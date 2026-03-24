@@ -482,7 +482,7 @@ export default function LandingPage() {
                 Bet<span className="text-flame-500">Autopsy</span>
               </span>
               <p className="text-ink-700 text-xs mt-2 max-w-sm">
-                AI-powered behavioral analysis for sports bettors.
+                AI-powered sports betting behavioral analysis.
                 Understand your patterns. Improve your process.
               </p>
             </div>
