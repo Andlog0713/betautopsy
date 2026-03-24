@@ -49,28 +49,16 @@ export default function HowToUploadPage() {
               </p>
             </div>
 
-            {/* BetStamp */}
-            <div className="bg-ink-900/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-medium">BetStamp</h3>
-                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
-              </div>
-              <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been logging bets in BetStamp.</p>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Open BetStamp → Bet History → Export as CSV</li>
-                <li>Upload the file here</li>
-              </ol>
-            </div>
-
             {/* Action Network */}
             <div className="bg-ink-900/50 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-medium">Action Network</h3>
-                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
+                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">BetMGM &amp; bet365 only</span>
               </div>
-              <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been tracking bets on Action Network.</p>
+              <p className="text-xs text-ink-600 mb-2">Action Network&apos;s BetSync only works with BetMGM and bet365. If you use other sportsbooks, use Pikkit instead.</p>
               <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Log in on desktop → tracked bets → export history</li>
+                <li>Log in on desktop → Settings → Export Picks</li>
+                <li>Choose date range → CSV will be emailed to you</li>
                 <li>Upload CSV here</li>
               </ol>
             </div>

@@ -296,8 +296,8 @@ export default function UploadPage() {
       <div className="card p-6 space-y-4">
         <h2 className="font-serif text-xl">Supported Formats</h2>
         <p className="text-ink-600 text-sm">
-          We auto-detect columns from most bet trackers including Pikkit, Juice
-          Reel, BetStamp, and generic CSV exports.
+          We auto-detect columns from most bet trackers including Pikkit,
+          Action Network, and generic CSV exports.
         </p>
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-ink-600">Expected columns:</h3>
