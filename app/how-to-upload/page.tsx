@@ -53,7 +53,6 @@ export default function HowToUploadPage() {
             <div className="bg-ink-900/50 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-medium">Juice Reel</h3>
-                <span className="text-xs text-mint-500">(free)</span>
                 <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
               </div>
               <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been logging bets in Juice Reel. Doesn&apos;t auto-sync from sportsbooks.</p>
