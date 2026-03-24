@@ -913,6 +913,39 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Feedback */}
       <ReportFeedback reportId={reportId} />
+
+      {/* Sharp tab nudge */}
+      {hasSharpContent && (
+        <button
+          onClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className="w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-cyan-400/10 flex items-center justify-center shrink-0">
+                <svg className="w-4.5 h-4.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-[#F0F0F0] group-hover:text-cyan-400 transition-colors">
+                  {isSharp ? 'View Sharp Analysis' : 'Unlock Sharp Analysis'}
+                </p>
+                <p className="text-ink-600 text-xs mt-0.5">
+                  {isSharp
+                    ? 'What-If Simulator and Leak Prioritizer are ready for this report.'
+                    : totalRecoverable > 0
+                      ? `Your data shows $${Math.round(totalRecoverable).toLocaleString()} in recoverable leaks.`
+                      : 'What-If scenarios and leak rankings from your data.'}
+                </p>
+              </div>
+            </div>
+            <span className="text-ink-700 group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">
+              {isSharp ? 'Sharp →' : 'See what you\u2019re missing →'}
+            </span>
+          </div>
+        </button>
+      )}
       </>}
 
       {/* ═══ Sharp Tab ═══ */}
