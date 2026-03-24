@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ShareModal from './ShareModal';
+import ReportFeedback from './ReportFeedback';
 import type { ShareCardData } from './ShareCard';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot } from '@/types';
 
@@ -878,14 +879,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Responsible Gambling Disclaimer */}
-      <div className="border-t border-ink-700/30 pt-6 mt-8">
-        <p className="text-ink-700 text-xs text-center">
-          BetAutopsy provides behavioral analysis and educational insights — not gambling or financial
-          advice. Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a
-          gambling problem, call 1-800-GAMBLER.
-        </p>
-      </div>
+      {/* Feedback */}
+      <ReportFeedback reportId={reportId} />
     </div>
   );
 }

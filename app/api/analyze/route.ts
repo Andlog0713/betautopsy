@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runAutopsy, calculateMetrics, calculateDisciplineScore } from '@/lib/autopsy-engine';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS } from '@/types';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limit: 5 reports per hour
+    if (!checkRateLimit(user.id, 5, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "You've hit the analysis limit. Try again in a few minutes." }, { status: 429 });
     }
 
     // Get profile and check tier limits
@@ -59,6 +65,21 @@ export async function POST(request: Request) {
       if (body.sportsbook) sportsbook = body.sportsbook;
     } catch {
       // No body or invalid JSON is fine, use defaults
+    }
+
+    // Input validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}/;
+    if (dateFrom && (!dateRegex.test(dateFrom) || isNaN(Date.parse(dateFrom)))) {
+      return NextResponse.json({ error: 'Invalid start date format.' }, { status: 400 });
+    }
+    if (dateTo && (!dateRegex.test(dateTo) || isNaN(Date.parse(dateTo)))) {
+      return NextResponse.json({ error: 'Invalid end date format.' }, { status: 400 });
+    }
+    for (const uid of uploadIds) {
+      if (!uuidRegex.test(uid)) {
+        return NextResponse.json({ error: 'Invalid upload ID.' }, { status: 400 });
+      }
     }
 
     // Fetch user's bets with optional filters

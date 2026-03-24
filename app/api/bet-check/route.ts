@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import Anthropic from '@anthropic-ai/sdk';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { sanitizeForPrompt } from '@/lib/utils';
 import type { Bet, Profile } from '@/types';
 
 const SYSTEM_PROMPT = `You are BetAutopsy's Live Bet Check. A user is about to place a bet. Given their recent betting history, analyze this potential bet for behavioral red flags in 3-4 sentences. Be direct and specific.
@@ -32,6 +34,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit: 30 checks per hour
+    if (!checkRateLimit(user.id + ':betcheck', 30, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "You've hit the check limit. Try again in a few minutes." }, { status: 429 });
+    }
+
     // Check tier
     const { data: profile } = await supabase
       .from('profiles')
@@ -46,10 +53,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const { description, odds, stake, sport, bet_type } = await request.json();
+    const body = await request.json();
 
-    if (!description || stake === undefined) {
+    if (!body.description || body.stake === undefined) {
       return NextResponse.json({ error: 'Description and stake are required' }, { status: 400 });
+    }
+
+    // Sanitize user inputs
+    const description = sanitizeForPrompt(body.description, 300);
+    const odds = sanitizeForPrompt(body.odds || '', 20);
+    const stake = Number(body.stake);
+    const sport = sanitizeForPrompt(body.sport || '', 50);
+    const bet_type = sanitizeForPrompt(body.bet_type || '', 50);
+
+    if (isNaN(stake) || stake <= 0) {
+      return NextResponse.json({ error: 'Invalid stake amount' }, { status: 400 });
     }
 
     // Fetch last 50 bets for context
@@ -102,12 +120,13 @@ export async function POST(request: Request) {
       else break;
     }
 
-    const userMessage = `PROPOSED BET:
-- Description: ${description}
-- Odds: ${odds || 'not specified'}
-- Stake: $${stake}
-- Sport: ${sport || 'not specified'}
-- Bet Type: ${bet_type || 'not specified'}
+    const userMessage = `<user_bet>
+Description: ${description}
+Odds: ${odds || 'not specified'}
+Stake: $${stake}
+Sport: ${sport || 'not specified'}
+Bet Type: ${bet_type || 'not specified'}
+</user_bet>
 
 USER CONTEXT:
 - Total bets tracked: ${bets.length}

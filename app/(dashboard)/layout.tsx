@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
+import FeedbackButton from '@/components/FeedbackButton';
 import type { Profile } from '@/types';
 
 const navItems = [
@@ -223,6 +224,7 @@ export default function DashboardLayout({
           </p>
         </footer>
       </main>
+      <FeedbackButton />
     </div>
     </PrivacyProvider>
   );

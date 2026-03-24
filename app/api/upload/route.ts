@@ -42,6 +42,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // File type validation
+    if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
+      return NextResponse.json({ error: 'Only CSV files are accepted.' }, { status: 400 });
+    }
+
+    // File size validation (10MB max)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 413 });
+    }
+
     const text = await file.text();
     console.log(`[Upload] File: ${file.name}, Size: ${text.length} bytes, First 200 chars: ${text.slice(0, 200)}`);
     const { bets, errors, warnings, column_mapping } = parseCSV(text);

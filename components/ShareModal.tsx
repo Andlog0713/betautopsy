@@ -18,13 +18,13 @@ export default function ShareModal({
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
-  // Lock body scroll on mount
   useEffect(() => {
+    const orig = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = orig;
       window.removeEventListener('keydown', handleEsc);
     };
   }, [onClose]);
@@ -44,16 +44,9 @@ export default function ShareModal({
     setDownloading(false);
   }
 
-  async function handleCopyLink() {
-    if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-      return;
-    }
-
-    if (!reportId) return;
-
+  async function getShareUrl(): Promise<string | null> {
+    if (shareUrl) return shareUrl;
+    if (!reportId) return null;
     try {
       const res = await fetch('/api/share', {
         method: 'POST',
@@ -64,54 +57,78 @@ export default function ShareModal({
       if (result.share_id) {
         const url = `${window.location.origin}/share/${result.share_id}`;
         setShareUrl(url);
-        await navigator.clipboard.writeText(url);
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 2000);
+        return url;
       }
     } catch {
       console.error('Share link failed');
     }
+    return null;
+  }
+
+  async function handleCopyLink() {
+    const url = await getShareUrl();
+    if (url) {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  }
+
+  async function handleShareTwitter() {
+    const url = await getShareUrl();
+    const text = `My BetAutopsy: Grade ${data.grade}${data.archetype ? ` | ${data.archetype.name}` : ''} | Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}%`;
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}${url ? `&url=${encodeURIComponent(url)}` : ''}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-y-auto"
       onClick={onClose}
     >
-      {/* Close button - fixed top right */}
+      {/* Close button */}
       <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-50 text-ink-500 hover:text-[#e7e6e1] transition-colors text-2xl"
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="fixed top-4 right-4 z-[60] text-ink-500 hover:text-[#e7e6e1] transition-colors text-2xl"
       >
         ✕
       </button>
 
-      <div
-        className="flex flex-col items-center gap-4 py-8 px-4 w-full max-w-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Card preview — scaled down on mobile */}
-        <div className="transform scale-[0.85] sm:scale-100 origin-top">
-          <ShareCard ref={cardRef} data={data} />
-        </div>
+      <div className="min-h-full flex flex-col items-center justify-start py-6 px-4">
+        <div
+          className="flex flex-col items-center gap-5 w-full max-w-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Card — scaled on mobile to fit screen */}
+          <div className="transform scale-[0.75] sm:scale-[0.85] md:scale-100 origin-top shrink-0">
+            <ShareCard ref={cardRef} data={data} />
+          </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="btn-primary text-sm flex-1"
-          >
-            {downloading ? 'Rendering...' : 'Download Image'}
-          </button>
-          {reportId && (
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3 justify-center w-full pb-6">
             <button
-              onClick={handleCopyLink}
-              className="btn-secondary text-sm flex-1"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="btn-primary text-sm"
             >
-              {linkCopied ? '✓ Link Copied' : 'Copy Link'}
+              {downloading ? 'Rendering...' : 'Download Image'}
             </button>
-          )}
+            {reportId && (
+              <button
+                onClick={handleCopyLink}
+                className="btn-secondary text-sm"
+              >
+                {linkCopied ? '✓ Copied' : 'Copy Link'}
+              </button>
+            )}
+            <button
+              onClick={handleShareTwitter}
+              className="btn-secondary text-sm flex items-center gap-1.5"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share on X
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tailwindcss:*)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl:*)",
+      "Bash(pkill -f \"node.*next\")",
+      "Bash(pkill -f next)",
+      "Bash(wc:*)",
+      "Bash(pkill -f node)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill:*)",
+      "Bash(grep -rn -i claude /Users/Andrew/Downloads/betautopsy/components/ --include=*.tsx)",
+      "Bash(node -e \"console.log\\(require\\(''tailwindcss/package.json''\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\(''postcss/package.json''\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\(''autoprefixer/package.json''\\).version\\)\")",
+      "Bash(lsof -ti:3000 -ti:3001)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
