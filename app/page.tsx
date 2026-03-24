@@ -25,9 +25,6 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-lg !px-8 !py-3.5 shadow-lg shadow-flame-500/20">
               Upload Your Bets — It&apos;s Free
             </Link>
-            <a href="#sample" className="btn-secondary text-lg !px-8 !py-3.5">
-              See a Sample Report
-            </a>
           </div>
           <p className="text-ink-700 text-xs mt-6 animate-fade-in-d5">
             No credit card required · Works with Pikkit and any CSV export
