@@ -1,11 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 
 export default function OAuthButtons() {
   const [loading, setLoading] = useState<'google' | 'twitter' | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const reset = () => { setLoading(null); setError(''); };
+    window.addEventListener('pageshow', reset);
+    window.addEventListener('focus', reset);
+    return () => {
+      window.removeEventListener('pageshow', reset);
+      window.removeEventListener('focus', reset);
+    };
+  }, []);
 
   async function handleOAuth(provider: 'google' | 'twitter') {
     setError('');
