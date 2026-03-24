@@ -1073,40 +1073,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <h2 className="font-bold text-2xl">Sharp Analysis</h2>
               <p className="text-ink-600 text-sm">Advanced tools that turn your report data into actionable strategy.</p>
-            </div>
-
-            {/* Feature previews */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="card p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🔮</span>
-                  <h3 className="font-medium">What-If Simulator</h3>
-                </div>
-                <p className="text-ink-600 text-sm">See how flat staking, cutting parlays, or focusing on your edges would have changed your P&L.</p>
-                {whatIfs.length > 0 && (
-                  <div className="bg-ink-900/50 rounded-lg p-3">
-                    <p className="text-ink-700 text-xs mb-1">Preview</p>
-                    <p className="text-sm text-[#F0F0F0]">{whatIfs.length} scenario{whatIfs.length !== 1 ? 's' : ''} ready from your data</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="card p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🩸</span>
-                  <h3 className="font-medium">Leak Prioritizer</h3>
-                </div>
-                <p className="text-ink-600 text-sm">Every leak and bias ranked by dollar impact, with a fix for each one.</p>
-                {totalRecoverable > 0 && (
-                  <div className="bg-ink-900/50 rounded-lg p-3">
-                    <p className="text-ink-700 text-xs mb-1">Your data shows</p>
-                    <p className="font-mono font-semibold text-flame-500">${Math.round(totalRecoverable).toLocaleString()} recoverable</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="text-center">
               <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $22/mo</a>
             </div>
 
