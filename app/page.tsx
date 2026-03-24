@@ -493,7 +493,12 @@ export default function LandingPage() {
               <Link href="/how-to-upload" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">How to Upload</Link>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-white/[0.06]">
+          <div className="mt-8 pt-6 border-t border-white/[0.06] space-y-3">
+            <div className="flex justify-center gap-4">
+              <Link href="/privacy" className="text-ink-700 text-xs hover:text-ink-500 transition-colors">
+                Privacy Policy
+              </Link>
+            </div>
             <p className="text-ink-700 text-xs text-center">
               BetAutopsy provides behavioral analysis and educational insights — not
               gambling or financial advice. Past results don&apos;t guarantee future outcomes.

@@ -324,7 +324,10 @@ export default function DashboardLayout({
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
           {children}
         </div>
-        <footer className="text-center py-6 px-4">
+        <footer className="text-center py-6 px-4 space-y-2">
+          <Link href="/privacy" className="text-ink-700 text-xs hover:text-ink-500 transition-colors">
+            Privacy Policy
+          </Link>
           <p className="text-ink-700 text-xs">
             BetAutopsy provides behavioral analysis and educational insights — not
             gambling or financial advice. Past results don&apos;t guarantee future outcomes.
