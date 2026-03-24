@@ -7,8 +7,8 @@ const authRoutes = ['/login', '/signup'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip auth check for public routes
-  if (pathname.startsWith('/api/webhook') || pathname.startsWith('/api/template') || pathname.startsWith('/api/og')) {
+  // Skip auth check for public routes and OAuth callback
+  if (pathname.startsWith('/auth/callback') || pathname.startsWith('/api/webhook') || pathname.startsWith('/api/template') || pathname.startsWith('/api/og')) {
     return NextResponse.next();
   }
 

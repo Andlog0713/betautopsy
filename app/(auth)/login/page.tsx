@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import OAuthButtons from '@/components/OAuthButtons';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,6 +37,17 @@ export default function LoginPage() {
   return (
     <div className="card p-8 animate-fade-in">
       <h2 className="font-bold text-2xl mb-6 text-center">Welcome back</h2>
+
+      <OAuthButtons />
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/[0.08]" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-ink-950 px-3 text-ink-600">or</span>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
