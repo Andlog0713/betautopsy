@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     'Upload your bet history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and tilt patterns.',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/favicon.png',
   },
 };
 
