@@ -251,6 +251,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   const hasBets = bets.length > 0;
 
+  const [activeTab, setActiveTab] = useState<'report' | 'sharp'>('report');
+  const hasSharpContent = whatIfs.length > 0 || prioritizedLeaks.length > 0;
+
   // Comparison data
   const compItems = previousSnapshot ? [
     { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: analysis.tilt_score, lowerBetter: true },
@@ -262,6 +265,39 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Tab Bar */}
+      {hasSharpContent && (
+        <div className="flex gap-1 bg-ink-900 p-1 rounded-lg w-fit">
+          <button
+            onClick={() => setActiveTab('report')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'report'
+                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
+                : 'text-ink-600 hover:text-ink-500'
+            }`}
+          >
+            Report
+          </button>
+          <button
+            onClick={() => setActiveTab('sharp')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'sharp'
+                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
+                : 'text-ink-600 hover:text-ink-500'
+            }`}
+          >
+            Sharp
+            {!isSharp && (
+              <svg className="w-3.5 h-3.5 text-ink-700" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* ═══ Report Tab ═══ */}
+      {activeTab === 'report' && <>
       {/* Bet DNA */}
       {analysis.betting_archetype && (
         <div className="card p-6 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
@@ -808,173 +844,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* What If Simulator (Sharp: full interactive version, others: teaser) */}
-      {whatIfs.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="font-bold text-2xl">What If Simulator</h2>
-            {isSharp && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">SHARP</span>}
-          </div>
-          <p className="text-ink-600 text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
-
-          {/* Always show first scenario */}
-          {whatIfs.slice(0, isSharp ? whatIfs.length : 1).map((wi, i) => {
-            const diff = wi.hypothetical - wi.actual;
-            const better = diff > 0;
-            const maxVal = Math.max(Math.abs(wi.actual), Math.abs(wi.hypothetical));
-            const actualPct = maxVal > 0 ? (Math.abs(wi.actual) / maxVal) * 100 : 0;
-            const hypoPct = maxVal > 0 ? (Math.abs(wi.hypothetical) / maxVal) * 100 : 0;
-            return (
-              <div key={i} className="card p-5">
-                <p className="text-[#F0F0F0] text-sm mb-4">{wi.label}</p>
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-ink-600">Actual P&L</span>
-                      <span className={`font-mono font-semibold ${wi.actual >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
-                        {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="h-3 bg-ink-900 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-mint-500' : 'bg-red-400'}`} style={{ width: `${actualPct}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-ink-600">Hypothetical P&L</span>
-                      <span className={`font-mono font-semibold ${wi.hypothetical >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
-                        {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="h-3 bg-ink-900 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-red-400'}`} style={{ width: `${hypoPct}%` }} />
-                    </div>
-                  </div>
-                </div>
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-mono font-semibold ${better ? 'bg-mint-500/10 text-mint-500' : 'bg-red-400/10 text-red-400'}`}>
-                  {better ? '↑' : '↓'} {better ? '+' : ''}${Math.round(diff).toLocaleString()}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Locked teaser for non-Sharp */}
-          {!isSharp && whatIfs.length > 1 && (
-            <div className="relative">
-              <div className="blur-sm pointer-events-none opacity-40">
-                {whatIfs.slice(1, 3).map((wi, i) => (
-                  <div key={i} className="card p-5 mb-3">
-                    <p className="text-[#F0F0F0] text-sm mb-3">{wi.label}</p>
-                    <div className="h-3 bg-ink-900 rounded-full mb-2" />
-                    <div className="h-3 bg-ink-900 rounded-full" />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="card bg-ink-800/95 p-5 text-center max-w-sm">
-                  <p className="text-2xl mb-2">🔮</p>
-                  <p className="text-[#F0F0F0] font-medium mb-1">Full What-If Simulator</p>
-                  <p className="text-ink-600 text-sm mb-3">See all {whatIfs.length} scenarios — flat staking, no parlays, profitable-only betting — and how much each would save you.</p>
-                  <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Sharp — $22/mo</a>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Leak Prioritizer (Sharp exclusive) */}
-      {prioritizedLeaks.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">SHARP</span>
-          </div>
-
-          {isSharp ? (
-            <>
-              <div className="card p-5 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
-                <p className="text-ink-600 text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                <p className="font-mono text-3xl font-bold text-flame-500">${Math.round(totalRecoverable).toLocaleString()}</p>
-                <p className="text-ink-600 text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-              </div>
-
-              <div className="space-y-3">
-                {prioritizedLeaks.map((item, i) => {
-                  const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
-                  return (
-                    <div key={i} className="card p-5">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-lg font-bold text-flame-500 shrink-0">#{i + 1}</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{item.name}</h3>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'bias' ? 'bg-orange-400/10 text-orange-400' : 'bg-red-400/10 text-red-400'}`}>
-                                {item.type}
-                              </span>
-                              {item.severity && (
-                                <span className={`text-xs px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.medium}`}>
-                                  {item.severity}
-                                </span>
-                              )}
-                            </div>
-                            {item.detail && <p className="text-ink-600 text-xs mt-0.5">{item.detail}</p>}
-                          </div>
-                        </div>
-                        <span className="font-mono text-lg font-bold text-red-400 shrink-0">
-                          -${Math.round(item.cost).toLocaleString()}
-                        </span>
-                      </div>
-
-                      {/* Impact bar */}
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-ink-600">Share of total leaks</span>
-                          <span className="text-ink-500 font-mono">{pct.toFixed(0)}%</span>
-                        </div>
-                        <div className="h-2 bg-ink-900 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-flame-500" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-
-                      <div className="bg-ink-900/50 rounded-lg p-3">
-                        <p className="text-ink-600 text-xs mb-1">Fix</p>
-                        <p className="text-[#F0F0F0] text-sm">{item.fix}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <div className="relative">
-              <div className="blur-sm pointer-events-none opacity-40">
-                <div className="card p-5 mb-3">
-                  <p className="text-ink-600 text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                  <p className="font-mono text-3xl font-bold text-flame-500">${Math.round(totalRecoverable).toLocaleString()}</p>
-                </div>
-                {prioritizedLeaks.slice(0, 3).map((_, i) => (
-                  <div key={i} className="card p-5 mb-3">
-                    <div className="h-4 bg-ink-800 rounded w-1/3 mb-2" />
-                    <div className="h-2 bg-ink-800 rounded w-full mb-2" />
-                    <div className="h-8 bg-ink-900/50 rounded" />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="card bg-ink-800/95 p-5 text-center max-w-sm">
-                  <p className="text-2xl mb-2">🩸</p>
-                  <p className="text-[#F0F0F0] font-medium mb-1">Leak Prioritizer</p>
-                  <p className="text-ink-600 text-sm mb-3">See exactly which leaks cost you the most, ranked by dollar impact, with a fix for each one. You have ${Math.round(totalRecoverable).toLocaleString()} recoverable.</p>
-                  <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Sharp — $22/mo</a>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Discipline Score */}
       {analysis.discipline_score && (
         <div className="card p-6 space-y-4">
@@ -1044,6 +913,171 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Feedback */}
       <ReportFeedback reportId={reportId} />
+      </>}
+
+      {/* ═══ Sharp Tab ═══ */}
+      {activeTab === 'sharp' && (
+        isSharp ? (
+          <div className="space-y-8">
+            {/* What If Simulator */}
+            {whatIfs.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="font-bold text-2xl">What-If Simulator</h2>
+                <p className="text-ink-600 text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
+                <div className="grid gap-3">
+                  {whatIfs.map((wi, i) => {
+                    const diff = wi.hypothetical - wi.actual;
+                    const better = diff > 0;
+                    const maxVal = Math.max(Math.abs(wi.actual), Math.abs(wi.hypothetical));
+                    const actualPct = maxVal > 0 ? (Math.abs(wi.actual) / maxVal) * 100 : 0;
+                    const hypoPct = maxVal > 0 ? (Math.abs(wi.hypothetical) / maxVal) * 100 : 0;
+                    return (
+                      <div key={i} className="card p-5">
+                        <p className="text-[#F0F0F0] text-sm mb-4">{wi.label}</p>
+                        <div className="space-y-3 mb-4">
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-ink-600">Actual P&L</span>
+                              <span className={`font-mono font-semibold ${wi.actual >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                                {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="h-3 bg-ink-900 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-mint-500' : 'bg-red-400'}`} style={{ width: `${actualPct}%` }} />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-ink-600">Hypothetical P&L</span>
+                              <span className={`font-mono font-semibold ${wi.hypothetical >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                                {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="h-3 bg-ink-900 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-red-400'}`} style={{ width: `${hypoPct}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-mono font-semibold ${better ? 'bg-mint-500/10 text-mint-500' : 'bg-red-400/10 text-red-400'}`}>
+                          {better ? '↑' : '↓'} {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Leak Prioritizer */}
+            {prioritizedLeaks.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
+
+                <div className="card p-5 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
+                  <p className="text-ink-600 text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
+                  <p className="font-mono text-3xl font-bold text-flame-500">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  <p className="text-ink-600 text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+                </div>
+
+                <div className="space-y-3">
+                  {prioritizedLeaks.map((item, i) => {
+                    const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    return (
+                      <div key={i} className="card p-5">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-lg font-bold text-flame-500 shrink-0">#{i + 1}</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{item.name}</h3>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'bias' ? 'bg-orange-400/10 text-orange-400' : 'bg-red-400/10 text-red-400'}`}>
+                                  {item.type}
+                                </span>
+                                {item.severity && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.medium}`}>
+                                    {item.severity}
+                                  </span>
+                                )}
+                              </div>
+                              {item.detail && <p className="text-ink-600 text-xs mt-0.5">{item.detail}</p>}
+                            </div>
+                          </div>
+                          <span className="font-mono text-lg font-bold text-red-400 shrink-0">
+                            -${Math.round(item.cost).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-ink-600">Share of total leaks</span>
+                            <span className="text-ink-500 font-mono">{pct.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-2 bg-ink-900 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-flame-500" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="bg-ink-900/50 rounded-lg p-3">
+                          <p className="text-ink-600 text-xs mb-1">Fix</p>
+                          <p className="text-[#F0F0F0] text-sm">{item.fix}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Locked Sharp tab for non-Sharp users */
+          <div className="space-y-6 py-4">
+            <div className="text-center max-w-md mx-auto space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mx-auto">
+                <svg className="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h2 className="font-bold text-2xl">Sharp Analysis</h2>
+              <p className="text-ink-600 text-sm">Advanced tools that turn your report data into actionable strategy.</p>
+            </div>
+
+            {/* Feature previews */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="card p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔮</span>
+                  <h3 className="font-medium">What-If Simulator</h3>
+                </div>
+                <p className="text-ink-600 text-sm">See how flat staking, cutting parlays, or focusing on your edges would have changed your P&L.</p>
+                {whatIfs.length > 0 && (
+                  <div className="bg-ink-900/50 rounded-lg p-3">
+                    <p className="text-ink-700 text-xs mb-1">Preview</p>
+                    <p className="text-sm text-[#F0F0F0]">{whatIfs.length} scenario{whatIfs.length !== 1 ? 's' : ''} ready from your data</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="card p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🩸</span>
+                  <h3 className="font-medium">Leak Prioritizer</h3>
+                </div>
+                <p className="text-ink-600 text-sm">Every leak and bias ranked by dollar impact, with a fix for each one.</p>
+                {totalRecoverable > 0 && (
+                  <div className="bg-ink-900/50 rounded-lg p-3">
+                    <p className="text-ink-700 text-xs mb-1">Your data shows</p>
+                    <p className="font-mono font-semibold text-flame-500">${Math.round(totalRecoverable).toLocaleString()} recoverable</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="text-center">
+              <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $22/mo</a>
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }
