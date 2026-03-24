@@ -4,16 +4,16 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
 
 export default function OAuthButtons() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'google' | 'twitter' | null>(null);
   const [error, setError] = useState('');
 
-  async function handleGoogle() {
+  async function handleOAuth(provider: 'google' | 'twitter') {
     setError('');
-    setLoading(true);
+    setLoading(provider);
 
     const supabase = createClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -21,16 +21,16 @@ export default function OAuthButtons() {
 
     if (oauthError) {
       setError(oauthError.message);
-      setLoading(false);
+      setLoading(null);
     }
   }
 
   return (
-    <div>
+    <div className="space-y-3">
       <button
         type="button"
-        onClick={handleGoogle}
-        disabled={loading}
+        onClick={() => handleOAuth('google')}
+        disabled={loading !== null}
         className="w-full flex items-center justify-center gap-3 rounded-lg border border-white/[0.08] bg-ink-900 px-4 py-2.5 text-sm font-medium text-[#F0F0F0] hover:bg-ink-800 transition-colors disabled:opacity-50"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -51,7 +51,19 @@ export default function OAuthButtons() {
             fill="#EA4335"
           />
         </svg>
-        {loading ? 'Redirecting...' : 'Continue with Google'}
+        {loading === 'google' ? 'Redirecting...' : 'Continue with Google'}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => handleOAuth('twitter')}
+        disabled={loading !== null}
+        className="w-full flex items-center justify-center gap-3 rounded-lg border border-white/[0.08] bg-ink-900 px-4 py-2.5 text-sm font-medium text-[#F0F0F0] hover:bg-ink-800 transition-colors disabled:opacity-50"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        {loading === 'twitter' ? 'Redirecting...' : 'Continue with X'}
       </button>
 
       {error && (
