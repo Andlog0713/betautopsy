@@ -278,13 +278,103 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Track Your Progress ── */}
+      <section className="max-w-5xl mx-auto px-4 md:px-8 py-20">
+        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4">
+          One report is a <span className="text-ink-600">snapshot</span>.
+          <br />
+          Five reports is <span className="text-flame-500">proof</span>.
+        </h2>
+        <p className="text-ink-600 text-center mb-14 max-w-lg mx-auto">
+          BetAutopsy gets sharper the more you use it. Every autopsy tracks your
+          progress — so you can see if you&apos;re actually getting better or just
+          telling yourself you are.
+        </p>
+
+        {/* Mock progress dashboard */}
+        <div className="card p-6 md:p-8 mb-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Left: Emotion Score dropping */}
+            <div>
+              <h3 className="text-sm font-medium text-ink-600 mb-4">Emotion Score Over Time</h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'Report 1', score: 72, date: 'Week 1' },
+                  { label: 'Report 2', score: 58, date: 'Week 2' },
+                  { label: 'Report 3', score: 47, date: 'Week 4' },
+                  { label: 'Report 4', score: 41, date: 'Week 6' },
+                ].map((r) => (
+                  <div key={r.label} className="flex items-center gap-3">
+                    <span className="text-xs text-ink-600 w-16 shrink-0">{r.date}</span>
+                    <div className="flex-1 h-3 bg-ink-900 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${r.score}%`,
+                          background: r.score <= 45 ? '#4ade80' : r.score <= 60 ? '#fbbf24' : '#f97316',
+                        }}
+                      />
+                    </div>
+                    <span className={`font-mono text-sm w-8 text-right ${r.score <= 45 ? 'text-mint-500' : r.score <= 60 ? 'text-amber-400' : 'text-orange-400'}`}>
+                      {r.score}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-mint-500 text-xs mt-3">↓ 31 points in 6 weeks</p>
+            </div>
+
+            {/* Right: Key metrics improving */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-ink-600 mb-2">Your Numbers Over Time</h3>
+              {[
+                { label: 'Discipline Score', from: '34', to: '67', color: 'text-mint-500', arrow: '↑' },
+                { label: 'Loss Chase Ratio', from: '1.8x', to: '1.1x', color: 'text-mint-500', arrow: '↓' },
+                { label: 'Parlay %', from: '42%', to: '18%', color: 'text-mint-500', arrow: '↓' },
+                { label: 'ROI', from: '-8.2%', to: '-1.4%', color: 'text-mint-500', arrow: '↑' },
+              ].map((m) => (
+                <div key={m.label} className="flex items-center justify-between">
+                  <span className="text-sm text-ink-600">{m.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm text-ink-700">{m.from}</span>
+                    <span className={`${m.color}`}>{m.arrow}</span>
+                    <span className={`font-mono text-sm font-medium ${m.color}`}>{m.to}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 pt-2">
+                <span className="text-lg">🔥</span>
+                <span className="text-sm text-[#e7e6e1]">4-report streak</span>
+                <span className="text-xs text-ink-600">(Best: 4)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Social proof stats */}
+        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold text-flame-500">7 days</p>
+            <p className="text-ink-600 text-xs mt-1">Average time to second autopsy</p>
+          </div>
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold text-mint-500">-18 pts</p>
+            <p className="text-ink-600 text-xs mt-1">Average emotion score drop after 3 reports</p>
+          </div>
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold text-[#e7e6e1]">5 min</p>
+            <p className="text-ink-600 text-xs mt-1">Upload, run, review — that&apos;s it</p>
+          </div>
+        </div>
+      </section>
+
       {/* ── Pricing ── */}
       <section id="pricing" className="max-w-5xl mx-auto px-4 md:px-8 py-20">
         <h2 className="font-serif text-3xl md:text-4xl text-center mb-4">
           Simple <span className="text-flame-500">pricing</span>
         </h2>
         <p className="text-ink-600 text-center mb-14 max-w-md mx-auto">
-          Start free. Upgrade when you want deeper analysis and unlimited reports.
+          Start free. Upgrade when you want to track your progress and go deeper.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free */}
@@ -318,13 +408,13 @@ export default function LandingPage() {
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">
               {[
-                'Unlimited bets',
-                'Unlimited reports',
-                'Full bias suite',
-                'Strategic leak analysis',
-                'Behavioral patterns',
-                'Weekly reports',
-                'PDF export',
+                'Unlimited bets & reports',
+                'Progress tracking over time',
+                'Emotion Score + Discipline Score',
+                'Full bias & leak analysis',
+                'Personal rules & action plans',
+                'Bet DNA archetype',
+                'Shareable report cards',
               ].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
                   <span className="text-mint-500 mt-0.5 shrink-0">✓</span>
@@ -347,9 +437,9 @@ export default function LandingPage() {
             <ul className="space-y-2.5 flex-1 mb-7">
               {[
                 'Everything in Pro',
-                'Real-time bet annotation',
-                'Custom emotional pattern alerts',
-                'API access',
+                'Live Bet Check before every bet',
+                'Upload comparison & analysis',
+                'Custom rules & alerts',
               ].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
                   <span className="text-mint-500 mt-0.5 shrink-0">✓</span>
