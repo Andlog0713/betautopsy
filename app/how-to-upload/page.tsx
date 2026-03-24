@@ -33,13 +33,13 @@ export default function HowToUploadPage() {
         <div className="card p-6 md:p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-flame-500/10 text-flame-500 font-bold text-lg font-bold">1</span>
-            <h2 className="font-bold text-2xl">Use a bet tracker you already have</h2>
+            <h2 className="font-bold text-2xl">Use a bet tracker</h2>
             <span className="text-xs font-medium bg-mint-500/10 text-mint-500 px-2 py-0.5 rounded-full">RECOMMENDED</span>
           </div>
           <p className="text-ink-600 text-sm mb-6">
-            Pikkit is the only app that auto-syncs directly from your sportsbooks — even if
-            you&apos;ve never tracked a bet before. The others only work if you&apos;ve already
-            been logging bets there.
+            Pikkit connects directly to your sportsbook accounts and pulls your full bet
+            history automatically — no manual logging needed, even if you&apos;ve never used
+            a tracker before.
           </p>
 
           <div className="space-y-4">
