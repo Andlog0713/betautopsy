@@ -36,14 +36,14 @@ function emotionColor(s: number): string {
 }
 
 const ARCHETYPE_BG: Record<string, string> = {
-  'The Natural': 'radial-gradient(ellipse at 30% 20%, rgba(74,222,128,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(74,222,128,0.05) 0%, transparent 50%)',
-  'Tilt Machine': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.07) 0px, transparent 40px, rgba(248,113,113,0.06) 80px)',
+  'The Natural': 'radial-gradient(ellipse at 30% 20%, rgba(0,200,83,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(0,200,83,0.05) 0%, transparent 50%)',
+  'Tilt Machine': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.07) 0px, transparent 40px, rgba(248,113,113,0.04) 80px)',
   'Parlay Dreamer': 'radial-gradient(circle at 40% 40%, rgba(139,92,246,0.08) 0%, transparent 50%), radial-gradient(circle at 60% 70%, rgba(96,165,250,0.06) 0%, transparent 40%)',
-  'Chalk Grinder': 'repeating-linear-gradient(0deg, rgba(154,148,131,0.05) 0px, transparent 1px, transparent 20px, rgba(154,148,131,0.05) 20px), repeating-linear-gradient(90deg, rgba(154,148,131,0.05) 0px, transparent 1px, transparent 20px, rgba(154,148,131,0.05) 20px)',
-  'Sharp Sleeper': 'repeating-linear-gradient(0deg, rgba(74,222,128,0.06) 0px, transparent 3px, transparent 14px)',
-  'Volume Warrior': 'radial-gradient(circle, rgba(154,148,131,0.06) 1px, transparent 1px)',
-  'Sniper': 'linear-gradient(0deg, transparent 48%, rgba(154,148,131,0.06) 48%, rgba(154,148,131,0.06) 52%, transparent 52%), linear-gradient(90deg, transparent 48%, rgba(154,148,131,0.06) 48%, rgba(154,148,131,0.06) 52%, transparent 52%)',
-  'Degen King': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.08) 0px, transparent 30px, rgba(249,115,22,0.05) 60px)',
+  'Chalk Grinder': 'repeating-linear-gradient(0deg, rgba(90,92,111,0.06) 0px, transparent 1px, transparent 20px, rgba(90,92,111,0.06) 20px), repeating-linear-gradient(90deg, rgba(90,92,111,0.06) 0px, transparent 1px, transparent 20px, rgba(90,92,111,0.06) 20px)',
+  'Sharp Sleeper': 'repeating-linear-gradient(0deg, rgba(0,200,83,0.06) 0px, transparent 3px, transparent 14px)',
+  'Volume Warrior': 'radial-gradient(circle, rgba(90,92,111,0.06) 1px, transparent 1px)',
+  'Sniper': 'linear-gradient(0deg, transparent 48%, rgba(90,92,111,0.06) 48%, rgba(90,92,111,0.06) 52%, transparent 52%), linear-gradient(90deg, transparent 48%, rgba(90,92,111,0.06) 48%, rgba(90,92,111,0.06) 52%, transparent 52%)',
+  'Degen King': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.08) 0px, transparent 30px, rgba(248,113,113,0.05) 60px)',
   'The Grinder': 'none',
 };
 
@@ -91,7 +91,7 @@ function truncate(s: string, n: number): string {
 
 const S = { // shared inline styles
   mono: { fontFamily: "'JetBrains Mono', monospace" } as React.CSSProperties,
-  serif: { fontFamily: "'DM Serif Display', Georgia, serif" } as React.CSSProperties,
+  serif: { fontFamily: "'Inter', -apple-system, sans-serif", fontWeight: 700 } as React.CSSProperties,
   label: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#A0A3B1' },
 };
 
@@ -110,9 +110,9 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       style={{
         width: 440,
         padding: 32,
-        background: '#0f0e0c',
+        background: '#0D1117',
         borderRadius: 20,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: '#F0F0F0',
         position: 'relative',
         overflow: 'hidden',
@@ -125,14 +125,14 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       <div style={{ position: 'relative' }}>
         {/* Logo */}
         <div style={{ ...S.serif, fontSize: 16, marginBottom: 24 }}>
-          Bet<span style={{ color: '#f97316' }}>Autopsy</span>
+          Bet<span style={{ color: '#00C853' }}>Autopsy</span>
         </div>
 
         {/* Archetype */}
         {data.archetype && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ ...S.label, marginBottom: 6 }}>YOUR BET DNA</div>
-            <div style={{ ...S.serif, fontSize: 26, color: '#f97316', lineHeight: 1.2 }}>{data.archetype.name}</div>
+            <div style={{ ...S.serif, fontSize: 26, color: '#00C853', lineHeight: 1.2 }}>{data.archetype.name}</div>
             <div style={{ fontSize: 12, color: '#A0A3B1', marginTop: 4 }}>{data.archetype.description}</div>
           </div>
         )}
@@ -149,7 +149,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             </div>
             {/* Best Edge */}
             {data.best_edge && (
-              <div style={{ background: 'rgba(74,222,128,0.06)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
+              <div style={{ background: 'rgba(0,200,83,0.06)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
                 <div style={{ fontSize: 9, color: '#00C853' }}>Best Edge</div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{data.best_edge.category}</div>
                 <div style={{ ...S.mono, fontSize: 11, color: '#00C853' }}>+{data.best_edge.roi.toFixed(1)}%</div>
@@ -162,7 +162,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
                   <span>Sharp Score</span>
                   <span style={{ ...S.mono, color: '#00C853' }}>{data.sharp_score}</span>
                 </div>
-                <div style={{ height: 4, background: '#1f1e1c', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: '#1C1E2D', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${data.sharp_score}%`, borderRadius: 2, background: '#00C853' }} />
                 </div>
               </div>
@@ -170,7 +170,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
           </div>
 
           {/* Divider */}
-          <div style={{ background: 'linear-gradient(180deg, transparent, rgba(95,89,79,0.3), transparent)' }} />
+          <div style={{ background: 'linear-gradient(180deg, transparent, rgba(90,92,111,0.3), transparent)' }} />
 
           {/* Right: The Real */}
           <div style={{ paddingLeft: 16 }}>
@@ -181,7 +181,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
                 <span>Emotion Score</span>
                 <span style={{ ...S.mono, color: ec }}>{data.emotion_score}/100</span>
               </div>
-              <div style={{ height: 5, background: '#1f1e1c', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ height: 5, background: '#1C1E2D', borderRadius: 3, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${data.emotion_score}%`, borderRadius: 3, background: ec }} />
               </div>
             </div>
@@ -205,7 +205,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
         {badges.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16, justifyContent: 'center' }}>
             {badges.map((b) => (
-              <span key={b} style={{ fontSize: 10, color: '#f97316', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 20, padding: '3px 10px' }}>
+              <span key={b} style={{ fontSize: 10, color: '#00C853', background: 'rgba(0,200,83,0.1)', border: '1px solid rgba(0,200,83,0.2)', borderRadius: 20, padding: '3px 10px' }}>
                 {b}
               </span>
             ))}
@@ -214,7 +214,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
 
         {/* Biggest Hit */}
         {hit && (
-          <div style={{ background: 'rgba(74,222,128,0.04)', border: '1px solid rgba(74,222,128,0.1)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
+          <div style={{ background: 'rgba(0,200,83,0.04)', border: '1px solid rgba(0,200,83,0.12)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
             <div style={{ fontSize: 9, color: '#00C853', marginBottom: 4 }}>BIGGEST HIT</div>
             <div style={{ ...S.mono, fontSize: 20, fontWeight: 700, color: '#00C853' }}>+${Math.round(hit.profit).toLocaleString()}</div>
             <div style={{ fontSize: 11, color: '#A0A3B1', marginTop: 2 }}>{truncate(hit.description, 60)}</div>
