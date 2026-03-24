@@ -11,6 +11,7 @@ import type { Profile } from '@/types';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/upload', label: 'Upload Bets', icon: '📤' },
+  { href: '/how-to-upload', label: 'How to Upload', icon: '❓' },
   { href: '/bets', label: 'Bet History', icon: '🎯' },
   { href: '/uploads', label: 'Uploads', icon: '📁' },
   { href: '/reports', label: 'Reports', icon: '🔬' },

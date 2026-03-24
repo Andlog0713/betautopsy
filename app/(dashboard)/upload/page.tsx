@@ -129,14 +129,26 @@ export default function UploadPage() {
         </div>
       )}
 
-      {/* Help links */}
-      <div className="flex flex-wrap items-center gap-2 text-sm">
+      {/* How to get your data — prominent banner */}
+      <Link
+        href="/how-to-upload"
+        className="block card border-flame-500/30 bg-flame-500/5 hover:bg-flame-500/10 p-4 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[#e7e6e1] font-medium text-sm">Don&apos;t have a CSV yet?</p>
+            <p className="text-ink-600 text-sm mt-0.5">
+              We&apos;ll show you how to export your bet history in under 3 minutes — works with every sportsbook.
+            </p>
+          </div>
+          <span className="text-flame-500 text-lg shrink-0 ml-4">→</span>
+        </div>
+      </Link>
+
+      {/* Template download */}
+      <div className="text-sm">
         <a href="/api/template" className="text-flame-500 hover:underline">
           ↓ Download CSV template
-        </a>
-        <span className="text-ink-700">·</span>
-        <a href="/how-to-upload" className="text-flame-500 hover:underline">
-          Need help getting your data? See our guide
         </a>
       </div>
 
