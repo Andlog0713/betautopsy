@@ -194,6 +194,19 @@ export default function ReportsPage() {
     setRunning(false);
   }
 
+  async function openReport(report: AutopsyReportType) {
+    setActiveReport(report);
+    // Fetch bets for this report's date range so What-If and Leak Prioritizer work
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    let query = supabase.from('bets').select('*').eq('user_id', user.id).order('placed_at', { ascending: true });
+    if (report.date_range_start) query = query.gte('placed_at', report.date_range_start);
+    if (report.date_range_end) query = query.lte('placed_at', report.date_range_end);
+    const { data: betsData } = await query;
+    if (betsData) setAnalyzedBets(betsData as Bet[]);
+  }
+
   function setQuickRange(days: number | null) {
     if (days === null) {
       setDateFrom('');
@@ -229,7 +242,7 @@ export default function ReportsPage() {
           <OnboardingSteps active={3} completed={[1, 2]} />
         )}
         <button
-          onClick={() => setActiveReport(null)}
+          onClick={() => { setActiveReport(null); setAnalyzedBets([]); }}
           className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
         >
           ← Back to Reports
@@ -507,7 +520,7 @@ export default function ReportsPage() {
             return (
               <button
                 key={report.id}
-                onClick={() => setActiveReport(report)}
+                onClick={() => openReport(report)}
                 className="card p-5 w-full text-left hover:border-white/[0.15] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
