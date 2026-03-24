@@ -111,13 +111,22 @@ export default function BetsPage() {
     return sorted;
   })();
 
+  // Pagination
+  const PAGE_SIZE = 50;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1); }, [sportFilter, typeFilter]);
+
   // Selection state
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState('');
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every((b) => selected.has(b.id));
+  const allFilteredSelected = paginated.length > 0 && paginated.every((b) => selected.has(b.id));
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -132,13 +141,13 @@ export default function BetsPage() {
     if (allFilteredSelected) {
       setSelected((prev) => {
         const next = new Set(prev);
-        filtered.forEach((b) => next.delete(b.id));
+        paginated.forEach((b) => next.delete(b.id));
         return next;
       });
     } else {
       setSelected((prev) => {
         const next = new Set(prev);
-        filtered.forEach((b) => next.add(b.id));
+        paginated.forEach((b) => next.add(b.id));
         return next;
       });
     }
@@ -344,7 +353,7 @@ export default function BetsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((bet) => (
+                {paginated.map((bet) => (
                   <tr
                     key={bet.id}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
@@ -422,6 +431,31 @@ export default function BetsPage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
+              <p className="text-xs text-ink-600">
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 text-sm rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]"
+                >
+                  Prev
+                </button>
+                <span className="text-xs text-ink-600 font-mono">{page}/{totalPages}</span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 text-sm rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

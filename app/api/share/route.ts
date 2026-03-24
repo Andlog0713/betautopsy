@@ -40,7 +40,12 @@ export async function POST(request: Request) {
       grade: analysis.summary.overall_grade,
       emotion_score: analysis.tilt_score,
       roi_percent: analysis.summary.roi_percent,
-      win_rate: Math.round((analysis.summary.total_bets > 0 ? analysis.summary.roi_percent : 0) * 10) / 10,
+      win_rate: (() => {
+        const parts = (analysis.summary.record ?? '').split('-').map(Number);
+        const wins = parts[0] || 0;
+        const total = analysis.summary.total_bets || 1;
+        return Math.round((wins / total) * 1000) / 10;
+      })(),
       total_bets: analysis.summary.total_bets,
       record: analysis.summary.record,
       best_edge: bestEdge ? { category: bestEdge.category, roi: bestEdge.roi_impact } : null,
