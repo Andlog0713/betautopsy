@@ -911,9 +911,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Feedback */}
-      <ReportFeedback reportId={reportId} />
-
       {/* Sharp tab nudge */}
       {hasSharpContent && (
         <button
@@ -946,6 +943,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
         </button>
       )}
+
+      {/* Feedback */}
+      <ReportFeedback reportId={reportId} />
       </>}
 
       {/* ═══ Sharp Tab ═══ */}
@@ -1060,6 +1060,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
               </div>
             )}
+            <ReportFeedback reportId={reportId} />
           </div>
         ) : (
           /* Locked Sharp tab for non-Sharp users */
@@ -1108,6 +1109,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="text-center">
               <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $22/mo</a>
             </div>
+
+            <ReportFeedback reportId={reportId} />
           </div>
         )
       )}
