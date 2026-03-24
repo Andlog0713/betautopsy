@@ -30,7 +30,7 @@ export default function HowToUploadPage() {
             <div className="bg-ink-900/50 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <h3 className="font-medium">Pikkit</h3>
-                <span className="text-xs font-medium bg-flame-500/10 text-flame-500 px-2 py-0.5 rounded-full">FASTEST</span>
+                <span className="text-xs font-medium bg-flame-500/10 text-flame-500 px-2 py-0.5 rounded-full">RECOMMENDED FOR MOST PEOPLE</span>
               </div>
               <p className="text-sm text-ink-600 mb-3">
                 Pikkit <span className="text-[#e7e6e1]">connects directly to your sportsbook accounts</span> and
