@@ -179,7 +179,6 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   else if (loseWinRatio >= 1.2) sessionDisciplinePts = 5;
 
   const tiltScore = Math.min(100, stakeVolatility + lossChasingPts + streakBehaviorPts + sessionDisciplinePts);
-  console.log(`[Emotion Score] Sizing: ${stakeVolatility}/25 | Losses: ${lossChasingPts}/25 | Streaks: ${streakBehaviorPts}/25 | Stopping: ${sessionDisciplinePts}/25 | Total: ${tiltScore}/100`);
 
   // Bankroll health
   const br = bankroll ? Number(bankroll) : avgStake * 20;

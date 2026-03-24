@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /bets
+Disallow: /reports
+Disallow: /uploads
+Disallow: /settings
+Disallow: /pricing
+Disallow: /upload
+Disallow: /api/
+
+Sitemap: https://www.betautopsy.com/sitemap.xml

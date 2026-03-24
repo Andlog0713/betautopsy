@@ -54,9 +54,7 @@ export async function POST(request: Request) {
     }
 
     const text = await file.text();
-    console.log(`[Upload] File: ${file.name}, Size: ${text.length} bytes, First 200 chars: ${text.slice(0, 200)}`);
     const { bets, errors, warnings, column_mapping } = parseCSV(text);
-    console.log(`[Upload] Parsed: ${bets.length} bets, ${errors.length} errors, ${warnings.length} warnings, mapping:`, column_mapping);
 
     if (bets.length === 0) {
       return NextResponse.json(
@@ -105,8 +103,6 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log(`[Upload] After dedup: ${betsToInsert.length} to insert, ${duplicatesSkipped} skipped, ${existingBets?.length ?? 0} existing in DB`);
-
     if (betsToInsert.length === 0) {
       return NextResponse.json({
         bets_imported: 0,
@@ -142,7 +138,7 @@ export async function POST(request: Request) {
     if (!uploadErr && uploadRecord) {
       uploadId = uploadRecord.id;
     } else if (uploadErr) {
-      console.log('[Upload] Could not create upload record:', uploadErr.message);
+      // Upload record creation failed — non-critical, continue with bet insertion
     }
 
     const currentCount = typedProfile.bet_count ?? 0;

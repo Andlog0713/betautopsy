@@ -293,7 +293,6 @@ function parseRow(
     result = RESULT_MAP[resultStr] ?? 'pending';
   }
   if (rawResult && !RESULT_MAP[rawResult.toLowerCase().trim()] && !RESULT_MAP[resultStr]) {
-    console.log(`[CSV Parser] Row ${lineNum}: Unrecognized status "${rawResult}" → defaulting to pending`);
     warnings.push(`Row ${lineNum}: Unknown result "${rawResult}", defaulting to pending`);
   }
 

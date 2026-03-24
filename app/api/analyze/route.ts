@@ -148,7 +148,6 @@ export async function POST(request: Request) {
 
     // Run the autopsy (pass bankroll for context)
     const userBankroll = (profile as Profile).bankroll;
-    console.log('[Analyze Debug] profile.bankroll:', userBankroll, 'type:', typeof userBankroll);
     const { analysis, markdown, tokensUsed, model } = await runAutopsy(betsToAnalyze, userBankroll);
 
     // Estimate cost
