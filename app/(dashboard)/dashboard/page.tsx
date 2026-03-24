@@ -307,6 +307,32 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {!isPaid && stats.reportCount > 0 && (
+            <div className="relative">
+              <div className="blur-sm pointer-events-none opacity-40">
+                <div className="card p-6">
+                  <h3 className="font-serif text-lg mb-3">Progress Over Time</h3>
+                  <div className="space-y-2">
+                    {[65, 52, 47, 38].map((h, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-xs text-ink-600 w-16">Week {i + 1}</span>
+                        <div className="flex-1 h-2 bg-ink-900 rounded-full overflow-hidden">
+                          <div className="h-full bg-flame-500 rounded-full" style={{ width: `${h}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-2xl mb-1">🔒</p>
+                  <p className="text-ink-600 text-sm">Track your progress with Pro</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress Chart */}
           {snapshots.length >= 2 && isPaid && (
             <div className="card p-6">

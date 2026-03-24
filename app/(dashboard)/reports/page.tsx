@@ -290,18 +290,48 @@ export default function ReportsPage() {
 
       {/* Free tier exhausted */}
       {freeExhausted && !running && (
-        <div className="card border-flame-500/30 bg-flame-500/5 p-6 text-center space-y-3">
-          <p className="text-[#e7e6e1] mb-2">
-            This report analyzed your 50 most recent bets. The rest are sitting in the dark.
-          </p>
-          <p className="text-ink-600 text-sm mb-4">
-            With Pro, you&apos;d know whether your props are a real leak or just a bad month,
-            if your weekend betting costs more than your whole week earns, and exactly which
-            sportsbook you perform best on. One insight pays for the whole year.
-          </p>
-          <a href="/pricing" className="btn-primary inline-block">
-            Unlock Full Analysis — $19/mo
-          </a>
+        <div className="space-y-4">
+          <div className="card border-flame-500/30 bg-flame-500/5 p-6 text-center space-y-3">
+            <p className="text-[#e7e6e1] mb-2">
+              This report analyzed your 50 most recent bets. The rest are sitting in the dark.
+            </p>
+            <p className="text-ink-600 text-sm mb-4">
+              With Pro, you&apos;d know whether your props are a real leak or just a bad month,
+              if your weekend betting costs more than your whole week earns, and exactly which
+              sportsbook you perform best on. One insight pays for the whole year.
+            </p>
+            <a href="/pricing" className="btn-primary inline-block">
+              Unlock Full Analysis — $19/mo
+            </a>
+          </div>
+
+          {/* Locked feature previews */}
+          <div className="relative">
+            <div className="blur-sm pointer-events-none opacity-50">
+              <div className="card p-5">
+                <h3 className="font-serif text-lg mb-2">Edge Profile</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">NFL Spreads</p><p className="font-mono text-mint-500">+8.3%</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">NBA Props</p><p className="font-mono text-red-400">-14.2%</p></div>
+                </div>
+              </div>
+              <div className="card p-5 mt-3">
+                <h3 className="font-serif text-lg mb-2">Personal Rules</h3>
+                <div className="space-y-2">
+                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Max stake $150 on any single bet</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Stop betting after 3 consecutive losses</p></div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="card bg-ink-800/95 p-6 text-center max-w-sm">
+                <p className="text-2xl mb-2">🔒</p>
+                <p className="text-[#e7e6e1] font-medium mb-1">Pro reports include</p>
+                <p className="text-ink-600 text-sm mb-3">Edge Profile, Session Analysis, Personal Rules, Discipline Score tracking, and progress over time.</p>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $19/mo</a>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -246,6 +246,20 @@ export default function BetsPage() {
         </div>
       )}
 
+      {/* Free tier upsell — filtered analysis */}
+      {tier === 'free' && bets.length > 0 && (
+        <div className="card p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔒</span>
+            <div>
+              <p className="text-sm text-[#e7e6e1]">Want to analyze just your wins? Or filter by sport?</p>
+              <p className="text-xs text-ink-600">Pro users get unlimited filtered reports.</p>
+            </div>
+          </div>
+          <a href="/pricing" className="text-sm text-flame-500 hover:underline shrink-0">Upgrade →</a>
+        </div>
+      )}
+
       {/* Bulk action bar (inline, above table) */}
       {selected.size > 0 && (
         bulkConfirm ? (
