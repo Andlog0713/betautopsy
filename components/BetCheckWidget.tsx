@@ -59,7 +59,7 @@ export default function BetCheckWidget({
   // Locked state for non-Sharp users
   if (tier !== 'sharp') {
     return (
-      <div className="card p-5 border-ink-700/30 relative overflow-hidden">
+      <div className="card p-5 relative overflow-hidden">
         <div className="flex items-start gap-3">
           <span className="text-2xl">🎯</span>
           <div>
@@ -135,7 +135,7 @@ export default function BetCheckWidget({
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-ink-800/40 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
       >
         <div className="flex items-center gap-3">
           <span className="text-xl">🎯</span>
@@ -148,7 +148,7 @@ export default function BetCheckWidget({
       </button>
 
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-ink-700/30 pt-4">
+        <div className="px-5 pb-5 space-y-4 border-t border-white/[0.06] pt-4">
           {/* Input form */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="col-span-2 md:col-span-2">
@@ -246,7 +246,7 @@ export default function BetCheckWidget({
                     {SIGNAL_STYLES[result.signal].label}
                   </span>
                 </div>
-                <p className="text-[#e7e6e1] text-sm leading-relaxed">{result.analysis}</p>
+                <p className="text-[#F0F0F0] text-sm leading-relaxed">{result.analysis}</p>
 
                 {/* Extra warning for RED */}
                 {result.signal === 'red' && (
@@ -284,7 +284,7 @@ export default function BetCheckWidget({
                 <button onClick={handleLog} className="btn-secondary text-sm !py-2">
                   Log This Bet
                 </button>
-                <button onClick={handleClear} className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors px-3 py-2">
+                <button onClick={handleClear} className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors px-3 py-2">
                   Clear
                 </button>
               </div>

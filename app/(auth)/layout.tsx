@@ -7,7 +7,7 @@ export default function AuthLayout({
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl">
+          <h1 className="font-bold text-3xl">
             Bet<span className="text-flame-500">Autopsy</span>
           </h1>
           <p className="text-ink-600 text-sm mt-2">

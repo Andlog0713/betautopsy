@@ -189,7 +189,7 @@ export default function BetsPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl mb-1">Bet History</h1>
+          <h1 className="font-bold text-3xl mb-1">Bet History</h1>
           <p className="text-ink-600 text-sm">{bets.length} total bets</p>
         </div>
         <button
@@ -221,7 +221,7 @@ export default function BetsPage() {
                 className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
                   sportFilter === sport
                     ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#e7e6e1] hover:bg-ink-800'
+                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-ink-800'
                 }`}
               >
                 {sport === 'all' ? 'All Sports' : sport}
@@ -252,7 +252,7 @@ export default function BetsPage() {
           <div className="flex items-center gap-2">
             <span className="text-lg">🔒</span>
             <div>
-              <p className="text-sm text-[#e7e6e1]">Want to analyze just your wins? Or filter by sport?</p>
+              <p className="text-sm text-[#F0F0F0]">Want to analyze just your wins? Or filter by sport?</p>
               <p className="text-xs text-ink-600">Pro users get unlimited filtered reports.</p>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function BetsPage() {
       {selected.size > 0 && (
         bulkConfirm ? (
           <div className="card border-red-400/30 bg-red-400/5 px-5 py-3 flex flex-wrap items-center gap-4">
-            <p className="text-sm text-[#e7e6e1]">
+            <p className="text-sm text-[#F0F0F0]">
               Delete {selected.size} bet{selected.size !== 1 ? 's' : ''}? This cannot be undone.
             </p>
             <button
@@ -276,19 +276,19 @@ export default function BetsPage() {
             </button>
             <button
               onClick={() => setBulkConfirm(false)}
-              className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors"
+              className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
             >
               Cancel
             </button>
           </div>
         ) : (
           <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-            <span className="text-sm text-[#e7e6e1]">
+            <span className="text-sm text-[#F0F0F0]">
               <span className="font-mono font-medium">{selected.size}</span> bet{selected.size !== 1 ? 's' : ''} selected
             </span>
             <button
               onClick={() => setSelected(new Set())}
-              className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors"
+              className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
             >
               Deselect All
             </button>
@@ -366,7 +366,7 @@ export default function BetsPage() {
                       })}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[#e7e6e1]">{bet.description}</span>
+                      <span className="text-[#F0F0F0]">{bet.description}</span>
                       {bet.is_bonus_bet && (
                         <span className="ml-2 text-xs bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">
                           Bonus
@@ -463,8 +463,8 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/80 backdrop-blur-sm" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
           <div className="card border-red-400/20 bg-ink-800 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-serif text-lg">Clear All Bets</h3>
-            <p className="text-sm text-[#e7e6e1]">
+            <h3 className="font-bold text-lg">Clear All Bets</h3>
+            <p className="text-sm text-[#F0F0F0]">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of
               your bets and cannot be undone. Your autopsy reports will be kept but
               may reference bets that no longer exist.
@@ -492,7 +492,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
               </button>
               <button
                 onClick={() => { setShowConfirm(false); setConfirmText(''); }}
-                className="text-sm text-ink-600 hover:text-[#e7e6e1] px-4 py-2 transition-colors"
+                className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
               >
                 Cancel
               </button>
@@ -594,7 +594,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
 
   return (
     <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      <h3 className="font-serif text-lg">Add Bet</h3>
+      <h3 className="font-bold text-lg">Add Bet</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <label className="label">Date</label>
@@ -762,7 +762,7 @@ function SortTh({
   return (
     <th
       className={`text-${align} font-medium px-4 py-3 cursor-pointer select-none transition-colors ${
-        active ? 'text-[#e7e6e1]' : 'text-ink-600 hover:text-ink-500'
+        active ? 'text-[#F0F0F0]' : 'text-ink-600 hover:text-ink-500'
       } ${className ?? ''}`}
       onClick={() => onSort(col)}
     >

@@ -233,10 +233,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="text-2xl">🧬</span>
             <div>
               <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA</p>
-              <h2 className="font-serif text-2xl text-flame-500">{analysis.betting_archetype.name}</h2>
+              <h2 className="font-bold text-2xl text-flame-500">{analysis.betting_archetype.name}</h2>
             </div>
           </div>
-          <p className="text-[#e7e6e1] text-sm">{analysis.betting_archetype.description}</p>
+          <p className="text-[#F0F0F0] text-sm">{analysis.betting_archetype.description}</p>
         </div>
       )}
 
@@ -246,7 +246,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* vs. Last Report */}
       {previousSnapshot && (
         <div className="card p-6">
-          <h2 className="font-serif text-lg mb-3">
+          <h2 className="font-bold text-lg mb-3">
             vs. Last Report <span className="text-ink-600 text-sm font-normal">({new Date(previousSnapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -289,10 +289,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Summary Card */}
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="font-serif text-2xl">Autopsy Summary</h2>
+          <h2 className="font-bold text-2xl">Autopsy Summary</h2>
           <div className="flex items-center gap-2">
             <span className="text-ink-600 text-sm">Overall Grade:</span>
-            <span className={`font-serif text-4xl font-bold ${gradeColor(summary.overall_grade)}`}>
+            <span className={`font-bold text-4xl font-bold ${gradeColor(summary.overall_grade)}`}>
               {summary.overall_grade}
             </span>
           </div>
@@ -318,7 +318,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* P&L Over Time Chart */}
       {hasBets && pnlData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-serif text-xl mb-4">P&L Over Time</h2>
+          <h2 className="font-bold text-xl mb-4">P&L Over Time</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
@@ -337,7 +337,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Emotion Score */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-serif text-xl">Emotion Score</h2>
+          <h2 className="font-bold text-xl">Emotion Score</h2>
           <span className={`font-mono text-2xl font-bold ${
             analysis.tilt_score <= 25 ? 'text-mint-500' :
             analysis.tilt_score <= 50 ? 'text-amber-400' :
@@ -386,7 +386,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Stake Size Timeline */}
       {hasBets && stakeData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-serif text-xl mb-1">Stake Size Timeline</h2>
+          <h2 className="font-bold text-xl mb-1">Stake Size Timeline</h2>
           <p className="text-ink-600 text-xs mb-4">
             <span className="inline-block w-2 h-2 rounded-full bg-[#5f594f] mr-1 align-middle" /> Normal
             <span className="inline-block w-2 h-2 rounded-full bg-[#f97316] mr-1 ml-3 align-middle" /> Within 1hr of a loss
@@ -433,7 +433,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </p>
               {analysis.bankroll_health === 'danger' && (
                 <p className="text-ink-700 text-xs mt-3">
-                  If you feel your gambling is out of control, call <span className="text-[#e7e6e1]">1-800-GAMBLER</span> or visit <span className="text-[#e7e6e1]">ncpgambling.org</span> for self-exclusion resources.
+                  If you feel your gambling is out of control, call <span className="text-[#F0F0F0]">1-800-GAMBLER</span> or visit <span className="text-[#F0F0F0]">ncpgambling.org</span> for self-exclusion resources.
                 </p>
               )}
             </div>
@@ -444,7 +444,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Biases Detected */}
       {biases_detected.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Biases Detected</h2>
+          <h2 className="font-bold text-2xl">Biases Detected</h2>
           <div className="grid gap-4">
             {biases_detected.map((bias, i) => (
               <div key={i} className="card p-5">
@@ -454,11 +454,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {bias.severity.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[#e7e6e1] text-sm mb-4">{bias.description}</p>
+                <p className="text-[#F0F0F0] text-sm mb-4">{bias.description}</p>
                 <div className="grid sm:grid-cols-3 gap-4 text-sm">
                   <div className="bg-ink-900/50 rounded-lg p-3">
                     <p className="text-ink-600 text-xs mb-1">Evidence</p>
-                    <p className="text-[#e7e6e1]">{bias.evidence}</p>
+                    <p className="text-[#F0F0F0]">{bias.evidence}</p>
                   </div>
                   <div className="bg-ink-900/50 rounded-lg p-3">
                     <p className="text-ink-600 text-xs mb-1">Estimated Cost</p>
@@ -466,7 +466,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </div>
                   <div className="bg-ink-900/50 rounded-lg p-3">
                     <p className="text-ink-600 text-xs mb-1">How to Fix</p>
-                    <p className="text-[#e7e6e1]">{bias.fix}</p>
+                    <p className="text-[#F0F0F0]">{bias.fix}</p>
                   </div>
                 </div>
               </div>
@@ -478,7 +478,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Strategic Leaks */}
       {strategic_leaks.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Strategic Leaks</h2>
+          <h2 className="font-bold text-2xl">Strategic Leaks</h2>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -519,20 +519,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ROI by Category Chart */}
       {hasBets && roiData.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-serif text-xl mb-4">ROI by Category</h2>
+          <h2 className="font-bold text-xl mb-4">ROI by Category</h2>
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#5f594f20" horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#9a9483', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} tickFormatter={(v: number) => `${v}%`} />
-                <YAxis type="category" dataKey="category" tick={{ fill: '#e7e6e1', fontSize: 12 }} tickLine={false} axisLine={false} width={55} />
+                <YAxis type="category" dataKey="category" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={55} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
                     const d = payload[0].payload as { category: string; roi: number; count: number };
                     return (
                       <div className="bg-ink-800 border border-ink-700/50 rounded-lg px-3 py-2 text-xs shadow-lg">
-                        <p className="text-[#e7e6e1] font-medium">{d.category}</p>
+                        <p className="text-[#F0F0F0] font-medium">{d.category}</p>
                         <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi}% ROI</p>
                         <p className="text-ink-600">{d.count} bets</p>
                       </div>
@@ -554,7 +554,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Edge Profile */}
       {analysis.edge_profile && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Edge Profile</h2>
+          <h2 className="font-bold text-2xl">Edge Profile</h2>
           {/* Sharp Score */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
@@ -621,7 +621,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           {/* Reallocation advice */}
           {analysis.edge_profile.reallocation_advice && (
             <div className="card border-flame-500/20 bg-flame-500/5 p-5">
-              <p className="text-sm text-[#e7e6e1]">{analysis.edge_profile.reallocation_advice}</p>
+              <p className="text-sm text-[#F0F0F0]">{analysis.edge_profile.reallocation_advice}</p>
             </div>
           )}
         </div>
@@ -630,7 +630,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Behavioral Patterns */}
       {behavioral_patterns.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Behavioral Patterns</h2>
+          <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
               <div key={i} className="card p-5 flex gap-4">
@@ -648,7 +648,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       {pat.impact}
                     </span>
                   </div>
-                  <p className="text-[#e7e6e1] text-sm">{pat.description}</p>
+                  <p className="text-[#F0F0F0] text-sm">{pat.description}</p>
                   <div className="flex gap-4 mt-2 text-xs text-ink-600">
                     <span>Frequency: {pat.frequency}</span>
                     <span>Evidence: {pat.data_points}</span>
@@ -663,7 +663,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Session Analysis */}
       {analysis.session_analysis && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Session Analysis</h2>
+          <h2 className="font-bold text-2xl">Session Analysis</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Worst session */}
             {analysis.session_analysis.worst_session && (
@@ -679,7 +679,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <span>{analysis.session_analysis.worst_session.bets} bets</span>
                   <span>{analysis.session_analysis.worst_session.duration}</span>
                 </div>
-                <p className="text-sm text-[#e7e6e1]">{analysis.session_analysis.worst_session.description}</p>
+                <p className="text-sm text-[#F0F0F0]">{analysis.session_analysis.worst_session.description}</p>
               </div>
             )}
             {/* Best session */}
@@ -696,12 +696,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <span>{analysis.session_analysis.best_session.bets} bets</span>
                   <span>{analysis.session_analysis.best_session.duration}</span>
                 </div>
-                <p className="text-sm text-[#e7e6e1]">{analysis.session_analysis.best_session.description}</p>
+                <p className="text-sm text-[#F0F0F0]">{analysis.session_analysis.best_session.description}</p>
               </div>
             )}
           </div>
           <div className="card p-5">
-            <p className="text-sm text-[#e7e6e1]">
+            <p className="text-sm text-[#F0F0F0]">
               Your winning sessions average{' '}
               <span className="font-mono font-medium text-mint-500">{analysis.session_analysis.avg_bets_per_winning_session}</span> bets.
               Your losing sessions average{' '}
@@ -718,7 +718,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Action Plan */}
       {recommendations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">Action Plan</h2>
+          <h2 className="font-bold text-2xl">Action Plan</h2>
           <div className="space-y-3">
             {recommendations.map((rec, i) => (
               <div key={i} className="card p-5">
@@ -731,7 +731,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         {rec.difficulty}
                       </span>
                     </div>
-                    <p className="text-[#e7e6e1] text-sm">{rec.description}</p>
+                    <p className="text-[#F0F0F0] text-sm">{rec.description}</p>
                     <p className="text-ink-600 text-xs mt-2">
                       Expected improvement: <span className="text-mint-500">{rec.expected_improvement}</span>
                     </p>
@@ -747,7 +747,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {(analysis.personal_rules ?? []).length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-2xl">Your Rules</h2>
+            <h2 className="font-bold text-2xl">Your Rules</h2>
             <button
               onClick={() => {
                 const text = (analysis.personal_rules ?? [])
@@ -763,7 +763,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="space-y-3">
             {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
               <div key={i} className="card border-l-4 border-l-flame-500 bg-ink-800/60 p-5">
-                <p className="text-[#e7e6e1] font-medium mb-2">{rule.rule}</p>
+                <p className="text-[#F0F0F0] font-medium mb-2">{rule.rule}</p>
                 <p className="text-ink-600 text-sm mb-2">{rule.reason}</p>
                 <p className="text-ink-700 text-xs">Based on: {rule.based_on}</p>
               </div>
@@ -775,7 +775,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* What If Analysis */}
       {whatIfs.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-serif text-2xl">What If?</h2>
+          <h2 className="font-bold text-2xl">What If?</h2>
           <p className="text-ink-600 text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
           <div className="grid gap-3">
             {whatIfs.map((wi, i) => {
@@ -783,7 +783,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const better = diff > 0;
               return (
                 <div key={i} className="card p-5">
-                  <p className="text-[#e7e6e1] text-sm mb-3">{wi.label}</p>
+                  <p className="text-[#F0F0F0] text-sm mb-3">{wi.label}</p>
                   <div className="flex items-center gap-6">
                     <div>
                       <p className="text-ink-600 text-xs">Actual P&L</p>
@@ -816,7 +816,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.discipline_score && (
         <div className="card p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-2xl">Discipline Score</h2>
+            <h2 className="font-bold text-2xl">Discipline Score</h2>
             <span className={`font-mono text-3xl font-bold ${
               analysis.discipline_score.total >= 71 ? 'text-mint-500' :
               analysis.discipline_score.total >= 51 ? 'text-amber-400' :
@@ -872,7 +872,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             };
             return (
               <p className="text-ink-600 text-xs">
-                Weakest area: <span className="text-[#e7e6e1]">{weakest.name} ({weakest.val}/25)</span> — {tips[weakest.name]}
+                Weakest area: <span className="text-[#F0F0F0]">{weakest.name} ({weakest.val}/25)</span> — {tips[weakest.name]}
               </p>
             );
           })()}
@@ -889,7 +889,7 @@ function SummaryItem({ label, value, color, small }: { label: string; value: str
   return (
     <div>
       <p className="text-ink-600 text-xs mb-0.5">{label}</p>
-      <p className={`font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-[#e7e6e1]'}`}>{value}</p>
+      <p className={`font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-[#F0F0F0]'}`}>{value}</p>
     </div>
   );
 }

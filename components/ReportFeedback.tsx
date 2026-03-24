@@ -41,7 +41,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
 
   return (
     <div className="card p-5 space-y-4">
-      <p className="text-[#e7e6e1] text-sm font-medium">Was this autopsy useful?</p>
+      <p className="text-[#F0F0F0] text-sm font-medium">Was this autopsy useful?</p>
 
       <div className="flex gap-3">
         <button

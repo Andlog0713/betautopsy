@@ -145,11 +145,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      <h1 className="font-serif text-3xl">Settings</h1>
+      <h1 className="font-bold text-3xl">Settings</h1>
 
       {/* ── Profile ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Profile</h2>
+        <h2 className="font-bold text-xl">Profile</h2>
         <div className="space-y-4">
           <div>
             <label className="label">Display Name</label>
@@ -182,7 +182,7 @@ export default function SettingsPage() {
 
       {/* ── Bankroll ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Bankroll</h2>
+        <h2 className="font-bold text-xl">Bankroll</h2>
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-xs">
             <label className="label">Total Bankroll</label>
@@ -213,7 +213,7 @@ export default function SettingsPage() {
 
         <button
           onClick={() => setBankrollExpanded(!bankrollExpanded)}
-          className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors flex items-center gap-1"
+          className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors flex items-center gap-1"
         >
           <span className="text-xs">{bankrollExpanded ? '▾' : '▸'}</span>
           What&apos;s a bankroll?
@@ -228,7 +228,7 @@ export default function SettingsPage() {
             </p>
             <p>It&apos;s okay to estimate — a rough number is better than nothing.</p>
             <p>
-              <span className="text-[#e7e6e1]">Why this matters:</span>{' '}
+              <span className="text-[#F0F0F0]">Why this matters:</span>{' '}
               BetAutopsy uses your bankroll to assess whether your bet sizing
               is sustainable. A $200 bet means something very different if your
               bankroll is $1,000 versus $20,000. Without this number, we have
@@ -241,7 +241,7 @@ export default function SettingsPage() {
 
       {/* ── Subscription ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Subscription</h2>
+        <h2 className="font-bold text-xl">Subscription</h2>
         <div className="flex items-center gap-3">
           <span className={`text-sm font-medium px-3 py-1 rounded-full capitalize ${tierBadge[tier]}`}>
             {tier}
@@ -269,7 +269,7 @@ export default function SettingsPage() {
           )
         ) : (
           <div className="space-y-3">
-            <p className="text-[#e7e6e1] text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
+            <p className="text-[#F0F0F0] text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
             <ul className="text-ink-600 text-sm space-y-1">
               <li>— Unlimited reports as you add bets weekly</li>
               <li>— Progress tracking that shows whether your habits are actually improving</li>
@@ -284,10 +284,10 @@ export default function SettingsPage() {
 
       {/* ── Data ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Data</h2>
+        <h2 className="font-bold text-xl">Data</h2>
         <div className="flex gap-4 text-sm text-ink-600">
-          <span><span className="font-mono text-[#e7e6e1]">{betCount}</span> bets</span>
-          <span><span className="font-mono text-[#e7e6e1]">{reportCount}</span> reports</span>
+          <span><span className="font-mono text-[#F0F0F0]">{betCount}</span> bets</span>
+          <span><span className="font-mono text-[#F0F0F0]">{reportCount}</span> reports</span>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -308,7 +308,7 @@ export default function SettingsPage() {
               </button>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-[#e7e6e1]">
+                <p className="text-sm text-[#F0F0F0]">
                   This will permanently delete all <span className="font-mono">{betCount}</span> bets.
                   Reports will be kept.
                 </p>
@@ -334,7 +334,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={() => { setShowClearBets(false); setClearConfirm(''); }}
-                    className="text-sm text-ink-600 hover:text-[#e7e6e1] px-4 py-2 transition-colors"
+                    className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
                   >
                     Cancel
                   </button>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
 
       {/* ── Account ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Account</h2>
+        <h2 className="font-bold text-xl">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
             {passwordResetSent ? '✓ Reset email sent' : 'Change Password'}
@@ -360,7 +360,7 @@ export default function SettingsPage() {
 
       {/* ── Danger Zone ── */}
       <div className="card border-red-400/20 p-6 space-y-4">
-        <h2 className="font-serif text-xl text-red-400">Danger Zone</h2>
+        <h2 className="font-bold text-xl text-red-400">Danger Zone</h2>
         {!showDeleteAccount ? (
           <button
             onClick={() => setShowDeleteAccount(true)}
@@ -370,7 +370,7 @@ export default function SettingsPage() {
           </button>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-[#e7e6e1]">
+            <p className="text-sm text-[#F0F0F0]">
               This will permanently delete your account, all bets, and all reports.
               This action cannot be undone.
             </p>
@@ -396,7 +396,7 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={() => { setShowDeleteAccount(false); setDeleteConfirm(''); }}
-                className="text-sm text-ink-600 hover:text-[#e7e6e1] px-4 py-2 transition-colors"
+                className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
               >
                 Cancel
               </button>

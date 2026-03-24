@@ -55,10 +55,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', background: '#0f0e0c', display: 'flex', flexDirection: 'row', padding: 60, color: '#e7e6e1' }}>
+      <div style={{ width: '100%', height: '100%', background: '#0f0e0c', display: 'flex', flexDirection: 'row', padding: 60, color: '#F0F0F0' }}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, paddingRight: 40 }}>
           <div style={{ display: 'flex', fontSize: 28 }}>
-            <span style={{ color: '#e7e6e1' }}>Bet</span>
+            <span style={{ color: '#F0F0F0' }}>Bet</span>
             <span style={{ color: '#f97316' }}>Autopsy</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -69,15 +69,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           <div style={{ display: 'flex', gap: 32 }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: 13, color: '#9a9483' }}>Record</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.record}</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.record}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: 13, color: '#9a9483' }}>Emotion</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.emotion_score}/100</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.emotion_score}/100</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: 13, color: '#9a9483' }}>Bets</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.total_bets}</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.total_bets}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <span style={{ fontSize: 13, color: '#5f594f' }}>betautopsy.com</span>

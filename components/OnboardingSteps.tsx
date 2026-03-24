@@ -38,7 +38,7 @@ export default function OnboardingSteps({
                   isDone
                     ? 'text-mint-500'
                     : isActive
-                    ? 'text-[#e7e6e1]'
+                    ? 'text-[#F0F0F0]'
                     : 'text-ink-700'
                 }`}
               >

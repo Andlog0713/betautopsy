@@ -114,7 +114,7 @@ export default function UploadPage() {
       )}
 
       <div>
-        <h1 className="font-serif text-3xl mb-2">Upload Bets</h1>
+        <h1 className="font-bold text-3xl mb-2">Upload Bets</h1>
         <p className="text-ink-600">
           Drop your CSV and let&apos;s see what&apos;s really going on.
         </p>
@@ -124,7 +124,7 @@ export default function UploadPage() {
       {tier === 'free' && (
         <div className="card border-ink-700/30 bg-ink-800/40 p-4">
           <p className="text-ink-600 text-sm">
-            <span className="font-medium text-[#e7e6e1]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
+            <span className="font-medium text-[#F0F0F0]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
           </p>
         </div>
       )}
@@ -235,7 +235,7 @@ export default function UploadPage() {
                       setState('idle');
                       setResult(null);
                     }}
-                    className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors"
+                    className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
                   >
                     Upload more bets first
                   </button>
@@ -272,7 +272,7 @@ export default function UploadPage() {
         ) : (
           <div className="space-y-3">
             <div className="text-5xl">📤</div>
-            <p className="text-[#e7e6e1] font-medium text-lg">
+            <p className="text-[#F0F0F0] font-medium text-lg">
               Drag &amp; drop your CSV here
             </p>
             <p className="text-ink-600 text-sm">or click to browse files</p>
@@ -282,7 +282,7 @@ export default function UploadPage() {
 
       {/* Format guide */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Supported Formats</h2>
+        <h2 className="font-bold text-xl">Supported Formats</h2>
         <p className="text-ink-600 text-sm">
           We auto-detect columns from most bet trackers including Pikkit, Juice
           Reel, BetStamp, and generic CSV exports.

@@ -172,12 +172,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <h1 className="font-serif text-3xl">Dashboard</h1>
+      <h1 className="font-bold text-3xl">Dashboard</h1>
 
       {!hasBets ? (
         <div className="card p-12 text-center">
           <div className="text-5xl mb-4">🎯</div>
-          <h2 className="font-serif text-2xl mb-2">No bets yet</h2>
+          <h2 className="font-bold text-2xl mb-2">No bets yet</h2>
           <p className="text-ink-600 mb-6 max-w-md mx-auto">
             You&apos;ve got bets to upload and truths to face. Let&apos;s go.
           </p>
@@ -209,11 +209,11 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-3xl font-bold text-[#e7e6e1]">{latest.discipline_score ?? '—'}</span>
+                    <span className="font-mono text-3xl font-bold text-[#F0F0F0]">{latest.discipline_score ?? '—'}</span>
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <h2 className="font-serif text-xl mb-1">Discipline Score</h2>
+                  <h2 className="font-bold text-xl mb-1">Discipline Score</h2>
                   <p className="text-ink-600 text-xs mb-3">
                     How consistently you&apos;re building better betting habits.
                   </p>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                     <span className={`text-lg ${streakCount >= 10 ? 'animate-pulse' : ''}`}>
                       {streakCount >= 10 ? '🔥🔥' : streakCount >= 6 ? '🔥' : streakCount >= 3 ? '🔥' : '📅'}
                     </span>
-                    <span className="text-sm text-[#e7e6e1]">
+                    <span className="text-sm text-[#F0F0F0]">
                       {streakCount > 0 ? `${streakCount}-report streak` : 'No active streak'}
                     </span>
                     {streakBest > 1 && (
@@ -266,7 +266,7 @@ export default function DashboardPage() {
           {daysSinceReport !== null && daysSinceReport >= 7 && newBetsSinceReport > 0 && (
             <div className="card border-flame-500/30 bg-flame-500/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <p className="text-[#e7e6e1] font-medium">
+                <p className="text-[#F0F0F0] font-medium">
                   You&apos;ve placed {newBetsSinceReport} new bet{newBetsSinceReport !== 1 ? 's' : ''} since your last autopsy
                 </p>
                 <p className="text-ink-600 text-sm">Time for a check-up? ({daysSinceReport} days ago)</p>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
           {/* Progress Trend Cards */}
           {latest && isPaid && (
             <div className="space-y-4">
-              <h2 className="font-serif text-xl">Your Progress</h2>
+              <h2 className="font-bold text-xl">Your Progress</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <TrendCard label="Emotion Score" current={mask(latest.tilt_score.toString())} prev={prev?.tilt_score} unit="" lowerIsBetter masked={mask('x') !== 'x'} />
                 <TrendCard label="Grade" current={mask(latest.overall_grade)} prev={prev?.overall_grade} isGrade masked={mask('x') !== 'x'} />
@@ -295,7 +295,7 @@ export default function DashboardPage() {
           {/* Free tier upgrade prompt */}
           {latest && !isPaid && (
             <div className="card border-flame-500/20 bg-flame-500/5 p-6 text-center space-y-3">
-              <p className="text-[#e7e6e1] mb-2">
+              <p className="text-[#F0F0F0] mb-2">
                 Right now you&apos;re guessing whether you&apos;re getting better.
               </p>
               <p className="text-ink-600 text-sm mb-4">
@@ -311,7 +311,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="blur-sm pointer-events-none opacity-40">
                 <div className="card p-6">
-                  <h3 className="font-serif text-lg mb-3">Progress Over Time</h3>
+                  <h3 className="font-bold text-lg mb-3">Progress Over Time</h3>
                   <div className="space-y-2">
                     {[65, 52, 47, 38].map((h, i) => (
                       <div key={i} className="flex items-center gap-3">
@@ -336,7 +336,7 @@ export default function DashboardPage() {
           {/* Progress Chart */}
           {snapshots.length >= 2 && isPaid && (
             <div className="card p-6">
-              <h2 className="font-serif text-xl mb-4">Progress Over Time</h2>
+              <h2 className="font-bold text-xl mb-4">Progress Over Time</h2>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={snapshots.map((s) => ({
@@ -382,15 +382,15 @@ export default function DashboardPage() {
               <span className="text-3xl">{streakWeeks >= 3 ? '🔥' : '📅'}</span>
               <div>
                 {streakWeeks >= 2 ? (
-                  <p className="text-[#e7e6e1] font-medium">
+                  <p className="text-[#F0F0F0] font-medium">
                     {streakWeeks} consecutive autopsy check-ins
                   </p>
                 ) : daysSinceReport !== null && daysSinceReport > 12 ? (
-                  <p className="text-[#e7e6e1]">
+                  <p className="text-[#F0F0F0]">
                     It&apos;s been {daysSinceReport} days since your last autopsy — upload your recent bets and check in.
                   </p>
                 ) : (
-                  <p className="text-[#e7e6e1]">
+                  <p className="text-[#F0F0F0]">
                     {snapshots.length} autopsy report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly for the best insights.
                   </p>
                 )}
@@ -401,7 +401,7 @@ export default function DashboardPage() {
           {/* Milestones */}
           {isPaid && snapshots.length > 0 && (
             <div className="space-y-3">
-              <h2 className="font-serif text-xl">Milestones</h2>
+              <h2 className="font-bold text-xl">Milestones</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {milestones.map((m) => (
                   <div
@@ -438,7 +438,7 @@ export default function DashboardPage() {
           {stats.reportCount === 0 && (
             <div className="card border-flame-500/30 bg-flame-500/5 p-8 text-center space-y-4">
               <div className="text-4xl">🔬</div>
-              <h2 className="font-serif text-2xl">Run Your First Autopsy</h2>
+              <h2 className="font-bold text-2xl">Run Your First Autopsy</h2>
               <p className="text-ink-600 max-w-md mx-auto">
                 You&apos;ve got {stats.totalBets} bets loaded. Get an AI-powered behavioral
                 analysis in about 20 seconds.
@@ -454,14 +454,14 @@ export default function DashboardPage() {
             <div className="card p-5 flex items-center justify-between">
               <div>
                 <p className="text-ink-600 text-xs">Bankroll</p>
-                <p className="font-mono text-lg text-[#e7e6e1]">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                <p className="font-mono text-lg text-[#F0F0F0]">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
               </div>
               <Link href="/settings" className="text-xs text-ink-600 hover:text-flame-500 transition-colors">Edit in Settings</Link>
             </div>
           ) : (
             <div className="card p-5 flex items-center justify-between">
               <div>
-                <p className="text-[#e7e6e1] text-sm">Set your bankroll for more accurate analysis</p>
+                <p className="text-[#F0F0F0] text-sm">Set your bankroll for more accurate analysis</p>
                 <p className="text-ink-700 text-xs mt-0.5">Helps us assess your risk level</p>
               </div>
               <Link href="/settings" className="text-sm text-flame-500 hover:underline">Set up your profile →</Link>
@@ -536,7 +536,7 @@ function TrendCard({
   return (
     <div className="card p-4">
       <p className="text-ink-600 text-xs mb-1">{label}</p>
-      <p className="font-mono text-xl font-semibold text-[#e7e6e1]">{current}</p>
+      <p className="font-mono text-xl font-semibold text-[#F0F0F0]">{current}</p>
       {changeText && <p className={`text-xs mt-1 ${changeColor}`}>{changeText}</p>}
     </div>
   );
@@ -551,7 +551,7 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
         <span className="text-ink-600 text-sm">{label}</span>
         <span className="text-lg">{icon}</span>
       </div>
-      <p className={`font-mono text-2xl font-semibold ${color ?? 'text-[#e7e6e1]'}`}>{value}</p>
+      <p className={`font-mono text-2xl font-semibold ${color ?? 'text-[#F0F0F0]'}`}>{value}</p>
     </div>
   );
 }

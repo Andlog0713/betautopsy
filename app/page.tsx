@@ -9,7 +9,7 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="max-w-6xl mx-auto px-4 md:px-8 pt-36 pb-28 text-center">
-        <h1 className="font-serif text-5xl md:text-7xl leading-tight mb-6 animate-fade-in">
+        <h1 className="font-bold text-5xl md:text-7xl leading-tight mb-6 animate-fade-in">
           Your bets,{' '}
           <span className="text-flame-500">dissected.</span>
         </h1>
@@ -37,7 +37,7 @@ export default function LandingPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-ink-600 mb-4 block">
               The problem
             </span>
-            <h2 className="font-serif text-2xl md:text-3xl mb-4">
+            <h2 className="font-bold text-2xl md:text-3xl mb-4">
               You know <span className="text-ink-600">what</span> happened.
               <br />
               You don&apos;t know <span className="text-flame-500">why.</span>
@@ -53,7 +53,7 @@ export default function LandingPage() {
                 you&apos;ve never been profitable on them. Or why your $50 &quot;fun parlay&quot;
                 turned into a $400 chase by the end of the night.
               </p>
-              <p className="text-[#e7e6e1]">
+              <p className="text-[#F0F0F0]">
                 The numbers show you what happened. They don&apos;t show you what
                 you&apos;re doing to yourself.
               </p>
@@ -65,7 +65,7 @@ export default function LandingPage() {
             <span className="text-xs font-medium uppercase tracking-wider text-flame-500 mb-4 block">
               The solution
             </span>
-            <h2 className="font-serif text-2xl md:text-3xl mb-4">
+            <h2 className="font-bold text-2xl md:text-3xl mb-4">
               BetAutopsy reads your history like a{' '}
               <span className="text-flame-500">case file.</span>
             </h2>
@@ -79,7 +79,7 @@ export default function LandingPage() {
                 Then we hand you a plan: specific rules, dollar amounts, and progress
                 tracking so you can actually prove to yourself you&apos;re getting sharper.
               </p>
-              <p className="text-[#e7e6e1] font-medium">
+              <p className="text-[#F0F0F0] font-medium">
                 Upload your bets. Get your autopsy in 20 seconds. See what you&apos;ve
                 been missing.
               </p>
@@ -90,7 +90,7 @@ export default function LandingPage() {
 
       {/* ── How It Works ── */}
       <section className="max-w-4xl mx-auto px-4 md:px-8 py-20">
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-16">
+        <h2 className="font-bold text-3xl md:text-4xl text-center mb-16">
           Three steps to{' '}
           <span className="text-flame-500">clarity</span>
         </h2>
@@ -116,10 +116,10 @@ export default function LandingPage() {
             },
           ].map((s) => (
             <div key={s.step} className={`text-center ${s.delay}`}>
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-flame-500/10 text-flame-500 font-serif text-2xl font-bold mb-5 border border-flame-500/20">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-flame-500/10 text-flame-500 font-bold text-2xl font-bold mb-5 border border-flame-500/20">
                 {s.step}
               </div>
-              <h3 className="font-serif text-xl mb-3">{s.title}</h3>
+              <h3 className="font-bold text-xl mb-3">{s.title}</h3>
               <p className="text-ink-600 text-sm leading-relaxed">{s.desc}</p>
             </div>
           ))}
@@ -128,7 +128,7 @@ export default function LandingPage() {
 
       {/* ── Sample Report Preview ── */}
       <section id="sample" className="max-w-4xl mx-auto px-4 md:px-8 py-20">
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-3">
+        <h2 className="font-bold text-3xl md:text-4xl text-center mb-3">
           Sample <span className="text-flame-500">Autopsy</span>
         </h2>
         <p className="text-ink-600 text-center mb-12 max-w-lg mx-auto">
@@ -141,11 +141,11 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <span className="text-xs text-ink-600 uppercase tracking-wider">Full Autopsy</span>
-              <h3 className="font-serif text-xl mt-1">Report Summary</h3>
+              <h3 className="font-bold text-xl mt-1">Report Summary</h3>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-ink-600 text-sm">Overall Grade</span>
-              <span className="font-serif text-5xl font-bold text-orange-400">C-</span>
+              <span className="font-bold text-5xl font-bold text-orange-400">C-</span>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -196,7 +196,7 @@ export default function LandingPage() {
                 HIGH
               </span>
             </div>
-            <p className="text-[#e7e6e1] text-sm mb-4">
+            <p className="text-[#F0F0F0] text-sm mb-4">
               Your average stake jumps from $82 to $134 after a loss — a 63%
               increase. After losing streaks of 3+, you placed 11 bets over $200.
               Seven of those lost, compounding the damage. This is your most
@@ -205,7 +205,7 @@ export default function LandingPage() {
             <div className="grid sm:grid-cols-3 gap-3 text-sm">
               <div className="bg-ink-900/50 rounded-lg p-3">
                 <p className="text-ink-600 text-xs mb-1">Evidence</p>
-                <p className="text-[#e7e6e1]">
+                <p className="text-[#F0F0F0]">
                   Avg stake after loss: $134 vs $82 after win. 11 bets &gt;$200
                   following 3+ loss streaks (7 lost).
                 </p>
@@ -216,7 +216,7 @@ export default function LandingPage() {
               </div>
               <div className="bg-ink-900/50 rounded-lg p-3">
                 <p className="text-ink-600 text-xs mb-1">How to Fix</p>
-                <p className="text-[#e7e6e1]">
+                <p className="text-[#F0F0F0]">
                   Set a hard rule: no bet can exceed 2x your average stake. If you
                   lose 3 in a row, stop betting for the day.
                 </p>
@@ -232,7 +232,7 @@ export default function LandingPage() {
                 MEDIUM
               </span>
             </div>
-            <p className="text-[#e7e6e1] text-sm mb-4">
+            <p className="text-[#F0F0F0] text-sm mb-4">
               34% of your bets are parlays (96 of 280), but they carry a combined
               ROI of -38.4%. Meanwhile, your straight bet ROI is +4.1%. Your
               parlays have a 14% win rate vs the 18% you&apos;d need to break even
@@ -241,7 +241,7 @@ export default function LandingPage() {
             <div className="grid sm:grid-cols-3 gap-3 text-sm">
               <div className="bg-ink-900/50 rounded-lg p-3">
                 <p className="text-ink-600 text-xs mb-1">Evidence</p>
-                <p className="text-[#e7e6e1]">
+                <p className="text-[#F0F0F0]">
                   96 parlays at -38.4% ROI vs 184 straight bets at +4.1%.
                   14% parlay win rate, needed 18%.
                 </p>
@@ -252,7 +252,7 @@ export default function LandingPage() {
               </div>
               <div className="bg-ink-900/50 rounded-lg p-3">
                 <p className="text-ink-600 text-xs mb-1">How to Fix</p>
-                <p className="text-[#e7e6e1]">
+                <p className="text-[#F0F0F0]">
                   Cap parlays at 10% of total bets. Limit to 2-3 legs max. Your
                   straight bets are profitable — lean into that.
                 </p>
@@ -280,7 +280,7 @@ export default function LandingPage() {
 
       {/* ── Track Your Progress ── */}
       <section className="max-w-5xl mx-auto px-4 md:px-8 py-20">
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4">
+        <h2 className="font-bold text-3xl md:text-4xl text-center mb-4">
           One report is a <span className="text-ink-600">snapshot</span>.
           <br />
           Five reports is <span className="text-flame-500">proof</span>.
@@ -344,7 +344,7 @@ export default function LandingPage() {
               ))}
               <div className="flex items-center gap-2 pt-2">
                 <span className="text-lg">🔥</span>
-                <span className="text-sm text-[#e7e6e1]">4-report streak</span>
+                <span className="text-sm text-[#F0F0F0]">4-report streak</span>
                 <span className="text-xs text-ink-600">(Best: 4)</span>
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function LandingPage() {
             <p className="text-ink-600 text-xs mt-1">Average emotion score drop after 3 reports</p>
           </div>
           <div className="text-center">
-            <p className="font-mono text-2xl font-bold text-[#e7e6e1]">5 min</p>
+            <p className="font-mono text-2xl font-bold text-[#F0F0F0]">5 min</p>
             <p className="text-ink-600 text-xs mt-1">Upload, run, review — that&apos;s it</p>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function LandingPage() {
 
       {/* ── Pricing ── */}
       <section id="pricing" className="max-w-5xl mx-auto px-4 md:px-8 py-20">
-        <h2 className="font-serif text-3xl md:text-4xl text-center mb-4">
+        <h2 className="font-bold text-3xl md:text-4xl text-center mb-4">
           Simple <span className="text-flame-500">pricing</span>
         </h2>
         <p className="text-ink-600 text-center mb-14 max-w-md mx-auto">
@@ -379,7 +379,7 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free */}
           <div className="card p-7 flex flex-col animate-slide-up-d1">
-            <h3 className="font-serif text-2xl">Free</h3>
+            <h3 className="font-bold text-2xl">Free</h3>
             <div className="mt-2 mb-5">
               <span className="font-mono text-4xl font-bold">$0</span>
             </div>
@@ -401,7 +401,7 @@ export default function LandingPage() {
             <span className="text-xs font-medium text-flame-500 bg-flame-500/10 rounded-full px-3 py-1 self-start mb-4">
               Most Popular
             </span>
-            <h3 className="font-serif text-2xl">Pro</h3>
+            <h3 className="font-bold text-2xl">Pro</h3>
             <div className="mt-2 mb-5">
               <span className="font-mono text-4xl font-bold">$19</span>
               <span className="text-ink-600 text-sm">/mo</span>
@@ -429,7 +429,7 @@ export default function LandingPage() {
 
           {/* Sharp */}
           <div className="card p-7 flex flex-col animate-slide-up-d5">
-            <h3 className="font-serif text-2xl">Sharp</h3>
+            <h3 className="font-bold text-2xl">Sharp</h3>
             <div className="mt-2 mb-5">
               <span className="font-mono text-4xl font-bold">$29</span>
               <span className="text-ink-600 text-sm">/mo</span>
@@ -459,7 +459,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <span className="font-serif text-lg">
+              <span className="font-bold text-lg">
                 Bet<span className="text-flame-500">Autopsy</span>
               </span>
               <p className="text-ink-700 text-xs mt-2 max-w-sm">
@@ -468,9 +468,9 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm">
-              <a href="#pricing" className="text-ink-600 hover:text-[#e7e6e1] transition-colors">Pricing</a>
-              <Link href="/login" className="text-ink-600 hover:text-[#e7e6e1] transition-colors">Log in</Link>
-              <Link href="/signup" className="text-ink-600 hover:text-[#e7e6e1] transition-colors">Sign up</Link>
+              <a href="#pricing" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Pricing</a>
+              <Link href="/login" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Log in</Link>
+              <Link href="/signup" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Sign up</Link>
               <span className="text-ink-700 cursor-default">Privacy</span>
               <span className="text-ink-700 cursor-default">Terms</span>
             </div>

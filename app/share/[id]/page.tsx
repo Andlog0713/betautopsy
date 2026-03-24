@@ -68,7 +68,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-serif text-3xl mb-2">Link expired</h1>
+          <h1 className="font-bold text-3xl mb-2">Link expired</h1>
           <p className="text-ink-600">This share link is no longer available.</p>
           <Link href="/" className="btn-primary inline-block mt-4">Get Your Own Autopsy</Link>
         </div>
@@ -83,7 +83,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
         <div className="card p-8 space-y-6">
           {/* Logo */}
           <div className="text-center">
-            <span className="font-serif text-xl">
+            <span className="font-bold text-xl">
               Bet<span className="text-flame-500">Autopsy</span>
             </span>
           </div>
@@ -92,7 +92,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
           {data.archetype && (
             <div className="text-center">
               <p className="text-ink-600 text-xs uppercase tracking-wider">Bet DNA</p>
-              <p className="font-serif text-lg text-flame-500">{data.archetype.name}</p>
+              <p className="font-bold text-lg text-flame-500">{data.archetype.name}</p>
               <p className="text-ink-600 text-xs mt-1">{data.archetype.description}</p>
             </div>
           )}
@@ -100,7 +100,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
           {/* Grade */}
           <div className="text-center">
             <p className="text-ink-600 text-xs uppercase tracking-wider mb-1">Overall Grade</p>
-            <span className={`font-serif text-7xl font-bold ${gradeColor(data.grade)}`}>
+            <span className={`font-bold text-7xl font-bold ${gradeColor(data.grade)}`}>
               {data.grade}
             </span>
           </div>
@@ -109,7 +109,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <p className="text-ink-600 text-xs">Emotion Score</p>
-              <p className="font-mono text-lg font-semibold text-[#e7e6e1]">{data.emotion_score}/100</p>
+              <p className="font-mono text-lg font-semibold text-[#F0F0F0]">{data.emotion_score}/100</p>
             </div>
             <div className="text-center">
               <p className="text-ink-600 text-xs">ROI</p>
@@ -119,11 +119,11 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="text-center">
               <p className="text-ink-600 text-xs">Record</p>
-              <p className="font-mono text-lg font-semibold text-[#e7e6e1]">{data.record}</p>
+              <p className="font-mono text-lg font-semibold text-[#F0F0F0]">{data.record}</p>
             </div>
             <div className="text-center">
               <p className="text-ink-600 text-xs">Total Bets</p>
-              <p className="font-mono text-lg font-semibold text-[#e7e6e1]">{data.total_bets}</p>
+              <p className="font-mono text-lg font-semibold text-[#F0F0F0]">{data.total_bets}</p>
             </div>
           </div>
 
