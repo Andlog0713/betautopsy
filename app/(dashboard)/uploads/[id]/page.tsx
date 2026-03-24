@@ -65,10 +65,10 @@ export default function UploadDetailPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors">
+          <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">
             ← Back to Uploads
           </Link>
-          <h1 className="font-serif text-2xl mt-2">{name}</h1>
+          <h1 className="font-bold text-2xl mt-2">{name}</h1>
           <p className="text-ink-600 text-sm">
             {bets.length} bets · {upload?.sportsbook ?? 'Multiple books'} · {upload ? new Date(upload.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
           </p>
@@ -81,10 +81,10 @@ export default function UploadDetailPage() {
       {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-          <span className="text-sm text-[#e7e6e1]">
+          <span className="text-sm text-[#F0F0F0]">
             <span className="font-mono">{selected.size}</span> bet{selected.size !== 1 ? 's' : ''} selected
           </span>
-          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors">Deselect All</button>
+          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">Deselect All</button>
           <button onClick={deleteSelected} disabled={deleting} className="text-sm text-red-400/70 hover:text-red-400 transition-colors">
             {deleting ? 'Deleting...' : 'Delete Selected'}
           </button>
@@ -96,13 +96,13 @@ export default function UploadDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-700/30">
+              <tr className="border-b border-white/[0.06]">
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => allSelected ? setSelected(new Set()) : setSelected(new Set(bets.map((b) => b.id)))}
-                    className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                   />
                 </th>
                 <th className="text-left text-ink-600 font-medium px-4 py-3">Date</th>
@@ -118,19 +118,19 @@ export default function UploadDetailPage() {
             </thead>
             <tbody>
               {bets.map((bet) => (
-                <tr key={bet.id} className={`border-b border-ink-700/15 hover:bg-ink-800/40 transition-colors ${selected.has(bet.id) ? 'bg-flame-500/5' : ''}`}>
+                <tr key={bet.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-flame-500/5' : ''}`}>
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.has(bet.id)}
                       onChange={() => { const n = new Set(selected); n.has(bet.id) ? n.delete(bet.id) : n.add(bet.id); setSelected(n); }}
-                      className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                      className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                     />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-ink-600">
                     {new Date(bet.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
-                  <td className="px-4 py-3 text-[#e7e6e1]">{bet.description}</td>
+                  <td className="px-4 py-3 text-[#F0F0F0]">{bet.description}</td>
                   <td className="px-4 py-3 text-ink-600 hidden md:table-cell">{bet.sport}</td>
                   <td className="px-4 py-3 text-ink-600 hidden md:table-cell capitalize">{bet.bet_type}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{bet.odds > 0 ? `+${bet.odds}` : bet.odds}</td>

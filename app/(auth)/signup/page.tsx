@@ -39,7 +39,7 @@ export default function SignupPage() {
 
   return (
     <div className="card p-8 animate-fade-in">
-      <h2 className="font-serif text-2xl mb-6 text-center">Create your account</h2>
+      <h2 className="font-bold text-2xl mb-6 text-center">Create your account</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

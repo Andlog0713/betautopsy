@@ -114,7 +114,7 @@ export default function UploadPage() {
       )}
 
       <div>
-        <h1 className="font-serif text-3xl mb-2">Upload Bets</h1>
+        <h1 className="font-bold text-3xl mb-2">Upload Bets</h1>
         <p className="text-ink-600">
           Drop your CSV and let&apos;s see what&apos;s really going on.
         </p>
@@ -122,9 +122,9 @@ export default function UploadPage() {
 
       {/* Tier info */}
       {tier === 'free' && (
-        <div className="card border-ink-700/30 bg-ink-800/40 p-4">
+        <div className="card p-4">
           <p className="text-ink-600 text-sm">
-            <span className="font-medium text-[#e7e6e1]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
+            <span className="font-medium text-[#F0F0F0]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
           </p>
         </div>
       )}
@@ -161,7 +161,7 @@ export default function UploadPage() {
         className={`card p-12 text-center cursor-pointer transition-all duration-200 ${
           dragOver
             ? 'border-flame-500 bg-flame-500/5'
-            : 'hover:border-ink-700/60'
+            : 'hover:border-white/[0.15]'
         }`}
       >
         <input
@@ -247,7 +247,7 @@ export default function UploadPage() {
                       setState('idle');
                       setResult(null);
                     }}
-                    className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors"
+                    className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
                   >
                     Upload more bets first
                   </button>
@@ -284,7 +284,7 @@ export default function UploadPage() {
         ) : (
           <div className="space-y-3">
             <div className="text-5xl">📤</div>
-            <p className="text-[#e7e6e1] font-medium text-lg">
+            <p className="text-[#F0F0F0] font-medium text-lg">
               Drag &amp; drop your CSV here
             </p>
             <p className="text-ink-600 text-sm">or click to browse files</p>
@@ -294,7 +294,7 @@ export default function UploadPage() {
 
       {/* Format guide */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-serif text-xl">Supported Formats</h2>
+        <h2 className="font-bold text-xl">Supported Formats</h2>
         <p className="text-ink-600 text-sm">
           We auto-detect columns from most bet trackers including Pikkit,
           Action Network, and generic CSV exports.
@@ -304,7 +304,7 @@ export default function UploadPage() {
           <div className="flex flex-wrap gap-2">
             {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
               (col) => (
-                <span key={col} className="font-mono text-xs bg-ink-900 border border-ink-700 rounded px-2 py-1">
+                <span key={col} className="font-mono text-xs bg-ink-900 border border-white/[0.08] rounded px-2 py-1">
                   {col}
                 </span>
               )
@@ -313,7 +313,7 @@ export default function UploadPage() {
         </div>
         <div>
           <h3 className="text-sm font-medium text-ink-600 mb-2">Sample CSV:</h3>
-          <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-ink-700 rounded-lg p-4 overflow-x-auto">
+          <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-white/[0.08] rounded-lg p-4 overflow-x-auto">
 {`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
 2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
 2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM

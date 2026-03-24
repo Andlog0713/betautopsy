@@ -22,14 +22,14 @@ export interface ShareCardData {
 }
 
 function gradeColor(g: string): string {
-  if (g.startsWith('A')) return '#4ade80';
+  if (g.startsWith('A')) return '#00C853';
   if (g.startsWith('B')) return '#fbbf24';
   if (g.startsWith('C')) return '#f97316';
   return '#f87171';
 }
 
 function emotionColor(s: number): string {
-  if (s <= 30) return '#4ade80';
+  if (s <= 30) return '#00C853';
   if (s <= 55) return '#fbbf24';
   if (s <= 75) return '#f97316';
   return '#f87171';
@@ -92,7 +92,7 @@ function truncate(s: string, n: number): string {
 const S = { // shared inline styles
   mono: { fontFamily: "'JetBrains Mono', monospace" } as React.CSSProperties,
   serif: { fontFamily: "'DM Serif Display', Georgia, serif" } as React.CSSProperties,
-  label: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#9a9483' },
+  label: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#A0A3B1' },
 };
 
 const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data }, ref) => {
@@ -113,7 +113,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
         background: '#0f0e0c',
         borderRadius: 20,
         fontFamily: "'DM Sans', sans-serif",
-        color: '#e7e6e1',
+        color: '#F0F0F0',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -133,7 +133,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
           <div style={{ marginBottom: 24 }}>
             <div style={{ ...S.label, marginBottom: 6 }}>YOUR BET DNA</div>
             <div style={{ ...S.serif, fontSize: 26, color: '#f97316', lineHeight: 1.2 }}>{data.archetype.name}</div>
-            <div style={{ fontSize: 12, color: '#9a9483', marginTop: 4 }}>{data.archetype.description}</div>
+            <div style={{ fontSize: 12, color: '#A0A3B1', marginTop: 4 }}>{data.archetype.description}</div>
           </div>
         )}
 
@@ -141,29 +141,29 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: 0, marginBottom: 20 }}>
           {/* Left: The Good */}
           <div style={{ paddingRight: 16 }}>
-            <div style={{ ...S.label, marginBottom: 10, color: '#4ade80' }}>THE GOOD</div>
+            <div style={{ ...S.label, marginBottom: 10, color: '#00C853' }}>THE GOOD</div>
             {/* Grade */}
             <div style={{ textAlign: 'center', marginBottom: 12 }}>
               <div style={{ ...S.serif, fontSize: 52, fontWeight: 'bold', color: gc, lineHeight: 1 }}>{data.grade}</div>
-              <div style={{ fontSize: 9, color: '#9a9483', marginTop: 2 }}>GRADE</div>
+              <div style={{ fontSize: 9, color: '#A0A3B1', marginTop: 2 }}>GRADE</div>
             </div>
             {/* Best Edge */}
             {data.best_edge && (
               <div style={{ background: 'rgba(74,222,128,0.06)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
-                <div style={{ fontSize: 9, color: '#4ade80' }}>Best Edge</div>
+                <div style={{ fontSize: 9, color: '#00C853' }}>Best Edge</div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{data.best_edge.category}</div>
-                <div style={{ ...S.mono, fontSize: 11, color: '#4ade80' }}>+{data.best_edge.roi.toFixed(1)}%</div>
+                <div style={{ ...S.mono, fontSize: 11, color: '#00C853' }}>+{data.best_edge.roi.toFixed(1)}%</div>
               </div>
             )}
             {/* Sharp Score */}
             {data.sharp_score !== null && (
               <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#9a9483', marginBottom: 3 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#A0A3B1', marginBottom: 3 }}>
                   <span>Sharp Score</span>
-                  <span style={{ ...S.mono, color: '#4ade80' }}>{data.sharp_score}</span>
+                  <span style={{ ...S.mono, color: '#00C853' }}>{data.sharp_score}</span>
                 </div>
                 <div style={{ height: 4, background: '#1f1e1c', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${data.sharp_score}%`, borderRadius: 2, background: '#4ade80' }} />
+                  <div style={{ height: '100%', width: `${data.sharp_score}%`, borderRadius: 2, background: '#00C853' }} />
                 </div>
               </div>
             )}
@@ -177,7 +177,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             <div style={{ ...S.label, marginBottom: 10, color: '#f87171' }}>THE REAL</div>
             {/* Emotion Score */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#9a9483', marginBottom: 3 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#A0A3B1', marginBottom: 3 }}>
                 <span>Emotion Score</span>
                 <span style={{ ...S.mono, color: ec }}>{data.emotion_score}/100</span>
               </div>
@@ -196,7 +196,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             {/* Win Rate */}
             <div style={{ marginTop: 8, textAlign: 'center' }}>
               <div style={{ ...S.mono, fontSize: 22, fontWeight: 600 }}>{(data.win_rate ?? 0).toFixed(1)}%</div>
-              <div style={{ fontSize: 9, color: '#9a9483' }}>WIN RATE</div>
+              <div style={{ fontSize: 9, color: '#A0A3B1' }}>WIN RATE</div>
             </div>
           </div>
         </div>
@@ -215,10 +215,10 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
         {/* Biggest Hit */}
         {hit && (
           <div style={{ background: 'rgba(74,222,128,0.04)', border: '1px solid rgba(74,222,128,0.1)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            <div style={{ fontSize: 9, color: '#4ade80', marginBottom: 4 }}>BIGGEST HIT</div>
-            <div style={{ ...S.mono, fontSize: 20, fontWeight: 700, color: '#4ade80' }}>+${Math.round(hit.profit).toLocaleString()}</div>
-            <div style={{ fontSize: 11, color: '#9a9483', marginTop: 2 }}>{truncate(hit.description, 60)}</div>
-            <div style={{ fontSize: 10, color: '#5f594f', marginTop: 2 }}>
+            <div style={{ fontSize: 9, color: '#00C853', marginBottom: 4 }}>BIGGEST HIT</div>
+            <div style={{ ...S.mono, fontSize: 20, fontWeight: 700, color: '#00C853' }}>+${Math.round(hit.profit).toLocaleString()}</div>
+            <div style={{ fontSize: 11, color: '#A0A3B1', marginTop: 2 }}>{truncate(hit.description, 60)}</div>
+            <div style={{ fontSize: 10, color: '#5A5C6F', marginTop: 2 }}>
               {hit.bet_type} at {hit.odds > 0 ? `+${hit.odds}` : hit.odds}
             </div>
           </div>
@@ -229,12 +229,12 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
           <div style={{ background: 'rgba(248,113,113,0.03)', border: '1px solid rgba(248,113,113,0.08)', borderRadius: 10, padding: 10, marginBottom: 16 }}>
             <div style={{ fontSize: 9, color: '#f87171', marginBottom: 2 }}>WORST BAD BEAT</div>
             <div style={{ ...S.mono, fontSize: 14, color: '#f87171' }}>-${Math.abs(Math.round(beat.profit)).toLocaleString()}</div>
-            <div style={{ fontSize: 10, color: '#5f594f', marginTop: 2 }}>{truncate(beat.description, 55)} · {beat.odds > 0 ? `+${beat.odds}` : beat.odds}</div>
+            <div style={{ fontSize: 10, color: '#5A5C6F', marginTop: 2 }}>{truncate(beat.description, 55)} · {beat.odds > 0 ? `+${beat.odds}` : beat.odds}</div>
           </div>
         )}
 
         {/* Bottom section */}
-        <div style={{ textAlign: 'center', fontSize: 11, color: '#5f594f', marginBottom: 6 }}>
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#5A5C6F', marginBottom: 6 }}>
           {data.record} across {data.total_bets} bets
           {data.date_range ? ` · ${data.date_range}` : ''}
         </div>
@@ -243,16 +243,16 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
         {((data.discipline_score && data.discipline_score > 0) || (data.streak_count && data.streak_count > 1)) && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 10, fontSize: 11 }}>
             {data.discipline_score && data.discipline_score > 0 && (
-              <span style={{ color: '#9a9483' }}>Discipline: <span style={{ ...S.mono, color: '#e7e6e1' }}>{data.discipline_score}/100</span></span>
+              <span style={{ color: '#A0A3B1' }}>Discipline: <span style={{ ...S.mono, color: '#F0F0F0' }}>{data.discipline_score}/100</span></span>
             )}
             {data.streak_count && data.streak_count > 1 && (
-              <span style={{ color: '#9a9483' }}>🔥 {data.streak_count}-report streak</span>
+              <span style={{ color: '#A0A3B1' }}>🔥 {data.streak_count}-report streak</span>
             )}
           </div>
         )}
 
         {/* CTA */}
-        <div style={{ textAlign: 'center', fontSize: 12, color: '#9a9483', marginTop: 8 }}>
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#A0A3B1', marginTop: 8 }}>
           betautopsy.com — find out what your bets say about you
         </div>
       </div>

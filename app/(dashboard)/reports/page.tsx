@@ -226,13 +226,13 @@ export default function ReportsPage() {
         )}
         <button
           onClick={() => setActiveReport(null)}
-          className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors"
+          className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
         >
           ← Back to Reports
         </button>
         {tierLimited && (
           <div className="card border-flame-500/30 bg-flame-500/5 p-5">
-            <p className="text-[#e7e6e1] text-sm">
+            <p className="text-[#F0F0F0] text-sm">
               This analysis covers your <span className="font-medium">50 most recent bets</span>.
               Upgrade to Pro to unlock full analysis across all{' '}
               <span className="font-mono">{totalBetsAll}</span> of your bets — more data means
@@ -279,7 +279,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="font-serif text-3xl mb-1">Reports</h1>
+        <h1 className="font-bold text-3xl mb-1">Reports</h1>
         <p className="text-ink-600 text-sm">
           Your betting habits, dissected. No sugarcoating.
         </p>
@@ -292,7 +292,7 @@ export default function ReportsPage() {
       {freeExhausted && !running && (
         <div className="space-y-4">
           <div className="card border-flame-500/30 bg-flame-500/5 p-6 text-center space-y-3">
-            <p className="text-[#e7e6e1] mb-2">
+            <p className="text-[#F0F0F0] mb-2">
               This report analyzed your 50 most recent bets. The rest are sitting in the dark.
             </p>
             <p className="text-ink-600 text-sm mb-4">
@@ -309,14 +309,14 @@ export default function ReportsPage() {
           <div className="relative">
             <div className="blur-sm pointer-events-none opacity-50">
               <div className="card p-5">
-                <h3 className="font-serif text-lg mb-2">Edge Profile</h3>
+                <h3 className="font-bold text-lg mb-2">Edge Profile</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">NFL Spreads</p><p className="font-mono text-mint-500">+8.3%</p></div>
                   <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">NBA Props</p><p className="font-mono text-red-400">-14.2%</p></div>
                 </div>
               </div>
               <div className="card p-5 mt-3">
-                <h3 className="font-serif text-lg mb-2">Personal Rules</h3>
+                <h3 className="font-bold text-lg mb-2">Personal Rules</h3>
                 <div className="space-y-2">
                   <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Max stake $150 on any single bet</p></div>
                   <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Stop betting after 3 consecutive losses</p></div>
@@ -326,7 +326,7 @@ export default function ReportsPage() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="card bg-ink-800/95 p-6 text-center max-w-sm">
                 <p className="text-2xl mb-2">🔒</p>
-                <p className="text-[#e7e6e1] font-medium mb-1">Pro reports include</p>
+                <p className="text-[#F0F0F0] font-medium mb-1">Pro reports include</p>
                 <p className="text-ink-600 text-sm mb-3">Edge Profile, Session Analysis, Personal Rules, Discipline Score tracking, and progress over time.</p>
                 <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $19/mo</a>
               </div>
@@ -420,7 +420,7 @@ export default function ReportsPage() {
                   className={`px-3 py-1 rounded-lg text-xs transition-colors ${
                     isActive
                       ? 'bg-flame-500/10 text-flame-500'
-                      : 'text-ink-600 hover:text-[#e7e6e1] hover:bg-ink-800'
+                      : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
                   }`}
                 >
                   {f.label}
@@ -433,7 +433,7 @@ export default function ReportsPage() {
           <p className="text-ink-600 text-sm">
             {dateFrom || dateTo ? (
               <>
-                Analyzing <span className="text-[#e7e6e1] font-mono">{betCountForRun}</span> bet{betCountForRun !== 1 ? 's' : ''}{' '}
+                Analyzing <span className="text-[#F0F0F0] font-mono">{betCountForRun}</span> bet{betCountForRun !== 1 ? 's' : ''}{' '}
                 {dateFrom && dateTo
                   ? `from ${dateFrom} to ${dateTo}`
                   : dateFrom
@@ -442,7 +442,7 @@ export default function ReportsPage() {
               </>
             ) : (
               <>
-                Analyzing all <span className="text-[#e7e6e1] font-mono">{betCountForRun}</span> bets
+                Analyzing all <span className="text-[#F0F0F0] font-mono">{betCountForRun}</span> bets
               </>
             )}
           </p>
@@ -473,7 +473,7 @@ export default function ReportsPage() {
       {totalBetCount === 0 && !running && (
         <div className="card p-12 text-center">
           <div className="text-5xl mb-4">📤</div>
-          <h2 className="font-serif text-2xl mb-2">No bets to analyze</h2>
+          <h2 className="font-bold text-2xl mb-2">No bets to analyze</h2>
           <p className="text-ink-600 mb-6">
             Upload your bet history first, then come back to run your autopsy.
           </p>
@@ -487,7 +487,7 @@ export default function ReportsPage() {
       {reports.length > 0 && !running && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-xl">Past Reports</h2>
+            <h2 className="font-bold text-xl">Past Reports</h2>
             {reports.length > 1 && (
               <button onClick={deleteAllReports} className="text-xs text-ink-700 hover:text-red-400/70 transition-colors">
                 Delete all reports
@@ -504,12 +504,12 @@ export default function ReportsPage() {
               <button
                 key={report.id}
                 onClick={() => setActiveReport(report)}
-                className="card p-5 w-full text-left hover:border-ink-700/60 transition-colors"
+                className="card p-5 w-full text-left hover:border-white/[0.15] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
                     <span
-                      className={`font-serif text-2xl font-bold ${
+                      className={`font-bold text-2xl font-bold ${
                         analysis.summary.overall_grade.startsWith('A')
                           ? 'text-mint-500'
                           : analysis.summary.overall_grade.startsWith('B')
@@ -649,7 +649,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
   return (
     <div className="card p-8 text-center space-y-4">
       <div className="text-5xl animate-pulse">🧠</div>
-      <h2 className="font-serif text-xl">{LOADING_MESSAGES[msgIndex]}</h2>
+      <h2 className="font-bold text-xl">{LOADING_MESSAGES[msgIndex]}</h2>
       <div className="w-72 mx-auto">
         <div className="flex items-center justify-between text-xs text-ink-600 mb-1">
           <span>{estimate}</span>

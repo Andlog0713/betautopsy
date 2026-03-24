@@ -87,7 +87,7 @@ export default function ShareModal({
       {/* Close button */}
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
-        className="fixed top-4 right-4 z-[60] text-ink-500 hover:text-[#e7e6e1] transition-colors text-2xl"
+        className="fixed top-4 right-4 z-[60] text-ink-500 hover:text-[#F0F0F0] transition-colors text-2xl"
       >
         ✕
       </button>

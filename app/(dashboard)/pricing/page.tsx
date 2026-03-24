@@ -63,7 +63,7 @@ export default function PricingPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
-        <h1 className="font-serif text-3xl mb-2">Choose Your Plan</h1>
+        <h1 className="font-bold text-3xl mb-2">Choose Your Plan</h1>
         <p className="text-ink-600">
           Unlock deeper insights into your betting behavior.
         </p>
@@ -89,7 +89,7 @@ export default function PricingPage() {
                 </span>
               )}
 
-              <h2 className="font-serif text-2xl">{config.name}</h2>
+              <h2 className="font-bold text-2xl">{config.name}</h2>
               <div className="mt-2 mb-4">
                 <span className="font-mono text-3xl font-bold">
                   ${config.price}

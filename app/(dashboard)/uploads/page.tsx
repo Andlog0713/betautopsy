@@ -116,7 +116,7 @@ export default function UploadsPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl mb-1">Uploads</h1>
+          <h1 className="font-bold text-3xl mb-1">Uploads</h1>
           <p className="text-ink-600 text-sm">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
         </div>
         <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>
@@ -126,7 +126,7 @@ export default function UploadsPage() {
       {legacyBets.length > 0 && (
         <div className="card p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm text-[#e7e6e1]">Previous imports</p>
+            <p className="text-sm text-[#F0F0F0]">Previous imports</p>
             <p className="text-xs text-ink-600">{legacyBets.length} bets uploaded before upload tracking was enabled</p>
           </div>
           <Link href="/bets" className="text-xs text-flame-500 hover:underline">View in Bet History</Link>
@@ -152,7 +152,7 @@ export default function UploadsPage() {
                     type="checkbox"
                     checked={selected.has(u.id)}
                     onChange={() => toggleSelect(u.id)}
-                    className="mt-1 rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="mt-1 rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -195,7 +195,7 @@ export default function UploadsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/uploads/${u.id}`} className="text-xs text-ink-600 hover:text-[#e7e6e1] transition-colors">
+                    <Link href={`/uploads/${u.id}`} className="text-xs text-ink-600 hover:text-[#F0F0F0] transition-colors">
                       View Bets
                     </Link>
                     <Link href={`/reports?upload_id=${u.id}`} className="text-xs text-flame-500 hover:underline">
@@ -221,10 +221,10 @@ export default function UploadsPage() {
       {/* Multi-select action bar */}
       {selected.size > 0 && (
         <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-          <span className="text-sm text-[#e7e6e1]">
+          <span className="text-sm text-[#F0F0F0]">
             <span className="font-mono font-medium">{selected.size}</span> upload{selected.size !== 1 ? 's' : ''} selected ({totalSelectedBets} bets)
           </span>
-          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors">
+          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">
             Deselect All
           </button>
           <button onClick={analyzeSelected} className="text-sm text-flame-500 hover:underline">

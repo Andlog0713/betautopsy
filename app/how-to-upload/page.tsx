@@ -7,7 +7,7 @@ export default function HowToUploadPage() {
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
-        <h1 className="font-serif text-4xl mb-3">How to get your bet history</h1>
+        <h1 className="font-bold text-4xl mb-3">How to get your bet history</h1>
         <p className="text-ink-600 text-lg mb-12">
           Two ways to get your data in, from easiest to most involved.
         </p>
@@ -15,8 +15,8 @@ export default function HowToUploadPage() {
         {/* Method 1 */}
         <div className="card p-6 md:p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-flame-500/10 text-flame-500 font-serif text-lg font-bold">1</span>
-            <h2 className="font-serif text-2xl">Use a bet tracker you already have</h2>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-flame-500/10 text-flame-500 font-bold text-lg font-bold">1</span>
+            <h2 className="font-bold text-2xl">Use a bet tracker you already have</h2>
             <span className="text-xs font-medium bg-mint-500/10 text-mint-500 px-2 py-0.5 rounded-full">RECOMMENDED</span>
           </div>
           <p className="text-ink-600 text-sm mb-6">
@@ -33,7 +33,7 @@ export default function HowToUploadPage() {
                 <span className="text-xs font-medium bg-flame-500/10 text-flame-500 px-2 py-0.5 rounded-full">RECOMMENDED FOR MOST PEOPLE</span>
               </div>
               <p className="text-sm text-ink-600 mb-3">
-                Pikkit <span className="text-[#e7e6e1]">connects directly to your sportsbook accounts</span> and
+                Pikkit <span className="text-[#F0F0F0]">connects directly to your sportsbook accounts</span> and
                 pulls your full bet history automatically — even if you&apos;ve never tracked a bet before.
                 New users get a free 7-day Pro trial, no payment upfront.
               </p>
@@ -41,7 +41,7 @@ export default function HowToUploadPage() {
                 <li>Download Pikkit and connect your sportsbooks</li>
                 <li>Activate the free Pro trial (tap the Pro tab → start trial)</li>
                 <li>Go to Pro tab → Settings (top-right) → Data Exports</li>
-                <li>Set your date range and tap <span className="text-[#e7e6e1]">Send CSV</span> — it&apos;ll be emailed to you</li>
+                <li>Set your date range and tap <span className="text-[#F0F0F0]">Send CSV</span> — it&apos;ll be emailed to you</li>
                 <li>Upload that CSV here and you&apos;re done</li>
               </ol>
               <p className="text-xs text-ink-700 mt-3">
@@ -65,7 +65,7 @@ export default function HowToUploadPage() {
 
             {/* Don't use any tracker? */}
             <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
-              <p className="text-sm text-[#e7e6e1] font-medium mb-1">Don&apos;t use a tracker?</p>
+              <p className="text-sm text-[#F0F0F0] font-medium mb-1">Don&apos;t use a tracker?</p>
               <p className="text-sm text-ink-600">
                 Start with Pikkit — it&apos;ll pull your full history from any sportsbook automatically.
                 No manual logging needed. <span className="text-flame-500">3 minutes to set up.</span>
@@ -77,8 +77,8 @@ export default function HowToUploadPage() {
         {/* Method 2 */}
         <div className="card p-6 md:p-8 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-flame-500/10 text-flame-500 font-serif text-lg font-bold">2</span>
-            <h2 className="font-serif text-2xl">Manual entry or spreadsheet</h2>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-flame-500/10 text-flame-500 font-bold text-lg font-bold">2</span>
+            <h2 className="font-bold text-2xl">Manual entry or spreadsheet</h2>
           </div>
           <p className="text-ink-600 text-sm mb-4">
             For people who track in spreadsheets or don&apos;t use any tracker.
@@ -96,7 +96,7 @@ export default function HowToUploadPage() {
               <div className="flex flex-wrap gap-2">
                 {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
                   (col) => (
-                    <span key={col} className="font-mono text-xs bg-ink-900 border border-ink-700 rounded px-2 py-1">
+                    <span key={col} className="font-mono text-xs bg-ink-900 border border-white/[0.08] rounded px-2 py-1">
                       {col}
                     </span>
                   )
@@ -106,7 +106,7 @@ export default function HowToUploadPage() {
 
             <div>
               <h3 className="text-sm font-medium text-ink-600 mb-2">Example rows:</h3>
-              <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-ink-700 rounded-lg p-4 overflow-x-auto">
+              <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-white/[0.08] rounded-lg p-4 overflow-x-auto">
 {`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
 2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
 2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM
@@ -131,7 +131,7 @@ export default function HowToUploadPage() {
 
         {/* Still stuck */}
         <div className="card p-6 text-center space-y-3">
-          <h3 className="font-serif text-lg">Still stuck?</h3>
+          <h3 className="font-bold text-lg">Still stuck?</h3>
           <p className="text-ink-600 text-sm">
             Can&apos;t figure out how to get your data? We&apos;re happy to help.
           </p>

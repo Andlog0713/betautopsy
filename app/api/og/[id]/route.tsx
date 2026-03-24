@@ -14,7 +14,7 @@ interface ShareData {
 }
 
 function gradeColor(g: string): string {
-  if (g.startsWith('A')) return '#4ade80';
+  if (g.startsWith('A')) return '#00C853';
   if (g.startsWith('B')) return '#fbbf24';
   if (g.startsWith('C')) return '#f97316';
   return '#f87171';
@@ -51,43 +51,43 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const archName = d.archetype?.name ?? '';
   const archDesc = d.archetype?.description ?? '';
   const roiStr = `${d.roi_percent >= 0 ? '+' : ''}${d.roi_percent.toFixed(1)}%`;
-  const roiColor = d.roi_percent >= 0 ? '#4ade80' : '#f87171';
+  const roiColor = d.roi_percent >= 0 ? '#00C853' : '#f87171';
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', background: '#0f0e0c', display: 'flex', flexDirection: 'row', padding: 60, color: '#e7e6e1' }}>
+      <div style={{ width: '100%', height: '100%', background: '#0f0e0c', display: 'flex', flexDirection: 'row', padding: 60, color: '#F0F0F0' }}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, paddingRight: 40 }}>
           <div style={{ display: 'flex', fontSize: 28 }}>
-            <span style={{ color: '#e7e6e1' }}>Bet</span>
+            <span style={{ color: '#F0F0F0' }}>Bet</span>
             <span style={{ color: '#f97316' }}>Autopsy</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 14, color: '#9a9483', letterSpacing: 3 }}>BET DNA</div>
+            <div style={{ fontSize: 14, color: '#A0A3B1', letterSpacing: 3 }}>BET DNA</div>
             <div style={{ fontSize: 44, color: '#f97316', marginTop: 8 }}>{archName}</div>
-            <div style={{ fontSize: 16, color: '#9a9483', marginTop: 8 }}>{archDesc}</div>
+            <div style={{ fontSize: 16, color: '#A0A3B1', marginTop: 8 }}>{archDesc}</div>
           </div>
           <div style={{ display: 'flex', gap: 32 }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#9a9483' }}>Record</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.record}</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Record</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.record}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#9a9483' }}>Emotion</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.emotion_score}/100</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Emotion</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.emotion_score}/100</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#9a9483' }}>Bets</span>
-              <span style={{ fontSize: 18, color: '#e7e6e1', marginTop: 2 }}>{d.total_bets}</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Bets</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.total_bets}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 13, color: '#5f594f' }}>betautopsy.com</span>
+              <span style={{ fontSize: 13, color: '#5A5C6F' }}>betautopsy.com</span>
             </div>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 260 }}>
-          <div style={{ fontSize: 13, color: '#9a9483', letterSpacing: 3, marginBottom: 8 }}>GRADE</div>
+          <div style={{ fontSize: 13, color: '#A0A3B1', letterSpacing: 3, marginBottom: 8 }}>GRADE</div>
           <div style={{ fontSize: 130, fontWeight: 700, color: gc, lineHeight: 1 }}>{d.grade}</div>
-          <div style={{ fontSize: 13, color: '#9a9483', marginTop: 20 }}>ROI</div>
+          <div style={{ fontSize: 13, color: '#A0A3B1', marginTop: 20 }}>ROI</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: roiColor, marginTop: 4 }}>{roiStr}</div>
         </div>
       </div>
