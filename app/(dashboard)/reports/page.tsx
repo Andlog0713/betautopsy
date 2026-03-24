@@ -4,8 +4,12 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import AutopsyReport from '@/components/AutopsyReport';
+import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
+
+const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
+  loading: () => <div className="h-96 bg-ink-800 rounded-lg animate-pulse" />,
+});
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
 
 function daysAgo(n: number): string {
