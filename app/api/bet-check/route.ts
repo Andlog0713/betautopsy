@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     // Rate limit: 30 checks per hour
-    if (!checkRateLimit(user.id + ':betcheck', 30, 60 * 60 * 1000)) {
+    if (!(await checkRateLimit(user.id + ':betcheck', 30, 60 * 60 * 1000))) {
       return NextResponse.json({ error: "You've hit the check limit. Try again in a few minutes." }, { status: 429 });
     }
 

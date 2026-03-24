@@ -155,6 +155,16 @@ create table if not exists error_logs (
   created_at timestamptz default now()
 );
 
+-- ── Rate Limits ──
+
+create table if not exists rate_limits (
+  key text primary key,
+  count integer not null default 1,
+  reset_at timestamptz not null
+);
+
+create index if not exists idx_rate_limits_reset on rate_limits(reset_at);
+
 -- ============================================
 -- Indexes
 -- ============================================
@@ -216,3 +226,6 @@ create policy "Users can view own feedback" on feedback for select using (auth.u
 alter table error_logs enable row level security;
 create policy "Users can insert error logs" on error_logs for insert with check (true);
 create policy "Users can view own error logs" on error_logs for select using (auth.uid() = user_id);
+
+-- Rate Limits (service role only — accessed from API routes, not directly by users)
+alter table rate_limits enable row level security;

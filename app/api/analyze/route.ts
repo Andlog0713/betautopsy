@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     // Rate limit: 5 reports per hour
-    if (!checkRateLimit(user.id, 5, 60 * 60 * 1000)) {
+    if (!(await checkRateLimit(user.id, 5, 60 * 60 * 1000))) {
       return NextResponse.json({ error: "You've hit the hourly analysis limit. Try again in a few minutes." }, { status: 429 });
     }
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     // Daily report cap by tier (Pro: 10/day, Sharp: 25/day)
     const dailyCaps: Record<string, number> = { free: 1, pro: 10, sharp: 25 };
     const dailyCap = dailyCaps[tier] ?? 10;
-    if (!checkRateLimit(user.id + ':daily', dailyCap, 24 * 60 * 60 * 1000)) {
+    if (!(await checkRateLimit(user.id + ':daily', dailyCap, 24 * 60 * 60 * 1000))) {
       return NextResponse.json({ error: `You've reached your daily limit of ${dailyCap} reports. Resets tomorrow.` }, { status: 429 });
     }
 
