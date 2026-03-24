@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     // Rate limit: 5 reports per hour
     if (!checkRateLimit(user.id, 5, 60 * 60 * 1000)) {
-      return NextResponse.json({ error: "You've hit the analysis limit. Try again in a few minutes." }, { status: 429 });
+      return NextResponse.json({ error: "You've hit the hourly analysis limit. Try again in a few minutes." }, { status: 429 });
     }
 
     // Get profile and check tier limits
@@ -32,6 +32,13 @@ export async function POST(request: Request) {
 
     const tier = (profile as Profile).subscription_tier as SubscriptionTier;
     const limits = TIER_LIMITS[tier];
+
+    // Daily report cap by tier (Pro: 10/day, Sharp: 25/day)
+    const dailyCaps: Record<string, number> = { free: 1, pro: 10, sharp: 25 };
+    const dailyCap = dailyCaps[tier] ?? 10;
+    if (!checkRateLimit(user.id + ':daily', dailyCap, 24 * 60 * 60 * 1000)) {
+      return NextResponse.json({ error: `You've reached your daily limit of ${dailyCap} reports. Resets tomorrow.` }, { status: 429 });
+    }
 
     // Check report limits for free tier
     if (limits.maxReports !== null) {
