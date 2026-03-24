@@ -194,7 +194,7 @@ function buildWhatIfs(bets: Bet[]) {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-ink-800 border border-ink-700/50 rounded-lg px-3 py-2 text-xs shadow-lg">
+    <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
       <p className="text-ink-600">{label}</p>
       <p className={`font-mono font-medium ${payload[0].value >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
         ${payload[0].value.toLocaleString()}
@@ -322,11 +322,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5f594f20" />
-                <XAxis dataKey="date" tick={{ fill: '#9a9483', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: '#9a9483', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} tickFormatter={(v: number) => `$${v}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
+                <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip content={<ChartTooltip />} />
-                <ReferenceLine y={0} stroke="#5f594f50" />
+                <ReferenceLine y={0} stroke="#5A5C6F50" />
                 <Line type="monotone" dataKey="pnl" stroke="#f97316" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -354,7 +354,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
         <p className="text-ink-600 text-sm mb-3">{tiltLabel(analysis.tilt_score)}</p>
         {analysis.tilt_breakdown && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-ink-700/20">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
             {([
               { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const },
               { label: 'Reaction to Losses', key: 'loss_chasing' as const },
@@ -394,13 +394,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stakeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5f594f20" />
-                <XAxis dataKey="date" tick={{ fill: '#9a9483', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: '#9a9483', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} tickFormatter={(v: number) => `$${v}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
+                <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip content={<ChartTooltip />} />
                 <Bar dataKey="stake" radius={[2, 2, 0, 0]}>
                   {stakeData.map((entry, i) => (
-                    <Cell key={i} fill={entry.afterLoss ? '#f97316' : '#5f594f'} />
+                    <Cell key={i} fill={entry.afterLoss ? '#f97316' : '#5A5C6F'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -483,7 +483,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-ink-700/30">
+                  <tr className="border-b border-white/[0.06]">
                     <th className="text-left text-ink-600 font-medium px-4 py-3">Category</th>
                     <th className="text-left text-ink-600 font-medium px-4 py-3">Issue</th>
                     <th className="text-right text-ink-600 font-medium px-4 py-3">ROI</th>
@@ -494,7 +494,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </thead>
                 <tbody>
                   {strategic_leaks.map((leak, i) => (
-                    <tr key={i} className="border-b border-ink-700/15">
+                    <tr key={i} className="border-b border-white/[0.04]">
                       <td className="px-4 py-3 font-medium">{leak.category}</td>
                       <td className="px-4 py-3 text-ink-600">{leak.detail}</td>
                       <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
@@ -523,15 +523,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5f594f20" horizontal={false} />
-                <XAxis type="number" tick={{ fill: '#9a9483', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5f594f30' }} tickFormatter={(v: number) => `${v}%`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
+                <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}%`} />
                 <YAxis type="category" dataKey="category" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={55} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
                     const d = payload[0].payload as { category: string; roi: number; count: number };
                     return (
-                      <div className="bg-ink-800 border border-ink-700/50 rounded-lg px-3 py-2 text-xs shadow-lg">
+                      <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
                         <p className="text-[#F0F0F0] font-medium">{d.category}</p>
                         <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi}% ROI</p>
                         <p className="text-ink-600">{d.count} bets</p>
@@ -539,10 +539,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     );
                   }}
                 />
-                <ReferenceLine x={0} stroke="#5f594f50" />
+                <ReferenceLine x={0} stroke="#5A5C6F50" />
                 <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                   {roiData.map((entry, i) => (
-                    <Cell key={i} fill={entry.roi >= 0 ? '#4ade80' : '#f87171'} fillOpacity={0.7} />
+                    <Cell key={i} fill={entry.roi >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
                   ))}
                 </Bar>
               </BarChart>

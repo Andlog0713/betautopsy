@@ -129,7 +129,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
 
           {/* Edge & Leak */}
           {(data.best_edge || data.biggest_leak) && (
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-ink-700/30">
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/[0.06]">
               {data.best_edge && (
                 <div className="text-center">
                   <p className="text-ink-600 text-xs">Best Edge</p>
@@ -149,7 +149,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
 
           {/* Sharp Score */}
           {data.sharp_score !== null && (
-            <div className="pt-2 border-t border-ink-700/30">
+            <div className="pt-2 border-t border-white/[0.06]">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-ink-600 text-xs">Sharp Score</p>
                 <p className="font-mono text-sm text-cyan-400">{data.sharp_score}/100</p>

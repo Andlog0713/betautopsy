@@ -160,7 +160,7 @@ export default function DashboardLayout({
   const tier = profile?.subscription_tier ?? 'free';
 
   const tierBadge: Record<string, string> = {
-    free: 'bg-ink-700/30 text-ink-500 border border-ink-700/30',
+    free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
     pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
     sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
   };

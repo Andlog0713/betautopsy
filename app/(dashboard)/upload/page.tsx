@@ -122,7 +122,7 @@ export default function UploadPage() {
 
       {/* Tier info */}
       {tier === 'free' && (
-        <div className="card border-ink-700/30 bg-ink-800/40 p-4">
+        <div className="card p-4">
           <p className="text-ink-600 text-sm">
             <span className="font-medium text-[#F0F0F0]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
           </p>
@@ -149,7 +149,7 @@ export default function UploadPage() {
         className={`card p-12 text-center cursor-pointer transition-all duration-200 ${
           dragOver
             ? 'border-flame-500 bg-flame-500/5'
-            : 'hover:border-ink-700/60'
+            : 'hover:border-white/[0.15]'
         }`}
       >
         <input
@@ -292,7 +292,7 @@ export default function UploadPage() {
           <div className="flex flex-wrap gap-2">
             {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
               (col) => (
-                <span key={col} className="font-mono text-xs bg-ink-900 border border-ink-700 rounded px-2 py-1">
+                <span key={col} className="font-mono text-xs bg-ink-900 border border-white/[0.08] rounded px-2 py-1">
                   {col}
                 </span>
               )
@@ -301,7 +301,7 @@ export default function UploadPage() {
         </div>
         <div>
           <h3 className="text-sm font-medium text-ink-600 mb-2">Sample CSV:</h3>
-          <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-ink-700 rounded-lg p-4 overflow-x-auto">
+          <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-white/[0.08] rounded-lg p-4 overflow-x-auto">
 {`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
 2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
 2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM

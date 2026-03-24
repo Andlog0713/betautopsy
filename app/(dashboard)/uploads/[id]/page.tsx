@@ -96,13 +96,13 @@ export default function UploadDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-700/30">
+              <tr className="border-b border-white/[0.06]">
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => allSelected ? setSelected(new Set()) : setSelected(new Set(bets.map((b) => b.id)))}
-                    className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                   />
                 </th>
                 <th className="text-left text-ink-600 font-medium px-4 py-3">Date</th>
@@ -118,13 +118,13 @@ export default function UploadDetailPage() {
             </thead>
             <tbody>
               {bets.map((bet) => (
-                <tr key={bet.id} className={`border-b border-ink-700/15 hover:bg-ink-800/40 transition-colors ${selected.has(bet.id) ? 'bg-flame-500/5' : ''}`}>
+                <tr key={bet.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-flame-500/5' : ''}`}>
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.has(bet.id)}
                       onChange={() => { const n = new Set(selected); n.has(bet.id) ? n.delete(bet.id) : n.add(bet.id); setSelected(n); }}
-                      className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                      className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                     />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-ink-600">

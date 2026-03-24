@@ -221,7 +221,7 @@ export default function BetsPage() {
                 className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
                   sportFilter === sport
                     ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-ink-800'
+                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
                 }`}
               >
                 {sport === 'all' ? 'All Sports' : sport}
@@ -236,7 +236,7 @@ export default function BetsPage() {
                 className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors ${
                   typeFilter === bt
                     ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-700 hover:text-ink-500 hover:bg-ink-800'
+                    : 'text-ink-700 hover:text-ink-500 hover:bg-white/[0.04]'
                 }`}
               >
                 {bt === 'all' ? 'All Types' : bt}
@@ -319,13 +319,13 @@ export default function BetsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-700/30">
+                <tr className="border-b border-white/[0.06]">
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={allFilteredSelected}
                       onChange={toggleSelectAll}
-                      className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                      className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                     />
                   </th>
                   <SortTh col="placed_at" label="Date" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -347,7 +347,7 @@ export default function BetsPage() {
                 {filtered.map((bet) => (
                   <tr
                     key={bet.id}
-                    className={`border-b border-ink-700/15 hover:bg-ink-800/40 transition-colors ${
+                    className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
                       selected.has(bet.id) ? 'bg-flame-500/5' : ''
                     }`}
                   >
@@ -356,7 +356,7 @@ export default function BetsPage() {
                         type="checkbox"
                         checked={selected.has(bet.id)}
                         onChange={() => toggleSelect(bet.id)}
-                        className="rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                        className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                       />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-ink-600">
@@ -486,13 +486,13 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
               <button
                 onClick={handleDelete}
                 disabled={confirmText !== 'DELETE' || deleting}
-                className="text-sm font-medium text-red-400 bg-red-400/10 hover:bg-red-400/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="btn-danger text-sm !px-4 !py-2"
               >
                 {deleting ? 'Deleting...' : 'Delete All Bets'}
               </button>
               <button
                 onClick={() => { setShowConfirm(false); setConfirmText(''); }}
-                className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
+                className="btn-ghost text-sm"
               >
                 Cancel
               </button>
@@ -707,7 +707,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
               type="checkbox"
               checked={form.is_bonus_bet}
               onChange={(e) => update('is_bonus_bet', e.target.checked)}
-              className="rounded border-ink-700 bg-ink-900 text-flame-500 focus:ring-flame-500/40"
+              className="rounded border-white/[0.08] bg-ink-900 text-flame-500 focus:ring-flame-500/40"
             />
             <span className="text-sm text-ink-600">Bonus Bet</span>
           </label>

@@ -152,7 +152,7 @@ export default function UploadsPage() {
                     type="checkbox"
                     checked={selected.has(u.id)}
                     onChange={() => toggleSelect(u.id)}
-                    className="mt-1 rounded border-ink-700 bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="mt-1 rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

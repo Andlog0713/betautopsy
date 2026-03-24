@@ -50,7 +50,7 @@ function CompareMetric({ label, a, b, suffix, lowerBetter }: { label: string; a:
   const bWins = lowerBetter ? b < a : b > a;
   const same = Math.abs(a - b) < 0.1;
   return (
-    <tr className="border-b border-ink-700/15">
+    <tr className="border-b border-white/[0.04]">
       <td className={`px-4 py-3 text-right font-mono ${!same && aWins ? 'text-mint-500' : !same && bWins ? 'text-red-400' : 'text-[#F0F0F0]'}`}>
         {a >= 0 && suffix === '$' ? '+' : ''}{suffix === '$' ? `$${Math.round(a).toLocaleString()}` : `${a.toFixed(1)}${s}`}
       </td>
@@ -153,7 +153,7 @@ export default function ComparePage() {
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-ink-700/30">
+            <tr className="border-b border-white/[0.06]">
               <th className="text-right text-ink-600 font-medium px-4 py-3 w-1/3">
                 <div className="truncate">{nameA}</div>
                 <div className="text-xs font-normal">{a.bets.length} bets</div>
@@ -166,7 +166,7 @@ export default function ComparePage() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-ink-700/15">
+            <tr className="border-b border-white/[0.04]">
               <td className="px-4 py-3 text-right font-mono text-[#F0F0F0]">{a.record}</td>
               <td className="px-4 py-3 text-center text-ink-600 text-sm">Record</td>
               <td className="px-4 py-3 font-mono text-[#F0F0F0]">{b.record}</td>

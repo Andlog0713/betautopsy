@@ -420,7 +420,7 @@ export default function ReportsPage() {
                   className={`px-3 py-1 rounded-lg text-xs transition-colors ${
                     isActive
                       ? 'bg-flame-500/10 text-flame-500'
-                      : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-ink-800'
+                      : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
                   }`}
                 >
                   {f.label}
@@ -504,7 +504,7 @@ export default function ReportsPage() {
               <button
                 key={report.id}
                 onClick={() => setActiveReport(report)}
-                className="card p-5 w-full text-left hover:border-ink-700/60 transition-colors"
+                className="card p-5 w-full text-left hover:border-white/[0.15] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-4">

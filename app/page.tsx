@@ -311,7 +311,7 @@ export default function LandingPage() {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${r.score}%`,
-                          background: r.score <= 45 ? '#4ade80' : r.score <= 60 ? '#fbbf24' : '#f97316',
+                          background: r.score <= 45 ? '#00C853' : r.score <= 60 ? '#fbbf24' : '#f97316',
                         }}
                       />
                     </div>
@@ -455,7 +455,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-ink-700/30">
+      <footer className="border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
@@ -475,7 +475,7 @@ export default function LandingPage() {
               <span className="text-ink-700 cursor-default">Terms</span>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-ink-700/20">
+          <div className="mt-8 pt-6 border-t border-white/[0.06]">
             <p className="text-ink-700 text-xs text-center">
               BetAutopsy provides behavioral analysis and educational insights — not
               gambling or financial advice. Past results don&apos;t guarantee future outcomes.

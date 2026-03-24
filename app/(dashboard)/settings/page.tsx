@@ -138,9 +138,9 @@ export default function SettingsPage() {
   const isPaid = tier === 'pro' || tier === 'sharp';
 
   const tierBadge: Record<string, string> = {
-    free: 'bg-ink-700/50 text-ink-500',
-    pro: 'bg-flame-500/10 text-flame-500',
-    sharp: 'bg-mint-500/10 text-mint-500',
+    free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
+    pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
+    sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
   };
 
   return (
@@ -298,7 +298,7 @@ export default function SettingsPage() {
 
         {/* Clear all bets */}
         {isPaid && betCount > 0 && (
-          <div className="pt-3 border-t border-ink-700/20">
+          <div className="pt-3 border-t border-white/[0.06]">
             {!showClearBets ? (
               <button
                 onClick={() => setShowClearBets(true)}
@@ -328,13 +328,13 @@ export default function SettingsPage() {
                   <button
                     onClick={handleClearBets}
                     disabled={clearConfirm !== 'DELETE' || clearing}
-                    className="text-sm text-red-400 bg-red-400/10 hover:bg-red-400/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="btn-danger text-sm !px-4 !py-2"
                   >
                     {clearing ? 'Clearing...' : 'Clear All Bets'}
                   </button>
                   <button
                     onClick={() => { setShowClearBets(false); setClearConfirm(''); }}
-                    className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
+                    className="btn-ghost text-sm"
                   >
                     Cancel
                   </button>
@@ -390,13 +390,13 @@ export default function SettingsPage() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteConfirm !== 'DELETE' || deleting}
-                className="text-sm font-medium text-red-400 bg-red-400/10 hover:bg-red-400/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="btn-danger text-sm !px-4 !py-2"
               >
                 {deleting ? 'Deleting...' : 'Delete My Account'}
               </button>
               <button
                 onClick={() => { setShowDeleteAccount(false); setDeleteConfirm(''); }}
-                className="text-sm text-ink-600 hover:text-[#F0F0F0] px-4 py-2 transition-colors"
+                className="btn-ghost text-sm"
               >
                 Cancel
               </button>
