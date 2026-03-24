@@ -30,6 +30,9 @@ export default function LoginPage() {
       return;
     }
 
+    // Increment login count for returning-user redirect
+    await supabase.rpc('increment_login_count');
+
     router.push('/dashboard');
     router.refresh();
   }

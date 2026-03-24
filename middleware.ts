@@ -53,6 +53,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Redirect returning users (2+ logins) from landing page to dashboard
+  if (pathname === '/' && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('login_count')
+      .eq('id', user.id)
+      .single();
+
+    if (profile && profile.login_count >= 2) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 

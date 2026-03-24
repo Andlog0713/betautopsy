@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Increment login count for returning-user redirect
+      await supabase.rpc('increment_login_count');
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

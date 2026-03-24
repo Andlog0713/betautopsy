@@ -40,6 +40,7 @@ export interface Profile {
   streak_count: number;
   streak_last_date: string | null;
   streak_best: number;
+  login_count: number;
   created_at: string;
   updated_at: string;
 }

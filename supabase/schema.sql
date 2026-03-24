@@ -19,6 +19,7 @@ create table if not exists profiles (
   streak_count integer default 0,
   streak_last_date date,
   streak_best integer default 0,
+  login_count integer default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -43,6 +44,19 @@ $$;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Increment login count (called from client after sign-in)
+create or replace function public.increment_login_count()
+returns void
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  update public.profiles
+  set login_count = coalesce(login_count, 0) + 1
+  where id = auth.uid();
+end;
+$$;
 
 -- ── Uploads ──
 
