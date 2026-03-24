@@ -34,9 +34,9 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
   }
 
   const placeholders: Record<string, string> = {
-    positive: 'What was the most useful insight?',
-    neutral: 'What would make it better?',
-    negative: 'What did we get wrong?',
+    positive: 'Which part changed how you think about your bets? Did you act on anything?',
+    neutral: 'What were you hoping to see that wasn\'t there?',
+    negative: 'What felt off? Was something inaccurate, or just not useful for how you bet?',
   };
 
   return (
@@ -72,12 +72,11 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
 
       {rating && (
         <div className="space-y-3">
-          <input
-            type="text"
+          <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={placeholders[rating]}
-            className="input-field w-full text-sm"
+            className="input-field w-full text-sm h-24 resize-none"
           />
           <button
             onClick={handleSubmit}
