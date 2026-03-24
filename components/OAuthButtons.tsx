@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 
 export default function OAuthButtons() {
-  const [loading, setLoading] = useState<'google' | 'twitter' | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const reset = () => { setLoading(null); setError(''); };
+    const reset = () => { setLoading(false); setError(''); };
     window.addEventListener('pageshow', reset);
     window.addEventListener('focus', reset);
     return () => {
@@ -17,13 +17,13 @@ export default function OAuthButtons() {
     };
   }, []);
 
-  async function handleOAuth(provider: 'google' | 'twitter') {
+  async function handleGoogle() {
     setError('');
-    setLoading(provider);
+    setLoading(true);
 
     const supabase = createClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -31,16 +31,16 @@ export default function OAuthButtons() {
 
     if (oauthError) {
       setError(oauthError.message);
-      setLoading(null);
+      setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       <button
         type="button"
-        onClick={() => handleOAuth('google')}
-        disabled={loading !== null}
+        onClick={handleGoogle}
+        disabled={loading}
         className="w-full flex items-center justify-center gap-3 rounded-lg border border-white/[0.08] bg-ink-900 px-4 py-2.5 text-sm font-medium text-[#F0F0F0] hover:bg-ink-800 transition-colors disabled:opacity-50"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -61,19 +61,7 @@ export default function OAuthButtons() {
             fill="#EA4335"
           />
         </svg>
-        {loading === 'google' ? 'Redirecting...' : 'Continue with Google'}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleOAuth('twitter')}
-        disabled={loading !== null}
-        className="w-full flex items-center justify-center gap-3 rounded-lg border border-white/[0.08] bg-ink-900 px-4 py-2.5 text-sm font-medium text-[#F0F0F0] hover:bg-ink-800 transition-colors disabled:opacity-50"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-        {loading === 'twitter' ? 'Redirecting...' : 'Continue with X'}
+        {loading ? 'Redirecting...' : 'Continue with Google'}
       </button>
 
       {error && (
