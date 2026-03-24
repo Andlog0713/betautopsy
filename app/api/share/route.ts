@@ -1,0 +1,83 @@
+import { NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
+import type { AutopsyAnalysis } from '@/types';
+
+export async function POST(request: Request) {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { report_id } = await request.json();
+    if (!report_id) {
+      return NextResponse.json({ error: 'report_id required' }, { status: 400 });
+    }
+
+    // Fetch report
+    const { data: report } = await supabase
+      .from('autopsy_reports')
+      .select('*')
+      .eq('id', report_id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!report) {
+      return NextResponse.json({ error: 'Report not found' }, { status: 404 });
+    }
+
+    const analysis = report.report_json as AutopsyAnalysis;
+
+    // Find best edge and biggest leak from strategic leaks
+    const leaks = analysis.strategic_leaks ?? [];
+    const bestEdge = leaks.filter((l) => l.roi_impact > 0).sort((a, b) => b.roi_impact - a.roi_impact)[0];
+    const biggestLeak = leaks.filter((l) => l.roi_impact < 0).sort((a, b) => a.roi_impact - b.roi_impact)[0];
+
+    // Sanitized share data (no dollar amounts, no bet descriptions)
+    const shareData = {
+      grade: analysis.summary.overall_grade,
+      emotion_score: analysis.tilt_score,
+      roi_percent: analysis.summary.roi_percent,
+      win_rate: Math.round((analysis.summary.total_bets > 0 ? analysis.summary.roi_percent : 0) * 10) / 10,
+      total_bets: analysis.summary.total_bets,
+      record: analysis.summary.record,
+      best_edge: bestEdge ? { category: bestEdge.category, roi: bestEdge.roi_impact } : null,
+      biggest_leak: biggestLeak ? { category: biggestLeak.category, roi: biggestLeak.roi_impact } : null,
+      sharp_score: analysis.edge_profile?.sharp_score ?? null,
+      archetype: analysis.betting_archetype ?? null,
+      date: report.created_at,
+    };
+
+    // Check if share token already exists for this report
+    const { data: existing } = await supabase
+      .from('share_tokens')
+      .select('id')
+      .eq('report_id', report_id)
+      .single();
+
+    if (existing) {
+      return NextResponse.json({ share_id: existing.id });
+    }
+
+    const { data: token, error: insertErr } = await supabase
+      .from('share_tokens')
+      .insert({
+        report_id: report_id,
+        user_id: user.id,
+        data: shareData,
+      })
+      .select('id')
+      .single();
+
+    if (insertErr) {
+      return NextResponse.json({ error: 'Could not create share link' }, { status: 500 });
+    }
+
+    return NextResponse.json({ share_id: token.id });
+  } catch (error) {
+    console.error('Share error:', error);
+    return NextResponse.json({ error: 'Share failed' }, { status: 500 });
+  }
+}
