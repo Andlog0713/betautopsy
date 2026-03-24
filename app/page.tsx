@@ -443,7 +443,6 @@ export default function LandingPage() {
             <ul className="space-y-2.5 flex-1 mb-7">
               {[
                 'Everything in Pro',
-                'Live Bet Check before every bet',
                 'Leak Prioritizer — ranked by $ impact',
                 'Full What-If Simulator',
                 'Early access to new features',

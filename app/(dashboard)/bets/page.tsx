@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import BetCheckWidget from '@/components/BetCheckWidget';
 import { usePrivacy } from '@/components/PrivacyContext';
 import type { Bet, Profile } from '@/types';
 
@@ -193,9 +192,6 @@ export default function BetsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Live Bet Check widget */}
-      <BetCheckWidget tier={tier} onLogBet={handleLogBet} />
-
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-bold text-3xl mb-1">Bet History</h1>

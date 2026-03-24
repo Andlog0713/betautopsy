@@ -245,7 +245,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     maxBetsPerReport: null,
     features: [
       'Everything in Pro',
-      'Live Bet Check',
       'Leak Prioritizer — ranked by $ impact',
       'Full What-If Simulator',
       'Early access to new features',
