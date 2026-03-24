@@ -431,15 +431,15 @@ export default function LandingPage() {
           <div className="card p-7 flex flex-col animate-slide-up-d5">
             <h3 className="font-serif text-2xl">Sharp</h3>
             <div className="mt-2 mb-5">
-              <span className="font-mono text-4xl font-bold">$39</span>
+              <span className="font-mono text-4xl font-bold">$29</span>
               <span className="text-ink-600 text-sm">/mo</span>
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">
               {[
                 'Everything in Pro',
                 'Live Bet Check before every bet',
-                'Upload comparison & analysis',
-                'Custom rules & alerts',
+                'Priority analysis (faster queue)',
+                'Early access to new features',
               ].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
                   <span className="text-mint-500 mt-0.5 shrink-0">✓</span>

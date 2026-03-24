@@ -67,6 +67,7 @@ export default function ComparePage() {
   const [loading, setLoading] = useState(true);
   const [a, setA] = useState<UploadAnalysis | null>(null);
   const [b, setB] = useState<UploadAnalysis | null>(null);
+  const [tier, setTier] = useState('free');
 
   useEffect(() => {
     async function load() {
@@ -75,6 +76,13 @@ export default function ComparePage() {
       if (!idA || !idB) return;
 
       const supabase = createClient();
+
+      // Check tier
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('subscription_tier').eq('id', user.id).single();
+        if (profile) setTier(profile.subscription_tier);
+      }
       const [uploadA, uploadB, betsA, betsB] = await Promise.all([
         supabase.from('uploads').select('*').eq('id', idA).single(),
         supabase.from('uploads').select('*').eq('id', idB).single(),
@@ -90,6 +98,22 @@ export default function ComparePage() {
     }
     load();
   }, [searchParams]);
+
+  if (!loading && tier === 'free') {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#e7e6e1] transition-colors">← Back to Uploads</Link>
+        <div className="card border-flame-500/20 bg-flame-500/5 p-8 text-center space-y-4">
+          <h2 className="font-serif text-2xl">Upload Comparison</h2>
+          <p className="text-ink-600 text-sm max-w-md mx-auto">
+            Compare how you perform across different sportsbooks, time periods, or bet sources.
+            Available on Pro and Sharp.
+          </p>
+          <Link href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro — $19/mo</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !a || !b) {
     return (

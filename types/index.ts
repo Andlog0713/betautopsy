@@ -238,15 +238,15 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
   sharp: {
     name: 'Sharp',
-    price: 39,
+    price: 29,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: null,
     features: [
       'Everything in Pro',
       'Live Bet Check',
-      'Custom rules & alerts',
-      'API access',
+      'Priority analysis',
+      'Early access to new features',
     ],
   },
 };
