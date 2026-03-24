@@ -19,12 +19,9 @@ export default function ShareModal({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const orig = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => {
-      document.body.style.overflow = orig;
       window.removeEventListener('keydown', handleEsc);
     };
   }, [onClose]);
@@ -83,7 +80,8 @@ export default function ShareModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+      style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
       onClick={onClose}
     >
       {/* Close button */}
@@ -94,41 +92,44 @@ export default function ShareModal({
         ✕
       </button>
 
-      <div className="min-h-full flex flex-col items-center justify-start py-6 px-4">
-        <div
-          className="flex flex-col items-center gap-5 w-full max-w-lg"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Card — scaled on mobile to fit screen */}
-          <div className="transform scale-[0.75] sm:scale-[0.85] md:scale-100 origin-top shrink-0">
-            <ShareCard ref={cardRef} data={data} />
-          </div>
+      <div
+        className="flex flex-col items-center gap-5 px-4 py-6 pb-12"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Card — scaled on mobile to fit screen width */}
+        <div style={{ transform: 'scale(var(--card-scale, 1))', transformOrigin: 'top center' }}>
+          <style>{`
+            :root { --card-scale: 0.7; }
+            @media (min-width: 480px) { :root { --card-scale: 0.85; } }
+            @media (min-width: 640px) { :root { --card-scale: 1; } }
+          `}</style>
+          <ShareCard ref={cardRef} data={data} />
+        </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-3 justify-center w-full pb-6">
+        {/* Action buttons — always visible */}
+        <div className="flex flex-wrap gap-3 justify-center w-full max-w-sm">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="btn-primary text-sm"
+          >
+            {downloading ? 'Rendering...' : 'Download Image'}
+          </button>
+          {reportId && (
             <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="btn-primary text-sm"
+              onClick={handleCopyLink}
+              className="btn-secondary text-sm"
             >
-              {downloading ? 'Rendering...' : 'Download Image'}
+              {linkCopied ? '✓ Copied' : 'Copy Link'}
             </button>
-            {reportId && (
-              <button
-                onClick={handleCopyLink}
-                className="btn-secondary text-sm"
-              >
-                {linkCopied ? '✓ Copied' : 'Copy Link'}
-              </button>
-            )}
-            <button
-              onClick={handleShareTwitter}
-              className="btn-secondary text-sm flex items-center gap-1.5"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              Share on X
-            </button>
-          </div>
+          )}
+          <button
+            onClick={handleShareTwitter}
+            className="btn-secondary text-sm flex items-center gap-1.5"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Share on X
+          </button>
         </div>
       </div>
     </div>
