@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,21 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-ink-900 text-[#e7e6e1] font-sans antialiased;
-    position: relative;
-  }
-
-  /* Noise texture overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 256px 256px;
+    @apply bg-ink-900 text-[#F0F0F0] font-sans antialiased;
   }
 
   /* Custom scrollbar */
@@ -29,49 +15,49 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0f0e0c;
+    background: #0D1117;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #5f594f;
+    background: #5A5C6F;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #9a9483;
+    background: #A0A3B1;
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #5f594f #0f0e0c;
+    scrollbar-color: #5A5C6F #0D1117;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-ink-800/80 border border-ink-700/30 rounded-xl backdrop-blur-sm;
+    @apply bg-ink-800 border border-white/[0.08] rounded-xl;
   }
 
   .btn-primary {
-    @apply bg-flame-500 hover:bg-flame-600 text-white font-medium px-6 py-2.5 rounded-lg
-           shadow-lg shadow-flame-500/20 transition-all duration-200
+    @apply bg-flame-500 hover:bg-flame-600 text-white font-semibold px-6 py-2.5 rounded-lg
+           transition-all duration-200
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-ink-800 border border-ink-700 text-[#e7e6e1] font-medium px-6 py-2.5 rounded-lg
-           hover:bg-ink-700/50 transition-all duration-200
+    @apply bg-transparent border border-white/[0.15] text-[#F0F0F0] font-medium px-6 py-2.5 rounded-lg
+           hover:bg-white/[0.06] hover:border-white/[0.25] transition-all duration-200
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .input-field {
-    @apply bg-ink-900 border border-ink-700 text-[#e7e6e1] rounded-lg px-4 py-2.5
+    @apply bg-[#252836] border border-white/[0.1] text-[#F0F0F0] rounded-lg px-4 py-2.5
            focus:outline-none focus:ring-2 focus:ring-flame-500/40 focus:border-flame-500/40
-           placeholder:text-ink-600 transition-all duration-200;
+           placeholder:text-ink-700 transition-all duration-200;
   }
 
   .label {
-    @apply text-sm font-medium text-[#9a9483] mb-1.5 block;
+    @apply text-sm font-medium text-ink-600 mb-1.5 block;
   }
 }

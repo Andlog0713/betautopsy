@@ -8,23 +8,22 @@ module.exports = {
     extend: {
       colors: {
         ink: {
-          900: '#0f0e0c',
-          800: '#1f1e1c',
-          700: '#5f594f',
-          600: '#9a9483',
-          500: '#b5ae9e',
+          900: '#0D1117',
+          800: '#1C1E2D',
+          700: '#5A5C6F',
+          600: '#A0A3B1',
+          500: '#C0C3CE',
         },
         flame: {
-          500: '#f97316',
-          600: '#ea580c',
+          500: '#00C853',
+          600: '#00A844',
         },
         mint: {
-          500: '#4ade80',
+          500: '#00C853',
         },
       },
       fontFamily: {
-        sans: ['DM Sans', 'sans-serif'],
-        serif: ['DM Serif Display', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       keyframes: {
@@ -37,8 +36,8 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(249,115,22,0.2)' },
-          '50%': { boxShadow: '0 0 40px rgba(249,115,22,0.4)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(0,200,83,0.2)' },
+          '50%': { boxShadow: '0 0 40px rgba(0,200,83,0.4)' },
         },
       },
       animation: {
