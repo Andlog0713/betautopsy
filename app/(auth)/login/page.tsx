@@ -25,7 +25,10 @@ export default function LoginPage() {
     });
 
     if (signInError) {
-      setError(signInError.message);
+      const msg = signInError.message.toLowerCase().includes('email not confirmed')
+        ? 'Please confirm your email first. Check your inbox for the confirmation link.'
+        : signInError.message;
+      setError(msg);
       setLoading(false);
       return;
     }
