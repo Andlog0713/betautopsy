@@ -1,6 +1,5 @@
 import { ImageResponse } from '@vercel/og';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 
@@ -26,11 +25,10 @@ function gradeColor(g: string): string {
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
+  // Use supabase-js directly (not SSR) since this is an edge function with no cookies
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   const { data } = await supabase
@@ -68,7 +66,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           </div>
 
           {/* Archetype */}
-          {d.archetype && (
+          {d.archetype ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ fontSize: 14, letterSpacing: 3, textTransform: 'uppercase', color: '#9a9483' }}>
                 BET DNA
@@ -80,9 +78,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 {d.archetype.description}
               </div>
             </div>
+          ) : (
+            <div style={{ display: 'flex' }} />
           )}
 
-          {/* Bottom stats row */}
+          {/* Bottom stats */}
           <div style={{ display: 'flex', gap: 40, fontSize: 16, color: '#9a9483' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span>Record</span>
@@ -96,7 +96,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               <span>Total Bets</span>
               <span style={{ color: '#e7e6e1', fontSize: 20, fontWeight: 600, marginTop: 4 }}>{d.total_bets}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <span style={{ fontSize: 14 }}>betautopsy.com</span>
             </div>
           </div>
@@ -104,14 +104,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
         {/* Right side — Grade + ROI */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 280 }}>
-          {/* Grade */}
           <div style={{ fontSize: 14, letterSpacing: 3, textTransform: 'uppercase', color: '#9a9483', marginBottom: 12 }}>
             GRADE
           </div>
           <div style={{ fontSize: 140, fontWeight: 700, color: gc, lineHeight: 1 }}>
             {d.grade}
           </div>
-          {/* ROI */}
           <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: 14, color: '#9a9483' }}>ROI</div>
             <div style={{
@@ -123,13 +121,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               {d.roi_percent >= 0 ? '+' : ''}{d.roi_percent.toFixed(1)}%
             </div>
           </div>
-          {/* Edge/Leak */}
-          {d.best_edge && (
+          {d.best_edge ? (
             <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ fontSize: 12, color: '#4ade80' }}>Best Edge</div>
               <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{d.best_edge.category}</div>
               <div style={{ fontSize: 14, color: '#4ade80' }}>+{d.best_edge.roi.toFixed(1)}%</div>
             </div>
+          ) : (
+            <div style={{ display: 'flex' }} />
           )}
         </div>
       </div>
