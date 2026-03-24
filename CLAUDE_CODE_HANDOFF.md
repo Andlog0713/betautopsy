@@ -4,7 +4,7 @@
 
 BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans their bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (tilt, emotional stake sizing, weekend warrior tendencies). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
 
-**It is NOT a bet tracker.** Pikkit, Juice Reel, BetStamp already do that. BetAutopsy is the intelligence layer on top. Users export from their existing tracker and upload here.
+**It is NOT a bet tracker.** Pikkit, BetStamp already do that. BetAutopsy is the intelligence layer on top. Users export from their existing tracker and upload here.
 
 ## TECH STACK
 
@@ -48,7 +48,7 @@ betautopsy/
 │   └── BetHistory.tsx                # Sortable bet history table
 ├── lib/
 │   ├── autopsy-engine.ts             # Claude API integration + system prompt + analysis logic
-│   ├── csv-parser.ts                 # Multi-format CSV parser (Pikkit, Juice Reel, generic)
+│   ├── csv-parser.ts                 # Multi-format CSV parser (Pikkit, BetStamp, generic)
 │   ├── stripe.ts                     # Stripe client, tier limits, checkout/portal helpers
 │   └── supabase.ts                   # Supabase clients (browser + server) + auth helpers
 ├── middleware.ts                     # Auth protection for dashboard routes
