@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { parseCSV } from '@/lib/csv-parser';
 import { TIER_LIMITS } from '@/types';
 import type { ParsedBet, Profile, SubscriptionTier } from '@/types';
+import { logErrorServer } from '@/lib/log-error-server';
 
 // Generate a duplicate key from a bet's core fields
 function dupKey(date: string, description: string, odds: number, stake: number): string {
@@ -195,6 +196,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Upload error:', error);
+    logErrorServer(error, { path: '/api/upload' });
     const message = error instanceof Error ? error.message : 'Upload failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runAutopsy, calculateMetrics, calculateDisciplineScore } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS } from '@/types';
+import { logErrorServer } from '@/lib/log-error-server';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
 export async function POST(request: Request) {
@@ -285,6 +286,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ report, ...meta });
   } catch (error) {
     console.error('Analysis error:', error);
+    logErrorServer(error, { path: '/api/analyze' });
     const message = error instanceof Error ? error.message : 'Analysis failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

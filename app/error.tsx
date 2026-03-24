@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import { reportError } from '@/lib/report-error';
+
 export default function Error({
   error,
   reset,
@@ -7,6 +10,10 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    reportError(error, { source: 'client', metadata: { digest: error.digest } });
+  }, [error]);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center">

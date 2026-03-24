@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { AutopsyAnalysis } from '@/types';
+import { logErrorServer } from '@/lib/log-error-server';
 
 export async function POST(request: Request) {
   try {
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ share_id: token.id });
   } catch (error) {
     console.error('Share error:', error);
+    logErrorServer(error, { path: '/api/share' });
     return NextResponse.json({ error: 'Share failed' }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { logErrorServer } from '@/lib/log-error-server';
 
 export async function POST(request: Request) {
   try {
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Feedback error:', error);
+    logErrorServer(error, { path: '/api/feedback' });
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
   }
 }

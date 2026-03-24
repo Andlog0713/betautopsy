@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { Bet } from '@/types';
+import { logErrorServer } from '@/lib/log-error-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Export error:', error);
+    logErrorServer(error, { path: '/api/export' });
     return NextResponse.json({ error: 'Export failed' }, { status: 500 });
   }
 }

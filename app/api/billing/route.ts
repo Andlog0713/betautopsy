@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { createCustomerPortalSession } from '@/lib/stripe';
+import { logErrorServer } from '@/lib/log-error-server';
 import type { Profile } from '@/types';
 
 export async function POST() {
@@ -33,6 +34,7 @@ export async function POST() {
     return NextResponse.json({ url });
   } catch (error) {
     console.error('Billing portal error:', error);
+    logErrorServer(error, { path: '/api/billing' });
     const message = error instanceof Error ? error.message : 'Billing portal failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

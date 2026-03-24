@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getStripe, tierFromPriceId } from '@/lib/stripe';
 import type Stripe from 'stripe';
+import { logErrorServer } from '@/lib/log-error-server';
 
 // Use service role key — this endpoint is called by Stripe, not a user session
 function createServiceClient() {
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('Webhook handler error:', error);
+    logErrorServer(error, { path: '/api/webhook' });
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 

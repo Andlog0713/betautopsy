@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { getOrCreateCustomer, createCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 import type { Profile } from '@/types';
+import { logErrorServer } from '@/lib/log-error-server';
 
 export async function POST(request: Request) {
   try {
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ url });
   } catch (error) {
     console.error('Checkout error:', error);
+    logErrorServer(error, { path: '/api/checkout' });
     const message = error instanceof Error ? error.message : 'Checkout failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

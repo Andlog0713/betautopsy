@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import Anthropic from '@anthropic-ai/sdk';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeForPrompt } from '@/lib/utils';
+import { logErrorServer } from '@/lib/log-error-server';
 import type { Bet, Profile } from '@/types';
 
 const SYSTEM_PROMPT = `You are BetAutopsy's Live Bet Check. A user is about to place a bet. Given their recent betting history, analyze this potential bet for behavioral red flags in 3-4 sentences. Be direct and specific.
@@ -180,6 +181,7 @@ ${historyLines.join('\n') || 'No bet history yet'}`;
     });
   } catch (error) {
     console.error('Bet check error:', error);
+    logErrorServer(error, { path: '/api/bet-check' });
     const message = error instanceof Error ? error.message : 'Bet check failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
