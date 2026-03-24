@@ -109,7 +109,7 @@ export default function ComparePage() {
             Compare how you perform across different sportsbooks, time periods, or bet sources.
             Available on Pro and Sharp.
           </p>
-          <Link href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro — $19/mo</Link>
+          <Link href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro — $11/mo</Link>
         </div>
       </div>
     );

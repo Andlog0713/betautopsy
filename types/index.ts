@@ -224,7 +224,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
   pro: {
     name: 'Pro',
-    price: 19,
+    price: 11,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: null,
@@ -238,7 +238,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
   sharp: {
     name: 'Sharp',
-    price: 29,
+    price: 22,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: null,

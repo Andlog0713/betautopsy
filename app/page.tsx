@@ -409,7 +409,7 @@ export default function LandingPage() {
             </span>
             <h3 className="font-bold text-2xl">Pro</h3>
             <div className="mt-2 mb-5">
-              <span className="font-mono text-4xl font-bold">$19</span>
+              <span className="font-mono text-4xl font-bold">$11</span>
               <span className="text-ink-600 text-sm">/mo</span>
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">
@@ -437,7 +437,7 @@ export default function LandingPage() {
           <div className="card p-7 flex flex-col animate-slide-up-d5">
             <h3 className="font-bold text-2xl">Sharp</h3>
             <div className="mt-2 mb-5">
-              <span className="font-mono text-4xl font-bold">$29</span>
+              <span className="font-mono text-4xl font-bold">$22</span>
               <span className="text-ink-600 text-sm">/mo</span>
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">

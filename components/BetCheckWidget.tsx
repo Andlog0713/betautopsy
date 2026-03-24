@@ -70,7 +70,7 @@ export default function BetCheckWidget({
               history before placing it.
             </p>
             <Link href="/pricing" className="text-sm text-flame-500 hover:underline">
-              Upgrade to Sharp — $29/mo →
+              Upgrade to Sharp — $22/mo →
             </Link>
           </div>
         </div>
