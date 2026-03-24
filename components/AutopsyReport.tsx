@@ -282,13 +282,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             onClick={() => setActiveTab('sharp')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'sharp'
-                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
-                : 'text-ink-600 hover:text-ink-500'
+                ? 'bg-cyan-400/10 text-cyan-400 shadow-sm border border-cyan-400/20'
+                : 'text-cyan-400/60 hover:text-cyan-400'
             }`}
           >
             Sharp
             {!isSharp && (
-              <svg className="w-3.5 h-3.5 text-ink-700" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
             )}
