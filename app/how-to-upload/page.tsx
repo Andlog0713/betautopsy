@@ -116,15 +116,23 @@ export default function HowToUploadPage() {
           <div className="space-y-4">
             {/* Pikkit */}
             <div className="bg-ink-900/50 rounded-lg p-4">
-              <h3 className="font-medium mb-2">Pikkit <span className="text-xs text-ink-600">(Pro required for export)</span></h3>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Open Pikkit app → Profile → Settings</li>
-                <li>Tap &quot;Export Bet History&quot;</li>
-                <li>Choose CSV format</li>
-                <li>Save the file and upload it here</li>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="font-medium">Pikkit</h3>
+                <span className="text-xs font-medium bg-flame-500/10 text-flame-500 px-2 py-0.5 rounded-full">FASTEST</span>
+              </div>
+              <p className="text-sm text-ink-600 mb-3">
+                Pikkit syncs with all major sportsbooks and exports your full history as CSV.
+                New users get a free 7-day Pro trial — no payment upfront.
+              </p>
+              <ol className="list-decimal list-inside space-y-1.5 text-sm text-ink-600">
+                <li>Download Pikkit and connect your sportsbooks</li>
+                <li>Activate the free Pro trial (tap the Pro tab → start trial)</li>
+                <li>Go to Pro tab → Settings (top-right) → Data Exports</li>
+                <li>Set your date range and tap <span className="text-[#e7e6e1]">Send CSV</span> — it&apos;ll be emailed to you</li>
+                <li>Upload that CSV here and you&apos;re done</li>
               </ol>
-              <p className="text-xs text-amber-400/80 mt-2">
-                Note: Export requires Pikkit Pro ($4.99/mo). Free Pikkit does not support CSV export.
+              <p className="text-xs text-ink-700 mt-3">
+                Takes about 3 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
               </p>
             </div>
 
