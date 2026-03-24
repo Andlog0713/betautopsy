@@ -30,7 +30,7 @@ export default function LandingPage() {
             </a>
           </div>
           <p className="text-ink-700 text-xs mt-6 animate-fade-in-d5">
-            No credit card required · Works with Pikkit, Action Network, and any CSV export
+            No credit card required · Works with Pikkit and any CSV export
           </p>
         </div>
       </section>
@@ -105,7 +105,7 @@ export default function LandingPage() {
             {
               step: '1',
               title: 'Upload',
-              desc: 'Export from your tracker or sportsbook. We handle Pikkit, Action Network, DraftKings, FanDuel — whatever you\'ve got.',
+              desc: 'Export from your tracker or sportsbook. We handle Pikkit, DraftKings, FanDuel — whatever you\'ve got.',
               delay: 'animate-slide-up-d1',
             },
             {

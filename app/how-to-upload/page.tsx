@@ -49,20 +49,6 @@ export default function HowToUploadPage() {
               </p>
             </div>
 
-            {/* Action Network */}
-            <div className="bg-ink-900/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-medium">Action Network</h3>
-                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">BetMGM &amp; bet365 only</span>
-              </div>
-              <p className="text-xs text-ink-600 mb-2">Action Network&apos;s BetSync only works with BetMGM and bet365. If you use other sportsbooks, use Pikkit instead.</p>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Log in on desktop → Settings → Export Picks</li>
-                <li>Choose date range → CSV will be emailed to you</li>
-                <li>Upload CSV here</li>
-              </ol>
-            </div>
-
             {/* Don't use any tracker? */}
             <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
               <p className="text-sm text-[#F0F0F0] font-medium mb-1">Don&apos;t use a tracker?</p>
