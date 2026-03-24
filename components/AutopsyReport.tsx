@@ -912,7 +912,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Sharp tab nudge */}
-      {hasSharpContent && (
+      {hasSharpContent && isSharp && (
         <button
           onClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           className="w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
