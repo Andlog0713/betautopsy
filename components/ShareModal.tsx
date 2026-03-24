@@ -80,6 +80,9 @@ export default function ShareModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share report"
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
       style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
       onClick={onClose}
@@ -87,6 +90,7 @@ export default function ShareModal({
       {/* Close button */}
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
+        aria-label="Close share modal"
         className="fixed top-4 right-4 z-[60] text-ink-500 hover:text-[#F0F0F0] transition-colors text-2xl"
       >
         ✕
@@ -127,7 +131,7 @@ export default function ShareModal({
             onClick={handleShareTwitter}
             className="btn-secondary text-sm flex items-center gap-1.5"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             Share on X
           </button>
         </div>

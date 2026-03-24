@@ -205,7 +205,7 @@ export default function UploadsPage() {
                       <button
                         onClick={() => deleteUpload(u.id, u.bet_count)}
                         className="text-xs text-ink-700 hover:text-red-400 transition-colors"
-                        title="Delete upload"
+                        aria-label="Delete upload"
                       >
                         ✕
                       </button>

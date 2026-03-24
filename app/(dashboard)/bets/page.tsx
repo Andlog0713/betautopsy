@@ -334,6 +334,7 @@ export default function BetsPage() {
                       type="checkbox"
                       checked={allFilteredSelected}
                       onChange={toggleSelectAll}
+                      aria-label="Select all bets on this page"
                       className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                     />
                   </th>
@@ -365,6 +366,7 @@ export default function BetsPage() {
                         type="checkbox"
                         checked={selected.has(bet.id)}
                         onChange={() => toggleSelect(bet.id)}
+                        aria-label={`Select bet: ${bet.description}`}
                         className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
                       />
                     </td>
@@ -421,7 +423,7 @@ export default function BetsPage() {
                       <button
                         onClick={() => handleDelete(bet.id)}
                         className="text-ink-700 hover:text-red-400 transition-colors text-xs"
-                        title="Delete bet"
+                        aria-label={`Delete bet: ${bet.description}`}
                       >
                         ✕
                       </button>
@@ -496,7 +498,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
         </button>
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/80 backdrop-blur-sm" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
-          <div className="card border-red-400/20 bg-ink-800 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
+          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-ink-800 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-bold text-lg">Clear All Bets</h3>
             <p className="text-sm text-[#F0F0F0]">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of

@@ -146,7 +146,7 @@ export default function UploadDetailPage() {
                     {Number(bet.profit) > 0 ? '+' : ''}${Number(bet.profit).toFixed(0)}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => deleteBet(bet.id)} className="text-ink-700 hover:text-red-400 transition-colors text-xs" title="Delete">✕</button>
+                    <button onClick={() => deleteBet(bet.id)} className="text-ink-700 hover:text-red-400 transition-colors text-xs" aria-label="Delete bet">✕</button>
                   </td>
                 </tr>
               ))}

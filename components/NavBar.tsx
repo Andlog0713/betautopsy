@@ -77,12 +77,15 @@ export default function NavBar() {
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
+                  aria-label="Account menu"
+                  aria-haspopup="true"
+                  aria-expanded={menuOpen}
                   className="w-8 h-8 rounded-full bg-ink-800 border border-white/[0.1] flex items-center justify-center text-sm font-medium text-[#F0F0F0] hover:border-white/[0.2] transition-colors"
                 >
                   {initial}
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-ink-800 border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/40 animate-fade-in">
+                  <div role="menu" className="absolute right-0 mt-2 w-56 bg-ink-800 border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/40 animate-fade-in">
                     <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
                       <p className="text-xs text-ink-500 truncate">{user.email}</p>
                       <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-1.5 capitalize ${tierBadge[tier]}`}>

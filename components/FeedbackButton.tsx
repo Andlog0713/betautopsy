@@ -49,7 +49,7 @@ export default function FeedbackButton() {
           <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 w-80 bg-ink-800 border border-white/[0.08] rounded-l-xl p-5 shadow-2xl shadow-black/40 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-sm">Send Feedback</h3>
-              <button onClick={() => setOpen(false)} className="text-ink-600 hover:text-[#F0F0F0] text-sm">✕</button>
+              <button onClick={() => setOpen(false)} aria-label="Close feedback" className="text-ink-600 hover:text-[#F0F0F0] text-sm">✕</button>
             </div>
 
             {submitted ? (
