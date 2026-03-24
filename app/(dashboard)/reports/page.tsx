@@ -247,7 +247,7 @@ export default function ReportsPage() {
             </a>
           </div>
         )}
-        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} />
+        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro' | 'sharp'} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
           <div className="card p-5 text-center space-y-2">

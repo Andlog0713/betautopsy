@@ -246,7 +246,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     features: [
       'Everything in Pro',
       'Live Bet Check',
-      'Priority analysis',
+      'Leak Prioritizer — ranked by $ impact',
+      'Full What-If Simulator',
       'Early access to new features',
     ],
   },

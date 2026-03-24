@@ -444,7 +444,8 @@ export default function LandingPage() {
               {[
                 'Everything in Pro',
                 'Live Bet Check before every bet',
-                'Priority analysis (faster queue)',
+                'Leak Prioritizer — ranked by $ impact',
+                'Full What-If Simulator',
                 'Early access to new features',
               ].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
