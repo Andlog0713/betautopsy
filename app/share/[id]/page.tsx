@@ -38,14 +38,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const data = await getShareData(id);
   if (!data) return { title: 'BetAutopsy' };
 
-  const title = `Grade: ${data.grade} | BetAutopsy`;
-  const desc = `Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent.toFixed(1)}% | ${data.record}${data.archetype ? ` | ${data.archetype.name}` : ''}`;
+  const title = data.archetype
+    ? `My BetAutopsy: ${data.grade} — ${data.archetype.name}`
+    : `My BetAutopsy: Grade ${data.grade}`;
+  const desc = `Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}% | ${data.record}${data.archetype ? ` | ${data.archetype.description}` : ''}`;
+  const ogImage = `${process.env.NEXT_PUBLIC_APP_URL || 'https://betautopsy.com'}/api/og/${id}`;
 
   return {
     title,
     description: desc,
-    openGraph: { title, description: desc, siteName: 'BetAutopsy' },
-    twitter: { card: 'summary', title, description: desc },
+    openGraph: { title, description: desc, siteName: 'BetAutopsy', images: [{ url: ogImage, width: 1200, height: 630 }] },
+    twitter: { card: 'summary_large_image', title, description: desc, images: [ogImage] },
   };
 }
 
