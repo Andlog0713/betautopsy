@@ -109,8 +109,9 @@ export default function HowToUploadPage() {
             <span className="text-xs font-medium bg-mint-500/10 text-mint-500 px-2 py-0.5 rounded-full">RECOMMENDED</span>
           </div>
           <p className="text-ink-600 text-sm mb-6">
-            If you already track bets in an app, this is the fastest path. Export your history
-            as CSV and upload it here. We auto-detect the format.
+            Pikkit is the only app that auto-syncs directly from your sportsbooks — even if
+            you&apos;ve never tracked a bet before. The others only work if you&apos;ve already
+            been logging bets there.
           </p>
 
           <div className="space-y-4">
@@ -121,8 +122,9 @@ export default function HowToUploadPage() {
                 <span className="text-xs font-medium bg-flame-500/10 text-flame-500 px-2 py-0.5 rounded-full">FASTEST</span>
               </div>
               <p className="text-sm text-ink-600 mb-3">
-                Pikkit syncs with all major sportsbooks and exports your full history as CSV.
-                New users get a free 7-day Pro trial — no payment upfront.
+                Pikkit <span className="text-[#e7e6e1]">connects directly to your sportsbook accounts</span> and
+                pulls your full bet history automatically — even if you&apos;ve never tracked a bet before.
+                New users get a free 7-day Pro trial, no payment upfront.
               </p>
               <ol className="list-decimal list-inside space-y-1.5 text-sm text-ink-600">
                 <li>Download Pikkit and connect your sportsbooks</li>
@@ -138,34 +140,51 @@ export default function HowToUploadPage() {
 
             {/* Juice Reel */}
             <div className="bg-ink-900/50 rounded-lg p-4">
-              <h3 className="font-medium mb-2">Juice Reel <span className="text-xs text-mint-500">(free)</span></h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-medium">Juice Reel</h3>
+                <span className="text-xs text-mint-500">(free)</span>
+                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
+              </div>
+              <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been logging bets in Juice Reel. Doesn&apos;t auto-sync from sportsbooks.</p>
               <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Open Juice Reel app or web</li>
-                <li>Go to your bet history / tracked bets</li>
-                <li>Look for the export or download option</li>
+                <li>Open Juice Reel → bet history</li>
                 <li>Export as CSV and upload here</li>
               </ol>
             </div>
 
             {/* BetStamp */}
             <div className="bg-ink-900/50 rounded-lg p-4">
-              <h3 className="font-medium mb-2">BetStamp</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-medium">BetStamp</h3>
+                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
+              </div>
+              <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been logging bets in BetStamp.</p>
               <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Open BetStamp → Bet History</li>
-                <li>Export your tracked bets as CSV</li>
+                <li>Open BetStamp → Bet History → Export as CSV</li>
                 <li>Upload the file here</li>
               </ol>
             </div>
 
             {/* Action Network */}
             <div className="bg-ink-900/50 rounded-lg p-4">
-              <h3 className="font-medium mb-2">Action Network</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-medium">Action Network</h3>
+                <span className="text-xs text-ink-700 bg-ink-800 px-2 py-0.5 rounded">Manual tracking only</span>
+              </div>
+              <p className="text-xs text-ink-600 mb-2">Only works if you&apos;ve been tracking bets on Action Network.</p>
               <ol className="list-decimal list-inside space-y-1 text-sm text-ink-600">
-                <li>Log in to Action Network on desktop</li>
-                <li>Go to your tracked bets</li>
-                <li>Export bet history</li>
+                <li>Log in on desktop → tracked bets → export history</li>
                 <li>Upload CSV here</li>
               </ol>
+            </div>
+
+            {/* Don't use any tracker? */}
+            <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
+              <p className="text-sm text-[#e7e6e1] font-medium mb-1">Don&apos;t use a tracker?</p>
+              <p className="text-sm text-ink-600">
+                Start with Pikkit — it&apos;ll pull your full history from any sportsbook automatically.
+                No manual logging needed. <span className="text-flame-500">3 minutes to set up.</span>
+              </p>
             </div>
           </div>
         </div>
