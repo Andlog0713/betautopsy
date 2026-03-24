@@ -124,7 +124,7 @@ export default function UploadPage() {
       {tier === 'free' && (
         <div className="card border-ink-700/30 bg-ink-800/40 p-4">
           <p className="text-ink-600 text-sm">
-            <span className="font-medium text-[#e7e6e1]">Free tier:</span> Unlimited uploads. Your first autopsy analyzes your 50 most recent bets.
+            <span className="font-medium text-[#e7e6e1]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
           </p>
         </div>
       )}
