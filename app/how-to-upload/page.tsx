@@ -1,5 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
+import { useState } from 'react';
+
+const AI_PROMPT = `Convert my betting data into a CSV with exactly these columns in this order: date, sport, bet_type, description, odds, stake, result, profit, sportsbook.
+
+Rules:
+- date: YYYY-MM-DD format
+- sport: NFL, NBA, MLB, NHL, Soccer, Tennis, etc.
+- bet_type: spread, moneyline, total, prop, parlay, or other
+- odds: American format (e.g. -110, +150)
+- stake: number only, no dollar sign
+- result: win, loss, or push
+- profit: positive for wins, negative for losses (number only)
+- sportsbook: DraftKings, FanDuel, BetMGM, etc.
+
+Output ONLY the CSV with a header row, no explanation. Here is my data:`;
 
 export default function HowToUploadPage() {
   return (
@@ -54,7 +71,7 @@ export default function HowToUploadPage() {
               <p className="text-sm text-[#F0F0F0] font-medium mb-1">Don&apos;t use a tracker?</p>
               <p className="text-sm text-ink-600">
                 Start with Pikkit — it&apos;ll pull your full history from any sportsbook automatically.
-                No manual logging needed. <span className="text-flame-500">3 minutes to set up.</span>
+                No manual logging needed. <span className="text-flame-500">Less than 5 minutes to set up.</span>
               </p>
             </div>
           </div>
@@ -112,6 +129,8 @@ export default function HowToUploadPage() {
                 on the Bet History page.
               </p>
             </div>
+
+            <AiPromptBlock />
           </div>
         </div>
 
@@ -135,5 +154,47 @@ export default function HowToUploadPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+function AiPromptBlock() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(AI_PROMPT);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
+      <p className="text-sm text-[#F0F0F0] font-medium mb-2">Already have a spreadsheet in a different format?</p>
+      <p className="text-sm text-ink-600 mb-3">
+        Copy and paste this prompt into ChatGPT, Claude, or any AI assistant along with your data to convert it automatically:
+      </p>
+      <div className="relative">
+        <pre className="font-mono text-xs text-ink-400 bg-ink-900 border border-white/[0.08] rounded-lg p-4 pr-12 overflow-x-auto whitespace-pre-wrap">
+          {AI_PROMPT}
+        </pre>
+        <button
+          onClick={handleCopy}
+          className="absolute top-2 right-2 text-ink-600 hover:text-[#F0F0F0] transition-colors"
+          title="Copy prompt"
+        >
+          {copied ? (
+            <svg className="w-4 h-4 text-mint-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          )}
+        </button>
+      </div>
+      <p className="text-xs text-ink-700 mt-2">
+        Paste the AI&apos;s output into a text file, save as .csv, and upload it here.
+      </p>
+    </div>
   );
 }
