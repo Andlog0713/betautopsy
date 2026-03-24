@@ -188,6 +188,46 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          {/* Stats grid */}
+          <div className="relative">
+            <div className="absolute -top-8 right-0"><EyeToggle /></div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <StatCard label="Total Bets" value={mask(stats.totalBets.toLocaleString())} icon="🎯" />
+              <StatCard label="Total Wagered" value={mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} icon="💵" />
+              <StatCard label="Net P&L" value={mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL).toLocaleString()}`)} icon="💰" color={stats.netPnL >= 0 ? 'text-mint-500' : 'text-red-400'} />
+              <StatCard label="Win Rate" value={mask(`${stats.winRate.toFixed(1)}%`)} icon="📈" color={stats.winRate >= 50 ? 'text-mint-500' : 'text-red-400'} />
+              <StatCard label="Avg Stake" value={mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} icon="📊" />
+            </div>
+          </div>
+
+          {/* First Autopsy CTA */}
+          {stats.reportCount === 0 && (
+            <div className="card border-flame-500/30 bg-flame-500/5 p-8 text-center space-y-4">
+              <div className="text-4xl">🔬</div>
+              <h2 className="font-bold text-2xl">Run Your First Autopsy</h2>
+              <p className="text-ink-600 max-w-md mx-auto">
+                You&apos;ve got {stats.totalBets} bets loaded. Get an AI-powered behavioral
+                analysis in about 20 seconds.
+              </p>
+              <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3">
+                Run Your Autopsy Now →
+              </Link>
+            </div>
+          )}
+
+          {/* Nudge — haven't run a report in 7+ days */}
+          {daysSinceReport !== null && daysSinceReport >= 7 && newBetsSinceReport > 0 && (
+            <div className="card border-flame-500/30 bg-flame-500/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-[#F0F0F0] font-medium">
+                  You&apos;ve placed {newBetsSinceReport} new bet{newBetsSinceReport !== 1 ? 's' : ''} since your last autopsy
+                </p>
+                <p className="text-ink-600 text-sm">Time for a check-up? ({daysSinceReport} days ago)</p>
+              </div>
+              <Link href="/reports?run=true" className="btn-primary text-sm shrink-0">Run Autopsy</Link>
+            </div>
+          )}
+
           {/* Discipline Score + Streak Hero */}
           {latest && isPaid && (
             <div className="card p-6">
@@ -242,39 +282,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Streak at risk warning */}
-          {isPaid && streakCount > 0 && streakLastDate && (() => {
-            const daysSinceStreak = Math.floor((Date.now() - new Date(streakLastDate).getTime()) / 86400000);
-            const daysLeft = 21 - daysSinceStreak;
-            if (daysSinceStreak >= 14 && daysLeft > 0) {
-              return (
-                <div className="card border-amber-400/30 bg-amber-400/5 p-4">
-                  <p className="text-amber-400 text-sm">
-                    Your {streakCount}-report streak is at risk — run an autopsy in the next {daysLeft} day{daysLeft !== 1 ? 's' : ''} to keep it alive.
-                    {newBetsSinceReport > 0 && ` You have ${newBetsSinceReport} new bets since your last check-in.`}
-                  </p>
-                  <Link href="/reports?run=true" className="text-sm text-flame-500 hover:underline mt-1 inline-block">
-                    Run Autopsy →
-                  </Link>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
-          {/* Nudge — haven't run a report in 7+ days */}
-          {daysSinceReport !== null && daysSinceReport >= 7 && newBetsSinceReport > 0 && (
-            <div className="card border-flame-500/30 bg-flame-500/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-[#F0F0F0] font-medium">
-                  You&apos;ve placed {newBetsSinceReport} new bet{newBetsSinceReport !== 1 ? 's' : ''} since your last autopsy
-                </p>
-                <p className="text-ink-600 text-sm">Time for a check-up? ({daysSinceReport} days ago)</p>
-              </div>
-              <Link href="/reports?run=true" className="btn-primary text-sm shrink-0">Run Autopsy</Link>
-            </div>
-          )}
-
           {/* Progress Trend Cards */}
           {latest && isPaid && (
             <div className="space-y-4">
@@ -289,47 +296,6 @@ export default function DashboardPage() {
               {!prev && (
                 <p className="text-ink-700 text-xs">Run another autopsy next week to start tracking progress.</p>
               )}
-            </div>
-          )}
-
-          {/* Free tier upgrade prompt */}
-          {latest && !isPaid && (
-            <div className="card border-flame-500/20 bg-flame-500/5 p-6 text-center space-y-3">
-              <p className="text-[#F0F0F0] mb-2">
-                Right now you&apos;re guessing whether you&apos;re getting better.
-              </p>
-              <p className="text-ink-600 text-sm mb-4">
-                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks — and
-                saw it in the numbers. Your first report was a snapshot. Your fifth report is
-                proof you&apos;re a different bettor.
-              </p>
-              <Link href="/pricing" className="btn-primary inline-block text-sm">Start Tracking Your Progress</Link>
-            </div>
-          )}
-
-          {!isPaid && stats.reportCount > 0 && (
-            <div className="relative">
-              <div className="blur-sm pointer-events-none opacity-40">
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Progress Over Time</h3>
-                  <div className="space-y-2">
-                    {[65, 52, 47, 38].map((h, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-ink-600 w-16">Week {i + 1}</span>
-                        <div className="flex-1 h-2 bg-ink-900 rounded-full overflow-hidden">
-                          <div className="h-full bg-flame-500 rounded-full" style={{ width: `${h}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-2xl mb-1">🔒</p>
-                  <p className="text-ink-600 text-sm">Track your progress with Pro</p>
-                </div>
-              </div>
             </div>
           )}
 
@@ -376,25 +342,83 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Streak Counter */}
-          {isPaid && snapshots.length > 0 && (
-            <div className="card p-5 flex items-center gap-4">
-              <span className="text-3xl">{streakWeeks >= 3 ? '🔥' : '📅'}</span>
-              <div>
-                {streakWeeks >= 2 ? (
-                  <p className="text-[#F0F0F0] font-medium">
-                    {streakWeeks} consecutive autopsy check-ins
-                  </p>
-                ) : daysSinceReport !== null && daysSinceReport > 12 ? (
-                  <p className="text-[#F0F0F0]">
-                    It&apos;s been {daysSinceReport} days since your last autopsy — upload your recent bets and check in.
-                  </p>
-                ) : (
-                  <p className="text-[#F0F0F0]">
-                    {snapshots.length} autopsy report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly for the best insights.
-                  </p>
-                )}
+          {/* Free tier upgrade prompt */}
+          {latest && !isPaid && (
+            <div className="card border-flame-500/20 bg-flame-500/5 p-6 text-center space-y-3">
+              <p className="text-[#F0F0F0] mb-2">
+                Right now you&apos;re guessing whether you&apos;re getting better.
+              </p>
+              <p className="text-ink-600 text-sm mb-4">
+                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks — and
+                saw it in the numbers. Your first report was a snapshot. Your fifth report is
+                proof you&apos;re a different bettor.
+              </p>
+              <Link href="/pricing" className="btn-primary inline-block text-sm">Start Tracking Your Progress</Link>
+            </div>
+          )}
+
+          {!isPaid && stats.reportCount > 0 && (
+            <div className="relative">
+              <div className="blur-sm pointer-events-none opacity-40">
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">Progress Over Time</h3>
+                  <div className="space-y-2">
+                    {[65, 52, 47, 38].map((h, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-xs text-ink-600 w-16">Week {i + 1}</span>
+                        <div className="flex-1 h-2 bg-ink-900 rounded-full overflow-hidden">
+                          <div className="h-full bg-flame-500 rounded-full" style={{ width: `${h}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-2xl mb-1">🔒</p>
+                  <p className="text-ink-600 text-sm">Track your progress with Pro</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Streak warnings */}
+          {isPaid && streakCount > 0 && streakLastDate && (() => {
+            const daysSinceStreak = Math.floor((Date.now() - new Date(streakLastDate).getTime()) / 86400000);
+            const daysLeft = 21 - daysSinceStreak;
+            if (daysSinceStreak >= 14 && daysLeft > 0) {
+              return (
+                <div className="card border-amber-400/30 bg-amber-400/5 p-4">
+                  <p className="text-amber-400 text-sm">
+                    Your {streakCount}-report streak is at risk — run an autopsy in the next {daysLeft} day{daysLeft !== 1 ? 's' : ''} to keep it alive.
+                    {newBetsSinceReport > 0 && ` You have ${newBetsSinceReport} new bets since your last check-in.`}
+                  </p>
+                  <Link href="/reports?run=true" className="text-sm text-flame-500 hover:underline mt-1 inline-block">
+                    Run Autopsy →
+                  </Link>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Bankroll */}
+          {bankroll ? (
+            <div className="card p-5 flex items-center justify-between">
+              <div>
+                <p className="text-ink-600 text-xs">Bankroll</p>
+                <p className="font-mono text-lg text-[#F0F0F0]">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+              </div>
+              <Link href="/settings" className="text-xs text-ink-600 hover:text-flame-500 transition-colors">Edit in Settings</Link>
+            </div>
+          ) : (
+            <div className="card p-5 flex items-center justify-between">
+              <div>
+                <p className="text-[#F0F0F0] text-sm">Set your bankroll for more accurate analysis</p>
+                <p className="text-ink-700 text-xs mt-0.5">Helps us assess your risk level</p>
+              </div>
+              <Link href="/settings" className="text-sm text-flame-500 hover:underline">Set up your profile →</Link>
             </div>
           )}
 
@@ -422,49 +446,25 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Stats grid */}
-          <div className="relative">
-            <div className="absolute -top-8 right-0"><EyeToggle /></div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <StatCard label="Total Bets" value={mask(stats.totalBets.toLocaleString())} icon="🎯" />
-              <StatCard label="Total Wagered" value={mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} icon="💵" />
-              <StatCard label="Net P&L" value={mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL).toLocaleString()}`)} icon="💰" color={stats.netPnL >= 0 ? 'text-mint-500' : 'text-red-400'} />
-              <StatCard label="Win Rate" value={mask(`${stats.winRate.toFixed(1)}%`)} icon="📈" color={stats.winRate >= 50 ? 'text-mint-500' : 'text-red-400'} />
-              <StatCard label="Avg Stake" value={mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} icon="📊" />
-            </div>
-          </div>
-
-          {/* First Autopsy CTA */}
-          {stats.reportCount === 0 && (
-            <div className="card border-flame-500/30 bg-flame-500/5 p-8 text-center space-y-4">
-              <div className="text-4xl">🔬</div>
-              <h2 className="font-bold text-2xl">Run Your First Autopsy</h2>
-              <p className="text-ink-600 max-w-md mx-auto">
-                You&apos;ve got {stats.totalBets} bets loaded. Get an AI-powered behavioral
-                analysis in about 20 seconds.
-              </p>
-              <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3">
-                Run Your Autopsy Now →
-              </Link>
-            </div>
-          )}
-
-          {/* Bankroll */}
-          {bankroll ? (
-            <div className="card p-5 flex items-center justify-between">
+          {/* Streak Counter */}
+          {isPaid && snapshots.length > 0 && (
+            <div className="card p-5 flex items-center gap-4">
+              <span className="text-3xl">{streakWeeks >= 3 ? '🔥' : '📅'}</span>
               <div>
-                <p className="text-ink-600 text-xs">Bankroll</p>
-                <p className="font-mono text-lg text-[#F0F0F0]">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                {streakWeeks >= 2 ? (
+                  <p className="text-[#F0F0F0] font-medium">
+                    {streakWeeks} consecutive autopsy check-ins
+                  </p>
+                ) : daysSinceReport !== null && daysSinceReport > 12 ? (
+                  <p className="text-[#F0F0F0]">
+                    It&apos;s been {daysSinceReport} days since your last autopsy — upload your recent bets and check in.
+                  </p>
+                ) : (
+                  <p className="text-[#F0F0F0]">
+                    {snapshots.length} autopsy report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly for the best insights.
+                  </p>
+                )}
               </div>
-              <Link href="/settings" className="text-xs text-ink-600 hover:text-flame-500 transition-colors">Edit in Settings</Link>
-            </div>
-          ) : (
-            <div className="card p-5 flex items-center justify-between">
-              <div>
-                <p className="text-[#F0F0F0] text-sm">Set your bankroll for more accurate analysis</p>
-                <p className="text-ink-700 text-xs mt-0.5">Helps us assess your risk level</p>
-              </div>
-              <Link href="/settings" className="text-sm text-flame-500 hover:underline">Set up your profile →</Link>
             </div>
           )}
 
