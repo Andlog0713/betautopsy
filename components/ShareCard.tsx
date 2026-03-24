@@ -108,7 +108,8 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
     <div
       ref={ref}
       style={{
-        width: 440,
+        width: '100%',
+        maxWidth: 440,
         padding: 32,
         background: '#0D1117',
         borderRadius: 20,

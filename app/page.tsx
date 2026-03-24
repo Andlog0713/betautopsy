@@ -358,7 +358,7 @@ export default function LandingPage() {
         </div>
 
         {/* Social proof stats */}
-        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
           <div className="text-center">
             <p className="font-mono text-2xl font-bold text-flame-500">7 days</p>
             <p className="text-ink-700 text-xs mt-1">Average time to second autopsy</p>

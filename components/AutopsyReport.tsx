@@ -391,7 +391,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {hasBets && pnlData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-bold text-xl mb-4">P&L Over Time</h2>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
@@ -463,7 +463,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="inline-block w-2 h-2 rounded-full bg-[#5f594f] mr-1 align-middle" /> Normal
             <span className="inline-block w-2 h-2 rounded-full bg-[#f97316] mr-1 ml-3 align-middle" /> Within 1hr of a loss
           </p>
-          <div className="h-48">
+          <div className="h-40 sm:h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stakeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
