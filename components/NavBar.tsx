@@ -74,6 +74,9 @@ export default function NavBar() {
           {user ? (
             /* Logged in */
             <div className="flex items-center gap-3">
+              <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors whitespace-nowrap hidden sm:block">
+                How to Upload
+              </Link>
               <Link href="/dashboard" className="btn-primary text-sm !px-4 !py-2 whitespace-nowrap">
                 Dashboard
               </Link>
