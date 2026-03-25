@@ -6,9 +6,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
-import ShareModal from './ShareModal';
 import ReportFeedback from './ReportFeedback';
-import type { ShareCardData } from './ShareCard';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot } from '@/types';
 
 // ── Helpers ──
@@ -313,7 +311,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Share */}
-      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />}
+      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} />}
 
       {/* vs. Last Report */}
       {previousSnapshot && (
@@ -1119,78 +1117,96 @@ function SummaryItem({ label, value, color, small, hint }: { label: string; valu
 
 // ── Share Section ──
 
-function ShareSection({ analysis, summary, reportId, bets }: { analysis: AutopsyAnalysis; summary: AutopsyAnalysis['summary']; reportId?: string; bets?: Bet[] }) {
-  const [showModal, setShowModal] = useState(false);
+function ShareSection({ analysis, summary, reportId }: { analysis: AutopsyAnalysis; summary: AutopsyAnalysis['summary']; reportId?: string }) {
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  // Calculate best edge and biggest leak from strategic leaks OR from bets directly
-  const leaks = analysis.strategic_leaks ?? [];
-  let bestEdgeData: { category: string; roi: number } | null = null;
-  let biggestLeakData: { category: string; roi: number } | null = null;
-
-  const bestLeakEdge = leaks.filter((l) => l.roi_impact > 0).sort((a, b) => b.roi_impact - a.roi_impact)[0];
-  const worstLeak = leaks.filter((l) => l.roi_impact < 0).sort((a, b) => a.roi_impact - b.roi_impact)[0];
-
-  if (bestLeakEdge) bestEdgeData = { category: bestLeakEdge.category, roi: bestLeakEdge.roi_impact };
-  if (worstLeak) biggestLeakData = { category: worstLeak.category, roi: worstLeak.roi_impact };
-
-  // Fallback: calculate from bets if no leaks data
-  if ((!bestEdgeData || !biggestLeakData) && bets && bets.length > 0) {
-    const catMap = new Map<string, { profit: number; staked: number; count: number }>();
-    bets.filter((b) => b.result === 'win' || b.result === 'loss').forEach((b) => {
-      const key = `${b.sport} ${b.bet_type}`;
-      const c = catMap.get(key) ?? { profit: 0, staked: 0, count: 0 };
-      c.profit += Number(b.profit); c.staked += Number(b.stake); c.count++;
-      catMap.set(key, c);
-    });
-    const cats = Array.from(catMap.entries())
-      .filter(([, v]) => v.count >= 3 && v.staked > 0)
-      .map(([k, v]) => ({ category: k, roi: (v.profit / v.staked) * 100 }));
-    if (!bestEdgeData) {
-      const best = cats.filter((c) => c.roi > 0).sort((a, b) => b.roi - a.roi)[0];
-      if (best) bestEdgeData = best;
+  async function getShareUrl(): Promise<string | null> {
+    if (shareUrl) return shareUrl;
+    if (!reportId) return null;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_id: reportId }),
+      });
+      const result = await res.json();
+      if (result.share_id) {
+        const url = `${window.location.origin}/share/${result.share_id}`;
+        setShareUrl(url);
+        return url;
+      }
+    } catch {
+      console.error('Share link failed');
+    } finally {
+      setLoading(false);
     }
-    if (!biggestLeakData) {
-      const worst = cats.filter((c) => c.roi < 0).sort((a, b) => a.roi - b.roi)[0];
-      if (worst) biggestLeakData = worst;
+    return null;
+  }
+
+  async function handleShare() {
+    const url = await getShareUrl();
+    if (url) setOpen(true);
+  }
+
+  async function handleCopy() {
+    const url = shareUrl ?? await getShareUrl();
+    if (url) {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   }
 
-  // Calculate win rate from summary
-  const parts = summary.record.match(/(\d+)W-(\d+)L-(\d+)P/);
-  const winRate = parts ? (parseInt(parts[1]) / (parseInt(parts[1]) + parseInt(parts[2]) + parseInt(parts[3]))) * 100 : 0;
-
-  // Calculate parlay percent from bets
-  const parlayPct = bets && bets.length > 0
-    ? (bets.filter((b) => b.bet_type === 'parlay' || (b.parlay_legs && b.parlay_legs > 1)).length / bets.length) * 100
-    : 0;
-
-  const shareData: ShareCardData = {
-    grade: summary.overall_grade,
-    emotion_score: analysis.tilt_score,
-    roi_percent: summary.roi_percent,
-    win_rate: winRate,
-    total_bets: summary.total_bets,
-    record: summary.record,
-    best_edge: bestEdgeData,
-    biggest_leak: biggestLeakData,
-    parlay_percent: parlayPct,
-    sharp_score: analysis.edge_profile?.sharp_score ?? null,
-    archetype: analysis.betting_archetype ?? null,
-    discipline_score: analysis.discipline_score?.total ?? null,
-    date_range: summary.date_range,
-    bets,
-  };
+  function handleTweet() {
+    if (!shareUrl) return;
+    const text = `My BetAutopsy: Grade ${summary.overall_grade}${analysis.betting_archetype ? ` | ${analysis.betting_archetype.name}` : ''} | Emotion Score: ${analysis.tilt_score}/100 | ROI: ${summary.roi_percent >= 0 ? '+' : ''}${summary.roi_percent.toFixed(1)}%`;
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  }
 
   return (
-    <>
-      <div className="flex flex-wrap gap-3">
-        <button onClick={() => setShowModal(true)} className="btn-primary text-sm !py-2">
-          Share Card
-        </button>
-      </div>
-      {showModal && (
-        <ShareModal data={shareData} reportId={reportId} onClose={() => setShowModal(false)} />
+    <div className="relative">
+      <button
+        onClick={handleShare}
+        disabled={loading || !reportId}
+        className="btn-primary text-sm !py-2 flex items-center gap-2"
+      >
+        {loading ? (
+          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        ) : (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+        )}
+        Share
+      </button>
+
+      {open && shareUrl && (
+        <div className="mt-3 card p-4 space-y-3 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={shareUrl}
+              className="flex-1 bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] font-mono truncate"
+              onFocus={(e) => e.target.select()}
+            />
+            <button onClick={handleCopy} className="btn-secondary text-sm whitespace-nowrap">
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <button
+            onClick={handleTweet}
+            className="btn-secondary text-sm flex items-center gap-1.5"
+          >
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Share on X
+          </button>
+        </div>
       )}
-    </>
+    </div>
   );
 }
