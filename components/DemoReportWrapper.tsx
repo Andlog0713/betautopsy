@@ -33,7 +33,7 @@ export default function DemoReportWrapper() {
       {/* ── Report Container ── */}
       <div
         className={`relative overflow-hidden transition-all duration-700 ease-out ${
-          expanded ? 'max-h-none' : 'max-h-[900px]'
+          expanded ? 'max-h-none' : 'max-h-[2400px]'
         }`}
       >
         {/* Subtle watermark pattern */}
@@ -63,7 +63,7 @@ export default function DemoReportWrapper() {
         {!expanded && (
           <div className="absolute bottom-0 left-0 right-0 z-20">
             {/* Tall gradient fade */}
-            <div className="h-64 bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent" />
+            <div className="h-80 bg-gradient-to-t from-ink-900 via-ink-900/90 to-transparent" />
 
             {/* CTA area */}
             <div className="bg-ink-900 pb-4 text-center space-y-4">
