@@ -70,7 +70,7 @@ export default function NavBar() {
           <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors whitespace-nowrap hidden sm:block">
             How to Upload
           </Link>
-          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
+          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
             Pricing
           </a>
 
