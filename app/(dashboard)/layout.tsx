@@ -104,6 +104,14 @@ const navItems = [
   { href: '/reports', label: 'Reports', Icon: IconReport },
 ];
 
+function IconAdmin({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 const bottomNavItems = [
   { href: '/settings', label: 'Settings', Icon: IconSettings },
 ];
@@ -212,6 +220,20 @@ export default function DashboardLayout({
               <IconPricing />
               Pricing
             </Link>
+            {profile?.is_admin && (
+              <Link
+                href="/admin/reports"
+                onClick={() => setMobileNavOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  pathname.startsWith('/admin')
+                    ? 'bg-flame-500/10 text-flame-500'
+                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                }`}
+              >
+                <IconAdmin />
+                Admin
+              </Link>
+            )}
             {bottomNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -272,6 +294,19 @@ export default function DashboardLayout({
             </Link>
           ))}
           <div className="mt-3 pt-3 border-t border-white/[0.06]">
+            {profile?.is_admin && (
+              <Link
+                href="/admin/reports"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                  pathname.startsWith('/admin')
+                    ? 'bg-flame-500/10 text-flame-500'
+                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                }`}
+              >
+                <IconAdmin />
+                Admin
+              </Link>
+            )}
             {bottomNavItems.map((item) => (
               <Link
                 key={item.href}

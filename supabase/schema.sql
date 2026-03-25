@@ -20,6 +20,7 @@ create table if not exists profiles (
   streak_last_date date,
   streak_best integer default 0,
   login_count integer default 0,
+  is_admin boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
