@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import type { AutopsyAnalysis } from '@/types';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import type { AutopsyAnalysis, Profile } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 
 export async function POST(request: Request) {
@@ -17,13 +17,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'report_id required' }, { status: 400 });
     }
 
-    // Fetch report
-    const { data: report } = await supabase
+    // Fetch report (try own first, then admin fallback)
+    let report = (await supabase
       .from('autopsy_reports')
       .select('*')
       .eq('id', report_id)
       .eq('user_id', user.id)
-      .single();
+      .single()).data;
+
+    if (!report) {
+      // Admin fallback: bypass RLS
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (profile && (profile as Profile).is_admin) {
+        const adminClient = createServiceRoleClient();
+        report = (await adminClient
+          .from('autopsy_reports')
+          .select('*')
+          .eq('id', report_id)
+          .single()).data;
+      }
+    }
 
     if (!report) {
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
@@ -57,8 +75,12 @@ export async function POST(request: Request) {
       report_json: analysis,
     };
 
+    // Use service role for admin sharing other users' reports (bypasses RLS)
+    const isOwnReport = report.user_id === user.id;
+    const dbClient = isOwnReport ? supabase : createServiceRoleClient();
+
     // Check if share token already exists for this report
-    const { data: existing } = await supabase
+    const { data: existing } = await dbClient
       .from('share_tokens')
       .select('id, data')
       .eq('report_id', report_id)
@@ -68,7 +90,7 @@ export async function POST(request: Request) {
       const existingData = existing.data as Record<string, unknown> | null;
       // Update old tokens that don't have the full report
       if (!existingData?.report_json) {
-        await supabase
+        await dbClient
           .from('share_tokens')
           .update({ data: shareData })
           .eq('id', existing.id);
@@ -76,11 +98,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ share_id: existing.id });
     }
 
-    const { data: token, error: insertErr } = await supabase
+    const { data: token, error: insertErr } = await dbClient
       .from('share_tokens')
       .insert({
         report_id: report_id,
-        user_id: user.id,
+        user_id: report.user_id,
         data: shareData,
       })
       .select('id')
