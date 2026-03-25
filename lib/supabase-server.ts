@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Profile } from '@/types';
 
@@ -32,18 +33,14 @@ export async function createServerSupabaseClient() {
 
 // ── Service Role Client (for webhooks, admin operations) ──
 
-export async function createServiceRoleClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+export function createServiceRoleClient() {
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() {},
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
       },
     }
   );

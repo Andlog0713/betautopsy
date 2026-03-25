@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     // Use service role client to bypass RLS
-    const adminClient = await createServiceRoleClient();
+    const adminClient = createServiceRoleClient();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
