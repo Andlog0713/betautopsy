@@ -288,8 +288,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Tab Bar */}
-      {hasSharpContent && (
+      {/* Tab Bar — hidden in readOnly/demo mode */}
+      {hasSharpContent && !readOnly && (
         <div className="flex gap-1 bg-ink-900 p-1 rounded-lg w-fit">
           <button
             onClick={() => setActiveTab('report')}
