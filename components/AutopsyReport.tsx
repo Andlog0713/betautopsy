@@ -1313,7 +1313,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         isSharp ? (
           <div className="space-y-8">
             {/* What If Simulator */}
-            {whatIfs.length > 0 && (
+            {isPartialReport && <SkeletonSection label="Running what-if simulations..." />}
+            {!isPartialReport && whatIfs.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
                 <p className="text-ink-600 text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
@@ -1362,7 +1363,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
 
             {/* Leak Prioritizer */}
-            {prioritizedLeaks.length > 0 && (
+            {isPartialReport && <SkeletonSection label="Ranking leaks by dollar impact..." />}
+            {!isPartialReport && prioritizedLeaks.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
