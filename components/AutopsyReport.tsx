@@ -9,7 +9,7 @@ import {
 import ShareModal from './ShareModal';
 import ReportFeedback from './ReportFeedback';
 import type { ShareCardData } from './ShareCard';
-import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot } from '@/types';
+import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket } from '@/types';
 
 // ── Helpers ──
 
@@ -588,6 +588,149 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      )}
+
+      {/* Timing Patterns */}
+      {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Timing Patterns</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Your performance broken down by when you place bets — reveals hidden patterns in your schedule.</p>
+
+          {/* Day of Week Chart */}
+          <div className="card p-6">
+            <h3 className="font-medium text-lg mb-4">ROI by Day of Week</h3>
+            <div style={{ height: Math.max(200, analysis.timing_analysis.by_day.filter((d) => d.bets > 0).length * 40) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analysis.timing_analysis.by_day.filter((d) => d.bets > 0)} layout="vertical" margin={{ left: 35 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}%`} />
+                  <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={30} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as TimingBucket;
+                      return (
+                        <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
+                          <p className="text-[#F0F0F0] font-medium">{d.label}</p>
+                          <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi.toFixed(1)}% ROI</p>
+                          <p className="text-ink-600">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
+                          <p className={`font-mono text-xs ${d.profit >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.profit >= 0 ? '+' : ''}${d.profit.toFixed(0)}</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine x={0} stroke="#5A5C6F50" />
+                  <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
+                    {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
+                      <Cell key={i} fill={entry.roi >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Hour of Day Heatmap — only if we have real time data */}
+          {analysis.timing_analysis.has_time_data && (
+            <div className="card p-6">
+              <h3 className="font-medium text-lg mb-1">Time of Day Heatmap</h3>
+              <p className="text-ink-700 text-xs italic mb-4">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
+              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1.5">
+                {analysis.timing_analysis.by_hour.map((h, i) => {
+                  const hasBets = h.bets > 0;
+                  const intensity = hasBets ? Math.min(1, h.bets / Math.max(...analysis.timing_analysis!.by_hour.map((x) => x.bets || 1))) : 0;
+                  const bgColor = !hasBets
+                    ? 'bg-ink-900/50'
+                    : h.roi >= 10 ? 'bg-[#00C853]'
+                    : h.roi >= 0 ? 'bg-[#00C853]'
+                    : h.roi >= -10 ? 'bg-[#f87171]'
+                    : 'bg-[#f87171]';
+                  const opacity = !hasBets ? '' : h.roi >= 10 || h.roi <= -10 ? `opacity-${Math.round(Math.max(0.4, intensity) * 100) >= 70 ? '90' : '60'}` : `opacity-${Math.round(Math.max(0.3, intensity) * 100) >= 50 ? '50' : '30'}`;
+
+                  return (
+                    <div
+                      key={i}
+                      className="relative group"
+                      title={hasBets ? `${h.label}: ${h.roi.toFixed(1)}% ROI, ${h.bets} bets` : `${h.label}: no bets`}
+                    >
+                      <div
+                        className={`rounded-md aspect-square flex flex-col items-center justify-center ${bgColor} transition-all`}
+                        style={{ opacity: hasBets ? Math.max(0.3, intensity * 0.7 + 0.3) : 0.15 }}
+                      >
+                        <span className="text-[10px] font-mono text-white/90 leading-none">{h.label.replace('am', 'a').replace('pm', 'p')}</span>
+                        {hasBets && <span className="text-[9px] font-mono text-white/70 leading-none mt-0.5">{h.bets}</span>}
+                      </div>
+                      {/* Hover tooltip */}
+                      {hasBets && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-ink-800 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                          <p className="text-[#F0F0F0] font-medium">{h.label}</p>
+                          <p className={`font-mono ${h.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.roi.toFixed(1)}% ROI</p>
+                          <p className="text-ink-600">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
+                          <p className={`font-mono ${h.profit >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.profit >= 0 ? '+' : ''}${h.profit.toFixed(0)}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-xs text-ink-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-[#00C853] opacity-60" />
+                  <span>Profitable</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-[#f87171] opacity-60" />
+                  <span>Unprofitable</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-ink-900/50 opacity-50" />
+                  <span>No bets</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Best / Worst / Late Night callouts */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {analysis.timing_analysis.best_window && (
+              <div className="card border-mint-500/20 bg-mint-500/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Best Window</p>
+                <p className="font-bold text-xl text-mint-500">{analysis.timing_analysis.best_window.label}</p>
+                <p className="font-mono text-mint-500 text-sm">+{analysis.timing_analysis.best_window.roi.toFixed(1)}% ROI</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.best_window.count} bets</p>
+              </div>
+            )}
+            {analysis.timing_analysis.worst_window && (
+              <div className="card border-red-400/20 bg-red-400/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Worst Window</p>
+                <p className="font-bold text-xl text-red-400">{analysis.timing_analysis.worst_window.label}</p>
+                <p className="font-mono text-red-400 text-sm">{analysis.timing_analysis.worst_window.roi.toFixed(1)}% ROI</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.worst_window.count} bets</p>
+              </div>
+            )}
+            {analysis.timing_analysis.late_night_stats && (
+              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-white/[0.08]'}`}>
+                <p className="text-ink-600 text-xs mb-1">Late Night (11pm–4am)</p>
+                <p className="font-bold text-xl text-[#F0F0F0]">{analysis.timing_analysis.late_night_stats.count} bets</p>
+                <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-mint-500' : 'text-orange-400'}`}>
+                  {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI
+                </p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
+              </div>
+            )}
+          </div>
+
+          {/* No time data notice */}
+          {!analysis.timing_analysis.has_time_data && (
+            <div className="card p-4 border-amber-400/20 bg-amber-400/5">
+              <p className="text-amber-400 text-sm font-medium mb-1">Limited time data</p>
+              <p className="text-ink-600 text-xs">
+                Your CSV only included dates, not timestamps. Day-of-week analysis is available above, but hour-of-day patterns require time data.
+                For full timing insights, use a tracker like Pikkit that exports <span className="text-[#F0F0F0]">time_placed_iso</span> with each bet.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

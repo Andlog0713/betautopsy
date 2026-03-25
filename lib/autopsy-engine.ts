@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket } from '@/types';
 
 // ── Deterministic Metrics Calculator ──
 
@@ -47,6 +47,100 @@ export interface CalculatedMetrics {
     actual_profit: number;
   };
   betting_archetype: { name: string; description: string };
+  timing: TimingAnalysis;
+}
+
+// ── Timing Analysis ──
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const HOUR_LABELS = [
+  '12am', '1am', '2am', '3am', '4am', '5am', '6am', '7am', '8am', '9am', '10am', '11am',
+  '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm', '9pm', '10pm', '11pm',
+];
+
+function calculateTiming(bets: Bet[]): TimingAnalysis {
+  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+
+  // Detect if we actually have time data — if >80% of bets land at exactly midnight, timestamps are date-only
+  const midnightCount = settled.filter((b) => {
+    const d = new Date(b.placed_at);
+    return d.getHours() === 0 && d.getMinutes() === 0;
+  }).length;
+  const hasTimeData = settled.length >= 5 && midnightCount / settled.length < 0.8;
+
+  // Initialize buckets
+  const hourBuckets: { bets: number; wins: number; losses: number; staked: number; profit: number }[] =
+    Array.from({ length: 24 }, () => ({ bets: 0, wins: 0, losses: 0, staked: 0, profit: 0 }));
+  const dayBuckets: { bets: number; wins: number; losses: number; staked: number; profit: number }[] =
+    Array.from({ length: 7 }, () => ({ bets: 0, wins: 0, losses: 0, staked: 0, profit: 0 }));
+
+  for (const b of settled) {
+    const d = new Date(b.placed_at);
+    const hour = d.getHours();
+    const day = d.getDay(); // 0=Sun
+
+    const stake = Number(b.stake);
+    const profit = Number(b.profit);
+    const isWin = b.result === 'win';
+
+    hourBuckets[hour].bets++;
+    hourBuckets[hour].staked += stake;
+    hourBuckets[hour].profit += profit;
+    if (isWin) hourBuckets[hour].wins++;
+    else hourBuckets[hour].losses++;
+
+    dayBuckets[day].bets++;
+    dayBuckets[day].staked += stake;
+    dayBuckets[day].profit += profit;
+    if (isWin) dayBuckets[day].wins++;
+    else dayBuckets[day].losses++;
+  }
+
+  function toBucket(raw: { bets: number; wins: number; losses: number; staked: number; profit: number }, label: string): TimingBucket {
+    return {
+      label,
+      bets: raw.bets,
+      wins: raw.wins,
+      losses: raw.losses,
+      staked: round2(raw.staked),
+      profit: round2(raw.profit),
+      roi: raw.staked > 0 ? round2((raw.profit / raw.staked) * 100) : 0,
+      win_rate: raw.bets > 0 ? round2((raw.wins / raw.bets) * 100) : 0,
+    };
+  }
+
+  const byHour = hourBuckets.map((b, i) => toBucket(b, HOUR_LABELS[i]));
+  // Reorder days to Mon-Sun for display
+  const dayOrder = [1, 2, 3, 4, 5, 6, 0]; // Mon=1 through Sun=0
+  const byDay = dayOrder.map((i) => toBucket(dayBuckets[i], DAY_LABELS[i]));
+
+  // Find best/worst windows (minimum 3 bets to qualify)
+  const allBuckets = [...byHour, ...byDay].filter((b) => b.bets >= 3);
+  allBuckets.sort((a, b) => a.roi - b.roi);
+
+  const worstWindow = allBuckets.length > 0 ? { label: allBuckets[0].label, roi: allBuckets[0].roi, count: allBuckets[0].bets } : null;
+  const bestWindow = allBuckets.length > 0 ? { label: allBuckets[allBuckets.length - 1].label, roi: allBuckets[allBuckets.length - 1].roi, count: allBuckets[allBuckets.length - 1].bets } : null;
+
+  // Late night stats (11pm-4am)
+  const lateNightHours = [23, 0, 1, 2, 3, 4];
+  const lateNight = lateNightHours.reduce(
+    (acc, h) => {
+      acc.count += hourBuckets[h].bets;
+      acc.staked += hourBuckets[h].staked;
+      acc.profit += hourBuckets[h].profit;
+      return acc;
+    },
+    { count: 0, staked: 0, profit: 0 }
+  );
+  const lateNightStats = lateNight.count >= 3
+    ? {
+        count: lateNight.count,
+        roi: lateNight.staked > 0 ? round2((lateNight.profit / lateNight.staked) * 100) : 0,
+        pct_of_total: settled.length > 0 ? round2((lateNight.count / settled.length) * 100) : 0,
+      }
+    : null;
+
+  return { by_hour: byHour, by_day: byDay, best_window: bestWindow, worst_window: worstWindow, late_night_stats: lateNightStats, has_time_data: hasTimeData };
 }
 
 export function calculateMetrics(bets: Bet[], bankroll?: number | null): CalculatedMetrics {
@@ -349,6 +443,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       actual_profit: round2(actualProfit),
     },
     betting_archetype: determineArchetype(roiPercent, tiltScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi),
+    timing: calculateTiming(sorted),
   };
 }
 
@@ -658,6 +753,17 @@ Parlays: ${metrics.parlay_stats.parlay_count} (${metrics.parlay_stats.parlay_per
 ${metrics.category_roi.map((c) => `${c.category}: ${c.roi.toFixed(1)}% ROI (${c.count} bets, $${c.profit.toFixed(0)} profit)`).join('\n')}
 ===
 
+=== TIMING ANALYSIS (day-of-week and time-of-day performance) ===
+${metrics.timing.has_time_data ? `By Day of Week:
+${metrics.timing.by_day.filter((d) => d.bets >= 1).map((d) => `${d.label}: ${d.roi.toFixed(1)}% ROI (${d.bets} bets, ${d.win_rate.toFixed(0)}% win rate, $${d.profit.toFixed(0)} profit)`).join('\n')}
+
+By Time of Day:
+${metrics.timing.by_hour.filter((h) => h.bets >= 1).map((h) => `${h.label}: ${h.roi.toFixed(1)}% ROI (${h.bets} bets, ${h.win_rate.toFixed(0)}% win rate, $${h.profit.toFixed(0)} profit)`).join('\n')}
+${metrics.timing.best_window ? `\nBest Window: ${metrics.timing.best_window.label} — ${metrics.timing.best_window.roi.toFixed(1)}% ROI (${metrics.timing.best_window.count} bets)` : ''}
+${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.label} — ${metrics.timing.worst_window.roi.toFixed(1)}% ROI (${metrics.timing.worst_window.count} bets)` : ''}
+${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : 'No time-of-day data available (timestamps are date-only).'}
+===
+
 === PRE-CLASSIFIED BIASES (do not change bias names or severity levels — write descriptions and evidence for each) ===
 ${metrics.biases_detected.length > 0
     ? metrics.biases_detected.map((b) => `- ${b.bias_name}: ${b.severity.toUpperCase()} (${b.data})`).join('\n')
@@ -730,6 +836,7 @@ ${metrics.biases_detected.length > 0
     session_analysis: claudeData.session_analysis as AutopsyAnalysis['session_analysis'],
     edge_profile: claudeData.edge_profile as AutopsyAnalysis['edge_profile'],
     betting_archetype: metrics.betting_archetype,
+    timing_analysis: metrics.timing,
   };
 
   const markdown = generateMarkdownReport(analysis);
@@ -796,6 +903,29 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     lines.push('| Category | Issue | ROI | Sample | Suggestion |');
     lines.push('|----------|-------|-----|--------|------------|');
     for (const l of a.strategic_leaks) lines.push(`| ${l.category} | ${l.detail} | ${l.roi_impact.toFixed(1)}% | ${l.sample_size} | ${l.suggestion} |`);
+    lines.push('');
+  }
+  if (a.timing_analysis && a.timing_analysis.by_day.some((d) => d.bets > 0)) {
+    lines.push('## Timing Patterns\n');
+    lines.push('### By Day of Week\n');
+    lines.push('| Day | Bets | Win Rate | ROI | Profit |');
+    lines.push('|-----|------|----------|-----|--------|');
+    for (const d of a.timing_analysis.by_day.filter((d) => d.bets > 0)) {
+      lines.push(`| ${d.label} | ${d.bets} | ${d.win_rate.toFixed(0)}% | ${d.roi.toFixed(1)}% | $${d.profit.toFixed(0)} |`);
+    }
+    lines.push('');
+    if (a.timing_analysis.has_time_data) {
+      lines.push('### By Time of Day\n');
+      lines.push('| Time | Bets | Win Rate | ROI | Profit |');
+      lines.push('|------|------|----------|-----|--------|');
+      for (const h of a.timing_analysis.by_hour.filter((h) => h.bets > 0)) {
+        lines.push(`| ${h.label} | ${h.bets} | ${h.win_rate.toFixed(0)}% | ${h.roi.toFixed(1)}% | $${h.profit.toFixed(0)} |`);
+      }
+      lines.push('');
+    }
+    if (a.timing_analysis.best_window) lines.push(`- **Best Window:** ${a.timing_analysis.best_window.label} (${a.timing_analysis.best_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.best_window.count} bets)`);
+    if (a.timing_analysis.worst_window) lines.push(`- **Worst Window:** ${a.timing_analysis.worst_window.label} (${a.timing_analysis.worst_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.worst_window.count} bets)`);
+    if (a.timing_analysis.late_night_stats) lines.push(`- **Late Night (11pm-4am):** ${a.timing_analysis.late_night_stats.count} bets, ${a.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI`);
     lines.push('');
   }
   if (a.recommendations.length > 0) {

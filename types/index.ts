@@ -85,6 +85,26 @@ export interface AutopsyReport {
   created_at: string;
 }
 
+export interface TimingBucket {
+  label: string;
+  bets: number;
+  wins: number;
+  losses: number;
+  staked: number;
+  profit: number;
+  roi: number;
+  win_rate: number;
+}
+
+export interface TimingAnalysis {
+  by_hour: TimingBucket[];     // 24 buckets (0-23)
+  by_day: TimingBucket[];      // 7 buckets (Mon-Sun)
+  best_window: { label: string; roi: number; count: number } | null;
+  worst_window: { label: string; roi: number; count: number } | null;
+  late_night_stats: { count: number; roi: number; pct_of_total: number } | null; // 11pm-4am
+  has_time_data: boolean;      // false if all bets land at midnight (no real time info)
+}
+
 export interface AutopsyAnalysis {
   summary: AutopsySummary;
   biases_detected: BiasDetected[];
@@ -103,6 +123,7 @@ export interface AutopsyAnalysis {
   session_analysis?: SessionAnalysis;
   edge_profile?: EdgeProfile;
   betting_archetype?: { name: string; description: string };
+  timing_analysis?: TimingAnalysis;
   discipline_score?: {
     total: number;
     tracking: number;
