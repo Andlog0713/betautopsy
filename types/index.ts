@@ -288,7 +288,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     annualPrice: 99,
     maxBets: null,
     maxReports: null,
-    maxBetsPerReport: null,
+    maxBetsPerReport: 2000,
     features: [
       'Full bias suite',
       'Strategic leaks',
@@ -303,7 +303,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     annualPrice: 199,
     maxBets: null,
     maxReports: null,
-    maxBetsPerReport: null,
+    maxBetsPerReport: 5000,
     features: [
       'Everything in Pro',
       'Leak Prioritizer — ranked by $ impact',
