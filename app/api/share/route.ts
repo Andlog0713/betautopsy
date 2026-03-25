@@ -73,11 +73,20 @@ export async function POST(request: Request) {
       archetype: analysis.betting_archetype ?? null,
       date: report.created_at,
       report_json: analysis,
+      tier: 'free' as string,
     };
 
     // Use service role for admin sharing other users' reports (bypasses RLS)
     const isOwnReport = report.user_id === user.id;
     const dbClient = isOwnReport ? supabase : createServiceRoleClient();
+
+    // Fetch the report owner's tier
+    const { data: ownerProfile } = await dbClient
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', report.user_id)
+      .single();
+    shareData.tier = ownerProfile?.subscription_tier ?? 'free';
 
     // Check if share token already exists for this report
     const { data: existing } = await dbClient

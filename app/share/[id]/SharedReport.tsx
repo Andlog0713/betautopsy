@@ -16,6 +16,7 @@ interface ShareData {
   archetype: { name: string; description: string } | null;
   date: string;
   report_json?: unknown;
+  tier?: string;
 }
 
 function gradeColor(grade: string): string {
@@ -54,7 +55,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
         {hasFullReport ? (
           <AutopsyReport
             analysis={data.report_json as AutopsyAnalysis}
-            tier="sharp"
+            tier={(data.tier as 'free' | 'pro' | 'sharp') ?? 'free'}
             readOnly
           />
         ) : (
