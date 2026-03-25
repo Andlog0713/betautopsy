@@ -136,6 +136,21 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Quick Quiz CTA ── */}
+      <section className="max-w-3xl mx-auto px-4 md:px-8 py-12">
+        <div className="card p-8 text-center border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
+          <span className="text-3xl mb-3 block">🧬</span>
+          <h3 className="font-bold text-2xl mb-2">What&apos;s your Bet DNA?</h3>
+          <p className="text-ink-600 text-sm mb-5 max-w-md mx-auto">
+            Take the free 2-minute quiz to discover your betting personality
+            and hidden biases. No signup. No data needed.
+          </p>
+          <Link href="/quiz" className="btn-secondary inline-block">
+            Take the Quiz
+          </Link>
+        </div>
+      </section>
+
       {/* ── Interactive Demo Report ── */}
       <section id="sample" className="max-w-4xl mx-auto px-4 md:px-8 py-20">
         <h2 className="font-bold text-3xl md:text-4xl text-center tracking-tight mb-3">
