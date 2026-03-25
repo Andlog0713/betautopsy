@@ -168,7 +168,7 @@ export default function AdminReportsPage() {
               </thead>
               <tbody>
                 {reports.map((r) => (
-                  <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <tr key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-medium text-[#F0F0F0] truncate max-w-[200px]">
