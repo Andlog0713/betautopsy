@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
+import DemoReportWrapper from '@/components/DemoReportWrapper';
 
 export default function LandingPage() {
   return (
@@ -135,168 +136,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Sample Report Preview ── */}
+      {/* ── Interactive Demo Report ── */}
       <section id="sample" className="max-w-4xl mx-auto px-4 md:px-8 py-20">
         <h2 className="font-bold text-3xl md:text-4xl text-center tracking-tight mb-3">
-          What your bets <span className="text-flame-500">say about you</span>
+          See a real <span className="text-flame-500">autopsy report</span>
         </h2>
-        <p className="text-ink-600 text-center mb-12 max-w-lg mx-auto">
-          Real report from a real user. 280 bets. NFL &amp; NBA. 3 months.
-          They thought they were doing fine.
+        <p className="text-ink-600 text-center mb-10 max-w-lg mx-auto">
+          280 bets. NFL &amp; NBA. 3 months. This bettor thought they were doing fine.
+          Scroll through their full report — then get yours.
         </p>
-
-        {/* Bet DNA — the hook */}
-        <div className="card p-6 md:p-8 mb-6 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">🧬</span>
-            <div>
-              <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA <span className="normal-case text-ink-700">(your betting personality)</span></p>
-              <h3 className="font-bold text-2xl text-flame-500">The Parlay Dreamer</h3>
-            </div>
-          </div>
-          <p className="text-[#F0F0F0] text-sm">
-            The big ticket is always calling. Your straight bet game is probably better than you think.
-          </p>
-        </div>
-
-        {/* Summary + Emotion Score */}
-        <div className="card p-6 md:p-8 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h3 className="font-bold text-xl">Report Summary</h3>
-            <div className="flex items-center gap-3">
-              <span className="text-ink-600 text-sm">Overall Grade</span>
-              <span className="font-extrabold text-5xl text-amber-400">C+</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div>
-              <p className="text-ink-600 text-xs mb-0.5">Record</p>
-              <p className="font-mono font-semibold text-lg">142-131-7</p>
-            </div>
-            <div>
-              <p className="text-ink-600 text-xs mb-0.5">Net Profit/Loss</p>
-              <p className="font-mono font-semibold text-lg text-red-400">-$215</p>
-            </div>
-            <div>
-              <p className="text-ink-600 text-xs mb-0.5">ROI <span className="text-ink-700 normal-case">(return on investment)</span></p>
-              <p className="font-mono font-semibold text-lg text-red-400">-0.8%</p>
-            </div>
-            <div>
-              <p className="text-ink-600 text-xs mb-0.5">Avg Stake <span className="text-ink-700 normal-case">(typical bet size)</span></p>
-              <p className="font-mono font-semibold text-lg">$94</p>
-            </div>
-            <div>
-              <p className="text-ink-600 text-xs mb-0.5">Emotion Score <span className="text-ink-700 normal-case">(lower is better)</span></p>
-              <p className="font-mono font-semibold text-lg text-orange-400">64/100</p>
-            </div>
-          </div>
-
-          {/* Emotion Score bar */}
-          <div>
-            <div className="flex items-center justify-between text-xs text-ink-600 mb-1.5">
-              <span>Emotion Score</span>
-              <span className="text-orange-400 font-mono">64/100</span>
-            </div>
-            <div className="w-full h-2.5 bg-ink-900 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full" style={{ width: '64%' }} />
-            </div>
-            <p className="text-ink-700 text-xs mt-1.5">
-              Emotions are creeping in. This is costing you real money.
-            </p>
-            <p className="text-ink-700 text-[11px] mt-1 italic">
-              Measures how much emotions drive your bets (chasing losses, erratic sizing, heated betting). Lower is better. Under 40 means strong discipline.
-            </p>
-          </div>
-        </div>
-
-        {/* Edge + Leak side by side */}
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
-          {/* Edge */}
-          <div className="card border-mint-500/20 bg-mint-500/5 p-5">
-            <p className="text-mint-500 text-xs font-medium uppercase tracking-wider mb-2">Your Edge</p>
-            <h3 className="font-semibold text-lg mb-1">NBA Spreads</h3>
-            <p className="font-mono text-mint-500 font-bold text-xl mb-2">+8.3% ROI</p>
-            <p className="text-ink-600 text-xs">67 bets · High confidence</p>
-            <p className="text-[#F0F0F0] text-sm mt-3">
-              You have a genuine edge here. This is where your volume should go.
-            </p>
-          </div>
-          {/* Leak */}
-          <div className="card border-red-400/20 bg-red-400/5 p-5">
-            <p className="text-red-400 text-xs font-medium uppercase tracking-wider mb-2">Biggest Leak</p>
-            <h3 className="font-semibold text-lg mb-1">NFL Parlays</h3>
-            <p className="font-mono text-red-400 font-bold text-xl mb-2">-38.4% ROI</p>
-            <p className="text-ink-600 text-xs">96 bets · -$620 estimated cost</p>
-            <p className="text-[#F0F0F0] text-sm mt-3">
-              14% win rate vs the 18% needed to break even. Your single-game bets are profitable — parlays are erasing that.
-            </p>
-            <p className="text-ink-700 text-[11px] mt-2 italic">
-              A parlay combines multiple bets into one — all must win or you lose the whole thing.
-            </p>
-          </div>
-        </div>
-
-        {/* One bias card */}
-        <div className="card p-5 md:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-            <h3 className="font-medium text-lg">Post-Loss Escalation</h3>
-            <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border bg-orange-400/10 text-orange-400 border-orange-400/20 self-start">
-              HIGH
-            </span>
-          </div>
-          <p className="text-[#F0F0F0] text-sm mb-4 leading-relaxed">
-            Your average stake jumps from $82 to $134 after a loss — a 63% increase.
-            After losing streaks of 3+, you placed 11 bets over $200. Seven of those lost.
-          </p>
-          <div className="grid sm:grid-cols-3 gap-3 text-sm">
-            <div className="bg-ink-900/50 rounded-lg p-3">
-              <p className="text-ink-700 text-[11px] font-medium uppercase tracking-wider mb-1">Evidence</p>
-              <p className="text-ink-500 text-[13px]">
-                Avg stake after loss: $134 vs $82 after win. 11 bets &gt;$200
-                following 3+ loss streaks (7 lost).
-              </p>
-            </div>
-            <div className="bg-ink-900/50 rounded-lg p-3">
-              <p className="text-ink-700 text-[11px] font-medium uppercase tracking-wider mb-1">Estimated Cost</p>
-              <p className="text-red-400 font-mono font-medium">-$480</p>
-            </div>
-            <div className="bg-ink-900/50 rounded-lg p-3">
-              <p className="text-ink-700 text-[11px] font-medium uppercase tracking-wider mb-1">How to Fix</p>
-              <p className="text-ink-500 text-[13px]">
-                Set a hard rule: no bet can exceed 2x your average stake. If you
-                lose 3 in a row, stop betting for the day.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Personal Rules preview */}
-        <div className="space-y-2 mb-6">
-          <p className="text-ink-600 text-xs uppercase tracking-wider font-medium">Your Rules — generated from your data</p>
-          <div className="card border-l-4 border-l-flame-500 bg-ink-800/60 p-4">
-            <p className="text-[#F0F0F0] text-sm font-medium">Never bet more than $100 on a parlay.</p>
-            <p className="text-ink-600 text-xs mt-1">Your parlays over $100 are 3-14. That&apos;s a 17% win rate costing you $890.</p>
-          </div>
-          <div className="card border-l-4 border-l-flame-500 bg-ink-800/60 p-4">
-            <p className="text-[#F0F0F0] text-sm font-medium">After 2 losses in a row, stop for the day.</p>
-            <p className="text-ink-600 text-xs mt-1">Your 3rd+ bets in losing streaks hit at 31%. You&apos;re chasing, not betting.</p>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="relative">
-          <div className="card p-5 opacity-30 blur-[2px]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-medium">Session Analysis</span>
-            </div>
-            <p className="text-ink-600 text-sm">Your winning sessions average 4 bets. Your losing sessions average 11...</p>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Link href="/signup" className="btn-primary shadow-xl shadow-flame-500/20 text-lg !px-8 !py-3.5">
-              See What Your Bets Say — Free
-            </Link>
-          </div>
-        </div>
+        <DemoReportWrapper />
       </section>
 
       {/* ── Track Your Progress ── */}
