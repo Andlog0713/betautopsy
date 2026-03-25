@@ -406,7 +406,7 @@ export default function LandingPage() {
               <span className="font-mono text-4xl font-bold">$0</span>
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">
-              {['Unlimited bet uploads', '1 autopsy report (50 most recent bets)', 'Basic bias detection', 'Summary stats'].map((f) => (
+              {['1 autopsy report (50 most recent bets)', 'Basic bias detection', 'Summary stats'].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
                   <span className="text-mint-500 mt-0.5 shrink-0">✓</span>
                   {f}
@@ -425,7 +425,7 @@ export default function LandingPage() {
             </span>
             <h3 className="font-bold text-2xl">Pro</h3>
             <div className="mt-2 mb-5">
-              <span className="font-mono text-4xl font-bold">$9.99</span>
+              <span className="text-4xl font-bold tracking-tight">$9.99</span>
               <span className="text-ink-600 text-sm">/mo</span>
               <p className="text-ink-700 text-xs mt-1">Less than one bad parlay</p>
             </div>
@@ -454,7 +454,7 @@ export default function LandingPage() {
           <div className="card p-7 flex flex-col animate-slide-up-d5">
             <h3 className="font-bold text-2xl">Sharp</h3>
             <div className="mt-2 mb-5">
-              <span className="font-mono text-4xl font-bold">$24.99</span>
+              <span className="text-4xl font-bold tracking-tight">$24.99</span>
               <span className="text-ink-600 text-sm">/mo</span>
             </div>
             <ul className="space-y-2.5 flex-1 mb-7">

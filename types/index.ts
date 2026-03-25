@@ -280,7 +280,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     maxBets: null,
     maxReports: 1,
     maxBetsPerReport: 50,
-    features: ['Unlimited bet uploads', '1 autopsy report (50 most recent bets)', 'Basic bias detection', 'Summary stats'],
+    features: ['1 autopsy report (50 most recent bets)', 'Basic bias detection', 'Summary stats'],
   },
   pro: {
     name: 'Pro',
