@@ -25,7 +25,7 @@ export default function DemoReportWrapper() {
             Interactive Demo
           </span>
           <span className="text-xs text-ink-600">
-            — real report, sample data
+            — Pro tier report, sample data
           </span>
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function DemoReportWrapper() {
                 onClick={() => setExpanded(true)}
                 className="text-sm text-ink-500 hover:text-ink-400 transition-colors"
               >
-                ↓ Keep scrolling to explore the full demo report
+                ↓ Click to see the full expanded report
               </button>
               <div>
                 <p className="text-[#F0F0F0] text-lg font-medium mb-2">
