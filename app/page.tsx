@@ -26,7 +26,13 @@ export default function LandingPage() {
               Upload Your Bets — It&apos;s Free
             </Link>
           </div>
-          <p className="text-ink-700 text-xs mt-6 animate-fade-in-d5">
+          <Link
+            href="/how-to-upload"
+            className="inline-block text-sm text-flame-500 hover:text-flame-400 transition-colors mt-6 animate-fade-in-d5"
+          >
+            Not sure how to get your data? We&apos;ll walk you through it →
+          </Link>
+          <p className="text-ink-700 text-xs mt-3 animate-fade-in-d5">
             No credit card required · Works with Pikkit and any CSV export
           </p>
         </div>

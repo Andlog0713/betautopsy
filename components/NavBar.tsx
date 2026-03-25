@@ -61,7 +61,7 @@ export default function NavBar() {
           Bet<span className="text-flame-500">Autopsy</span>
         </Link>
         <div className="flex items-center gap-6">
-          <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
+          <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
             How to Upload
           </Link>
           <a href="#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
