@@ -922,7 +922,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Sharp tab nudge */}
-      {hasSharpContent && (
+      {hasSharpContent && !readOnly && (
         isSharp ? (
           <button
             onClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}

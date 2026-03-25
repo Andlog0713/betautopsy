@@ -54,7 +54,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
         {hasFullReport ? (
           <AutopsyReport
             analysis={data.report_json as AutopsyAnalysis}
-            tier="free"
+            tier="sharp"
             readOnly
           />
         ) : (
