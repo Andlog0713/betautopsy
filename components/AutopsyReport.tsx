@@ -7,7 +7,8 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
-import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot } from '@/types';
+import type { ShareCardData } from './ShareCard';
+import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
 
@@ -46,14 +47,14 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: 'bg-red-400/10 text-red-400',
 };
 
-function tiltColor(score: number): string {
+function emotionColor(score: number): string {
   if (score <= 25) return 'bg-mint-500';
   if (score <= 50) return 'bg-amber-400';
   if (score <= 75) return 'bg-orange-400';
   return 'bg-red-400';
 }
 
-function tiltLabel(score: number): string {
+function emotionLabel(score: number): string {
   if (score <= 20) return 'Cool and collected. Your decisions are strategy-driven.';
   if (score <= 40) return 'Mostly disciplined. Minor emotional patterns worth watching.';
   if (score <= 60) return 'Emotions are creeping in. This is costing you real money.';
@@ -206,6 +207,10 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro' | 'sharp'; readOnly?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
 
+  // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
+  const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
+  const emotionBreakdown = analysis.emotion_breakdown ?? analysis.tilt_breakdown;
+
   const pnlData = useMemo(() => buildPnLData(bets), [bets]);
   const stakeData = useMemo(() => buildStakeData(bets), [bets]);
   const roiData = useMemo(() => buildROIData(bets), [bets]);
@@ -254,7 +259,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   // Comparison data
   const compItems = previousSnapshot ? [
-    { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: analysis.tilt_score, lowerBetter: true },
+    { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: emotionScore, lowerBetter: true },
     { label: 'Grade', from: previousSnapshot.overall_grade, to: analysis.summary.overall_grade, isGrade: true },
     { label: 'Loss Chase Ratio', from: previousSnapshot.loss_chase_ratio, to: null, lowerBetter: true, suffix: 'x' },
     { label: 'Parlay %', from: previousSnapshot.parlay_percent, to: null, lowerBetter: true, suffix: '%' },
@@ -311,7 +316,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Share */}
-      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} />}
+      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />}
 
       {/* vs. Last Report */}
       {previousSnapshot && (
@@ -410,24 +415,24 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-xl">Emotion Score</h2>
           <span className={`font-mono text-2xl font-bold ${
-            analysis.tilt_score <= 25 ? 'text-mint-500' :
-            analysis.tilt_score <= 50 ? 'text-amber-400' :
-            analysis.tilt_score <= 75 ? 'text-orange-400' : 'text-red-400'
+            emotionScore <= 25 ? 'text-mint-500' :
+            emotionScore <= 50 ? 'text-amber-400' :
+            emotionScore <= 75 ? 'text-orange-400' : 'text-red-400'
           }`}>
-            {analysis.tilt_score}/100
+            {emotionScore}/100
           </span>
         </div>
         <div className="w-full h-3 bg-ink-900 rounded-full overflow-hidden mb-3">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ease-out ${tiltColor(analysis.tilt_score)}`}
-            style={{ width: `${analysis.tilt_score}%` }}
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${emotionColor(emotionScore)}`}
+            style={{ width: `${emotionScore}%` }}
           />
         </div>
-        <p className="text-ink-600 text-sm mb-2">{tiltLabel(analysis.tilt_score)}</p>
+        <p className="text-ink-600 text-sm mb-2">{emotionLabel(emotionScore)}</p>
         <p className="text-ink-700 text-xs mb-3 italic">
-          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and tilt betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
+          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
-        {analysis.tilt_breakdown && (
+        {emotionBreakdown && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
             {([
               { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const, hint: 'How much your bet sizes vary after accounting for odds differences' },
@@ -435,7 +440,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               { label: 'During Losing Streaks', key: 'streak_behavior' as const, hint: 'How your betting speed and sizing change during consecutive losses' },
               { label: 'Knowing When to Stop', key: 'session_discipline' as const, hint: 'Whether you tend to over-bet in long sessions or chase back losses late at night' },
             ]).map(({ label, key, hint }) => {
-              const val = analysis.tilt_breakdown![key];
+              const val = emotionBreakdown![key];
               return (
                 <div key={key}>
                   <p className="text-ink-700 text-xs mb-1" title={hint}>{label}</p>
@@ -625,6 +630,303 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Timing Patterns */}
+      {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Timing Patterns</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Your performance broken down by when you place bets — reveals hidden patterns in your schedule.</p>
+
+          {/* Day of Week Chart */}
+          <div className="card p-6">
+            <h3 className="font-medium text-lg mb-4">ROI by Day of Week</h3>
+            <div style={{ height: Math.max(200, analysis.timing_analysis.by_day.filter((d) => d.bets > 0).length * 40) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analysis.timing_analysis.by_day.filter((d) => d.bets > 0)} layout="vertical" margin={{ left: 35 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}%`} />
+                  <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={30} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as TimingBucket;
+                      return (
+                        <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
+                          <p className="text-[#F0F0F0] font-medium">{d.label}</p>
+                          <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi.toFixed(1)}% ROI</p>
+                          <p className="text-ink-600">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
+                          <p className={`font-mono text-xs ${d.profit >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.profit >= 0 ? '+' : ''}${d.profit.toFixed(0)}</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine x={0} stroke="#5A5C6F50" />
+                  <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
+                    {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
+                      <Cell key={i} fill={entry.roi >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Hour of Day Heatmap — only if we have real time data */}
+          {analysis.timing_analysis.has_time_data && (
+            <div className="card p-6">
+              <h3 className="font-medium text-lg mb-1">Time of Day Heatmap</h3>
+              <p className="text-ink-700 text-xs italic mb-4">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
+              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1.5">
+                {analysis.timing_analysis.by_hour.map((h, i) => {
+                  const hasBets = h.bets > 0;
+                  const intensity = hasBets ? Math.min(1, h.bets / Math.max(...analysis.timing_analysis!.by_hour.map((x) => x.bets || 1))) : 0;
+                  const bgColor = !hasBets
+                    ? 'bg-ink-900/50'
+                    : h.roi >= 10 ? 'bg-[#00C853]'
+                    : h.roi >= 0 ? 'bg-[#00C853]'
+                    : h.roi >= -10 ? 'bg-[#f87171]'
+                    : 'bg-[#f87171]';
+                  const opacity = !hasBets ? '' : h.roi >= 10 || h.roi <= -10 ? `opacity-${Math.round(Math.max(0.4, intensity) * 100) >= 70 ? '90' : '60'}` : `opacity-${Math.round(Math.max(0.3, intensity) * 100) >= 50 ? '50' : '30'}`;
+
+                  return (
+                    <div
+                      key={i}
+                      className="relative group"
+                      title={hasBets ? `${h.label}: ${h.roi.toFixed(1)}% ROI, ${h.bets} bets` : `${h.label}: no bets`}
+                    >
+                      <div
+                        className={`rounded-md aspect-square flex flex-col items-center justify-center ${bgColor} transition-all`}
+                        style={{ opacity: hasBets ? Math.max(0.3, intensity * 0.7 + 0.3) : 0.15 }}
+                      >
+                        <span className="text-[10px] font-mono text-white/90 leading-none">{h.label.replace('am', 'a').replace('pm', 'p')}</span>
+                        {hasBets && <span className="text-[9px] font-mono text-white/70 leading-none mt-0.5">{h.bets}</span>}
+                      </div>
+                      {/* Hover tooltip */}
+                      {hasBets && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-ink-800 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                          <p className="text-[#F0F0F0] font-medium">{h.label}</p>
+                          <p className={`font-mono ${h.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.roi.toFixed(1)}% ROI</p>
+                          <p className="text-ink-600">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
+                          <p className={`font-mono ${h.profit >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.profit >= 0 ? '+' : ''}${h.profit.toFixed(0)}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-xs text-ink-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-[#00C853] opacity-60" />
+                  <span>Profitable</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-[#f87171] opacity-60" />
+                  <span>Unprofitable</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-ink-900/50 opacity-50" />
+                  <span>No bets</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Best / Worst / Late Night callouts */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {analysis.timing_analysis.best_window && (
+              <div className="card border-mint-500/20 bg-mint-500/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Best Window</p>
+                <p className="font-bold text-xl text-mint-500">{analysis.timing_analysis.best_window.label}</p>
+                <p className="font-mono text-mint-500 text-sm">+{analysis.timing_analysis.best_window.roi.toFixed(1)}% ROI</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.best_window.count} bets</p>
+              </div>
+            )}
+            {analysis.timing_analysis.worst_window && (
+              <div className="card border-red-400/20 bg-red-400/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Worst Window</p>
+                <p className="font-bold text-xl text-red-400">{analysis.timing_analysis.worst_window.label}</p>
+                <p className="font-mono text-red-400 text-sm">{analysis.timing_analysis.worst_window.roi.toFixed(1)}% ROI</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.worst_window.count} bets</p>
+              </div>
+            )}
+            {analysis.timing_analysis.late_night_stats && (
+              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-white/[0.08]'}`}>
+                <p className="text-ink-600 text-xs mb-1">Late Night (11pm–4am)</p>
+                <p className="font-bold text-xl text-[#F0F0F0]">{analysis.timing_analysis.late_night_stats.count} bets</p>
+                <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-mint-500' : 'text-orange-400'}`}>
+                  {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI
+                </p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
+              </div>
+            )}
+          </div>
+
+          {/* No time data notice */}
+          {!analysis.timing_analysis.has_time_data && (
+            <div className="card p-4 border-amber-400/20 bg-amber-400/5">
+              <p className="text-amber-400 text-sm font-medium mb-1">Limited time data</p>
+              <p className="text-ink-600 text-xs">
+                Your CSV only included dates, not timestamps. Day-of-week analysis is available above, but hour-of-day patterns require time data.
+                For full timing insights, use a tracker like Pikkit that exports <span className="text-[#F0F0F0]">time_placed_iso</span> with each bet.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Odds Intelligence */}
+      {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Odds Intelligence</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">How you perform at different price points — and whether you&apos;re finding real value or just getting lucky.</p>
+
+          {/* Odds Bucket Table */}
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="text-left text-ink-600 font-medium px-4 py-3">Odds Range</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Bets</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Win Rate</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3 hidden sm:table-cell">Implied</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Edge</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">ROI</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3 hidden md:table-cell">Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.odds_analysis.buckets.filter((b) => b.bets > 0).map((bucket, i) => (
+                    <tr key={i} className="border-b border-white/[0.04]">
+                      <td className="px-4 py-3">
+                        <span className="font-medium">{bucket.label}</span>
+                        <span className="text-ink-700 text-xs ml-1.5 hidden sm:inline">({bucket.range})</span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-ink-500">{bucket.bets}</td>
+                      <td className="px-4 py-3 text-right font-mono">{bucket.win_rate.toFixed(0)}%</td>
+                      <td className="px-4 py-3 text-right font-mono text-ink-600 hidden sm:table-cell">{bucket.implied_prob.toFixed(0)}%</td>
+                      <td className={`px-4 py-3 text-right font-mono font-semibold ${bucket.edge > 2 ? 'text-mint-500' : bucket.edge < -2 ? 'text-red-400' : 'text-ink-500'}`}>
+                        {bucket.edge >= 0 ? '+' : ''}{bucket.edge.toFixed(1)}pp
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono font-medium ${bucket.roi >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                        {bucket.roi >= 0 ? '+' : ''}{bucket.roi.toFixed(1)}%
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono hidden md:table-cell ${bucket.profit >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                        {bucket.profit >= 0 ? '+' : ''}${bucket.profit.toFixed(0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2.5 border-t border-white/[0.04] bg-ink-900/30">
+              <p className="text-ink-700 text-xs">
+                <span className="text-ink-600">Edge</span> = your actual win rate minus the implied probability from the odds. Positive edge means you&apos;re beating the line at that price point.
+              </p>
+            </div>
+          </div>
+
+          {/* Edge by Bucket Visual */}
+          {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length > 0 && (
+            <div className="card p-6">
+              <h3 className="font-medium text-lg mb-4">Edge by Odds Range</h3>
+              <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analysis.odds_analysis.buckets.filter((b) => b.bets >= 3)} layout="vertical" margin={{ left: 90 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}pp`} />
+                    <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={85} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload as OddsBucket;
+                        return (
+                          <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
+                            <p className="text-[#F0F0F0] font-medium">{d.label}</p>
+                            <p className={`font-mono ${d.edge >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
+                            <p className="text-ink-600">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
+                            <p className="text-ink-600">{d.bets} bets · {d.roi.toFixed(1)}% ROI</p>
+                          </div>
+                        );
+                      }}
+                    />
+                    <ReferenceLine x={0} stroke="#5A5C6F50" />
+                    <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
+                      {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
+                        <Cell key={i} fill={entry.edge >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Luck vs Skill + Best/Worst Callouts */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Luck vs Skill */}
+            <div className={`card p-5 ${
+              analysis.odds_analysis.luck_rating > 1 ? 'border-amber-400/20 bg-amber-400/5' :
+              analysis.odds_analysis.luck_rating < -1 ? 'border-cyan-400/20 bg-cyan-400/5' :
+              'border-white/[0.08]'
+            }`}>
+              <p className="text-ink-600 text-xs mb-1">Luck vs Skill</p>
+              <p className={`font-bold text-xl ${
+                analysis.odds_analysis.luck_rating > 1 ? 'text-amber-400' :
+                analysis.odds_analysis.luck_rating < -1 ? 'text-cyan-400' :
+                'text-[#F0F0F0]'
+              }`}>
+                {analysis.odds_analysis.luck_label}
+              </p>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-600">Expected wins</span>
+                  <span className="font-mono text-ink-500">{analysis.odds_analysis.expected_wins.toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-600">Actual wins</span>
+                  <span className="font-mono text-[#F0F0F0]">{analysis.odds_analysis.actual_wins}</span>
+                </div>
+                <div className="flex justify-between text-xs border-t border-white/[0.06] pt-1">
+                  <span className="text-ink-600">Difference</span>
+                  <span className={`font-mono font-semibold ${analysis.odds_analysis.luck_rating >= 0 ? 'text-amber-400' : 'text-cyan-400'}`}>
+                    {analysis.odds_analysis.luck_rating >= 0 ? '+' : ''}{analysis.odds_analysis.luck_rating.toFixed(1)} wins
+                  </span>
+                </div>
+              </div>
+              <p className="text-ink-700 text-[10px] mt-2 italic">
+                {analysis.odds_analysis.luck_rating > 1
+                  ? 'You\'re winning more than the odds predict. Could be skill, could be variance — more bets will tell.'
+                  : analysis.odds_analysis.luck_rating < -1
+                  ? 'You\'re winning less than expected. Could be bad luck — or the lines you\'re taking aren\'t as good as they look.'
+                  : 'Your results are tracking close to what the odds predict. Solid baseline.'}
+              </p>
+            </div>
+
+            {/* Best Bucket */}
+            {analysis.odds_analysis.best_bucket && (
+              <div className="card border-mint-500/20 bg-mint-500/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Best Odds Range</p>
+                <p className="font-bold text-xl text-mint-500">{analysis.odds_analysis.best_bucket.label}</p>
+                <p className="font-mono text-mint-500 text-sm">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}pp edge</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
+                <p className="text-ink-700 text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
+              </div>
+            )}
+
+            {/* Worst Bucket */}
+            {analysis.odds_analysis.worst_bucket && (
+              <div className="card border-red-400/20 bg-red-400/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Worst Odds Range</p>
+                <p className="font-bold text-xl text-red-400">{analysis.odds_analysis.worst_bucket.label}</p>
+                <p className="font-mono text-red-400 text-sm">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
+                <p className="text-ink-700 text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -884,7 +1186,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {([
               { label: 'Tracking', val: analysis.discipline_score.tracking, hint: 'Consistency of uploading and reviewing your bets' },
               { label: 'Sizing', val: analysis.discipline_score.sizing, hint: 'How flat and controlled your bet sizing is' },
-              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — lower tilt means more control' },
+              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — staying cool means more control' },
               { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
             ]).map(({ label, val, hint }) => (
               <div key={label}>
@@ -1117,7 +1419,7 @@ function SummaryItem({ label, value, color, small, hint }: { label: string; valu
 
 // ── Share Section ──
 
-function ShareSection({ analysis, summary, reportId }: { analysis: AutopsyAnalysis; summary: AutopsyAnalysis['summary']; reportId?: string }) {
+function ShareSection({ analysis, summary, reportId, bets }: { analysis: AutopsyAnalysis; summary: AutopsyAnalysis['summary']; reportId?: string; bets?: Bet[] }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -1147,6 +1449,14 @@ function ShareSection({ analysis, summary, reportId }: { analysis: AutopsyAnalys
     return null;
   }
 
+  function handleTweet() {
+    if (!shareUrl) return;
+    const emotionVal = analysis.emotion_score ?? analysis.tilt_score ?? 0;
+    const text = `My BetAutopsy: Grade ${summary.overall_grade}${analysis.betting_archetype ? ` | ${analysis.betting_archetype.name}` : ''} | Emotion Score: ${emotionVal}/100 | ROI: ${summary.roi_percent >= 0 ? '+' : ''}${summary.roi_percent.toFixed(1)}%`;
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  }
+
   async function handleShare() {
     const url = await getShareUrl();
     if (url) setOpen(true);
@@ -1159,13 +1469,6 @@ function ShareSection({ analysis, summary, reportId }: { analysis: AutopsyAnalys
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }
-
-  function handleTweet() {
-    if (!shareUrl) return;
-    const text = `My BetAutopsy: Grade ${summary.overall_grade}${analysis.betting_archetype ? ` | ${analysis.betting_archetype.name}` : ''} | Emotion Score: ${analysis.tilt_score}/100 | ROI: ${summary.roi_percent >= 0 ? '+' : ''}${summary.roi_percent.toFixed(1)}%`;
-    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
   }
 
   return (

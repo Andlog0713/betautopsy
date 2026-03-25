@@ -269,7 +269,7 @@ export async function POST(request: Request) {
         total_profit: metricsSnap.summary.total_profit,
         roi_percent: metricsSnap.summary.roi_percent,
         win_rate: metricsSnap.summary.win_rate,
-        tilt_score: metricsSnap.tilt_score,
+        tilt_score: metricsSnap.emotion_score, // DB column is still tilt_score
         avg_stake: metricsSnap.summary.avg_stake,
         parlay_percent: metricsSnap.parlay_stats.parlay_percent,
         loss_chase_ratio: metricsSnap.loss_chase_ratio,

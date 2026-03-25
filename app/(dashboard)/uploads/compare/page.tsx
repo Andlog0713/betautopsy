@@ -36,7 +36,7 @@ function analyzeUpload(upload: Upload, bets: Bet[]): UploadAnalysis {
     roi: m.summary.roi_percent,
     netPnL: m.summary.total_profit,
     avgStake: m.summary.avg_stake,
-    emotionScore: m.tilt_score,
+    emotionScore: m.emotion_score,
     parlayPct: m.parlay_stats.parlay_percent,
     parlayRoi: m.parlay_stats.parlay_roi,
     topProfitable: profitable.map((c) => ({ cat: c.category, roi: c.roi, count: c.count })),

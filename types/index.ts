@@ -85,13 +85,68 @@ export interface AutopsyReport {
   created_at: string;
 }
 
+export interface TimingBucket {
+  label: string;
+  bets: number;
+  wins: number;
+  losses: number;
+  staked: number;
+  profit: number;
+  roi: number;
+  win_rate: number;
+}
+
+export interface TimingAnalysis {
+  by_hour: TimingBucket[];     // 24 buckets (0-23)
+  by_day: TimingBucket[];      // 7 buckets (Mon-Sun)
+  best_window: { label: string; roi: number; count: number } | null;
+  worst_window: { label: string; roi: number; count: number } | null;
+  late_night_stats: { count: number; roi: number; pct_of_total: number } | null; // 11pm-4am
+  has_time_data: boolean;      // false if all bets land at midnight (no real time info)
+}
+
+export interface OddsBucket {
+  label: string;           // e.g. "Heavy Chalk (-300+)", "Slight Dog (+100 to +150)"
+  range: string;           // e.g. "-300 or worse", "+100 to +150"
+  bets: number;
+  wins: number;
+  losses: number;
+  staked: number;
+  profit: number;
+  roi: number;
+  win_rate: number;
+  implied_prob: number;    // avg implied probability for this bucket
+  actual_win_rate: number; // actual win rate — compare to implied_prob
+  edge: number;            // actual_win_rate - implied_prob (positive = finding value)
+}
+
+export interface OddsAnalysis {
+  buckets: OddsBucket[];
+  expected_wins: number;        // sum of implied probabilities across all settled bets
+  actual_wins: number;          // actual win count
+  luck_rating: number;          // actual_wins - expected_wins (positive = running hot)
+  luck_label: string;           // "Running hot", "Running cold", "Right on track"
+  total_settled: number;
+  best_bucket: { label: string; edge: number; count: number } | null;
+  worst_bucket: { label: string; edge: number; count: number } | null;
+}
+
 export interface AutopsyAnalysis {
   summary: AutopsySummary;
   biases_detected: BiasDetected[];
   strategic_leaks: StrategicLeak[];
   behavioral_patterns: BehavioralPattern[];
   recommendations: Recommendation[];
-  tilt_score: number; // 0-100
+  emotion_score: number; // 0-100
+  emotion_breakdown?: {
+    stake_volatility: number;
+    loss_chasing: number;
+    streak_behavior: number;
+    session_discipline: number;
+  };
+  /** @deprecated Use emotion_score — kept for backward compat with old saved reports */
+  tilt_score?: number;
+  /** @deprecated Use emotion_breakdown */
   tilt_breakdown?: {
     stake_volatility: number;
     loss_chasing: number;
@@ -103,6 +158,8 @@ export interface AutopsyAnalysis {
   session_analysis?: SessionAnalysis;
   edge_profile?: EdgeProfile;
   betting_archetype?: { name: string; description: string };
+  timing_analysis?: TimingAnalysis;
+  odds_analysis?: OddsAnalysis;
   discipline_score?: {
     total: number;
     tracking: number;

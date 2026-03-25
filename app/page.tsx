@@ -204,7 +204,7 @@ export default function LandingPage() {
               Emotions are creeping in. This is costing you real money.
             </p>
             <p className="text-ink-700 text-[11px] mt-1 italic">
-              Measures how much emotions drive your bets (chasing losses, erratic sizing, tilt betting). Lower is better. Under 40 means strong discipline.
+              Measures how much emotions drive your bets (chasing losses, erratic sizing, heated betting). Lower is better. Under 40 means strong discipline.
             </p>
           </div>
         </div>

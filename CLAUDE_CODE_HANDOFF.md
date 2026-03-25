@@ -2,7 +2,7 @@
 
 ## WHAT TO BUILD
 
-BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans their bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (tilt, emotional stake sizing, weekend warrior tendencies). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
+BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans their bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (emotional betting, heated stake sizing, weekend warrior tendencies). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
 
 **It is NOT a bet tracker.** Pikkit already does that. BetAutopsy is the intelligence layer on top. Users export from their existing tracker and upload here.
 
@@ -43,7 +43,7 @@ betautopsy/
 │       ├── billing/route.ts          # POST: Create Stripe customer portal session
 │       └── webhook/route.ts          # POST: Stripe webhook handler
 ├── components/
-│   ├── AutopsyReport.tsx             # Full report display (tilt score, biases, leaks, action plan)
+│   ├── AutopsyReport.tsx             # Full report display (emotion score, biases, leaks, action plan)
 │   ├── BetEntryForm.tsx              # Manual bet entry with auto-calculated profit
 │   └── BetHistory.tsx                # Sortable bet history table
 ├── lib/
@@ -186,7 +186,7 @@ create policy "Users can insert own reports" on autopsy_reports for insert with 
 |------|-------|----------|-------------|----------|
 | Free | $0 | 50 | 1 | Basic bias detection, summary stats |
 | Pro | $19/mo | Unlimited | Unlimited | Full bias suite, strategic leaks, behavioral patterns, weekly reports, PDF export |
-| Sharp | $39/mo | Unlimited | Unlimited | Everything in Pro + real-time bet annotation, custom tilt alerts, API access |
+| Sharp | $39/mo | Unlimited | Unlimited | Everything in Pro + real-time bet annotation, custom emotion alerts, API access |
 
 ## THE CLAUDE SYSTEM PROMPT (MOST IMPORTANT PART)
 
@@ -222,7 +222,7 @@ Break down ROI by every dimension:
 ### 3. Behavioral Patterns
 Identify timing and sequence patterns:
 - Betting velocity (bets per day) and correlation with outcomes
-- "Tilt sequences" — runs of increasing stakes or frequency after losses
+- "Heated sequences" — runs of increasing stakes or frequency after losses
 - Weekend warrior patterns vs. daily grinder
 - Emotional escalation (bigger bets after big wins or losses)
 
@@ -280,7 +280,7 @@ Respond with valid JSON matching this exact structure:
       "difficulty": "easy|medium|hard"
     }
   ],
-  "tilt_score": number (0-100, where 0 is ice cold discipline and 100 is full tilt),
+  "emotion_score": number (0-100, where 0 is ice cold discipline and 100 is fully heated),
   "bankroll_health": "healthy|caution|danger"
 }
 
@@ -344,7 +344,7 @@ The autopsy report should also include:
 The landing page should include:
 1. Hero: "Your bets, dissected." with subhead about AI behavioral analysis
 2. Problem/solution: "Trackers tell you what happened. BetAutopsy tells you why."
-3. Feature list: loss chasing detection, cognitive bias ID, strategic leak mapping, tilt scoring, action plan
+3. Feature list: loss chasing detection, cognitive bias ID, strategic leak mapping, emotion scoring, action plan
 4. How it works: Upload → Analyze → Improve (3-step)
 5. Sample report preview: A mock autopsy showing loss chasing (high severity), parlay addiction (medium), favorite bias (low) with real-looking numbers
 6. Pricing: 3-tier grid (Free $0, Pro $19/mo, Sharp $39/mo)
@@ -355,7 +355,7 @@ The landing page should include:
 The report display component should render:
 
 1. **Summary card**: Record, P&L, ROI, avg stake, overall letter grade (A-F), date range
-2. **Tilt score**: 0-100 with colored progress bar (green → amber → orange → red), one-sentence interpretation
+2. **Emotion score**: 0-100 with colored progress bar (green → amber → orange → red), one-sentence interpretation
 3. **Bankroll health warning**: Red alert box if "danger", amber if "caution"
 4. **Biases detected**: Cards with severity badges (color-coded), description, evidence, estimated cost, fix
 5. **Strategic leaks**: Table with category, ROI%, sample size, issue description, suggestion

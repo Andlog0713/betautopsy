@@ -8,7 +8,7 @@ import type { ProgressSnapshot } from '@/types';
 export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapshot[] }) {
   const data = snapshots.map((s) => ({
     date: new Date(s.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    tilt: s.tilt_score,
+    emotion: s.tilt_score,
     roi: s.roi_percent,
   }));
 
@@ -20,7 +20,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
             <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} />
-            <YAxis yAxisId="tilt" orientation="left" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
+            <YAxis yAxisId="emotion" orientation="left" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
             <YAxis yAxisId="roi" orientation="right" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
             <Tooltip
               content={({ active, payload, label }) => {
@@ -30,7 +30,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
                     <p className="text-ink-600">{label}</p>
                     {payload.map((p) => (
                       <p key={p.dataKey as string} style={{ color: p.color }} className="font-mono">
-                        {p.dataKey === 'tilt' ? `Emotion: ${p.value}` : `ROI: ${p.value}%`}
+                        {p.dataKey === 'emotion' ? `Emotion: ${p.value}` : `ROI: ${p.value}%`}
                       </p>
                     ))}
                   </div>
@@ -38,7 +38,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
               }}
             />
             <ReferenceLine yAxisId="roi" y={0} stroke="#5A5C6F50" />
-            <Line yAxisId="tilt" type="monotone" dataKey="tilt" stroke="#fbbf24" strokeWidth={2} dot={{ r: 4, fill: '#fbbf24' }} />
+            <Line yAxisId="emotion" type="monotone" dataKey="emotion" stroke="#fbbf24" strokeWidth={2} dot={{ r: 4, fill: '#fbbf24' }} />
             <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#00C853" strokeWidth={2} dot={{ r: 4, fill: '#00C853' }} />
           </LineChart>
         </ResponsiveContainer>

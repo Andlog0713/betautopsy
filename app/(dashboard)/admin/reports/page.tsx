@@ -17,7 +17,8 @@ interface AdminReport {
   overall_grade: string;
   total_profit: number;
   roi_percent: number;
-  tilt_score: number | null;
+  emotion_score: number | null;
+  tilt_score: number | null; // backward compat
   user: {
     id: string;
     email: string;
@@ -203,7 +204,7 @@ export default function AdminReportsPage() {
                       {Number(r.roi_percent).toFixed(1)}%
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-ink-500 hidden md:table-cell">
-                      {r.tilt_score !== null ? `${r.tilt_score}/100` : '—'}
+                      {(r.emotion_score ?? r.tilt_score) !== null ? `${r.emotion_score ?? r.tilt_score}/100` : '—'}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-ink-600 hidden lg:table-cell">
                       {r.tokens_used ? r.tokens_used.toLocaleString() : '—'}

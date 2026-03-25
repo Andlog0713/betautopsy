@@ -84,7 +84,8 @@ export async function GET(request: Request) {
         overall_grade: summary?.overall_grade ?? '—',
         total_profit: summary?.total_profit ?? 0,
         roi_percent: summary?.roi_percent ?? 0,
-        tilt_score: (json?.tilt_score as number) ?? null,
+        emotion_score: (json?.emotion_score as number) ?? (json?.tilt_score as number) ?? null,
+        tilt_score: (json?.emotion_score as number) ?? (json?.tilt_score as number) ?? null, // backward compat
         user: userProfile ? {
           id: userProfile.id,
           email: userProfile.email,
