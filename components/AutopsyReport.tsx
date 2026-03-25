@@ -62,6 +62,20 @@ function emotionLabel(score: number): string {
   return 'Your emotions are in the driver\'s seat. Addressing this is priority #1.';
 }
 
+function SkeletonSection({ label }: { label: string }) {
+  return (
+    <div className="card p-6 space-y-3">
+      <div className="flex items-center gap-2 text-ink-600 text-sm">
+        <span className="inline-block w-4 h-4 border-2 border-ink-600 border-t-flame-500 rounded-full animate-spin" />
+        {label}
+      </div>
+      <div className="h-4 bg-ink-800 rounded animate-pulse w-full" />
+      <div className="h-4 bg-ink-800 rounded animate-pulse w-2/3" />
+      <div className="h-4 bg-ink-800 rounded animate-pulse w-4/5" />
+    </div>
+  );
+}
+
 function gradeColor(grade: string): string {
   const g = grade.toUpperCase();
   if (g.startsWith('A')) return 'text-mint-500';
@@ -210,6 +224,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
   const emotionBreakdown = analysis.emotion_breakdown ?? analysis.tilt_breakdown;
+
+  // Detect if this is a partial (metrics-only) report still waiting for Claude
+  const isPartialReport =
+    biases_detected?.every((b) => !b.description && !b.fix) &&
+    (!strategic_leaks || strategic_leaks.length === 0) &&
+    (!recommendations || recommendations.length === 0);
 
   const pnlData = useMemo(() => buildPnLData(bets), [bets]);
   const stakeData = useMemo(() => buildStakeData(bets), [bets]);
@@ -536,21 +556,31 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {bias.severity.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[#F0F0F0] text-sm mb-4">{bias.description}</p>
-                <div className="grid sm:grid-cols-3 gap-4 text-sm">
-                  <div className="bg-ink-900/50 rounded-lg p-3">
-                    <p className="text-ink-600 text-xs mb-1">Evidence</p>
-                    <p className="text-[#F0F0F0]">{bias.evidence}</p>
+                {isPartialReport ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-ink-800 rounded animate-pulse w-full" />
+                    <div className="h-4 bg-ink-800 rounded animate-pulse w-3/4" />
+                    <div className="h-3 bg-ink-800 rounded animate-pulse w-1/2 mt-3" />
                   </div>
-                  <div className="bg-ink-900/50 rounded-lg p-3">
-                    <p className="text-ink-600 text-xs mb-1">Estimated Cost</p>
-                    <p className="text-red-400 font-mono font-medium">-${Math.abs(bias.estimated_cost).toFixed(0)}</p>
-                  </div>
-                  <div className="bg-ink-900/50 rounded-lg p-3">
-                    <p className="text-ink-600 text-xs mb-1">How to Fix</p>
-                    <p className="text-[#F0F0F0]">{bias.fix}</p>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <p className="text-[#F0F0F0] text-sm mb-4">{bias.description}</p>
+                    <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                      <div className="bg-ink-900/50 rounded-lg p-3">
+                        <p className="text-ink-600 text-xs mb-1">Evidence</p>
+                        <p className="text-[#F0F0F0]">{bias.evidence}</p>
+                      </div>
+                      <div className="bg-ink-900/50 rounded-lg p-3">
+                        <p className="text-ink-600 text-xs mb-1">Estimated Cost</p>
+                        <p className="text-red-400 font-mono font-medium">-${Math.abs(bias.estimated_cost).toFixed(0)}</p>
+                      </div>
+                      <div className="bg-ink-900/50 rounded-lg p-3">
+                        <p className="text-ink-600 text-xs mb-1">How to Fix</p>
+                        <p className="text-[#F0F0F0]">{bias.fix}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -558,7 +588,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Strategic Leaks */}
-      {strategic_leaks.length > 0 && (
+      {isPartialReport && <SkeletonSection label="Analyzing strategic leaks..." />}
+      {!isPartialReport && strategic_leaks.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Strategic Leaks</h2>
           <p className="text-ink-700 text-xs italic -mt-2">Specific bet types or sports where you&apos;re consistently losing money.</p>
@@ -932,7 +963,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Edge Profile */}
-      {analysis.edge_profile && (
+      {isPartialReport && <SkeletonSection label="Calculating your edge profile..." />}
+      {!isPartialReport && analysis.edge_profile && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
           <p className="text-ink-700 text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
@@ -1010,7 +1042,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Behavioral Patterns */}
-      {behavioral_patterns.length > 0 && (
+      {isPartialReport && <SkeletonSection label="Identifying behavioral patterns..." />}
+      {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
           <p className="text-ink-700 text-xs italic -mt-2">Recurring habits we found in your betting — some help you, some hurt you.</p>
@@ -1044,7 +1077,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Session Analysis */}
-      {analysis.session_analysis && (
+      {isPartialReport && <SkeletonSection label="Analyzing your sessions..." />}
+      {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
           <p className="text-ink-700 text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time — like a single night of betting.</p>
@@ -1100,7 +1134,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Action Plan */}
-      {recommendations.length > 0 && (
+      {isPartialReport && <SkeletonSection label="Building your action plan..." />}
+      {!isPartialReport && recommendations.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Action Plan</h2>
           <div className="space-y-3">
@@ -1128,7 +1163,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Personal Rules */}
-      {(analysis.personal_rules ?? []).length > 0 && (
+      {isPartialReport && <SkeletonSection label="Generating personal rules..." />}
+      {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-2xl">Your Rules</h2>

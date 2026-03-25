@@ -157,6 +157,7 @@ export default function ReportsPage() {
   async function runAutopsy() {
     setRunning(true);
     setError('');
+    setActiveReport(null);
 
     try {
       const body: Record<string, string | string[]> = { report_type: 'full' };
@@ -173,25 +174,103 @@ export default function ReportsPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
+      // If JSON error response (pre-stream validation failures)
+      if (!res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
         setError(data.error || 'Analysis failed');
         setRunning(false);
         return;
       }
 
-      const report = data.report as AutopsyReportType;
-      setTierLimited(data.tier_limited ?? false);
-      setTotalBetsAll(data.total_bets ?? 0);
-      setAnalyzedBets((data.analyzed_bets ?? []) as Bet[]);
-      setActiveReport(report);
-      setReports((prev) => [report, ...prev]);
+      if (!res.ok) {
+        setError('Analysis failed');
+        setRunning(false);
+        return;
+      }
+
+      // Read SSE stream
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setError('Stream unavailable');
+        setRunning(false);
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let streamComplete = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const json = line.slice(6);
+
+          try {
+            const event = JSON.parse(json);
+
+            if (event.type === 'metrics') {
+              const d = event.data;
+              setTierLimited(d.tier_limited ?? false);
+              setTotalBetsAll(d.total_bets ?? 0);
+              setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
+
+              // Create temporary report so AutopsyReport can render partial results
+              const tempReport: AutopsyReportType = {
+                id: 'loading',
+                user_id: '',
+                report_type: 'full',
+                bet_count_analyzed: d.partial_analysis.summary.total_bets,
+                date_range_start: null,
+                date_range_end: null,
+                report_json: d.partial_analysis,
+                report_markdown: '',
+                model_used: null,
+                tokens_used: null,
+                cost_cents: null,
+                created_at: new Date().toISOString(),
+              };
+              setActiveReport(tempReport);
+              // setRunning stays true — signals Claude sections still loading
+            }
+
+            if (event.type === 'complete') {
+              const d = event.data;
+              const report = d.report as AutopsyReportType;
+              setTierLimited(d.tier_limited ?? false);
+              setTotalBetsAll(d.total_bets ?? 0);
+              setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
+              setActiveReport(report);
+              setReports((prev) => [report, ...prev]);
+              setRunning(false);
+              streamComplete = true;
+            }
+
+            if (event.type === 'error') {
+              setError(event.data.error || 'Analysis failed');
+              setRunning(false);
+              streamComplete = true;
+            }
+          } catch {
+            // JSON parse error on chunk — skip
+          }
+        }
+      }
+
+      // If stream ended without a 'complete' event
+      if (!streamComplete) {
+        setRunning(false);
+      }
     } catch {
       setError('Analysis failed. Please try again.');
+      setRunning(false);
     }
-
-    setRunning(false);
   }
 
   async function openReport(report: AutopsyReportType) {
@@ -260,6 +339,8 @@ export default function ReportsPage() {
             </a>
           </div>
         )}
+        {/* Compact progress bar while Claude is still analyzing */}
+        {running && <AnalyzingProgress />}
         <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro' | 'sharp'} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
@@ -473,11 +554,11 @@ export default function ReportsPage() {
         </button>
       )}
 
-      {/* Running state */}
-      {running && reports.length === 0 && (
+      {/* Running state — full screen only before metrics arrive */}
+      {running && !activeReport && reports.length === 0 && (
         <OnboardingSteps active={2} completed={[1]} />
       )}
-      {running && (
+      {running && !activeReport && (
         <AnalyzingState betCount={betCountForRun} />
       )}
 
@@ -683,6 +764,35 @@ function AnalyzingState({ betCount }: { betCount: number }) {
         <p className="text-amber-400/70 text-xs">Still working — large bet histories take longer to analyze.</p>
       )}
       <p className="text-ink-700 text-xs font-mono">Elapsed: {timeStr}</p>
+    </div>
+  );
+}
+
+// ── Compact progress bar shown above partial report while Claude is working ──
+
+const PROGRESS_MESSAGES = [
+  'Reading behavioral patterns...',
+  'Identifying cognitive biases...',
+  'Calculating strategic leaks...',
+  'Generating personal rules...',
+  'Writing your action plan...',
+];
+
+function AnalyzingProgress() {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setMsgIndex((i) => (i + 1) % PROGRESS_MESSAGES.length), 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="card border-flame-500/20 bg-flame-500/5 p-4 flex items-center gap-3">
+      <span className="inline-block w-5 h-5 border-2 border-flame-500/30 border-t-flame-500 rounded-full animate-spin shrink-0" />
+      <div>
+        <p className="text-[#F0F0F0] text-sm font-medium">Generating behavioral analysis...</p>
+        <p className="text-ink-600 text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
+      </div>
     </div>
   );
 }

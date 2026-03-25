@@ -688,6 +688,61 @@ export function calculateDisciplineScore(
   return { total, tracking, sizing, control, strategy };
 }
 
+// ── Partial Analysis (JS-only, no Claude call) ──
+
+export function calculateMetricsOnly(
+  bets: Bet[],
+  bankroll?: number | null,
+  disciplineCtx?: Partial<DisciplineContext>
+): { partialAnalysis: Partial<AutopsyAnalysis>; metrics: CalculatedMetrics } {
+  const metrics = calculateMetrics(bets, bankroll);
+
+  const disciplineScore = calculateDisciplineScore(metrics, {
+    hasBankroll: disciplineCtx?.hasBankroll ?? false,
+    reportCount: disciplineCtx?.reportCount ?? 0,
+    streakCount: disciplineCtx?.streakCount ?? 0,
+    uploadedRecently: disciplineCtx?.uploadedRecently ?? false,
+    prevSnapshot: disciplineCtx?.prevSnapshot ?? null,
+  });
+
+  const partialAnalysis: Partial<AutopsyAnalysis> = {
+    summary: {
+      total_bets: metrics.summary.total_bets,
+      record: metrics.summary.record,
+      total_profit: metrics.summary.total_profit,
+      roi_percent: metrics.summary.roi_percent,
+      avg_stake: metrics.summary.avg_stake,
+      date_range: metrics.summary.date_range,
+      overall_grade: metrics.summary.overall_grade,
+    },
+    biases_detected: metrics.biases_detected.map((b) => ({
+      bias_name: b.bias_name,
+      severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
+      description: '',
+      evidence: b.data,
+      estimated_cost: 0,
+      fix: '',
+    })),
+    emotion_score: metrics.emotion_score,
+    tilt_score: metrics.emotion_score,
+    emotion_breakdown: metrics.emotion_breakdown,
+    tilt_breakdown: metrics.emotion_breakdown,
+    bankroll_health: metrics.bankroll_health,
+    betting_archetype: metrics.betting_archetype,
+    timing_analysis: metrics.timing,
+    odds_analysis: metrics.odds,
+    discipline_score: disciplineScore,
+    strategic_leaks: [],
+    behavioral_patterns: [],
+    recommendations: [],
+    personal_rules: undefined,
+    session_analysis: undefined,
+    edge_profile: undefined,
+  };
+
+  return { partialAnalysis, metrics };
+}
+
 function round2(n: number): number { return Math.round(n * 100) / 100; }
 function fmtDate(iso: string): string { try { return new Date(iso).toISOString().split('T')[0]; } catch { return 'N/A'; } }
 function pad(str: string, len: number): string { return str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length); }
