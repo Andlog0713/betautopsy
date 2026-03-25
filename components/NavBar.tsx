@@ -67,12 +67,12 @@ export default function NavBar() {
           <Link href="/quiz" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
             Quiz
           </Link>
-          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
-            Pricing
-          </a>
           <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors whitespace-nowrap hidden sm:block">
             How to Upload
           </Link>
+          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
+            Pricing
+          </a>
 
           {user ? (
             /* Logged in */
