@@ -317,7 +317,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Left: Emotion Score dropping */}
             <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-ink-700 mb-4">Emotion Score Over Time</h3>
+              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-ink-700 mb-1">Emotion Score Over Time</h3>
+              <p className="text-ink-700 text-xs mb-4">Measures how much emotions drive your bets. Lower is better — under 40 means strong discipline.</p>
               <div className="space-y-3">
                 {[
                   { label: 'Report 1', score: 72, date: 'Week 1' },
@@ -355,7 +356,7 @@ export default function LandingPage() {
                 { label: 'ROI', hint: 'Return on investment — profit as % of total wagered', from: '-8.2%', to: '-1.4%', color: 'text-mint-500', arrow: '↑' },
               ].map((m) => (
                 <div key={m.label} className="flex items-center justify-between py-1 group relative">
-                  <span className="text-sm text-ink-600">{m.label} <span className="text-ink-700 text-xs hidden sm:inline">({m.hint})</span></span>
+                  <span className="text-sm text-ink-600">{m.label} <span className="text-ink-700 text-xs">({m.hint})</span></span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm text-ink-700">{m.from}</span>
                     <span className={`${m.color}`}>{m.arrow}</span>
