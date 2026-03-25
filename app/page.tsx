@@ -233,7 +233,7 @@ export default function LandingPage() {
           Simple <span className="text-flame-500">pricing</span>
         </h2>
         <p className="text-ink-600 text-center mb-14 max-w-md mx-auto">
-          Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, and progress tracking.
+          Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free */}
