@@ -137,7 +137,16 @@ export interface AutopsyAnalysis {
   strategic_leaks: StrategicLeak[];
   behavioral_patterns: BehavioralPattern[];
   recommendations: Recommendation[];
-  tilt_score: number; // 0-100
+  emotion_score: number; // 0-100
+  emotion_breakdown?: {
+    stake_volatility: number;
+    loss_chasing: number;
+    streak_behavior: number;
+    session_discipline: number;
+  };
+  /** @deprecated Use emotion_score — kept for backward compat with old saved reports */
+  tilt_score?: number;
+  /** @deprecated Use emotion_breakdown */
   tilt_breakdown?: {
     stake_volatility: number;
     loss_chasing: number;

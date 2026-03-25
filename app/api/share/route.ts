@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     // Sanitized share data (no dollar amounts, no bet descriptions)
     const shareData = {
       grade: analysis.summary.overall_grade,
-      emotion_score: analysis.tilt_score,
+      emotion_score: analysis.emotion_score ?? analysis.tilt_score,
       roi_percent: analysis.summary.roi_percent,
       win_rate: (() => {
         const parts = (analysis.summary.record ?? '').split('-').map(Number);

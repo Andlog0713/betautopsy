@@ -48,14 +48,14 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: 'bg-red-400/10 text-red-400',
 };
 
-function tiltColor(score: number): string {
+function emotionColor(score: number): string {
   if (score <= 25) return 'bg-mint-500';
   if (score <= 50) return 'bg-amber-400';
   if (score <= 75) return 'bg-orange-400';
   return 'bg-red-400';
 }
 
-function tiltLabel(score: number): string {
+function emotionLabel(score: number): string {
   if (score <= 20) return 'Cool and collected. Your decisions are strategy-driven.';
   if (score <= 40) return 'Mostly disciplined. Minor emotional patterns worth watching.';
   if (score <= 60) return 'Emotions are creeping in. This is costing you real money.';
@@ -208,6 +208,10 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free' }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro' | 'sharp' }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
 
+  // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
+  const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
+  const emotionBreakdown = analysis.emotion_breakdown ?? analysis.tilt_breakdown;
+
   const pnlData = useMemo(() => buildPnLData(bets), [bets]);
   const stakeData = useMemo(() => buildStakeData(bets), [bets]);
   const roiData = useMemo(() => buildROIData(bets), [bets]);
@@ -253,7 +257,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   // Comparison data
   const compItems = previousSnapshot ? [
-    { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: analysis.tilt_score, lowerBetter: true },
+    { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: emotionScore, lowerBetter: true },
     { label: 'Grade', from: previousSnapshot.overall_grade, to: analysis.summary.overall_grade, isGrade: true },
     { label: 'Loss Chase Ratio', from: previousSnapshot.loss_chase_ratio, to: null, lowerBetter: true, suffix: 'x' },
     { label: 'Parlay %', from: previousSnapshot.parlay_percent, to: null, lowerBetter: true, suffix: '%' },
@@ -375,24 +379,24 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-xl">Emotion Score</h2>
           <span className={`font-mono text-2xl font-bold ${
-            analysis.tilt_score <= 25 ? 'text-mint-500' :
-            analysis.tilt_score <= 50 ? 'text-amber-400' :
-            analysis.tilt_score <= 75 ? 'text-orange-400' : 'text-red-400'
+            emotionScore <= 25 ? 'text-mint-500' :
+            emotionScore <= 50 ? 'text-amber-400' :
+            emotionScore <= 75 ? 'text-orange-400' : 'text-red-400'
           }`}>
-            {analysis.tilt_score}/100
+            {emotionScore}/100
           </span>
         </div>
         <div className="w-full h-3 bg-ink-900 rounded-full overflow-hidden mb-3">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ease-out ${tiltColor(analysis.tilt_score)}`}
-            style={{ width: `${analysis.tilt_score}%` }}
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${emotionColor(emotionScore)}`}
+            style={{ width: `${emotionScore}%` }}
           />
         </div>
-        <p className="text-ink-600 text-sm mb-2">{tiltLabel(analysis.tilt_score)}</p>
+        <p className="text-ink-600 text-sm mb-2">{emotionLabel(emotionScore)}</p>
         <p className="text-ink-700 text-xs mb-3 italic">
-          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and tilt betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
+          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
-        {analysis.tilt_breakdown && (
+        {emotionBreakdown && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
             {([
               { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const, hint: 'How much your bet sizes vary after accounting for odds differences' },
@@ -400,7 +404,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               { label: 'During Losing Streaks', key: 'streak_behavior' as const, hint: 'How your betting speed and sizing change during consecutive losses' },
               { label: 'Knowing When to Stop', key: 'session_discipline' as const, hint: 'Whether you tend to over-bet in long sessions or chase back losses late at night' },
             ]).map(({ label, key, hint }) => {
-              const val = analysis.tilt_breakdown![key];
+              const val = emotionBreakdown![key];
               return (
                 <div key={key}>
                   <p className="text-ink-700 text-xs mb-1" title={hint}>{label}</p>
@@ -1308,7 +1312,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {([
               { label: 'Tracking', val: analysis.discipline_score.tracking, hint: 'Consistency of uploading and reviewing your bets' },
               { label: 'Sizing', val: analysis.discipline_score.sizing, hint: 'How flat and controlled your bet sizing is' },
-              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — lower tilt means more control' },
+              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — staying cool means more control' },
               { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
             ]).map(({ label, val, hint }) => (
               <div key={label}>
@@ -1409,7 +1413,7 @@ function ShareSection({ analysis, summary, reportId, bets }: { analysis: Autopsy
 
   const shareData: ShareCardData = {
     grade: summary.overall_grade,
-    emotion_score: analysis.tilt_score,
+    emotion_score: analysis.emotion_score ?? analysis.tilt_score ?? 0,
     roi_percent: summary.roi_percent,
     win_rate: winRate,
     total_bets: summary.total_bets,

@@ -37,7 +37,7 @@ function emotionColor(s: number): string {
 
 const ARCHETYPE_BG: Record<string, string> = {
   'The Natural': 'radial-gradient(ellipse at 30% 20%, rgba(74,222,128,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(74,222,128,0.05) 0%, transparent 50%)',
-  'Tilt Machine': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.07) 0px, transparent 40px, rgba(248,113,113,0.06) 80px)',
+  'Heated Bettor': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.07) 0px, transparent 40px, rgba(248,113,113,0.06) 80px)',
   'Parlay Dreamer': 'radial-gradient(circle at 40% 40%, rgba(139,92,246,0.08) 0%, transparent 50%), radial-gradient(circle at 60% 70%, rgba(96,165,250,0.06) 0%, transparent 40%)',
   'Chalk Grinder': 'repeating-linear-gradient(0deg, rgba(154,148,131,0.05) 0px, transparent 1px, transparent 20px, rgba(154,148,131,0.05) 20px), repeating-linear-gradient(90deg, rgba(154,148,131,0.05) 0px, transparent 1px, transparent 20px, rgba(154,148,131,0.05) 20px)',
   'Sharp Sleeper': 'repeating-linear-gradient(0deg, rgba(74,222,128,0.06) 0px, transparent 3px, transparent 14px)',

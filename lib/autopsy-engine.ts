@@ -21,8 +21,8 @@ export interface CalculatedMetrics {
     date_range: string;
     overall_grade: string;
   };
-  tilt_score: number;
-  tilt_breakdown: {
+  emotion_score: number;
+  emotion_breakdown: {
     stake_volatility: number;
     loss_chasing: number;
     streak_behavior: number;
@@ -375,7 +375,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   else if (loseWinRatio >= 1.5) sessionDisciplinePts = 10;
   else if (loseWinRatio >= 1.2) sessionDisciplinePts = 5;
 
-  const tiltScore = Math.min(100, stakeVolatility + lossChasingPts + streakBehaviorPts + sessionDisciplinePts);
+  const emotionScore = Math.min(100, stakeVolatility + lossChasingPts + streakBehaviorPts + sessionDisciplinePts);
 
   // Bankroll health
   const br = bankroll ? Number(bankroll) : avgStake * 20;
@@ -473,11 +473,11 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
 
   // Overall grade (deterministic)
   let gradeScore = 100;
-  // Tilt penalty
-  if (tiltScore > 80) gradeScore -= 35;
-  else if (tiltScore > 60) gradeScore -= 25;
-  else if (tiltScore > 40) gradeScore -= 15;
-  else if (tiltScore > 20) gradeScore -= 5;
+  // Emotion score penalty
+  if (emotionScore > 80) gradeScore -= 35;
+  else if (emotionScore > 60) gradeScore -= 25;
+  else if (emotionScore > 40) gradeScore -= 15;
+  else if (emotionScore > 20) gradeScore -= 5;
   // ROI penalty
   if (roiPercent < -10) gradeScore -= 35;
   else if (roiPercent < -5) gradeScore -= 25;
@@ -530,8 +530,8 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
 
   return {
     summary: { total_bets: totalBets, wins, losses, pushes, record, total_staked: totalStaked, total_profit: totalProfit, roi_percent: round2(roiPercent), avg_stake: round2(avgStake), median_stake: round2(medianStake), max_stake: round2(maxStake), min_stake: round2(minStake), win_rate: round2(winRate), date_range: dateRange, overall_grade: overallGrade },
-    tilt_score: tiltScore,
-    tilt_breakdown: { stake_volatility: stakeVolatility, loss_chasing: lossChasingPts, streak_behavior: streakBehaviorPts, session_discipline: sessionDisciplinePts },
+    emotion_score: emotionScore,
+    emotion_breakdown: { stake_volatility: stakeVolatility, loss_chasing: lossChasingPts, streak_behavior: streakBehaviorPts, session_discipline: sessionDisciplinePts },
     bankroll_health: bankrollHealth,
     parlay_stats: { parlay_count: parlays.length, parlay_percent: round2(parlayPercent), parlay_roi: round2(parlayRoi), straight_roi: round2(straightRoi) },
     loss_chase_ratio: round2(lossChaseRatio),
@@ -545,7 +545,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       profitable_only: { categories: profitableCatNames, hypothetical_profit: round2(profitableOnlyProfit) },
       actual_profit: round2(actualProfit),
     },
-    betting_archetype: determineArchetype(roiPercent, tiltScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi),
+    betting_archetype: determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi),
     timing: calculateTiming(sorted),
     odds: calculateOdds(sorted),
   };
@@ -567,9 +567,9 @@ function determineArchetype(
   if (hasProfitableCats && roi > -5 && stakeCv >= 0.8) {
     return { name: 'Sharp Sleeper', description: "You've got real edges but your sizing is holding you back." };
   }
-  // Tilt Machine — decent picks, emotions ruin it
+  // Heated Bettor — decent picks, emotions ruin it
   if (hasProfitableCats && emotionScore > 55 && lossChaseRatio > 1.4) {
-    return { name: 'Tilt Machine', description: "Your strategy has promise but your emotions are eating the profit." };
+    return { name: 'Heated Bettor', description: "Your strategy has promise but your emotions are eating the profit." };
   }
   // Chalk Grinder — heavy favorites, paying juice
   if (favPct >= 65 && stakeCv < 0.8 && roi < 0) {
@@ -602,7 +602,7 @@ export interface DisciplineContext {
   reportCount: number;
   streakCount: number;
   uploadedRecently: boolean; // bets uploaded in last 14 days
-  prevSnapshot: { tilt_score: number; stake_cv?: number; parlay_percent?: number; loss_chase_ratio?: number } | null;
+  prevSnapshot: { tilt_score: number; emotion_score?: number; stake_cv?: number; parlay_percent?: number; loss_chase_ratio?: number } | null;
 }
 
 export function calculateDisciplineScore(
@@ -637,11 +637,12 @@ export function calculateDisciplineScore(
 
   // EMOTIONAL CONTROL (0-25)
   let control = 0;
-  if (metrics.tilt_score < 50) control += 8;
-  if (metrics.tilt_score < 25) control += 5;
+  if (metrics.emotion_score < 50) control += 8;
+  if (metrics.emotion_score < 25) control += 5;
   if (metrics.loss_chase_ratio < 1.3) control += 7;
   if (ctx.prevSnapshot) {
-    if (metrics.tilt_score < ctx.prevSnapshot.tilt_score) control += 5;
+    const prevEmotion = ctx.prevSnapshot.emotion_score ?? ctx.prevSnapshot.tilt_score;
+    if (metrics.emotion_score < prevEmotion) control += 5;
   }
   control = Math.min(25, control);
 
@@ -681,7 +682,7 @@ function pad(str: string, len: number): string { return str.length >= len ? str.
 
 const SYSTEM_PROMPT = `You are BetAutopsy, an elite sports betting behavioral analyst.
 
-IMPORTANT: All numerical metrics (ROI, win rate, tilt score, bankroll health, category breakdowns, bias classifications) are PRE-CALCULATED and provided to you. NEVER recalculate them. Use the EXACT numbers given. Your role is:
+IMPORTANT: All numerical metrics (ROI, win rate, emotion score, bankroll health, category breakdowns, bias classifications) are PRE-CALCULATED and provided to you. NEVER recalculate them. Use the EXACT numbers given. Your role is:
 - Interpret what the numbers mean behaviorally
 - Write descriptions and evidence for each pre-classified bias (do NOT add or remove biases, do NOT change severity levels)
 - Identify behavioral patterns in the sequence and timing of bets
@@ -691,7 +692,7 @@ IMPORTANT: All numerical metrics (ROI, win rate, tilt score, bankroll health, ca
 - Assign the overall_grade based on the provided metrics
 - Write all recommendations
 
-You do NOT calculate: tilt_score, roi_percent, win_rate, bankroll_health, category ROIs, bias severity levels, or any other number.
+You do NOT calculate: emotion_score, roi_percent, win_rate, bankroll_health, category ROIs, bias severity levels, or any other number.
 
 ## Output Format
 Respond with valid JSON:
@@ -847,7 +848,7 @@ Bankroll: ${metrics.bankroll_used ? `$${metrics.bankroll_used.toLocaleString()}`
 Bankroll Health: ${metrics.bankroll_health === 'danger' ? 'At Risk' : metrics.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}
 Overall Grade: ${metrics.summary.overall_grade} (pre-calculated, do not override)
 Bet DNA: ${metrics.betting_archetype.name} — ${metrics.betting_archetype.description}
-Emotion Score: ${metrics.tilt_score}/100 (bet_sizing: ${metrics.tilt_breakdown.stake_volatility}/25, loss_reaction: ${metrics.tilt_breakdown.loss_chasing}/25, streak_behavior: ${metrics.tilt_breakdown.streak_behavior}/25, knowing_when_to_stop: ${metrics.tilt_breakdown.session_discipline}/25)
+Emotion Score: ${metrics.emotion_score}/100 (bet_sizing: ${metrics.emotion_breakdown.stake_volatility}/25, loss_reaction: ${metrics.emotion_breakdown.loss_chasing}/25, streak_behavior: ${metrics.emotion_breakdown.streak_behavior}/25, knowing_when_to_stop: ${metrics.emotion_breakdown.session_discipline}/25)
 Bet Sizing Consistency: ${metrics.stake_cv < 0.5 ? 'very consistent' : metrics.stake_cv < 0.8 ? 'somewhat varied' : metrics.stake_cv < 1.2 ? 'inconsistent' : 'wildly inconsistent'} (variability score: ${metrics.stake_cv.toFixed(2)})
 Loss Chase Ratio: ${metrics.loss_chase_ratio.toFixed(2)}x
 Parlays: ${metrics.parlay_stats.parlay_count} (${metrics.parlay_stats.parlay_percent.toFixed(1)}%), Parlay ROI: ${metrics.parlay_stats.parlay_roi.toFixed(1)}%, Straight ROI: ${metrics.parlay_stats.straight_roi.toFixed(1)}%
@@ -942,8 +943,10 @@ ${metrics.biases_detected.length > 0
     }),
     behavioral_patterns: (Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'],
     recommendations: (Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as AutopsyAnalysis['recommendations'],
-    tilt_score: metrics.tilt_score,
-    tilt_breakdown: metrics.tilt_breakdown,
+    emotion_score: metrics.emotion_score,
+    tilt_score: metrics.emotion_score, // backward compat for old report renders
+    emotion_breakdown: metrics.emotion_breakdown,
+    tilt_breakdown: metrics.emotion_breakdown, // backward compat
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
     session_analysis: claudeData.session_analysis as AutopsyAnalysis['session_analysis'],
@@ -999,7 +1002,7 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
   lines.push(`- **Date Range:** ${a.summary.date_range}`);
   lines.push(`- **Overall Grade:** ${a.summary.overall_grade}`);
   lines.push('');
-  lines.push(`## Emotion Score: ${a.tilt_score}/100`);
+  lines.push(`## Emotion Score: ${a.emotion_score}/100`);
   lines.push(`## Bankroll Health: ${a.bankroll_health === 'danger' ? 'At Risk' : a.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}`);
   lines.push('');
   if (a.biases_detected.length > 0) {

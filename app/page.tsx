@@ -177,7 +177,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Tilt bar */}
+          {/* Emotion bar */}
           <div className="mt-6">
             <div className="flex items-center justify-between text-xs text-ink-600 mb-1.5">
               <span>Emotion Score</span>
@@ -190,7 +190,7 @@ export default function LandingPage() {
               Elevated — emotional betting patterns are costing you money.
             </p>
             <p className="text-ink-700 text-[11px] mt-1 italic">
-              Measures how much emotions drive your bets (chasing losses, erratic sizing, tilt betting). Lower is better. Under 40 means strong discipline.
+              Measures how much emotions drive your bets (chasing losses, erratic sizing, heated betting). Lower is better. Under 40 means strong discipline.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 # BetAutopsy
 
-BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (tilt sequences, emotional stake sizing). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
+BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (emotional betting sequences, heated stake sizing). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
 
 ## Setup
 

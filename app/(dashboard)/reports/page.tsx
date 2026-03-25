@@ -551,7 +551,7 @@ export default function ReportsPage() {
                       {analysis.summary.total_profit >= 0 ? '+' : ''}${analysis.summary.total_profit.toFixed(0)}
                     </span>
                     <span className="text-ink-600">
-                      Emotion: {analysis.tilt_score}/100
+                      Emotion: {analysis.emotion_score ?? analysis.tilt_score}/100
                     </span>
                     <span className="text-ink-700 text-xs">
                       {new Date(report.created_at).toLocaleDateString('en-US', {

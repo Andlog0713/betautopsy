@@ -4,7 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'BetAutopsy — AI-Powered Betting Behavioral Analysis',
   description:
-    'Upload your bet history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and tilt patterns.',
+    'Upload your bet history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional betting patterns.',
   icons: {
     icon: '/favicon.svg',
   },
