@@ -9,7 +9,7 @@ import {
 import ShareModal from './ShareModal';
 import ReportFeedback from './ReportFeedback';
 import type { ShareCardData } from './ShareCard';
-import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket } from '@/types';
+import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
 
@@ -731,6 +731,160 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Odds Intelligence */}
+      {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Odds Intelligence</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">How you perform at different price points — and whether you&apos;re finding real value or just getting lucky.</p>
+
+          {/* Odds Bucket Table */}
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="text-left text-ink-600 font-medium px-4 py-3">Odds Range</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Bets</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Win Rate</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3 hidden sm:table-cell">Implied</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">Edge</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3">ROI</th>
+                    <th className="text-right text-ink-600 font-medium px-4 py-3 hidden md:table-cell">Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.odds_analysis.buckets.filter((b) => b.bets > 0).map((bucket, i) => (
+                    <tr key={i} className="border-b border-white/[0.04]">
+                      <td className="px-4 py-3">
+                        <span className="font-medium">{bucket.label}</span>
+                        <span className="text-ink-700 text-xs ml-1.5 hidden sm:inline">({bucket.range})</span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-ink-500">{bucket.bets}</td>
+                      <td className="px-4 py-3 text-right font-mono">{bucket.win_rate.toFixed(0)}%</td>
+                      <td className="px-4 py-3 text-right font-mono text-ink-600 hidden sm:table-cell">{bucket.implied_prob.toFixed(0)}%</td>
+                      <td className={`px-4 py-3 text-right font-mono font-semibold ${bucket.edge > 2 ? 'text-mint-500' : bucket.edge < -2 ? 'text-red-400' : 'text-ink-500'}`}>
+                        {bucket.edge >= 0 ? '+' : ''}{bucket.edge.toFixed(1)}pp
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono font-medium ${bucket.roi >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                        {bucket.roi >= 0 ? '+' : ''}{bucket.roi.toFixed(1)}%
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono hidden md:table-cell ${bucket.profit >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                        {bucket.profit >= 0 ? '+' : ''}${bucket.profit.toFixed(0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2.5 border-t border-white/[0.04] bg-ink-900/30">
+              <p className="text-ink-700 text-xs">
+                <span className="text-ink-600">Edge</span> = your actual win rate minus the implied probability from the odds. Positive edge means you&apos;re beating the line at that price point.
+              </p>
+            </div>
+          </div>
+
+          {/* Edge by Bucket Visual */}
+          {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length > 0 && (
+            <div className="card p-6">
+              <h3 className="font-medium text-lg mb-4">Edge by Odds Range</h3>
+              <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analysis.odds_analysis.buckets.filter((b) => b.bets >= 3)} layout="vertical" margin={{ left: 90 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}pp`} />
+                    <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={85} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload as OddsBucket;
+                        return (
+                          <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
+                            <p className="text-[#F0F0F0] font-medium">{d.label}</p>
+                            <p className={`font-mono ${d.edge >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
+                            <p className="text-ink-600">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
+                            <p className="text-ink-600">{d.bets} bets · {d.roi.toFixed(1)}% ROI</p>
+                          </div>
+                        );
+                      }}
+                    />
+                    <ReferenceLine x={0} stroke="#5A5C6F50" />
+                    <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
+                      {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
+                        <Cell key={i} fill={entry.edge >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Luck vs Skill + Best/Worst Callouts */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Luck vs Skill */}
+            <div className={`card p-5 ${
+              analysis.odds_analysis.luck_rating > 1 ? 'border-amber-400/20 bg-amber-400/5' :
+              analysis.odds_analysis.luck_rating < -1 ? 'border-cyan-400/20 bg-cyan-400/5' :
+              'border-white/[0.08]'
+            }`}>
+              <p className="text-ink-600 text-xs mb-1">Luck vs Skill</p>
+              <p className={`font-bold text-xl ${
+                analysis.odds_analysis.luck_rating > 1 ? 'text-amber-400' :
+                analysis.odds_analysis.luck_rating < -1 ? 'text-cyan-400' :
+                'text-[#F0F0F0]'
+              }`}>
+                {analysis.odds_analysis.luck_label}
+              </p>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-600">Expected wins</span>
+                  <span className="font-mono text-ink-500">{analysis.odds_analysis.expected_wins.toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-ink-600">Actual wins</span>
+                  <span className="font-mono text-[#F0F0F0]">{analysis.odds_analysis.actual_wins}</span>
+                </div>
+                <div className="flex justify-between text-xs border-t border-white/[0.06] pt-1">
+                  <span className="text-ink-600">Difference</span>
+                  <span className={`font-mono font-semibold ${analysis.odds_analysis.luck_rating >= 0 ? 'text-amber-400' : 'text-cyan-400'}`}>
+                    {analysis.odds_analysis.luck_rating >= 0 ? '+' : ''}{analysis.odds_analysis.luck_rating.toFixed(1)} wins
+                  </span>
+                </div>
+              </div>
+              <p className="text-ink-700 text-[10px] mt-2 italic">
+                {analysis.odds_analysis.luck_rating > 1
+                  ? 'You\'re winning more than the odds predict. Could be skill, could be variance — more bets will tell.'
+                  : analysis.odds_analysis.luck_rating < -1
+                  ? 'You\'re winning less than expected. Could be bad luck — or the lines you\'re taking aren\'t as good as they look.'
+                  : 'Your results are tracking close to what the odds predict. Solid baseline.'}
+              </p>
+            </div>
+
+            {/* Best Bucket */}
+            {analysis.odds_analysis.best_bucket && (
+              <div className="card border-mint-500/20 bg-mint-500/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Best Odds Range</p>
+                <p className="font-bold text-xl text-mint-500">{analysis.odds_analysis.best_bucket.label}</p>
+                <p className="font-mono text-mint-500 text-sm">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}pp edge</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
+                <p className="text-ink-700 text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
+              </div>
+            )}
+
+            {/* Worst Bucket */}
+            {analysis.odds_analysis.worst_bucket && (
+              <div className="card border-red-400/20 bg-red-400/5 p-5">
+                <p className="text-ink-600 text-xs mb-1">Worst Odds Range</p>
+                <p className="font-bold text-xl text-red-400">{analysis.odds_analysis.worst_bucket.label}</p>
+                <p className="font-mono text-red-400 text-sm">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge</p>
+                <p className="text-ink-600 text-xs mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
+                <p className="text-ink-700 text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

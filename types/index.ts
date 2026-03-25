@@ -105,6 +105,32 @@ export interface TimingAnalysis {
   has_time_data: boolean;      // false if all bets land at midnight (no real time info)
 }
 
+export interface OddsBucket {
+  label: string;           // e.g. "Heavy Chalk (-300+)", "Slight Dog (+100 to +150)"
+  range: string;           // e.g. "-300 or worse", "+100 to +150"
+  bets: number;
+  wins: number;
+  losses: number;
+  staked: number;
+  profit: number;
+  roi: number;
+  win_rate: number;
+  implied_prob: number;    // avg implied probability for this bucket
+  actual_win_rate: number; // actual win rate — compare to implied_prob
+  edge: number;            // actual_win_rate - implied_prob (positive = finding value)
+}
+
+export interface OddsAnalysis {
+  buckets: OddsBucket[];
+  expected_wins: number;        // sum of implied probabilities across all settled bets
+  actual_wins: number;          // actual win count
+  luck_rating: number;          // actual_wins - expected_wins (positive = running hot)
+  luck_label: string;           // "Running hot", "Running cold", "Right on track"
+  total_settled: number;
+  best_bucket: { label: string; edge: number; count: number } | null;
+  worst_bucket: { label: string; edge: number; count: number } | null;
+}
+
 export interface AutopsyAnalysis {
   summary: AutopsySummary;
   biases_detected: BiasDetected[];
@@ -124,6 +150,7 @@ export interface AutopsyAnalysis {
   edge_profile?: EdgeProfile;
   betting_archetype?: { name: string; description: string };
   timing_analysis?: TimingAnalysis;
+  odds_analysis?: OddsAnalysis;
   discipline_score?: {
     total: number;
     tracking: number;

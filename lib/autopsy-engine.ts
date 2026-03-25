@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket } from '@/types';
 
 // ── Deterministic Metrics Calculator ──
 
@@ -48,6 +48,109 @@ export interface CalculatedMetrics {
   };
   betting_archetype: { name: string; description: string };
   timing: TimingAnalysis;
+  odds: OddsAnalysis;
+}
+
+// ── Odds Intelligence ──
+
+const ODDS_BUCKETS: { label: string; range: string; min: number; max: number }[] = [
+  { label: 'Heavy Chalk', range: '-300 or worse', min: -Infinity, max: -299 },
+  { label: 'Moderate Favorite', range: '-200 to -299', min: -299, max: -199 },
+  { label: 'Slight Favorite', range: '-110 to -199', min: -199, max: -109 },
+  { label: 'Pick\'em', range: '-109 to +109', min: -109, max: 109 },
+  { label: 'Slight Dog', range: '+110 to +175', min: 110, max: 175 },
+  { label: 'Moderate Dog', range: '+176 to +300', min: 176, max: 300 },
+  { label: 'Longshot', range: '+301 or longer', min: 301, max: Infinity },
+];
+
+function oddsToImpliedProb(americanOdds: number): number {
+  if (americanOdds >= 0) return 100 / (americanOdds + 100);
+  return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100);
+}
+
+function getBucketIndex(odds: number): number {
+  // American odds: negatives are favorites, positives are dogs
+  // Sort into buckets by the raw odds value
+  for (let i = 0; i < ODDS_BUCKETS.length; i++) {
+    const b = ODDS_BUCKETS[i];
+    if (i === 0 && odds <= b.max) return i;                          // Heavy chalk: <= -300
+    if (i === ODDS_BUCKETS.length - 1 && odds >= b.min) return i;    // Longshot: >= +301
+    if (odds >= b.min && odds <= b.max) return i;
+  }
+  return 3; // default to pick'em
+}
+
+function calculateOdds(bets: Bet[]): OddsAnalysis {
+  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+
+  // Initialize bucket accumulators
+  const accum: { bets: number; wins: number; losses: number; staked: number; profit: number; impliedProbSum: number }[] =
+    ODDS_BUCKETS.map(() => ({ bets: 0, wins: 0, losses: 0, staked: 0, profit: 0, impliedProbSum: 0 }));
+
+  let totalExpectedWins = 0;
+  let totalActualWins = 0;
+
+  for (const b of settled) {
+    const idx = getBucketIndex(b.odds);
+    const stake = Number(b.stake);
+    const profit = Number(b.profit);
+    const isWin = b.result === 'win';
+    const impliedProb = oddsToImpliedProb(b.odds);
+
+    accum[idx].bets++;
+    accum[idx].staked += stake;
+    accum[idx].profit += profit;
+    accum[idx].impliedProbSum += impliedProb;
+    if (isWin) { accum[idx].wins++; totalActualWins++; }
+    else accum[idx].losses++;
+
+    totalExpectedWins += impliedProb;
+  }
+
+  const buckets: OddsBucket[] = ODDS_BUCKETS.map((def, i) => {
+    const a = accum[i];
+    const avgImplied = a.bets > 0 ? a.impliedProbSum / a.bets : 0;
+    const actualWR = a.bets > 0 ? a.wins / a.bets : 0;
+    return {
+      label: def.label,
+      range: def.range,
+      bets: a.bets,
+      wins: a.wins,
+      losses: a.losses,
+      staked: round2(a.staked),
+      profit: round2(a.profit),
+      roi: a.staked > 0 ? round2((a.profit / a.staked) * 100) : 0,
+      win_rate: round2(actualWR * 100),
+      implied_prob: round2(avgImplied * 100),
+      actual_win_rate: round2(actualWR * 100),
+      edge: round2((actualWR - avgImplied) * 100),
+    };
+  });
+
+  const activeBuckets = buckets.filter((b) => b.bets >= 3);
+  activeBuckets.sort((a, b) => a.edge - b.edge);
+  const worstBucket = activeBuckets.length > 0 ? { label: activeBuckets[0].label, edge: activeBuckets[0].edge, count: activeBuckets[0].bets } : null;
+  const bestBucket = activeBuckets.length > 0 ? { label: activeBuckets[activeBuckets.length - 1].label, edge: activeBuckets[activeBuckets.length - 1].edge, count: activeBuckets[activeBuckets.length - 1].bets } : null;
+
+  const luckRating = round2(totalActualWins - totalExpectedWins);
+  let luckLabel: string;
+  if (settled.length < 10) luckLabel = 'Not enough data';
+  else if (luckRating > 3) luckLabel = 'Running hot';
+  else if (luckRating > 1) luckLabel = 'Slightly lucky';
+  else if (luckRating >= -1) luckLabel = 'Right on track';
+  else if (luckRating >= -3) luckLabel = 'Slightly cold';
+  else luckLabel = 'Running cold';
+
+  return {
+    buckets,
+    expected_wins: round2(totalExpectedWins),
+    actual_wins: totalActualWins,
+    luck_rating: luckRating,
+    luck_label: luckLabel,
+    total_settled: settled.length,
+    best_bucket: bestBucket,
+    worst_bucket: worstBucket,
+  };
 }
 
 // ── Timing Analysis ──
@@ -444,6 +547,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     },
     betting_archetype: determineArchetype(roiPercent, tiltScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi),
     timing: calculateTiming(sorted),
+    odds: calculateOdds(sorted),
   };
 }
 
@@ -764,6 +868,15 @@ ${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.lab
 ${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : 'No time-of-day data available (timestamps are date-only).'}
 ===
 
+=== ODDS INTELLIGENCE ===
+By Odds Bucket:
+${metrics.odds.buckets.filter((b) => b.bets >= 1).map((b) => `${b.label} (${b.range}): ${b.bets} bets, ${b.win_rate.toFixed(0)}% win rate vs ${b.implied_prob.toFixed(0)}% implied, edge: ${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp, ROI: ${b.roi.toFixed(1)}%, $${b.profit.toFixed(0)} profit`).join('\n')}
+
+Luck vs Skill: ${metrics.odds.actual_wins} actual wins vs ${metrics.odds.expected_wins.toFixed(1)} expected wins (${metrics.odds.luck_label}, ${metrics.odds.luck_rating >= 0 ? '+' : ''}${metrics.odds.luck_rating.toFixed(1)} wins above expected)
+${metrics.odds.best_bucket ? `Best Odds Range: ${metrics.odds.best_bucket.label} (${metrics.odds.best_bucket.edge >= 0 ? '+' : ''}${metrics.odds.best_bucket.edge.toFixed(1)}pp edge, ${metrics.odds.best_bucket.count} bets)` : ''}
+${metrics.odds.worst_bucket ? `Worst Odds Range: ${metrics.odds.worst_bucket.label} (${metrics.odds.worst_bucket.edge >= 0 ? '+' : ''}${metrics.odds.worst_bucket.edge.toFixed(1)}pp edge, ${metrics.odds.worst_bucket.count} bets)` : ''}
+===
+
 === PRE-CLASSIFIED BIASES (do not change bias names or severity levels — write descriptions and evidence for each) ===
 ${metrics.biases_detected.length > 0
     ? metrics.biases_detected.map((b) => `- ${b.bias_name}: ${b.severity.toUpperCase()} (${b.data})`).join('\n')
@@ -837,6 +950,7 @@ ${metrics.biases_detected.length > 0
     edge_profile: claudeData.edge_profile as AutopsyAnalysis['edge_profile'],
     betting_archetype: metrics.betting_archetype,
     timing_analysis: metrics.timing,
+    odds_analysis: metrics.odds,
   };
 
   const markdown = generateMarkdownReport(analysis);
@@ -926,6 +1040,19 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     if (a.timing_analysis.best_window) lines.push(`- **Best Window:** ${a.timing_analysis.best_window.label} (${a.timing_analysis.best_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.best_window.count} bets)`);
     if (a.timing_analysis.worst_window) lines.push(`- **Worst Window:** ${a.timing_analysis.worst_window.label} (${a.timing_analysis.worst_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.worst_window.count} bets)`);
     if (a.timing_analysis.late_night_stats) lines.push(`- **Late Night (11pm-4am):** ${a.timing_analysis.late_night_stats.count} bets, ${a.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI`);
+    lines.push('');
+  }
+  if (a.odds_analysis && a.odds_analysis.buckets.some((b) => b.bets > 0)) {
+    lines.push('## Odds Intelligence\n');
+    lines.push('| Odds Range | Bets | Win Rate | Implied | Edge | ROI | Profit |');
+    lines.push('|------------|------|----------|---------|------|-----|--------|');
+    for (const b of a.odds_analysis.buckets.filter((b) => b.bets > 0)) {
+      lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${b.win_rate.toFixed(0)}% | ${b.implied_prob.toFixed(0)}% | ${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp | ${b.roi.toFixed(1)}% | $${b.profit.toFixed(0)} |`);
+    }
+    lines.push('');
+    lines.push(`- **Luck vs Skill:** ${a.odds_analysis.actual_wins} actual wins vs ${a.odds_analysis.expected_wins.toFixed(1)} expected — ${a.odds_analysis.luck_label}`);
+    if (a.odds_analysis.best_bucket) lines.push(`- **Best Odds Range:** ${a.odds_analysis.best_bucket.label} (${a.odds_analysis.best_bucket.edge >= 0 ? '+' : ''}${a.odds_analysis.best_bucket.edge.toFixed(1)}pp edge)`);
+    if (a.odds_analysis.worst_bucket) lines.push(`- **Worst Odds Range:** ${a.odds_analysis.worst_bucket.label} (${a.odds_analysis.worst_bucket.edge >= 0 ? '+' : ''}${a.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge)`);
     lines.push('');
   }
   if (a.recommendations.length > 0) {
