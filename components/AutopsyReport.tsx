@@ -362,7 +362,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="font-bold text-2xl">Autopsy Summary</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" title="Combines ROI, win rate, discipline, and emotional control into a single letter grade">
             <span className="text-ink-600 text-sm">Overall Grade:</span>
             <span className={`font-bold text-4xl font-bold ${gradeColor(summary.overall_grade)}`}>
               {summary.overall_grade}
@@ -427,20 +427,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
         <p className="text-ink-600 text-sm mb-2">{tiltLabel(analysis.tilt_score)}</p>
         <p className="text-ink-700 text-xs mb-3 italic">
-          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and tilt betting. Lower is better.
+          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and tilt betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
         {analysis.tilt_breakdown && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
             {([
-              { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const },
-              { label: 'Reaction to Losses', key: 'loss_chasing' as const },
-              { label: 'During Losing Streaks', key: 'streak_behavior' as const },
-              { label: 'Knowing When to Stop', key: 'session_discipline' as const },
-            ]).map(({ label, key }) => {
+              { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const, hint: 'How much your bet sizes vary after accounting for odds differences' },
+              { label: 'Reaction to Losses', key: 'loss_chasing' as const, hint: 'Whether your stakes increase after losing bets compared to after wins' },
+              { label: 'During Losing Streaks', key: 'streak_behavior' as const, hint: 'How your betting speed and sizing change during consecutive losses' },
+              { label: 'Knowing When to Stop', key: 'session_discipline' as const, hint: 'Whether you tend to over-bet in long sessions or chase back losses late at night' },
+            ]).map(({ label, key, hint }) => {
               const val = analysis.tilt_breakdown![key];
               return (
                 <div key={key}>
-                  <p className="text-ink-700 text-xs mb-1">{label}</p>
+                  <p className="text-ink-700 text-xs mb-1" title={hint}>{label}</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 bg-ink-900 rounded-full overflow-hidden">
                       <div
@@ -452,6 +452,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     </div>
                     <span className="font-mono text-xs text-ink-600">{val}/25</span>
                   </div>
+                  <p className="text-ink-800 text-[10px] mt-0.5 leading-tight">{hint}</p>
                 </div>
               );
             })}
@@ -656,6 +657,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 ? 'Some promising spots, but more data needed to confirm real edges.'
                 : 'No strong edges detected yet. Focus on reducing leaks first.'}
             </p>
+            <p className="text-ink-800 text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
           </div>
           {/* Profitable / Unprofitable areas */}
           <div className="grid md:grid-cols-2 gap-4">
@@ -882,13 +884,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {([
-              { label: 'Tracking', val: analysis.discipline_score.tracking },
-              { label: 'Sizing', val: analysis.discipline_score.sizing },
-              { label: 'Control', val: analysis.discipline_score.control },
-              { label: 'Strategy', val: analysis.discipline_score.strategy },
-            ]).map(({ label, val }) => (
+              { label: 'Tracking', val: analysis.discipline_score.tracking, hint: 'Consistency of uploading and reviewing your bets' },
+              { label: 'Sizing', val: analysis.discipline_score.sizing, hint: 'How flat and controlled your bet sizing is' },
+              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — lower tilt means more control' },
+              { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
+            ]).map(({ label, val, hint }) => (
               <div key={label}>
-                <p className="text-ink-700 text-xs mb-1">{label}</p>
+                <p className="text-ink-700 text-xs mb-1" title={hint}>{label}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-ink-900 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${val >= 18 ? 'bg-mint-500' : val >= 12 ? 'bg-amber-400' : val >= 6 ? 'bg-orange-400' : 'bg-red-400'}`} style={{ width: `${(val / 25) * 100}%` }} />

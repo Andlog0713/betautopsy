@@ -41,6 +41,7 @@ export interface Profile {
   streak_last_date: string | null;
   streak_best: number;
   login_count: number;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
