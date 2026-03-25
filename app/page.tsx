@@ -19,7 +19,7 @@ export default function LandingPage() {
           </h1>
           <p className="text-ink-600 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-d2">
             Upload your bet history. Find out which habits are costing you, which
-            plays are actually sharp, and what to do about it.
+            plays are actually winning, and what to do about it.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up-d3">
             <Link href="/signup" className="btn-primary text-lg !px-8 !py-3.5 shadow-lg shadow-flame-500/20">
@@ -117,7 +117,7 @@ export default function LandingPage() {
             {
               step: '3',
               title: 'Improve',
-              desc: 'Get a game plan with real numbers. Not \'bet smarter\' — actual rules like \'stop laying -150+ chalk on NFL, it\'s costing you $40/week.\'',
+              desc: 'Get a game plan with real numbers. Not \'bet smarter\' — actual rules like \'stop betting heavy favorites on NFL, it\'s costing you $40/week.\'',
               delay: 'animate-slide-up-d5',
             },
           ].map((s) => (
@@ -160,11 +160,11 @@ export default function LandingPage() {
               <p className="font-mono font-semibold text-lg">142-131-7</p>
             </div>
             <div>
-              <p className="text-ink-600 text-xs mb-0.5">Net P&amp;L</p>
+              <p className="text-ink-600 text-xs mb-0.5">Net Profit/Loss</p>
               <p className="font-mono font-semibold text-lg text-red-400">-$840</p>
             </div>
             <div>
-              <p className="text-ink-600 text-xs mb-0.5">ROI</p>
+              <p className="text-ink-600 text-xs mb-0.5">ROI <span className="text-ink-700 normal-case">(return on investment)</span></p>
               <p className="font-mono font-semibold text-lg text-red-400">-3.2%</p>
             </div>
             <div>
@@ -188,6 +188,9 @@ export default function LandingPage() {
             </div>
             <p className="text-ink-700 text-xs mt-1.5">
               Elevated — emotional betting patterns are costing you money.
+            </p>
+            <p className="text-ink-700 text-[11px] mt-1 italic">
+              Measures how much emotions drive your bets (chasing losses, erratic sizing, tilt betting). Lower is better. Under 40 means strong discipline.
             </p>
           </div>
         </div>
@@ -234,21 +237,22 @@ export default function LandingPage() {
           <div className="card p-5 md:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
               <h3 className="font-medium text-lg">Heavy Parlay Tendency</h3>
+              <span className="text-[11px] text-ink-700 italic hidden sm:inline">(parlays = multi-bet combos that all must win)</span>
               <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border bg-amber-400/10 text-amber-400 border-amber-400/20 self-start">
                 MEDIUM
               </span>
             </div>
             <p className="text-[#F0F0F0] text-sm mb-4 leading-relaxed">
               34% of your bets are parlays (96 of 280), but they carry a combined
-              ROI of -38.4%. Meanwhile, your straight bet ROI is +4.1%. Your
+              ROI of -38.4%. Meanwhile, your single-game bets return +4.1%. Your
               parlays have a 14% win rate vs the 18% you&apos;d need to break even
-              at your average parlay odds of +450.
+              at your average parlay odds.
             </p>
             <div className="grid sm:grid-cols-3 gap-3 text-sm">
               <div className="bg-ink-900/50 rounded-lg p-3">
                 <p className="text-ink-700 text-[11px] font-medium uppercase tracking-wider mb-1">Evidence</p>
                 <p className="text-ink-500 text-[13px]">
-                  96 parlays at -38.4% ROI vs 184 straight bets at +4.1%.
+                  96 parlays at -38.4% ROI vs 184 single-game bets at +4.1%.
                   14% parlay win rate, needed 18%.
                 </p>
               </div>
@@ -260,7 +264,7 @@ export default function LandingPage() {
                 <p className="text-ink-700 text-[11px] font-medium uppercase tracking-wider mb-1">How to Fix</p>
                 <p className="text-ink-500 text-[13px]">
                   Cap parlays at 10% of total bets. Limit to 2-3 legs max. Your
-                  straight bets are profitable — lean into that.
+                  single-game bets are profitable — lean into that.
                 </p>
               </div>
             </div>
@@ -334,13 +338,13 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-ink-700 mb-2">Your Numbers Over Time</h3>
               {[
-                { label: 'Discipline Score', from: '34', to: '67', color: 'text-mint-500', arrow: '↑' },
-                { label: 'Loss Chase Ratio', from: '1.8x', to: '1.1x', color: 'text-mint-500', arrow: '↓' },
-                { label: 'Parlay %', from: '42%', to: '18%', color: 'text-mint-500', arrow: '↓' },
-                { label: 'ROI', from: '-8.2%', to: '-1.4%', color: 'text-mint-500', arrow: '↑' },
+                { label: 'Discipline Score', hint: 'How consistently you follow your own rules', from: '34', to: '67', color: 'text-mint-500', arrow: '↑' },
+                { label: 'Loss Chase Ratio', hint: 'How much bigger your bets get after a loss (1.0x = no change)', from: '1.8x', to: '1.1x', color: 'text-mint-500', arrow: '↓' },
+                { label: 'Parlay %', hint: 'Portion of bets that are multi-leg combos', from: '42%', to: '18%', color: 'text-mint-500', arrow: '↓' },
+                { label: 'ROI', hint: 'Return on investment — profit as % of total wagered', from: '-8.2%', to: '-1.4%', color: 'text-mint-500', arrow: '↑' },
               ].map((m) => (
-                <div key={m.label} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-ink-600">{m.label}</span>
+                <div key={m.label} className="flex items-center justify-between py-1 group relative">
+                  <span className="text-sm text-ink-600 border-b border-dotted border-ink-700 cursor-help" title={m.hint}>{m.label}</span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm text-ink-700">{m.from}</span>
                     <span className={`${m.color}`}>{m.arrow}</span>

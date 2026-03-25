@@ -354,7 +354,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* P&L Over Time Chart */}
       {hasBets && pnlData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-4">P&L Over Time</h2>
+          <h2 className="font-bold text-xl mb-4">Profit/Loss Over Time</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
@@ -388,7 +388,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             style={{ width: `${analysis.tilt_score}%` }}
           />
         </div>
-        <p className="text-ink-600 text-sm mb-3">{tiltLabel(analysis.tilt_score)}</p>
+        <p className="text-ink-600 text-sm mb-2">{tiltLabel(analysis.tilt_score)}</p>
+        <p className="text-ink-700 text-xs mb-3 italic">
+          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and tilt betting. Lower is better.
+        </p>
         {analysis.tilt_breakdown && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
             {([
@@ -591,10 +594,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.edge_profile && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
           {/* Sharp Score */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-ink-600 text-sm">Sharp Score</span>
+              <span className="text-ink-600 text-sm">Sharp Score <span className="text-ink-700 italic">(how skilled your betting is overall)</span></span>
               <span className="font-mono text-2xl font-bold text-cyan-400">
                 {analysis.edge_profile.sharp_score}/100
               </span>
