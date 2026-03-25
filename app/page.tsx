@@ -360,6 +360,8 @@ export default function LandingPage() {
               <Link href="/login" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Log in</Link>
               <Link href="/signup" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Sign up</Link>
               <Link href="/how-to-upload" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">How to Upload</Link>
+              <Link href="/blog" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Blog</Link>
+              <Link href="/quiz" className="text-ink-600 hover:text-[#F0F0F0] transition-colors">Quiz</Link>
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-white/[0.06] space-y-3">

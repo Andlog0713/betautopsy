@@ -72,4 +72,42 @@
   .label {
     @apply text-sm font-medium text-ink-600 mb-1.5 block;
   }
+
+  /* ── Blog prose ── */
+  .prose-betautopsy {
+    @apply text-ink-600 text-[15px] leading-relaxed;
+  }
+  .prose-betautopsy h2 {
+    @apply font-bold text-xl text-[#F0F0F0] mt-10 mb-4;
+  }
+  .prose-betautopsy h3 {
+    @apply font-bold text-lg text-[#F0F0F0] mt-8 mb-3;
+  }
+  .prose-betautopsy p {
+    @apply mb-4;
+  }
+  .prose-betautopsy strong {
+    @apply text-[#F0F0F0] font-semibold;
+  }
+  .prose-betautopsy ul, .prose-betautopsy ol {
+    @apply mb-4 pl-6 space-y-2;
+  }
+  .prose-betautopsy ul {
+    @apply list-disc;
+  }
+  .prose-betautopsy ol {
+    @apply list-decimal;
+  }
+  .prose-betautopsy li {
+    @apply text-ink-600;
+  }
+  .prose-betautopsy a {
+    @apply text-flame-500 hover:underline;
+  }
+  .prose-betautopsy blockquote {
+    @apply border-l-2 border-flame-500/30 pl-4 my-6 text-ink-500 italic;
+  }
+  .prose-betautopsy hr {
+    @apply border-white/[0.06] my-8;
+  }
 }
