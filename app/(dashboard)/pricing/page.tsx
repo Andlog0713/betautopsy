@@ -14,6 +14,7 @@ const tiers: { key: SubscriptionTier; highlight?: boolean }[] = [
 export default function PricingPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
 
   useEffect(() => {
     async function load() {
@@ -36,7 +37,7 @@ export default function PricingPage() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, interval }),
       });
       const data = await res.json();
       if (data.url) {
@@ -69,6 +70,21 @@ export default function PricingPage() {
         </p>
       </div>
 
+      {/* Billing interval toggle */}
+      <div className="flex items-center justify-center gap-3">
+        <span className={`text-sm ${interval === 'monthly' ? 'text-[#F0F0F0]' : 'text-ink-600'}`}>Monthly</span>
+        <button
+          onClick={() => setInterval(interval === 'monthly' ? 'annual' : 'monthly')}
+          className="relative w-14 h-7 rounded-full bg-ink-800 border border-white/[0.08] transition-colors"
+        >
+          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-flame-500 transition-transform ${interval === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`} />
+        </button>
+        <span className={`text-sm ${interval === 'annual' ? 'text-[#F0F0F0]' : 'text-ink-600'}`}>
+          Annual
+          <span className="text-mint-500 text-xs ml-1.5">Save up to 34%</span>
+        </span>
+      </div>
+
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         {tiers.map(({ key, highlight }) => {
           const config = TIER_LIMITS[key];
@@ -91,11 +107,25 @@ export default function PricingPage() {
 
               <h2 className="font-bold text-2xl">{config.name}</h2>
               <div className="mt-2 mb-4">
-                <span className="font-mono text-3xl font-bold">
-                  ${config.price}
-                </span>
-                {config.price > 0 && (
-                  <span className="text-ink-600 text-sm">/mo</span>
+                {config.price > 0 && config.annualPrice && interval === 'annual' ? (
+                  <>
+                    <span className="font-mono text-3xl font-bold">
+                      ${(config.annualPrice / 12).toFixed(2)}
+                    </span>
+                    <span className="text-ink-600 text-sm">/mo</span>
+                    <p className="text-ink-700 text-xs mt-1">
+                      ${config.annualPrice}/year — save {Math.round((1 - config.annualPrice / (config.price * 12)) * 100)}%
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-mono text-3xl font-bold">
+                      ${config.price}
+                    </span>
+                    {config.price > 0 && (
+                      <span className="text-ink-600 text-sm">/mo</span>
+                    )}
+                  </>
                 )}
               </div>
 

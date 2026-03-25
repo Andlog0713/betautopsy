@@ -14,8 +14,8 @@ BetAutopsy is a web app where sports bettors upload their bet history (CSV or ma
 
 - Go to [stripe.com](https://stripe.com) and create an account (or use test mode)
 - Create two products with recurring prices:
-  - **Pro** — $19/month
-  - **Sharp** — $39/month
+  - **Pro** — $9.99/month (or $99/year)
+  - **Sharp** — $24.99/month (or $199/year)
 - Copy the price IDs (starts with `price_`)
 - Go to **Developers → Webhooks** and add an endpoint pointing to `https://your-domain.com/api/webhook`
 - Select events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`

@@ -23,8 +23,8 @@ export function getStripe(): Stripe {
 export { getStripe as stripe };
 
 export function tierFromPriceId(priceId: string): 'pro' | 'sharp' | null {
-  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro';
-  if (priceId === process.env.STRIPE_SHARP_PRICE_ID) return 'sharp';
+  if (priceId === process.env.STRIPE_PRO_PRICE_ID || priceId === process.env.STRIPE_PRO_ANNUAL_PRICE_ID) return 'pro';
+  if (priceId === process.env.STRIPE_SHARP_PRICE_ID || priceId === process.env.STRIPE_SHARP_ANNUAL_PRICE_ID) return 'sharp';
   return null;
 }
 
@@ -48,13 +48,22 @@ export async function getOrCreateCustomer(
 export async function createCheckoutSession(
   customerId: string,
   tier: 'pro' | 'sharp',
-  userId: string
+  userId: string,
+  interval: 'monthly' | 'annual' = 'monthly'
 ): Promise<string> {
-  const priceId = tier === 'pro'
-    ? process.env.STRIPE_PRO_PRICE_ID!
-    : process.env.STRIPE_SHARP_PRICE_ID!;
+  let priceId: string;
 
-  if (!priceId) throw new Error(`No price ID configured for tier: ${tier}`);
+  if (interval === 'annual') {
+    priceId = tier === 'pro'
+      ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID!
+      : process.env.STRIPE_SHARP_ANNUAL_PRICE_ID!;
+  } else {
+    priceId = tier === 'pro'
+      ? process.env.STRIPE_PRO_PRICE_ID!
+      : process.env.STRIPE_SHARP_PRICE_ID!;
+  }
+
+  if (!priceId) throw new Error(`No price ID configured for tier: ${tier}, interval: ${interval}`);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 

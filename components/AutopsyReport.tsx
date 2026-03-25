@@ -1397,7 +1397,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <h2 className="font-bold text-2xl">Sharp Analysis</h2>
               <p className="text-ink-600 text-sm">Advanced tools that turn your report data into actionable strategy.</p>
-              <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $22/mo</a>
+              <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $24.99/mo</a>
             </div>
 
             {!readOnly && <ReportFeedback reportId={reportId} />}

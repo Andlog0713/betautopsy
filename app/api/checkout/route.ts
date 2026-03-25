@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { tier } = await request.json();
+    const { tier, interval } = await request.json();
 
     if (tier !== 'pro' && tier !== 'sharp') {
       return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Create checkout session
-    const url = await createCheckoutSession(customerId, tier, user.id);
+    const url = await createCheckoutSession(customerId, tier, user.id, interval || 'monthly');
 
     return NextResponse.json({ url });
   } catch (error) {

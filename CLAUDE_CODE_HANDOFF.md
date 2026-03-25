@@ -182,11 +182,11 @@ create policy "Users can insert own reports" on autopsy_reports for insert with 
 
 ## SUBSCRIPTION TIERS
 
-| Tier | Price | Max Bets | Max Reports | Features |
-|------|-------|----------|-------------|----------|
-| Free | $0 | 50 | 1 | Basic bias detection, summary stats |
-| Pro | $19/mo | Unlimited | Unlimited | Full bias suite, strategic leaks, behavioral patterns, weekly reports, PDF export |
-| Sharp | $39/mo | Unlimited | Unlimited | Everything in Pro + real-time bet annotation, custom emotion alerts, API access |
+| Tier | Price | Annual | Max Bets | Max Reports | Features |
+|------|-------|--------|----------|-------------|----------|
+| Free | $0 | — | Unlimited | 1 (50 bets) | Basic bias detection, summary stats |
+| Pro | $9.99/mo | $99/yr | Unlimited | Unlimited | Full bias suite, strategic leaks, behavioral patterns, weekly reports, PDF export |
+| Sharp | $24.99/mo | $199/yr | Unlimited | Unlimited | Everything in Pro + Leak Prioritizer, full What-If Simulator, early access |
 
 ## THE CLAUDE SYSTEM PROMPT (MOST IMPORTANT PART)
 
@@ -347,7 +347,7 @@ The landing page should include:
 3. Feature list: loss chasing detection, cognitive bias ID, strategic leak mapping, emotion scoring, action plan
 4. How it works: Upload → Analyze → Improve (3-step)
 5. Sample report preview: A mock autopsy showing loss chasing (high severity), parlay addiction (medium), favorite bias (low) with real-looking numbers
-6. Pricing: 3-tier grid (Free $0, Pro $19/mo, Sharp $39/mo)
+6. Pricing: 3-tier grid (Free $0, Pro $9.99/mo or $99/yr, Sharp $24.99/mo or $199/yr)
 7. Footer with disclaimer
 
 ## AUTOPSY REPORT UI

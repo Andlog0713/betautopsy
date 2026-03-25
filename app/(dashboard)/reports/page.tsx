@@ -318,7 +318,7 @@ export default function ReportsPage() {
               sportsbook you perform best on. One insight pays for the whole year.
             </p>
             <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Analysis — $11/mo
+              Unlock Full Analysis — $9.99/mo
             </a>
           </div>
 
@@ -345,7 +345,7 @@ export default function ReportsPage() {
                 <p className="text-2xl mb-2">🔒</p>
                 <p className="text-[#F0F0F0] font-medium mb-1">Pro reports include</p>
                 <p className="text-ink-600 text-sm mb-3">Edge Profile, Session Analysis, Personal Rules, Discipline Score tracking, and progress over time.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $11/mo</a>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $9.99/mo</a>
               </div>
             </div>
           </div>

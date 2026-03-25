@@ -263,6 +263,7 @@ export interface Recommendation {
 export interface TierConfig {
   name: string;
   price: number;
+  annualPrice?: number;
   maxBets: number | null; // null = unlimited
   maxReports: number | null; // null = unlimited
   maxBetsPerReport: number | null; // null = unlimited
@@ -283,7 +284,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
   pro: {
     name: 'Pro',
-    price: 11,
+    price: 9.99,
+    annualPrice: 99,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: null,
@@ -297,7 +299,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
   sharp: {
     name: 'Sharp',
-    price: 22,
+    price: 24.99,
+    annualPrice: 199,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: null,
