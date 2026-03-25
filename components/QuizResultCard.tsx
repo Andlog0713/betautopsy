@@ -49,11 +49,11 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
         {/* Emotion score */}
-        <div style={{ background: '#1C1E2D', borderRadius: 12, padding: 16, textAlign: 'center' }}>
+        <div style={{ background: '#1C1E2D', borderRadius: 12, padding: 12, textAlign: 'center', overflow: 'hidden' }}>
           <div style={{ fontSize: 10, color: '#A0A3B1', marginBottom: 6 }}>EMOTION SCORE</div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 28, fontWeight: 700, color: ec }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 26, fontWeight: 700, color: ec }}>
             {result.emotion_estimate}
           </div>
           <div style={{ height: 4, background: '#0D1117', borderRadius: 2, overflow: 'hidden', marginTop: 8 }}>
@@ -62,9 +62,9 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
         </div>
 
         {/* Top bias */}
-        <div style={{ background: '#1C1E2D', borderRadius: 12, padding: 16 }}>
+        <div style={{ background: '#1C1E2D', borderRadius: 12, padding: 12, overflow: 'hidden' }}>
           <div style={{ fontSize: 10, color: '#A0A3B1', marginBottom: 6 }}>TOP BIAS</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#F0F0F0' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F0F0', wordBreak: 'break-word' as const }}>
             {result.biases[0]?.name ?? 'None'}
           </div>
           <div style={{
