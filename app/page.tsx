@@ -222,21 +222,9 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Social proof stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold text-flame-500">7 days</p>
-            <p className="text-ink-700 text-xs mt-1">Average time to second autopsy</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold text-mint-500">-18 pts</p>
-            <p className="text-ink-700 text-xs mt-1">Average emotion score drop after 3 reports</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold text-[#F0F0F0]">5 min</p>
-            <p className="text-ink-700 text-xs mt-1">Upload, run, review — that&apos;s it</p>
-          </div>
-        </div>
+        <p className="text-ink-600 text-center text-sm max-w-lg mx-auto">
+          Upload in 2 minutes. Get your report in 20 seconds. See what you&apos;ve been missing.
+        </p>
       </section>
 
       {/* ── Pricing ── */}
