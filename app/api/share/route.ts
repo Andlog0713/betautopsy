@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const bestEdge = leaks.filter((l) => l.roi_impact > 0).sort((a, b) => b.roi_impact - a.roi_impact)[0];
     const biggestLeak = leaks.filter((l) => l.roi_impact < 0).sort((a, b) => a.roi_impact - b.roi_impact)[0];
 
-    // Sanitized share data (no dollar amounts, no bet descriptions)
+    // Share data: card summary for OG/metadata + full report for viewing
     const shareData = {
       grade: analysis.summary.overall_grade,
       emotion_score: analysis.tilt_score,
@@ -54,16 +54,25 @@ export async function POST(request: Request) {
       sharp_score: analysis.edge_profile?.sharp_score ?? null,
       archetype: analysis.betting_archetype ?? null,
       date: report.created_at,
+      report_json: analysis,
     };
 
     // Check if share token already exists for this report
     const { data: existing } = await supabase
       .from('share_tokens')
-      .select('id')
+      .select('id, data')
       .eq('report_id', report_id)
       .single();
 
     if (existing) {
+      const existingData = existing.data as Record<string, unknown> | null;
+      // Update old tokens that don't have the full report
+      if (!existingData?.report_json) {
+        await supabase
+          .from('share_tokens')
+          .update({ data: shareData })
+          .eq('id', existing.id);
+      }
       return NextResponse.json({ share_id: existing.id });
     }
 

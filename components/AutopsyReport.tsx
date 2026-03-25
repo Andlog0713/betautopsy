@@ -205,7 +205,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free' }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro' | 'sharp' }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro' | 'sharp'; readOnly?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
 
   const pnlData = useMemo(() => buildPnLData(bets), [bets]);
@@ -313,7 +313,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Share */}
-      <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />}
 
       {/* vs. Last Report */}
       {previousSnapshot && (
@@ -969,7 +969,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Feedback */}
-      <ReportFeedback reportId={reportId} />
+      {!readOnly && <ReportFeedback reportId={reportId} />}
       </>}
 
       {/* ═══ Sharp Tab ═══ */}
@@ -1084,7 +1084,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
               </div>
             )}
-            <ReportFeedback reportId={reportId} />
+            {!readOnly && <ReportFeedback reportId={reportId} />}
           </div>
         ) : (
           /* Locked Sharp tab for non-Sharp users */
@@ -1100,7 +1100,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $22/mo</a>
             </div>
 
-            <ReportFeedback reportId={reportId} />
+            {!readOnly && <ReportFeedback reportId={reportId} />}
           </div>
         )
       )}

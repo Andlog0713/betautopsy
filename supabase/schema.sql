@@ -231,6 +231,7 @@ create policy "Users can insert own snapshots" on progress_snapshots for insert 
 alter table share_tokens enable row level security;
 create policy "Anyone can view share tokens" on share_tokens for select using (true);
 create policy "Users can insert own share tokens" on share_tokens for insert with check (auth.uid() = user_id);
+create policy "Users can update own share tokens" on share_tokens for update using (auth.uid() = user_id);
 
 -- Feedback
 alter table feedback enable row level security;
