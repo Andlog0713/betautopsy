@@ -304,7 +304,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">🧬</span>
             <div>
-              <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA</p>
+              <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA <span className="normal-case text-ink-700">(your betting personality based on patterns in your data)</span></p>
               <h2 className="font-bold text-2xl text-flame-500">{analysis.betting_archetype.name}</h2>
             </div>
           </div>
@@ -372,12 +372,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <SummaryItem label="Record" value={summary.record} />
           <SummaryItem
-            label="Net P&L"
+            label="Net Profit/Loss"
             value={`${summary.total_profit >= 0 ? '+' : ''}$${summary.total_profit.toFixed(2)}`}
             color={summary.total_profit >= 0 ? 'text-mint-500' : 'text-red-400'}
           />
           <SummaryItem
             label="ROI"
+            hint="return on investment"
             value={`${summary.roi_percent.toFixed(1)}%`}
             color={summary.roi_percent >= 0 ? 'text-mint-500' : 'text-red-400'}
           />
@@ -462,6 +463,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {hasBets && stakeData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-bold text-xl mb-1">Stake Size Timeline</h2>
+          <p className="text-ink-700 text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
           <p className="text-ink-600 text-xs mb-4">
             <span className="inline-block w-2 h-2 rounded-full bg-[#5f594f] mr-1 align-middle" /> Normal
             <span className="inline-block w-2 h-2 rounded-full bg-[#f97316] mr-1 ml-3 align-middle" /> Within 1hr of a loss
@@ -520,6 +522,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {biases_detected.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Biases Detected</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Unconscious habits that are hurting your results — patterns you probably don&apos;t notice in the moment.</p>
           <div className="grid gap-4">
             {biases_detected.map((bias, i) => (
               <div key={i} className="card p-5">
@@ -554,6 +557,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {strategic_leaks.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Strategic Leaks</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Specific bet types or sports where you&apos;re consistently losing money.</p>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -707,6 +711,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {behavioral_patterns.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">Recurring habits we found in your betting — some help you, some hurt you.</p>
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
               <div key={i} className="card p-5 flex gap-4">
@@ -740,6 +745,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
+          <p className="text-ink-700 text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time — like a single night of betting.</p>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Worst session */}
             {analysis.session_analysis.worst_session && (
@@ -1100,10 +1106,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   );
 }
 
-function SummaryItem({ label, value, color, small }: { label: string; value: string; color?: string; small?: boolean }) {
+function SummaryItem({ label, value, color, small, hint }: { label: string; value: string; color?: string; small?: boolean; hint?: string }) {
   return (
     <div>
-      <p className="text-ink-600 text-xs mb-0.5">{label}</p>
+      <p className="text-ink-600 text-xs mb-0.5">{label}{hint && <span className="text-ink-700 normal-case"> ({hint})</span>}</p>
       <p className={`font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-[#F0F0F0]'}`}>{value}</p>
     </div>
   );

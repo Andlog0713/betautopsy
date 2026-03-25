@@ -150,7 +150,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">🧬</span>
             <div>
-              <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA</p>
+              <p className="text-ink-600 text-xs uppercase tracking-wider">Your Bet DNA <span className="normal-case text-ink-700">(your betting personality)</span></p>
               <h3 className="font-bold text-2xl text-flame-500">The Parlay Dreamer</h3>
             </div>
           </div>
@@ -182,11 +182,11 @@ export default function LandingPage() {
               <p className="font-mono font-semibold text-lg text-red-400">-0.8%</p>
             </div>
             <div>
-              <p className="text-ink-600 text-xs mb-0.5">Avg Stake</p>
+              <p className="text-ink-600 text-xs mb-0.5">Avg Stake <span className="text-ink-700 normal-case">(typical bet size)</span></p>
               <p className="font-mono font-semibold text-lg">$94</p>
             </div>
             <div>
-              <p className="text-ink-600 text-xs mb-0.5">Emotion Score</p>
+              <p className="text-ink-600 text-xs mb-0.5">Emotion Score <span className="text-ink-700 normal-case">(lower is better)</span></p>
               <p className="font-mono font-semibold text-lg text-orange-400">64/100</p>
             </div>
           </div>
@@ -355,7 +355,7 @@ export default function LandingPage() {
                 { label: 'ROI', hint: 'Return on investment — profit as % of total wagered', from: '-8.2%', to: '-1.4%', color: 'text-mint-500', arrow: '↑' },
               ].map((m) => (
                 <div key={m.label} className="flex items-center justify-between py-1 group relative">
-                  <span className="text-sm text-ink-600 border-b border-dotted border-ink-700 cursor-help" title={m.hint}>{m.label}</span>
+                  <span className="text-sm text-ink-600">{m.label} <span className="text-ink-700 text-xs hidden sm:inline">({m.hint})</span></span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm text-ink-700">{m.from}</span>
                     <span className={`${m.color}`}>{m.arrow}</span>
