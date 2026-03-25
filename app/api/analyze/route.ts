@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     }
 
     if (betList.length < 10) {
-      return NextResponse.json({ error: `You need at least 10 bets to generate a report (you have ${betList.length}). Upload more bets and try again.` }, { status: 400 });
+      return NextResponse.json({ error: `You need at least 10 bets to generate a report (you have ${betList.length}). For best results, we recommend 50+ bets. Upload more and try again.` }, { status: 400 });
     }
 
     // Enforce per-report bet limit (free tier = 50 most recent)
