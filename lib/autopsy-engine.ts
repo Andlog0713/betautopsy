@@ -76,13 +76,27 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     ? `${fmtDate(dateStart)} to ${fmtDate(dateEnd)}`
     : 'Unknown';
 
-  // Stake CV
-  const mean = avgStake;
-  const variance = totalBets > 0
-    ? sorted.reduce((s, b) => s + Math.pow(Number(b.stake) - mean, 2), 0) / totalBets
+  // Stake CV — odds-normalized to avoid penalizing intentional sizing
+  // Convert each stake to its implied-risk equivalent: what you'd need to
+  // stake at -110 to have the same potential loss.  This way, $200 at +500
+  // and $50 at -110 produce similar normalized values.
+  function impliedProb(americanOdds: number): number {
+    if (americanOdds >= 0) return 100 / (americanOdds + 100);
+    return Math.abs(americanOdds) / (Math.abs(americanOdds) + 100);
+  }
+  const BASELINE_PROB = impliedProb(-110); // ≈ 0.5238
+  const normalizedStakes = sorted.map((b) => {
+    const prob = impliedProb(b.odds);
+    // Scale stake by (prob / baseline) — longer odds → smaller normalized stake
+    return Number(b.stake) * (prob / BASELINE_PROB);
+  });
+  const normMean = normalizedStakes.length > 0
+    ? normalizedStakes.reduce((a, b) => a + b, 0) / normalizedStakes.length : 0;
+  const variance = normalizedStakes.length > 0
+    ? normalizedStakes.reduce((s, v) => s + Math.pow(v - normMean, 2), 0) / normalizedStakes.length
     : 0;
   const stdDev = Math.sqrt(variance);
-  const stakeCv = mean > 0 ? stdDev / mean : 0;
+  const stakeCv = normMean > 0 ? stdDev / normMean : 0;
 
   // Loss chase ratio
   let stakeAfterLoss = 0, countAfterLoss = 0, stakeAfterWin = 0, countAfterWin = 0;
