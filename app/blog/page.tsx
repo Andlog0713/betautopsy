@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata: Metadata = {
-  title: 'Blog — Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
+  title: 'The Post-Mortem — Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
   description: 'Deep dives into sports betting psychology, cognitive biases, parlay math, loss chasing, and the behavioral patterns that cost bettors money.',
 };
 
@@ -11,7 +11,7 @@ export default function BlogIndexPage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="font-bold text-4xl mb-3">Blog</h1>
+        <h1 className="font-bold text-4xl mb-3">The Post-Mortem</h1>
         <p className="text-ink-600">
           The behavioral side of sports betting. Patterns, biases, and what they cost you.
         </p>
