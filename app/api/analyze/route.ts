@@ -130,6 +130,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `No bets found${rangeMsg}. Upload some bets first.` }, { status: 400 });
     }
 
+    if (betList.length < 10) {
+      return NextResponse.json({ error: `You need at least 10 bets to generate a report (you have ${betList.length}). Upload more bets and try again.` }, { status: 400 });
+    }
+
     // Enforce per-report bet limit (free tier = 50 most recent)
     const totalBetCount = betList.length;
     let betsToAnalyze = betList;
