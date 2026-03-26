@@ -17,16 +17,47 @@ function parseLegs(description: string): string[] {
 
 /**
  * Shorten a single leg description — extract the key info.
- * "Suwon KT Sonicboom Moneyline Suwon KT Sonicboom vs Seoul Samsung Thunders" → "Suwon KT Sonicboom ML"
+ * "Minas Tenis Clube Money Line Minas Tenis Clube vs Tokyo" → "Minas Tenis Clube ML"
+ * "CLE Cavaliers Moneyline SA Spurs at CLE Cavaliers" → "CLE Cavaliers ML"
  */
 function shortenLeg(leg: string): string {
   // Already short enough
-  if (leg.length <= 40) return leg;
-  // Try to grab everything before "vs" or the second team mention
-  const vsIdx = leg.indexOf(' vs ');
-  if (vsIdx > 0) return leg.slice(0, vsIdx).trim();
+  if (leg.length <= 30) return leg;
+
+  // Detect bet type keywords and extract team + type
+  const betTypes: [RegExp, string][] = [
+    [/\bMoney\s?Line\b/i, 'ML'],
+    [/\bMoneyline\b/i, 'ML'],
+    [/\bSpread\b/i, 'Spread'],
+    [/\bOver\b/i, 'Over'],
+    [/\bUnder\b/i, 'Under'],
+    [/\bTotal\b/i, 'Total'],
+  ];
+
+  for (const [regex, short] of betTypes) {
+    const match = leg.match(regex);
+    if (match && match.index !== undefined) {
+      // Grab everything before the bet type as the team name
+      let team = leg.slice(0, match.index).trim();
+      // If there's a number after (spread/total), grab it
+      const afterType = leg.slice(match.index + match[0].length).trim();
+      const numMatch = afterType.match(/^[+-]?\d+\.?\d*/);
+      const num = numMatch ? ` ${numMatch[0]}` : '';
+      // Truncate team name if still too long
+      if (team.length > 20) team = team.slice(0, 18) + '…';
+      return `${team} ${short}${num}`;
+    }
+  }
+
+  // Try to grab everything before "vs" or "at"
+  const splitIdx = leg.search(/\b(vs|at)\b/i);
+  if (splitIdx > 0) {
+    const team = leg.slice(0, splitIdx).trim();
+    return team.length > 25 ? team.slice(0, 23) + '…' : team;
+  }
+
   // Just truncate
-  return leg.slice(0, 38) + '…';
+  return leg.slice(0, 28) + '…';
 }
 
 /**
