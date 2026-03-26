@@ -1,8 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { toPng } from 'html-to-image';
 import ShareCard, { type ShareCardData } from './ShareCard';
+import ShareCardStories from './ShareCardStories';
+import { generateRoastStats } from '@/lib/share-helpers';
 
 export default function ShareModal({
   data,
@@ -14,9 +16,13 @@ export default function ShareModal({
   onClose: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const storiesRef = useRef<HTMLDivElement>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [format, setFormat] = useState<'stories' | 'card'>('stories');
+
+  const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -27,12 +33,13 @@ export default function ShareModal({
   }, [onClose]);
 
   async function handleDownload() {
-    if (!cardRef.current) return;
+    const ref = format === 'stories' ? storiesRef : cardRef;
+    if (!ref.current) return;
     setDownloading(true);
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2 });
+      const dataUrl = await toPng(ref.current, { pixelRatio: format === 'stories' ? 1 : 2 });
       const link = document.createElement('a');
-      link.download = `betautopsy-${data.grade.toLowerCase()}-${Date.now()}.png`;
+      link.download = `betautopsy-${data.grade.toLowerCase()}-${format}-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -63,18 +70,22 @@ export default function ShareModal({
   }
 
   async function handleCopyLink() {
-    const url = await getShareUrl();
-    if (url) {
-      await navigator.clipboard.writeText(url);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    }
+    await navigator.clipboard.writeText('https://betautopsy.com/quiz');
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   }
 
   async function handleShareTwitter() {
     const url = await getShareUrl();
-    const text = `My BetAutopsy: Grade ${data.grade}${data.archetype ? ` | ${data.archetype.name}` : ''} | Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}%`;
-    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}${url ? `&url=${encodeURIComponent(url)}` : ''}`;
+    let text = `My Bet DNA: ${data.archetype?.name ?? data.grade}`;
+    // Add a roast stat to the tweet if available
+    if (roastStats.length > 0) {
+      text += ` | ${roastStats[0].text}`;
+    } else {
+      text += ` | Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}%`;
+    }
+    text += ` | What's yours?`;
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url || 'https://betautopsy.com/quiz')}`;
     window.open(twitterUrl, '_blank', 'width=600,height=400');
   }
 
@@ -100,33 +111,76 @@ export default function ShareModal({
         className="flex flex-col items-center gap-5 px-4 py-6 pb-12"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Card — scaled on mobile to fit screen width */}
-        <div style={{ transform: 'scale(var(--card-scale, 1))', transformOrigin: 'top center' }}>
-          <style>{`
-            :root { --card-scale: 0.7; }
-            @media (min-width: 480px) { :root { --card-scale: 0.85; } }
-            @media (min-width: 640px) { :root { --card-scale: 1; } }
-          `}</style>
-          <ShareCard ref={cardRef} data={data} />
+        {/* Format toggle */}
+        <div className="flex gap-1 bg-ink-900 p-1 rounded-lg">
+          <button
+            onClick={() => setFormat('stories')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              format === 'stories'
+                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
+                : 'text-ink-600 hover:text-ink-500'
+            }`}
+          >
+            Stories
+          </button>
+          <button
+            onClick={() => setFormat('card')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              format === 'card'
+                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
+                : 'text-ink-600 hover:text-ink-500'
+            }`}
+          >
+            Card
+          </button>
         </div>
 
-        {/* Action buttons — always visible */}
+        {/* Card — scaled to fit screen */}
+        <div style={{
+          transform: format === 'stories' ? 'scale(var(--stories-scale, 0.3))' : 'scale(var(--card-scale, 1))',
+          transformOrigin: 'top center',
+          height: format === 'stories' ? `calc(1920px * var(--stories-scale, 0.3))` : 'auto',
+        }}>
+          <style>{`
+            :root {
+              --card-scale: 0.7;
+              --stories-scale: 0.25;
+            }
+            @media (min-width: 480px) {
+              :root {
+                --card-scale: 0.85;
+                --stories-scale: 0.32;
+              }
+            }
+            @media (min-width: 640px) {
+              :root {
+                --card-scale: 1;
+                --stories-scale: 0.38;
+              }
+            }
+          `}</style>
+          {format === 'stories' ? (
+            <ShareCardStories ref={storiesRef} data={data} roastStats={roastStats} />
+          ) : (
+            <ShareCard ref={cardRef} data={data} roastStats={roastStats} />
+          )}
+        </div>
+
+        {/* Action buttons */}
         <div className="flex flex-wrap gap-3 justify-center w-full max-w-sm">
           <button
             onClick={handleDownload}
             disabled={downloading}
             className="btn-primary text-sm"
           >
-            {downloading ? 'Rendering...' : 'Download Image'}
+            {downloading ? 'Rendering...' : format === 'stories' ? 'Download for Stories' : 'Download Image'}
           </button>
-          {reportId && (
-            <button
-              onClick={handleCopyLink}
-              className="btn-secondary text-sm"
-            >
-              {linkCopied ? '✓ Copied' : 'Copy Link'}
-            </button>
-          )}
+          <button
+            onClick={handleCopyLink}
+            className="btn-secondary text-sm"
+          >
+            {linkCopied ? '✓ Copied' : 'Copy Quiz Link'}
+          </button>
           <button
             onClick={handleShareTwitter}
             className="btn-secondary text-sm flex items-center gap-1.5"

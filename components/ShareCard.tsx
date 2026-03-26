@@ -3,6 +3,7 @@
 import { forwardRef } from 'react';
 import type { Bet } from '@/types';
 import { formatParlayCompact } from '@/lib/format-parlay';
+import type { RoastStat } from '@/lib/share-helpers';
 
 export interface ShareCardData {
   grade: string;
@@ -96,7 +97,7 @@ const S = { // shared inline styles
   label: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#A0A3B1' },
 };
 
-const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data }, ref) => {
+const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?: RoastStat[] }>(({ data, roastStats = [] }, ref) => {
   const gc = gradeColor(data.grade);
   const ec = emotionColor(data.emotion_score);
   const archName = data.archetype?.name ?? 'The Grinder';
@@ -259,9 +260,20 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
           </div>
         )}
 
+        {/* Roast stats */}
+        {roastStats.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            {roastStats.slice(0, 2).map((stat, i) => (
+              <div key={i} style={{ fontSize: 10, color: '#A0A3B1', marginBottom: 4, lineHeight: 1.4 }}>
+                {stat.emoji} {stat.text}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* CTA */}
         <div style={{ textAlign: 'center', fontSize: 12, color: '#A0A3B1', marginTop: 8 }}>
-          betautopsy.com — find out what your bets say about you
+          betautopsy.com/quiz — find out what your bets say about you
         </div>
       </div>
     </div>
