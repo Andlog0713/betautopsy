@@ -21,6 +21,9 @@ export default function SettingsPage() {
   const [bankrollSaved, setBankrollSaved] = useState(false);
   const [bankrollExpanded, setBankrollExpanded] = useState(false);
 
+  // Email preferences
+  const [digestEnabled, setDigestEnabled] = useState(true);
+
   // Danger zone
   const [showClearBets, setShowClearBets] = useState(false);
   const [clearConfirm, setClearConfirm] = useState('');
@@ -47,6 +50,7 @@ export default function SettingsPage() {
         setProfile(p);
         setDisplayName(p.display_name ?? '');
         if (p.bankroll) setBankroll(p.bankroll.toString());
+        setDigestEnabled(p.email_digest_enabled !== false);
       }
       setBetCount(betsRes.count ?? 0);
       setReportCount(reportsRes.count ?? 0);
@@ -280,6 +284,32 @@ export default function SettingsPage() {
             <a href="/pricing" className="btn-primary inline-block text-sm">Go Pro</a>
           </div>
         )}
+      </div>
+
+      {/* ── Email Preferences ── */}
+      <div className="card p-6 space-y-4">
+        <h2 className="font-bold text-xl">Email Preferences</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[#F0F0F0] text-sm font-medium">Weekly Digest</p>
+            <p className="text-ink-600 text-xs">Get your personalized &quot;Week in Bets&quot; email every Tuesday.</p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !digestEnabled;
+              setDigestEnabled(newVal);
+              const supabase = createClient();
+              const { error } = await supabase
+                .from('profiles')
+                .update({ email_digest_enabled: newVal })
+                .eq('id', profile!.id);
+              if (error) setDigestEnabled(!newVal); // revert on error
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-flame-500' : 'bg-ink-700'}`}
+          >
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${digestEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+          </button>
+        </div>
       </div>
 
       {/* ── Data ── */}

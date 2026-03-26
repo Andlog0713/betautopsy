@@ -42,6 +42,8 @@ export interface Profile {
   streak_best: number;
   login_count: number;
   is_admin: boolean;
+  email_digest_enabled: boolean;
+  last_digest_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }
