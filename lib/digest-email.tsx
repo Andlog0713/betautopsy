@@ -42,7 +42,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
       </td>` : '';
     const lossCell = biggestLoss ? `
       <td style="width:${biggestWin ? '50%' : '100%'};padding-left:${biggestWin ? '4px' : '0'}">
-        <div style="background:rgba(248,113,113,0.06);border-radius:10px;padding:14px;border:1px solid rgba(248,113,113,0.12)">
+        <div style="background:#1a0f0f;border-radius:10px;padding:14px;border:1px solid #331818">
           <div style="font-size:11px;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST LOSS</div>
           <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description)}</div>
           <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#f87171">-$${Math.abs(biggestLoss.profit)}</div>
@@ -68,10 +68,10 @@ export function renderDigestEmail(props: DigestEmailProps): string {
   .dark-bg { background-color: #1C1E2D !important; }
 </style>
 </head>
-<body style="margin:0;padding:0;background-color:#0D1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#F0F0F0">
+<body style="margin:0;padding:0;background-color:#0D1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#F0F0F0" bgcolor="#0D1117">
 <!-- Outer wrapper table forces dark bg on all clients -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color:#0D1117;width:100%;margin:0;padding:0">
-<tr><td align="center" style="background-color:#0D1117">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#0D1117" style="background-color:#0D1117;width:100%;margin:0;padding:0">
+<tr><td align="center" bgcolor="#0D1117" style="background-color:#0D1117">
 <table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;padding:32px 20px"><tbody>
 
 <!-- Logo -->
