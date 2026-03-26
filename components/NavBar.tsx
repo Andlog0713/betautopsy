@@ -70,13 +70,16 @@ export default function NavBar() {
           <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors whitespace-nowrap hidden sm:block">
             How to Upload
           </Link>
-          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
+          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
             Pricing
           </a>
 
           {user ? (
             /* Logged in */
             <div className="flex items-center gap-3">
+              <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors sm:hidden">
+                Pricing
+              </a>
               <Link href="/dashboard" className="btn-primary text-sm !px-4 !py-2 whitespace-nowrap">
                 Dashboard
               </Link>
