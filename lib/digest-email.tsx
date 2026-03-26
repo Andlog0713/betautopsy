@@ -25,136 +25,139 @@ export function renderDigestEmail(props: DigestEmailProps): string {
     insightEmoji, insightHeadline, insightDetail,
     biggestWin, biggestLoss, unsubscribeUrl, autopsyUrl, quizUrl } = props;
 
-  const pnlColor = netPnL >= 0 ? '#00C853' : '#f87171';
-  const roiColor = roi >= 0 ? '#00C853' : '#f87171';
+  const pnlColor = netPnL >= 0 ? '#16a34a' : '#dc2626';
+  const roiColor = roi >= 0 ? '#16a34a' : '#dc2626';
   const pnlStr = `${netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(netPnL))}`;
   const roiStr = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
 
   let winLossHtml = '';
   if (biggestWin || biggestLoss) {
     const winCell = biggestWin ? `
-      <td style="width:${biggestLoss ? '50%' : '100%'};padding-right:${biggestLoss ? '4px' : '0'}">
-        <div style="background:#0a1a0f;border-radius:10px;padding:14px;border:1px solid #0d3318">
-          <div style="font-size:11px;color:#00C853;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST WIN</div>
-          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description)}</div>
-          <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#00C853">+$${biggestWin.profit}</div>
+      <td style="width:${biggestLoss ? '50%' : '100%'};padding-right:${biggestLoss ? '6px' : '0'};vertical-align:top">
+        <div style="background:#f0fdf4;border-radius:10px;padding:14px;border:1px solid #bbf7d0">
+          <div style="font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">BIGGEST WIN</div>
+          <div style="font-size:13px;color:#1a1a1a;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description)}</div>
+          <div style="font-size:16px;font-weight:700;color:#16a34a">+$${biggestWin.profit}</div>
         </div>
       </td>` : '';
     const lossCell = biggestLoss ? `
-      <td style="width:${biggestWin ? '50%' : '100%'};padding-left:${biggestWin ? '4px' : '0'}">
-        <div style="background:#1a0f0f;border-radius:10px;padding:14px;border:1px solid #331818">
-          <div style="font-size:11px;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST LOSS</div>
-          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description)}</div>
-          <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#f87171">-$${Math.abs(biggestLoss.profit)}</div>
+      <td style="width:${biggestWin ? '50%' : '100%'};padding-left:${biggestWin ? '6px' : '0'};vertical-align:top">
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;border:1px solid #fecaca">
+          <div style="font-size:11px;color:#dc2626;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">BIGGEST LOSS</div>
+          <div style="font-size:13px;color:#1a1a1a;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description)}</div>
+          <div style="font-size:16px;font-weight:700;color:#dc2626">-$${Math.abs(biggestLoss.profit)}</div>
         </div>
       </td>` : '';
     winLossHtml = `
-      <tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
+      <tr><td style="padding-bottom:20px">
         <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>${winCell}${lossCell}</tr></tbody></table>
       </td></tr>`;
   }
 
   const streakHtml = streakCount > 0
-    ? `<td style="text-align:right"><span style="font-size:14px;color:#A0A3B1">🔥 ${streakCount}-week streak</span></td>`
+    ? `<td style="text-align:right"><span style="font-size:14px;color:#666">🔥 ${streakCount}-week streak</span></td>`
     : '';
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark">
-<meta name="supported-color-schemes" content="dark">
-<style>
-  :root { color-scheme: dark; }
-  body, .body-bg { background-color: #0D1117 !important; }
-  .dark-bg { background-color: #1C1E2D !important; }
-</style>
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 </head>
-<body style="margin:0;padding:0;background-color:#0D1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#F0F0F0" bgcolor="#0D1117">
-<!-- Outer wrapper table forces dark bg on all clients -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#0D1117" style="background-color:#0D1117;width:100%;margin:0;padding:0">
-<tr><td align="center" bgcolor="#0D1117" style="background-color:#0D1117">
-<table cellpadding="0" cellspacing="0" bgcolor="#0D1117" style="width:100%;max-width:560px;margin:0 auto;padding:32px 20px;background-color:#0D1117"><tbody>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f5f5f5;width:100%">
+<tr><td align="center" style="padding:24px 16px">
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5"><tbody>
 
-<!-- Logo -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:24px;background-color:#0D1117">
-  <span style="font-size:18px;font-weight:700">Bet<span style="color:#00C853">Autopsy</span></span>
+<!-- Header bar -->
+<tr><td style="background-color:#0D1117;padding:20px 24px">
+  <span style="font-size:18px;font-weight:700;color:#ffffff">Bet<span style="color:#00C853">Autopsy</span></span>
 </td></tr>
 
 <!-- Positive lead -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
-  <div style="background:#0a1a0f;border-radius:12px;padding:16px 20px;border:1px solid #0d3318">
-    <span style="font-size:15px;color:#F0F0F0">${positiveLead.emoji} ${esc(positiveLead.text)}</span>
+<tr><td style="padding:20px 24px 0">
+  <div style="background:#f0fdf4;border-radius:10px;padding:14px 18px;border:1px solid #bbf7d0">
+    <span style="font-size:15px;color:#1a1a1a">${positiveLead.emoji} ${esc(positiveLead.text)}</span>
   </div>
 </td></tr>
 
 <!-- Heading -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
-  <div style="font-size:16px;font-weight:700;color:#F0F0F0;margin-bottom:4px">Your week in bets, ${esc(displayName)}.</div>
-  <div style="font-size:13px;color:#5A5C6F">Here's what happened since last Tuesday.</div>
+<tr><td style="padding:20px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:4px">Your week in bets, ${esc(displayName)}.</div>
+  <div style="font-size:13px;color:#888">Here's what happened since last Tuesday.</div>
 </td></tr>
 
 <!-- Stats grid -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:16px;background-color:#0D1117">
+<tr><td style="padding:16px 24px 0">
   <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>
     <td style="width:33%;padding-right:6px">
-      <div style="background:#1C1E2D;border-radius:10px;padding:14px 12px;text-align:center">
-        <div style="font-size:11px;color:#5A5C6F;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BETS</div>
-        <div style="font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#F0F0F0">${totalBets}</div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:14px 8px;text-align:center">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">BETS</div>
+        <div style="font-size:26px;font-weight:700;color:#1a1a1a">${totalBets}</div>
       </div>
     </td>
     <td style="width:33%;padding:0 3px">
-      <div style="background:#1C1E2D;border-radius:10px;padding:14px 12px;text-align:center">
-        <div style="font-size:11px;color:#5A5C6F;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">RECORD</div>
-        <div style="font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#F0F0F0">${esc(record)}</div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:14px 8px;text-align:center">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">RECORD</div>
+        <div style="font-size:26px;font-weight:700;color:#1a1a1a">${esc(record)}</div>
       </div>
     </td>
     <td style="width:33%;padding-left:6px">
-      <div style="background:#1C1E2D;border-radius:10px;padding:14px 12px;text-align:center">
-        <div style="font-size:11px;color:#5A5C6F;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">P&amp;L</div>
-        <div style="font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${pnlColor}">${pnlStr}</div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:14px 8px;text-align:center">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">P&amp;L</div>
+        <div style="font-size:26px;font-weight:700;color:${pnlColor}">${pnlStr}</div>
       </div>
     </td>
   </tr></tbody></table>
 </td></tr>
 
 <!-- ROI + Streak -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
+<tr><td style="padding:12px 24px 0">
   <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>
     <td>
-      <span style="font-size:14px;color:#A0A3B1">Weekly ROI: </span>
-      <span style="font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;color:${roiColor}">${roiStr}</span>
+      <span style="font-size:14px;color:#666">Weekly ROI: </span>
+      <span style="font-size:14px;font-weight:600;color:${roiColor}">${roiStr}</span>
     </td>
     ${streakHtml}
   </tr></tbody></table>
 </td></tr>
 
+<!-- Divider -->
+<tr><td style="padding:20px 24px 0"><div style="border-top:1px solid #e5e5e5"></div></td></tr>
+
 <!-- Insight card -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
-  <div style="background:#1C1E2D;border-radius:10px;padding:20px;border-left:3px solid #00C853">
-    <div style="font-size:15px;font-weight:700;color:#F0F0F0;margin-bottom:8px">${insightEmoji} ${esc(insightHeadline)}</div>
-    <div style="font-size:13px;color:#A0A3B1;line-height:1.6">${esc(insightDetail)}</div>
+<tr><td style="padding:20px 24px 0">
+  <div style="background:#f8f9fa;border-radius:10px;padding:18px;border-left:3px solid #00C853">
+    <div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${insightEmoji} ${esc(insightHeadline)}</div>
+    <div style="font-size:13px;color:#555;line-height:1.6">${esc(insightDetail)}</div>
   </div>
 </td></tr>
 
 <!-- Win/Loss -->
-${winLossHtml}
+<tr><td style="padding:20px 24px 0">
+  <table cellpadding="0" cellspacing="0" style="width:100%"><tbody>
+    ${winLossHtml ? winLossHtml : ''}
+  </tbody></table>
+</td></tr>
 
 <!-- CTA -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:12px;text-align:center;background-color:#0D1117">
-  <a href="${esc(autopsyUrl)}" style="display:inline-block;background:#00C853;color:#0D1117;font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;text-decoration:none">Run a Fresh Autopsy →</a>
+<tr><td style="padding:8px 24px 0;text-align:center">
+  <a href="${esc(autopsyUrl)}" style="display:inline-block;background:#00C853;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;text-decoration:none">Run a Fresh Autopsy →</a>
 </td></tr>
 
 <!-- Secondary CTA -->
-<tr><td bgcolor="#0D1117" style="padding-bottom:24px;text-align:center;background-color:#0D1117">
+<tr><td style="padding:12px 24px 0;text-align:center">
   <a href="${esc(quizUrl)}" style="font-size:13px;color:#00C853;text-decoration:none">Or take the free Bet DNA quiz →</a>
 </td></tr>
 
 <!-- Footer -->
-<tr><td bgcolor="#0D1117" style="border-top:1px solid #1C1E2D;padding-top:20px;background-color:#0D1117">
-  <div style="font-size:11px;color:#5A5C6F;line-height:1.6;text-align:center">
-    BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don't guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
-  </div>
-  <div style="text-align:center;margin-top:12px">
-    <a href="${esc(unsubscribeUrl)}" style="font-size:11px;color:#5A5C6F;text-decoration:underline">Unsubscribe from weekly digests</a>
+<tr><td style="padding:24px 24px">
+  <div style="border-top:1px solid #e5e5e5;padding-top:16px">
+    <div style="font-size:11px;color:#999;line-height:1.6;text-align:center">
+      BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don't guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <a href="${esc(unsubscribeUrl)}" style="font-size:11px;color:#999;text-decoration:underline">Unsubscribe from weekly digests</a>
+    </div>
   </div>
 </td></tr>
 
