@@ -87,26 +87,16 @@ export function formatParlayFull(bet: Pick<Bet, 'bet_type' | 'parlay_legs' | 'de
 /**
  * Compact format — for email, share cards, report summaries.
  * Returns a single string like "3-Leg: Chiefs ML, Celtics -4.5, Lakers ML"
- * If too many legs, shows first 2 + "and X more"
+ * Always shows all legs.
  */
-export function formatParlayCompact(bet: Pick<Bet, 'bet_type' | 'parlay_legs' | 'description' | 'odds'>, maxChars = 80): string {
+export function formatParlayCompact(bet: Pick<Bet, 'bet_type' | 'parlay_legs' | 'description' | 'odds'>, maxChars = 0): string {
   if (!isParlay(bet)) {
-    return bet.description.length > maxChars ? bet.description.slice(0, maxChars - 1) + '…' : bet.description;
+    return maxChars > 0 && bet.description.length > maxChars ? bet.description.slice(0, maxChars - 1) + '…' : bet.description;
   }
   const legs = parseLegs(bet.description);
   const legCount = bet.parlay_legs ?? legs.length;
   const shortened = legs.map(shortenLeg);
-
-  // Try showing all legs
-  const prefix = `${legCount}-Leg: `;
-  const allLegs = prefix + shortened.join(', ');
-  if (allLegs.length <= maxChars) return allLegs;
-
-  // Show first 2 + "and X more"
-  const first2 = prefix + shortened.slice(0, 2).join(', ');
-  const remaining = legCount - 2;
-  if (remaining > 0) return `${first2}, +${remaining} more`;
-  return first2;
+  return `${legCount}-Leg: ${shortened.join(', ')}`;
 }
 
 /**
