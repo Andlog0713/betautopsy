@@ -40,6 +40,7 @@ export interface Profile {
   streak_count: number;
   streak_last_date: string | null;
   streak_best: number;
+  streak_freezes: number;
   login_count: number;
   is_admin: boolean;
   email_digest_enabled: boolean;

@@ -181,6 +181,25 @@ export default function SettingsPage() {
           >
             {profileSaved ? '✓ Saved' : profileSaving ? 'Saving...' : 'Save Profile'}
           </button>
+
+          {/* Streak info */}
+          <div className="pt-4 border-t border-white/[0.06] space-y-2">
+            <p className="text-ink-600 text-xs uppercase tracking-wider font-medium">Streak</p>
+            <div className="flex gap-6 text-sm">
+              <div>
+                <span className="text-ink-600">Current: </span>
+                <span className="text-[#F0F0F0] font-mono">{profile?.streak_count ?? 0} weeks</span>
+              </div>
+              <div>
+                <span className="text-ink-600">Best: </span>
+                <span className="text-[#F0F0F0] font-mono">{profile?.streak_best ?? 0} weeks</span>
+              </div>
+              <div>
+                <span className="text-ink-600">Freezes: </span>
+                <span className="text-[#F0F0F0] font-mono">❄️ {profile?.streak_freezes ?? 1}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

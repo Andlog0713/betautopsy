@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [streakCount, setStreakCount] = useState(0);
   const [streakBest, setStreakBest] = useState(0);
   const [streakLastDate, setStreakLastDate] = useState<string | null>(null);
+  const [streakFreezes, setStreakFreezes] = useState(1);
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function DashboardPage() {
 
       const [betsRes, profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
         supabase.from('bets').select('result, profit, stake, placed_at').eq('user_id', user.id),
-        supabase.from('profiles').select('bankroll, subscription_tier, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
+        supabase.from('profiles').select('bankroll, subscription_tier, streak_count, streak_best, streak_last_date, streak_freezes').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
         supabase.from('autopsy_reports').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
@@ -78,6 +79,7 @@ export default function DashboardPage() {
       if (profileRes.data?.streak_count) setStreakCount(profileRes.data.streak_count);
       if (profileRes.data?.streak_best) setStreakBest(profileRes.data.streak_best);
       if (profileRes.data?.streak_last_date) setStreakLastDate(profileRes.data.streak_last_date);
+      setStreakFreezes(profileRes.data?.streak_freezes ?? 1);
       if (profileRes.data?.subscription_tier) setTier(profileRes.data.subscription_tier);
       if (snapshotsRes.data) setSnapshots(snapshotsRes.data as ProgressSnapshot[]);
 
@@ -202,6 +204,17 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Streak start CTA — has bets + reports but no active streak */}
+          {stats.reportCount > 0 && streakCount === 0 && (
+            <div className="card p-5 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[#F0F0F0] font-medium">🔥 Start your streak — run an autopsy this week</p>
+                <p className="text-ink-600 text-xs mt-0.5">Weekly check-ins unlock milestone badges and keep you accountable.</p>
+              </div>
+              <Link href="/reports?run=true" className="btn-primary text-sm shrink-0">Run Autopsy</Link>
+            </div>
+          )}
+
           {/* First Autopsy CTA */}
           {stats.reportCount === 0 && (
             <div className="card border-flame-500/30 bg-flame-500/5 p-8 text-center space-y-4">
@@ -272,12 +285,41 @@ export default function DashboardPage() {
                     <span className={`text-lg ${streakCount >= 10 ? 'animate-pulse' : ''}`}>
                       {streakCount >= 10 ? '🔥🔥' : streakCount >= 6 ? '🔥' : streakCount >= 3 ? '🔥' : '📅'}
                     </span>
-                    <span className="text-sm text-[#F0F0F0]">
-                      {streakCount > 0 ? `${streakCount}-report streak` : 'No active streak'}
+                    <span className="text-sm text-[#F0F0F0] font-medium">
+                      {streakCount > 0 ? `${streakCount}-week streak` : 'No active streak'}
                     </span>
                     {streakBest > 1 && (
-                      <span className="text-xs text-ink-600">(Best: {streakBest})</span>
+                      <span className="text-xs text-ink-600">Personal best: {streakBest}</span>
                     )}
+                  </div>
+                  {/* Freeze */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-ink-600">
+                      ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''} available
+                    </span>
+                    <span className="text-ink-700 text-[10px]">(Refills on the 1st)</span>
+                  </div>
+                  {/* Milestone badges */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {[
+                      { weeks: 4, label: 'Consistent', color: 'bg-amber-700/20 text-amber-600 border-amber-700/30' },
+                      { weeks: 12, label: 'Dedicated', color: 'bg-gray-400/20 text-gray-300 border-gray-400/30' },
+                      { weeks: 26, label: 'Half-Year Sharp', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+                      { weeks: 52, label: 'Annual Autopsy', color: 'bg-flame-500/20 text-flame-500 border-flame-500/30' },
+                    ].map((m) => {
+                      const earned = streakBest >= m.weeks;
+                      return (
+                        <span
+                          key={m.weeks}
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                            earned ? m.color : 'bg-ink-900/50 text-ink-700 border-white/[0.06]'
+                          } ${m.weeks === 52 && earned ? 'shadow-sm shadow-flame-500/20' : ''}`}
+                        >
+                          {!earned && <span className="mr-0.5">🔒</span>}
+                          {m.label}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

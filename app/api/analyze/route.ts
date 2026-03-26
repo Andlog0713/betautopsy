@@ -258,18 +258,31 @@ export async function POST(request: Request) {
         try {
           const today = new Date().toISOString().split('T')[0];
           let newStreak = typedProfile.streak_count ?? 0;
+          let freezes = typedProfile.streak_freezes ?? 1;
           const lastDate = typedProfile.streak_last_date;
           const daysSince = lastDate ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000) : null;
 
-          if (daysSince === null) newStreak = 1;
-          else if (daysSince >= 5 && daysSince <= 21) newStreak += 1;
-          else if (daysSince > 21) newStreak = 1;
+          if (daysSince === null) {
+            newStreak = 1;
+          } else if (daysSince >= 5 && daysSince <= 21) {
+            newStreak += 1;
+          } else if (daysSince > 21) {
+            // Streak would break — check for freeze
+            if (freezes > 0) {
+              // Use a freeze: keep streak, don't increment
+              freezes -= 1;
+            } else {
+              newStreak = 1;
+            }
+          }
+          // daysSince < 5: don't increment, too soon
 
           const newBest = Math.max(newStreak, typedProfile.streak_best ?? 0);
           await supabase.from('profiles').update({
             streak_count: newStreak,
             streak_last_date: today,
             streak_best: newBest,
+            streak_freezes: freezes,
           }).eq('id', user.id);
         } catch (streakErr) {
           console.error('Failed to update streak:', streakErr);

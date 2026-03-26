@@ -179,9 +179,14 @@ export default function DashboardLayout({
       {/* Mobile top nav */}
       <header className="md:hidden border-b border-white/[0.06] bg-ink-900/95 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
-          <Link href="/dashboard" className="font-bold text-lg tracking-tight">
-            Bet<span className="text-flame-500">Autopsy</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="font-bold text-lg tracking-tight">
+              Bet<span className="text-flame-500">Autopsy</span>
+            </Link>
+            {(profile?.streak_count ?? 0) > 0 && (
+              <span className="text-xs text-flame-500 font-medium">🔥{profile?.streak_count}</span>
+            )}
+          </div>
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
@@ -339,7 +344,12 @@ export default function DashboardLayout({
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-[#F0F0F0] truncate">{profile?.display_name ?? profile?.email}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-[#F0F0F0] truncate">{profile?.display_name ?? profile?.email}</p>
+                {(profile?.streak_count ?? 0) > 0 && (
+                  <span className="text-[10px] text-flame-500 font-medium shrink-0">🔥{profile?.streak_count}</span>
+                )}
+              </div>
               <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 capitalize ${tierBadge[tier]}`}>
                 {tier}
               </span>

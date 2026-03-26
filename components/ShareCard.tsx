@@ -248,7 +248,13 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
               <span style={{ color: '#A0A3B1' }}>Discipline: <span style={{ ...S.mono, color: '#F0F0F0' }}>{data.discipline_score}/100</span></span>
             )}
             {data.streak_count && data.streak_count > 1 && (
-              <span style={{ color: '#A0A3B1' }}>🔥 {data.streak_count}-report streak</span>
+              data.streak_count >= 4 ? (
+                <span style={{ color: '#00C853', background: 'rgba(0,200,83,0.1)', border: '1px solid rgba(0,200,83,0.2)', borderRadius: 20, padding: '2px 10px', fontSize: 11 }}>
+                  🔥 {data.streak_count}-week streak
+                </span>
+              ) : (
+                <span style={{ color: '#A0A3B1' }}>🔥 {data.streak_count}-week streak</span>
+              )
             )}
           </div>
         )}
