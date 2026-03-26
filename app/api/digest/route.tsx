@@ -93,23 +93,25 @@ export async function GET(request: Request) {
         from: 'BetAutopsy <digest@betautopsy.com>',
         to: typedProfile.email,
         subject,
-        react: DigestEmail({
-          displayName: typedProfile.display_name || 'there',
-          positiveLead,
-          totalBets: stats.totalBets,
-          record,
-          netPnL: stats.netPnL,
-          roi: stats.roi,
-          streakCount: typedProfile.streak_count ?? 0,
-          insightEmoji: insight.emoji,
-          insightHeadline: insight.headline,
-          insightDetail: insight.detail,
-          biggestWin: stats.biggestWin,
-          biggestLoss: stats.biggestLoss,
-          unsubscribeUrl: `${appUrl}/api/unsubscribe?token=${tokenId}`,
-          autopsyUrl: `${appUrl}/reports?run=true`,
-          quizUrl: `${appUrl}/quiz`,
-        }),
+        react: (
+          <DigestEmail
+            displayName={typedProfile.display_name || 'there'}
+            positiveLead={positiveLead}
+            totalBets={stats.totalBets}
+            record={record}
+            netPnL={stats.netPnL}
+            roi={stats.roi}
+            streakCount={typedProfile.streak_count ?? 0}
+            insightEmoji={insight.emoji}
+            insightHeadline={insight.headline}
+            insightDetail={insight.detail}
+            biggestWin={stats.biggestWin}
+            biggestLoss={stats.biggestLoss}
+            unsubscribeUrl={`${appUrl}/api/unsubscribe?token=${tokenId}`}
+            autopsyUrl={`${appUrl}/reports?run=true`}
+            quizUrl={`${appUrl}/quiz`}
+          />
+        ),
       });
 
       // Update last sent timestamp
