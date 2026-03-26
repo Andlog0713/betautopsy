@@ -290,10 +290,10 @@ export default function QuizClient() {
     const emotionBarColor = result.emotion_estimate <= 30 ? 'bg-mint-500' : result.emotion_estimate <= 55 ? 'bg-amber-400' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-red-400';
 
     return (
-      <main className="min-h-screen bg-ink-900 px-4 py-12">
-        <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
+      <main className="min-h-screen bg-ink-900 px-4 py-12 overflow-x-hidden">
+        <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
           {/* Archetype card */}
-          <div className="card p-6 border-white/[0.1] text-center" style={{ borderColor: `${result.archetype.color}30` }}>
+          <div className="card p-5 sm:p-6 border-white/[0.1] text-center" style={{ borderColor: `${result.archetype.color}30` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="text-ink-600 text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
             <h1 className="font-extrabold text-3xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
@@ -366,9 +366,11 @@ export default function QuizClient() {
           )}
 
           {/* Shareable card */}
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-hidden">
             <h2 className="font-bold text-xl">Share Your Bet DNA</h2>
-            <QuizResultCard ref={resultCardRef} result={result} />
+            <div className="overflow-hidden rounded-2xl">
+              <QuizResultCard ref={resultCardRef} result={result} />
+            </div>
             <div className="flex gap-2">
               <button onClick={handleShare} className="btn-secondary text-sm flex-1 flex items-center justify-center gap-1.5">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
