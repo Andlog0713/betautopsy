@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { usePrivacy } from '@/components/PrivacyContext';
+import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import type { Bet, Profile } from '@/types';
 
 export default function BetsPage() {
@@ -193,7 +193,8 @@ export default function BetsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div className="relative">
+          <div className="absolute -top-1 right-0"><EyeToggle /></div>
           <h1 className="font-bold text-3xl mb-1">Bet History</h1>
           <p className="text-ink-600 text-sm">{bets.length} total bets</p>
         </div>

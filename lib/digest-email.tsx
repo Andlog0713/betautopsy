@@ -34,7 +34,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
   if (biggestWin || biggestLoss) {
     const winCell = biggestWin ? `
       <td style="width:${biggestLoss ? '50%' : '100%'};padding-right:${biggestLoss ? '4px' : '0'}">
-        <div style="background:rgba(0,200,83,0.06);border-radius:10px;padding:14px;border:1px solid rgba(0,200,83,0.12)">
+        <div style="background:#0a1a0f;border-radius:10px;padding:14px;border:1px solid #0d3318">
           <div style="font-size:11px;color:#00C853;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST WIN</div>
           <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description.slice(0, 50))}</div>
           <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#00C853">+$${biggestWin.profit}</div>
@@ -59,8 +59,19 @@ export function renderDigestEmail(props: DigestEmailProps): string {
     : '';
 
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background-color:#0D1117;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#F0F0F0">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<style>
+  :root { color-scheme: dark; }
+  body, .body-bg { background-color: #0D1117 !important; }
+  .dark-bg { background-color: #1C1E2D !important; }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#0D1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#F0F0F0">
+<!-- Outer wrapper table forces dark bg on all clients -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="body-bg" style="background-color:#0D1117;width:100%;margin:0;padding:0">
+<tr><td align="center" style="background-color:#0D1117">
 <table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;padding:32px 20px"><tbody>
 
 <!-- Logo -->
@@ -70,7 +81,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
 <!-- Positive lead -->
 <tr><td style="padding-bottom:20px">
-  <div style="background:rgba(0,200,83,0.06);border-radius:12px;padding:16px 20px;border:1px solid rgba(0,200,83,0.12)">
+  <div style="background:#0a1a0f;border-radius:12px;padding:16px 20px;border:1px solid #0d3318">
     <span style="font-size:15px;color:#F0F0F0">${positiveLead.emoji} ${esc(positiveLead.text)}</span>
   </div>
 </td></tr>
@@ -148,5 +159,6 @@ ${winLossHtml}
 </td></tr>
 
 </tbody></table>
+</td></tr></table>
 </body></html>`;
 }
