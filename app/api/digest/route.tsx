@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { isResendConfigured, getResend } from '@/lib/resend';
 import { getWeeklyBets, calculateDigestStats, generateInsight, generatePositiveLead } from '@/lib/digest-helpers';
-import { DigestEmail } from '@/lib/digest-email';
+import { renderDigestEmail } from '@/lib/digest-email';
 import type { Profile } from '@/types';
 
 export const maxDuration = 300; // 5 min for processing all users
@@ -89,29 +89,29 @@ export async function GET(request: Request) {
       const pnlStr = `${stats.netPnL >= 0 ? '+' : '-'}$${Math.abs(Math.round(stats.netPnL))}`;
       const subject = `Your week: ${record}, ${pnlStr} | BetAutopsy`;
 
+      const emailHtml = renderDigestEmail({
+        displayName: typedProfile.display_name || 'there',
+        positiveLead,
+        totalBets: stats.totalBets,
+        record,
+        netPnL: stats.netPnL,
+        roi: stats.roi,
+        streakCount: typedProfile.streak_count ?? 0,
+        insightEmoji: insight.emoji,
+        insightHeadline: insight.headline,
+        insightDetail: insight.detail,
+        biggestWin: stats.biggestWin,
+        biggestLoss: stats.biggestLoss,
+        unsubscribeUrl: `${appUrl}/api/unsubscribe?token=${tokenId}`,
+        autopsyUrl: `${appUrl}/reports?run=true`,
+        quizUrl: `${appUrl}/quiz`,
+      });
+
       await resend.emails.send({
         from: 'BetAutopsy <digest@betautopsy.com>',
         to: typedProfile.email,
         subject,
-        react: (
-          <DigestEmail
-            displayName={typedProfile.display_name || 'there'}
-            positiveLead={positiveLead}
-            totalBets={stats.totalBets}
-            record={record}
-            netPnL={stats.netPnL}
-            roi={stats.roi}
-            streakCount={typedProfile.streak_count ?? 0}
-            insightEmoji={insight.emoji}
-            insightHeadline={insight.headline}
-            insightDetail={insight.detail}
-            biggestWin={stats.biggestWin}
-            biggestLoss={stats.biggestLoss}
-            unsubscribeUrl={`${appUrl}/api/unsubscribe?token=${tokenId}`}
-            autopsyUrl={`${appUrl}/reports?run=true`}
-            quizUrl={`${appUrl}/quiz`}
-          />
-        ),
+        html: emailHtml,
       });
 
       // Update last sent timestamp
