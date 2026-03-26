@@ -8,6 +8,7 @@ import type { Profile } from '@/types';
 export default function NavBar() {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +25,7 @@ export default function NavBar() {
           .single();
         if (data) setProfile(data as Profile);
       }
+      setAuthChecked(true);
     }
     checkAuth();
   }, []);
@@ -74,7 +76,10 @@ export default function NavBar() {
             Pricing
           </a>
 
-          {user ? (
+          {!authChecked ? (
+            /* Auth loading — show nothing to prevent flash */
+            <div className="w-24" />
+          ) : user ? (
             /* Logged in */
             <div className="flex items-center gap-3">
               <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors sm:hidden">
