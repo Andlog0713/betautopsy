@@ -36,7 +36,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
       <td style="width:${biggestLoss ? '50%' : '100%'};padding-right:${biggestLoss ? '4px' : '0'}">
         <div style="background:#0a1a0f;border-radius:10px;padding:14px;border:1px solid #0d3318">
           <div style="font-size:11px;color:#00C853;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST WIN</div>
-          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description.slice(0, 50))}</div>
+          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description)}</div>
           <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#00C853">+$${biggestWin.profit}</div>
         </div>
       </td>` : '';
@@ -44,7 +44,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
       <td style="width:${biggestWin ? '50%' : '100%'};padding-left:${biggestWin ? '4px' : '0'}">
         <div style="background:rgba(248,113,113,0.06);border-radius:10px;padding:14px;border:1px solid rgba(248,113,113,0.12)">
           <div style="font-size:11px;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">BIGGEST LOSS</div>
-          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description.slice(0, 50))}</div>
+          <div style="font-size:13px;color:#F0F0F0;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description)}</div>
           <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#f87171">-$${Math.abs(biggestLoss.profit)}</div>
         </div>
       </td>` : '';

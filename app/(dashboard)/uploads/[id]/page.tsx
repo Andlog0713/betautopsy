@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { formatBetDescription } from '@/lib/format-parlay';
 import { createClient } from '@/lib/supabase';
 import type { Bet, Upload } from '@/types';
 
@@ -130,7 +131,20 @@ export default function UploadDetailPage() {
                   <td className="px-4 py-3 font-mono text-xs text-ink-600">
                     {new Date(bet.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
-                  <td className="px-4 py-3 text-[#F0F0F0]">{bet.description}</td>
+                  <td className="px-4 py-3 text-[#F0F0F0]">
+                    {(() => {
+                      const fmt = formatBetDescription(bet);
+                      if (!fmt.isParlay) return fmt.label;
+                      return (
+                        <div>
+                          <span className="text-xs font-medium text-ink-500 bg-ink-900 rounded px-1.5 py-0.5 mr-1">{fmt.label}</span>
+                          <div className="mt-1 space-y-0.5">
+                            {fmt.legs.map((leg, li) => <div key={li} className="text-xs">{leg}</div>)}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-ink-600 hidden md:table-cell">{bet.sport}</td>
                   <td className="px-4 py-3 text-ink-600 hidden md:table-cell capitalize">{bet.bet_type}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{bet.odds > 0 ? `+${bet.odds}` : bet.odds}</td>

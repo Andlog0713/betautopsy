@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket } from '@/types';
+import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
 
@@ -877,7 +878,7 @@ function formatBetTable(bets: Bet[]): string {
     const date = fmtDate(b.placed_at);
     const sport = pad(b.sport, 6);
     const type = pad(b.bet_type, 10);
-    const desc = pad(b.description.replace(/[<>{}]/g, '').slice(0, 200), 36);
+    const desc = pad(formatParlayForClaude(b).replace(/[<>{}]/g, '').slice(0, 200), 36);
     const odds = pad(b.odds > 0 ? `+${b.odds}` : `${b.odds}`, 6);
     const stake = pad(`$${Number(b.stake).toFixed(0)}`, 6);
     const result = pad(b.result.toUpperCase(), 6);

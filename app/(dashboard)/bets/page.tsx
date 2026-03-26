@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
+import { formatBetDescription } from '@/lib/format-parlay';
 import type { Bet, Profile } from '@/types';
 
 export default function BetsPage() {
@@ -374,7 +375,20 @@ export default function BetsPage() {
                       })}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[#F0F0F0]">{bet.description}</span>
+                      {(() => {
+                        const fmt = formatBetDescription(bet);
+                        if (!fmt.isParlay) return <span className="text-[#F0F0F0]">{fmt.label}</span>;
+                        return (
+                          <div>
+                            <span className="text-xs font-medium text-ink-500 bg-ink-900 rounded px-1.5 py-0.5 mr-1.5">{fmt.label}</span>
+                            <div className="mt-1 space-y-0.5">
+                              {fmt.legs.map((leg, li) => (
+                                <div key={li} className="text-[#F0F0F0] text-xs">{leg}</div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {bet.is_bonus_bet && (
                         <span className="ml-2 text-xs bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">
                           Bonus

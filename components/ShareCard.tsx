@@ -2,6 +2,7 @@
 
 import { forwardRef } from 'react';
 import type { Bet } from '@/types';
+import { formatParlayCompact } from '@/lib/format-parlay';
 
 export interface ShareCardData {
   grade: string;
@@ -52,7 +53,7 @@ function getBiggestHit(bets?: Bet[]): { profit: number; description: string; odd
   const wins = bets.filter((b) => b.result === 'win' && Number(b.profit) > 0);
   if (wins.length === 0) return null;
   const best = wins.sort((a, b) => Number(b.profit) - Number(a.profit))[0];
-  return { profit: Number(best.profit), description: best.description, odds: best.odds, bet_type: best.bet_type };
+  return { profit: Number(best.profit), description: formatParlayCompact(best, 55), odds: best.odds, bet_type: best.bet_type };
 }
 
 function getWorstBeat(bets?: Bet[]): { profit: number; description: string; odds: number; bet_type: string } | null {
@@ -66,7 +67,7 @@ function getWorstBeat(bets?: Bet[]): { profit: number; description: string; odds
     return { ...b, painScore: potentialWin };
   });
   const worst = withPain.sort((a, b) => b.painScore - a.painScore)[0];
-  return { profit: Number(worst.profit), description: worst.description, odds: worst.odds, bet_type: worst.bet_type };
+  return { profit: Number(worst.profit), description: formatParlayCompact(worst, 50), odds: worst.odds, bet_type: worst.bet_type };
 }
 
 function getBadges(data: ShareCardData): string[] {

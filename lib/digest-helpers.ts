@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Bet } from '@/types';
+import { formatParlayCompact } from '@/lib/format-parlay';
 
 export interface DigestStats {
   totalBets: number;
@@ -134,8 +135,8 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
     avgStake: Math.round(avgStake), avgStakeAfterLoss: Math.round(avgStakeAfterLoss), avgStakeAfterWin: Math.round(avgStakeAfterWin),
     parlayCount: parlays.length, parlayPnL: Math.round(parlayPnL * 100) / 100, parlayRoi: Math.round(parlayRoi * 10) / 10,
     straightBetPnL: Math.round(straightBetPnL * 100) / 100, straightBetRoi: Math.round(straightBetRoi * 10) / 10,
-    biggestWin: biggestWin ? { description: biggestWin.description, profit: Math.round(Number(biggestWin.profit)), odds: biggestWin.odds } : null,
-    biggestLoss: biggestLoss ? { description: biggestLoss.description, profit: Math.round(Number(biggestLoss.profit)) } : null,
+    biggestWin: biggestWin ? { description: formatParlayCompact(biggestWin, 60), profit: Math.round(Number(biggestWin.profit)), odds: biggestWin.odds } : null,
+    biggestLoss: biggestLoss ? { description: formatParlayCompact(biggestLoss, 60), profit: Math.round(Number(biggestLoss.profit)) } : null,
     mostBetSport, mostProfitableSport, lateNightBets,
     longestWinStreak, longestLoseStreak,
     uniqueSportsbooks: Array.from(books),
@@ -221,7 +222,7 @@ export interface PositiveLead {
 
 export function generatePositiveLead(stats: DigestStats): PositiveLead {
   if (stats.biggestWin && stats.biggestWin.profit > 100) {
-    return { emoji: '💰', text: `Biggest hit: ${stats.biggestWin.description.slice(0, 50)} for +$${stats.biggestWin.profit}` };
+    return { emoji: '💰', text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit}` };
   }
   if (stats.mostProfitableSport) {
     const sport = stats.mostProfitableSport;
