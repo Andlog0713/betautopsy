@@ -49,7 +49,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
         </div>
       </td>` : '';
     winLossHtml = `
-      <tr><td style="padding-bottom:20px">
+      <tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
         <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>${winCell}${lossCell}</tr></tbody></table>
       </td></tr>`;
   }
@@ -72,28 +72,28 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 <!-- Outer wrapper table forces dark bg on all clients -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#0D1117" style="background-color:#0D1117;width:100%;margin:0;padding:0">
 <tr><td align="center" bgcolor="#0D1117" style="background-color:#0D1117">
-<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;padding:32px 20px"><tbody>
+<table cellpadding="0" cellspacing="0" bgcolor="#0D1117" style="width:100%;max-width:560px;margin:0 auto;padding:32px 20px;background-color:#0D1117"><tbody>
 
 <!-- Logo -->
-<tr><td style="padding-bottom:24px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:24px;background-color:#0D1117">
   <span style="font-size:18px;font-weight:700">Bet<span style="color:#00C853">Autopsy</span></span>
 </td></tr>
 
 <!-- Positive lead -->
-<tr><td style="padding-bottom:20px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
   <div style="background:#0a1a0f;border-radius:12px;padding:16px 20px;border:1px solid #0d3318">
     <span style="font-size:15px;color:#F0F0F0">${positiveLead.emoji} ${esc(positiveLead.text)}</span>
   </div>
 </td></tr>
 
 <!-- Heading -->
-<tr><td style="padding-bottom:20px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
   <div style="font-size:16px;font-weight:700;color:#F0F0F0;margin-bottom:4px">Your week in bets, ${esc(displayName)}.</div>
   <div style="font-size:13px;color:#5A5C6F">Here's what happened since last Tuesday.</div>
 </td></tr>
 
 <!-- Stats grid -->
-<tr><td style="padding-bottom:16px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:16px;background-color:#0D1117">
   <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>
     <td style="width:33%;padding-right:6px">
       <div style="background:#1C1E2D;border-radius:10px;padding:14px 12px;text-align:center">
@@ -117,7 +117,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 </td></tr>
 
 <!-- ROI + Streak -->
-<tr><td style="padding-bottom:20px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
   <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>
     <td>
       <span style="font-size:14px;color:#A0A3B1">Weekly ROI: </span>
@@ -128,7 +128,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 </td></tr>
 
 <!-- Insight card -->
-<tr><td style="padding-bottom:20px">
+<tr><td bgcolor="#0D1117" style="padding-bottom:20px;background-color:#0D1117">
   <div style="background:#1C1E2D;border-radius:10px;padding:20px;border-left:3px solid #00C853">
     <div style="font-size:15px;font-weight:700;color:#F0F0F0;margin-bottom:8px">${insightEmoji} ${esc(insightHeadline)}</div>
     <div style="font-size:13px;color:#A0A3B1;line-height:1.6">${esc(insightDetail)}</div>
@@ -139,17 +139,17 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 ${winLossHtml}
 
 <!-- CTA -->
-<tr><td style="padding-bottom:12px;text-align:center">
+<tr><td bgcolor="#0D1117" style="padding-bottom:12px;text-align:center;background-color:#0D1117">
   <a href="${esc(autopsyUrl)}" style="display:inline-block;background:#00C853;color:#0D1117;font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;text-decoration:none">Run a Fresh Autopsy →</a>
 </td></tr>
 
 <!-- Secondary CTA -->
-<tr><td style="padding-bottom:24px;text-align:center">
+<tr><td bgcolor="#0D1117" style="padding-bottom:24px;text-align:center;background-color:#0D1117">
   <a href="${esc(quizUrl)}" style="font-size:13px;color:#00C853;text-decoration:none">Or take the free Bet DNA quiz →</a>
 </td></tr>
 
 <!-- Footer -->
-<tr><td style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px">
+<tr><td bgcolor="#0D1117" style="border-top:1px solid #1C1E2D;padding-top:20px;background-color:#0D1117">
   <div style="font-size:11px;color:#5A5C6F;line-height:1.6;text-align:center">
     BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don't guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
   </div>
