@@ -27,7 +27,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
   const pnlColor = netPnL >= 0 ? '#16a34a' : '#dc2626';
   const roiColor = roi >= 0 ? '#16a34a' : '#dc2626';
-  const pnlStr = `${netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(netPnL))}`;
+  const pnlStr = `${netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(netPnL)).toLocaleString()}`;
   const roiStr = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
 
   let winLossHtml = '';
@@ -37,7 +37,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
         <div style="background:#f0fdf4;border-radius:10px;padding:14px;border:1px solid #bbf7d0">
           <div style="font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">BIGGEST WIN</div>
           <div style="font-size:13px;color:#1a1a1a;margin-bottom:4px;line-height:1.4">${esc(biggestWin.description)}</div>
-          <div style="font-size:16px;font-weight:700;color:#16a34a">+$${biggestWin.profit}</div>
+          <div style="font-size:16px;font-weight:700;color:#16a34a">+$${biggestWin.profit.toLocaleString()}</div>
         </div>
       </td>` : '';
     const lossCell = biggestLoss ? `
@@ -45,7 +45,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
         <div style="background:#fef2f2;border-radius:10px;padding:14px;border:1px solid #fecaca">
           <div style="font-size:11px;color:#dc2626;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">BIGGEST LOSS</div>
           <div style="font-size:13px;color:#1a1a1a;margin-bottom:4px;line-height:1.4">${esc(biggestLoss.description)}</div>
-          <div style="font-size:16px;font-weight:700;color:#dc2626">-$${Math.abs(biggestLoss.profit)}</div>
+          <div style="font-size:16px;font-weight:700;color:#dc2626">-$${Math.abs(biggestLoss.profit).toLocaleString()}</div>
         </div>
       </td>` : '';
     winLossHtml = `

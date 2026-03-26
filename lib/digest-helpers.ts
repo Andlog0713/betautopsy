@@ -157,7 +157,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '🔥',
       headline: 'Your stakes jumped after losses',
-      detail: `Your average bet was $${stats.avgStakeAfterLoss} after a loss vs $${stats.avgStakeAfterWin} after a win — a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
+      detail: `Your average bet was $${stats.avgStakeAfterLoss.toLocaleString()} after a loss vs $${stats.avgStakeAfterWin.toLocaleString()} after a win — a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
     };
   }
 
@@ -194,7 +194,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '📈',
       headline: `+${stats.roi}% ROI this week`,
-      detail: `Strong week — ${stats.wins}-${stats.losses} with $${Math.abs(stats.netPnL)} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
+      detail: `Strong week — ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
     };
   }
 
@@ -203,7 +203,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '📉',
       headline: 'Tough week',
-      detail: `${stats.wins}-${stats.losses} for -$${Math.abs(stats.netPnL)}. Everyone has down weeks — the key is whether your behavior stayed consistent. Did bet sizes stay flat? Did you avoid chasing? If yes, the process is working even when results don't show it yet.`,
+      detail: `${stats.wins}-${stats.losses} for -$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. Everyone has down weeks — the key is whether your behavior stayed consistent. Did bet sizes stay flat? Did you avoid chasing? If yes, the process is working even when results don't show it yet.`,
     };
   }
 
@@ -211,7 +211,7 @@ export function generateInsight(stats: DigestStats): Insight {
   return {
     emoji: '📊',
     headline: `${stats.totalBets} bets, ${stats.wins}-${stats.losses} record`,
-    detail: `You wagered $${Math.round(stats.totalStaked).toLocaleString()} this week for ${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL)}. ${stats.mostBetSport ? `Most of your action was on ${stats.mostBetSport}.` : ''} Run an autopsy to see what patterns are hiding in the data.`,
+    detail: `You wagered $${Math.round(stats.totalStaked).toLocaleString()} this week for ${stats.netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. ${stats.mostBetSport ? `Most of your action was on ${stats.mostBetSport}.` : ''} Run an autopsy to see what patterns are hiding in the data.`,
   };
 }
 
@@ -222,7 +222,7 @@ export interface PositiveLead {
 
 export function generatePositiveLead(stats: DigestStats): PositiveLead {
   if (stats.biggestWin && stats.biggestWin.profit > 100) {
-    return { emoji: '💰', text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit}` };
+    return { emoji: '💰', text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit.toLocaleString()}` };
   }
   if (stats.mostProfitableSport) {
     const sport = stats.mostProfitableSport;
