@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip auth check for public routes and OAuth callback
-  if (pathname.startsWith('/auth/callback') || pathname.startsWith('/api/webhook') || pathname.startsWith('/api/template') || pathname.startsWith('/api/og') || pathname.startsWith('/api/digest') || pathname.startsWith('/api/unsubscribe')) {
+  if (pathname.startsWith('/auth/callback') || pathname.startsWith('/api/webhook') || pathname.startsWith('/api/template') || pathname.startsWith('/api/og') || pathname.startsWith('/api/digest') || pathname.startsWith('/api/unsubscribe') || pathname.startsWith('/api/freeze-refill')) {
     return NextResponse.next();
   }
 
