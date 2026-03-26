@@ -5,6 +5,9 @@ import { BLOG_POSTS } from '@/lib/blog-posts';
 export const metadata: Metadata = {
   title: 'The Post-Mortem — Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
   description: 'Deep dives into sports betting psychology, cognitive biases, parlay math, loss chasing, and the behavioral patterns that cost bettors money.',
+  alternates: {
+    canonical: '/blog',
+  },
 };
 
 export default function BlogIndexPage() {

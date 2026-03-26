@@ -29,12 +29,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.title} | BetAutopsy Blog`,
     description: post.description,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
       publishedTime: post.publishedAt,
-      url: `https://betautopsy.com/blog/${post.slug}`,
+      url: `https://www.betautopsy.com/blog/${post.slug}`,
     },
     twitter: {
       card: 'summary_large_image',
@@ -51,8 +54,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   if (!post || !PostContent) notFound();
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    author: { '@type': 'Organization', name: 'BetAutopsy' },
+    publisher: { '@type': 'Organization', name: 'BetAutopsy', url: 'https://www.betautopsy.com' },
+    mainEntityOfPage: `https://www.betautopsy.com/blog/${post.slug}`,
+  };
+
   return (
     <article className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <Link href="/blog" className="text-sm text-ink-600 hover:text-flame-500 transition-colors">
         ← All posts
       </Link>
