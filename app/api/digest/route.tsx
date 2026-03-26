@@ -25,15 +25,26 @@ export async function GET(request: Request) {
   const resend = getResend();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://betautopsy.com';
 
-  // Get all users with digest enabled
-  const { data: profiles } = await supabase
+  // Test mode: ?test=email@example.com sends only to that user with all-time bets
+  const { searchParams } = new URL(request.url);
+  const testEmail = searchParams.get('test');
+
+  // Get users
+  let profileQuery = supabase
     .from('profiles')
     .select('*')
-    .eq('email_digest_enabled', true)
     .not('email', 'is', null);
 
+  if (testEmail) {
+    profileQuery = profileQuery.eq('email', testEmail.toLowerCase().trim());
+  } else {
+    profileQuery = profileQuery.eq('email_digest_enabled', true);
+  }
+
+  const { data: profiles } = await profileQuery;
+
   if (!profiles || profiles.length === 0) {
-    return NextResponse.json({ sent: 0, skipped: 0, errors: [] });
+    return NextResponse.json({ sent: 0, skipped: 0, errors: [], note: testEmail ? `No profile found for ${testEmail}` : undefined });
   }
 
   let sent = 0;
@@ -43,8 +54,11 @@ export async function GET(request: Request) {
   for (const profile of profiles) {
     try {
       const typedProfile = profile as Profile;
-      const sinceDate = (typedProfile as Profile & { last_digest_sent_at?: string }).last_digest_sent_at
-        ?? new Date(Date.now() - 7 * 86400000).toISOString();
+      // In test mode, look back 365 days to guarantee finding bets
+      const sinceDate = testEmail
+        ? new Date(Date.now() - 365 * 86400000).toISOString()
+        : ((typedProfile as Profile & { last_digest_sent_at?: string }).last_digest_sent_at
+          ?? new Date(Date.now() - 7 * 86400000).toISOString());
 
       const bets = await getWeeklyBets(supabase, typedProfile.id, sinceDate);
 
