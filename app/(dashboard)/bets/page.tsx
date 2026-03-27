@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
@@ -317,9 +318,13 @@ export default function BetsPage() {
           ))}
         </div>
       ) : bets.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="text-4xl mb-3">🎯</div>
-          <p className="text-ink-600">No bets yet. Upload a CSV or add bets manually.</p>
+        <div className="card p-12 text-center space-y-4">
+          <div className="text-4xl mb-1">🎯</div>
+          <p className="text-ink-600">No bets yet. Upload a CSV or add bets manually above.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/upload" className="btn-primary text-sm">Upload CSV</Link>
+            <Link href="/how-to-upload" className="btn-secondary text-sm">How to Get Your Data</Link>
+          </div>
         </div>
       ) : (
         <div className="card overflow-hidden">

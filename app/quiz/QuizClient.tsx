@@ -89,7 +89,7 @@ export default function QuizClient() {
     if (!result) return;
     const text = `My Bet DNA: ${result.archetype.name} ${result.archetype.emoji} | Emotion Score: ${result.emotion_estimate}/100 | Top bias: ${result.biases[0]?.name ?? 'None'} — What's yours?`;
     const url = 'https://betautopsy.com/quiz';
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer,width=600,height=400');
   };
 
   const progress = phase === 'questions' ? ((currentQ + 1) / QUIZ_QUESTIONS.length) * 100 : 0;
@@ -120,6 +120,9 @@ export default function QuizClient() {
           <Link href="/" className="text-ink-700 text-xs hover:text-ink-500 transition-colors mt-4 inline-block">
             ← Back to BetAutopsy
           </Link>
+          <p className="text-ink-700 text-[10px] mt-8 max-w-sm mx-auto">
+            21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+          </p>
         </div>
       </main>
     );

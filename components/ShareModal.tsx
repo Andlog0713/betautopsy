@@ -87,7 +87,7 @@ export default function ShareModal({
     }
     text += ` | What's yours?`;
     const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url || 'https://betautopsy.com/quiz')}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   }
 
   return (

@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,6 +95,24 @@ export default function LoginPage() {
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
+
+      <button
+        onClick={async () => {
+          if (!email) { setError('Enter your email above first.'); return; }
+          setError('');
+          const supabase = createClient();
+          await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          });
+          setResetSent(true);
+        }}
+        className="text-sm text-ink-600 hover:text-flame-500 transition-colors mt-3 block mx-auto"
+      >
+        Forgot your password?
+      </button>
+      {resetSent && (
+        <p className="text-mint-500 text-sm text-center mt-2">Check your email for a reset link.</p>
+      )}
 
       <p className="text-ink-600 text-sm text-center mt-6">
         Don&apos;t have an account?{' '}

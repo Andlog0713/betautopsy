@@ -13,6 +13,7 @@ const tiers: { key: SubscriptionTier; highlight?: boolean }[] = [
 
 export default function PricingPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
 
@@ -27,6 +28,7 @@ export default function PricingPage() {
         .eq('id', user.id)
         .single();
       if (data) setProfile(data as Profile);
+      setPageLoading(false);
     }
     load();
   }, []);
@@ -60,6 +62,20 @@ export default function PricingPage() {
 
   const currentTier = profile?.subscription_tier ?? 'free';
   const isPaid = currentTier === 'pro' || currentTier === 'sharp';
+
+  if (pageLoading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="text-center space-y-2">
+          <div className="h-8 w-48 bg-ink-800 rounded mx-auto" />
+          <div className="h-4 w-64 bg-ink-800 rounded mx-auto" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-ink-800 rounded-xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">

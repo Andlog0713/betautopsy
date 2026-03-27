@@ -138,7 +138,7 @@ export default function UploadPage() {
           <div>
             <p className="text-[#e7e6e1] font-medium text-sm">Don&apos;t have a CSV yet?</p>
             <p className="text-ink-600 text-sm mt-0.5">
-              We&apos;ll show you how to export your bet history in under 3 minutes — works with every sportsbook.
+              We&apos;ll show you how to get your bet history into BetAutopsy — step by step for every method.
             </p>
           </div>
           <span className="text-flame-500 text-lg shrink-0 ml-4">→</span>
