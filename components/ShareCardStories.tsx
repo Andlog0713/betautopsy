@@ -108,13 +108,19 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
           </div>
         </div>
 
-        {/* Edge + Leak row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 48 }}>
+        {/* Edge + Leak row — always lead with the positive */}
+        <div style={{ display: 'grid', gridTemplateColumns: (data.best_edge && data.biggest_leak) ? '1fr 1fr' : '1fr', gap: 16, marginBottom: 48 }}>
           {data.best_edge && (
             <div style={{ background: 'rgba(0,200,83,0.08)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,200,83,0.2)' }}>
               <div style={{ fontSize: 16, color: '#00C853', fontWeight: 600, marginBottom: 8 }}>BEST EDGE</div>
               <div style={{ fontSize: 28, fontWeight: 700 }}>{data.best_edge.category}</div>
               <div style={{ fontSize: 24, color: '#00C853', fontWeight: 700, marginTop: 4 }}>+{data.best_edge.roi.toFixed(1)}%</div>
+            </div>
+          )}
+          {!data.best_edge && data.sharp_score !== null && (
+            <div style={{ background: 'rgba(0,200,83,0.08)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,200,83,0.2)' }}>
+              <div style={{ fontSize: 16, color: '#00C853', fontWeight: 600, marginBottom: 8 }}>SHARP SCORE</div>
+              <div style={{ fontSize: 48, fontWeight: 800, color: '#00C853' }}>{data.sharp_score}/100</div>
             </div>
           )}
           {data.biggest_leak && (
@@ -125,6 +131,22 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
             </div>
           )}
         </div>
+
+        {/* Biggest Win — positive highlight before the roasts */}
+        {(() => {
+          if (!data.bets || data.bets.length === 0) return null;
+          const wins = data.bets.filter((b) => b.result === 'win' && Number(b.profit) > 0);
+          if (wins.length === 0) return null;
+          const best = wins.sort((a, b) => Number(b.profit) - Number(a.profit))[0];
+          const profit = Math.round(Number(best.profit));
+          if (profit < 50) return null;
+          return (
+            <div style={{ background: 'rgba(0,200,83,0.06)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,200,83,0.15)', marginBottom: 48, textAlign: 'center' }}>
+              <div style={{ fontSize: 16, color: '#00C853', fontWeight: 600, marginBottom: 8 }}>BIGGEST WIN</div>
+              <div style={{ fontSize: 48, fontWeight: 800, color: '#00C853' }}>+${profit.toLocaleString()}</div>
+            </div>
+          );
+        })()}
 
         {/* Roast stats */}
         {roastStats.length > 0 && (
