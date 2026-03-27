@@ -63,6 +63,16 @@ function emotionLabel(score: number): string {
   return 'Your emotions are in the driver\'s seat. Addressing this is priority #1.';
 }
 
+function formatCategoryLabel(cat: string): string {
+  const upper: Record<string, string> = { nba: 'NBA', nfl: 'NFL', nhl: 'NHL', mlb: 'MLB', ncaab: 'NCAAB', ncaaf: 'NCAAF', mma: 'MMA', ufc: 'UFC' };
+  return cat.split(' ').map((word) => {
+    const low = word.toLowerCase();
+    if (upper[low]) return upper[low];
+    // Replace underscores and capitalize
+    return word.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }).join(' ');
+}
+
 function SkeletonSection({ label }: { label: string }) {
   return (
     <div className="card p-6 space-y-3">
@@ -151,7 +161,7 @@ function buildROIData(bets: Bet[]) {
   const data: { category: string; roi: number; count: number }[] = [];
   groups.forEach((v, k) => {
     if (v.count >= 3) {
-      data.push({ category: k, roi: Math.round((v.profit / v.staked) * 1000) / 10, count: v.count });
+      data.push({ category: formatCategoryLabel(k), roi: Math.round((v.profit / v.staked) * 1000) / 10, count: v.count });
     }
   });
   data.sort((a, b) => b.count - a.count);
@@ -609,7 +619,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {bias.severity.toUpperCase()}
                   </span>
                 </div>
-                {isPartialReport ? (
+                {!bias.description && !bias.fix ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-ink-800 rounded animate-pulse w-full" />
                     <div className="h-4 bg-ink-800 rounded animate-pulse w-3/4" />
@@ -662,7 +672,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <tbody>
                   {strategic_leaks.map((leak, i) => (
                     <tr key={i} className="border-b border-white/[0.04]">
-                      <td className="px-4 py-3 font-medium">{leak.category}</td>
+                      <td className="px-4 py-3 font-medium">{formatCategoryLabel(leak.category)}</td>
                       <td className="px-4 py-3 text-ink-600">{leak.detail}</td>
                       <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
                         {leak.roi_impact >= 0 ? '+' : ''}{leak.roi_impact.toFixed(1)}%
@@ -1154,7 +1164,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 analysis.edge_profile.profitable_areas.map((area, i) => (
                   <div key={i} className="card border-mint-500/20 bg-mint-500/5 p-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{area.category}</span>
+                      <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         area.confidence === 'high' ? 'bg-mint-500/10 text-mint-500' :
                         area.confidence === 'medium' ? 'bg-amber-400/10 text-amber-400' :
@@ -1175,7 +1185,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 analysis.edge_profile.unprofitable_areas.map((area, i) => (
                   <div key={i} className="card border-red-400/20 bg-red-400/5 p-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{area.category}</span>
+                      <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
                       <span className="text-xs text-red-400 font-mono">-${Math.abs(area.estimated_loss).toLocaleString()}</span>
                     </div>
                     <p className="font-mono text-red-400 font-semibold">{area.roi.toFixed(1)}% ROI</p>
