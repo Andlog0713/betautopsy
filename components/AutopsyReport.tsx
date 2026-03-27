@@ -322,6 +322,27 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ═══ Report Tab ═══ */}
       {activeTab === 'report' && <>
+
+      {/* Behavioral Analysis Report header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-flame-500 text-sm font-semibold uppercase tracking-wider">Behavioral Analysis Report</span>
+          <span className="text-ink-700 text-xs">·</span>
+          <span className="text-ink-700 text-xs">{summary.date_range}</span>
+        </div>
+        <span className="text-ink-700 text-xs">{summary.total_bets} bets analyzed</span>
+      </div>
+
+      {/* What this report analyzes — collapsible explainer */}
+      <details className="card bg-ink-900/50 border-white/[0.04] mb-2">
+        <summary className="px-4 py-3 text-sm text-ink-500 cursor-pointer hover:text-ink-400 flex items-center gap-2">
+          <span>ℹ️</span> What this report analyzes
+        </summary>
+        <div className="px-4 pb-4 text-xs text-ink-600 leading-relaxed">
+          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-[#F0F0F0]">behavior</strong> — the psychological patterns, emotional responses, and cognitive biases that affect every bet you place. Below you&apos;ll find your Emotion Score (how much emotions drive your betting), Discipline Score (how consistent your process is), detected cognitive biases with dollar costs, and a personalized action plan.
+        </div>
+      </details>
+
       {/* Bet DNA */}
       {analysis.betting_archetype && (
         <div className="card p-6 border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
@@ -382,40 +403,70 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Summary Card */}
-      <div className="card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="font-bold text-2xl">Autopsy Summary</h2>
-          <div className="flex items-center gap-2" title="Combines ROI, win rate, discipline, and emotional control into a single letter grade">
-            <span className="text-ink-600 text-sm">Overall Grade:</span>
-            <span className={`font-bold text-4xl font-bold ${gradeColor(summary.overall_grade)}`}>
-              {summary.overall_grade}
-            </span>
+      {/* Behavioral Profile — 3 core metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card p-5 text-center">
+          <p className="text-ink-600 text-xs uppercase tracking-wider mb-2">Emotion Score</p>
+          <p className={`font-mono text-4xl font-bold ${
+            emotionScore <= 25 ? 'text-mint-500' : emotionScore <= 50 ? 'text-amber-400' : emotionScore <= 75 ? 'text-orange-400' : 'text-red-400'
+          }`}>{emotionScore}/100</p>
+          <div className="w-full h-2 bg-ink-900 rounded-full overflow-hidden mt-3 mb-2">
+            <div className={`h-full rounded-full ${emotionColor(emotionScore)}`} style={{ width: `${emotionScore}%` }} />
           </div>
+          <p className="text-ink-600 text-xs">{emotionLabel(emotionScore).split('.')[0]}.</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <SummaryItem label="Record" value={summary.record} />
-          <SummaryItem
-            label="Net Profit/Loss"
-            value={`${summary.total_profit >= 0 ? '+' : ''}$${summary.total_profit.toFixed(2)}`}
-            color={summary.total_profit >= 0 ? 'text-mint-500' : 'text-red-400'}
-          />
-          <SummaryItem
-            label="ROI"
-            hint="return on investment"
-            value={`${summary.roi_percent.toFixed(1)}%`}
-            color={summary.roi_percent >= 0 ? 'text-mint-500' : 'text-red-400'}
-          />
-          <SummaryItem label="Avg Stake" value={`$${summary.avg_stake.toFixed(0)}`} />
-          <SummaryItem label="Total Bets" value={summary.total_bets.toString()} />
-          <SummaryItem label="Date Range" value={summary.date_range} small />
+        {analysis.discipline_score && (
+          <div className="card p-5 text-center">
+            <p className="text-ink-600 text-xs uppercase tracking-wider mb-2">Discipline Score</p>
+            <p className={`font-mono text-4xl font-bold ${
+              analysis.discipline_score.total >= 71 ? 'text-mint-500' : analysis.discipline_score.total >= 51 ? 'text-amber-400' : analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-red-400'
+            }`}>{analysis.discipline_score.total}/100</p>
+            <div className="w-full h-2 bg-ink-900 rounded-full overflow-hidden mt-3 mb-2">
+              <div className={`h-full rounded-full ${
+                analysis.discipline_score.total >= 71 ? 'bg-mint-500' : analysis.discipline_score.total >= 51 ? 'bg-amber-400' : analysis.discipline_score.total >= 31 ? 'bg-orange-400' : 'bg-red-400'
+              }`} style={{ width: `${analysis.discipline_score.total}%` }} />
+            </div>
+            <p className="text-ink-600 text-xs">How consistently you follow your process.</p>
+          </div>
+        )}
+        <div className="card p-5 text-center">
+          <p className="text-ink-600 text-xs uppercase tracking-wider mb-2">Overall Grade</p>
+          <p className={`text-5xl font-bold ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
+          <p className="text-ink-600 text-xs mt-3">Combines ROI, discipline, and emotional control.</p>
         </div>
       </div>
+
+      {/* Performance Summary (condensed) */}
+      <div className="bg-ink-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div>
+          <span className="text-ink-700 text-xs">Record </span>
+          <span className="font-mono text-sm text-[#F0F0F0]">{summary.record}</span>
+        </div>
+        <div>
+          <span className="text-ink-700 text-xs">P&L </span>
+          <span className={`font-mono text-sm ${summary.total_profit >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+            {summary.total_profit >= 0 ? '+' : ''}${summary.total_profit.toFixed(0)}
+          </span>
+        </div>
+        <div>
+          <span className="text-ink-700 text-xs">ROI </span>
+          <span className={`font-mono text-sm ${summary.roi_percent >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+            {summary.roi_percent.toFixed(1)}%
+          </span>
+        </div>
+        <div>
+          <span className="text-ink-700 text-xs">Avg Stake </span>
+          <span className="font-mono text-sm text-[#F0F0F0]">${summary.avg_stake.toFixed(0)}</span>
+        </div>
+      </div>
+
+      {/* Summary Card — REMOVED (replaced by Behavioral Profile + condensed stats above) */}
 
       {/* P&L Over Time Chart */}
       {hasBets && pnlData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-4">Profit/Loss Over Time</h2>
+          <h2 className="font-bold text-xl mb-1">Profit/Loss Over Time</h2>
+          <p className="text-ink-700 text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
           <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
@@ -589,7 +640,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Strategic Leaks */}
-      {isPartialReport && <SkeletonSection label="Analyzing strategic leaks..." />}
+      {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
       {!isPartialReport && strategic_leaks.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Strategic Leaks</h2>
@@ -634,7 +685,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ROI by Category Chart */}
       {hasBets && roiData.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-4">ROI by Category</h2>
+          <h2 className="font-bold text-xl mb-1">ROI by Category</h2>
+          <p className="text-ink-700 text-xs italic mb-3">See where your edge lives and where it doesn&apos;t.</p>
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
@@ -964,7 +1016,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Edge Profile */}
-      {isPartialReport && <SkeletonSection label="Calculating your edge profile..." />}
+      {isPartialReport && <SkeletonSection label="Ranking your edges and leaks by dollar impact..." />}
       {!isPartialReport && analysis.edge_profile && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
@@ -1043,7 +1095,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Behavioral Patterns */}
-      {isPartialReport && <SkeletonSection label="Identifying behavioral patterns..." />}
+      {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
       {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
@@ -1078,7 +1130,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Session Analysis */}
-      {isPartialReport && <SkeletonSection label="Analyzing your sessions..." />}
+      {isPartialReport && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
       {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
@@ -1135,7 +1187,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Action Plan */}
-      {isPartialReport && <SkeletonSection label="Building your action plan..." />}
+      {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Action Plan</h2>
@@ -1164,7 +1216,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Personal Rules */}
-      {isPartialReport && <SkeletonSection label="Generating personal rules..." />}
+      {isPartialReport && <SkeletonSection label="Writing personal betting rules from your data..." />}
       {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -1276,7 +1328,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
                 <div>
                   <p className="font-medium text-sm text-[#F0F0F0] group-hover:text-cyan-400 transition-colors">View Sharp Analysis</p>
-                  <p className="text-ink-600 text-xs mt-0.5">Your Sharp tools are ready for this report.</p>
+                  <p className="text-ink-600 text-xs mt-0.5">Your leaks are ranked and ready. See what to fix first.</p>
                 </div>
               </div>
               <span className="text-ink-700 group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">Sharp →</span>
@@ -1296,7 +1348,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
                 <div>
                   <p className="font-medium text-sm text-[#F0F0F0] group-hover:text-cyan-400 transition-colors">Unlock Sharp Analysis</p>
-                  <p className="text-ink-600 text-xs mt-0.5">Get deeper insights from your report data.</p>
+                  <p className="text-ink-600 text-xs mt-0.5">See every leak ranked by dollar cost and simulate what fixing each one saves you.</p>
                 </div>
               </div>
               <span className="text-ink-700 group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">See plans →</span>
@@ -1314,7 +1366,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         isSharp ? (
           <div className="space-y-8">
             {/* What If Simulator */}
-            {isPartialReport && <SkeletonSection label="Running what-if simulations..." />}
+            {isPartialReport && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
             {!isPartialReport && whatIfs.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
@@ -1364,7 +1416,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
 
             {/* Leak Prioritizer */}
-            {isPartialReport && <SkeletonSection label="Ranking leaks by dollar impact..." />}
+            {isPartialReport && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
             {!isPartialReport && prioritizedLeaks.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
@@ -1435,7 +1487,28 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </svg>
               </div>
               <h2 className="font-bold text-2xl">Sharp Analysis</h2>
-              <p className="text-ink-600 text-sm">Advanced tools that turn your report data into actionable strategy.</p>
+              <p className="text-ink-600 text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first — and simulate how much you&apos;d save.</p>
+              {/* Blurred Leak Prioritizer preview */}
+              <div className="relative mb-6">
+                <div className="blur-sm pointer-events-none opacity-50 space-y-2">
+                  {[
+                    { name: 'Loss Chasing', cost: 340, pct: 38 },
+                    { name: 'Parlay Overexposure', cost: 210, pct: 23 },
+                    { name: 'Late Night Impulse Bets', cost: 180, pct: 20 },
+                    { name: 'Favorite Bias (NFL)', cost: 170, pct: 19 },
+                  ].map((item) => (
+                    <div key={item.name} className="card p-4">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium">{item.name}</span>
+                        <span className="font-mono text-red-400 text-sm">-${item.cost}/mo</span>
+                      </div>
+                      <div className="h-2 bg-ink-900 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-red-400 to-flame-500" style={{ width: `${item.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $24.99/mo</a>
             </div>
 

@@ -391,41 +391,48 @@ export default function ReportsPage() {
         <div className="space-y-4">
           <div className="card border-flame-500/30 bg-flame-500/5 p-6 text-center space-y-3">
             <p className="text-[#F0F0F0] mb-2">
-              This report analyzed your 50 most recent bets. The rest are sitting in the dark.
+              This report analyzed your 50 most recent bets. Your full behavioral picture needs more data.
             </p>
             <p className="text-ink-600 text-sm mb-4">
-              With Pro, you&apos;d know whether your props are a real leak or just a bad month,
-              if your weekend betting costs more than your whole week earns, and exactly which
-              sportsbook you perform best on. One insight pays for the whole year.
+              With Pro, your behavioral analysis covers your <strong className="text-[#F0F0F0]">entire</strong> bet history — more bets means more accurate bias detection, real trend tracking, and personal rules backed by statistical significance.
             </p>
+            <ul className="text-ink-600 text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
+              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Session-by-session analysis — see exactly when and why you go off-script</li>
+              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Personal betting rules generated from YOUR data — not generic advice</li>
+              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Weekly reports tracking whether your behavioral patterns are improving</li>
+              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Discipline Score tracking over time — proof that you&apos;re getting sharper</li>
+            </ul>
             <a href="/pricing" className="btn-primary inline-block">
               Unlock Full Analysis — $9.99/mo
             </a>
           </div>
 
-          {/* Locked feature previews */}
+          {/* Locked feature previews — behavioral framing */}
           <div className="relative">
             <div className="blur-sm pointer-events-none opacity-50">
               <div className="card p-5">
-                <h3 className="font-bold text-lg mb-2">Edge Profile</h3>
+                <h3 className="font-bold text-lg mb-2">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">NFL Spreads</p><p className="font-mono text-mint-500">+8.3%</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">NBA Props</p><p className="font-mono text-red-400">-14.2%</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">Researched bets (&gt;2hr before game)</p><p className="font-mono text-mint-500">+6.1% ROI</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">Impulse bets (&lt;30min before game)</p><p className="font-mono text-red-400">-18.4% ROI</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">Post-loss bets</p><p className="font-mono text-red-400">-22.7% ROI</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">Morning line bets</p><p className="font-mono text-mint-500">+4.2% ROI</p></div>
                 </div>
               </div>
               <div className="card p-5 mt-3">
-                <h3 className="font-bold text-lg mb-2">Personal Rules</h3>
+                <h3 className="font-bold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Max stake $150 on any single bet</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Stop betting after 3 consecutive losses</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="card bg-ink-800/95 p-6 text-center max-w-sm">
                 <p className="text-2xl mb-2">🔒</p>
-                <p className="text-[#F0F0F0] font-medium mb-1">Pro reports include</p>
-                <p className="text-ink-600 text-sm mb-3">Edge Profile, Session Analysis, Personal Rules, Discipline Score tracking, and progress over time.</p>
+                <p className="text-[#F0F0F0] font-medium mb-1">Pro unlocks your full behavioral analysis</p>
+                <p className="text-ink-600 text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and progress tracking that proves you&apos;re actually changing.</p>
                 <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $9.99/mo</a>
               </div>
             </div>
