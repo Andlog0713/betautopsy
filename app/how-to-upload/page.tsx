@@ -55,7 +55,7 @@ export default function HowToUploadPage() {
                 New users get a free 7-day Pro trial, no payment upfront.
               </p>
               <ol className="list-decimal list-inside space-y-1.5 text-sm text-ink-600">
-                <li>Download Pikkit and connect your sportsbooks</li>
+                <li><a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="text-flame-500 hover:underline">Download Pikkit</a> and connect your sportsbooks</li>
                 <li>Activate the free Pro trial (tap the Pro tab → start trial)</li>
                 <li>Go to Pro tab → Settings (top-right) → Data Exports</li>
                 <li>Set your date range and tap <span className="text-[#F0F0F0]">Send CSV</span> — it&apos;ll be emailed to you</li>
