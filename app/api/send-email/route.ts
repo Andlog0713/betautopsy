@@ -92,7 +92,7 @@ export async function GET(request: Request) {
   </div>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 8px">
-    If you have feedback, ideas, or just want to say hey — reply to this email. We read everything.
+    Welcome to the team.
   </p>
 
   <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:24px 0 0">
