@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
       const [betsRes, profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
         supabase.from('bets').select('result, profit, stake, placed_at').eq('user_id', user.id),
-        supabase.from('profiles').select('bankroll, subscription_tier, streak_count, streak_best, streak_last_date, streak_freezes').eq('id', user.id).single(),
+        supabase.from('profiles').select('bankroll, subscription_tier, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
         supabase.from('autopsy_reports').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
@@ -79,8 +79,11 @@ export default function DashboardPage() {
       if (profileRes.data?.streak_count) setStreakCount(profileRes.data.streak_count);
       if (profileRes.data?.streak_best) setStreakBest(profileRes.data.streak_best);
       if (profileRes.data?.streak_last_date) setStreakLastDate(profileRes.data.streak_last_date);
-      setStreakFreezes(profileRes.data?.streak_freezes ?? 1);
-      if (profileRes.data?.subscription_tier) setTier(profileRes.data.subscription_tier);
+      setStreakFreezes((profileRes.data as Record<string, unknown>)?.streak_freezes as number ?? 1);
+      const profileTier = profileRes.data?.subscription_tier;
+      if (profileTier) setTier(profileTier);
+      // Debug: log if tier doesn't match expected
+      if (profileRes.error) console.error('Profile query error:', profileRes.error);
       if (snapshotsRes.data) setSnapshots(snapshotsRes.data as ProgressSnapshot[]);
 
       // Bets since last report
