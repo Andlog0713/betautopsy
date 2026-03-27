@@ -70,7 +70,8 @@ export default function ShareModal({
   }
 
   async function handleCopyLink() {
-    await navigator.clipboard.writeText('https://betautopsy.com/quiz');
+    const url = await getShareUrl();
+    await navigator.clipboard.writeText(url || 'https://betautopsy.com');
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   }
@@ -179,7 +180,7 @@ export default function ShareModal({
             onClick={handleCopyLink}
             className="btn-secondary text-sm"
           >
-            {linkCopied ? '✓ Copied' : 'Copy Quiz Link'}
+            {linkCopied ? '✓ Copied' : 'Copy Report Link'}
           </button>
           <button
             onClick={handleShareTwitter}

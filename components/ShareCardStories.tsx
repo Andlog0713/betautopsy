@@ -64,13 +64,13 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
           <div style={{ fontSize: 36, fontWeight: 700 }}>
             Bet<span style={{ color: '#00C853' }}>Autopsy</span>
           </div>
-          <div style={{ fontSize: 18, color: '#5A5C6F', marginTop: 4 }}>Bet DNA Report</div>
+          <div style={{ fontSize: 18, color: '#5A5C6F', marginTop: 4 }}>Autopsy Report</div>
         </div>
 
         {/* Archetype */}
         <div style={{ textAlign: 'center', marginBottom: 50 }}>
           <div style={{ fontSize: 80, marginBottom: 16 }}>{data.archetype?.description ? '' : ''}{getArchEmoji(archName)}</div>
-          <div style={{ fontSize: 16, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#5A5C6F', marginBottom: 12 }}>YOUR BET DNA</div>
+          <div style={{ fontSize: 16, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#5A5C6F', marginBottom: 12 }}>MY BETTING PERSONALITY</div>
           <div style={{ fontSize: 56, fontWeight: 800, color: archColor, lineHeight: 1.1, marginBottom: 12 }}>{archName}</div>
           <div style={{ fontSize: 20, color: '#A0A3B1', maxWidth: 700, margin: '0 auto', lineHeight: 1.5 }}>
             {data.archetype?.description ?? ''}
@@ -160,8 +160,8 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
           {data.streak_count && data.streak_count >= 4 && (
             <div style={{ fontSize: 14, color: '#00C853', marginBottom: 12 }}>🔥 {data.streak_count}-week streak</div>
           )}
-          <div style={{ fontSize: 22, color: '#F0F0F0', marginTop: 20, fontWeight: 600 }}>What&apos;s YOUR Bet DNA?</div>
-          <div style={{ fontSize: 18, color: '#00C853', marginTop: 4 }}>betautopsy.com/quiz</div>
+          <div style={{ fontSize: 22, color: '#F0F0F0', marginTop: 20, fontWeight: 600 }}>Get your autopsy report</div>
+          <div style={{ fontSize: 18, color: '#00C853', marginTop: 4 }}>betautopsy.com</div>
         </div>
       </div>
     </div>

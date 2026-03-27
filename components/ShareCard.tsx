@@ -220,7 +220,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
           <div style={{ background: 'rgba(0,200,83,0.04)', border: '1px solid rgba(0,200,83,0.12)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
             <div style={{ fontSize: 9, color: '#00C853', marginBottom: 4 }}>BIGGEST HIT</div>
             <div style={{ ...S.mono, fontSize: 20, fontWeight: 700, color: '#00C853' }}>+${Math.round(hit.profit).toLocaleString()}</div>
-            <div style={{ fontSize: 11, color: '#A0A3B1', marginTop: 2 }}>{truncate(hit.description, 60)}</div>
+            <div style={{ fontSize: 11, color: '#A0A3B1', marginTop: 2 }}>{hit.description}</div>
             <div style={{ fontSize: 10, color: '#5A5C6F', marginTop: 2 }}>
               {hit.bet_type} at {hit.odds > 0 ? `+${hit.odds}` : hit.odds}
             </div>
@@ -232,7 +232,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
           <div style={{ background: 'rgba(248,113,113,0.03)', border: '1px solid rgba(248,113,113,0.08)', borderRadius: 10, padding: 10, marginBottom: 16 }}>
             <div style={{ fontSize: 9, color: '#f87171', marginBottom: 2 }}>WORST BAD BEAT</div>
             <div style={{ ...S.mono, fontSize: 14, color: '#f87171' }}>-${Math.abs(Math.round(beat.profit)).toLocaleString()}</div>
-            <div style={{ fontSize: 10, color: '#5A5C6F', marginTop: 2 }}>{truncate(beat.description, 55)} · {beat.odds > 0 ? `+${beat.odds}` : beat.odds}</div>
+            <div style={{ fontSize: 10, color: '#5A5C6F', marginTop: 2 }}>{beat.description} · {beat.odds > 0 ? `+${beat.odds}` : beat.odds}</div>
           </div>
         )}
 
