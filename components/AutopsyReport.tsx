@@ -1461,9 +1461,16 @@ function SummaryItem({ label, value, color, small, hint }: { label: string; valu
 function ShareSection({ analysis, summary, reportId, bets }: { analysis: AutopsyAnalysis; summary: AutopsyAnalysis['summary']; reportId?: string; bets?: Bet[] }) {
   const [showModal, setShowModal] = useState(false);
 
-  // Build share card data
+  // Build share card data — find best edge from edge_profile or strategic_leaks
   const leaks = analysis.strategic_leaks ?? [];
-  const bestEdge = leaks.filter((l) => l.roi_impact > 0).sort((a, b) => b.roi_impact - a.roi_impact)[0];
+  const profitableAreas = analysis.edge_profile?.profitable_areas ?? [];
+  const bestProfitable = profitableAreas.sort((a, b) => b.roi - a.roi)[0];
+  const bestLeakEdge = leaks.filter((l) => l.roi_impact > 0).sort((a, b) => b.roi_impact - a.roi_impact)[0];
+  const bestEdge = bestProfitable
+    ? { category: bestProfitable.category, roi: bestProfitable.roi }
+    : bestLeakEdge
+    ? { category: bestLeakEdge.category, roi: bestLeakEdge.roi_impact }
+    : null;
   const biggestLeak = leaks.filter((l) => l.roi_impact < 0).sort((a, b) => a.roi_impact - b.roi_impact)[0];
 
   const parts = summary.record.match(/(\d+)W-(\d+)L-(\d+)P/);
@@ -1481,7 +1488,7 @@ function ShareSection({ analysis, summary, reportId, bets }: { analysis: Autopsy
     win_rate: winRate,
     total_bets: summary.total_bets,
     record: summary.record,
-    best_edge: bestEdge ? { category: bestEdge.category, roi: bestEdge.roi_impact } : null,
+    best_edge: bestEdge,
     biggest_leak: biggestLeak ? { category: biggestLeak.category, roi: biggestLeak.roi_impact } : null,
     parlay_percent: parlayPct,
     sharp_score: analysis.edge_profile?.sharp_score ?? null,
