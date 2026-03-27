@@ -22,7 +22,7 @@ BetAutopsy is a web app where sports bettors upload their bet history (CSV or ma
 betautopsy/
 ├── app/
 │   ├── layout.tsx                    # Root layout with fonts, metadata, noise texture
-│   ├── page.tsx                      # Landing page (marketing, pricing, sample report)
+│   ├── page.tsx                      # Landing page (marketing, pricing, sample report, interactive demo)
 │   ├── globals.css                   # Tailwind + custom classes + DM Sans/Serif import
 │   ├── (auth)/
 │   │   ├── layout.tsx                # Centered auth layout with logo
@@ -35,25 +35,50 @@ betautopsy/
 │   │   ├── bets/page.tsx             # Bet history table + manual entry form
 │   │   ├── reports/page.tsx          # Run autopsy + view past reports
 │   │   └── pricing/page.tsx          # Upgrade tiers with Stripe checkout
+│   ├── blog/
+│   │   ├── layout.tsx                # Blog layout with SEO metadata
+│   │   ├── page.tsx                  # Blog index — "The Post-Mortem"
+│   │   ├── [slug]/page.tsx           # Individual blog post pages
+│   │   └── _posts/                   # MDX/markdown blog post content
+│   ├── quiz/
+│   │   ├── page.tsx                  # Bet DNA personality quiz entry
+│   │   └── QuizClient.tsx            # Quiz UI client component
 │   └── api/
-│       ├── analyze/route.ts          # POST: Run Claude autopsy on user's bets
+│       ├── analyze/route.ts          # POST: Run Claude autopsy on user's bets (SSE streaming)
 │       ├── upload/route.ts           # POST: Parse and store CSV bet history
 │       ├── template/route.ts         # GET: Download sample CSV template
 │       ├── checkout/route.ts         # POST: Create Stripe checkout session
 │       ├── billing/route.ts          # POST: Create Stripe customer portal session
-│       └── webhook/route.ts          # POST: Stripe webhook handler
+│       ├── webhook/route.ts          # POST: Stripe webhook handler
+│       ├── digest/route.ts           # POST: Weekly email digest cron (Tuesdays 10am ET)
+│       ├── unsubscribe/route.ts      # GET: Email unsubscribe with token auth
+│       ├── freeze-refill/route.ts    # POST: Monthly streak freeze refill cron (1st of month)
+│       ├── send-email/route.ts       # POST: One-off templated email sends
+│       └── quiz-lead/route.ts        # POST: Quiz email capture
 ├── components/
 │   ├── AutopsyReport.tsx             # Full report display (emotion score, biases, leaks, action plan)
 │   ├── BetEntryForm.tsx              # Manual bet entry with auto-calculated profit
-│   └── BetHistory.tsx                # Sortable bet history table
+│   ├── BetHistory.tsx                # Sortable bet history table
+│   ├── ShareCardStories.tsx          # Instagram Stories share card
+│   ├── QuizResultCard.tsx            # Quiz result share card
+│   └── DemoReportWrapper.tsx         # Interactive demo on landing page
 ├── lib/
 │   ├── autopsy-engine.ts             # Claude API integration + system prompt + analysis logic
 │   ├── csv-parser.ts                 # Multi-format CSV parser (Pikkit, Action Network, generic)
 │   ├── stripe.ts                     # Stripe client, tier limits, checkout/portal helpers
-│   └── supabase.ts                   # Supabase clients (browser + server) + auth helpers
+│   ├── supabase.ts                   # Supabase clients (browser + server) + auth helpers
+│   ├── quiz-engine.ts                # Quiz questions + scoring logic
+│   ├── blog-posts.ts                 # Blog post registry
+│   ├── resend.ts                     # Resend email client
+│   ├── digest-helpers.ts             # Weekly digest stats + insights
+│   ├── digest-email.tsx              # Digest email HTML template
+│   ├── format-parlay.ts              # Parlay description formatting
+│   ├── share-helpers.ts              # Roast stats for share cards
+│   └── demo-data.ts                  # Demo report data for landing page
 ├── middleware.ts                     # Auth protection for dashboard routes
 ├── types/
 │   └── index.ts                      # All TypeScript interfaces
+├── vercel.json                       # Cron schedules (digest Tuesdays, freeze 1st of month)
 └── supabase/
     └── migration.sql                 # Full database schema with RLS policies
 ```
@@ -182,11 +207,11 @@ create policy "Users can insert own reports" on autopsy_reports for insert with 
 
 ## SUBSCRIPTION TIERS
 
-| Tier | Price | Annual | Max Bets | Max Reports | Features |
-|------|-------|--------|----------|-------------|----------|
-| Free | $0 | — | Unlimited | 1 (50 bets) | Basic bias detection, summary stats |
-| Pro | $9.99/mo | $99/yr | Unlimited | Unlimited | Full bias suite, strategic leaks, behavioral patterns, weekly reports, PDF export |
-| Sharp | $24.99/mo | $199/yr | Unlimited | Unlimited | Everything in Pro + Leak Prioritizer, full What-If Simulator, early access |
+| Tier | Price | Annual | Max Bets | Max Reports | Bets/Report | Features |
+|------|-------|--------|----------|-------------|-------------|----------|
+| Free | $0 | — | Unlimited | 1 | 50 | Basic bias detection, summary stats |
+| Pro | $9.99/mo | $99/yr | Unlimited | Unlimited | 2,000 | Full bias suite, strategic leaks, behavioral patterns, weekly reports, PDF export |
+| Sharp | $24.99/mo | $199/yr | Unlimited | Unlimited | 5,000 | Everything in Pro + Leak Prioritizer, full What-If Simulator, early access |
 
 ## THE CLAUDE SYSTEM PROMPT (MOST IMPORTANT PART)
 
@@ -280,7 +305,7 @@ Respond with valid JSON matching this exact structure:
       "difficulty": "easy|medium|hard"
     }
   ],
-  "emotion_score": number (0-100, where 0 is ice cold discipline and 100 is fully heated),
+  "emotion_score": number (0-100, where 0 is ice cold discipline and 100 is fully heated), // renamed from tilt_score; code accepts both for backward compat
   "bankroll_health": "healthy|caution|danger"
 }
 
@@ -346,7 +371,7 @@ The landing page should include:
 2. Problem/solution: "Trackers tell you what happened. BetAutopsy tells you why."
 3. Feature list: loss chasing detection, cognitive bias ID, strategic leak mapping, emotion scoring, action plan
 4. How it works: Upload → Analyze → Improve (3-step)
-5. Sample report preview: A mock autopsy showing loss chasing (high severity), parlay addiction (medium), favorite bias (low) with real-looking numbers
+5. Interactive demo: A live DemoReportWrapper component showing a real-looking autopsy (powered by demo-data.ts) that users can click through
 6. Pricing: 3-tier grid (Free $0, Pro $9.99/mo or $99/yr, Sharp $24.99/mo or $199/yr)
 7. Footer with disclaimer
 
@@ -355,7 +380,7 @@ The landing page should include:
 The report display component should render:
 
 1. **Summary card**: Record, P&L, ROI, avg stake, overall letter grade (A-F), date range
-2. **Emotion score**: 0-100 with colored progress bar (green → amber → orange → red), one-sentence interpretation
+2. **Emotion score** (renamed from tilt_score, backward compatible): 0-100 with colored progress bar (green → amber → orange → red), one-sentence interpretation
 3. **Bankroll health warning**: Red alert box if "danger", amber if "caution"
 4. **Biases detected**: Cards with severity badges (color-coded), description, evidence, estimated cost, fix
 5. **Strategic leaks**: Table with category, ROI%, sample size, issue description, suggestion
@@ -378,6 +403,10 @@ The report display component should render:
 - Redirect authenticated users away from /login and /signup to /dashboard
 - The /api/webhook route must be excluded from auth middleware (Stripe calls it)
 - The /api/template route can be public (just downloads a sample CSV)
+- The /api/digest and /api/freeze-refill routes are Vercel cron endpoints (authenticated via CRON_SECRET)
+- The /api/unsubscribe route is public (token-authenticated via query param)
+- The /api/quiz-lead route is public (email capture from quiz)
+- The /blog and /quiz routes are public (SEO and lead gen)
 
 ## ENVIRONMENT VARIABLES NEEDED
 
@@ -392,6 +421,8 @@ STRIPE_PRO_PRICE_ID=
 STRIPE_SHARP_PRICE_ID=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+RESEND_API_KEY=
+CRON_SECRET=
 ```
 
 ## KEY IMPLEMENTATION NOTES
@@ -402,11 +433,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 3. **Bet data formatting for Claude**: Sort bets chronologically, format as a text table with columns: DATE | SPORT | TYPE | DESCRIPTION | ODDS | STAKE | RESULT | PROFIT | BOOK. Include a QUICK STATS summary block above the table with record, total profit, ROI, avg stake, parlay count, date range.
 
-4. **API route for analysis** (`/api/analyze`): Check user tier, check report limits, fetch user's bets from Supabase, format them, call Claude, parse JSON response, save report to autopsy_reports table, return analysis.
+4. **API route for analysis** (`/api/analyze`): Check user tier, check report limits, fetch user's bets from Supabase, format them, call Claude via **streaming SSE** (Server-Sent Events) so the user sees the autopsy build in real time, parse the final JSON response, save report to autopsy_reports table, return analysis.
 
 5. **CSV upload route** (`/api/upload`): Parse the file, map columns, convert data, insert bets in batches of 100, update bet_count on profile.
 
-6. **The analysis endpoint should be gated**: Free tier gets 1 report max and 50 bets max. Pro and Sharp get unlimited. Check these before running the Claude call (API calls cost money).
+6. **The analysis endpoint should be gated**: Free tier gets 1 report max (50 bets/report). Pro gets unlimited reports (2,000 bets/report). Sharp gets unlimited reports (5,000 bets/report). Check these before running the Claude call (API calls cost money).
 
 7. **Stripe webhook uses service role key**: The webhook is called by Stripe's servers, not by a logged-in user, so it needs the Supabase service role key to update profiles.
 
@@ -448,8 +479,11 @@ When done, a user should be able to:
 1. Land on the marketing page and understand what the product does
 2. Sign up in 30 seconds
 3. Upload a CSV of their bets and see them in a table
-4. Click "Run Autopsy" and within 15-20 seconds see a full behavioral analysis
+4. Click "Run Autopsy" and see the analysis stream in real time via SSE
 5. Upgrade to Pro via Stripe and get unlimited access
 6. Come back weekly and run new reports as they add more bets
+7. Receive a **weekly digest email** every Tuesday at 10am ET with stats, insights, and streaks
+8. Take the **Bet DNA quiz** to discover their betting personality (and capture email leads)
+9. Read **"The Post-Mortem" blog** for SEO-driven content on betting psychology and bias
 
 The app should build without errors, deploy to Vercel, and handle the full user lifecycle from signup through payment.
