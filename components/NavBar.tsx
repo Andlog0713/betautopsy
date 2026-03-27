@@ -61,6 +61,7 @@ export default function NavBar() {
       <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-xl tracking-tight">
           Bet<span className="text-flame-500">Autopsy</span>
+          <span className="text-ink-700 text-[11px] font-normal ml-2 hidden lg:inline">Betting behavioral analysis</span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-6">
           <Link href="/blog" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">

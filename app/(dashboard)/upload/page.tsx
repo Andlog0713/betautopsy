@@ -116,7 +116,7 @@ export default function UploadPage() {
       <div>
         <h1 className="font-bold text-3xl mb-2">Upload Bets</h1>
         <p className="text-ink-600">
-          Drop your CSV and let&apos;s see what&apos;s really going on.
+          Drop your CSV and we&apos;ll find the behavioral patterns hiding in your bet history.
         </p>
       </div>
 

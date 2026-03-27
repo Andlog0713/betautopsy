@@ -69,6 +69,7 @@ export default function SignupPage() {
 
   return (
     <div className="card p-8 animate-fade-in">
+      <p className="text-ink-600 text-sm text-center mb-2">Your behavioral analysis is one upload away.</p>
       <h2 className="font-bold text-2xl mb-6 text-center">Create your account</h2>
 
       <OAuthButtons />

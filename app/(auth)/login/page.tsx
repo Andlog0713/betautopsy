@@ -43,6 +43,7 @@ export default function LoginPage() {
 
   return (
     <div className="card p-8 animate-fade-in">
+      <p className="text-ink-600 text-sm text-center mb-2">Your betting behavior doesn&apos;t lie. Let&apos;s see what&apos;s changed.</p>
       <h2 className="font-bold text-2xl mb-6 text-center">Welcome back</h2>
 
       <OAuthButtons />

@@ -15,12 +15,16 @@ export default function LandingPage() {
 
         <div className="max-w-6xl mx-auto px-4 md:px-8 pt-36 pb-28 text-center relative">
           <h1 className="font-extrabold text-5xl md:text-7xl leading-[1.08] tracking-tight mb-6 animate-fade-in">
-            Your bets,{' '}
-            <span className="text-flame-500">dissected.</span>
+            Your bets aren&apos;t the problem.{' '}
+            <span className="text-flame-500">Your behavior is.</span>
           </h1>
-          <p className="text-ink-600 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-d2">
-            Upload your bet history. Find out which habits are costing you, which
-            plays are actually winning, and what to do about it.
+          <p className="text-ink-600 text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed animate-fade-in-d2">
+            Upload your bet history and get an AI-powered behavioral analysis — loss chasing detection,
+            emotional betting patterns, cognitive bias identification, and a personalized plan to fix
+            what&apos;s costing you money.
+          </p>
+          <p className="text-ink-500 text-sm mb-8 animate-fade-in-d2">
+            Not a bet tracker. Not a picks service. A sports psychologist for your betting data.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up-d3">
             <Link href="/signup" className="btn-primary text-lg !px-8 !py-3.5 shadow-lg shadow-flame-500/20">
@@ -115,7 +119,7 @@ export default function LandingPage() {
             {
               step: '2',
               title: 'Analyze',
-              desc: 'We scan every bet for patterns you can\'t see from inside your own head — the chasing, the sizing, the leaks.',
+              desc: 'AI scans your history for cognitive biases (loss chasing, favorite bias, parlay addiction), emotional patterns (heated sequences, stake escalation), and strategic leaks — then gives you an Emotion Score, Bet DNA archetype, and Discipline Score.',
               delay: 'animate-slide-up-d3',
             },
             {
@@ -142,8 +146,8 @@ export default function LandingPage() {
           <span className="text-3xl mb-3 block">🧬</span>
           <h3 className="font-bold text-2xl mb-2">What&apos;s your Bet DNA?</h3>
           <p className="text-ink-600 text-sm mb-5 max-w-md mx-auto">
-            Take the free 2-minute quiz to discover your betting personality
-            and hidden biases. No signup. No data needed.
+            Take the free 2-minute quiz to discover your betting personality type — the
+            cognitive biases and emotional patterns that shape every bet you place. No signup. No data needed.
           </p>
           <Link href="/quiz" className="btn-secondary inline-block">
             Take the Quiz
@@ -157,7 +161,7 @@ export default function LandingPage() {
           See a real <span className="text-flame-500">autopsy report</span>
         </h2>
         <p className="text-ink-600 text-center mb-10 max-w-lg mx-auto">
-          280 bets. NFL &amp; NBA. 3 months. This bettor thought they were doing fine.
+          280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea.
           Scroll through their full report — then get yours.
         </p>
         <DemoReportWrapper />
@@ -171,9 +175,8 @@ export default function LandingPage() {
           Five reports is <span className="text-flame-500">proof</span>.
         </h2>
         <p className="text-ink-600 text-center mb-14 max-w-lg mx-auto">
-          BetAutopsy gets sharper the more you use it. Every autopsy tracks your
-          progress — so you can see if you&apos;re actually getting better or just
-          telling yourself you are.
+          Watch your loss-chasing habit shrink. See your emotional betting patterns fade.
+          Track the behavioral changes that actually save you money.
         </p>
 
         {/* Mock progress dashboard */}
@@ -284,12 +287,12 @@ export default function LandingPage() {
             <ul className="space-y-2.5 flex-1 mb-7">
               {[
                 'Unlimited bets & reports',
-                'Progress tracking over time',
-                'Emotion Score + Discipline Score',
-                'Full bias & leak analysis',
+                'Full cognitive bias detection — loss chasing, favorite bias, parlay addiction, and more',
+                'Strategic leak analysis — ROI by sport, bet type, odds range, and time of day',
+                'Behavioral pattern identification — heated sequences, emotional sizing',
+                'Emotion Score + Discipline Score + Bet DNA archetype',
                 'Personal rules & action plans',
-                'Bet DNA archetype',
-                'Shareable report cards',
+                'Progress tracking over time',
               ].map((f) => (
                 <li key={f} className="text-sm text-ink-600 flex items-start gap-2.5">
                   <span className="text-mint-500 mt-0.5 shrink-0">✓</span>
@@ -332,7 +335,7 @@ export default function LandingPage() {
       {/* ── Final CTA ── */}
       <section className="max-w-3xl mx-auto px-4 md:px-8 py-20 text-center">
         <h2 className="font-bold text-3xl md:text-4xl tracking-tight mb-4">
-          Stop guessing. Start <span className="text-flame-500">knowing.</span>
+          Stop betting on autopilot. Start <span className="text-flame-500">understanding your behavior.</span>
         </h2>
         <p className="text-ink-600 mb-8 max-w-lg mx-auto">
           Your next bet is coming. Know what your patterns say before you place it.
