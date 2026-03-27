@@ -296,11 +296,11 @@ export default function DashboardPage() {
                     )}
                   </div>
                   {/* Freeze */}
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-2" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
                     <span className="text-xs text-ink-600">
-                      ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''} available
+                      ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
                     </span>
-                    <span className="text-ink-700 text-[10px]">(Refills on the 1st)</span>
+                    <span className="text-ink-700 text-[10px]">— miss a week without losing your streak (resets monthly)</span>
                   </div>
                   {/* Milestone badges */}
                   <div className="flex flex-wrap gap-1.5 mt-3">

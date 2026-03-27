@@ -347,7 +347,7 @@ export default function DashboardLayout({
               <div className="flex items-center gap-1.5">
                 <p className="text-xs text-[#F0F0F0] truncate">{profile?.display_name ?? profile?.email}</p>
                 {(profile?.streak_count ?? 0) > 0 && (
-                  <span className="text-[10px] text-flame-500 font-medium shrink-0">🔥{profile?.streak_count}</span>
+                  <span className="text-[10px] text-flame-500 font-medium shrink-0" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
                 )}
               </div>
               <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 capitalize ${tierBadge[tier]}`}>
