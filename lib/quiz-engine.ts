@@ -94,6 +94,17 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
   },
   {
+    id: 'q13',
+    question: 'You\'re up $300 for the week. Sunday night, one game left. You see a spread you like. How much do you bet?',
+    subtext: 'Be honest — not what you think the "right" answer is.',
+    options: [
+      { label: 'My normal unit — $25-50. The week\'s been good, no reason to change.', value: 'normal', scores: { discipline: 9, emotion: 2, variance: 1 } },
+      { label: 'A little more — maybe $75-100. I\'m playing with house money.', value: 'house_money', scores: { discipline: 5, emotion: 5, variance: 5 } },
+      { label: '$150-200. I\'m up, might as well take a shot.', value: 'bigger', scores: { discipline: 3, emotion: 7, variance: 7 } },
+      { label: 'All of it. If I hit, it\'s a monster week. If I lose, I\'m back to even.', value: 'yolo', scores: { discipline: 1, emotion: 9, variance: 10, chase_tendency: 5 } },
+    ],
+  },
+  {
     id: 'q8',
     question: 'How many sportsbooks do you use?',
     subtext: 'Line shopping = using multiple books to find the best odds.',
