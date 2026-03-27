@@ -23,6 +23,7 @@
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "@vercel/og": "^0.11.1",
+    "@vercel/speed-insights": "^2.0.0",
     "autoprefixer": "^10.4.27",
     "html-to-image": "^1.11.13",
     "next": "^14.2.35",
