@@ -134,7 +134,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
         {/* Archetype */}
         {data.archetype && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ ...S.label, marginBottom: 6 }}>YOUR BET DNA</div>
+            <div style={{ ...S.label, marginBottom: 6 }}>YOUR BETTING PERSONALITY</div>
             <div style={{ ...S.serif, fontSize: 26, color: '#00C853', lineHeight: 1.2 }}>{data.archetype.name}</div>
             <div style={{ fontSize: 12, color: '#A0A3B1', marginTop: 4 }}>{data.archetype.description}</div>
           </div>
@@ -273,7 +273,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
 
         {/* CTA */}
         <div style={{ textAlign: 'center', fontSize: 12, color: '#A0A3B1', marginTop: 8 }}>
-          betautopsy.com/quiz — find out what your bets say about you
+          betautopsy.com — get your autopsy report
         </div>
       </div>
     </div>
