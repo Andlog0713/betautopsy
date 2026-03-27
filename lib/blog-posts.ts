@@ -50,3 +50,8 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     tags: ['self-assessment', 'betting habits', 'sports betting'],
   },
 ];
+
+// ── Future DFS/Pick'em Posts (to be written) ──
+// { slug: 'why-am-i-losing-on-prizepicks', title: 'Why Am I Losing on PrizePicks?', ... }
+// { slug: 'pick-em-behavioral-mistakes', title: '5 Behavioral Mistakes Every Pick\'em Player Makes', ... }
+// { slug: 'prizepicks-5-pick-trap', title: 'The 5-Pick Trap: Why Your PrizePicks Entries Keep Losing', ... }

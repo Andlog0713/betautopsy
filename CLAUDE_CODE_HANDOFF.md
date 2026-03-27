@@ -6,6 +6,8 @@ BetAutopsy is a web app where sports bettors upload their bet history (CSV or ma
 
 **It is NOT a bet tracker.** Pikkit already does that. BetAutopsy is the intelligence layer on top. Users export from their existing tracker and upload here.
 
+BetAutopsy also supports DFS pick'em players (PrizePicks, Underdog, Sleeper). Pick'em data is uploaded through Pikkit, which syncs with DFS apps and exports everything in one CSV. The behavioral analysis applies identically — loss chasing, emotional sizing, and parlay-style thinking are the same patterns in pick'em as in traditional sports betting.
+
 ## TECH STACK
 
 - **Framework**: Next.js 14 with App Router (NOT Pages Router)

@@ -24,7 +24,7 @@ export default function HowToUploadPage() {
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
-        <h1 className="font-bold text-4xl mb-3">How to get your bet history</h1>
+        <h1 className="font-bold text-4xl mb-3">How to get your bet &amp; pick&apos;em history</h1>
         <p className="text-ink-600 text-lg mb-12">
           Two ways to get your data in, from easiest to most involved.
         </p>
@@ -75,13 +75,20 @@ export default function HowToUploadPage() {
               <p className="text-xs text-ink-700 mt-3">
                 Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
               </p>
+              <div className="bg-mint-500/5 border border-mint-500/20 rounded-lg p-4 mt-4">
+                <p className="text-sm text-[#F0F0F0] font-medium mb-1">Play DFS pick&apos;em?</p>
+                <p className="text-sm text-ink-600">
+                  Pikkit syncs with <span className="text-[#F0F0F0]">PrizePicks, Underdog, Sleeper, and Thrive Fantasy</span> too.
+                  Your pick&apos;em entries get pulled in alongside your sportsbook bets — one export covers everything.
+                </p>
+              </div>
             </div>
 
             {/* Don't use any tracker? */}
             <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
               <p className="text-sm text-[#F0F0F0] font-medium mb-1">Don&apos;t use a tracker?</p>
               <p className="text-sm text-ink-600">
-                Start with Pikkit — it&apos;ll pull your full history from any sportsbook automatically.
+                Start with Pikkit — it pulls your full history from sportsbooks AND DFS apps like PrizePicks and Underdog automatically.
                 No manual logging needed. <span className="text-flame-500">Less than 5 minutes to set up.</span>
               </p>
               <a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-flame-500 hover:underline mt-2">

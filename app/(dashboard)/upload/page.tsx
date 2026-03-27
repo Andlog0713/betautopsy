@@ -116,7 +116,7 @@ export default function UploadPage() {
       <div>
         <h1 className="font-bold text-3xl mb-2">Upload Bets</h1>
         <p className="text-ink-600">
-          Drop your CSV and we&apos;ll find the behavioral patterns hiding in your bet history.
+          Drop your CSV and we&apos;ll find the behavioral patterns hiding in your betting history.
         </p>
       </div>
 
@@ -296,7 +296,7 @@ export default function UploadPage() {
       <div className="card p-6 space-y-4">
         <h2 className="font-bold text-xl">Supported Formats</h2>
         <p className="text-ink-600 text-sm">
-          We auto-detect columns from most bet trackers including Pikkit
+          We auto-detect columns from Pikkit (including DFS/pick&apos;em data)
           and generic CSV exports.
         </p>
         <div className="space-y-2">

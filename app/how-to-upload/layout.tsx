@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'How to Get Your Bet History | BetAutopsy',
-  description: 'Step-by-step guide to exporting your bet history from Pikkit, DraftKings, FanDuel, and other sportsbooks for analysis in BetAutopsy.',
+  description: 'Step-by-step guide to exporting your sports betting and DFS pick&apos;em history from Pikkit for behavioral analysis in BetAutopsy.',
   alternates: {
     canonical: '/how-to-upload',
   },

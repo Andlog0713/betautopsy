@@ -19,7 +19,7 @@ export default function LandingPage() {
             <span className="text-flame-500">Your behavior is.</span>
           </h1>
           <p className="text-ink-600 text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed animate-fade-in-d2">
-            Upload your bet history and get an AI-powered behavioral analysis — loss chasing detection,
+            Upload your bet history or pick&apos;em history and get an AI-powered behavioral analysis — loss chasing detection,
             emotional betting patterns, cognitive bias identification, and a personalized plan to fix
             what&apos;s costing you money.
           </p>
@@ -38,7 +38,7 @@ export default function LandingPage() {
             Not sure how to get your data? We&apos;ll walk you through it →
           </Link>
           <p className="text-ink-700 text-xs mt-3 animate-fade-in-d5">
-            No credit card required · Works with Pikkit and any CSV export
+            No credit card required · Works with Pikkit (syncs sportsbooks + DFS apps) and any CSV export
           </p>
         </div>
       </section>
@@ -65,7 +65,8 @@ export default function LandingPage() {
                 But none of that explains why you doubled your stake after three straight
                 losses last Sunday. Or why you keep firing on NBA player props when
                 you&apos;ve never been profitable on them. Or why your $50 &quot;fun parlay&quot;
-                turned into a $400 chase by the end of the night.
+                turned into a $400 chase by the end of the night. Or why you keep stacking
+                5-pick entries when your 2-picks hit at twice the rate.
               </p>
               <p className="text-[#F0F0F0]">
                 The numbers show you what happened. They don&apos;t show you what
@@ -94,7 +95,7 @@ export default function LandingPage() {
                 tracking so you can actually prove to yourself you&apos;re getting sharper.
               </p>
               <p className="text-[#F0F0F0] font-medium">
-                Upload your bets. Get your autopsy in 20 seconds. See what you&apos;ve
+                Upload your bets or pick&apos;em history. Get your autopsy in 20 seconds. See what you&apos;ve
                 been missing.
               </p>
             </div>
@@ -113,7 +114,7 @@ export default function LandingPage() {
             {
               step: '1',
               title: 'Upload',
-              desc: 'Export from your tracker or sportsbook. We handle Pikkit, DraftKings, FanDuel — whatever you\'ve got.',
+              desc: 'Export from Pikkit — it syncs your sportsbooks and DFS apps (PrizePicks, Underdog, Sleeper) into one place. Or upload any CSV.',
               delay: 'animate-slide-up-d1',
             },
             {
@@ -354,7 +355,7 @@ export default function LandingPage() {
                 Bet<span className="text-flame-500">Autopsy</span>
               </span>
               <p className="text-ink-700 text-xs mt-2 max-w-sm">
-                AI-powered sports betting behavioral analysis.
+                AI-powered behavioral analysis for sports bettors and DFS players.
                 Understand your patterns. Improve your process.
               </p>
             </div>
