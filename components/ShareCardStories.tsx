@@ -14,6 +14,9 @@ const ARCHETYPE_BG: Record<string, string> = {
   'Sniper': 'linear-gradient(0deg, transparent 48%, rgba(90,92,111,0.06) 48%, rgba(90,92,111,0.06) 52%, transparent 52%)',
   'Degen King': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.08) 0px, transparent 30px, rgba(248,113,113,0.05) 60px)',
   'The Grinder': 'none',
+  'Multiplier Chaser': 'radial-gradient(circle at 40% 40%, rgba(139,92,246,0.1) 0%, transparent 50%)',
+  'All-or-Nothing Player': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.07) 0px, transparent 40px)',
+  'Loyalty Bettor': 'radial-gradient(ellipse at 30% 20%, rgba(96,165,250,0.08) 0%, transparent 50%)',
 };
 
 function gradeColor(g: string): string {
@@ -35,6 +38,7 @@ function getArchEmoji(name: string): string {
     'The Natural': '🧊', 'Sharp Sleeper': '🎯', 'Heated Bettor': '🔥',
     'Chalk Grinder': '📋', 'Parlay Dreamer': '🎰', 'Sniper': '🎯',
     'Volume Warrior': '⚔️', 'Degen King': '👑', 'The Grinder': '💪',
+    'Multiplier Chaser': '🎰', 'All-or-Nothing Player': '⚡', 'Loyalty Bettor': '🫡',
   };
   return map[name] ?? '🧬';
 }
@@ -44,6 +48,7 @@ function getArchColor(name: string): string {
     'The Natural': '#00C853', 'Sharp Sleeper': '#00C853', 'Heated Bettor': '#f97316',
     'Chalk Grinder': '#fbbf24', 'Parlay Dreamer': '#8b5cf6', 'Sniper': '#60a5fa',
     'Volume Warrior': '#a78bfa', 'Degen King': '#f87171', 'The Grinder': '#94a3b8',
+    'Multiplier Chaser': '#8b5cf6', 'All-or-Nothing Player': '#f97316', 'Loyalty Bettor': '#60a5fa',
   };
   return map[name] ?? '#94a3b8';
 }

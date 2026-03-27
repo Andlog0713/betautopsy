@@ -163,6 +163,9 @@ export interface AutopsyAnalysis {
   betting_archetype?: { name: string; description: string };
   timing_analysis?: TimingAnalysis;
   odds_analysis?: OddsAnalysis;
+  dfs_mode?: boolean;
+  dfs_platform?: string;
+  dfs_metrics?: DFSMetrics;
   discipline_score?: {
     total: number;
     tracking: number;
@@ -315,6 +318,29 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     ],
   },
 };
+
+// ── DFS Detection ──
+
+export interface DFSDetection {
+  isDFS: boolean;
+  dfsPercent: number;
+  primaryPlatform: string | null;
+  isMixed: boolean;
+}
+
+export interface DFSMetrics {
+  pickCountDistribution: { picks: number; count: number; roi: number; profit: number; winRate: number }[];
+  powerVsFlex: {
+    powerCount: number; powerROI: number; powerProfit: number;
+    flexCount: number; flexROI: number; flexProfit: number;
+  } | null;
+  playerConcentration: { player: string; count: number; percent: number; roi: number }[];
+  avgPickCount: number;
+  lowPickROI: number;
+  highPickROI: number;
+  pickCountAfterLoss: number;
+  pickCountAfterWin: number;
+}
 
 // ── CSV Parser ──
 

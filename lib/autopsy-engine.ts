@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
@@ -50,6 +50,176 @@ export interface CalculatedMetrics {
   betting_archetype: { name: string; description: string };
   timing: TimingAnalysis;
   odds: OddsAnalysis;
+  dfs: DFSDetection;
+  dfs_metrics: DFSMetrics | null;
+}
+
+// ── DFS Detection + Metrics ──
+
+const DFS_PLATFORMS = ['prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper', 'dabble', 'thrive', 'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'betr picks'];
+
+export function detectDFSSource(bets: Bet[]): DFSDetection {
+  if (bets.length === 0) return { isDFS: false, dfsPercent: 0, primaryPlatform: null, isMixed: false };
+
+  const platformCounts = new Map<string, number>();
+  let dfsCount = 0;
+
+  for (const b of bets) {
+    const book = (b.sportsbook ?? '').toLowerCase().trim();
+    if (!book) continue;
+    for (const p of DFS_PLATFORMS) {
+      if (book.includes(p)) {
+        dfsCount++;
+        const normalized = p === 'prize picks' ? 'prizepicks' : p === 'underdog fantasy' ? 'underdog' : p;
+        platformCounts.set(normalized, (platformCounts.get(normalized) ?? 0) + 1);
+        break;
+      }
+    }
+  }
+
+  const dfsPercent = bets.length > 0 ? (dfsCount / bets.length) * 100 : 0;
+  let primaryPlatform: string | null = null;
+  let maxCount = 0;
+  platformCounts.forEach((count, name) => {
+    if (count > maxCount) { maxCount = count; primaryPlatform = name.charAt(0).toUpperCase() + name.slice(1); }
+  });
+
+  return {
+    isDFS: dfsPercent >= 70,
+    dfsPercent: Math.round(dfsPercent),
+    primaryPlatform,
+    isMixed: dfsPercent >= 30 && dfsPercent < 70,
+  };
+}
+
+function getPickCount(bet: Bet): number {
+  // Try parlay_legs first
+  if (bet.parlay_legs && bet.parlay_legs > 1) return bet.parlay_legs;
+  // Try "X-pick" pattern
+  const pickMatch = bet.description.match(/(\d+)[- ]pick/i);
+  if (pickMatch) return parseInt(pickMatch[1]);
+  // Count " | " separators
+  const legs = bet.description.split(' | ').filter(Boolean);
+  if (legs.length > 1) return legs.length;
+  // Fallback
+  if (bet.bet_type === 'pick_em') return 2;
+  return 2;
+}
+
+export function calculateDFSMetrics(bets: Bet[]): DFSMetrics {
+  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+
+  // Pick count distribution
+  const pickBuckets = new Map<number, { count: number; wins: number; staked: number; profit: number }>();
+  for (const b of settled) {
+    const picks = getPickCount(b);
+    const bucket = pickBuckets.get(picks) ?? { count: 0, wins: 0, staked: 0, profit: 0 };
+    bucket.count++;
+    if (b.result === 'win') bucket.wins++;
+    bucket.staked += Number(b.stake);
+    bucket.profit += Number(b.profit);
+    pickBuckets.set(picks, bucket);
+  }
+
+  const pickCountDistribution: DFSMetrics['pickCountDistribution'] = [];
+  pickBuckets.forEach((v, picks) => {
+    pickCountDistribution.push({
+      picks,
+      count: v.count,
+      roi: v.staked > 0 ? Math.round((v.profit / v.staked) * 1000) / 10 : 0,
+      profit: Math.round(v.profit),
+      winRate: v.count > 0 ? Math.round((v.wins / v.count) * 1000) / 10 : 0,
+    });
+  });
+  pickCountDistribution.sort((a, b) => a.picks - b.picks);
+
+  // Power vs Flex
+  let powerCount = 0, powerStaked = 0, powerProfit = 0;
+  let flexCount = 0, flexStaked = 0, flexProfit = 0;
+  let hasPowerFlex = false;
+  for (const b of settled) {
+    const desc = b.description.toLowerCase();
+    if (desc.includes('power')) {
+      powerCount++; powerStaked += Number(b.stake); powerProfit += Number(b.profit);
+      hasPowerFlex = true;
+    } else if (desc.includes('flex')) {
+      flexCount++; flexStaked += Number(b.stake); flexProfit += Number(b.profit);
+      hasPowerFlex = true;
+    }
+  }
+
+  const powerVsFlex = hasPowerFlex ? {
+    powerCount, powerROI: powerStaked > 0 ? Math.round((powerProfit / powerStaked) * 1000) / 10 : 0, powerProfit: Math.round(powerProfit),
+    flexCount, flexROI: flexStaked > 0 ? Math.round((flexProfit / flexStaked) * 1000) / 10 : 0, flexProfit: Math.round(flexProfit),
+  } : null;
+
+  // Player concentration
+  const playerCounts = new Map<string, { count: number; staked: number; profit: number }>();
+  for (const b of settled) {
+    const segments = b.description.split(' | ');
+    for (const seg of segments) {
+      // Extract player name: text before Over/Under
+      const match = seg.match(/^(.+?)\s+(Over|Under|o\d|u\d)/i);
+      if (match) {
+        const player = match[1].trim().replace(/^\(\d+\)\s*/, ''); // remove seed numbers like (1)
+        if (player.length > 2 && player.length < 40) {
+          const p = playerCounts.get(player) ?? { count: 0, staked: 0, profit: 0 };
+          p.count++; p.staked += Number(b.stake); p.profit += Number(b.profit);
+          playerCounts.set(player, p);
+        }
+      }
+    }
+  }
+
+  const totalEntries = settled.length;
+  const playerConcentration: DFSMetrics['playerConcentration'] = [];
+  playerCounts.forEach((v, player) => {
+    if (v.count >= 3) {
+      playerConcentration.push({
+        player,
+        count: v.count,
+        percent: totalEntries > 0 ? Math.round((v.count / totalEntries) * 100) : 0,
+        roi: v.staked > 0 ? Math.round((v.profit / v.staked) * 1000) / 10 : 0,
+      });
+    }
+  });
+  playerConcentration.sort((a, b) => b.count - a.count);
+
+  // Avg pick count + pick count after loss/win
+  let totalPicks = 0;
+  const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  for (const b of sorted) totalPicks += getPickCount(b);
+  const avgPickCount = settled.length > 0 ? Math.round((totalPicks / settled.length) * 10) / 10 : 0;
+
+  let picksAfterLoss = 0, countAfterLoss = 0, picksAfterWin = 0, countAfterWin = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1];
+    const picks = getPickCount(sorted[i]);
+    if (prev.result === 'loss') { picksAfterLoss += picks; countAfterLoss++; }
+    else if (prev.result === 'win') { picksAfterWin += picks; countAfterWin++; }
+  }
+
+  const pickCountAfterLoss = countAfterLoss > 0 ? Math.round((picksAfterLoss / countAfterLoss) * 10) / 10 : avgPickCount;
+  const pickCountAfterWin = countAfterWin > 0 ? Math.round((picksAfterWin / countAfterWin) * 10) / 10 : avgPickCount;
+
+  // Low pick vs high pick ROI
+  const lowPick = pickCountDistribution.filter((d) => d.picks <= 3);
+  const highPick = pickCountDistribution.filter((d) => d.picks >= 5);
+  const lowStaked = lowPick.reduce((s, d) => s + (d.count > 0 ? d.profit / (d.roi / 100 || 1) : 0), 0);
+  const lowProfit = lowPick.reduce((s, d) => s + d.profit, 0);
+  const highStaked = highPick.reduce((s, d) => s + (d.count > 0 ? d.profit / (d.roi / 100 || 1) : 0), 0);
+  const highProfit = highPick.reduce((s, d) => s + d.profit, 0);
+
+  return {
+    pickCountDistribution,
+    powerVsFlex,
+    playerConcentration: playerConcentration.slice(0, 10),
+    avgPickCount,
+    lowPickROI: lowStaked > 0 ? Math.round((lowProfit / lowStaked) * 1000) / 10 : 0,
+    highPickROI: highStaked > 0 ? Math.round((highProfit / highStaked) * 1000) / 10 : 0,
+    pickCountAfterLoss,
+    pickCountAfterWin,
+  };
 }
 
 // ── Odds Intelligence ──
@@ -543,7 +713,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     .filter((b) => profitableCatNames.includes(`${b.sport} ${b.bet_type}`))
     .reduce((s, b) => s + Number(b.profit), 0);
 
-  return {
+  const result: CalculatedMetrics = {
     summary: { total_bets: totalBets, wins, losses, pushes, record, total_staked: totalStaked, total_profit: totalProfit, roi_percent: round2(roiPercent), avg_stake: round2(avgStake), median_stake: round2(medianStake), max_stake: round2(maxStake), min_stake: round2(minStake), win_rate: round2(winRate), date_range: dateRange, overall_grade: overallGrade },
     emotion_score: emotionScore,
     emotion_breakdown: { stake_volatility: stakeVolatility, loss_chasing: lossChasingPts, streak_behavior: streakBehaviorPts, session_discipline: sessionDisciplinePts },
@@ -560,10 +730,51 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       profitable_only: { categories: profitableCatNames, hypothetical_profit: round2(profitableOnlyProfit) },
       actual_profit: round2(actualProfit),
     },
-    betting_archetype: determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi),
+    betting_archetype: { name: '', description: '' }, // set below after DFS check
     timing: calculateTiming(sorted),
     odds: calculateOdds(sorted),
+    dfs: detectDFSSource(sorted),
+    dfs_metrics: null, // set below
   };
+
+  // DFS-specific metrics + archetype
+  const dfsDetection = result.dfs;
+  if (dfsDetection.isDFS) {
+    result.dfs_metrics = calculateDFSMetrics(sorted);
+    result.betting_archetype = determineDFSArchetype(result.dfs_metrics, emotionScore, stakeCv);
+    // Replace parlay-related biases with DFS biases
+    result.biases_detected = result.biases_detected.filter((b) => b.bias_name !== 'Heavy Parlay Tendency');
+    const dm = result.dfs_metrics;
+    const highPickEntries = dm.pickCountDistribution.filter((d) => d.picks >= 5);
+    const highPickTotal = highPickEntries.reduce((s, d) => s + d.count, 0);
+    const highPickPct = totalBets > 0 ? (highPickTotal / totalBets) * 100 : 0;
+    if (highPickPct >= 50) {
+      const sev = highPickPct >= 60 ? 'critical' : 'high';
+      result.biases_detected.push({ bias_name: 'High-Pick Addiction', severity: sev, data: `${highPickTotal} entries at 5-6 picks (${Math.round(highPickPct)}%) with ${dm.highPickROI}% ROI vs ${dm.lowPickROI}% ROI on 2-3 pick entries` });
+    }
+    if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
+      const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
+      const powerPct = totalPF > 0 ? (dm.powerVsFlex.powerCount / totalPF) * 100 : 0;
+      if (powerPct > 55 && dm.powerVsFlex.powerROI < dm.powerVsFlex.flexROI) {
+        const sev = powerPct > 65 ? 'high' : 'medium';
+        result.biases_detected.push({ bias_name: 'Power Play Preference', severity: sev, data: `${dm.powerVsFlex.powerCount} Power entries (${Math.round(powerPct)}%) at ${dm.powerVsFlex.powerROI}% ROI vs ${dm.powerVsFlex.flexCount} Flex entries at ${dm.powerVsFlex.flexROI}% ROI` });
+      }
+    }
+    if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2 && countAfterLoss > 2) {
+      const sev = dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.4 ? 'high' : 'medium';
+      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win — chasing bigger multipliers to recover` });
+    }
+    const topPlayer = dm.playerConcentration[0];
+    if (topPlayer && topPlayer.percent >= 25) {
+      const sev = topPlayer.percent >= 30 ? 'high' : 'medium';
+      const top2 = dm.playerConcentration.slice(0, 2).map((p) => `${p.player} in ${p.percent}% of entries`).join(', ');
+      result.biases_detected.push({ bias_name: 'Player Concentration Bias', severity: sev, data: `Top picks: ${top2}. Overexposure to individual player performance.` });
+    }
+  } else {
+    result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
+  }
+
+  return result;
 }
 
 function determineArchetype(
@@ -608,6 +819,41 @@ function determineArchetype(
   }
   // Default
   return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation — the analysis shows where to build on it." };
+}
+
+function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: number): { name: string; description: string } {
+  const highPickEntries = dm.pickCountDistribution.filter((d) => d.picks >= 5);
+  const highPickPct = dm.pickCountDistribution.reduce((s, d) => s + d.count, 0) > 0
+    ? (highPickEntries.reduce((s, d) => s + d.count, 0) / dm.pickCountDistribution.reduce((s, d) => s + d.count, 0)) * 100 : 0;
+
+  // Multiplier Chaser — high pick count + bad ROI on high picks
+  if (dm.avgPickCount > 4.5 && dm.highPickROI < -40) {
+    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket — and it performs like one too." };
+  }
+  // All-or-Nothing — Power heavy + Flex is better
+  if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
+    const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
+    const powerPct = totalPF > 0 ? (dm.powerVsFlex.powerCount / totalPF) * 100 : 0;
+    if (powerPct > 65 && dm.powerVsFlex.flexROI > dm.powerVsFlex.powerROI) {
+      return { name: 'All-or-Nothing Player', description: "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing." };
+    }
+  }
+  // Loyalty Bettor — player concentration + emotional
+  const topPlayer = dm.playerConcentration[0];
+  if (topPlayer && topPlayer.percent >= 25 && emotionScore > 45) {
+    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy — it's a relationship.` };
+  }
+  // Fall through to standard archetypes based on discipline/emotion
+  if (emotionScore <= 30 && stakeCv < 0.8) {
+    return { name: 'The Natural', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
+  }
+  if (emotionScore > 55 && dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2) {
+    return { name: 'Heated Bettor', description: "Your reads aren't bad — but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
+  }
+  if (highPickPct > 60) {
+    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
+  }
+  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation — the analysis shows where to build on it." };
 }
 
 // ── Discipline Score Calculator ──
@@ -732,6 +978,9 @@ export function calculateMetricsOnly(
     betting_archetype: metrics.betting_archetype,
     timing_analysis: metrics.timing,
     odds_analysis: metrics.odds,
+    dfs_mode: metrics.dfs.isDFS,
+    dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
+    dfs_metrics: metrics.dfs_metrics ?? undefined,
     discipline_score: disciplineScore,
     strategic_leaks: [],
     behavioral_patterns: [],
@@ -956,7 +1205,39 @@ ${metrics.biases_detected.length > 0
 
   const betTable = formatBetTable(bets);
 
-  const userMessage = `${metricsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
+  // DFS mode prompt appendix
+  let dfsPromptBlock = '';
+  if (metrics.dfs.isDFS && metrics.dfs_metrics) {
+    const dm = metrics.dfs_metrics;
+    dfsPromptBlock = `\n\n=== DFS PICK'EM MODE ===
+This user plays on ${metrics.dfs.primaryPlatform ?? 'a DFS platform'}. ALL entries are multi-pick (2-6 player prop predictions). There are no "straight bets."
+
+CRITICAL LANGUAGE RULES:
+- NEVER call their activity "parlay addiction" — multi-pick entries are the only format
+- NEVER advise "cut parlays" or "switch to straight bets" — impossible on this platform
+- Use "entries" not "bets" and "picks" not "legs"
+- Say "2-pick entry" not "straight bet" and "5-pick entry" not "5-leg parlay"
+- Say "entry fee" not "stake" and "Power Play" / "Flex Play" not "all-or-nothing"
+
+WHAT TO ANALYZE:
+- Pick count distribution: are they overloaded on 5-6 pick entries vs 2-3?
+- Power vs Flex: Power = all picks must hit. Flex = partial payouts. Flex has better EV.
+- Multiplier chasing: after losses, do they increase pick count for bigger multipliers?
+- Player concentration: over-exposed to specific players?
+
+DFS METRICS:
+Pick Count Distribution: ${dm.pickCountDistribution.map((d) => `${d.picks}-pick: ${d.count} entries, ${d.winRate}% WR, ${d.roi}% ROI`).join(' | ')}
+Avg Pick Count: ${dm.avgPickCount}
+Pick Count After Loss: ${dm.pickCountAfterLoss} vs After Win: ${dm.pickCountAfterWin}
+Low Pick (2-3) ROI: ${dm.lowPickROI}% | High Pick (5-6) ROI: ${dm.highPickROI}%
+${dm.powerVsFlex ? `Power: ${dm.powerVsFlex.powerCount} entries, ${dm.powerVsFlex.powerROI}% ROI | Flex: ${dm.powerVsFlex.flexCount} entries, ${dm.powerVsFlex.flexROI}% ROI` : ''}
+Top Players: ${dm.playerConcentration.slice(0, 5).map((p) => `${p.player} (${p.percent}%, ${p.roi}% ROI)`).join(', ')}
+
+Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay reduction.
+===`;
+  }
+
+  const userMessage = `${metricsBlock}${dfsPromptBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
 
   // Step 3: Call Claude for behavioral interpretation
   const message = await client.messages.create({
@@ -1024,6 +1305,9 @@ ${metrics.biases_detected.length > 0
     betting_archetype: metrics.betting_archetype,
     timing_analysis: metrics.timing,
     odds_analysis: metrics.odds,
+    dfs_mode: metrics.dfs.isDFS,
+    dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
+    dfs_metrics: metrics.dfs_metrics ?? undefined,
   };
 
   const markdown = generateMarkdownReport(analysis);

@@ -327,10 +327,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-flame-500 text-sm font-semibold uppercase tracking-wider">Behavioral Analysis Report</span>
+          {analysis.dfs_mode && <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full ml-2">{analysis.dfs_platform ?? 'DFS'} Pick&apos;em</span>}
           <span className="text-ink-700 text-xs">·</span>
           <span className="text-ink-700 text-xs">{summary.date_range}</span>
         </div>
-        <span className="text-ink-700 text-xs">{summary.total_bets} bets analyzed</span>
+        <span className="text-ink-700 text-xs">{summary.total_bets} {analysis.dfs_mode ? 'entries' : 'bets'} analyzed</span>
       </div>
 
       {/* What this report analyzes — collapsible explainer */}
@@ -1011,6 +1012,105 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-ink-700 text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* DFS Pick Count Distribution */}
+      {analysis.dfs_mode && analysis.dfs_metrics && analysis.dfs_metrics.pickCountDistribution.length > 0 && (
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-bold text-xl">Performance by Pick Count</h2>
+            <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">DFS</span>
+          </div>
+          <p className="text-ink-700 text-xs italic mb-4">Fewer picks = higher win rate. Where&apos;s your sweet spot?</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left text-ink-600 font-medium px-3 py-2">Picks</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">Entries</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">Win Rate</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">ROI</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">P&L</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.dfs_metrics.pickCountDistribution.map((d) => (
+                  <tr key={d.picks} className="border-b border-white/[0.04]">
+                    <td className="px-3 py-2 font-medium">{d.picks}-pick</td>
+                    <td className="px-3 py-2 text-right font-mono text-ink-500">{d.count}</td>
+                    <td className="px-3 py-2 text-right font-mono">{d.winRate}%</td>
+                    <td className={`px-3 py-2 text-right font-mono font-medium ${d.roi >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                      {d.roi >= 0 ? '+' : ''}{d.roi}%
+                    </td>
+                    <td className={`px-3 py-2 text-right font-mono ${d.profit >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                      {d.profit >= 0 ? '+' : ''}${d.profit.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* DFS Power vs Flex */}
+      {analysis.dfs_mode && analysis.dfs_metrics?.powerVsFlex && (
+        <div className="card p-6">
+          <h2 className="font-bold text-xl mb-1">Power Play vs Flex Play</h2>
+          <p className="text-ink-700 text-xs italic mb-4">Power is all-or-nothing. Flex pays partial. Which is actually working?</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`rounded-xl p-4 ${analysis.dfs_metrics.powerVsFlex.powerROI >= analysis.dfs_metrics.powerVsFlex.flexROI ? 'bg-mint-500/5 border border-mint-500/20' : 'bg-red-400/5 border border-red-400/20'}`}>
+              <p className="text-ink-600 text-xs uppercase tracking-wider mb-2">Power Play</p>
+              <p className="font-mono text-2xl font-bold">{analysis.dfs_metrics.powerVsFlex.powerCount}</p>
+              <p className="text-ink-600 text-xs">entries</p>
+              <p className={`font-mono text-lg font-medium mt-2 ${analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                {analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.powerROI}% ROI
+              </p>
+            </div>
+            <div className={`rounded-xl p-4 ${analysis.dfs_metrics.powerVsFlex.flexROI >= analysis.dfs_metrics.powerVsFlex.powerROI ? 'bg-mint-500/5 border border-mint-500/20' : 'bg-red-400/5 border border-red-400/20'}`}>
+              <p className="text-ink-600 text-xs uppercase tracking-wider mb-2">Flex Play</p>
+              <p className="font-mono text-2xl font-bold">{analysis.dfs_metrics.powerVsFlex.flexCount}</p>
+              <p className="text-ink-600 text-xs">entries</p>
+              <p className={`font-mono text-lg font-medium mt-2 ${analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                {analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.flexROI}% ROI
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DFS Player Concentration */}
+      {analysis.dfs_mode && analysis.dfs_metrics && analysis.dfs_metrics.playerConcentration.length > 0 && (
+        <div className="card p-6">
+          <h2 className="font-bold text-xl mb-1">Player Concentration</h2>
+          <p className="text-ink-700 text-xs italic mb-4">Are you over-exposed to specific players?</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left text-ink-600 font-medium px-3 py-2">Player</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">Appearances</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">% of Entries</th>
+                  <th className="text-right text-ink-600 font-medium px-3 py-2">ROI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.dfs_metrics.playerConcentration.slice(0, 10).map((p) => (
+                  <tr key={p.player} className="border-b border-white/[0.04]">
+                    <td className="px-3 py-2 font-medium">{p.player}</td>
+                    <td className="px-3 py-2 text-right font-mono text-ink-500">{p.count}</td>
+                    <td className={`px-3 py-2 text-right font-mono ${p.percent >= 30 ? 'text-red-400' : p.percent >= 20 ? 'text-amber-400' : 'text-ink-500'}`}>
+                      {p.percent}%
+                    </td>
+                    <td className={`px-3 py-2 text-right font-mono ${p.roi >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                      {p.roi >= 0 ? '+' : ''}{p.roi}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

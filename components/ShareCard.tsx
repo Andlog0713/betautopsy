@@ -47,6 +47,9 @@ const ARCHETYPE_BG: Record<string, string> = {
   'Sniper': 'linear-gradient(0deg, transparent 48%, rgba(90,92,111,0.06) 48%, rgba(90,92,111,0.06) 52%, transparent 52%), linear-gradient(90deg, transparent 48%, rgba(90,92,111,0.06) 48%, rgba(90,92,111,0.06) 52%, transparent 52%)',
   'Degen King': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.08) 0px, transparent 30px, rgba(248,113,113,0.05) 60px)',
   'The Grinder': 'none',
+  'Multiplier Chaser': 'radial-gradient(circle at 40% 40%, rgba(139,92,246,0.1) 0%, transparent 50%)',
+  'All-or-Nothing Player': 'repeating-linear-gradient(135deg, rgba(249,115,22,0.07) 0px, transparent 40px)',
+  'Loyalty Bettor': 'radial-gradient(ellipse at 30% 20%, rgba(96,165,250,0.08) 0%, transparent 50%)',
 };
 
 function getBiggestHit(bets?: Bet[]): { profit: number; description: string; odds: number; bet_type: string } | null {
