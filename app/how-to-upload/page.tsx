@@ -61,6 +61,17 @@ export default function HowToUploadPage() {
                 <li>Set your date range and tap <span className="text-[#F0F0F0]">Send CSV</span> — it&apos;ll be emailed to you</li>
                 <li>Upload that CSV here and you&apos;re done</li>
               </ol>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <a href="https://apps.apple.com/us/app/pikkit-bet-tracker/id1644823816" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium bg-ink-900 hover:bg-ink-900/70 text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
+                  🍎 Download on App Store
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.pikkit" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium bg-ink-900 hover:bg-ink-900/70 text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
+                  ▶️ Get on Google Play
+                </a>
+                <a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-600 hover:text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
+                  🌐 pikkit.com
+                </a>
+              </div>
               <p className="text-xs text-ink-700 mt-3">
                 Takes about 3 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
               </p>
@@ -73,6 +84,9 @@ export default function HowToUploadPage() {
                 Start with Pikkit — it&apos;ll pull your full history from any sportsbook automatically.
                 No manual logging needed. <span className="text-flame-500">Less than 5 minutes to set up.</span>
               </p>
+              <a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-flame-500 hover:underline mt-2">
+                Get Pikkit →
+              </a>
             </div>
           </div>
         </div>
