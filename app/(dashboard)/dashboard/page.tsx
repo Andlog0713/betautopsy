@@ -348,8 +348,17 @@ export default function DashboardPage() {
             <ProgressChart snapshots={snapshots} />
           )}
 
+          {/* Paid user without snapshots — prompt to run report */}
+          {isPaid && !latest && stats.reportCount > 0 && (
+            <div className="card border-flame-500/20 bg-flame-500/5 p-5 text-center space-y-3">
+              <p className="text-[#F0F0F0] font-medium">Run a fresh autopsy to start tracking your progress</p>
+              <p className="text-ink-600 text-sm">Your reports will generate progress snapshots — emotion score, ROI, and discipline trends over time.</p>
+              <Link href="/reports?run=true" className="btn-primary inline-block text-sm">Run Autopsy</Link>
+            </div>
+          )}
+
           {/* Free tier upgrade prompt */}
-          {latest && !isPaid && (
+          {!isPaid && (
             <div className="card border-flame-500/20 bg-flame-500/5 p-6 text-center space-y-3">
               <p className="text-[#F0F0F0] mb-2">
                 Right now you&apos;re guessing whether you&apos;re getting better.
