@@ -73,7 +73,7 @@ export default function HowToUploadPage() {
                 </a>
               </div>
               <p className="text-xs text-ink-700 mt-3">
-                Takes about 3 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
+                Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
               </p>
             </div>
 
