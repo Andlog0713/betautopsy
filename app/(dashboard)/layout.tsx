@@ -182,7 +182,7 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <Link href="/dashboard">
-              <Logo size="sm" variant="horizontal" theme="dark" />
+              <Logo size="md" variant="horizontal" theme="dark" />
             </Link>
             {(profile?.streak_count ?? 0) > 0 && (
               <span className="text-xs text-flame-500 font-medium">🔥{profile?.streak_count}</span>
