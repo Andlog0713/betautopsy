@@ -6,10 +6,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <Logo size="lg" variant="stacked" theme="dark" showTagline />
+          <Logo size="md" variant="stacked" theme="dark" showTagline />
         </div>
         {children}
         <p className="text-ink-700 text-xs text-center mt-8">
