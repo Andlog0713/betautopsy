@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/types';
 
+import { Logo } from '@/components/logo';
+
 export default function NavBar() {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -59,9 +61,8 @@ export default function NavBar() {
   return (
     <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-ink-900/90 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl tracking-tight">
-          Bet<span className="text-flame-500">Autopsy</span>
-          <span className="text-ink-700 text-[11px] font-normal ml-2 hidden lg:inline">Betting behavioral analysis</span>
+        <Link href="/" className="flex items-center">
+          <Logo size="sm" variant="horizontal" theme="dark" />
         </Link>
         <div className="flex items-center gap-3 sm:gap-6">
           <Link href="/blog" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">

@@ -201,7 +201,7 @@ export default function LandingPage() {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${r.score}%`,
-                          background: r.score <= 45 ? '#00C853' : r.score <= 60 ? '#fbbf24' : '#f97316',
+                          background: r.score <= 45 ? '#00C9A7' : r.score <= 60 ? '#fbbf24' : '#f97316',
                         }}
                       />
                     </div>

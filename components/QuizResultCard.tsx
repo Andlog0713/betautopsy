@@ -4,7 +4,7 @@ import { forwardRef } from 'react';
 import type { QuizResult } from '@/lib/quiz-engine';
 
 function emotionColor(s: number): string {
-  if (s <= 30) return '#00C853';
+  if (s <= 30) return '#00C9A7';
   if (s <= 55) return '#fbbf24';
   if (s <= 75) return '#f97316';
   return '#f87171';
@@ -32,7 +32,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
     >
       {/* Logo */}
       <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 24 }}>
-        Bet<span style={{ color: '#00C853' }}>Autopsy</span>
+        Bet<span style={{ color: '#00C9A7' }}>Autopsy</span>
       </div>
 
       {/* Archetype */}
@@ -74,8 +74,8 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
             padding: '2px 8px',
             borderRadius: 20,
             marginTop: 6,
-            background: result.biases[0]?.severity === 'high' ? 'rgba(248,113,113,0.1)' : result.biases[0]?.severity === 'medium' ? 'rgba(251,191,36,0.1)' : 'rgba(0,200,83,0.1)',
-            color: result.biases[0]?.severity === 'high' ? '#f87171' : result.biases[0]?.severity === 'medium' ? '#fbbf24' : '#00C853',
+            background: result.biases[0]?.severity === 'high' ? 'rgba(248,113,113,0.1)' : result.biases[0]?.severity === 'medium' ? 'rgba(251,191,36,0.1)' : 'rgba(0,201,167,0.1)',
+            color: result.biases[0]?.severity === 'high' ? '#f87171' : result.biases[0]?.severity === 'medium' ? '#fbbf24' : '#00C9A7',
           }}>
             {result.biases[0]?.severity.toUpperCase() ?? 'LOW'}
           </div>
@@ -86,7 +86,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
       <div style={{ textAlign: 'center', fontSize: 13, color: '#A0A3B1', marginBottom: 4 }}>
         What&apos;s YOUR Bet DNA?
       </div>
-      <div style={{ textAlign: 'center', fontSize: 12, color: '#00C853' }}>
+      <div style={{ textAlign: 'center', fontSize: 12, color: '#00C9A7' }}>
         betautopsy.com/quiz
       </div>
     </div>

@@ -70,7 +70,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
 <!-- Header bar -->
 <tr><td style="background-color:#0D1117;padding:20px 24px">
-  <span style="font-size:18px;font-weight:700;color:#ffffff">Bet<span style="color:#00C853">Autopsy</span></span>
+  <span style="font-size:18px;font-weight:700;color:#ffffff">Bet<span style="color:#00C9A7">Autopsy</span></span>
 </td></tr>
 
 <!-- Positive lead -->
@@ -126,7 +126,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
 <!-- Insight card -->
 <tr><td style="padding:20px 24px 0">
-  <div style="background:#f8f9fa;border-radius:10px;padding:18px;border-left:3px solid #00C853">
+  <div style="background:#f8f9fa;border-radius:10px;padding:18px;border-left:3px solid #00C9A7">
     <div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${insightEmoji} ${esc(insightHeadline)}</div>
     <div style="font-size:13px;color:#555;line-height:1.6">${esc(insightDetail)}</div>
   </div>
@@ -141,12 +141,12 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
 <!-- CTA -->
 <tr><td style="padding:8px 24px 0;text-align:center">
-  <a href="${esc(autopsyUrl)}" style="display:inline-block;background:#00C853;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;text-decoration:none">Run a Fresh Autopsy →</a>
+  <a href="${esc(autopsyUrl)}" style="display:inline-block;background:#00C9A7;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:10px;text-decoration:none">Run a Fresh Autopsy →</a>
 </td></tr>
 
 <!-- Secondary CTA -->
 <tr><td style="padding:12px 24px 0;text-align:center">
-  <a href="${esc(quizUrl)}" style="font-size:13px;color:#00C853;text-decoration:none">Or take the free Bet DNA quiz →</a>
+  <a href="${esc(quizUrl)}" style="font-size:13px;color:#00C9A7;text-decoration:none">Or take the free Bet DNA quiz →</a>
 </td></tr>
 
 <!-- Footer -->

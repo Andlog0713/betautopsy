@@ -769,7 +769,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <ReferenceLine x={0} stroke="#5A5C6F50" />
                 <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                   {roiData.map((entry, i) => (
-                    <Cell key={i} fill={entry.roi >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                    <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
                   ))}
                 </Bar>
               </BarChart>
@@ -810,7 +810,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <ReferenceLine x={0} stroke="#5A5C6F50" />
                   <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                     {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
-                      <Cell key={i} fill={entry.roi >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                      <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -829,8 +829,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   const intensity = hasBets ? Math.min(1, h.bets / Math.max(...analysis.timing_analysis!.by_hour.map((x) => x.bets || 1))) : 0;
                   const bgColor = !hasBets
                     ? 'bg-ink-900/50'
-                    : h.roi >= 10 ? 'bg-[#00C853]'
-                    : h.roi >= 0 ? 'bg-[#00C853]'
+                    : h.roi >= 10 ? 'bg-[#00C9A7]'
+                    : h.roi >= 0 ? 'bg-[#00C9A7]'
                     : h.roi >= -10 ? 'bg-[#f87171]'
                     : 'bg-[#f87171]';
                   const opacity = !hasBets ? '' : h.roi >= 10 || h.roi <= -10 ? `opacity-${Math.round(Math.max(0.4, intensity) * 100) >= 70 ? '90' : '60'}` : `opacity-${Math.round(Math.max(0.3, intensity) * 100) >= 50 ? '50' : '30'}`;
@@ -863,7 +863,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <div className="flex items-center gap-4 mt-3 text-xs text-ink-600">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm bg-[#00C853] opacity-60" />
+                  <div className="w-3 h-3 rounded-sm bg-[#00C9A7] opacity-60" />
                   <span>Profitable</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1000,7 +1000,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <ReferenceLine x={0} stroke="#5A5C6F50" />
                     <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
                       {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
-                        <Cell key={i} fill={entry.edge >= 0 ? '#00C853' : '#f87171'} fillOpacity={0.7} />
+                        <Cell key={i} fill={entry.edge >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
                       ))}
                     </Bar>
                   </BarChart>

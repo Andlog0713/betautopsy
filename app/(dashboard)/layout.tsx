@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 import { createClient } from '@/lib/supabase';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
 import FeedbackButton from '@/components/FeedbackButton';
@@ -180,8 +181,8 @@ export default function DashboardLayout({
       <header className="md:hidden border-b border-white/[0.06] bg-ink-900/95 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
-            <Link href="/dashboard" className="font-bold text-lg tracking-tight">
-              Bet<span className="text-flame-500">Autopsy</span>
+            <Link href="/dashboard">
+              <Logo size="sm" variant="horizontal" theme="dark" />
             </Link>
             {(profile?.streak_count ?? 0) > 0 && (
               <span className="text-xs text-flame-500 font-medium">🔥{profile?.streak_count}</span>
@@ -278,8 +279,8 @@ export default function DashboardLayout({
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col md:w-60 border-r border-white/[0.06] bg-ink-800/30 sticky top-0 h-screen">
         <div className="px-5 pt-6 pb-4">
-          <Link href="/dashboard" className="font-bold text-xl tracking-tight">
-            Bet<span className="text-flame-500">Autopsy</span>
+          <Link href="/dashboard">
+            <Logo size="md" variant="horizontal" theme="dark" />
           </Link>
         </div>
 

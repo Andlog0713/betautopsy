@@ -14,7 +14,7 @@ interface ShareData {
 }
 
 function gradeColor(g: string): string {
-  if (g.startsWith('A')) return '#00C853';
+  if (g.startsWith('A')) return '#00C9A7';
   if (g.startsWith('B')) return '#fbbf24';
   if (g.startsWith('C')) return '#f97316';
   return '#f87171';
@@ -51,7 +51,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const archName = d.archetype?.name ?? '';
   const archDesc = d.archetype?.description ?? '';
   const roiStr = `${d.roi_percent >= 0 ? '+' : ''}${d.roi_percent.toFixed(1)}%`;
-  const roiColor = d.roi_percent >= 0 ? '#00C853' : '#f87171';
+  const roiColor = d.roi_percent >= 0 ? '#00C9A7' : '#f87171';
 
   return new ImageResponse(
     (

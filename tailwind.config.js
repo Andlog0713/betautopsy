@@ -14,12 +14,24 @@ module.exports = {
           600: '#A0A3B1',
           500: '#C0C3CE',
         },
+        scalpel: {
+          400: '#00E8C0',
+          500: '#00C9A7',
+          600: '#00A88C',
+          700: '#007D66',
+        },
+        bleed: {
+          400: '#F06B63',
+          500: '#E8453C',
+          600: '#C93A32',
+        },
+        // Keep flame/mint as aliases during transition to avoid breakage
         flame: {
-          500: '#00C853',
-          600: '#00A844',
+          500: '#00C9A7',
+          600: '#00A88C',
         },
         mint: {
-          500: '#00C853',
+          500: '#00C9A7',
         },
       },
       fontFamily: {
@@ -36,8 +48,8 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0,200,83,0.2)' },
-          '50%': { boxShadow: '0 0 40px rgba(0,200,83,0.4)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(0,201,167,0.2)' },
+          '50%': { boxShadow: '0 0 40px rgba(0,201,167,0.4)' },
         },
       },
       animation: {
