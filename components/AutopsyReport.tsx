@@ -588,7 +588,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     </div>
                     <span className="font-mono text-xs text-ink-600">{val}/25</span>
                   </div>
-                  <p className="text-ink-800 text-[10px] mt-0.5 leading-tight">{hint}</p>
+                  <p className="text-ink-600 text-[10px] mt-0.5 leading-tight">{hint}</p>
                 </div>
               );
             })}
@@ -1201,7 +1201,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 ? 'Some promising spots, but more data needed to confirm real edges.'
                 : 'No strong edges detected yet. Focus on reducing leaks first.'}
             </p>
-            <p className="text-ink-800 text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
+            <p className="text-ink-600 text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
           </div>
           {/* Profitable / Unprofitable areas */}
           <div className="grid md:grid-cols-2 gap-4">
