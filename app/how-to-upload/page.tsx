@@ -55,7 +55,7 @@ export default function HowToUploadPage() {
                 New users get a free 7-day Pro trial, no payment upfront.
               </p>
               <ol className="list-decimal list-inside space-y-1.5 text-sm text-ink-600">
-                <li><a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="text-flame-500 hover:underline">Download Pikkit</a> and connect your sportsbooks</li>
+                <li><a href="https://links.pikkit.com/invite/bullseye90350" target="_blank" rel="noopener noreferrer" className="text-flame-500 hover:underline">Download Pikkit</a> and connect your sportsbooks</li>
                 <li>Activate the free Pro trial (tap the Pro tab → start trial)</li>
                 <li>Go to Pro tab → Settings (top-right) → Data Exports</li>
                 <li>Set your date range and tap <span className="text-[#F0F0F0]">Send CSV</span> — it&apos;ll be emailed to you</li>
@@ -68,7 +68,7 @@ export default function HowToUploadPage() {
                 <a href="https://play.google.com/store/apps/details?id=com.pikkit" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium bg-ink-900 hover:bg-ink-900/70 text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
                   ▶️ Get on Google Play
                 </a>
-                <a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-600 hover:text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
+                <a href="https://links.pikkit.com/invite/bullseye90350" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-600 hover:text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
                   🌐 pikkit.com
                 </a>
               </div>
@@ -91,7 +91,7 @@ export default function HowToUploadPage() {
                 Start with Pikkit — it pulls your full history from sportsbooks AND DFS apps like PrizePicks and Underdog automatically.
                 No manual logging needed. <span className="text-flame-500">Less than 5 minutes to set up.</span>
               </p>
-              <a href="https://www.pikkit.com" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-flame-500 hover:underline mt-2">
+              <a href="https://links.pikkit.com/invite/bullseye90350" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-flame-500 hover:underline mt-2">
                 Get Pikkit →
               </a>
             </div>
