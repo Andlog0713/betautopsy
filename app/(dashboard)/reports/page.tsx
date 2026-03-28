@@ -665,7 +665,13 @@ export default function ReportsPage() {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
-                      })}
+                      })}{' '}
+                      <span className="text-ink-800">
+                        {new Date(report.created_at).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </span>
                     <button
                       onClick={(e) => deleteReport(report.id, e)}
@@ -793,19 +799,41 @@ const PROGRESS_MESSAGES = [
 
 function AnalyzingProgress() {
   const [msgIndex, setMsgIndex] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setMsgIndex((i) => (i + 1) % PROGRESS_MESSAGES.length), 3000);
-    return () => clearInterval(timer);
+    const clock = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => { clearInterval(timer); clearInterval(clock); };
   }, []);
 
+  // Simulated progress: fast at start, slows down, caps at 92%
+  const progress = Math.min(92,
+    elapsed <= 5 ? (elapsed / 5) * 25 :
+    elapsed <= 15 ? 25 + ((elapsed - 5) / 10) * 35 :
+    elapsed <= 30 ? 60 + ((elapsed - 15) / 15) * 20 :
+    80 + ((elapsed - 30) / 30) * 12
+  );
+
+  const estimate = elapsed < 10 ? 'Usually takes 15-25 seconds' : elapsed < 25 ? 'Almost there...' : 'Finishing up...';
+
   return (
-    <div className="card border-flame-500/20 bg-flame-500/5 p-4 flex items-center gap-3">
-      <span className="inline-block w-5 h-5 border-2 border-flame-500/30 border-t-flame-500 rounded-full animate-spin shrink-0" />
-      <div>
-        <p className="text-[#F0F0F0] text-sm font-medium">Generating behavioral analysis...</p>
-        <p className="text-ink-600 text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
+    <div className="card border-flame-500/20 bg-flame-500/5 p-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <span className="inline-block w-5 h-5 border-2 border-flame-500/30 border-t-flame-500 rounded-full animate-spin shrink-0" />
+        <div className="flex-1">
+          <p className="text-[#F0F0F0] text-sm font-medium">Generating behavioral analysis...</p>
+          <p className="text-ink-600 text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
+        </div>
+        <span className="text-ink-700 text-xs font-mono shrink-0">{Math.round(progress)}%</span>
       </div>
+      <div className="h-1.5 bg-ink-900 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-flame-500 rounded-full transition-all duration-1000 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <p className="text-ink-700 text-[10px]">{estimate}</p>
     </div>
   );
 }
