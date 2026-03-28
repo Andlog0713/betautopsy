@@ -649,11 +649,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {bias.severity.toUpperCase()}
                   </span>
                 </div>
-                {!bias.description && !bias.fix ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-ink-800 rounded animate-pulse w-full" />
-                    <div className="h-4 bg-ink-800 rounded animate-pulse w-3/4" />
-                    <div className="h-3 bg-ink-800 rounded animate-pulse w-1/2 mt-3" />
+                {!bias.description ? (
+                  <div className="flex items-center gap-2 text-ink-600 text-sm py-2">
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-ink-600 border-t-flame-500 rounded-full animate-spin" />
+                    Generating analysis for this bias...
                   </div>
                 ) : (
                   <>
