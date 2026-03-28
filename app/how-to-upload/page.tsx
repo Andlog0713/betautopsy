@@ -78,7 +78,6 @@ export default function HowToUploadPage() {
                 </p>
               </div>
             </div>
-            </div>
           </div>
         </div>
 
