@@ -20,7 +20,7 @@ export default function LandingPage() {
             <span className="text-flame-500">Your behavior is.</span>
           </h1>
           <p className="text-ink-600 text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed animate-fade-in-d2">
-            Upload your bet history or pick&apos;em history and get an AI-powered behavioral analysis — loss chasing detection,
+            Upload your betting, pick&apos;em, or prediction market history and get an AI-powered behavioral analysis — loss chasing detection,
             emotional betting patterns, cognitive bias identification, and a personalized plan to fix
             what&apos;s costing you money.
           </p>
@@ -39,7 +39,7 @@ export default function LandingPage() {
             Not sure how to get your data? We&apos;ll walk you through it →
           </Link>
           <p className="text-ink-700 text-xs mt-3 animate-fade-in-d5">
-            No credit card required · Works with Pikkit (syncs sportsbooks + DFS apps) and any CSV export
+            No credit card required · Works with Pikkit (syncs sportsbooks, DFS apps, and Kalshi) and any CSV export
           </p>
         </div>
       </section>
@@ -96,7 +96,7 @@ export default function LandingPage() {
                 tracking so you can actually prove to yourself you&apos;re getting sharper.
               </p>
               <p className="text-[#F0F0F0] font-medium">
-                Upload your bets or pick&apos;em history. Get your autopsy in 20 seconds. See what you&apos;ve
+                Upload your bets, pick&apos;em entries, or prediction market trades. Get your autopsy in 20 seconds. See what you&apos;ve
                 been missing.
               </p>
             </div>
@@ -115,7 +115,7 @@ export default function LandingPage() {
             {
               step: '1',
               title: 'Upload',
-              desc: 'Export from Pikkit — it syncs your sportsbooks and DFS apps (PrizePicks, Underdog, Sleeper) into one place. Or upload any CSV.',
+              desc: 'Export from Pikkit — it syncs your sportsbooks, DFS apps (PrizePicks, Underdog, Sleeper), and prediction markets (Kalshi) into one place. Or upload any CSV.',
               delay: 'animate-slide-up-d1',
             },
             {
@@ -354,7 +354,7 @@ export default function LandingPage() {
             <div>
               <Logo size="sm" variant="horizontal" theme="dark" />
               <p className="text-ink-700 text-xs mt-2 max-w-sm">
-                AI-powered behavioral analysis for sports bettors and DFS players.
+                AI-powered behavioral analysis for sports bettors, DFS players, and prediction market traders.
                 Understand your patterns. Improve your process.
               </p>
             </div>

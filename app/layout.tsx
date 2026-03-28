@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
   title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
   description:
-    'Upload your sports betting or DFS pick\'em history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
+    'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
   icons: {
     icon: '/favicon.svg',
   },
@@ -36,7 +36,7 @@ export default function RootLayout({
     url: 'https://www.betautopsy.com',
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Web',
-    description: 'Upload your sports betting or DFS pick\'em history and get an AI-powered behavioral analysis — cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis — cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
     offers: [
       { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free' },
       { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },

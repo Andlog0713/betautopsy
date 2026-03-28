@@ -55,3 +55,8 @@ export const BLOG_POSTS: BlogPostMeta[] = [
 // { slug: 'why-am-i-losing-on-prizepicks', title: 'Why Am I Losing on PrizePicks?', ... }
 // { slug: 'pick-em-behavioral-mistakes', title: '5 Behavioral Mistakes Every Pick\'em Player Makes', ... }
 // { slug: 'prizepicks-5-pick-trap', title: 'The 5-Pick Trap: Why Your PrizePicks Entries Keep Losing', ... }
+
+// ── Future Prediction Market Posts (to be written) ──
+// { slug: 'kalshi-behavioral-analysis', title: 'Behavioral Analysis for Kalshi Traders: The Biases Killing Your P&L', ... }
+// { slug: 'prediction-market-loss-chasing', title: 'Loss Chasing on Prediction Markets: Same Pattern, Different Platform', ... }
+// { slug: 'am-i-a-bad-kalshi-trader', title: 'Am I a Bad Kalshi Trader? A Behavioral Self-Assessment', ... }

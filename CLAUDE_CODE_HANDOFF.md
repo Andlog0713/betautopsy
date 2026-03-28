@@ -6,7 +6,7 @@ BetAutopsy is a web app where sports bettors upload their bet history (CSV or ma
 
 **It is NOT a bet tracker.** Pikkit already does that. BetAutopsy is the intelligence layer on top. Users export from their existing tracker and upload here.
 
-BetAutopsy also supports DFS pick'em players (PrizePicks, Underdog, Sleeper). Pick'em data is uploaded through Pikkit, which syncs with DFS apps and exports everything in one CSV. The behavioral analysis applies identically — loss chasing, emotional sizing, and parlay-style thinking are the same patterns in pick'em as in traditional sports betting.
+BetAutopsy also supports DFS pick'em players (PrizePicks, Underdog, Sleeper) and prediction market traders (Kalshi). All data is uploaded through Pikkit, which syncs with DFS apps, prediction markets, and sportsbooks into one CSV. The behavioral analysis applies identically — loss chasing, emotional sizing, and overconfidence bias are the same patterns across sports betting, DFS, and prediction markets. Kalshi is CFTC-regulated and legal in all 50 states, making it an important market for users in states without legal sports betting.
 
 ## TECH STACK
 

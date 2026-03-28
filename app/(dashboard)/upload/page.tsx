@@ -296,7 +296,7 @@ export default function UploadPage() {
       <div className="card p-6 space-y-4">
         <h2 className="font-bold text-xl">Supported Formats</h2>
         <p className="text-ink-600 text-sm">
-          We auto-detect columns from Pikkit (including DFS/pick&apos;em data)
+          We auto-detect columns from Pikkit (including DFS/pick&apos;em and prediction market data)
           and generic CSV exports.
         </p>
         <div className="space-y-2">

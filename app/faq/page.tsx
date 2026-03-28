@@ -50,10 +50,11 @@ const FAQ_DATA: FAQSection[] = [
     ],
   },
   {
-    title: 'DFS & Pick\'em Platforms',
+    title: 'DFS, Prediction Markets & Pick\'em',
     items: [
       { q: 'Does BetAutopsy support DFS platforms like PrizePicks or Underdog Fantasy?', a: 'Yes. We analyze DFS pick\'em data with a separate framework built for how those platforms actually work. DFS analysis focuses on pick count distribution, Power vs. Flex play preferences, multiplier chasing, and player concentration — rather than sportsbook-specific metrics like parlay ROI. The recommended data path is Pikkit, which normalizes DFS data into a format we can analyze.' },
-      { q: 'I live in California, Texas, or Florida where sports betting is illegal. Can I still use BetAutopsy?', a: 'Absolutely. If you play DFS pick\'em on platforms like PrizePicks or Underdog Fantasy, BetAutopsy can analyze that activity. DFS pick\'em is legal in most states. Upload via Pikkit and we\'ll automatically detect your platform type and apply the right analysis framework.' },
+      { q: 'Does BetAutopsy support prediction markets like Kalshi?', a: 'Yes. Kalshi event contracts are binary bets at their core — yes/no at some odds — and the behavioral patterns are identical to sports betting. Loss chasing, emotional sizing, and overconfidence bias all show up in prediction market trading. Upload your Kalshi history via Pikkit (which syncs with Kalshi) and we\'ll analyze it like any other betting data. Kalshi is CFTC-regulated and legal in all 50 states.' },
+      { q: 'I live in California, Texas, or Florida where sports betting is illegal. Can I still use BetAutopsy?', a: 'Absolutely. You have two options: DFS pick\'em platforms like PrizePicks and Underdog Fantasy (legal in most states), or prediction markets like Kalshi (federally regulated, legal in all 50 states). Both are supported. Upload via Pikkit and we\'ll automatically detect your platform type and apply the right analysis framework.' },
     ],
   },
   {
