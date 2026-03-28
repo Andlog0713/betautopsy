@@ -22,7 +22,8 @@ function IncisionMark({
   height: number; strokeWidth: number; dotRadius: number; endpointRadius: number; strokeColor: string;
 }) {
   const w = height * 0.6;
-  const armEnd = height * 0.25;
+  // Arms are 30% at small sizes (more visible), 25% at larger sizes
+  const armEnd = height <= 30 ? height * 0.30 : height * 0.25;
   const padX = dotRadius + 2;
   const padY = dotRadius + 2;
   const cx = w / 2 + padX;
