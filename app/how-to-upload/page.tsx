@@ -62,10 +62,10 @@ export default function HowToUploadPage() {
                 <li>Upload that CSV here and you&apos;re done</li>
               </ol>
               <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-flame-500/10 hover:bg-flame-500/20 text-flame-500 px-4 py-2.5 rounded-lg transition-colors mt-4">
-                Get Pikkit Free →
+                Get Pikkit →
               </a>
               <p className="text-xs text-ink-600 mt-2">
-                💰 Bonus: you&apos;ll get <span className="text-[#F0F0F0]">$3–$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
+                💰 From Pikkit: you&apos;ll get <span className="text-[#F0F0F0]">$3–$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
               </p>
               <p className="text-xs text-ink-700 mt-3">
                 Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
@@ -78,17 +78,6 @@ export default function HowToUploadPage() {
                 </p>
               </div>
             </div>
-
-            {/* Don't use any tracker? */}
-            <div className="bg-flame-500/5 border border-flame-500/20 rounded-lg p-4">
-              <p className="text-sm text-[#F0F0F0] font-medium mb-1">Don&apos;t use a tracker?</p>
-              <p className="text-sm text-ink-600">
-                Start with Pikkit — it pulls your full history from sportsbooks AND DFS apps like PrizePicks and Underdog automatically.
-                No manual logging needed. <span className="text-flame-500">Less than 5 minutes to set up.</span>
-              </p>
-              <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-flame-500 hover:underline mt-2">
-                Get Pikkit →
-              </a>
             </div>
           </div>
         </div>
