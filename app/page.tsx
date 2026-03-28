@@ -332,9 +332,10 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
+        <p className="text-ink-700 text-xs text-center mt-6">
+          Have questions? <Link href="/faq" className="text-flame-500 hover:underline">Check our FAQ</Link>
+        </p>
       </section>
-
-      {/* ── Final CTA ── */}
       <section className="max-w-3xl mx-auto px-4 md:px-8 py-20 text-center">
         <h2 className="font-bold text-3xl md:text-4xl tracking-tight mb-4">
           Stop betting on autopilot. Start <span className="text-flame-500">understanding your behavior.</span>
