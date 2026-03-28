@@ -1,7 +1,7 @@
 'use client';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'mark' | 'horizontal' | 'stacked';
   theme?: 'dark' | 'light' | 'brand';
   className?: string;
@@ -9,6 +9,7 @@ interface LogoProps {
 }
 
 const SIZES = {
+  xs:  { h: 18, sw: 1.4, r: 1.4, ep: 0.8,  text: 'text-[11px]', gap: 'gap-1.5' },
   sm:  { h: 22, sw: 1.6, r: 1.6, ep: 1,   text: 'text-xs',   gap: 'gap-2' },
   md:  { h: 36, sw: 2.2, r: 2.4, ep: 1.4,  text: 'text-sm',   gap: 'gap-2.5' },
   lg:  { h: 60, sw: 2.8, r: 3.2, ep: 1.8,  text: 'text-xl',   gap: 'gap-3' },

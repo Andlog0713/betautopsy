@@ -61,8 +61,8 @@ export default function NavBar() {
   return (
     <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-ink-900/90 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center">
-          <span className="sm:hidden"><Logo size="sm" variant="mark" theme="dark" /></span>
+        <Link href="/" className="flex items-center shrink-0">
+          <span className="sm:hidden"><Logo size="xs" variant="horizontal" theme="dark" /></span>
           <span className="hidden sm:block"><Logo size="md" variant="horizontal" theme="dark" /></span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-6">
