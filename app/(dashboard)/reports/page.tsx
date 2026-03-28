@@ -217,26 +217,30 @@ export default function ReportsPage() {
 
             if (event.type === 'metrics') {
               const d = event.data;
-              setTierLimited(d.tier_limited ?? false);
-              setTotalBetsAll(d.total_bets ?? 0);
-              setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
+              // Store data immediately but delay showing the report for 5-7s
+              // to create a premium "analyzing" feel
+              setTimeout(() => {
+                setTierLimited(d.tier_limited ?? false);
+                setTotalBetsAll(d.total_bets ?? 0);
+                setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
 
-              // Create temporary report so AutopsyReport can render partial results
-              const tempReport: AutopsyReportType = {
-                id: 'loading',
-                user_id: '',
-                report_type: 'full',
-                bet_count_analyzed: d.partial_analysis.summary.total_bets,
-                date_range_start: null,
-                date_range_end: null,
-                report_json: d.partial_analysis,
-                report_markdown: '',
-                model_used: null,
-                tokens_used: null,
-                cost_cents: null,
-                created_at: new Date().toISOString(),
-              };
-              setActiveReport(tempReport);
+                // Create temporary report so AutopsyReport can render partial results
+                const tempReport: AutopsyReportType = {
+                  id: 'loading',
+                  user_id: '',
+                  report_type: 'full',
+                  bet_count_analyzed: d.partial_analysis.summary.total_bets,
+                  date_range_start: null,
+                  date_range_end: null,
+                  report_json: d.partial_analysis,
+                  report_markdown: '',
+                  model_used: null,
+                  tokens_used: null,
+                  cost_cents: null,
+                  created_at: new Date().toISOString(),
+                };
+                setActiveReport(tempReport);
+              }, 6000); // 6 second delay
               // setRunning stays true — signals Claude sections still loading
             }
 
@@ -706,13 +710,13 @@ export default function ReportsPage() {
 
 const LOADING_MESSAGES = [
   'Scanning your bet history...',
-  'Analyzing stake patterns and timing...',
-  'Checking for cognitive biases...',
-  'Mapping strategic leaks by sport and bet type...',
-  'Identifying emotional patterns...',
-  'Calculating your edge profile...',
-  'Building your action plan...',
-  'Almost done — assembling your report...',
+  'Calculating your Emotion Score...',
+  'Detecting loss-chasing patterns...',
+  'Analyzing stake volatility...',
+  'Mapping your timing patterns...',
+  'Identifying cognitive biases...',
+  'Building your behavioral profile...',
+  'Generating your action plan...',
 ];
 
 function AnalyzingState({ betCount }: { betCount: number }) {
@@ -727,7 +731,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
   useEffect(() => {
     const rotator = setInterval(() => {
       setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
-    }, 8000);
+    }, 2000);
     return () => clearInterval(rotator);
   }, []);
 
