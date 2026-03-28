@@ -31,8 +31,16 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
       }}
     >
       {/* Logo */}
-      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 24 }}>
-        <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+        <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+          <path d="M2,2 Q3.8,5.2 9,8.5" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round"/>
+          <path d="M16,2 Q14.2,5.2 9,8.5" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round"/>
+          <line x1="9" y1="8.5" x2="9" y2="26" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round"/>
+          <circle cx="9" cy="8.5" r="1.9" fill="#E8453C"/>
+        </svg>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>
+          <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
+        </div>
       </div>
 
       {/* Archetype */}

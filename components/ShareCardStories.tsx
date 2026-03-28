@@ -82,8 +82,14 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1 }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ fontSize: 44, fontWeight: 700 }}>
+        <div style={{ marginBottom: 40, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <svg width="40" height="60" viewBox="0 0 40 60" fill="none">
+            <path d="M4,4 Q8.6,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
+            <path d="M36,4 Q31.4,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
+            <line x1="20" y1="19" x2="20" y2="56" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
+            <circle cx="20" cy="19" r="4" fill="#E8453C"/>
+          </svg>
+          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: 2 }}>
             <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
           </div>
         </div>
