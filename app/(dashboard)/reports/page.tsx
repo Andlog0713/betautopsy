@@ -48,8 +48,10 @@ export default function ReportsPage() {
     // Set scope from query params
     const qUploadId = searchParams.get('upload_id');
     const qUploadIds = searchParams.get('upload_ids');
+    const qSportsbook = searchParams.get('sportsbook');
     if (qUploadId) setAnalyzeScope(`upload:${qUploadId}`);
     else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
+    else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-trigger analysis when ?run=true or ?upload_id=xxx

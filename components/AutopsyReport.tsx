@@ -250,16 +250,29 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const isSharp = tier === 'sharp';
 
   // Detect mixed sportsbook + DFS data
-  const isMixedData = useMemo(() => {
-    if (bets.length < 10) return false;
+  const mixedDataInfo = useMemo(() => {
+    if (bets.length < 10) return null;
     const dfsNames = ['prizepicks', 'prize picks', 'underdog', 'sleeper', 'dabble', 'thrive', 'betr picks'];
-    let dfsCount = 0;
+    const dfsBooksSet = new Set<string>();
+    const sportsBooksSet = new Set<string>();
     for (const b of bets) {
       const book = (b.sportsbook ?? '').toLowerCase();
-      if (dfsNames.some((d) => book.includes(d))) dfsCount++;
+      if (!book) continue;
+      if (dfsNames.some((d) => book.includes(d))) {
+        dfsBooksSet.add(b.sportsbook!);
+      } else {
+        sportsBooksSet.add(b.sportsbook!);
+      }
     }
+    const dfsCount = bets.filter((b) => {
+      const book = (b.sportsbook ?? '').toLowerCase();
+      return dfsNames.some((d) => book.includes(d));
+    }).length;
     const pct = dfsCount / bets.length;
-    return pct >= 0.15 && pct < 0.85; // significant presence of both
+    if (pct < 0.15 || pct > 0.85) return null;
+    const dfsBook = Array.from(dfsBooksSet)[0] ?? null;
+    const sportsBook = Array.from(sportsBooksSet)[0] ?? null;
+    return { dfsBook, sportsBook };
   }, [bets]);
 
   // Leak Prioritizer: combine biases + strategic leaks, rank by $ impact
@@ -368,17 +381,24 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </details>
 
       {/* Mixed data banner */}
-      {isMixedData && !readOnly && (
+      {mixedDataInfo && !readOnly && (
         <div className="card border-purple-500/20 bg-purple-500/5 p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p className="text-[#F0F0F0] font-medium text-sm">This report includes both sportsbook bets and DFS pick&apos;em entries.</p>
-              <p className="text-ink-600 text-xs mt-1">For more accurate behavioral analysis, you can run separate reports for each.</p>
+              <p className="text-ink-600 text-xs mt-1">For more accurate behavioral analysis, run separate reports for each.</p>
             </div>
             <div className="flex gap-2 shrink-0">
-              <a href="/reports" className="text-xs font-medium bg-ink-900 hover:bg-ink-800 text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
-                Run Separate Reports →
-              </a>
+              {mixedDataInfo.sportsBook && (
+                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.sportsBook)}`} className="text-xs font-medium bg-ink-900 hover:bg-ink-800 text-[#F0F0F0] px-3 py-2 rounded-lg transition-colors">
+                  Sportsbook Only
+                </a>
+              )}
+              {mixedDataInfo.dfsBook && (
+                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.dfsBook)}`} className="text-xs font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-3 py-2 rounded-lg transition-colors">
+                  DFS Only
+                </a>
+              )}
             </div>
           </div>
         </div>
