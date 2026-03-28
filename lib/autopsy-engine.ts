@@ -56,7 +56,10 @@ export interface CalculatedMetrics {
 
 // ── DFS Detection + Metrics ──
 
-const DFS_PLATFORMS = ['prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper', 'dabble', 'thrive', 'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'betr picks', 'kalshi'];
+const DFS_PLATFORMS = ['prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper', 'dabble', 'thrive', 'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'betr picks'];
+// Kalshi intentionally excluded — prediction market contracts are binary bets, not multi-pick entries.
+// They should be analyzed with standard sportsbook logic, not DFS pick count analysis.
+// Future: add isPredictionMarket detection mode with contract/trade language.
 
 export function detectDFSSource(bets: Bet[]): DFSDetection {
   if (bets.length === 0) return { isDFS: false, dfsPercent: 0, primaryPlatform: null, isMixed: false };
