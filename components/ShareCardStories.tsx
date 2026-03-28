@@ -84,7 +84,7 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 44, fontWeight: 700 }}>
-            Bet<span style={{ color: '#00C9A7' }}>Autopsy</span>
+            <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
           </div>
         </div>
 

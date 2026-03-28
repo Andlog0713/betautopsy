@@ -70,7 +70,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 
 <!-- Header bar -->
 <tr><td style="background-color:#0D1117;padding:20px 24px">
-  <span style="font-size:18px;font-weight:700;color:#ffffff">Bet<span style="color:#00C9A7">Autopsy</span></span>
+  <span style="font-size:18px;font-weight:700;color:#ffffff"><span style="font-weight:900">BET</span><span style="font-weight:300;color:#00C9A7">AUTOPSY</span></span>
 </td></tr>
 
 <!-- Positive lead -->

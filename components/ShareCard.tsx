@@ -131,7 +131,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
       <div style={{ position: 'relative' }}>
         {/* Logo */}
         <div style={{ ...S.serif, fontSize: 16, marginBottom: 24 }}>
-          Bet<span style={{ color: '#00C9A7' }}>Autopsy</span>
+          <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
         </div>
 
         {/* Archetype */}

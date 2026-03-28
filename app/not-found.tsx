@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <div className="font-bold text-xl tracking-tight mb-8">
-          Bet<span className="text-flame-500">Autopsy</span>
+        <div className="mb-8 flex justify-center">
+          <Logo size="md" variant="horizontal" theme="dark" />
         </div>
         <h1 className="font-bold text-5xl mb-3">404</h1>
         <p className="text-ink-600 mb-6">This page doesn&apos;t exist or has been moved.</p>

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     .eq('id', tokenData.user_id);
 
   return htmlPage('Unsubscribed', `
-    <div style="font-size:18px;font-weight:700;margin-bottom:24px">Bet<span style="color:#00C9A7">Autopsy</span></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:24px"><span style="font-weight:900">BET</span><span style="font-weight:300;color:#00C9A7">AUTOPSY</span></div>
     <h1 style="font-size:24px;font-weight:700;margin-bottom:12px">You've been unsubscribed.</h1>
     <p style="color:#A0A3B1;font-size:14px;margin-bottom:24px">You won't receive weekly digests anymore.<br>Re-enable anytime in <a href="/settings">Settings</a>.</p>
     <a href="/" style="font-size:14px">← Back to BetAutopsy</a>

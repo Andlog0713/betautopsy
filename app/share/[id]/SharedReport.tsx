@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 import AutopsyReport from '@/components/AutopsyReport';
 import type { AutopsyAnalysis } from '@/types';
 
@@ -36,9 +37,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
         {/* Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-block">
-            <span className="font-bold text-xl">
-              Bet<span className="text-flame-500">Autopsy</span>
-            </span>
+            <Logo size="md" variant="horizontal" theme="dark" />
           </Link>
           {data.archetype && (
             <div>

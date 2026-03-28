@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
+import { Logo } from '@/components/logo';
 
 export default function LandingPage() {
   return (
@@ -351,9 +352,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <span className="font-bold text-lg tracking-tight">
-                Bet<span className="text-flame-500">Autopsy</span>
-              </span>
+              <Logo size="sm" variant="horizontal" theme="dark" />
               <p className="text-ink-700 text-xs mt-2 max-w-sm">
                 AI-powered behavioral analysis for sports bettors and DFS players.
                 Understand your patterns. Improve your process.

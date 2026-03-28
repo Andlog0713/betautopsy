@@ -32,7 +32,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, { result: QuizResult }>(({ res
     >
       {/* Logo */}
       <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 24 }}>
-        Bet<span style={{ color: '#00C9A7' }}>Autopsy</span>
+        <span style={{ fontWeight: 900 }}>BET</span><span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
       </div>
 
       {/* Archetype */}
