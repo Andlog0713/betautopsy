@@ -64,6 +64,8 @@ export default function ReportsPage() {
       totalBetCount > 0
     ) {
       autoRunTriggered.current = true;
+      // Clean up URL so refresh doesn't re-trigger
+      window.history.replaceState({}, '', '/reports');
       runAutopsy();
     }
   }, [searchParams, loading, totalBetCount]); // eslint-disable-line react-hooks/exhaustive-deps
