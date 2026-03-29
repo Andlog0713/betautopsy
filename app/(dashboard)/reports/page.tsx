@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
-  loading: () => <div className="h-96 bg-surface rounded-lg animate-pulse" />,
+  loading: () => <div className="h-96 bg-surface rounded-sm animate-pulse" />,
 });
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
 
@@ -308,7 +308,7 @@ export default function ReportsPage() {
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-8 w-48 bg-surface rounded" />
-        <div className="h-40 bg-surface rounded-xl" />
+        <div className="h-40 bg-surface rounded-sm" />
       </div>
     );
   }
@@ -421,18 +421,18 @@ export default function ReportsPage() {
               <div className="card p-5">
                 <h3 className="font-bold text-lg mb-2">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
-                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
-                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
-                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
                 </div>
               </div>
               <div className="card p-5 mt-3">
                 <h3 className="font-bold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
-                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>
@@ -530,7 +530,7 @@ export default function ReportsPage() {
                 <button
                   key={f.label}
                   onClick={() => setQuickRange(f.days)}
-                  className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+                  className={`px-3 py-1 rounded-sm text-xs transition-colors ${
                     isActive
                       ? 'bg-scalpel-muted text-scalpel'
                       : 'text-fg-muted hover:text-fg hover:bg-white/[0.04]'
@@ -617,7 +617,7 @@ export default function ReportsPage() {
               <button
                 key={report.id}
                 onClick={() => openReport(report)}
-                className="card p-5 w-full text-left hover:border-white/[0.15] transition-colors"
+                className="card p-5 w-full text-left hover:border-white/[0.08] transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
@@ -688,14 +688,14 @@ export default function ReportsPage() {
                   {analysis.biases_detected.slice(0, 3).map((bias, i) => (
                     <span
                       key={i}
-                      className={`text-xs px-2 py-0.5 rounded-full border ${
+                      className={`text-xs px-2 py-0.5 rounded-sm border ${
                         bias.severity === 'critical'
                           ? 'bg-bleed-muted text-loss border-bleed/20'
                           : bias.severity === 'high'
                           ? 'bg-orange-400/10 text-orange-400 border-orange-400/20'
                           : bias.severity === 'medium'
                           ? 'bg-caution/10 text-caution border-caution/20'
-                          : 'bg-win/10 text-win border-mint-500/20'
+                          : 'bg-win/10 text-win border-win/20'
                       }`}
                     >
                       {bias.bias_name}
@@ -822,7 +822,7 @@ function AnalyzingProgress() {
   return (
     <div className="card border-scalpel/20 bg-scalpel-muted p-4 space-y-3">
       <div className="flex items-center gap-3">
-        <span className="inline-block w-5 h-5 border-2 border-scalpel/20 border-t-flame-500 rounded-full animate-spin shrink-0" />
+        <span className="inline-block w-5 h-5 border-2 border-scalpel/20 border-t-scalpel rounded-full animate-spin shrink-0" />
         <div className="flex-1">
           <p className="text-fg-bright text-sm font-medium">Generating behavioral analysis...</p>
           <p className="text-fg-muted text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
