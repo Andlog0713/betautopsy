@@ -359,56 +359,31 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ═══ Report Tab ═══ */}
       {activeTab === 'report' && <>
 
-      {/* ═══ CASE FILE HEADER ═══ */}
-      <div className="border border-white/[0.06] rounded-sm overflow-hidden">
-        <div className="bg-surface-raised px-6 py-4 border-b border-white/[0.04]">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-mono text-[9px] text-fg-dim tracking-[4px] uppercase mb-1">Behavioral Autopsy Report</p>
-              <div className="flex items-center gap-3">
-                <h1 className="font-bold text-2xl text-fg-bright tracking-tight">Case File</h1>
-                {analysis.dfs_mode && <span className="evidence-tag border-purple-400/30 text-purple-400">{analysis.dfs_platform ?? 'DFS'} Pick&apos;em</span>}
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-mono text-[10px] text-fg-dim tracking-wider">{summary.date_range}</p>
-              <p className="font-mono text-[10px] text-fg-dim tracking-wider">{summary.total_bets} {analysis.dfs_mode ? 'ENTRIES' : 'BETS'} EXAMINED</p>
-              {reportId && <p className="font-mono text-[9px] text-fg-dim/50 tracking-wider mt-1">ID: {reportId.slice(0, 8)}</p>}
-            </div>
-          </div>
+      {/* ═══ CASE FILE HEADER — matching mockup ═══ */}
+      <div className="flex justify-between items-start mb-7">
+        <div>
+          <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1.5">
+            AUTOPSY REPORT — #{reportId ? `BA-${reportId.slice(0, 4).toUpperCase()}` : 'BA-LIVE'}
+            {analysis.dfs_mode && <span className="ml-2 text-purple-400">· {analysis.dfs_platform ?? 'DFS'}</span>}
+          </p>
+          <p className="font-mono text-[10px] text-fg-dim tracking-[1px]">
+            {summary.date_range.toUpperCase()} · {summary.total_bets} {analysis.dfs_mode ? 'ENTRIES' : 'SPECIMENS'} ANALYZED
+          </p>
         </div>
-        {/* Vitals strip — quick stats */}
-        <div className="vitals-strip grid-cols-2 sm:grid-cols-4 border-0 rounded-none">
-          <div className="vitals-cell text-center">
-            <span className="data-label block">Record</span>
-            <span className="font-mono text-lg font-bold text-fg-bright">{summary.record}</span>
-          </div>
-          <div className="vitals-cell text-center">
-            <span className="data-label block">P&amp;L</span>
-            <span className={`font-mono text-lg font-bold ${summary.total_profit >= 0 ? 'text-win' : 'text-loss'}`}>
-              {summary.total_profit >= 0 ? '+' : ''}${summary.total_profit.toFixed(0)}
-            </span>
-          </div>
-          <div className="vitals-cell text-center">
-            <span className="data-label block">ROI</span>
-            <span className={`font-mono text-lg font-bold ${summary.roi_percent >= 0 ? 'text-win' : 'text-loss'}`}>
-              {summary.roi_percent.toFixed(1)}%
-            </span>
-          </div>
-          <div className="vitals-cell text-center">
-            <span className="data-label block">Avg Stake</span>
-            <span className="font-mono text-lg font-bold text-fg-bright">${summary.avg_stake.toFixed(0)}</span>
-          </div>
+        {/* Stamp-style grade — tilted like the mockup */}
+        <div className={`border-2 ${gradeColor(summary.overall_grade).replace('text-', 'border-')} px-4 py-1.5 -rotate-3`}>
+          <p className={`font-mono text-[30px] font-bold leading-none ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
+          <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
         </div>
       </div>
 
-      {/* What this report analyzes — collapsible explainer */}
-      <details className="border border-white/[0.04] rounded-sm bg-surface/50">
+      {/* What this report analyzes — collapsible */}
+      <details className="border border-white/[0.04] rounded-sm bg-surface/50 mb-5">
         <summary className="px-4 py-3 text-sm text-fg-muted cursor-pointer hover:text-fg flex items-center gap-2 font-mono text-[11px] tracking-wider">
           <span className="text-fg-dim">▸</span> ABOUT THIS REPORT
         </summary>
         <div className="px-4 pb-4 text-xs text-fg-muted leading-relaxed border-t border-white/[0.04]">
-          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong> — the psychological patterns, emotional responses, and cognitive biases that affect every bet you place. Below you&apos;ll find your Emotion Score (how much emotions drive your betting), Discipline Score (how consistent your process is), detected cognitive biases with dollar costs, and a personalized action plan.
+          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong> — the psychological patterns, emotional responses, and cognitive biases that affect every bet you place.
         </div>
       </details>
 
@@ -436,22 +411,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Subject Profile — Bet DNA */}
+      {/* Subject Classification — Bet DNA (purple left border like mockup) */}
       {analysis.betting_archetype && (
-        <div className="border border-scalpel/15 rounded-sm overflow-hidden">
-          <div className="bg-scalpel/[0.03] px-6 py-4 border-b border-scalpel/10">
-            <p className="font-mono text-[9px] text-scalpel/60 tracking-[4px] uppercase mb-1">Subject Profile</p>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🧬</span>
-              <div>
-                <h2 className="font-bold text-2xl text-scalpel">{analysis.betting_archetype.name}</h2>
-                <p className="font-mono text-[10px] text-fg-dim tracking-wider">BEHAVIORAL CLASSIFICATION</p>
-              </div>
-            </div>
-          </div>
-          <div className="px-6 py-4">
-            <p className="text-fg-bright text-sm leading-relaxed">{analysis.betting_archetype.description}</p>
-          </div>
+        <div className="border border-white/[0.04] p-[18px] border-l-[3px] border-l-purple-500 mb-5">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
+          <h2 className="font-bold text-xl text-purple-400 mb-1">{analysis.betting_archetype.name}</h2>
+          <p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p>
         </div>
       )}
 
@@ -501,44 +466,68 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* ═══ ASSESSMENT PANEL — 3 core metrics ═══ */}
-      <div className="border border-white/[0.04] rounded-sm overflow-hidden">
-        <div className="px-5 py-2 bg-surface-raised border-b border-white/[0.04]">
-          <p className="font-mono text-[9px] text-fg-dim tracking-[4px] uppercase">Sec. 1 — Assessment</p>
+      {/* ═══ VITALS STRIP — 4-col like mockup ═══ */}
+      <div className="vitals-strip grid-cols-2 sm:grid-cols-4 mb-5">
+        <div className="vitals-cell">
+          <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">RECORD</span>
+          <span className="font-mono text-lg font-bold text-fg-bright">{summary.record}</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/[0.04]">
-          <div className="bg-base p-5 text-center">
-            <p className="data-label mb-2">Emotion Score</p>
-            <p className={`font-mono text-4xl font-bold ${
+        <div className="vitals-cell">
+          <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">NET P&amp;L</span>
+          <span className={`font-mono text-lg font-bold ${summary.total_profit >= 0 ? 'text-win' : 'text-loss'}`}>
+            {summary.total_profit >= 0 ? '+' : ''}{summary.total_profit < 0 ? '-' : ''}${Math.abs(summary.total_profit).toLocaleString(undefined, {maximumFractionDigits: 0})}
+          </span>
+        </div>
+        <div className="vitals-cell">
+          <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">ROI</span>
+          <span className={`font-mono text-lg font-bold ${summary.roi_percent >= 0 ? 'text-win' : 'text-loss'}`}>
+            {summary.roi_percent.toFixed(1)}%
+          </span>
+        </div>
+        <div className="vitals-cell">
+          <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">AVG STAKE</span>
+          <span className="font-mono text-lg font-bold text-fg-bright">${summary.avg_stake.toFixed(0)}</span>
+        </div>
+      </div>
+
+      {/* ═══ SCORES — side-by-side with gradient bars + needle ═══ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] border border-white/[0.04] mb-6">
+        <div className="bg-base p-[18px]">
+          <div className="flex justify-between items-baseline mb-2.5">
+            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
+            <span className={`font-mono text-[22px] font-bold ${
               emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-orange-400' : 'text-loss'
-            }`}>{emotionScore}<span className="text-lg text-fg-dim">/100</span></p>
-            <div className="w-full h-1.5 bg-surface-raised overflow-hidden mt-3 mb-2">
-              <div className={`h-full ${emotionColor(emotionScore)}`} style={{ width: `${emotionScore}%` }} />
-            </div>
-            <p className="text-fg-muted text-xs">{emotionLabel(emotionScore).split('.')[0]}.</p>
+            }`}>{emotionScore}</span>
           </div>
-          {analysis.discipline_score && (
-            <div className="bg-base p-5 text-center">
-              <p className="data-label mb-2">Discipline Score</p>
-              <p className={`font-mono text-4xl font-bold ${
-                analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
-              }`}>{analysis.discipline_score.total}<span className="text-lg text-fg-dim">/100</span></p>
-              <div className="w-full h-1.5 bg-surface-raised overflow-hidden mt-3 mb-2">
-                <div className={`h-full ${
-                  analysis.discipline_score.total >= 71 ? 'bg-win' : analysis.discipline_score.total >= 51 ? 'bg-caution' : analysis.discipline_score.total >= 31 ? 'bg-orange-400' : 'bg-loss'
-                }`} style={{ width: `${analysis.discipline_score.total}%` }} />
-              </div>
-              <p className="text-fg-muted text-xs">How consistently you follow your process.</p>
-            </div>
-          )}
-          <div className="bg-base p-5 text-center">
-            <p className="data-label mb-2">Overall Grade</p>
-            <div className={`inline-block border-2 ${gradeColor(summary.overall_grade).replace('text-', 'border-')} px-4 py-1 mt-1`}>
-              <p className={`text-4xl font-bold font-mono ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
-            </div>
-            <p className="text-fg-muted text-xs mt-3">Combines ROI, discipline, and emotional control.</p>
+          <div className="h-1 bg-surface-raised relative">
+            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #D29922, #E8453C)' }} />
+            <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
+          <p className="font-mono text-[10px] text-fg-muted mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
         </div>
+        {analysis.discipline_score ? (
+          <div className="bg-base p-[18px]">
+            <div className="flex justify-between items-baseline mb-2.5">
+              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE</span>
+              <span className={`font-mono text-[22px] font-bold ${
+                analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
+              }`}>{analysis.discipline_score.total}</span>
+            </div>
+            <div className="h-1 bg-surface-raised relative">
+              <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #D29922, #00C9A7)' : 'linear-gradient(90deg, #E8453C, #D29922)' }} />
+              <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
+            </div>
+            <p className="font-mono text-[10px] text-fg-muted mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
+          </div>
+        ) : (
+          <div className="bg-base p-[18px]">
+            <div className="flex justify-between items-baseline mb-2.5">
+              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">OVERALL GRADE</span>
+              <span className={`font-mono text-[22px] font-bold ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</span>
+            </div>
+            <p className="font-mono text-[10px] text-fg-muted mt-2">Combines ROI, discipline, and emotional control</p>
+          </div>
+        )}
       </div>
 
       {/* Summary Card — REMOVED (replaced by Behavioral Profile + condensed stats above) */}
@@ -684,25 +673,21 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Biases Detected — Findings */}
+      {/* FINDINGS — matching mockup exactly */}
       {biases_detected.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 3</span>
-            <h2 className="font-bold text-2xl">Findings: Cognitive Biases</h2>
-          </div>
-          <p className="text-fg-dim text-xs italic -mt-2">Unconscious habits that are hurting your results — patterns you probably don&apos;t notice in the moment.</p>
-          <div className="grid gap-4">
-            {biases_detected.map((bias, i) => (
-              <div key={i} className="finding-card border-l-bleed/40 p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] text-fg-dim">FINDING {String(i + 1).padStart(2, '0')}</span>
-                    <h3 className="font-medium text-lg">{bias.bias_name}</h3>
+        <div className="space-y-2">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">FINDINGS</p>
+          <div className="grid gap-2">
+            {biases_detected.map((bias, i) => {
+              const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
+              return (
+              <div key={i} className={`border border-white/[0.04] p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-[14px] font-semibold text-fg-bright">{bias.bias_name}</span>
                   </div>
-                  <span className={`evidence-tag self-start ${SEVERITY_COLORS[bias.severity] ?? SEVERITY_COLORS.medium}`}>
-                    {bias.severity.toUpperCase()}
-                  </span>
+                  <span className={`font-mono text-[9px] tracking-[1px] font-bold px-2 py-0.5 ${sevColor === 'bleed' ? 'bg-bleed text-base' : sevColor === 'caution' ? 'bg-caution text-base' : 'bg-win text-base'}`}>{bias.severity.toUpperCase()}</span>
                 </div>
                 {!bias.description ? (
                   <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
@@ -711,25 +696,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </div>
                 ) : (
                   <>
-                    <p className="text-fg-bright text-sm mb-4">{bias.description}</p>
-                    <div className="grid sm:grid-cols-3 gap-4 text-sm">
-                      <div className="bg-base/50 rounded-sm p-3">
-                        <p className="text-fg-muted text-xs mb-1">Evidence</p>
-                        <p className="text-fg-bright">{bias.evidence}</p>
-                      </div>
-                      <div className="bg-base/50 rounded-sm p-3">
-                        <p className="text-fg-muted text-xs mb-1">Estimated Cost</p>
-                        <p className="text-loss font-mono font-medium">-${Math.abs(bias.estimated_cost).toFixed(0)}</p>
-                      </div>
-                      <div className="bg-base/50 rounded-sm p-3">
-                        <p className="text-fg-muted text-xs mb-1">How to Fix</p>
-                        <p className="text-fg-bright">{bias.fix}</p>
-                      </div>
+                    <p className="text-[12px] text-fg-muted leading-relaxed mb-2.5">{bias.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
+                        est. cost: -${Math.abs(bias.estimated_cost).toLocaleString()}/qtr
+                      </span>
+                      <span className="font-mono text-[10px] text-scalpel cursor-pointer hover:underline">view protocol →</span>
                     </div>
                   </>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -1398,32 +1376,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Action Plan */}
       {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 9</span>
-            <h2 className="font-bold text-2xl">Action Plan</h2>
-          </div>
-          <div className="space-y-3">
-            {recommendations.map((rec, i) => (
-              <div key={i} className="card p-5">
-                <div className="flex items-start gap-4">
-                  <span className="font-mono text-xl font-bold text-scalpel mt-0.5 shrink-0">{rec.priority}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                      <h3 className="font-medium">{rec.title}</h3>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full self-start ${DIFFICULTY_COLORS[rec.difficulty] ?? DIFFICULTY_COLORS.medium}`}>
-                        {rec.difficulty}
-                      </span>
-                    </div>
-                    <p className="text-fg-bright text-sm">{rec.description}</p>
-                    <p className="text-fg-muted text-xs mt-2">
-                      Expected improvement: <span className="text-win">{rec.expected_improvement}</span>
-                    </p>
-                  </div>
-                </div>
+        <div className="space-y-1.5">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
+          {recommendations.map((rec, i) => (
+            <div key={i} className="border border-white/[0.04] p-4 border-l-[3px] border-l-scalpel">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-[14px] font-semibold text-fg-bright">{rec.title}</span>
               </div>
-            ))}
-          </div>
+              <p className="text-[12px] text-fg-muted leading-relaxed ml-[50px]">
+                {rec.description}{' '}
+                <span className="font-mono text-[11px] text-scalpel">{rec.expected_improvement}</span>
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
