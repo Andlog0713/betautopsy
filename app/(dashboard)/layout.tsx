@@ -161,53 +161,50 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-ink-600 animate-pulse">Loading...</div>
+        <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
       </div>
     );
   }
 
   const tier = profile?.subscription_tier ?? 'free';
 
-  const tierBadge: Record<string, string> = {
-    free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
-    pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
-    sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
-  };
+  const activeClass = 'bg-scalpel-muted text-scalpel border-l-2 border-scalpel';
+  const inactiveClass = 'text-fg-dim hover:text-fg hover:bg-white/[0.03] border-l-2 border-transparent';
 
   return (
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile top nav */}
-      <header className="md:hidden border-b border-white/[0.06] bg-ink-900/95 backdrop-blur-xl sticky top-0 z-40">
+      <header className="md:hidden border-b border-white/[0.04] bg-surface sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <Link href="/dashboard">
-              <Logo size="md" variant="horizontal" theme="dark" />
+              <Logo size="xs" variant="horizontal" theme="dark" />
             </Link>
             {(profile?.streak_count ?? 0) > 0 && (
-              <span className="text-xs text-flame-500 font-medium">🔥{profile?.streak_count}</span>
+              <span className="font-mono text-[10px] text-scalpel">🔥{profile?.streak_count}</span>
             )}
           </div>
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={mobileNavOpen}
-            className="text-ink-600 hover:text-[#F0F0F0] p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+            className="text-fg-dim hover:text-fg p-1.5 rounded-sm hover:bg-white/[0.03] transition-colors"
           >
             {mobileNavOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
         {mobileNavOpen && (
-          <nav className="border-t border-white/[0.06] px-3 py-3 space-y-0.5 animate-fade-in">
+          <nav className="border-t border-white/[0.04] px-3 py-3 space-y-0.5 animate-fade-in bg-surface">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname === item.href
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <item.Icon />
@@ -217,10 +214,10 @@ export default function DashboardLayout({
             <Link
               href="/pricing"
               onClick={() => setMobileNavOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                 pathname === '/pricing'
-                  ? 'bg-flame-500/10 text-flame-500'
-                  : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                  ? 'bg-scalpel-muted text-scalpel'
+                  : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
               }`}
             >
               <IconPricing />
@@ -230,10 +227,10 @@ export default function DashboardLayout({
               <Link
                 href="/admin/reports"
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname.startsWith('/admin')
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <IconAdmin />
@@ -245,27 +242,25 @@ export default function DashboardLayout({
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname === item.href
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <item.Icon />
                 {item.label}
               </Link>
             ))}
-            <div className="border-t border-white/[0.06] pt-3 mt-3 px-3">
+            <div className="border-t border-white/[0.04] pt-3 mt-3 px-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-ink-500 truncate">{profile?.email}</p>
-                  <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-1 capitalize ${tierBadge[tier]}`}>
-                    {tier}
-                  </span>
+                  <p className="font-mono text-[10px] text-fg-dim truncate">{profile?.email}</p>
+                  <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="text-ink-600 hover:text-red-400 p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors"
+                  className="text-fg-dim hover:text-loss p-1.5 rounded-sm hover:bg-white/[0.03] transition-colors"
                   aria-label="Sign out"
                 >
                   <IconSignOut />
@@ -277,36 +272,32 @@ export default function DashboardLayout({
       </header>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-60 border-r border-white/[0.06] bg-ink-800/30 sticky top-0 h-screen">
-        <div className="px-5 pt-6 pb-4">
+      <aside className="hidden md:flex md:flex-col md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen">
+        <div className="px-5 pt-5 pb-4">
           <Link href="/dashboard">
-            <Logo size="md" variant="horizontal" theme="dark" />
+            <Logo size="xs" variant="horizontal" theme="dark" />
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav className="flex-1 px-2 space-y-0.5">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                pathname === item.href
-                  ? 'bg-flame-500/10 text-flame-500'
-                  : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+              className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+                pathname === item.href ? activeClass : inactiveClass
               }`}
             >
               <item.Icon />
               {item.label}
             </Link>
           ))}
-          <div className="mt-3 pt-3 border-t border-white/[0.06]">
+          <div className="mt-3 pt-3 border-t border-white/[0.04]">
             {profile?.is_admin && (
               <Link
                 href="/admin/reports"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  pathname.startsWith('/admin')
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+                  pathname.startsWith('/admin') ? activeClass : inactiveClass
                 }`}
               >
                 <IconAdmin />
@@ -317,10 +308,8 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  pathname === item.href
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+                  pathname === item.href ? activeClass : inactiveClass
                 }`}
               >
                 <item.Icon />
@@ -330,35 +319,33 @@ export default function DashboardLayout({
           </div>
         </nav>
 
-        <div className="p-4 border-t border-white/[0.06] space-y-3">
+        <div className="p-4 border-t border-white/[0.04] space-y-3">
           {tier === 'free' && (
             <Link
               href="/pricing"
-              className="flex items-center justify-center gap-1.5 text-[13px] font-medium bg-flame-500/10 text-flame-500 hover:bg-flame-500/20 rounded-lg px-3 py-2 transition-colors"
+              className="flex items-center justify-center gap-1.5 font-mono text-[11px] tracking-wider bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-sm px-3 py-2 transition-colors border border-scalpel/20"
             >
               Upgrade to Pro
               <IconArrowUpRight />
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-ink-700/40 border border-white/[0.08] flex items-center justify-center text-xs font-semibold text-ink-500 shrink-0">
+            <div className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-dim shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-xs text-[#F0F0F0] truncate">{profile?.display_name ?? profile?.email}</p>
+                <p className="font-mono text-[10px] text-fg truncate">{profile?.display_name ?? profile?.email}</p>
                 {(profile?.streak_count ?? 0) > 0 && (
-                  <span className="text-[10px] text-flame-500 font-medium shrink-0" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
+                  <span className="font-mono text-[9px] text-scalpel shrink-0" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
                 )}
               </div>
-              <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 capitalize ${tierBadge[tier]}`}>
-                {tier}
-              </span>
+              <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
             </div>
             <EyeToggle />
             <button
               onClick={handleSignOut}
-              className="text-ink-700 hover:text-red-400 transition-colors shrink-0 p-1 rounded hover:bg-white/[0.04]"
+              className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-sm hover:bg-white/[0.03]"
               title="Sign out"
             >
               <IconSignOut />
@@ -373,13 +360,13 @@ export default function DashboardLayout({
           {children}
         </div>
         <footer className="text-center py-6 px-4 space-y-2">
-          <Link href="/privacy" className="text-ink-700 text-xs hover:text-ink-500 transition-colors">
+          <Link href="/privacy" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
             Privacy Policy
           </Link>
-          <p className="text-ink-700 text-xs">
-            BetAutopsy provides behavioral analysis and educational insights — not
-            gambling or financial advice. Past results don&apos;t guarantee future outcomes.
-            21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+          <p className="font-mono text-[9px] text-fg-dim tracking-wider max-w-xl mx-auto leading-relaxed">
+            BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS — NOT
+            GAMBLING OR FINANCIAL ADVICE. PAST RESULTS DON&apos;T GUARANTEE FUTURE OUTCOMES.
+            21+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
           </p>
         </footer>
       </main>

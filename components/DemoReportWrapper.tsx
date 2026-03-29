@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
-  loading: () => <div className="h-96 bg-ink-800 rounded-lg animate-pulse" />,
+  loading: () => <div className="h-96 bg-surface rounded-sm animate-pulse" />,
 });
 
 export default function DemoReportWrapper() {
@@ -16,15 +16,15 @@ export default function DemoReportWrapper() {
     <div className="relative">
       {/* ── Floating "DEMO" badge ── */}
       <div className="sticky top-20 z-30 flex justify-center mb-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ink-800/95 border border-flame-500/30 backdrop-blur-sm shadow-lg">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/95 border border-scalpel/20 backdrop-blur-sm shadow-lg">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-flame-500 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-flame-500" />
           </span>
-          <span className="text-sm font-medium text-[#F0F0F0]">
+          <span className="text-sm font-medium text-fg-bright">
             Interactive Demo
           </span>
-          <span className="text-xs text-ink-600">
+          <span className="text-xs text-fg-muted">
             — Pro tier report, sample data
           </span>
         </div>
@@ -63,23 +63,23 @@ export default function DemoReportWrapper() {
         {!expanded && (
           <div className="absolute bottom-0 left-0 right-0 z-20">
             {/* Tall gradient fade */}
-            <div className="h-80 bg-gradient-to-t from-ink-900 via-ink-900/90 to-transparent" />
+            <div className="h-80 bg-gradient-to-t from-base via-base/90 to-transparent" />
 
             {/* CTA area */}
-            <div className="bg-ink-900 pb-4 text-center space-y-4">
+            <div className="bg-base pb-4 text-center space-y-4">
               <button
                 onClick={() => setExpanded(true)}
-                className="text-sm text-ink-500 hover:text-ink-400 transition-colors"
+                className="text-sm text-fg-muted hover:text-ink-400 transition-colors"
               >
                 ↓ Click to see the full expanded report
               </button>
               <div>
-                <p className="text-[#F0F0F0] text-lg font-medium mb-2">
+                <p className="text-fg-bright text-lg font-medium mb-2">
                   This is a sample. Yours will be even more personal.
                 </p>
                 <Link
                   href="/signup"
-                  className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-flame-500/20 inline-block"
+                  className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/10 inline-block"
                 >
                   Get Your Free Autopsy
                 </Link>
@@ -92,12 +92,12 @@ export default function DemoReportWrapper() {
       {/* ── Bottom CTA (when expanded) ── */}
       {expanded && (
         <div className="mt-8 text-center space-y-3">
-          <p className="text-ink-600 text-sm">
+          <p className="text-fg-muted text-sm">
             That was a sample report with 280 bets. Imagine what yours would reveal.
           </p>
           <Link
             href="/signup"
-            className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-flame-500/20 inline-block"
+            className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/10 inline-block"
           >
             Get Your Free Autopsy
           </Link>

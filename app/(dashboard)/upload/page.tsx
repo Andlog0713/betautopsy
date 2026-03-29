@@ -105,7 +105,7 @@ export default function UploadPage() {
                 sessionStorage.setItem('onboarding_skip', '1');
                 window.location.href = '/dashboard';
               }}
-              className="text-xs text-ink-700 hover:text-ink-500 transition-colors"
+              className="text-xs text-fg-dim hover:text-fg-muted transition-colors"
             >
               Skip for now
             </button>
@@ -115,7 +115,7 @@ export default function UploadPage() {
 
       <div>
         <h1 className="font-bold text-3xl mb-2">Upload Bets</h1>
-        <p className="text-ink-600">
+        <p className="text-fg-muted">
           Drop your CSV and we&apos;ll find the behavioral patterns hiding in your betting history.
         </p>
       </div>
@@ -123,8 +123,8 @@ export default function UploadPage() {
       {/* Tier info */}
       {tier === 'free' && (
         <div className="card p-4">
-          <p className="text-ink-600 text-sm">
-            <span className="font-medium text-[#F0F0F0]">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
+          <p className="text-fg-muted text-sm">
+            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
           </p>
         </div>
       )}
@@ -132,22 +132,22 @@ export default function UploadPage() {
       {/* How to get your data — prominent banner */}
       <Link
         href="/how-to-upload"
-        className="block card border-flame-500/30 bg-flame-500/5 hover:bg-flame-500/10 p-4 transition-colors"
+        className="block card border-scalpel/20 bg-scalpel-muted hover:bg-scalpel-muted p-4 transition-colors"
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[#e7e6e1] font-medium text-sm">Don&apos;t have a CSV yet?</p>
-            <p className="text-ink-600 text-sm mt-0.5">
+            <p className="text-fg-bright font-medium text-sm">Don&apos;t have a CSV yet?</p>
+            <p className="text-fg-muted text-sm mt-0.5">
               We&apos;ll show you how to get your bet history into BetAutopsy — step by step for every method.
             </p>
           </div>
-          <span className="text-flame-500 text-lg shrink-0 ml-4">→</span>
+          <span className="text-scalpel text-lg shrink-0 ml-4">→</span>
         </div>
       </Link>
 
       {/* Template download */}
       <div className="text-sm">
-        <a href="/api/template" className="text-flame-500 hover:underline">
+        <a href="/api/template" className="text-scalpel hover:underline">
           ↓ Download CSV template
         </a>
       </div>
@@ -160,8 +160,8 @@ export default function UploadPage() {
         onClick={() => fileInputRef.current?.click()}
         className={`card p-12 text-center cursor-pointer transition-all duration-200 ${
           dragOver
-            ? 'border-flame-500 bg-flame-500/5'
-            : 'hover:border-white/[0.15]'
+            ? 'border-scalpel bg-scalpel-muted'
+            : 'hover:border-white/[0.08]'
         }`}
       >
         <input
@@ -175,32 +175,32 @@ export default function UploadPage() {
         {state === 'uploading' ? (
           <div className="space-y-3">
             <div className="text-4xl animate-pulse">⏳</div>
-            <p className="text-ink-600">Parsing and importing your bets...</p>
-            <div className="w-48 h-1.5 bg-ink-700 rounded-full mx-auto overflow-hidden">
-              <div className="h-full bg-flame-500 rounded-full animate-pulse w-2/3" />
+            <p className="text-fg-muted">Parsing and importing your bets...</p>
+            <div className="w-48 h-1.5 bg-surface rounded-full mx-auto overflow-hidden">
+              <div className="h-full bg-scalpel rounded-full animate-pulse w-2/3" />
             </div>
           </div>
         ) : state === 'success' && result ? (
           <div className="space-y-3">
             <div className="text-4xl">{result.bets_imported > 0 ? '✅' : 'ℹ️'}</div>
             {result.bets_imported > 0 ? (
-              <p className="text-mint-500 font-medium text-lg">
+              <p className="text-win font-medium text-lg">
                 {result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
                 {result.duplicates_skipped > 0 && (
-                  <span className="text-ink-600 font-normal text-sm block mt-1">
+                  <span className="text-fg-muted font-normal text-sm block mt-1">
                     {result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped
                   </span>
                 )}
               </p>
             ) : (
-              <p className="text-ink-600 font-medium text-lg">
+              <p className="text-fg-muted font-medium text-lg">
                 All {result.duplicates_skipped} bet{result.duplicates_skipped !== 1 ? 's were' : ' was'} already in your history — nothing new to import.
               </p>
             )}
             {result.warnings.length > 0 && (
               <div className="text-left max-w-md mx-auto mt-4">
-                <p className="text-amber-400 text-sm font-medium mb-1">Warnings:</p>
-                <ul className="text-amber-400/70 text-xs space-y-1">
+                <p className="text-caution text-sm font-medium mb-1">Warnings:</p>
+                <ul className="text-caution/70 text-xs space-y-1">
                   {result.warnings.slice(0, 5).map((w, i) => (
                     <li key={i}>• {w}</li>
                   ))}
@@ -247,7 +247,7 @@ export default function UploadPage() {
                       setState('idle');
                       setResult(null);
                     }}
-                    className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
+                    className="text-sm text-fg-muted hover:text-fg transition-colors"
                   >
                     Upload more bets first
                   </button>
@@ -269,7 +269,7 @@ export default function UploadPage() {
         ) : state === 'error' ? (
           <div className="space-y-3">
             <div className="text-4xl">❌</div>
-            <p className="text-red-400">{error}</p>
+            <p className="text-loss">{error}</p>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -284,10 +284,10 @@ export default function UploadPage() {
         ) : (
           <div className="space-y-3">
             <div className="text-5xl">📤</div>
-            <p className="text-[#F0F0F0] font-medium text-lg">
+            <p className="text-fg-bright font-medium text-lg">
               Drag &amp; drop your CSV here
             </p>
-            <p className="text-ink-600 text-sm">or click to browse files</p>
+            <p className="text-fg-muted text-sm">or click to browse files</p>
           </div>
         )}
       </div>
@@ -295,16 +295,16 @@ export default function UploadPage() {
       {/* Format guide */}
       <div className="card p-6 space-y-4">
         <h2 className="font-bold text-xl">Supported Formats</h2>
-        <p className="text-ink-600 text-sm">
+        <p className="text-fg-muted text-sm">
           We auto-detect columns from Pikkit (including DFS/pick&apos;em and prediction market data)
           and generic CSV exports.
         </p>
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-ink-600">Expected columns:</h3>
+          <h3 className="text-sm font-medium text-fg-muted">Expected columns:</h3>
           <div className="flex flex-wrap gap-2">
             {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
               (col) => (
-                <span key={col} className="font-mono text-xs bg-ink-900 border border-white/[0.08] rounded px-2 py-1">
+                <span key={col} className="font-mono text-xs bg-base border border-white/[0.04] rounded px-2 py-1">
                   {col}
                 </span>
               )
@@ -312,8 +312,8 @@ export default function UploadPage() {
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-medium text-ink-600 mb-2">Sample CSV:</h3>
-          <pre className="font-mono text-xs text-ink-500 bg-ink-900 border border-white/[0.08] rounded-lg p-4 overflow-x-auto">
+          <h3 className="text-sm font-medium text-fg-muted mb-2">Sample CSV:</h3>
+          <pre className="font-mono text-xs text-fg-muted bg-base border border-white/[0.04] rounded-sm p-4 overflow-x-auto">
 {`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
 2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
 2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM

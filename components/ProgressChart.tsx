@@ -26,8 +26,8 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="bg-ink-800 border border-white/[0.08] rounded-lg px-3 py-2 text-xs shadow-lg">
-                    <p className="text-ink-600">{label}</p>
+                  <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+                    <p className="text-fg-muted">{label}</p>
                     {payload.map((p) => (
                       <p key={p.dataKey as string} style={{ color: p.color }} className="font-mono">
                         {p.dataKey === 'emotion' ? `Emotion: ${p.value}` : `ROI: ${p.value}%`}
@@ -43,7 +43,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="flex gap-6 justify-center mt-3 text-xs text-ink-600">
+      <div className="flex gap-6 justify-center mt-3 text-xs text-fg-muted">
         <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#fbbf24] inline-block rounded" /> Emotion Score (lower is better)</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#00C9A7] inline-block rounded" /> ROI %</span>
       </div>

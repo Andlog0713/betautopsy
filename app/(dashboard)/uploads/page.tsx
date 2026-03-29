@@ -106,8 +106,8 @@ export default function UploadsPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-32 bg-ink-800 rounded" />
-        {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-ink-800 rounded-xl" />)}
+        <div className="h-8 w-32 bg-surface rounded" />
+        {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-surface rounded-sm" />)}
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function UploadsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-bold text-3xl mb-1">Uploads</h1>
-          <p className="text-ink-600 text-sm">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
+          <p className="text-fg-muted text-sm">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
         </div>
         <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>
       </div>
@@ -126,17 +126,17 @@ export default function UploadsPage() {
       {legacyBets.length > 0 && (
         <div className="card p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm text-[#F0F0F0]">Previous imports</p>
-            <p className="text-xs text-ink-600">{legacyBets.length} bets uploaded before upload tracking was enabled</p>
+            <p className="text-sm text-fg-bright">Previous imports</p>
+            <p className="text-xs text-fg-muted">{legacyBets.length} bets uploaded before upload tracking was enabled</p>
           </div>
-          <Link href="/bets" className="text-xs text-flame-500 hover:underline">View in Bet History</Link>
+          <Link href="/bets" className="text-xs text-scalpel hover:underline">View in Bet History</Link>
         </div>
       )}
 
       {uploads.length === 0 && legacyBets.length === 0 ? (
         <div className="card p-12 text-center">
           <div className="text-4xl mb-3">📁</div>
-          <p className="text-ink-600 mb-4">No uploads yet.</p>
+          <p className="text-fg-muted mb-4">No uploads yet.</p>
           <Link href="/upload" className="btn-primary">Upload Your First CSV</Link>
         </div>
       ) : (
@@ -146,13 +146,13 @@ export default function UploadsPage() {
             const isEditing = editingId === u.id;
 
             return (
-              <div key={u.id} className={`card p-5 ${selected.has(u.id) ? 'border-flame-500/30 bg-flame-500/5' : ''}`}>
+              <div key={u.id} className={`card p-5 ${selected.has(u.id) ? 'border-scalpel/20 bg-scalpel-muted' : ''}`}>
                 <div className="flex items-start gap-4">
                   <input
                     type="checkbox"
                     checked={selected.has(u.id)}
                     onChange={() => toggleSelect(u.id)}
-                    className="mt-1 rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="mt-1 rounded border-white/[0.04] bg-surface text-scalpel focus:ring-flame-500/40 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -171,40 +171,40 @@ export default function UploadsPage() {
                           <p className="font-medium truncate">{name}</p>
                           <button
                             onClick={() => { setEditingId(u.id); setEditName(name); }}
-                            className="text-ink-700 hover:text-ink-500 transition-colors shrink-0"
+                            className="text-fg-dim hover:text-fg transition-colors shrink-0"
                             title="Rename"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           </button>
                         </>
                       )}
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.analyzed ? 'bg-mint-500/10 text-mint-500' : 'bg-ink-700/50 text-ink-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-sm ${u.analyzed ? 'bg-win/10 text-win' : 'bg-surface text-fg-muted'}`}>
                         {u.analyzed ? 'Analyzed' : 'Not analyzed'}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-600">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted">
                       <span>{new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       <span>{u.bet_count} bets</span>
                       <span>{u.sportsbook ?? 'Multiple books'}</span>
                       <span className="font-mono">{u.record}</span>
-                      <span className={`font-mono ${u.netPnL >= 0 ? 'text-mint-500' : 'text-red-400'}`}>
+                      <span className={`font-mono ${u.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
                         {u.netPnL >= 0 ? '+' : ''}${Math.round(u.netPnL).toLocaleString()}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/uploads/${u.id}`} className="text-xs text-ink-600 hover:text-[#F0F0F0] transition-colors">
+                    <Link href={`/uploads/${u.id}`} className="text-xs text-fg-muted hover:text-fg transition-colors">
                       View Bets
                     </Link>
-                    <Link href={`/reports?upload_id=${u.id}`} className="text-xs text-flame-500 hover:underline">
+                    <Link href={`/reports?upload_id=${u.id}`} className="text-xs text-scalpel hover:underline">
                       Analyze
                     </Link>
                     {isPaid && (
                       <button
                         onClick={() => deleteUpload(u.id, u.bet_count)}
-                        className="text-xs text-ink-700 hover:text-red-400 transition-colors"
+                        className="text-xs text-fg-dim hover:text-loss transition-colors"
                         aria-label="Delete upload"
                       >
                         ✕
@@ -221,13 +221,13 @@ export default function UploadsPage() {
       {/* Multi-select action bar */}
       {selected.size > 0 && (
         <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-          <span className="text-sm text-[#F0F0F0]">
+          <span className="text-sm text-fg-bright">
             <span className="font-mono font-medium">{selected.size}</span> upload{selected.size !== 1 ? 's' : ''} selected ({totalSelectedBets} bets)
           </span>
-          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">
+          <button onClick={() => setSelected(new Set())} className="text-sm text-fg-muted hover:text-fg transition-colors">
             Deselect All
           </button>
-          <button onClick={analyzeSelected} className="text-sm text-flame-500 hover:underline">
+          <button onClick={analyzeSelected} className="text-sm text-scalpel hover:underline">
             Analyze Selected
           </button>
           {selected.size === 2 && isPaid && (

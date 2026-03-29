@@ -42,18 +42,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="card p-8 animate-fade-in">
-      <p className="text-ink-600 text-sm text-center mb-2">Your betting behavior doesn&apos;t lie. Let&apos;s see what&apos;s changed.</p>
-      <h2 className="font-bold text-2xl mb-6 text-center">Welcome back</h2>
+    <div className="case-card p-8 animate-fade-in">
+      <p className="text-fg-muted text-sm text-center mb-2">Your betting behavior doesn&apos;t lie. Let&apos;s see what&apos;s changed.</p>
+      <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Welcome back</h2>
 
       <OAuthButtons />
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/[0.08]" />
+          <div className="w-full border-t border-white/[0.04]" />
         </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-ink-950 px-3 text-ink-600">or</span>
+        <div className="relative flex justify-center">
+          <span className="bg-surface px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
         </div>
       </div>
 
@@ -89,10 +89,10 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-bleed text-sm font-mono">{error}</p>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <button type="submit" disabled={loading} className="btn-primary w-full font-mono">
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
@@ -107,17 +107,17 @@ export default function LoginPage() {
           });
           setResetSent(true);
         }}
-        className="text-sm text-ink-600 hover:text-flame-500 transition-colors mt-3 block mx-auto"
+        className="text-sm text-fg-muted hover:text-scalpel transition-colors mt-3 block mx-auto font-mono text-[11px]"
       >
         Forgot your password?
       </button>
       {resetSent && (
-        <p className="text-mint-500 text-sm text-center mt-2">Check your email for a reset link.</p>
+        <p className="text-scalpel text-sm text-center mt-2 font-mono">Check your email for a reset link.</p>
       )}
 
-      <p className="text-ink-600 text-sm text-center mt-6">
+      <p className="text-fg-muted text-sm text-center mt-6">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-flame-500 hover:underline">
+        <Link href="/signup" className="text-scalpel hover:underline">
           Sign up
         </Link>
       </p>

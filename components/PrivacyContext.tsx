@@ -50,7 +50,7 @@ export function EyeToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={toggle}
-      className={`text-ink-500 hover:text-ink-600 transition-colors ${className ?? ''}`}
+      className={`text-fg-muted hover:text-fg-muted transition-colors ${className ?? ''}`}
       aria-label={hidden ? 'Show numbers' : 'Hide numbers'}
     >
       {hidden ? (

@@ -198,7 +198,7 @@ export default function BetsPage() {
         <div className="relative">
           <div className="absolute -top-1 right-0"><EyeToggle /></div>
           <h1 className="font-bold text-3xl mb-1">Bet History</h1>
-          <p className="text-ink-600 text-sm">{bets.length} total bets</p>
+          <p className="text-fg-muted text-sm">{bets.length} total bets</p>
         </div>
         <button
           onClick={() => { setShowForm(!showForm); if (showForm) setPrefill(null); }}
@@ -213,8 +213,8 @@ export default function BetsPage() {
 
       {/* Delete success message */}
       {deleteSuccess && (
-        <div className="card border-mint-500/30 bg-mint-500/5 p-3 text-center">
-          <p className="text-mint-500 text-sm">{deleteSuccess}</p>
+        <div className="card border-win/20 bg-win/10 p-3 text-center">
+          <p className="text-win text-sm">{deleteSuccess}</p>
         </div>
       )}
 
@@ -226,10 +226,10 @@ export default function BetsPage() {
               <button
                 key={sport}
                 onClick={() => setSportFilter(sport)}
-                className={`px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-sm text-sm whitespace-nowrap transition-colors ${
                   sportFilter === sport
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.04]'
                 }`}
               >
                 {sport === 'all' ? 'All Sports' : sport}
@@ -241,10 +241,10 @@ export default function BetsPage() {
               <button
                 key={bt}
                 onClick={() => setTypeFilter(bt)}
-                className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-sm text-xs whitespace-nowrap transition-colors ${
                   typeFilter === bt
-                    ? 'bg-flame-500/10 text-flame-500'
-                    : 'text-ink-700 hover:text-ink-500 hover:bg-white/[0.04]'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.04]'
                 }`}
               >
                 {bt === 'all' ? 'All Types' : bt}
@@ -260,49 +260,49 @@ export default function BetsPage() {
           <div className="flex items-center gap-2">
             <span className="text-lg">🔒</span>
             <div>
-              <p className="text-sm text-[#F0F0F0]">Want to analyze just your wins? Or filter by sport?</p>
-              <p className="text-xs text-ink-600">Pro users get unlimited filtered reports.</p>
+              <p className="text-sm text-fg-bright">Want to analyze just your wins? Or filter by sport?</p>
+              <p className="text-xs text-fg-muted">Pro users get unlimited filtered reports.</p>
             </div>
           </div>
-          <a href="/pricing" className="text-sm text-flame-500 hover:underline shrink-0">Upgrade →</a>
+          <a href="/pricing" className="text-sm text-scalpel hover:underline shrink-0">Upgrade →</a>
         </div>
       )}
 
       {/* Bulk action bar (inline, above table) */}
       {selected.size > 0 && (
         bulkConfirm ? (
-          <div className="card border-red-400/30 bg-red-400/5 px-5 py-3 flex flex-wrap items-center gap-4">
-            <p className="text-sm text-[#F0F0F0]">
+          <div className="card border-bleed/20 bg-bleed-muted px-5 py-3 flex flex-wrap items-center gap-4">
+            <p className="text-sm text-fg-bright">
               Delete {selected.size} bet{selected.size !== 1 ? 's' : ''}? This cannot be undone.
             </p>
             <button
               onClick={handleBulkDelete}
               disabled={bulkDeleting}
-              className="text-sm font-medium text-red-400 bg-red-400/10 hover:bg-red-400/20 px-4 py-1.5 rounded-lg transition-colors"
+              className="text-sm font-medium text-loss bg-bleed-muted hover:bg-bleed-muted px-4 py-1.5 rounded-sm transition-colors"
             >
               {bulkDeleting ? 'Deleting...' : 'Delete'}
             </button>
             <button
               onClick={() => setBulkConfirm(false)}
-              className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
+              className="text-sm text-fg-muted hover:text-fg transition-colors"
             >
               Cancel
             </button>
           </div>
         ) : (
           <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-            <span className="text-sm text-[#F0F0F0]">
+            <span className="text-sm text-fg-bright">
               <span className="font-mono font-medium">{selected.size}</span> bet{selected.size !== 1 ? 's' : ''} selected
             </span>
             <button
               onClick={() => setSelected(new Set())}
-              className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
+              className="text-sm text-fg-muted hover:text-fg transition-colors"
             >
               Deselect All
             </button>
             <button
               onClick={() => setBulkConfirm(true)}
-              className="text-sm text-red-400/70 hover:text-red-400 transition-colors"
+              className="text-sm text-loss/70 hover:text-loss transition-colors"
             >
               Delete Selected
             </button>
@@ -314,13 +314,13 @@ export default function BetsPage() {
       {loading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 bg-ink-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-14 bg-surface rounded-sm animate-pulse" />
           ))}
         </div>
       ) : bets.length === 0 ? (
         <div className="card p-12 text-center space-y-4">
           <div className="text-4xl mb-1">🎯</div>
-          <p className="text-ink-600">No bets yet. Upload a CSV or add bets manually above.</p>
+          <p className="text-fg-muted">No bets yet. Upload a CSV or add bets manually above.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/upload" className="btn-primary text-sm">Upload CSV</Link>
             <Link href="/how-to-upload" className="btn-secondary text-sm">How to Get Your Data</Link>
@@ -331,18 +331,18 @@ export default function BetsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-white/[0.04]">
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={allFilteredSelected}
                       onChange={toggleSelectAll}
                       aria-label="Select all bets on this page"
-                      className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                      className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
                     />
                   </th>
                   <SortTh col="placed_at" label="Date" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-                  <th className="text-left text-ink-600 font-medium px-4 py-3">Description</th>
+                  <th className="text-left text-fg-muted font-medium px-4 py-3">Description</th>
                   <SortTh col="sport" label="Sport" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="bet_type" label="Type" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="odds" label="Odds" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -361,7 +361,7 @@ export default function BetsPage() {
                   <tr
                     key={bet.id}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
-                      selected.has(bet.id) ? 'bg-flame-500/5' : ''
+                      selected.has(bet.id) ? 'bg-scalpel-muted' : ''
                     }`}
                   >
                     <td className="px-4 py-3">
@@ -370,10 +370,10 @@ export default function BetsPage() {
                         checked={selected.has(bet.id)}
                         onChange={() => toggleSelect(bet.id)}
                         aria-label={`Select bet: ${bet.description}`}
-                        className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                        className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-ink-600">
+                    <td className="px-4 py-3 font-mono text-xs text-fg-muted">
                       {new Date(bet.placed_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -382,43 +382,43 @@ export default function BetsPage() {
                     <td className="px-4 py-3">
                       {(() => {
                         const fmt = formatBetDescription(bet);
-                        if (!fmt.isParlay) return <span className="text-[#F0F0F0]">{fmt.label}</span>;
+                        if (!fmt.isParlay) return <span className="text-fg-bright">{fmt.label}</span>;
                         return (
                           <div>
-                            <span className="text-xs font-medium text-ink-500 bg-ink-900 rounded px-1.5 py-0.5 mr-1.5">{fmt.label}</span>
+                            <span className="text-xs font-medium text-fg-muted bg-base rounded px-1.5 py-0.5 mr-1.5">{fmt.label}</span>
                             <div className="mt-1 space-y-0.5">
                               {fmt.legs.map((leg, li) => (
-                                <div key={li} className="text-[#F0F0F0] text-xs">{leg}</div>
+                                <div key={li} className="text-fg-bright text-xs">{leg}</div>
                               ))}
                             </div>
                           </div>
                         );
                       })()}
                       {bet.is_bonus_bet && (
-                        <span className="ml-2 text-xs bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs bg-amber-500/10 text-caution px-1.5 py-0.5 rounded">
                           Bonus
                         </span>
                       )}
                       {bet.parlay_legs && bet.parlay_legs > 1 && (
-                        <span className="ml-2 text-xs bg-ink-700/50 text-ink-500 px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs bg-surface text-fg-muted px-1.5 py-0.5 rounded">
                           {bet.parlay_legs}L
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-ink-600 hidden md:table-cell">{bet.sport}</td>
-                    <td className="px-4 py-3 text-ink-600 hidden md:table-cell capitalize">{bet.bet_type}</td>
+                    <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{bet.sport}</td>
+                    <td className="px-4 py-3 text-fg-muted hidden md:table-cell capitalize">{bet.bet_type}</td>
                     <td className="px-4 py-3 text-right font-mono text-xs">
                       {mask(bet.odds > 0 ? `+${bet.odds}` : `${bet.odds}`)}
                     </td>
                     <td className="px-4 py-3 text-right font-mono">{mask(`$${Number(bet.stake).toFixed(0)}`)}</td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        className={`text-xs font-medium px-2 py-0.5 rounded-sm ${
                           bet.result === 'win'
-                            ? 'bg-mint-500/10 text-mint-500'
+                            ? 'bg-win/10 text-win'
                             : bet.result === 'loss'
-                            ? 'bg-red-400/10 text-red-400'
-                            : 'bg-ink-700/50 text-ink-500'
+                            ? 'bg-bleed-muted text-loss'
+                            : 'bg-surface text-fg-muted'
                         }`}
                       >
                         {bet.result.toUpperCase()}
@@ -427,10 +427,10 @@ export default function BetsPage() {
                     <td
                       className={`px-4 py-3 text-right font-mono font-medium ${
                         Number(bet.profit) > 0
-                          ? 'text-mint-500'
+                          ? 'text-win'
                           : Number(bet.profit) < 0
-                          ? 'text-red-400'
-                          : 'text-ink-600'
+                          ? 'text-loss'
+                          : 'text-fg-muted'
                       }`}
                     >
                       {mask(`${Number(bet.profit) > 0 ? '+' : ''}$${Number(bet.profit).toFixed(0)}`)}
@@ -438,7 +438,7 @@ export default function BetsPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleDelete(bet.id)}
-                        className="text-ink-700 hover:text-red-400 transition-colors text-xs"
+                        className="text-fg-dim hover:text-loss transition-colors text-xs"
                         aria-label={`Delete bet: ${bet.description}`}
                       >
                         ✕
@@ -451,23 +451,23 @@ export default function BetsPage() {
           </div>
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
-              <p className="text-xs text-ink-600">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
+              <p className="text-xs text-fg-muted">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 text-sm rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]"
+                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.04]"
                 >
                   Prev
                 </button>
-                <span className="text-xs text-ink-600 font-mono">{page}/{totalPages}</span>
+                <span className="text-xs text-fg-muted font-mono">{page}/{totalPages}</span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1 text-sm rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]"
+                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.04]"
                 >
                   Next
                 </button>
@@ -507,23 +507,23 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
       {!showConfirm ? (
         <button
           onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-          className="text-[10px] text-ink-700 hover:text-red-400/70 transition-colors whitespace-nowrap"
+          className="text-[10px] text-fg-dim hover:text-loss/70 transition-colors whitespace-nowrap"
           title="Clear all bets"
         >
           Clear all
         </button>
       ) : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/80 backdrop-blur-sm" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
-          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-ink-800 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80 backdrop-blur-sm" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
+          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-bold text-lg">Clear All Bets</h3>
-            <p className="text-sm text-[#F0F0F0]">
+            <p className="text-sm text-fg-bright">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of
               your bets and cannot be undone. Your autopsy reports will be kept but
               may reference bets that no longer exist.
             </p>
             <div>
               <label className="label">
-                Type <span className="font-mono text-red-400">DELETE</span> to confirm
+                Type <span className="font-mono text-loss">DELETE</span> to confirm
               </label>
               <input
                 type="text"
@@ -759,20 +759,20 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
               type="checkbox"
               checked={form.is_bonus_bet}
               onChange={(e) => update('is_bonus_bet', e.target.checked)}
-              className="rounded border-white/[0.08] bg-ink-900 text-flame-500 focus:ring-flame-500/40"
+              className="rounded border-white/[0.04] bg-base text-scalpel focus:ring-scalpel/40"
             />
-            <span className="text-sm text-ink-600">Bonus Bet</span>
+            <span className="text-sm text-fg-muted">Bonus Bet</span>
           </label>
         </div>
       </div>
 
       {/* Calculated profit preview */}
       {form.odds && form.stake && form.result !== 'pending' && (
-        <p className="text-sm text-ink-600">
+        <p className="text-sm text-fg-muted">
           Calculated P&L:{' '}
           <span
             className={`font-mono font-medium ${
-              profit > 0 ? 'text-mint-500' : profit < 0 ? 'text-red-400' : 'text-ink-600'
+              profit > 0 ? 'text-win' : profit < 0 ? 'text-loss' : 'text-fg-muted'
             }`}
           >
             {profit > 0 ? '+' : ''}${profit.toFixed(2)}
@@ -780,7 +780,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
         </p>
       )}
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-loss text-sm">{error}</p>}
 
       <button type="submit" disabled={submitting} className="btn-primary">
         {submitting ? 'Adding...' : 'Add Bet'}
@@ -814,12 +814,12 @@ function SortTh({
   return (
     <th
       className={`text-${align} font-medium px-4 py-3 cursor-pointer select-none transition-colors ${
-        active ? 'text-[#F0F0F0]' : 'text-ink-600 hover:text-ink-500'
+        active ? 'text-fg-bright' : 'text-fg-muted hover:text-fg'
       } ${className ?? ''}`}
       onClick={() => onSort(col)}
     >
       {label}
-      {arrow && <span className="text-flame-500 text-xs ml-0.5">{arrow}</span>}
+      {arrow && <span className="text-scalpel text-xs ml-0.5">{arrow}</span>}
     </th>
   );
 }

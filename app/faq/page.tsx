@@ -88,16 +88,16 @@ const FAQ_DATA: FAQSection[] = [
 
 function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className={`border-l-2 transition-colors ${isOpen ? 'border-flame-500' : 'border-transparent'}`}>
+    <div className={`border-l-2 transition-colors ${isOpen ? 'border-scalpel' : 'border-transparent'}`}>
       <button
         onClick={onToggle}
         className="w-full text-left px-4 py-4 flex justify-between items-start gap-4 hover:bg-white/[0.02] transition-colors"
       >
-        <span className="font-medium text-[#F0F0F0] text-base">{item.q}</span>
-        <span className={`text-ink-600 text-lg shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
+        <span className="font-medium text-fg-bright text-base">{item.q}</span>
+        <span className={`text-fg-muted text-lg shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
       </button>
       <div className={`overflow-hidden transition-all duration-300 ease-out ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <p className="text-sm text-ink-600 leading-relaxed px-4 pb-4">{item.a}</p>
+        <p className="text-sm text-fg-muted leading-relaxed px-4 pb-4">{item.a}</p>
       </div>
     </div>
   );
@@ -110,13 +110,13 @@ export default function FAQPage() {
     <div className="space-y-4">
       <div className="mb-12">
         <h1 className="font-bold text-4xl mb-3">Frequently Asked Questions</h1>
-        <p className="text-ink-600">Everything you need to know about BetAutopsy.</p>
+        <p className="text-fg-muted">Everything you need to know about BetAutopsy.</p>
       </div>
 
       {FAQ_DATA.map((section, si) => (
         <div key={section.title}>
-          {si > 0 && <div className="border-t border-white/[0.06] my-10" />}
-          <h2 className="text-xs uppercase tracking-widest text-flame-500 mb-4 font-semibold">{section.title}</h2>
+          {si > 0 && <div className="border-t border-white/[0.04] my-10" />}
+          <h2 className="text-xs uppercase tracking-widest text-scalpel mb-4 font-semibold">{section.title}</h2>
           <div className="space-y-0.5">
             {section.items.map((item) => {
               const key = `${si}-${item.q}`;
@@ -134,21 +134,21 @@ export default function FAQPage() {
       ))}
 
       {/* Still have questions */}
-      <div className="border-t border-white/[0.06] my-10" />
+      <div className="border-t border-white/[0.04] my-10" />
       <div className="text-center space-y-3 py-8">
-        <p className="text-[#F0F0F0] font-medium text-lg">Still have questions?</p>
-        <p className="text-ink-600 text-sm">We&apos;re happy to help.</p>
+        <p className="text-fg-bright font-medium text-lg">Still have questions?</p>
+        <p className="text-fg-muted text-sm">We&apos;re happy to help.</p>
         <a href="mailto:support@betautopsy.com" className="btn-primary inline-block text-sm">
           Contact Support
         </a>
       </div>
 
       {/* Quick links */}
-      <div className="flex flex-wrap gap-4 justify-center text-sm text-ink-600 pb-4">
-        <Link href="/quiz" className="hover:text-flame-500 transition-colors">Take the Quiz</Link>
-        <Link href="/how-to-upload" className="hover:text-flame-500 transition-colors">How to Upload</Link>
-        <Link href="/pricing" className="hover:text-flame-500 transition-colors">Pricing</Link>
-        <Link href="/blog" className="hover:text-flame-500 transition-colors">Blog</Link>
+      <div className="flex flex-wrap gap-4 justify-center text-sm text-fg-muted pb-4">
+        <Link href="/quiz" className="hover:text-scalpel transition-colors">Take the Quiz</Link>
+        <Link href="/how-to-upload" className="hover:text-scalpel transition-colors">How to Upload</Link>
+        <Link href="/pricing" className="hover:text-scalpel transition-colors">Pricing</Link>
+        <Link href="/blog" className="hover:text-scalpel transition-colors">Blog</Link>
       </div>
     </div>
   );

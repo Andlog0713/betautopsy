@@ -72,20 +72,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
-      <Link href="/blog" className="text-sm text-ink-600 hover:text-flame-500 transition-colors">
+      <Link href="/blog" className="text-sm text-fg-muted hover:text-scalpel transition-colors">
         ← All posts
       </Link>
 
       <header>
         <div className="flex flex-wrap gap-2 mb-4">
           {post.tags.map((tag) => (
-            <span key={tag} className="text-[11px] text-ink-600 bg-ink-900 rounded-full px-2.5 py-0.5">
+            <span key={tag} className="text-[11px] text-fg-muted bg-base rounded-sm px-2.5 py-0.5">
               {tag}
             </span>
           ))}
         </div>
         <h1 className="font-bold text-3xl md:text-4xl mb-3">{post.title}</h1>
-        <div className="flex items-center gap-3 text-sm text-ink-700">
+        <div className="flex items-center gap-3 text-sm text-fg-dim">
           <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           <span>·</span>
           <span>{post.readTime}</span>
@@ -96,11 +96,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <PostContent />
       </div>
 
-      <div className="space-y-6 pt-8 border-t border-white/[0.06]">
-        <div className="card p-6 text-center border-flame-500/20 bg-gradient-to-r from-flame-500/5 to-transparent">
+      <div className="space-y-6 pt-8 border-t border-white/[0.04]">
+        <div className="card p-6 text-center border-scalpel/20 bg-gradient-to-r from-scalpel/5 to-transparent">
           <span className="text-2xl mb-2 block">🧬</span>
           <h3 className="font-bold text-lg mb-2">What&apos;s your Bet DNA?</h3>
-          <p className="text-ink-600 text-sm mb-4">
+          <p className="text-fg-muted text-sm mb-4">
             Take the free 2-minute quiz to discover your betting personality and hidden biases.
           </p>
           <Link href="/quiz" className="btn-primary inline-block text-sm">
@@ -110,7 +110,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <div className="card p-6 text-center">
           <h3 className="font-bold text-lg mb-2">Want the data, not just the theory?</h3>
-          <p className="text-ink-600 text-sm mb-4">
+          <p className="text-fg-muted text-sm mb-4">
             Upload your bet history and get an AI-powered behavioral analysis — free.
           </p>
           <Link href="/signup" className="btn-secondary inline-block text-sm">
@@ -125,10 +125,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <Link
                 key={p.slug}
                 href={`/blog/${p.slug}`}
-                className="card p-4 hover:border-white/[0.15] transition-colors"
+                className="card p-4 hover:border-white/[0.04] transition-colors"
               >
                 <h4 className="font-medium text-sm mb-1">{p.title}</h4>
-                <p className="text-ink-700 text-xs">{p.readTime}</p>
+                <p className="text-fg-dim text-xs">{p.readTime}</p>
               </Link>
             ))}
           </div>

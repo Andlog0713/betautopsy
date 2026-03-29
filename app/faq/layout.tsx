@@ -16,9 +16,9 @@ export default function FAQLayout({ children }: { children: React.ReactNode }) {
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         {children}
       </div>
-      <footer className="border-t border-white/[0.06]">
+      <footer className="border-t border-white/[0.04]">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
-          <p className="text-ink-700 text-xs text-center">
+          <p className="text-fg-dim text-xs text-center">
             For entertainment and educational purposes only. Not gambling advice. 21+.
             If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>

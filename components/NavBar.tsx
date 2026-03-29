@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/types';
-
 import { Logo } from '@/components/logo';
 
 export default function NavBar() {
@@ -12,6 +11,7 @@ export default function NavBar() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ export default function NavBar() {
     checkAuth();
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -52,100 +51,118 @@ export default function NavBar() {
   const initial = (profile?.display_name?.[0] ?? user?.email?.[0] ?? '?').toUpperCase();
   const tier = profile?.subscription_tier ?? 'free';
 
-  const tierBadge: Record<string, string> = {
-    free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
-    pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
-    sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
-  };
+  const navLinks = [
+    { href: '/blog', label: 'Blog' },
+    { href: '/quiz', label: 'Quiz' },
+    { href: '/how-to-upload', label: 'How to Upload' },
+    { href: '/#pricing', label: 'Pricing' },
+  ];
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-ink-900/90 backdrop-blur-xl">
-      <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center shrink-0">
-          <span className="sm:hidden"><Logo size="xs" variant="horizontal" theme="dark" /></span>
-          <span className="hidden sm:block"><Logo size="md" variant="horizontal" theme="dark" /></span>
-        </Link>
-        <div className="flex items-center gap-3 sm:gap-6">
-          <Link href="/blog" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
-            Blog
+    <>
+      <nav className="border-b border-white/[0.04] bg-surface">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <Link href={user ? '/dashboard' : '/'} className="shrink-0">
+            <Logo size="xs" variant="horizontal" theme="dark" />
           </Link>
-          <Link href="/quiz" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
-            Quiz
-          </Link>
-          <Link href="/how-to-upload" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors whitespace-nowrap hidden sm:block">
-            How to Upload
-          </Link>
-          <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors hidden sm:block">
-            Pricing
-          </a>
 
-          {!authChecked ? (
-            /* Auth loading — show nothing to prevent flash */
-            <div className="w-24" />
-          ) : user ? (
-            /* Logged in */
-            <div className="flex items-center gap-3">
-              <a href="/#pricing" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors sm:hidden">
-                Pricing
-              </a>
-              <Link href="/dashboard" className="btn-primary text-sm !px-4 !py-2 whitespace-nowrap">
-                Dashboard
-              </Link>
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  aria-label="Account menu"
-                  aria-haspopup="true"
-                  aria-expanded={menuOpen}
-                  className="w-8 h-8 rounded-full bg-ink-800 border border-white/[0.1] flex items-center justify-center text-sm font-medium text-[#F0F0F0] hover:border-white/[0.2] transition-colors"
-                >
-                  {initial}
-                </button>
-                {menuOpen && (
-                  <div role="menu" className="absolute right-0 mt-2 w-48 sm:w-56 bg-ink-800 border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/40 animate-fade-in">
-                    <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
-                      <p className="text-xs text-ink-500 truncate">{user.email}</p>
-                      <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-1.5 capitalize ${tierBadge[tier]}`}>
-                        {tier}
-                      </span>
-                    </div>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMenuOpen(false)}
-                      className="block px-3 py-2 text-sm text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04] rounded-lg transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setMenuOpen(false)}
-                      className="block px-3 py-2 text-sm text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04] rounded-lg transition-colors"
-                    >
-                      Settings
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-3 py-2 text-sm text-ink-600 hover:text-red-400 hover:bg-white/[0.04] rounded-lg transition-colors"
-                    >
-                      Sign out
-                    </button>
-                  </div>
+          {/* Center links — desktop */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              link.href.startsWith('#') || link.href.startsWith('/#') ? (
+                <a key={link.href} href={link.href} className="font-mono text-[11px] tracking-wider text-fg-dim hover:text-fg transition-colors">
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.href} href={link.href} className="font-mono text-[11px] tracking-wider text-fg-dim hover:text-fg transition-colors">
+                  {link.label}
+                </Link>
+              )
+            ))}
+          </div>
+
+          {/* Auth section */}
+          <div className="flex items-center gap-4">
+            {!authChecked ? (
+              <div className="w-20" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                {(profile?.streak_count ?? 0) > 0 && (
+                  <span className="font-mono text-[10px] text-scalpel" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
                 )}
+                <Link href="/dashboard" className="font-mono text-[11px] tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                  Dashboard
+                </Link>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted hover:border-white/[0.12] transition-colors"
+                  >
+                    {initial}
+                  </button>
+                  {menuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-surface border border-white/[0.06] rounded-sm p-1 shadow-2xl shadow-black/40 animate-fade-in z-50">
+                      <div className="px-3 py-2 border-b border-white/[0.04] mb-1">
+                        <p className="font-mono text-[10px] text-fg-dim truncate">{user.email}</p>
+                        <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
+                      </div>
+                      <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Dashboard</Link>
+                      <Link href="/settings" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Settings</Link>
+                      <button onClick={handleSignOut} className="w-full text-left px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-loss hover:bg-white/[0.03] rounded-sm transition-colors">Sign out</button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            /* Logged out */
-            <>
-              <Link href="/login" className="text-[13px] font-medium text-ink-600 hover:text-[#F0F0F0] transition-colors">
-                Log in
-              </Link>
-              <Link href="/signup" className="btn-primary text-sm !px-4 !py-2">
-                Get Started Free
-              </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link href="/login" className="font-mono text-[11px] tracking-wider text-fg-dim hover:text-fg transition-colors hidden sm:block">Log in</Link>
+                <Link href="/signup" className="font-mono text-[11px] tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                  Upload bets
+                </Link>
+              </>
+            )}
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden text-fg-muted hover:text-fg p-1"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile full-screen overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-base flex flex-col">
+          <div className="flex items-center justify-between px-6 h-14 border-b border-white/[0.04]">
+            <Logo size="xs" variant="horizontal" theme="dark" />
+            <button onClick={() => setMobileMenuOpen(false)} className="text-fg-muted hover:text-fg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col justify-center px-6 space-y-6">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className="font-mono text-lg tracking-wider text-fg-muted hover:text-fg transition-colors">
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="font-mono text-lg tracking-wider text-fg-muted hover:text-fg transition-colors">FAQ</Link>
+            <div className="pt-6 border-t border-white/[0.04]">
+              {user ? (
+                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>
+              ) : (
+                <div className="space-y-3">
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Upload bets — free</Link>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="btn-secondary text-center block font-mono text-sm">Log in</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

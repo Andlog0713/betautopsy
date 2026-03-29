@@ -67,11 +67,11 @@ export default function PricingPage() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="text-center space-y-2">
-          <div className="h-8 w-48 bg-ink-800 rounded mx-auto" />
-          <div className="h-4 w-64 bg-ink-800 rounded mx-auto" />
+          <div className="h-8 w-48 bg-surface rounded mx-auto" />
+          <div className="h-4 w-64 bg-surface rounded mx-auto" />
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-ink-800 rounded-xl" />)}
+          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-surface rounded-sm" />)}
         </div>
       </div>
     );
@@ -81,23 +81,23 @@ export default function PricingPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
         <h1 className="font-bold text-3xl mb-2">Choose Your Plan</h1>
-        <p className="text-ink-600">
+        <p className="text-fg-muted">
           Unlock deeper insights into your betting behavior.
         </p>
       </div>
 
       {/* Billing interval toggle */}
       <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm ${interval === 'monthly' ? 'text-[#F0F0F0]' : 'text-ink-600'}`}>Monthly</span>
+        <span className={`text-sm ${interval === 'monthly' ? 'text-fg-bright' : 'text-fg-muted'}`}>Monthly</span>
         <button
           onClick={() => setInterval(interval === 'monthly' ? 'annual' : 'monthly')}
-          className="relative w-14 h-7 rounded-full bg-ink-800 border border-white/[0.08] transition-colors"
+          className="relative w-14 h-7 rounded-full bg-surface border border-white/[0.04] transition-colors"
         >
           <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-flame-500 transition-transform ${interval === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`} />
         </button>
-        <span className={`text-sm ${interval === 'annual' ? 'text-[#F0F0F0]' : 'text-ink-600'}`}>
+        <span className={`text-sm ${interval === 'annual' ? 'text-fg-bright' : 'text-fg-muted'}`}>
           Annual
-          <span className="text-mint-500 text-xs ml-1.5">Save up to 34%</span>
+          <span className="text-win text-xs ml-1.5">Save up to 34%</span>
         </span>
       </div>
 
@@ -111,12 +111,12 @@ export default function PricingPage() {
               key={key}
               className={`card p-6 flex flex-col ${
                 highlight
-                  ? 'border-flame-500/50 shadow-lg shadow-flame-500/10'
+                  ? 'border-scalpel/30 shadow-lg shadow-scalpel/10'
                   : ''
-              } ${isActive ? 'ring-2 ring-flame-500/30' : ''}`}
+              } ${isActive ? 'ring-2 ring-scalpel/20' : ''}`}
             >
               {highlight && (
-                <span className="text-xs font-medium text-flame-500 bg-flame-500/10 rounded-full px-3 py-1 self-start mb-4">
+                <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
                   Most Popular
                 </span>
               )}
@@ -128,8 +128,8 @@ export default function PricingPage() {
                     <span className="font-mono text-3xl font-bold">
                       ${(config.annualPrice / 12).toFixed(2)}
                     </span>
-                    <span className="text-ink-600 text-sm">/mo</span>
-                    <p className="text-ink-700 text-xs mt-1">
+                    <span className="text-fg-muted text-sm">/mo</span>
+                    <p className="text-fg-dim text-xs mt-1">
                       ${config.annualPrice}/year — save {Math.round((1 - config.annualPrice / (config.price * 12)) * 100)}%
                     </p>
                   </>
@@ -139,26 +139,26 @@ export default function PricingPage() {
                       ${config.price}
                     </span>
                     {config.price > 0 && (
-                      <span className="text-ink-600 text-sm">/mo</span>
+                      <span className="text-fg-muted text-sm">/mo</span>
                     )}
                   </>
                 )}
               </div>
 
               <ul className="space-y-2 flex-1 mb-6">
-                <li className="text-sm text-ink-600 flex items-start gap-2">
-                  <span className="text-mint-500 mt-0.5">✓</span>
+                <li className="text-sm text-fg-muted flex items-start gap-2">
+                  <span className="text-win mt-0.5">✓</span>
                   {config.maxBets === null ? 'Unlimited bets' : `Up to ${config.maxBets} bets`}
                 </li>
-                <li className="text-sm text-ink-600 flex items-start gap-2">
-                  <span className="text-mint-500 mt-0.5">✓</span>
+                <li className="text-sm text-fg-muted flex items-start gap-2">
+                  <span className="text-win mt-0.5">✓</span>
                   {config.maxReports === null
                     ? 'Unlimited reports'
                     : `${config.maxReports} report`}
                 </li>
                 {config.features.map((f) => (
-                  <li key={f} className="text-sm text-ink-600 flex items-start gap-2">
-                    <span className="text-mint-500 mt-0.5">✓</span>
+                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                    <span className="text-win mt-0.5">✓</span>
                     {f}
                   </li>
                 ))}
@@ -166,12 +166,12 @@ export default function PricingPage() {
 
               {isActive ? (
                 <div className="text-center">
-                  <span className="inline-block text-sm font-medium text-mint-500 bg-mint-500/10 rounded-lg px-4 py-2">
+                  <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-sm px-4 py-2">
                     ✓ Active
                   </span>
                 </div>
               ) : key === 'free' ? (
-                <div className="text-center text-sm text-ink-600 py-2">
+                <div className="text-center text-sm text-fg-muted py-2">
                   Free forever
                 </div>
               ) : (
@@ -192,7 +192,7 @@ export default function PricingPage() {
         <div className="text-center">
           <button
             onClick={handleManage}
-            className="text-sm text-ink-600 hover:text-flame-500 transition-colors"
+            className="text-sm text-fg-muted hover:text-scalpel transition-colors"
           >
             Manage Subscription →
           </button>

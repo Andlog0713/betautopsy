@@ -25,10 +25,10 @@ export default function OnboardingSteps({
               <span
                 className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
                   isDone
-                    ? 'bg-mint-500/20 text-mint-500'
+                    ? 'bg-win/20 text-win'
                     : isActive
-                    ? 'bg-flame-500/20 text-flame-500'
-                    : 'bg-ink-800 text-ink-700'
+                    ? 'bg-scalpel-muted text-scalpel'
+                    : 'bg-surface text-fg-dim'
                 }`}
               >
                 {isDone ? '✓' : step.num}
@@ -36,10 +36,10 @@ export default function OnboardingSteps({
               <span
                 className={`text-xs sm:text-sm transition-colors ${
                   isDone
-                    ? 'text-mint-500'
+                    ? 'text-win'
                     : isActive
-                    ? 'text-[#F0F0F0]'
-                    : 'text-ink-700'
+                    ? 'text-fg-bright'
+                    : 'text-fg-dim'
                 }`}
               >
                 {step.label}
@@ -48,7 +48,7 @@ export default function OnboardingSteps({
             {i < steps.length - 1 && (
               <div
                 className={`w-6 sm:w-10 h-px ${
-                  isDone ? 'bg-mint-500/30' : 'bg-ink-700/50'
+                  isDone ? 'bg-win/30' : 'bg-fg-dim/50'
                 }`}
               />
             )}

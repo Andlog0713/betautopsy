@@ -103,7 +103,7 @@ export default function ShareModal({
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
         aria-label="Close share modal"
-        className="fixed top-4 right-4 z-[60] text-ink-500 hover:text-[#F0F0F0] transition-colors text-2xl"
+        className="fixed top-4 right-4 z-[60] text-fg-muted hover:text-fg transition-colors text-2xl"
       >
         ✕
       </button>
@@ -113,13 +113,13 @@ export default function ShareModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Format toggle */}
-        <div className="flex gap-1 bg-ink-900 p-1 rounded-lg">
+        <div className="flex gap-1 bg-base p-1 rounded-sm">
           <button
             onClick={() => setFormat('stories')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               format === 'stories'
-                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
-                : 'text-ink-600 hover:text-ink-500'
+                ? 'bg-surface text-fg-bright shadow-sm'
+                : 'text-fg-muted hover:text-fg-muted'
             }`}
           >
             Stories
@@ -128,8 +128,8 @@ export default function ShareModal({
             onClick={() => setFormat('card')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               format === 'card'
-                ? 'bg-ink-800 text-[#F0F0F0] shadow-sm'
-                : 'text-ink-600 hover:text-ink-500'
+                ? 'bg-surface text-fg-bright shadow-sm'
+                : 'text-fg-muted hover:text-fg-muted'
             }`}
           >
             Card

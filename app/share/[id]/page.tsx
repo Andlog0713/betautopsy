@@ -63,7 +63,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="font-bold text-3xl mb-2">Link expired</h1>
-          <p className="text-ink-600">This share link is no longer available.</p>
+          <p className="text-fg-muted">This share link is no longer available.</p>
           <Link href="/" className="btn-primary inline-block mt-4">Get Your Own Autopsy</Link>
         </div>
       </div>

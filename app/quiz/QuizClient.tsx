@@ -6,9 +6,9 @@ import { QUIZ_QUESTIONS, calculateQuizResult, type QuizResult } from '@/lib/quiz
 import QuizResultCard from '@/components/QuizResultCard';
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: 'bg-mint-500/10 text-mint-500 border-mint-500/20',
-  medium: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
-  high: 'bg-red-400/10 text-red-400 border-red-400/20',
+  low: 'bg-win/10 text-win border-win/20',
+  medium: 'bg-amber-400/10 text-caution border-amber-400/20',
+  high: 'bg-bleed-muted text-loss border-bleed/20',
 };
 
 const CALCULATING_MESSAGES = [
@@ -131,7 +131,7 @@ export default function QuizClient() {
   const progress = phase === 'questions' ? ((currentQ + 1) / QUIZ_QUESTIONS.length) * 100 : 0;
 
   const gamblingFooter = (
-    <p className="text-ink-700 text-xs text-center mt-12">
+    <p className="text-fg-dim text-xs text-center mt-12">
       For entertainment and educational purposes only. Not gambling advice. 21+.
       If you or someone you know has a gambling problem, call 1-800-GAMBLER.
     </p>
@@ -140,27 +140,27 @@ export default function QuizClient() {
   // ── Intro ──
   if (phase === 'intro') {
     return (
-      <main className="min-h-screen bg-ink-900 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-lg text-center animate-fade-in">
           <span className="text-6xl block mb-6">🧬</span>
           <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-4">
-            What&apos;s Your <span className="text-flame-500">Bet DNA</span>?
+            What&apos;s Your <span className="text-scalpel">Bet DNA</span>?
           </h1>
-          <p className="text-ink-600 text-lg mb-8 leading-relaxed">
+          <p className="text-fg-muted text-lg mb-8 leading-relaxed">
             Take this 2-minute quiz to discover your betting personality — the hidden
             patterns, biases, and tendencies that shape every bet you place.
           </p>
-          <p className="text-ink-700 text-sm mb-8">
+          <p className="text-fg-dim text-sm mb-8">
             No signup. No data needed. Just honest answers.
           </p>
           <button
             onClick={() => setPhase('questions')}
-            className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-flame-500/20"
+            className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/20"
           >
             Start Quiz
           </button>
-          <p className="text-ink-700 text-xs mt-6">13 questions · 2 minutes · 100% free</p>
-          <Link href="/" className="text-ink-700 text-xs hover:text-ink-500 transition-colors mt-4 inline-block">
+          <p className="text-fg-dim text-xs mt-6">13 questions · 2 minutes · 100% free</p>
+          <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors mt-4 inline-block">
             ← Back to BetAutopsy
           </Link>
           {gamblingFooter}
@@ -173,27 +173,27 @@ export default function QuizClient() {
   if (phase === 'questions') {
     const question = QUIZ_QUESTIONS[currentQ];
     return (
-      <main className="min-h-screen bg-ink-900 px-4 py-6">
+      <main className="min-h-screen bg-base px-4 py-6">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={handleBack}
               disabled={currentQ === 0}
-              className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="text-sm text-fg-muted hover:text-fg-bright transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ← Back
             </button>
-            <span className="text-sm text-ink-600">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
+            <span className="text-sm text-fg-muted">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
           </div>
-          <div className="h-1.5 bg-ink-800 rounded-full overflow-hidden mb-10">
+          <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-10">
             <div
-              className="h-full bg-flame-500 rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-scalpel rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
           <div key={question.id} className="animate-fade-in">
             <h2 className="font-bold text-xl md:text-2xl mb-2 leading-snug">{question.question}</h2>
-            {question.subtext && <p className="text-ink-600 text-sm mb-6">{question.subtext}</p>}
+            {question.subtext && <p className="text-fg-muted text-sm mb-6">{question.subtext}</p>}
             {!question.subtext && <div className="mb-6" />}
             <div className="space-y-3">
               {question.options.map((opt) => {
@@ -204,12 +204,12 @@ export default function QuizClient() {
                     key={opt.value}
                     onClick={() => handleAnswer(opt.value)}
                     disabled={selectedValue !== null}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
+                    className={`w-full text-left p-4 rounded-sm border transition-all duration-200 ${
                       isSelected
-                        ? 'border-flame-500 bg-flame-500/10 text-[#F0F0F0]'
+                        ? 'border-scalpel bg-scalpel-muted text-fg-bright'
                         : prevAnswer === opt.value
-                        ? 'border-white/[0.15] bg-white/[0.03] text-[#F0F0F0]'
-                        : 'border-white/[0.08] bg-ink-800/50 text-ink-500 hover:border-white/[0.15] hover:text-[#F0F0F0] hover:bg-ink-800'
+                        ? 'border-white/[0.08] bg-white/[0.03] text-fg-bright'
+                        : 'border-white/[0.04] bg-surface/50 text-fg-muted hover:border-white/[0.08] hover:text-fg-bright hover:bg-surface'
                     }`}
                   >
                     <span className="text-sm md:text-base">{opt.label}</span>
@@ -218,7 +218,7 @@ export default function QuizClient() {
               })}
             </div>
           </div>
-          <p className="text-ink-700 text-xs text-center mt-10">betautopsy.com</p>
+          <p className="text-fg-dim text-xs text-center mt-10">betautopsy.com</p>
         </div>
       </main>
     );
@@ -227,13 +227,13 @@ export default function QuizClient() {
   // ── Calculating ──
   if (phase === 'calculating') {
     return (
-      <main className="min-h-screen bg-ink-900 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="text-center animate-fade-in">
           <span className="text-6xl block mb-6 animate-pulse">🧬</span>
           <h2 className="font-bold text-xl mb-3">Analyzing your patterns...</h2>
-          <p className="text-ink-600 text-sm">{CALCULATING_MESSAGES[calcMsg]}</p>
-          <div className="w-48 h-1.5 bg-ink-800 rounded-full overflow-hidden mx-auto mt-6">
-            <div className="h-full bg-flame-500 rounded-full animate-pulse" style={{ width: '60%' }} />
+          <p className="text-fg-muted text-sm">{CALCULATING_MESSAGES[calcMsg]}</p>
+          <div className="w-48 h-1.5 bg-surface rounded-full overflow-hidden mx-auto mt-6">
+            <div className="h-full bg-scalpel rounded-full animate-pulse" style={{ width: '60%' }} />
           </div>
         </div>
       </main>
@@ -243,27 +243,27 @@ export default function QuizClient() {
   // ── Result Preview (holds back emotion score + biases to drive email capture) ──
   if (phase === 'result_preview' && result) {
     return (
-      <main className="min-h-screen bg-ink-900 px-4 py-12">
+      <main className="min-h-screen bg-base px-4 py-12">
         <div className="max-w-lg mx-auto animate-fade-in">
           {/* Archetype reveal only */}
           <div className="text-center mb-8">
             <span className="text-6xl block mb-4 animate-bounce">{result.archetype.emoji}</span>
-            <p className="text-ink-600 text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
+            <p className="text-fg-muted text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
             <h1 className="font-extrabold text-4xl mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-ink-500 text-sm leading-relaxed max-w-md mx-auto">
+            <p className="text-fg-muted text-sm leading-relaxed max-w-md mx-auto">
               {result.archetype.description}
             </p>
-            <p className="text-ink-700 text-xs mt-4">
+            <p className="text-fg-dim text-xs mt-4">
               Your full breakdown includes your Emotion Score, detected biases, strengths, and what to watch out for.
             </p>
           </div>
 
           {/* Email gate */}
-          <div className="card p-6 text-center space-y-4 border-flame-500/20 bg-flame-500/5">
-            <p className="text-[#F0F0F0] font-medium">Your Emotion Score and biases are ready.</p>
-            <p className="text-ink-600 text-sm">
+          <div className="card p-6 text-center space-y-4 border-scalpel/20 bg-scalpel-muted">
+            <p className="text-fg-bright font-medium">Your Emotion Score and biases are ready.</p>
+            <p className="text-fg-muted text-sm">
               Enter your email to see your full behavioral breakdown — how emotional your betting is,
               which cognitive biases are affecting you, and what to watch out for.
             </p>
@@ -274,7 +274,7 @@ export default function QuizClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleEmailSubmit()}
-                className="flex-1 bg-ink-900 border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm text-[#F0F0F0] placeholder-ink-700 focus:outline-none focus:border-flame-500/40"
+                className="flex-1 bg-base border border-white/[0.04] rounded-sm px-4 py-2.5 text-sm text-fg-bright placeholder-fg-dim focus:outline-none focus:border-scalpel/40"
               />
               <button
                 onClick={handleEmailSubmit}
@@ -284,10 +284,10 @@ export default function QuizClient() {
                 {emailSubmitting ? '...' : 'See My Results'}
               </button>
             </div>
-            <p className="text-ink-700 text-xs">No spam. Just your results.</p>
+            <p className="text-fg-dim text-xs">No spam. Just your results.</p>
             <button
               onClick={() => setPhase('full_result')}
-              className="text-xs text-ink-700 hover:text-ink-500 transition-colors"
+              className="text-xs text-fg-dim hover:text-fg-muted transition-colors"
             >
               Skip — just show me
             </button>
@@ -301,22 +301,22 @@ export default function QuizClient() {
 
   // ── Full Result ──
   if (phase === 'full_result' && result) {
-    const eColor = result.emotion_estimate <= 30 ? 'text-mint-500' : result.emotion_estimate <= 55 ? 'text-amber-400' : result.emotion_estimate <= 75 ? 'text-orange-400' : 'text-red-400';
-    const eBarColor = result.emotion_estimate <= 30 ? 'bg-mint-500' : result.emotion_estimate <= 55 ? 'bg-amber-400' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-red-400';
+    const eColor = result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : result.emotion_estimate <= 75 ? 'text-orange-400' : 'text-loss';
+    const eBarColor = result.emotion_estimate <= 30 ? 'bg-win' : result.emotion_estimate <= 55 ? 'bg-amber-400' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-loss';
 
     return (
-      <main className="min-h-screen bg-ink-900 px-4 py-12 overflow-x-hidden">
+      <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
 
           {/* 1. Archetype */}
-          <div className="card p-5 sm:p-6 border-white/[0.1] text-center" style={{ borderColor: `${result.archetype.color}30` }}>
+          <div className="card p-5 sm:p-6 border-white/[0.06] text-center" style={{ borderColor: `${result.archetype.color}30` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
-            <p className="text-ink-600 text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
+            <p className="text-fg-muted text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
             <h1 className="font-extrabold text-3xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-ink-500 text-sm leading-relaxed">{result.archetype.description}</p>
-            <p className="text-ink-600 text-xs mt-3 italic">
+            <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
+            <p className="text-fg-muted text-xs mt-3 italic">
               {ARCH_PRODUCT_TEASER[result.archetype.name] ?? 'A full BetAutopsy would show you exactly how your real betting data compares to this quiz estimate.'}
             </p>
           </div>
@@ -324,13 +324,13 @@ export default function QuizClient() {
           {/* 2. Emotion Score */}
           <div className="card p-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-ink-600">Estimated Emotion Score</span>
+              <span className="text-sm text-fg-muted">Estimated Emotion Score</span>
               <span className={`font-mono text-xl font-bold ${eColor}`}>{result.emotion_estimate}/100</span>
             </div>
-            <div className="h-2.5 bg-ink-900 rounded-full overflow-hidden mb-2">
+            <div className="h-2.5 bg-base rounded-full overflow-hidden mb-2">
               <div className={`h-full rounded-full transition-all duration-1000 ${eBarColor}`} style={{ width: `${result.emotion_estimate}%` }} />
             </div>
-            <p className="text-ink-700 text-xs">
+            <p className="text-fg-dim text-xs">
               {result.emotion_estimate <= 30 ? 'Your emotions seem well under control. That\'s rare.' :
                result.emotion_estimate <= 55 ? 'Mostly disciplined, but emotions creep in sometimes.' :
                result.emotion_estimate <= 75 ? 'Emotions are a factor in your betting. This is costing you.' :
@@ -349,35 +349,35 @@ export default function QuizClient() {
                     {bias.severity.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-ink-500 text-sm">{bias.one_liner}</p>
+                <p className="text-fg-muted text-sm">{bias.one_liner}</p>
               </div>
             ))}
           </div>
 
           {/* 4. "Is this accurate?" conversion card */}
-          <div className="card p-6 border-flame-500/20 bg-flame-500/5 text-center space-y-3">
-            <p className="text-[#F0F0F0] font-bold text-lg">Think this is accurate?</p>
-            <p className="text-ink-600 text-sm max-w-sm mx-auto">
+          <div className="card p-6 border-scalpel/20 bg-scalpel-muted text-center space-y-3">
+            <p className="text-fg-bright font-bold text-lg">Think this is accurate?</p>
+            <p className="text-fg-muted text-sm max-w-sm mx-auto">
               This quiz estimates your patterns from self-reported answers. Your actual bet history tells the
               real story — upload it and see how your real data compares.
             </p>
-            <p className="text-ink-700 text-xs">
+            <p className="text-fg-dim text-xs">
               Most bettors are surprised by the gap between what they think and what the data shows.
             </p>
             <Link href="/signup" className="btn-primary inline-block !px-8 !py-3">
               Get Your Real Autopsy — Free
             </Link>
-            <p className="text-ink-700 text-xs">No credit card. Upload takes 2 minutes.</p>
+            <p className="text-fg-dim text-xs">No credit card. Upload takes 2 minutes.</p>
           </div>
 
           {/* 5. Strengths */}
           {result.strengths.length > 0 && (
-            <div className="card border-mint-500/20 bg-mint-500/5 p-5">
-              <h3 className="text-mint-500 text-xs font-medium uppercase tracking-wider mb-3">Your Strengths</h3>
+            <div className="card border-win/20 bg-win/5 p-5">
+              <h3 className="text-win text-xs font-medium uppercase tracking-wider mb-3">Your Strengths</h3>
               <ul className="space-y-2">
                 {result.strengths.map((s) => (
-                  <li key={s} className="text-sm text-[#F0F0F0] flex items-start gap-2">
-                    <span className="text-mint-500 mt-0.5 shrink-0">+</span>
+                  <li key={s} className="text-sm text-fg-bright flex items-start gap-2">
+                    <span className="text-win mt-0.5 shrink-0">+</span>
                     {s}
                   </li>
                 ))}
@@ -392,11 +392,11 @@ export default function QuizClient() {
               <ul className="space-y-3">
                 {result.watch_outs.map((w) => (
                   <li key={w}>
-                    <div className="text-sm text-[#F0F0F0] flex items-start gap-2">
+                    <div className="text-sm text-fg-bright flex items-start gap-2">
                       <span className="text-orange-400 mt-0.5 shrink-0">!</span>
                       {w}
                     </div>
-                    <p className="text-ink-700 text-[10px] ml-5 mt-1 italic">A full autopsy would show you exactly how much this costs you.</p>
+                    <p className="text-fg-dim text-[10px] ml-5 mt-1 italic">A full autopsy would show you exactly how much this costs you.</p>
                   </li>
                 ))}
               </ul>
@@ -422,7 +422,7 @@ export default function QuizClient() {
 
           {/* 8. Retake */}
           <div className="text-center">
-            <button onClick={handleRetake} className="text-sm text-ink-700 hover:text-ink-500 transition-colors">
+            <button onClick={handleRetake} className="text-sm text-fg-dim hover:text-fg-muted transition-colors">
               ↻ Retake Quiz
             </button>
           </div>
@@ -430,26 +430,26 @@ export default function QuizClient() {
           {/* 9. Bottom CTA */}
           <div className="space-y-4 pt-4">
             <div className="card p-6 text-center space-y-3">
-              <p className="text-[#F0F0F0] font-medium">Ready to see the real numbers?</p>
-              <p className="text-ink-600 text-sm">
+              <p className="text-fg-bright font-medium">Ready to see the real numbers?</p>
+              <p className="text-fg-muted text-sm">
                 Your quiz says you&apos;re a {result.archetype.name}. Your actual bet history might tell a different story.
               </p>
               <Link href="/signup" className="btn-primary inline-block !px-8 !py-3">
                 Upload Your Bets — It&apos;s Free
               </Link>
             </div>
-            <p className="text-ink-700 text-xs text-center">
-              Already have an account? <Link href="/login" className="text-flame-500 hover:underline">Sign in</Link>
+            <p className="text-fg-dim text-xs text-center">
+              Already have an account? <Link href="/login" className="text-scalpel hover:underline">Sign in</Link>
             </p>
           </div>
 
           {/* Responsible gambling */}
           {result.emotion_estimate > 75 && (
             <div className="card border-amber-400/20 bg-amber-400/5 p-4">
-              <p className="text-amber-400 text-sm">
+              <p className="text-caution text-sm">
                 Your responses suggest emotions play a significant role in your betting.
                 If gambling is causing stress or financial difficulty, help is available at{' '}
-                <span className="text-[#F0F0F0]">1-800-GAMBLER</span>.
+                <span className="text-fg-bright">1-800-GAMBLER</span>.
               </p>
             </div>
           )}
@@ -457,7 +457,7 @@ export default function QuizClient() {
           {gamblingFooter}
 
           <div className="text-center">
-            <Link href="/" className="text-ink-700 text-xs hover:text-ink-500 transition-colors">
+            <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors">
               ← Back to BetAutopsy
             </Link>
           </div>

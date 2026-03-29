@@ -131,9 +131,9 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 w-32 bg-ink-800 rounded" />
-        <div className="h-40 bg-ink-800 rounded-xl" />
-        <div className="h-40 bg-ink-800 rounded-xl" />
+        <div className="h-8 w-32 bg-surface rounded" />
+        <div className="h-40 bg-surface rounded-sm" />
+        <div className="h-40 bg-surface rounded-sm" />
       </div>
     );
   }
@@ -142,9 +142,9 @@ export default function SettingsPage() {
   const isPaid = tier === 'pro' || tier === 'sharp';
 
   const tierBadge: Record<string, string> = {
-    free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
-    pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
-    sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
+    free: 'bg-surface text-fg-muted border border-white/[0.04]',
+    pro: 'bg-scalpel-muted text-scalpel border border-scalpel/20',
+    sharp: 'bg-win/10 text-win border border-win/20',
   };
 
   return (
@@ -183,20 +183,20 @@ export default function SettingsPage() {
           </button>
 
           {/* Streak info */}
-          <div className="pt-4 border-t border-white/[0.06] space-y-2">
-            <p className="text-ink-600 text-xs uppercase tracking-wider font-medium">Streak</p>
+          <div className="pt-4 border-t border-white/[0.04] space-y-2">
+            <p className="text-fg-muted text-xs uppercase tracking-wider font-medium">Streak</p>
             <div className="flex gap-6 text-sm">
               <div>
-                <span className="text-ink-600">Current: </span>
-                <span className="text-[#F0F0F0] font-mono">{profile?.streak_count ?? 0} weeks</span>
+                <span className="text-fg-muted">Current: </span>
+                <span className="text-fg-bright font-mono">{profile?.streak_count ?? 0} weeks</span>
               </div>
               <div>
-                <span className="text-ink-600">Best: </span>
-                <span className="text-[#F0F0F0] font-mono">{profile?.streak_best ?? 0} weeks</span>
+                <span className="text-fg-muted">Best: </span>
+                <span className="text-fg-bright font-mono">{profile?.streak_best ?? 0} weeks</span>
               </div>
               <div>
-                <span className="text-ink-600">Freezes: </span>
-                <span className="text-[#F0F0F0] font-mono">❄️ {profile?.streak_freezes ?? 1}</span>
+                <span className="text-fg-muted">Freezes: </span>
+                <span className="text-fg-bright font-mono">❄️ {profile?.streak_freezes ?? 1}</span>
               </div>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
           <div className="flex-1 max-w-xs">
             <label className="label">Total Bankroll</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-600">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted">$</span>
               <input
                 type="number"
                 value={bankroll}
@@ -230,19 +230,19 @@ export default function SettingsPage() {
             {bankrollSaved ? '✓ Saved' : bankrollSaving ? '...' : 'Save'}
           </button>
         </div>
-        <p className="text-ink-700 text-xs">
+        <p className="text-fg-dim text-xs">
           This helps us assess your risk level. We never share this.
         </p>
 
         <button
           onClick={() => setBankrollExpanded(!bankrollExpanded)}
-          className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors flex items-center gap-1"
+          className="text-sm text-fg-muted hover:text-fg transition-colors flex items-center gap-1"
         >
           <span className="text-xs">{bankrollExpanded ? '▾' : '▸'}</span>
           What&apos;s a bankroll?
         </button>
         {bankrollExpanded && (
-          <div className="bg-ink-900/50 rounded-lg p-4 text-sm text-ink-600 space-y-3">
+          <div className="bg-surface-raised rounded-sm p-4 text-sm text-fg-muted space-y-3">
             <p>
               Your bankroll is the total amount of money you&apos;ve set aside
               specifically for betting — across all your sportsbooks combined.
@@ -251,7 +251,7 @@ export default function SettingsPage() {
             </p>
             <p>It&apos;s okay to estimate — a rough number is better than nothing.</p>
             <p>
-              <span className="text-[#F0F0F0]">Why this matters:</span>{' '}
+              <span className="text-fg-bright">Why this matters:</span>{' '}
               BetAutopsy uses your bankroll to assess whether your bet sizing
               is sustainable. A $200 bet means something very different if your
               bankroll is $1,000 versus $20,000. Without this number, we have
@@ -266,13 +266,13 @@ export default function SettingsPage() {
       <div className="card p-6 space-y-4">
         <h2 className="font-bold text-xl">Subscription</h2>
         <div className="flex items-center gap-3">
-          <span className={`text-sm font-medium px-3 py-1 rounded-full capitalize ${tierBadge[tier]}`}>
+          <span className={`text-sm font-medium px-3 py-1 rounded-sm capitalize ${tierBadge[tier]}`}>
             {tier}
           </span>
           {profile?.subscription_status && profile.subscription_status !== 'inactive' && (
             <span className={`text-xs ${
-              profile.subscription_status === 'active' ? 'text-mint-500' :
-              profile.subscription_status === 'past_due' ? 'text-amber-400' : 'text-ink-600'
+              profile.subscription_status === 'active' ? 'text-win' :
+              profile.subscription_status === 'past_due' ? 'text-caution' : 'text-fg-muted'
             }`}>
               {profile.subscription_status === 'active' ? 'Active' :
                profile.subscription_status === 'past_due' ? 'Past Due' :
@@ -286,20 +286,20 @@ export default function SettingsPage() {
               Manage Subscription
             </button>
           ) : (
-            <p className="text-ink-600 text-sm">
+            <p className="text-fg-muted text-sm">
               Your subscription is managed manually. Contact support to make changes.
             </p>
           )
         ) : (
           <div className="space-y-3">
-            <p className="text-[#F0F0F0] text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
-            <ul className="text-ink-600 text-sm space-y-1">
+            <p className="text-fg-bright text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
+            <ul className="text-fg-muted text-sm space-y-1">
               <li>— Unlimited reports as you add bets weekly</li>
               <li>— Progress tracking that shows whether your habits are actually improving</li>
               <li>— Full analysis across ALL your bets, not just the last 50</li>
               <li>— Weekly check-ins so you don&apos;t have to remember to log in</li>
             </ul>
-            <p className="text-ink-600 text-xs">Most users make back the subscription cost from the first leak they plug.</p>
+            <p className="text-fg-muted text-xs">Most users make back the subscription cost from the first leak they plug.</p>
             <a href="/pricing" className="btn-primary inline-block text-sm">Go Pro</a>
           </div>
         )}
@@ -310,8 +310,8 @@ export default function SettingsPage() {
         <h2 className="font-bold text-xl">Email Preferences</h2>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[#F0F0F0] text-sm font-medium">Weekly Digest</p>
-            <p className="text-ink-600 text-xs">Get your personalized &quot;Week in Bets&quot; email every Tuesday.</p>
+            <p className="text-fg-bright text-sm font-medium">Weekly Digest</p>
+            <p className="text-fg-muted text-xs">Get your personalized &quot;Week in Bets&quot; email every Tuesday.</p>
           </div>
           <button
             onClick={async () => {
@@ -324,7 +324,7 @@ export default function SettingsPage() {
                 .eq('id', profile!.id);
               if (error) setDigestEnabled(!newVal); // revert on error
             }}
-            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-flame-500' : 'bg-ink-700'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface'}`}
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${digestEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
           </button>
@@ -334,9 +334,9 @@ export default function SettingsPage() {
       {/* ── Data ── */}
       <div className="card p-6 space-y-4">
         <h2 className="font-bold text-xl">Data</h2>
-        <div className="flex gap-4 text-sm text-ink-600">
-          <span><span className="font-mono text-[#F0F0F0]">{betCount}</span> bets</span>
-          <span><span className="font-mono text-[#F0F0F0]">{reportCount}</span> reports</span>
+        <div className="flex gap-4 text-sm text-fg-muted">
+          <span><span className="font-mono text-fg-bright">{betCount}</span> bets</span>
+          <span><span className="font-mono text-fg-bright">{reportCount}</span> reports</span>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -347,23 +347,23 @@ export default function SettingsPage() {
 
         {/* Clear all bets */}
         {isPaid && betCount > 0 && (
-          <div className="pt-3 border-t border-white/[0.06]">
+          <div className="pt-3 border-t border-white/[0.04]">
             {!showClearBets ? (
               <button
                 onClick={() => setShowClearBets(true)}
-                className="text-xs text-ink-700 hover:text-red-400/70 transition-colors"
+                className="text-xs text-fg-dim hover:text-loss/70 transition-colors"
               >
                 Clear all bets...
               </button>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-[#F0F0F0]">
+                <p className="text-sm text-fg-bright">
                   This will permanently delete all <span className="font-mono">{betCount}</span> bets.
                   Reports will be kept.
                 </p>
                 <div>
                   <label className="label">
-                    Type <span className="font-mono text-red-400">DELETE</span> to confirm
+                    Type <span className="font-mono text-loss">DELETE</span> to confirm
                   </label>
                   <input
                     type="text"
@@ -408,24 +408,24 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Danger Zone ── */}
-      <div className="card border-red-400/20 p-6 space-y-4">
-        <h2 className="font-bold text-xl text-red-400">Danger Zone</h2>
+      <div className="card border-bleed/20 p-6 space-y-4">
+        <h2 className="font-bold text-xl text-loss">Danger Zone</h2>
         {!showDeleteAccount ? (
           <button
             onClick={() => setShowDeleteAccount(true)}
-            className="text-xs text-ink-700 hover:text-red-400/70 transition-colors"
+            className="text-xs text-fg-dim hover:text-loss/70 transition-colors"
           >
             Delete my account...
           </button>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-[#F0F0F0]">
+            <p className="text-sm text-fg-bright">
               This will permanently delete your account, all bets, and all reports.
               This action cannot be undone.
             </p>
             <div>
               <label className="label">
-                Type <span className="font-mono text-red-400">DELETE</span> to confirm
+                Type <span className="font-mono text-loss">DELETE</span> to confirm
               </label>
               <input
                 type="text"
