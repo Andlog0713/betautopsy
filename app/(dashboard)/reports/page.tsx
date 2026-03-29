@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
-  loading: () => <div className="h-96 bg-ink-800 rounded-lg animate-pulse" />,
+  loading: () => <div className="h-96 bg-surface rounded-lg animate-pulse" />,
 });
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
 
@@ -307,8 +307,8 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-48 bg-ink-800 rounded" />
-        <div className="h-40 bg-ink-800 rounded-xl" />
+        <div className="h-8 w-48 bg-surface rounded" />
+        <div className="h-40 bg-surface rounded-xl" />
       </div>
     );
   }
@@ -330,13 +330,13 @@ export default function ReportsPage() {
         )}
         <button
           onClick={() => { setActiveReport(null); setAnalyzedBets([]); }}
-          className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors"
+          className="text-sm text-fg-muted hover:text-fg transition-colors"
         >
           ← Back to Reports
         </button>
         {tierLimited && (
-          <div className="card border-flame-500/30 bg-flame-500/5 p-5">
-            <p className="text-[#F0F0F0] text-sm">
+          <div className="card border-scalpel/20 bg-scalpel-muted p-5">
+            <p className="text-fg-bright text-sm">
               This analysis covers your <span className="font-medium">50 most recent bets</span>.
               Upgrade to Pro to unlock full analysis across all{' '}
               <span className="font-mono">{totalBetsAll}</span> of your bets — more data means
@@ -353,10 +353,10 @@ export default function ReportsPage() {
         {/* Post-first-report prompt */}
         {isFirstReport && (
           <div className="card p-5 text-center space-y-2">
-            <p className="text-ink-600 text-sm">
+            <p className="text-fg-muted text-sm">
               Want more accurate results? Set your bankroll and review your betting goals.
             </p>
-            <Link href="/dashboard" className="text-sm text-flame-500 hover:underline">
+            <Link href="/dashboard" className="text-sm text-scalpel hover:underline">
               Go to Dashboard →
             </Link>
           </div>
@@ -386,10 +386,10 @@ export default function ReportsPage() {
     <div className="space-y-8 animate-fade-in">
       <div>
         <h1 className="font-bold text-3xl mb-1">Reports</h1>
-        <p className="text-ink-600 text-sm">
+        <p className="text-fg-muted text-sm">
           Your betting habits, dissected. No sugarcoating.
         </p>
-        <p className="text-ink-700 text-xs mt-0.5">
+        <p className="text-fg-dim text-xs mt-0.5">
           {reports.length} report{reports.length !== 1 ? 's' : ''} generated
         </p>
       </div>
@@ -397,18 +397,18 @@ export default function ReportsPage() {
       {/* Free tier exhausted */}
       {freeExhausted && !running && (
         <div className="space-y-4">
-          <div className="card border-flame-500/30 bg-flame-500/5 p-6 text-center space-y-3">
-            <p className="text-[#F0F0F0] mb-2">
+          <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
+            <p className="text-fg-bright mb-2">
               This report analyzed your 50 most recent bets. Your full behavioral picture needs more data.
             </p>
-            <p className="text-ink-600 text-sm mb-4">
-              With Pro, your behavioral analysis covers your <strong className="text-[#F0F0F0]">entire</strong> bet history — more bets means more accurate bias detection, real trend tracking, and personal rules backed by statistical significance.
+            <p className="text-fg-muted text-sm mb-4">
+              With Pro, your behavioral analysis covers your <strong className="text-fg-bright">entire</strong> bet history — more bets means more accurate bias detection, real trend tracking, and personal rules backed by statistical significance.
             </p>
-            <ul className="text-ink-600 text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
-              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Session-by-session analysis — see exactly when and why you go off-script</li>
-              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Personal betting rules generated from YOUR data — not generic advice</li>
-              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Weekly reports tracking whether your behavioral patterns are improving</li>
-              <li className="flex items-start gap-2"><span className="text-mint-500 shrink-0">•</span>Discipline Score tracking over time — proof that you&apos;re getting sharper</li>
+            <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Session-by-session analysis — see exactly when and why you go off-script</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data — not generic advice</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Weekly reports tracking whether your behavioral patterns are improving</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Discipline Score tracking over time — proof that you&apos;re getting sharper</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
               Unlock Full Analysis — $9.99/mo
@@ -421,26 +421,26 @@ export default function ReportsPage() {
               <div className="card p-5">
                 <h3 className="font-bold text-lg mb-2">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">Researched bets (&gt;2hr before game)</p><p className="font-mono text-mint-500">+6.1% ROI</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">Impulse bets (&lt;30min before game)</p><p className="font-mono text-red-400">-18.4% ROI</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-red-400">Post-loss bets</p><p className="font-mono text-red-400">-22.7% ROI</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3"><p className="text-xs text-mint-500">Morning line bets</p><p className="font-mono text-mint-500">+4.2% ROI</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
                 </div>
               </div>
               <div className="card p-5 mt-3">
                 <h3 className="font-bold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="bg-ink-900/50 rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-surface-raised rounded-lg p-3 border-l-2 border-flame-500"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="card bg-ink-800/95 p-6 text-center max-w-sm">
+              <div className="card bg-surface/95 p-6 text-center max-w-sm">
                 <p className="text-2xl mb-2">🔒</p>
-                <p className="text-[#F0F0F0] font-medium mb-1">Pro unlocks your full behavioral analysis</p>
-                <p className="text-ink-600 text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and progress tracking that proves you&apos;re actually changing.</p>
+                <p className="text-fg-bright font-medium mb-1">Pro unlocks your full behavioral analysis</p>
+                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and progress tracking that proves you&apos;re actually changing.</p>
                 <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $9.99/mo</a>
               </div>
             </div>
@@ -450,7 +450,7 @@ export default function ReportsPage() {
 
       {/* Free tier note */}
       {tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
-        <p className="text-ink-600 text-sm">Free tier: 1 autopsy report included (analyzes your 50 most recent bets).</p>
+        <p className="text-fg-muted text-sm">Free tier: 1 autopsy report included (analyzes your 50 most recent bets).</p>
       )}
 
       {/* Analyze controls */}
@@ -532,8 +532,8 @@ export default function ReportsPage() {
                   onClick={() => setQuickRange(f.days)}
                   className={`px-3 py-1 rounded-lg text-xs transition-colors ${
                     isActive
-                      ? 'bg-flame-500/10 text-flame-500'
-                      : 'text-ink-600 hover:text-[#F0F0F0] hover:bg-white/[0.04]'
+                      ? 'bg-scalpel-muted text-scalpel'
+                      : 'text-fg-muted hover:text-fg hover:bg-white/[0.04]'
                   }`}
                 >
                   {f.label}
@@ -543,10 +543,10 @@ export default function ReportsPage() {
           </div>
 
           {/* Bet count summary */}
-          <p className="text-ink-600 text-sm">
+          <p className="text-fg-muted text-sm">
             {dateFrom || dateTo ? (
               <>
-                Analyzing <span className="text-[#F0F0F0] font-mono">{betCountForRun}</span> bet{betCountForRun !== 1 ? 's' : ''}{' '}
+                Analyzing <span className="text-fg-bright font-mono">{betCountForRun}</span> bet{betCountForRun !== 1 ? 's' : ''}{' '}
                 {dateFrom && dateTo
                   ? `from ${dateFrom} to ${dateTo}`
                   : dateFrom
@@ -555,7 +555,7 @@ export default function ReportsPage() {
               </>
             ) : (
               <>
-                Analyzing all <span className="text-[#F0F0F0] font-mono">{betCountForRun}</span> bets
+                Analyzing all <span className="text-fg-bright font-mono">{betCountForRun}</span> bets
               </>
             )}
           </p>
@@ -578,8 +578,8 @@ export default function ReportsPage() {
       )}
 
       {error && (
-        <div className="card border-red-400/30 bg-red-400/5 p-4">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="card border-bleed/20 bg-bleed-muted p-4">
+          <p className="text-loss text-sm">{error}</p>
         </div>
       )}
 
@@ -587,7 +587,7 @@ export default function ReportsPage() {
         <div className="card p-12 text-center">
           <div className="text-5xl mb-4">📤</div>
           <h2 className="font-bold text-2xl mb-2">No bets to analyze</h2>
-          <p className="text-ink-600 mb-6">
+          <p className="text-fg-muted mb-6">
             Upload your bet history first, then come back to run your autopsy.
           </p>
           <a href="/upload" className="btn-primary inline-block">
@@ -602,7 +602,7 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-xl">Past Reports</h2>
             {reports.length > 1 && (
-              <button onClick={deleteAllReports} className="text-xs text-ink-700 hover:text-red-400/70 transition-colors">
+              <button onClick={deleteAllReports} className="text-xs text-fg-dim hover:text-loss/70 transition-colors">
                 Delete all reports
               </button>
             )}
@@ -624,12 +624,12 @@ export default function ReportsPage() {
                     <span
                       className={`font-bold text-2xl font-bold ${
                         analysis.summary.overall_grade.startsWith('A')
-                          ? 'text-mint-500'
+                          ? 'text-win'
                           : analysis.summary.overall_grade.startsWith('B')
-                          ? 'text-mint-500/70'
+                          ? 'text-win/70'
                           : analysis.summary.overall_grade.startsWith('C')
-                          ? 'text-amber-400'
-                          : 'text-red-400'
+                          ? 'text-caution'
+                          : 'text-loss'
                       }`}
                     >
                       {analysis.summary.overall_grade}
@@ -646,7 +646,7 @@ export default function ReportsPage() {
                           return report.report_type === 'full' ? 'Full Autopsy' : report.report_type === 'weekly' ? 'Weekly Report' : 'Quick Scan';
                         })()}
                       </p>
-                      <p className="text-ink-600 text-sm">
+                      <p className="text-fg-muted text-sm">
                         {report.bet_count_analyzed} bets analyzed · {analysis.summary.record}
                       </p>
                     </div>
@@ -654,21 +654,21 @@ export default function ReportsPage() {
                   <div className="flex items-center gap-4 text-sm">
                     <span
                       className={`font-mono ${
-                        analysis.summary.total_profit >= 0 ? 'text-mint-500' : 'text-red-400'
+                        analysis.summary.total_profit >= 0 ? 'text-win' : 'text-loss'
                       }`}
                     >
                       {analysis.summary.total_profit >= 0 ? '+' : ''}${analysis.summary.total_profit.toFixed(0)}
                     </span>
-                    <span className="text-ink-600">
+                    <span className="text-fg-muted">
                       Emotion: {analysis.emotion_score ?? analysis.tilt_score}/100
                     </span>
-                    <span className="text-ink-700 text-xs">
+                    <span className="text-fg-dim text-xs">
                       {new Date(report.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}{' '}
-                      <span className="text-ink-800">
+                      <span className="text-fg-dim">
                         {new Date(report.created_at).toLocaleTimeString('en-US', {
                           hour: 'numeric',
                           minute: '2-digit',
@@ -677,7 +677,7 @@ export default function ReportsPage() {
                     </span>
                     <button
                       onClick={(e) => deleteReport(report.id, e)}
-                      className="text-ink-700 hover:text-red-400 transition-colors text-xs ml-2"
+                      className="text-fg-dim hover:text-loss transition-colors text-xs ml-2"
                       aria-label="Delete report"
                     >
                       ✕
@@ -690,19 +690,19 @@ export default function ReportsPage() {
                       key={i}
                       className={`text-xs px-2 py-0.5 rounded-full border ${
                         bias.severity === 'critical'
-                          ? 'bg-red-400/10 text-red-400 border-red-400/20'
+                          ? 'bg-bleed-muted text-loss border-bleed/20'
                           : bias.severity === 'high'
                           ? 'bg-orange-400/10 text-orange-400 border-orange-400/20'
                           : bias.severity === 'medium'
-                          ? 'bg-amber-400/10 text-amber-400 border-amber-400/20'
-                          : 'bg-mint-500/10 text-mint-500 border-mint-500/20'
+                          ? 'bg-caution/10 text-caution border-caution/20'
+                          : 'bg-win/10 text-win border-mint-500/20'
                       }`}
                     >
                       {bias.bias_name}
                     </span>
                   ))}
                   {analysis.biases_detected.length > 3 && (
-                    <span className="text-xs text-ink-600">
+                    <span className="text-xs text-fg-muted">
                       +{analysis.biases_detected.length - 3} more
                     </span>
                   )}
@@ -770,21 +770,21 @@ function AnalyzingState({ betCount }: { betCount: number }) {
       <div className="text-5xl animate-pulse">🧠</div>
       <h2 className="font-bold text-xl">{LOADING_MESSAGES[msgIndex]}</h2>
       <div className="w-72 mx-auto">
-        <div className="flex items-center justify-between text-xs text-ink-600 mb-1">
+        <div className="flex items-center justify-between text-xs text-fg-muted mb-1">
           <span>{estimate}</span>
           <span className="font-mono">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 bg-ink-700 rounded-full overflow-hidden">
+        <div className="h-2 bg-surface rounded-full overflow-hidden">
           <div
-            className="h-full bg-flame-500 rounded-full transition-all duration-1000 ease-out"
+            className="h-full bg-scalpel rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
       {elapsed > 90 && (
-        <p className="text-amber-400/70 text-xs">Still working — large bet histories take longer to analyze.</p>
+        <p className="text-caution/70 text-xs">Still working — large bet histories take longer to analyze.</p>
       )}
-      <p className="text-ink-700 text-xs font-mono">Elapsed: {timeStr}</p>
+      <p className="text-fg-dim text-xs font-mono">Elapsed: {timeStr}</p>
     </div>
   );
 }
@@ -820,22 +820,22 @@ function AnalyzingProgress() {
   const estimate = elapsed < 10 ? 'Usually takes 15-25 seconds' : elapsed < 25 ? 'Almost there...' : 'Finishing up...';
 
   return (
-    <div className="card border-flame-500/20 bg-flame-500/5 p-4 space-y-3">
+    <div className="card border-scalpel/20 bg-scalpel-muted p-4 space-y-3">
       <div className="flex items-center gap-3">
-        <span className="inline-block w-5 h-5 border-2 border-flame-500/30 border-t-flame-500 rounded-full animate-spin shrink-0" />
+        <span className="inline-block w-5 h-5 border-2 border-scalpel/20 border-t-flame-500 rounded-full animate-spin shrink-0" />
         <div className="flex-1">
-          <p className="text-[#F0F0F0] text-sm font-medium">Generating behavioral analysis...</p>
-          <p className="text-ink-600 text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
+          <p className="text-fg-bright text-sm font-medium">Generating behavioral analysis...</p>
+          <p className="text-fg-muted text-xs mt-0.5">{PROGRESS_MESSAGES[msgIndex]}</p>
         </div>
-        <span className="text-ink-700 text-xs font-mono shrink-0">{Math.round(progress)}%</span>
+        <span className="text-fg-dim text-xs font-mono shrink-0">{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 bg-ink-900 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-base rounded-full overflow-hidden">
         <div
-          className="h-full bg-flame-500 rounded-full transition-all duration-1000 ease-out"
+          className="h-full bg-scalpel rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="text-ink-700 text-[10px]">{estimate}</p>
+      <p className="text-fg-dim text-[10px]">{estimate}</p>
     </div>
   );
 }

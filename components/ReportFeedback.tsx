@@ -28,7 +28,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
   if (submitted) {
     return (
       <div className="card p-5 text-center">
-        <p className="text-ink-600 text-sm">Thanks — this helps us get sharper.</p>
+        <p className="text-fg-muted text-sm">Thanks — this helps us get sharper.</p>
       </div>
     );
   }
@@ -41,29 +41,29 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
 
   return (
     <div className="card p-5 space-y-4">
-      <p className="text-[#F0F0F0] text-sm font-medium">Was this autopsy useful?</p>
+      <p className="text-fg-bright text-sm font-medium">Was this autopsy useful?</p>
 
       <div className="flex gap-3">
         <button
           onClick={() => setRating('positive')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
-            rating === 'positive' ? 'bg-mint-500/15 text-mint-500 border border-mint-500/30' : 'bg-ink-800 text-ink-600 hover:text-mint-500'
+          className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
+            rating === 'positive' ? 'bg-win/15 text-win border border-win/30' : 'bg-surface text-fg-muted hover:text-win'
           }`}
         >
           👍 Nailed it
         </button>
         <button
           onClick={() => setRating('neutral')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
-            rating === 'neutral' ? 'bg-amber-400/15 text-amber-400 border border-amber-400/30' : 'bg-ink-800 text-ink-600 hover:text-amber-400'
+          className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
+            rating === 'neutral' ? 'bg-caution/15 text-caution border border-caution/30' : 'bg-surface text-fg-muted hover:text-caution'
           }`}
         >
           😐 It was okay
         </button>
         <button
           onClick={() => setRating('negative')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
-            rating === 'negative' ? 'bg-red-400/15 text-red-400 border border-red-400/30' : 'bg-ink-800 text-ink-600 hover:text-red-400'
+          className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
+            rating === 'negative' ? 'bg-loss/15 text-loss border border-loss/30' : 'bg-surface text-fg-muted hover:text-loss'
           }`}
         >
           👎 Missed it

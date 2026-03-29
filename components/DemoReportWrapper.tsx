@@ -69,7 +69,7 @@ export default function DemoReportWrapper() {
             <div className="bg-base pb-4 text-center space-y-4">
               <button
                 onClick={() => setExpanded(true)}
-                className="text-sm text-fg-muted hover:text-ink-400 transition-colors"
+                className="text-sm text-fg-muted hover:text-fg transition-colors"
               >
                 ↓ Click to see the full expanded report
               </button>
