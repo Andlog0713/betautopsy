@@ -93,7 +93,7 @@ export default function PricingPage() {
           onClick={() => setInterval(interval === 'monthly' ? 'annual' : 'monthly')}
           className="relative w-14 h-7 rounded-full bg-surface border border-white/[0.04] transition-colors"
         >
-          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-flame-500 transition-transform ${interval === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`} />
+          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-scalpel transition-transform ${interval === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`} />
         </button>
         <span className={`text-sm ${interval === 'annual' ? 'text-fg-bright' : 'text-fg-muted'}`}>
           Annual
