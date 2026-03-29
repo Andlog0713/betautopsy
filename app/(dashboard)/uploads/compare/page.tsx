@@ -51,11 +51,11 @@ function CompareMetric({ label, a, b, suffix, lowerBetter }: { label: string; a:
   const same = Math.abs(a - b) < 0.1;
   return (
     <tr className="border-b border-white/[0.04]">
-      <td className={`px-4 py-3 text-right font-mono ${!same && aWins ? 'text-mint-500' : !same && bWins ? 'text-red-400' : 'text-[#F0F0F0]'}`}>
+      <td className={`px-4 py-3 text-right font-mono ${!same && aWins ? 'text-win' : !same && bWins ? 'text-loss' : 'text-fg-bright'}`}>
         {a >= 0 && suffix === '$' ? '+' : ''}{suffix === '$' ? `$${Math.round(a).toLocaleString()}` : `${a.toFixed(1)}${s}`}
       </td>
-      <td className="px-4 py-3 text-center text-ink-600 text-sm">{label}</td>
-      <td className={`px-4 py-3 font-mono ${!same && bWins ? 'text-mint-500' : !same && aWins ? 'text-red-400' : 'text-[#F0F0F0]'}`}>
+      <td className="px-4 py-3 text-center text-fg-muted text-sm">{label}</td>
+      <td className={`px-4 py-3 font-mono ${!same && bWins ? 'text-win' : !same && aWins ? 'text-loss' : 'text-fg-bright'}`}>
         {b >= 0 && suffix === '$' ? '+' : ''}{suffix === '$' ? `$${Math.round(b).toLocaleString()}` : `${b.toFixed(1)}${s}`}
       </td>
     </tr>
@@ -102,10 +102,10 @@ export default function ComparePage() {
   if (!loading && tier === 'free') {
     return (
       <div className="space-y-6 animate-fade-in">
-        <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">← Back to Uploads</Link>
-        <div className="card border-flame-500/20 bg-flame-500/5 p-8 text-center space-y-4">
+        <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">← Back to Uploads</Link>
+        <div className="card border-scalpel/20 bg-scalpel-muted p-8 text-center space-y-4">
           <h2 className="font-bold text-2xl">Upload Comparison</h2>
-          <p className="text-ink-600 text-sm max-w-md mx-auto">
+          <p className="text-fg-muted text-sm max-w-md mx-auto">
             Compare how you perform across different sportsbooks, time periods, or bet sources.
             Available on Pro and Sharp.
           </p>
@@ -118,8 +118,8 @@ export default function ComparePage() {
   if (loading || !a || !b) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-ink-800 rounded" />
-        <div className="h-64 bg-ink-800 rounded-xl" />
+        <div className="h-8 w-48 bg-surface rounded" />
+        <div className="h-64 bg-surface rounded-sm" />
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function ComparePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">
+      <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">
         ← Back to Uploads
       </Link>
 
@@ -140,11 +140,11 @@ export default function ComparePage() {
 
       {/* Summary */}
       {roiDiff > 0.5 && (
-        <div className="card border-flame-500/20 bg-flame-500/5 p-5">
-          <p className="text-[#F0F0F0] text-sm">
+        <div className="card border-scalpel/20 bg-scalpel-muted p-5">
+          <p className="text-fg-bright text-sm">
             Your <span className="font-medium">{betterUpload}</span> bets are outperforming{' '}
             <span className="font-medium">{worseUpload}</span> by{' '}
-            <span className="font-mono text-mint-500">{roiDiff.toFixed(1)}%</span> ROI.
+            <span className="font-mono text-win">{roiDiff.toFixed(1)}%</span> ROI.
           </p>
         </div>
       )}
@@ -153,13 +153,13 @@ export default function ComparePage() {
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/[0.06]">
-              <th className="text-right text-ink-600 font-medium px-4 py-3 w-1/3">
+            <tr className="border-b border-white/[0.04]">
+              <th className="text-right text-fg-muted font-medium px-4 py-3 w-1/3">
                 <div className="truncate">{nameA}</div>
                 <div className="text-xs font-normal">{a.bets.length} bets</div>
               </th>
-              <th className="text-center text-ink-700 font-medium px-4 py-3">Metric</th>
-              <th className="text-left text-ink-600 font-medium px-4 py-3 w-1/3">
+              <th className="text-center text-fg-dim font-medium px-4 py-3">Metric</th>
+              <th className="text-left text-fg-muted font-medium px-4 py-3 w-1/3">
                 <div className="truncate">{nameB}</div>
                 <div className="text-xs font-normal">{b.bets.length} bets</div>
               </th>
@@ -167,9 +167,9 @@ export default function ComparePage() {
           </thead>
           <tbody>
             <tr className="border-b border-white/[0.04]">
-              <td className="px-4 py-3 text-right font-mono text-[#F0F0F0]">{a.record}</td>
-              <td className="px-4 py-3 text-center text-ink-600 text-sm">Record</td>
-              <td className="px-4 py-3 font-mono text-[#F0F0F0]">{b.record}</td>
+              <td className="px-4 py-3 text-right font-mono text-fg-bright">{a.record}</td>
+              <td className="px-4 py-3 text-center text-fg-muted text-sm">Record</td>
+              <td className="px-4 py-3 font-mono text-fg-bright">{b.record}</td>
             </tr>
             <CompareMetric label="Win Rate" a={a.winRate} b={b.winRate} suffix="%" />
             <CompareMetric label="ROI" a={a.roi} b={b.roi} suffix="%" />
@@ -189,22 +189,22 @@ export default function ComparePage() {
             <h3 className="font-medium text-sm">{name}</h3>
             {d.topProfitable.length > 0 && (
               <div className="card p-4">
-                <p className="text-xs text-mint-500 mb-2">Top profitable</p>
+                <p className="text-xs text-win mb-2">Top profitable</p>
                 {d.topProfitable.map((c) => (
                   <div key={c.cat} className="flex justify-between text-xs py-1">
-                    <span className="text-[#F0F0F0]">{c.cat}</span>
-                    <span className="font-mono text-mint-500">+{c.roi.toFixed(1)}% ({c.count})</span>
+                    <span className="text-fg-bright">{c.cat}</span>
+                    <span className="font-mono text-win">+{c.roi.toFixed(1)}% ({c.count})</span>
                   </div>
                 ))}
               </div>
             )}
             {d.topUnprofitable.length > 0 && (
               <div className="card p-4">
-                <p className="text-xs text-red-400 mb-2">Top leaks</p>
+                <p className="text-xs text-loss mb-2">Top leaks</p>
                 {d.topUnprofitable.map((c) => (
                   <div key={c.cat} className="flex justify-between text-xs py-1">
-                    <span className="text-[#F0F0F0]">{c.cat}</span>
-                    <span className="font-mono text-red-400">{c.roi.toFixed(1)}% ({c.count})</span>
+                    <span className="text-fg-bright">{c.cat}</span>
+                    <span className="font-mono text-loss">{c.roi.toFixed(1)}% ({c.count})</span>
                   </div>
                 ))}
               </div>

@@ -56,8 +56,8 @@ export default function UploadDetailPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-ink-800 rounded" />
-        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-ink-800 rounded-lg" />)}
+        <div className="h-8 w-48 bg-surface rounded" />
+        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-sm" />)}
       </div>
     );
   }
@@ -66,11 +66,11 @@ export default function UploadDetailPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/uploads" className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">
+          <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">
             ← Back to Uploads
           </Link>
           <h1 className="font-bold text-2xl mt-2">{name}</h1>
-          <p className="text-ink-600 text-sm">
+          <p className="text-fg-muted text-sm">
             {bets.length} bets · {upload?.sportsbook ?? 'Multiple books'} · {upload ? new Date(upload.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
           </p>
         </div>
@@ -82,11 +82,11 @@ export default function UploadDetailPage() {
       {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
-          <span className="text-sm text-[#F0F0F0]">
+          <span className="text-sm text-fg-bright">
             <span className="font-mono">{selected.size}</span> bet{selected.size !== 1 ? 's' : ''} selected
           </span>
-          <button onClick={() => setSelected(new Set())} className="text-sm text-ink-600 hover:text-[#F0F0F0] transition-colors">Deselect All</button>
-          <button onClick={deleteSelected} disabled={deleting} className="text-sm text-red-400/70 hover:text-red-400 transition-colors">
+          <button onClick={() => setSelected(new Set())} className="text-sm text-fg-muted hover:text-fg transition-colors">Deselect All</button>
+          <button onClick={deleteSelected} disabled={deleting} className="text-sm text-loss/70 hover:text-loss transition-colors">
             {deleting ? 'Deleting...' : 'Delete Selected'}
           </button>
         </div>
@@ -97,47 +97,47 @@ export default function UploadDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/[0.06]">
+              <tr className="border-b border-white/[0.04]">
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => allSelected ? setSelected(new Set()) : setSelected(new Set(bets.map((b) => b.id)))}
-                    className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                    className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
                   />
                 </th>
-                <th className="text-left text-ink-600 font-medium px-4 py-3">Date</th>
-                <th className="text-left text-ink-600 font-medium px-4 py-3">Description</th>
-                <th className="text-left text-ink-600 font-medium px-4 py-3 hidden md:table-cell">Sport</th>
-                <th className="text-left text-ink-600 font-medium px-4 py-3 hidden md:table-cell">Type</th>
-                <th className="text-right text-ink-600 font-medium px-4 py-3">Odds</th>
-                <th className="text-right text-ink-600 font-medium px-4 py-3">Stake</th>
-                <th className="text-center text-ink-600 font-medium px-4 py-3">Result</th>
-                <th className="text-right text-ink-600 font-medium px-4 py-3">P&amp;L</th>
+                <th className="text-left text-fg-muted font-medium px-4 py-3">Date</th>
+                <th className="text-left text-fg-muted font-medium px-4 py-3">Description</th>
+                <th className="text-left text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Sport</th>
+                <th className="text-left text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Type</th>
+                <th className="text-right text-fg-muted font-medium px-4 py-3">Odds</th>
+                <th className="text-right text-fg-muted font-medium px-4 py-3">Stake</th>
+                <th className="text-center text-fg-muted font-medium px-4 py-3">Result</th>
+                <th className="text-right text-fg-muted font-medium px-4 py-3">P&amp;L</th>
                 <th className="px-4 py-3 w-10"></th>
               </tr>
             </thead>
             <tbody>
               {bets.map((bet) => (
-                <tr key={bet.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-flame-500/5' : ''}`}>
+                <tr key={bet.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-scalpel-muted' : ''}`}>
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.has(bet.id)}
                       onChange={() => { const n = new Set(selected); n.has(bet.id) ? n.delete(bet.id) : n.add(bet.id); setSelected(n); }}
-                      className="rounded border-white/[0.08] bg-ink-800 text-flame-500 focus:ring-flame-500/40 cursor-pointer"
+                      className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-ink-600">
+                  <td className="px-4 py-3 font-mono text-xs text-fg-muted">
                     {new Date(bet.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
-                  <td className="px-4 py-3 text-[#F0F0F0]">
+                  <td className="px-4 py-3 text-fg-bright">
                     {(() => {
                       const fmt = formatBetDescription(bet);
                       if (!fmt.isParlay) return fmt.label;
                       return (
                         <div>
-                          <span className="text-xs font-medium text-ink-500 bg-ink-900 rounded px-1.5 py-0.5 mr-1">{fmt.label}</span>
+                          <span className="text-xs font-medium text-fg-muted bg-base rounded px-1.5 py-0.5 mr-1">{fmt.label}</span>
                           <div className="mt-1 space-y-0.5">
                             {fmt.legs.map((leg, li) => <div key={li} className="text-xs">{leg}</div>)}
                           </div>
@@ -145,22 +145,22 @@ export default function UploadDetailPage() {
                       );
                     })()}
                   </td>
-                  <td className="px-4 py-3 text-ink-600 hidden md:table-cell">{bet.sport}</td>
-                  <td className="px-4 py-3 text-ink-600 hidden md:table-cell capitalize">{bet.bet_type}</td>
+                  <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{bet.sport}</td>
+                  <td className="px-4 py-3 text-fg-muted hidden md:table-cell capitalize">{bet.bet_type}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{bet.odds > 0 ? `+${bet.odds}` : bet.odds}</td>
                   <td className="px-4 py-3 text-right font-mono">${Number(bet.stake).toFixed(0)}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      bet.result === 'win' ? 'bg-mint-500/10 text-mint-500'
-                      : bet.result === 'loss' ? 'bg-red-400/10 text-red-400'
-                      : 'bg-ink-700/50 text-ink-500'
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-sm ${
+                      bet.result === 'win' ? 'bg-win/10 text-win'
+                      : bet.result === 'loss' ? 'bg-bleed-muted text-loss'
+                      : 'bg-surface text-fg-muted'
                     }`}>{bet.result.toUpperCase()}</span>
                   </td>
-                  <td className={`px-4 py-3 text-right font-mono font-medium ${Number(bet.profit) > 0 ? 'text-mint-500' : Number(bet.profit) < 0 ? 'text-red-400' : 'text-ink-600'}`}>
+                  <td className={`px-4 py-3 text-right font-mono font-medium ${Number(bet.profit) > 0 ? 'text-win' : Number(bet.profit) < 0 ? 'text-loss' : 'text-fg-muted'}`}>
                     {Number(bet.profit) > 0 ? '+' : ''}${Number(bet.profit).toFixed(0)}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => deleteBet(bet.id)} className="text-ink-700 hover:text-red-400 transition-colors text-xs" aria-label="Delete bet">✕</button>
+                    <button onClick={() => deleteBet(bet.id)} className="text-fg-dim hover:text-loss transition-colors text-xs" aria-label="Delete bet">✕</button>
                   </td>
                 </tr>
               ))}
