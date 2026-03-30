@@ -44,18 +44,39 @@ export default function LandingPage() {
               NO CREDIT CARD · WORKS WITH PIKKIT + ANY CSV
             </span>
           </div>
-          {/* EKG heartbeat line */}
-          <svg className="w-full h-12 mt-12 animate-fade-in-d4" viewBox="0 0 1000 40" preserveAspectRatio="none">
-            <polyline
-              points="0,20 180,20 200,20 215,18 225,20 240,20 260,20 275,6 285,34 295,2 305,38 315,14 325,26 335,20 360,20 380,20 395,18 405,20 420,20 500,20 1000,20"
-              fill="none" stroke="#00C9A7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"
-            />
-            {/* Glow version */}
-            <polyline
-              points="0,20 180,20 200,20 215,18 225,20 240,20 260,20 275,6 285,34 295,2 305,38 315,14 325,26 335,20 360,20 380,20 395,18 405,20 420,20 500,20 1000,20"
-              fill="none" stroke="#00C9A7" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.08"
-            />
-          </svg>
+          {/* EKG heartbeat line — animated sweep */}
+          <div className="mt-14 animate-fade-in-d4 relative h-16 overflow-hidden">
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="ekg-fade-l" x1="0" x2="0.08" y1="0" y2="0"><stop offset="0" stopColor="#00C9A7" stopOpacity="0"/><stop offset="1" stopColor="#00C9A7" stopOpacity="1"/></linearGradient>
+                <linearGradient id="ekg-fade-r" x1="0.92" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#00C9A7" stopOpacity="1"/><stop offset="1" stopColor="#00C9A7" stopOpacity="0"/></linearGradient>
+                <linearGradient id="ekg-full" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/>
+                  <stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.35"/>
+                  <stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.35"/>
+                  <stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.35"/>
+                  <stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
+                </linearGradient>
+                <linearGradient id="ekg-glow" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/>
+                  <stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.12"/>
+                  <stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.12"/>
+                  <stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.12"/>
+                  <stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
+                </linearGradient>
+              </defs>
+              {/* Glow layer */}
+              <polyline
+                points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30"
+                fill="none" stroke="url(#ekg-glow)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"
+              />
+              {/* Main line */}
+              <polyline
+                points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30"
+                fill="none" stroke="url(#ekg-full)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              />
+            </svg>
+          </div>
         </div>
       </section>
 
