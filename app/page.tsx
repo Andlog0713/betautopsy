@@ -300,6 +300,29 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
+      {/* BLOG — pass PageRank to content       */}
+      {/* ══════════════════════════════════════ */}
+      <section className="max-w-5xl mx-auto px-6 py-12">
+        <div className="case-header mb-3">FROM THE POST-MORTEM</div>
+        <p className="text-fg-muted text-sm mb-6">Deep dives into the behavioral side of sports betting.</p>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { title: 'Why Am I Losing at Sports Betting?', slug: 'why-am-i-losing-at-sports-betting', time: '7 min' },
+            { title: 'The Real Math Behind Parlay Addiction', slug: 'parlay-addiction-the-real-math', time: '6 min' },
+            { title: '7 Cognitive Biases Destroying Your Bankroll', slug: 'cognitive-biases-destroying-your-bankroll', time: '8 min' },
+          ].map(post => (
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="case-card p-5 hover:border-white/[0.08] transition-colors group">
+              <h3 className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors mb-2 leading-snug">{post.title}</h3>
+              <span className="font-mono text-[10px] text-fg-dim">{post.time}</span>
+            </Link>
+          ))}
+        </div>
+        <div className="text-center mt-6">
+          <Link href="/blog" className="font-mono text-[11px] text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════ */}
       {/* FINAL CTA — base bg                   */}
       {/* ══════════════════════════════════════ */}
       <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
