@@ -26,8 +26,8 @@ export default function LandingPage() {
             sport-specific leaks, then gives you a concrete plan to fix them with real dollar amounts.
           </p>
           <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Powered by proprietary scoring models that no generic AI can replicate — your analysis
-            gets more accurate every time you upload, benchmarked against thousands of real bettors.
+            Powered by proprietary scoring models — your analysis gets more accurate every time
+            you upload, benchmarked against thousands of real bettors.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
