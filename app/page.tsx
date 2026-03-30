@@ -122,55 +122,8 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
-      {/* QUIZ CTA — base bg                    */}
-      {/* ══════════════════════════════════════ */}
-      <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="finding-card border-l-scalpel p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-fg-bright mb-1">What&apos;s your Bet DNA?</h3>
-              <p className="text-fg-muted text-sm">Free 2-minute quiz. No signup needed.</p>
-            </div>
-            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
-              Take the Quiz
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════ */}
-      {/* DEMO REPORT — surface bg, visually    */}
-      {/* separated so it's clearly a preview   */}
-      {/* ══════════════════════════════════════ */}
-      <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="case-header">EXHIBIT A — PRO TIER SAMPLE</div>
-            <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
-          </div>
-          <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
-            This is what a Pro autopsy looks like
-          </h2>
-          <p className="text-fg-muted text-sm mb-4 max-w-xl">
-            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
-          </p>
-          <p className="text-fg-dim text-xs mb-8 max-w-xl font-mono">
-            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
-          </p>
-          <div className="border border-white/[0.06] rounded-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
-              <div className="w-2 h-2 rounded-full bg-loss" />
-              <div className="w-2 h-2 rounded-full bg-caution" />
-              <div className="w-2 h-2 rounded-full bg-win" />
-              <span className="flex-1 text-center font-mono text-[10px] text-fg-dim tracking-wider">betautopsy.com/reports</span>
-            </div>
-            <DemoReportWrapper />
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════ */}
-      {/* PROGRESS TRACKING — base bg           */}
+      {/* PROGRESS TRACKING — why ongoing       */}
+      {/* value matters (before the demo)       */}
       {/* ══════════════════════════════════════ */}
       <section className="max-w-5xl mx-auto px-6 py-16 md:py-20">
         <span className="case-header block mb-3">Longitudinal Study</span>
@@ -222,6 +175,54 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════ */}
+      {/* DEMO REPORT — proof, see it yourself  */}
+      {/* ══════════════════════════════════════ */}
+      <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="case-header">EXHIBIT A — PRO TIER SAMPLE</div>
+            <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
+          </div>
+          <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
+            This is what a Pro autopsy looks like
+          </h2>
+          <p className="text-fg-muted text-sm mb-4 max-w-xl">
+            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
+          </p>
+          <p className="text-fg-dim text-xs mb-8 max-w-xl font-mono">
+            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
+          </p>
+          <div className="border border-white/[0.06] rounded-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
+              <div className="w-2 h-2 rounded-full bg-loss" />
+              <div className="w-2 h-2 rounded-full bg-caution" />
+              <div className="w-2 h-2 rounded-full bg-win" />
+              <span className="flex-1 text-center font-mono text-[10px] text-fg-dim tracking-wider">betautopsy.com/reports</span>
+            </div>
+            <DemoReportWrapper />
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════ */}
+      {/* QUIZ CTA — low-commitment alternative */}
+      {/* after they've seen the product        */}
+      {/* ══════════════════════════════════════ */}
+      <section className="max-w-3xl mx-auto px-6 py-12">
+        <div className="finding-card border-l-scalpel p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-lg text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
+              <p className="text-fg-muted text-sm">Discover your Bet DNA in 2 minutes. No signup, no data needed.</p>
+            </div>
+            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
+              Take the Quiz
+            </Link>
           </div>
         </div>
       </section>
