@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
 
+function gradeColor(g: string): string {
+  if (g === 'A') return '#00C853';
+  if (g === 'B') return '#2dd4bf';
+  if (g === 'C') return '#fbbf24';
+  if (g === 'D') return '#f97316';
+  return '#ef4444';
+}
+
 const ARCH_PRODUCT_TEASER: Record<string, string> = {
   'The Natural': 'A full BetAutopsy would confirm your edges with real data — and catch the blind spots even disciplined bettors miss.',
   'Sharp Sleeper': 'A full BetAutopsy would pinpoint exactly where your edges are and show you how much your sizing inconsistency is costing.',
@@ -343,11 +351,30 @@ export default function QuizClient() {
     return (
       <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
-          {/* Share card — FIRST thing they see */}
-          <div className="overflow-hidden rounded-sm relative" style={{ width: '100%', maxWidth: 440, height: Math.round(1920 * (440 / 1080)), margin: '0 auto' }}>
-            <div style={{ transform: `scale(${440 / 1080})`, transformOrigin: 'top left', width: 1080, height: 1920, position: 'absolute', top: 0, left: 0 }}>
-              <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
+          {/* Share card — rendered off-screen for download, preview shown as image */}
+          <div style={{ position: 'absolute', left: -9999, top: 0 }}>
+            <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
+          </div>
+          {/* Visual preview */}
+          <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
+            <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
+            <p className="font-mono text-[10px] text-fg-dim tracking-widest mb-2">YOUR BET DNA</p>
+            <h2 className="font-extrabold text-3xl mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
+            <p className="text-fg-muted text-sm mb-4">{result.archetype.description}</p>
+            <div className={`inline-block border-2 px-4 py-1 -rotate-3 mb-4`} style={{ borderColor: `${gradeColor(result.grade)}30` }}>
+              <span className="font-mono text-4xl font-bold" style={{ color: gradeColor(result.grade) }}>{result.grade}</span>
             </div>
+            <div className="grid grid-cols-2 gap-3 text-left mt-2">
+              <div className="bg-surface-raised p-3 rounded-sm">
+                <span className="font-mono text-[9px] text-fg-dim tracking-wider">EMOTION</span>
+                <span className={`font-mono text-xl font-bold block ${result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : 'text-loss'}`}>{result.emotion_estimate}</span>
+              </div>
+              <div className="bg-surface-raised p-3 rounded-sm">
+                <span className="font-mono text-[9px] text-fg-dim tracking-wider">DISCIPLINE</span>
+                <span className={`font-mono text-xl font-bold block ${result.discipline_estimate >= 70 ? 'text-win' : result.discipline_estimate >= 40 ? 'text-caution' : 'text-loss'}`}>{result.discipline_estimate}</span>
+              </div>
+            </div>
+            <p className="text-fg-dim text-xs mt-4 font-mono">Download the card to share on Stories</p>
           </div>
 
           {/* Share buttons */}
@@ -505,16 +532,11 @@ export default function QuizClient() {
             </button>
           </div>
 
-          {/* 8. Share card + buttons (again at bottom) */}
-          <div className="space-y-3 overflow-hidden">
+          {/* 8. Share + buttons (again at bottom) */}
+          <div className="space-y-3">
             <span className="case-header block">SHARE YOUR BET DNA</span>
-            <div className="overflow-hidden rounded-sm relative" style={{ width: '100%', maxWidth: 440, height: Math.round(1920 * (440 / 1080)), margin: '0 auto' }}>
-              <div style={{ transform: `scale(${440 / 1080})`, transformOrigin: 'top left', width: 1080, height: 1920, position: 'absolute', top: 0, left: 0 }}>
-                <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
-              </div>
-            </div>
             <div className="flex gap-2">
-              <button onClick={handleDownloadCard} className="btn-primary text-sm flex-1 font-mono">Download</button>
+              <button onClick={handleDownloadCard} className="btn-primary text-sm flex-1 font-mono">Download for Stories</button>
               <button onClick={handleShare} className="btn-secondary text-sm flex-1">Share on X</button>
               <button onClick={handleChallenge} className="btn-secondary text-sm flex-1">Challenge</button>
             </div>
