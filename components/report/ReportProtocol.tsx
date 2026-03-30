@@ -1,20 +1,7 @@
 'use client';
 
+import { SkeletonSection } from '@/lib/report-helpers';
 import type { AutopsyAnalysis, PersonalRule } from '@/types';
-
-function SkeletonSection({ label }: { label: string }) {
-  return (
-    <div className="card p-6 space-y-3">
-      <div className="flex items-center gap-2 text-fg-muted text-sm">
-        <span className="inline-block w-4 h-4 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
-        {label}
-      </div>
-      <div className="h-4 bg-surface rounded animate-pulse w-full" />
-      <div className="h-4 bg-surface rounded animate-pulse w-2/3" />
-      <div className="h-4 bg-surface rounded animate-pulse w-4/5" />
-    </div>
-  );
-}
 
 interface ReportProtocolProps {
   analysis: AutopsyAnalysis;
@@ -76,6 +63,73 @@ export default function ReportProtocol({ analysis, isPartialReport }: ReportProt
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Discipline Score */}
+      {analysis.discipline_score && (
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-2xl">Discipline Score</h2>
+            <span className={`font-mono text-3xl font-bold ${
+              analysis.discipline_score.total >= 71 ? 'text-win' :
+              analysis.discipline_score.total >= 51 ? 'text-caution' :
+              analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
+            }`}>
+              {analysis.discipline_score.total}/100
+            </span>
+          </div>
+          <p className="text-fg-muted text-xs">
+            Measures how consistently you&apos;re building better betting habits — tracking, sizing, emotional control, and strategic focus.
+          </p>
+          <div className="w-full h-3 bg-base rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ${
+                analysis.discipline_score.total >= 71 ? 'bg-win' :
+                analysis.discipline_score.total >= 51 ? 'bg-caution' :
+                analysis.discipline_score.total >= 31 ? 'bg-orange-400' : 'bg-loss'
+              }`}
+              style={{ width: `${analysis.discipline_score.total}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {([
+              { label: 'Tracking', val: analysis.discipline_score.tracking, hint: 'Consistency of uploading and reviewing your bets' },
+              { label: 'Sizing', val: analysis.discipline_score.sizing, hint: 'How flat and controlled your bet sizing is' },
+              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — staying cool means more control' },
+              { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
+            ]).map(({ label, val, hint }) => (
+              <div key={label}>
+                <p className="text-fg-dim text-xs mb-1" title={hint}>{label}</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-base rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${val >= 18 ? 'bg-win' : val >= 12 ? 'bg-caution' : val >= 6 ? 'bg-orange-400' : 'bg-loss'}`} style={{ width: `${(val / 25) * 100}%` }} />
+                  </div>
+                  <span className="font-mono text-xs text-fg-muted">{val}/25</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {(() => {
+            const scores = [
+              { name: 'Tracking', val: analysis.discipline_score!.tracking },
+              { name: 'Sizing', val: analysis.discipline_score!.sizing },
+              { name: 'Control', val: analysis.discipline_score!.control },
+              { name: 'Strategy', val: analysis.discipline_score!.strategy },
+            ];
+            const weakest = scores.sort((a, b) => a.val - b.val)[0];
+            const tips: Record<string, string> = {
+              Tracking: 'Set your bankroll, upload bets regularly, and keep your autopsy streak alive.',
+              Sizing: 'Flatten your bet sizing. Big swings in stake amounts signal emotional decisions.',
+              Control: 'Your emotion score is high. Focus on the post-loss escalation pattern.',
+              Strategy: 'Too much volume in losing categories. Check your Edge Profile and shift bets to what works.',
+            };
+            return (
+              <p className="text-fg-muted text-xs">
+                Weakest area: <span className="text-fg-bright">{weakest.name} ({weakest.val}/25)</span> — {tips[weakest.name]}
+              </p>
+            );
+          })()}
         </div>
       )}
     </>

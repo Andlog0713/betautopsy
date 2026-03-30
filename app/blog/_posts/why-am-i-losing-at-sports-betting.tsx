@@ -125,7 +125,9 @@ export default function WhyAmILosingAtSportsBetting() {
       </p>
 
       <p>
-        This is emotional sizing, and it systematically destroys bankrolls. Your largest bets
+        This is emotional sizing — one of the{' '}
+        <Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">cognitive biases that silently destroy your bankroll</Link>{' '}
+        — and it systematically wrecks results. Your largest bets
         aren&apos;t correlated with your best edges — they&apos;re correlated with your highest
         emotional arousal. Primetime. Playoffs. Rivalry games. Your team. These are exactly the
         spots where public lines are sharpest and value is thinnest, yet they&apos;re where you
@@ -257,6 +259,12 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         Stop guessing. Start measuring.
       </p>
+
+      <h2>Keep Reading</h2>
+      <ul>
+        <li><Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">7 Cognitive Biases Destroying Your Bankroll</Link></li>
+        <li><Link href="/blog/psychology-of-loss-chasing" className="text-scalpel hover:underline">The Psychology of Loss Chasing</Link></li>
+      </ul>
     </>
   );
 }

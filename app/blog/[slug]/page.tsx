@@ -38,11 +38,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'article',
       publishedTime: post.publishedAt,
       url: `https://www.betautopsy.com/blog/${post.slug}`,
+      images: [{ url: `/api/og?title=${encodeURIComponent(post.title)}`, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.description,
+      images: [`/api/og?title=${encodeURIComponent(post.title)}`],
     },
   };
 }
@@ -53,6 +55,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const PostContent = POST_COMPONENTS[slug];
 
   if (!post || !PostContent) notFound();
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.betautopsy.com' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://www.betautopsy.com/blog' },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `https://www.betautopsy.com/blog/${post.slug}` },
+    ],
+  };
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -68,6 +80,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <article className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}

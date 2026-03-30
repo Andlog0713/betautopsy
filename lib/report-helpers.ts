@@ -1,6 +1,8 @@
 // ── Report Helper Functions ──
 // Pure helpers shared across report sub-components.
 
+import React from 'react';
+
 export function leakToQuery(category: string): string {
   const lower = category.toLowerCase().trim();
   const params = new URLSearchParams();
@@ -74,4 +76,26 @@ export function calcProfit(odds: number, stake: number, result: string): number 
   if (result === 'win') return odds > 0 ? stake * (odds / 100) : stake * (100 / Math.abs(odds));
   if (result === 'loss') return -stake;
   return 0;
+}
+
+export function SkeletonSection({ label }: { label: string }) {
+  return React.createElement('div', { className: 'card p-6 space-y-3' },
+    React.createElement('div', { className: 'flex items-center gap-2 text-fg-muted text-sm' },
+      React.createElement('span', { className: 'inline-block w-4 h-4 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin' }),
+      label
+    ),
+    React.createElement('div', { className: 'h-4 bg-surface rounded animate-pulse w-full' }),
+    React.createElement('div', { className: 'h-4 bg-surface rounded animate-pulse w-2/3' }),
+    React.createElement('div', { className: 'h-4 bg-surface rounded animate-pulse w-4/5' })
+  );
+}
+
+export function SummaryItem({ label, value, color, small, hint }: { label: string; value: string; color?: string; small?: boolean; hint?: string }) {
+  return React.createElement('div', null,
+    React.createElement('p', { className: 'text-fg-muted text-xs mb-0.5' },
+      label,
+      hint && React.createElement('span', { className: 'text-fg-dim normal-case' }, ` (${hint})`)
+    ),
+    React.createElement('p', { className: `font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-fg-bright'}` }, value)
+  );
 }

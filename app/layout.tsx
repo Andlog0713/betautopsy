@@ -9,6 +9,20 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+  openGraph: {
+    title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
+    url: 'https://www.betautopsy.com',
+    siteName: 'BetAutopsy',
+    images: [{ url: '/api/og', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis.',
+    images: ['/api/og'],
+  },
   alternates: {
     canonical: '/',
   },

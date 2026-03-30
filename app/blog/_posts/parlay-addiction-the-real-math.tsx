@@ -253,6 +253,12 @@ export default function ParlayAddictionTheRealMath() {
         Because the first step to fixing parlay addiction isn&apos;t willpower — it&apos;s seeing
         what it&apos;s actually costing you.
       </p>
+
+      <h2>Keep Reading</h2>
+      <ul>
+        <li><Link href="/blog/why-am-i-losing-at-sports-betting" className="text-scalpel hover:underline">Why Am I Losing at Sports Betting?</Link></li>
+        <li><Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">7 Cognitive Biases Destroying Your Bankroll</Link></li>
+      </ul>
     </>
   );
 }

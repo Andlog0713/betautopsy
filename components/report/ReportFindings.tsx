@@ -1,20 +1,6 @@
 import Link from 'next/link';
-import { leakToQuery, formatCategoryLabel } from '@/lib/report-helpers';
+import { leakToQuery, formatCategoryLabel, SkeletonSection } from '@/lib/report-helpers';
 import type { AutopsyAnalysis } from '@/types';
-
-function SkeletonSection({ label }: { label: string }) {
-  return (
-    <div className="card p-6 space-y-3">
-      <div className="flex items-center gap-2 text-fg-muted text-sm">
-        <span className="inline-block w-4 h-4 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
-        {label}
-      </div>
-      <div className="h-4 bg-surface rounded animate-pulse w-full" />
-      <div className="h-4 bg-surface rounded animate-pulse w-2/3" />
-      <div className="h-4 bg-surface rounded animate-pulse w-4/5" />
-    </div>
-  );
-}
 
 interface ReportFindingsProps {
   analysis: AutopsyAnalysis;

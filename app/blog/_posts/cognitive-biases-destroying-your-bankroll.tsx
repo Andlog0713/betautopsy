@@ -197,7 +197,8 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         is roughly 0.1%.
       </p>
       <p>
-        <strong>What it costs:</strong> Availability bias is the engine behind parlay addiction. It
+        <strong>What it costs:</strong> Availability bias is the engine behind{' '}
+        <Link href="/blog/parlay-addiction-the-real-math" className="text-scalpel hover:underline">parlay addiction</Link>. It
         makes lottery-odds bets feel &ldquo;close to hitting.&rdquo; A bettor placing five 10-leg
         parlays a week at $20 each is spending $5,200 per year with an expected return of about
         $2,600 &mdash; a 50% loss rate that gets buried under the memory of the one ticket that
@@ -235,6 +236,12 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         Knowing the difference between the two is what separates bettors who improve from bettors
         who just keep paying tuition.
       </p>
+
+      <h2>Keep Reading</h2>
+      <ul>
+        <li><Link href="/blog/psychology-of-loss-chasing" className="text-scalpel hover:underline">The Psychology of Loss Chasing</Link></li>
+        <li><Link href="/blog/parlay-addiction-the-real-math" className="text-scalpel hover:underline">Parlay Addiction: The Real Math</Link></li>
+      </ul>
     </>
   );
 }

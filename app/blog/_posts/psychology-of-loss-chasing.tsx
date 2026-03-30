@@ -265,6 +265,12 @@ export default function PsychologyOfLossChasing() {
         <Link href="/quiz">Take the free Bet DNA quiz</Link> to find out which behavioral patterns
         are actually costing you money — it takes two minutes, and the results might surprise you.
       </p>
+
+      <h2>Keep Reading</h2>
+      <ul>
+        <li><Link href="/blog/am-i-a-bad-sports-bettor" className="text-scalpel hover:underline">Am I a Bad Sports Bettor? A 10-Point Self-Assessment</Link></li>
+        <li><Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">7 Cognitive Biases Destroying Your Bankroll</Link></li>
+      </ul>
     </>
   );
 }

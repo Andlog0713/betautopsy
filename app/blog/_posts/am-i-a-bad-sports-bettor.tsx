@@ -120,7 +120,9 @@ export default function AmIABadSportsBettor() {
         your brain whispers that you&apos;re &ldquo;due&rdquo; — that the next bet will even things
         out. It won&apos;t. Every bet is independent. If you find yourself increasing stakes after
         losing streaks, you&apos;re not making strategic decisions. You&apos;re reacting emotionally.
-        We break down exactly why this happens in our piece on{' '}
+        We wrote a full breakdown of{' '}
+        <Link href="/blog/psychology-of-loss-chasing" className="text-scalpel hover:underline">the psychology behind loss chasing</Link>{' '}
+        and cover how it fits into the broader picture of{' '}
         <Link href="/blog/why-am-i-losing-at-sports-betting">
           why you keep losing at sports betting
         </Link>
@@ -269,6 +271,12 @@ export default function AmIABadSportsBettor() {
         didn&apos;t know about yourself. And in sports betting, what you don&apos;t know about
         yourself is exactly what the sportsbook is counting on.
       </p>
+
+      <h2>Keep Reading</h2>
+      <ul>
+        <li><Link href="/blog/why-am-i-losing-at-sports-betting" className="text-scalpel hover:underline">Why Am I Losing at Sports Betting?</Link></li>
+        <li><Link href="/blog/psychology-of-loss-chasing" className="text-scalpel hover:underline">The Psychology of Loss Chasing</Link></li>
+      </ul>
     </>
   );
 }

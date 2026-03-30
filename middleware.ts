@@ -12,6 +12,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Bypass middleware entirely for public content pages (crawlability)
+  const publicRoutes = ['/blog', '/quiz', '/faq', '/how-to-upload', '/privacy', '/sitemap.xml', '/robots.txt', '/reset-password'];
+  const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith('/blog/'));
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

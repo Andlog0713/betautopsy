@@ -19,8 +19,51 @@ Rules:
 Output ONLY the CSV with a header row, no explanation. Here is my data:`;
 
 export default function HowToUploadPage() {
+  const howToJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'How to Upload Your Betting History to BetAutopsy',
+    description: 'Get your sports betting data into BetAutopsy for AI-powered behavioral analysis in 5 simple steps.',
+    step: [
+      {
+        '@type': 'HowToStep',
+        position: 1,
+        name: 'Download Pikkit',
+        text: 'Download the Pikkit app and connect your sportsbook accounts (DraftKings, FanDuel, BetMGM, Caesars, and more).',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 2,
+        name: 'Activate Free Pro Trial',
+        text: 'Activate the free 7-day Pro trial in Pikkit to unlock data export functionality.',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 3,
+        name: 'Export Your CSV',
+        text: 'Go to Pro tab, then Settings, then Data Exports. Set your date range and tap Send CSV to email it to yourself.',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 4,
+        name: 'Upload to BetAutopsy',
+        text: 'Drag and drop your CSV file into the BetAutopsy upload page.',
+      },
+      {
+        '@type': 'HowToStep',
+        position: 5,
+        name: 'Get Your Autopsy Report',
+        text: 'Your AI-powered behavioral analysis will be generated in about 20 seconds, revealing cognitive biases, strategic leaks, and emotional patterns.',
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">

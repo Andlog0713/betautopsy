@@ -106,8 +106,59 @@ function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: b
 export default function FAQPage() {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is BetAutopsy?',
+        acceptedAnswer: { '@type': 'Answer', text: 'BetAutopsy is an AI-powered behavioral analysis tool for sports bettors. You upload your bet history and we analyze it for cognitive biases, emotional patterns, and strategic leaks — the stuff your basic tracker can\'t tell you.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does BetAutopsy give me picks or tell me what to bet?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Never. We are not a picks service and we never predict outcomes. BetAutopsy analyzes your behavior — not the games. Our goal is to help you understand yourself as a bettor so you can make smarter decisions on your own.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I get my betting history into BetAutopsy?',
+        acceptedAnswer: { '@type': 'Answer', text: 'The easiest way is through Pikkit. Download Pikkit, connect your sportsbook accounts, activate their free 7-day Pro trial, go to Settings → Data Exports, and email yourself the CSV. The whole process takes about 3 minutes.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What does an Autopsy Report include?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Your report includes: a summary card (record, P&L, ROI, avg stake, overall grade), an Emotion Score (0–100 measuring your emotional volatility), bias detection cards, strategic leaks, behavioral patterns, an action plan with specific rules, and a bettor archetype profile.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What biases does BetAutopsy detect?',
+        acceptedAnswer: { '@type': 'Answer', text: 'We scan for: loss chasing, favorite bias, recency bias, parlay addiction, gambler\'s fallacy, availability bias, and sunk cost behavior. Each bias is backed by specific evidence from your data — not generic advice.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How many bets do I need for a meaningful analysis?',
+        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. The free tier analyzes your 50 most recent bets. Pro analyzes up to 2,000, and Sharp up to 5,000.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What\'s free vs. paid?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Free: 1 autopsy report covering your 50 most recent bets. Pro ($9.99/month): unlimited reports up to 2,000 bets, full bias suite, weekly digest, PDF export. Sharp ($24.99/month): everything in Pro plus Leak Prioritizer and What-If Simulator.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Who can see my betting data?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Only you. Your bet history is stored with row-level security. We do not sell your data, share it with third parties, or use it for advertising.' },
+      },
+    ],
+  };
+
   return (
     <div className="space-y-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <div className="mb-12">
         <h1 className="font-bold text-4xl mb-3">Frequently Asked Questions</h1>
         <p className="text-fg-muted">Everything you need to know about BetAutopsy.</p>
