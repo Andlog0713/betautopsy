@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { Logo } from '@/components/logo';
+import { Suspense } from 'react';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,11 +18,15 @@ export default function ResetPasswordPage() {
   const [sessionReady, setSessionReady] = useState(false);
   const [checking, setChecking] = useState(true);
 
+  // Check if URL has an explicit error from Supabase (truly expired link)
+  const urlError = searchParams.get('error_description');
+  const hasHashToken = typeof window !== 'undefined' && window.location.hash.includes('access_token');
+
   useEffect(() => {
-    // Supabase automatically picks up the recovery token from the URL hash
-    // when the client is initialized. We just need to wait for it.
     const supabase = createClient();
 
+    // Listen for PASSWORD_RECOVERY event — this fires when Supabase
+    // processes the recovery token from the URL hash
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setSessionReady(true);
@@ -28,15 +34,19 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Also check if already in a session (e.g., page refresh)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Give Supabase a moment to process the hash token, then check session
+    const timer = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setSessionReady(true);
       }
       setChecking(false);
-    });
+    }, 1500);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,6 +84,7 @@ export default function ResetPasswordPage() {
     );
   }
 
+  // Only show expired if there's a URL error AND no valid session was established
   if (!sessionReady) {
     return (
       <div className="min-h-screen bg-base flex items-center justify-center px-4">
@@ -81,7 +92,7 @@ export default function ResetPasswordPage() {
           <Logo size="md" variant="stacked" theme="dark" />
           <h1 className="font-bold text-2xl text-fg-bright mt-6">Reset link expired</h1>
           <p className="text-fg-muted text-sm">
-            This password reset link is invalid or has expired. Please request a new one.
+            This password reset link is invalid or has expired. Please request a new one from the login page.
           </p>
           <Link href="/login" className="btn-primary inline-block font-mono text-sm">
             Back to Login
@@ -149,5 +160,17 @@ export default function ResetPasswordPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-base flex items-center justify-center">
+        <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
