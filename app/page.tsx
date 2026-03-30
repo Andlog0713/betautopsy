@@ -10,7 +10,7 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative grid-paper">
-        <div className="max-w-5xl mx-auto px-6 pt-10 pb-16 relative">
+        <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative">
           <div className="case-header mb-8 animate-fade-in">
             CASE FILE — BEHAVIORAL ANALYSIS UNIT
           </div>
@@ -72,7 +72,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Problem / Solution ── */}
-      <section className="max-w-5xl mx-auto px-6 py-10 md:py-14">
+      <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
           <div className="bg-base p-6 md:p-8">
             <span className="case-header block mb-4">The Problem</span>
