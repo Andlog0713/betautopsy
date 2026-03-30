@@ -8,7 +8,9 @@ export default function LandingPage() {
     <main className="min-h-screen">
       <NavBar />
 
-      {/* ── Hero ── */}
+      {/* ══════════════════════════════════════ */}
+      {/* HERO — grid-paper bg                  */}
+      {/* ══════════════════════════════════════ */}
       <section className="relative grid-paper">
         <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative">
           <div className="case-header mb-8 animate-fade-in">
@@ -35,10 +37,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
-            <Link
-              href="/how-to-upload"
-              className="font-mono text-[11px] text-scalpel hover:text-scalpel/80 transition-colors tracking-wider"
-            >
+            <Link href="/how-to-upload" className="font-mono text-[11px] text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
               NOT SURE HOW TO GET YOUR DATA? →
             </Link>
             <span className="font-mono text-[10px] text-fg-dim tracking-wider">
@@ -50,18 +49,10 @@ export default function LandingPage() {
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="ekg-full" x1="0" x2="1" y1="0" y2="0">
-                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/>
-                  <stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.35"/>
-                  <stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.35"/>
-                  <stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.35"/>
-                  <stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
+                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/><stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.35"/><stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.35"/><stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.35"/><stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
                 </linearGradient>
                 <linearGradient id="ekg-glow" x1="0" x2="1" y1="0" y2="0">
-                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/>
-                  <stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.12"/>
-                  <stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.12"/>
-                  <stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.12"/>
-                  <stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
+                  <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/><stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
                 </linearGradient>
               </defs>
               <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-glow)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
@@ -71,15 +62,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Problem / Solution ── */}
+      {/* ══════════════════════════════════════ */}
+      {/* PROBLEM / SOLUTION — same bg as hero  */}
+      {/* ══════════════════════════════════════ */}
       <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
           <div className="bg-base p-6 md:p-8">
             <span className="case-header block mb-4">The Problem</span>
             <h2 className="font-bold text-xl md:text-2xl leading-snug mb-4 text-fg-bright">
               You know <span className="text-fg-muted">what</span> happened.
-              <br />
-              You don&apos;t know <span className="text-scalpel">why.</span>
+              <br />You don&apos;t know <span className="text-scalpel">why.</span>
             </h2>
             <p className="text-fg-muted text-sm leading-relaxed mb-3">
               Why you doubled your stake after three straight losses. Why your $50 parlay
@@ -107,8 +99,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works ── */}
-      <section className="py-16 md:py-24">
+      {/* ══════════════════════════════════════ */}
+      {/* HOW IT WORKS — raised bg-surface      */}
+      {/* ══════════════════════════════════════ */}
+      <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-8">PROTOCOL — THREE STEPS</div>
           <div className="vitals-strip grid-cols-1 md:grid-cols-3">
@@ -127,8 +121,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Quiz CTA ── */}
-      <section className="max-w-3xl mx-auto px-6 py-8">
+      {/* ══════════════════════════════════════ */}
+      {/* QUIZ CTA — base bg                    */}
+      {/* ══════════════════════════════════════ */}
+      <section className="max-w-3xl mx-auto px-6 py-12">
         <div className="finding-card border-l-scalpel p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -142,15 +138,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Demo Report ── */}
-      <section className="py-16 md:py-24" id="sample">
+      {/* ══════════════════════════════════════ */}
+      {/* DEMO REPORT — surface bg, visually    */}
+      {/* separated so it's clearly a preview   */}
+      {/* ══════════════════════════════════════ */}
+      <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-3">EXHIBIT A — PRO TIER SAMPLE</div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="case-header">EXHIBIT A — PRO TIER SAMPLE</div>
+            <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
+          </div>
           <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
             This is what a Pro autopsy looks like
           </h2>
           <p className="text-fg-muted text-sm mb-4 max-w-xl">
-            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea.
+            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
           <p className="text-fg-dim text-xs mb-8 max-w-xl font-mono">
             THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
@@ -167,8 +169,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Track Progress ── */}
-      <section className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+      {/* ══════════════════════════════════════ */}
+      {/* PROGRESS TRACKING — base bg           */}
+      {/* ══════════════════════════════════════ */}
+      <section className="max-w-5xl mx-auto px-6 py-16 md:py-20">
         <span className="case-header block mb-3">Longitudinal Study</span>
         <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           One report is a <span className="text-fg-muted">snapshot</span>.
@@ -177,7 +181,6 @@ export default function LandingPage() {
         <p className="text-fg-muted mb-10 max-w-lg text-sm">
           Track the behavioral changes that actually save you money.
         </p>
-
         <div className="case-card p-5 md:p-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -223,75 +226,82 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing ── */}
-      <section id="pricing" className="max-w-5xl mx-auto px-6 py-16 md:py-24">
-        <div className="case-header mb-2">PRICING — ACCESS LEVELS</div>
-        <p className="text-fg-muted mb-10 max-w-md text-sm">
-          Try it free with your latest 50 bets. Upgrade for unlimited analysis and progress tracking.
-        </p>
-        <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
-          <div className="bg-base p-6 flex flex-col">
-            <span className="case-header block mb-3">Free</span>
-            <div className="mb-4">
-              <span className="font-mono text-3xl font-bold text-fg-bright">$0</span>
+      {/* ══════════════════════════════════════ */}
+      {/* PRICING — surface bg, visually        */}
+      {/* separated as the "decision" section   */}
+      {/* ══════════════════════════════════════ */}
+      <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="case-header mb-2">PRICING — ACCESS LEVELS</div>
+          <p className="text-fg-muted mb-10 max-w-md text-sm">
+            Try it free with your latest 50 bets. Upgrade for unlimited analysis and progress tracking.
+          </p>
+          <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
+            <div className="bg-base p-6 flex flex-col">
+              <span className="case-header block mb-3">Free</span>
+              <div className="mb-4">
+                <span className="font-mono text-3xl font-bold text-fg-bright">$0</span>
+              </div>
+              <ul className="space-y-2 flex-1 mb-6">
+                {['1 report (50 most recent bets)', 'Basic bias detection', 'Summary stats'].map((f) => (
+                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
-            <ul className="space-y-2 flex-1 mb-6">
-              {['1 report (50 most recent bets)', 'Basic bias detection', 'Summary stats'].map((f) => (
-                <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                  <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
+            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
+              <div className="absolute -top-3 right-4 border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base">
+                <span className="font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
+              </div>
+              <span className="case-header block mb-3">Pro</span>
+              <div className="mb-4">
+                <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
+                <span className="text-fg-dim text-sm font-mono">/mo</span>
+              </div>
+              <ul className="space-y-2 flex-1 mb-6">
+                {[
+                  'Unlimited bets & reports',
+                  'Full bias detection + dollar costs',
+                  'BetIQ score + sport-specific leaks',
+                  'Emotion + Discipline tracking',
+                  'Personal rules & action plans',
+                  'Progress tracking over time',
+                ].map((f) => (
+                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
+            </div>
+            <div className="bg-base p-6 flex flex-col">
+              <span className="case-header block mb-3">Sharp</span>
+              <div className="mb-4">
+                <span className="font-mono text-3xl font-bold text-fg-bright">$24.99</span>
+                <span className="text-fg-dim text-sm font-mono">/mo</span>
+              </div>
+              <ul className="space-y-2 flex-1 mb-6">
+                {['Everything in Pro', 'Leak Prioritizer (ranked by $ impact)', 'What-If Simulator', 'Early access to new features'].map((f) => (
+                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
+            </div>
           </div>
-          <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
-            <div className="absolute -top-3 right-4 border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base">
-              <span className="font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
-            </div>
-            <span className="case-header block mb-3">Pro</span>
-            <div className="mb-4">
-              <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
-              <span className="text-fg-dim text-sm font-mono">/mo</span>
-            </div>
-            <ul className="space-y-2 flex-1 mb-6">
-              {[
-                'Unlimited bets & reports',
-                'Full bias detection + dollar costs',
-                'BetIQ score + sport-specific leaks',
-                'Emotion + Discipline tracking',
-                'Personal rules & action plans',
-                'Progress tracking over time',
-              ].map((f) => (
-                <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                  <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
-          </div>
-          <div className="bg-base p-6 flex flex-col">
-            <span className="case-header block mb-3">Sharp</span>
-            <div className="mb-4">
-              <span className="font-mono text-3xl font-bold text-fg-bright">$24.99</span>
-              <span className="text-fg-dim text-sm font-mono">/mo</span>
-            </div>
-            <ul className="space-y-2 flex-1 mb-6">
-              {['Everything in Pro', 'Leak Prioritizer (ranked by $ impact)', 'What-If Simulator', 'Early access to new features'].map((f) => (
-                <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                  <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
-          </div>
+          <p className="text-fg-dim text-xs mt-6 font-mono">
+            Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
+          </p>
         </div>
-        <p className="text-fg-dim text-xs mt-6 font-mono">
-          Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
-        </p>
       </section>
 
-      {/* ── Final CTA ── */}
-      <section className="max-w-3xl mx-auto px-6 py-16 md:py-24 text-center">
+      {/* ══════════════════════════════════════ */}
+      {/* FINAL CTA — base bg                   */}
+      {/* ══════════════════════════════════════ */}
+      <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
         <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           Stop betting on autopilot. Start <span className="text-scalpel">understanding your behavior.</span>
         </h2>
@@ -303,8 +313,10 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-white/[0.04] py-10">
+      {/* ══════════════════════════════════════ */}
+      {/* FOOTER                                */}
+      {/* ══════════════════════════════════════ */}
+      <footer className="border-t border-white/[0.04] bg-surface py-10">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
             <Logo size="xs" variant="horizontal" theme="dark" />
