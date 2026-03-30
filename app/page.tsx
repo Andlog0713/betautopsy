@@ -21,13 +21,13 @@ export default function LandingPage() {
             Your behavior is.
           </div>
           <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
-            BetAutopsy runs your betting history through proprietary scoring models — Emotion Score, BetIQ,
-            Discipline tracking, sport-specific pattern detection — and builds a diagnostic profile that
-            gets smarter every time you upload. This isn&apos;t a chatbot summarizing your CSV.
-            It&apos;s a system that learns your behavioral fingerprint.
+            Find out exactly which habits are costing you money — and how much. BetAutopsy
+            detects loss chasing, parlay addiction, emotional sizing, late-night tilt, and
+            sport-specific leaks, then gives you a concrete plan to fix them with real dollar amounts.
           </p>
-          <p className="font-mono text-[11px] text-fg-dim tracking-wider mb-8 animate-fade-in-d2">
-            PROPRIETARY SCORING ENGINE · LONGITUDINAL TRACKING · POPULATION BENCHMARKS
+          <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
+            Powered by proprietary scoring models that no generic AI can replicate — your analysis
+            gets more accurate every time you upload, benchmarked against thousands of real bettors.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
@@ -119,17 +119,17 @@ export default function LandingPage() {
             </h2>
             <div className="text-fg-muted space-y-4 text-sm leading-relaxed">
               <p>
-                Our engine detects session-level tilt patterns, odds drift after losses,
-                sport-specific leaks (NFL key number overpays, NBA prop traps, DFS multiplier chasing),
-                and cross-references your behavior against population benchmarks from real bettors.
+                We show you that your Tuesday night NBA parlays cost you $340 last quarter.
+                That your stakes jump 1.8x after a loss. That you&apos;re profitable on NFL spreads
+                but bleeding on player props. Specific patterns, specific dollars, specific fixes.
               </p>
               <p>
-                Then it generates a diagnostic report with your BetIQ skill score, Emotion Score,
-                Discipline tracking, and a prescribed protocol — specific rules with dollar amounts
-                that compound as you upload more data over time.
+                Then we track whether you actually change — your Emotion Score, Discipline Score,
+                and BetIQ update every time you run a new report, so you can see the proof
+                in your own numbers.
               </p>
               <p className="text-fg-bright font-medium">
-                Month 1, you get a snapshot. Month 6, you get proof you&apos;re a different bettor.
+                Month 1, you see what&apos;s costing you. Month 6, you see how much you&apos;ve saved.
               </p>
             </div>
           </div>
