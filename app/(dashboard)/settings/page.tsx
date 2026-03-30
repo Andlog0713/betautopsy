@@ -101,7 +101,9 @@ export default function SettingsPage() {
   async function handlePasswordReset() {
     if (!profile?.email) return;
     const supabase = createClient();
-    await supabase.auth.resetPasswordForEmail(profile.email);
+    await supabase.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     setPasswordResetSent(true);
     setTimeout(() => setPasswordResetSent(false), 5000);
   }
