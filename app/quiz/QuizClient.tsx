@@ -344,8 +344,8 @@ export default function QuizClient() {
       <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
           {/* Share card — FIRST thing they see */}
-          <div className="overflow-hidden rounded-sm" style={{ maxWidth: '100%' }}>
-            <div style={{ transform: 'scale(0.38)', transformOrigin: 'top left', width: 1080, height: 1920 }}>
+          <div className="overflow-hidden rounded-sm relative" style={{ width: '100%', maxWidth: 440, height: Math.round(1920 * (440 / 1080)), margin: '0 auto' }}>
+            <div style={{ transform: `scale(${440 / 1080})`, transformOrigin: 'top left', width: 1080, height: 1920, position: 'absolute', top: 0, left: 0 }}>
               <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
             </div>
           </div>
@@ -508,8 +508,8 @@ export default function QuizClient() {
           {/* 8. Share card + buttons (again at bottom) */}
           <div className="space-y-3 overflow-hidden">
             <span className="case-header block">SHARE YOUR BET DNA</span>
-            <div className="overflow-hidden rounded-sm" style={{ maxWidth: '100%' }}>
-              <div style={{ transform: 'scale(0.38)', transformOrigin: 'top left', width: 1080, height: 1920 }}>
+            <div className="overflow-hidden rounded-sm relative" style={{ width: '100%', maxWidth: 440, height: Math.round(1920 * (440 / 1080)), margin: '0 auto' }}>
+              <div style={{ transform: `scale(${440 / 1080})`, transformOrigin: 'top left', width: 1080, height: 1920, position: 'absolute', top: 0, left: 0 }}>
                 <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
               </div>
             </div>
