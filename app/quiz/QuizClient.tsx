@@ -544,7 +544,7 @@ export default function QuizClient() {
 
           {/* 9. Bottom CTA */}
           <div className="case-card p-6 text-center space-y-3">
-            <p className="text-fg-bright font-medium">Your quiz says you&apos;re a {result.archetype.name}.</p>
+            <p className="text-fg-bright font-medium">Your quiz says you&apos;re <span style={{ color: result.archetype.color }}>{result.archetype.name}</span>.</p>
             <p className="text-fg-muted text-sm">Your actual bet history might tell a different story.</p>
             <Link href="/signup" className="btn-primary inline-block !px-8 !py-3 font-mono">
               Upload Your Bets — It&apos;s Free
