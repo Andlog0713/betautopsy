@@ -54,17 +54,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Evidence bar — supported platforms ── */}
-      <div className="border-y border-white/[0.04] py-5">
-        <div className="max-w-5xl mx-auto px-6 flex flex-wrap gap-2">
-          {['Pikkit', 'DraftKings', 'FanDuel', 'BetMGM', 'PrizePicks', 'Underdog', 'Kalshi', 'Any CSV'].map((name, i) => (
-            <span key={name} className="evidence-tag border-white/[0.06] text-fg-dim">
-              EV-{String(i + 1).padStart(3, '0')} · {name}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* ── Problem / Solution — split panel ── */}
       <section className="max-w-5xl mx-auto px-6 py-20">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
