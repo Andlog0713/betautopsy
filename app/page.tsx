@@ -46,7 +46,7 @@ export default function LandingPage() {
             </span>
           </div>
           {/* EKG heartbeat line */}
-          <div className="mt-12 animate-fade-in-d4 relative h-12 overflow-hidden">
+          <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="ekg-full" x1="0" x2="1" y1="0" y2="0">
@@ -71,8 +71,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Problem / Solution — tighter copy ── */}
-      <section className="max-w-5xl mx-auto px-6 py-16 md:py-24">
+      {/* ── Problem / Solution ── */}
+      <section className="max-w-5xl mx-auto px-6 py-10 md:py-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
           <div className="bg-base p-6 md:p-8">
             <span className="case-header block mb-4">The Problem</span>
