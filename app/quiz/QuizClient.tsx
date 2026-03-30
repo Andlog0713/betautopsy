@@ -212,7 +212,7 @@ export default function QuizClient() {
                         : 'border-white/[0.10] bg-surface-raised text-fg-bright hover:border-white/[0.15] hover:bg-surface-elevated'
                     }`}
                   >
-                    <span className="text-sm md:text-base">{opt.label}</span>
+                    <span className="text-sm md:text-base" style={{ color: '#F0F2F5' }}>{opt.label}</span>
                   </button>
                 );
               })}
