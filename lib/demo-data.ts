@@ -242,5 +242,21 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     sizing: 8,
     control: 9,
     strategy: 11,
+    percentile: 35,
   },
+  betiq: {
+    score: 44,
+    components: {
+      line_value: 12,
+      calibration: 8,
+      sophistication: 6,
+      specialization: 8,
+      timing: 4,
+      confidence: 6,
+    },
+    percentile: 55,
+    interpretation: 'Moderate skill level. Some promising spots, but you\'re also making bets without clear edge.',
+    insufficient_data: false,
+  },
+  emotion_percentile: 30,
 };

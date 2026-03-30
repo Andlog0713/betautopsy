@@ -172,7 +172,10 @@ export interface AutopsyAnalysis {
     sizing: number;
     control: number;
     strategy: number;
+    percentile?: number;
   };
+  betiq?: BetIQResult;
+  emotion_percentile?: number;
 }
 
 export interface PersonalRule {
@@ -340,6 +343,33 @@ export interface DFSMetrics {
   highPickROI: number;
   pickCountAfterLoss: number;
   pickCountAfterWin: number;
+}
+
+// ── BetIQ Score ──
+
+export interface BetIQComponent {
+  line_value: number;       // 0-25: Are they getting good odds?
+  calibration: number;      // 0-20: Do they pick the right implied probabilities?
+  sophistication: number;   // 0-15: Straight bets vs parlays ratio
+  specialization: number;   // 0-15: Concentrated edge in 1-2 areas
+  timing: number;           // 0-10: Avoiding bad time windows
+  confidence: number;       // 0-15: Sample size adequacy
+}
+
+export interface BetIQResult {
+  score: number;            // 0-100 composite
+  components: BetIQComponent;
+  percentile: number;       // Estimated population percentile (1-99)
+  interpretation: string;   // One-sentence summary
+  insufficient_data: boolean; // True if < 50 settled bets
+}
+
+export interface PercentileBaselines {
+  top_10: number;
+  top_25: number;
+  median: number;
+  bottom_25: number;
+  bottom_10: number;
 }
 
 // ── CSV Parser ──

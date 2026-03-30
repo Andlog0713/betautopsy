@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
@@ -940,6 +940,172 @@ export function calculateDisciplineScore(
 
 // ── Partial Analysis (JS-only, no Claude call) ──
 
+// ── Population Percentile Baselines ──
+// Hardcoded estimates from academic research (Edson et al. 2023, Tom et al. 2025, Newall et al. 2021).
+// Will be replaced with real population data as user base grows.
+
+const PERCENTILE_BASELINES = {
+  discipline_score: { top_10: 78, top_25: 65, median: 48, bottom_25: 32, bottom_10: 20 },
+  betiq_score: { top_10: 72, top_25: 58, median: 42, bottom_25: 28, bottom_10: 15 },
+  emotion_score: { top_10: 22, top_25: 35, median: 52, bottom_25: 68, bottom_10: 82 },
+  roi_percent: { top_10: 5.0, top_25: 0.5, median: -4.0, bottom_25: -12.0, bottom_10: -25.0 },
+};
+
+export function estimatePercentile(
+  metric: keyof typeof PERCENTILE_BASELINES,
+  value: number,
+  lowerIsBetter = false
+): number {
+  const b = PERCENTILE_BASELINES[metric];
+  if (lowerIsBetter) {
+    if (value <= b.top_10) return 95;
+    if (value <= b.top_25) return 80;
+    if (value <= b.median) return 55;
+    if (value <= b.bottom_25) return 30;
+    if (value <= b.bottom_10) return 12;
+    return 5;
+  } else {
+    if (value >= b.top_10) return 95;
+    if (value >= b.top_25) return 80;
+    if (value >= b.median) return 55;
+    if (value >= b.bottom_25) return 30;
+    if (value >= b.bottom_10) return 12;
+    return 5;
+  }
+}
+
+export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQResult {
+  const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+
+  if (settled.length < 50) {
+    return {
+      score: 0,
+      components: { line_value: 0, calibration: 0, sophistication: 0, specialization: 0, timing: 0, confidence: 0 },
+      percentile: 50,
+      interpretation: `Need at least 50 settled bets for a meaningful BetIQ score. You have ${settled.length}.`,
+      insufficient_data: true,
+    };
+  }
+
+  // COMPONENT 1: LINE VALUE (0-25)
+  let lineValue = 0;
+  const straightBets = settled.filter(b => b.bet_type !== 'parlay' && (!b.parlay_legs || b.parlay_legs <= 1));
+  if (straightBets.length >= 10) {
+    const goodJuice = straightBets.filter(b => {
+      const odds = Number(b.odds);
+      return odds > 0 || odds >= -110;
+    });
+    const goodJuicePct = (goodJuice.length / straightBets.length) * 100;
+    if (goodJuicePct >= 70) lineValue += 10;
+    else if (goodJuicePct >= 50) lineValue += 7;
+    else if (goodJuicePct >= 30) lineValue += 4;
+    else lineValue += 1;
+  }
+  const favBets = straightBets.filter(b => Number(b.odds) < 0);
+  if (favBets.length >= 10) {
+    const avgFavOdds = favBets.reduce((s, b) => s + Number(b.odds), 0) / favBets.length;
+    if (avgFavOdds >= -115) lineValue += 8;
+    else if (avgFavOdds >= -125) lineValue += 5;
+    else if (avgFavOdds >= -140) lineValue += 3;
+    else lineValue += 1;
+  }
+  if (metrics.odds && metrics.odds.buckets) {
+    const dogBuckets = metrics.odds.buckets.filter(b => b.implied_prob < 50 && b.bets >= 5);
+    const posEdgeDogs = dogBuckets.filter(b => b.edge > 0);
+    if (posEdgeDogs.length > 0) lineValue += 7;
+    else if (dogBuckets.length > 0 && dogBuckets.some(b => b.edge > -3)) lineValue += 3;
+  }
+  lineValue = Math.min(25, lineValue);
+
+  // COMPONENT 2: CALIBRATION (0-20)
+  let calibration = 0;
+  if (metrics.odds && metrics.odds.buckets) {
+    const validBuckets = metrics.odds.buckets.filter(b => b.bets >= 10);
+    if (validBuckets.length >= 2) {
+      const totalBetsInBuckets = validBuckets.reduce((s, b) => s + b.bets, 0);
+      const weightedMAE = validBuckets.reduce((s, b) => {
+        return s + Math.abs(b.win_rate - b.implied_prob) * (b.bets / totalBetsInBuckets);
+      }, 0);
+      if (weightedMAE < 3) calibration = 20;
+      else if (weightedMAE < 6) calibration = 15;
+      else if (weightedMAE < 10) calibration = 10;
+      else if (weightedMAE < 15) calibration = 5;
+      else calibration = 2;
+    }
+  }
+
+  // COMPONENT 3: SOPHISTICATION (0-15)
+  let sophistication = 0;
+  const parlayPct = metrics.parlay_stats.parlay_percent;
+  if (parlayPct <= 5) sophistication = 15;
+  else if (parlayPct <= 15) sophistication = 12;
+  else if (parlayPct <= 25) sophistication = 9;
+  else if (parlayPct <= 40) sophistication = 6;
+  else if (parlayPct <= 60) sophistication = 3;
+  else sophistication = 1;
+  const longParlays = settled.filter(b => b.parlay_legs && b.parlay_legs >= 5);
+  if (longParlays.length > 5) sophistication = Math.max(0, sophistication - 3);
+
+  // COMPONENT 4: SPECIALIZATION (0-15)
+  let specialization = 0;
+  const sportCats = metrics.category_roi.filter(c => {
+    return !c.category.includes(' ') && c.count >= 15 && c.roi > 0;
+  });
+  if (sportCats.length >= 1) specialization += 5;
+  if (sportCats.some(c => c.count >= 30 && c.roi > 3)) specialization += 5;
+  if (sportCats.some(c => c.roi > 8)) specialization += 5;
+  const sportTypeCats = metrics.category_roi.filter(c => {
+    return c.category.includes(' ') && c.count >= 10 && c.roi > 0;
+  });
+  if (sportTypeCats.length >= 1 && specialization < 10) specialization += 3;
+  specialization = Math.min(15, specialization);
+
+  // COMPONENT 5: TIMING (0-10)
+  let timing = 0;
+  if (metrics.timing && metrics.timing.has_time_data) {
+    const lateNight = metrics.timing.late_night_stats;
+    if (!lateNight || lateNight.pct_of_total < 5) timing += 5;
+    else if (lateNight.pct_of_total < 15) timing += 3;
+    else timing += 1;
+    if (metrics.timing.best_window && metrics.timing.worst_window) {
+      const spread = metrics.timing.best_window.roi - metrics.timing.worst_window.roi;
+      if (spread > 20) timing += 5;
+      else if (spread > 10) timing += 3;
+      else timing += 2;
+    }
+  } else {
+    timing = 5;
+  }
+  timing = Math.min(10, timing);
+
+  // COMPONENT 6: CONFIDENCE (0-15)
+  let confidence = 0;
+  if (settled.length >= 500) confidence = 15;
+  else if (settled.length >= 300) confidence = 12;
+  else if (settled.length >= 150) confidence = 9;
+  else if (settled.length >= 75) confidence = 6;
+  else confidence = 3;
+
+  // COMPOSITE
+  const score = Math.min(100, lineValue + calibration + sophistication + specialization + timing + confidence);
+  const percentile = estimatePercentile('betiq_score', score);
+
+  let interpretation = '';
+  if (score >= 75) interpretation = 'Elite-level betting skill. You consistently find value and specialize where you have edge.';
+  else if (score >= 60) interpretation = 'Above-average skill. You have identifiable edges — the question is whether you\'re exploiting them enough.';
+  else if (score >= 45) interpretation = 'Moderate skill level. Some promising spots, but you\'re also making bets without clear edge.';
+  else if (score >= 30) interpretation = 'Below average. Focus on the 1-2 areas where you actually show positive ROI and cut everything else.';
+  else interpretation = 'Significant room for improvement. Your bet selection suggests recreational patterns — start tracking WHY you make each bet.';
+
+  return {
+    score,
+    components: { line_value: lineValue, calibration, sophistication, specialization, timing, confidence },
+    percentile,
+    interpretation,
+    insufficient_data: false,
+  };
+}
+
 export function calculateMetricsOnly(
   bets: Bet[],
   bankroll?: number | null,
@@ -984,7 +1150,9 @@ export function calculateMetricsOnly(
     dfs_mode: metrics.dfs.isDFS,
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
-    discipline_score: disciplineScore,
+    discipline_score: disciplineScore ? { ...disciplineScore, percentile: estimatePercentile('discipline_score', disciplineScore.total) } : undefined,
+    betiq: calculateBetIQ(metrics, bets),
+    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
     strategic_leaks: [],
     behavioral_patterns: [],
     recommendations: [],
