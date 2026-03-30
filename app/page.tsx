@@ -142,15 +142,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Demo Report — trimmed ── */}
+      {/* ── Demo Report ── */}
       <section className="py-16 md:py-24" id="sample">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-3">EXHIBIT A — SAMPLE AUTOPSY</div>
+          <div className="case-header mb-3">EXHIBIT A — PRO TIER SAMPLE</div>
           <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
-            See what an actual report looks like
+            This is what a Pro autopsy looks like
           </h2>
-          <p className="text-fg-muted text-sm mb-8 max-w-lg">
-            280 bets. 3 cognitive biases detected. $480/quarter in loss-chasing costs identified. Real output from a real analysis.
+          <p className="text-fg-muted text-sm mb-4 max-w-xl">
+            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea.
+          </p>
+          <p className="text-fg-dim text-xs mb-8 max-w-xl font-mono">
+            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
