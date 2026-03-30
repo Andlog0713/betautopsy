@@ -112,7 +112,7 @@ export default function LoginPage() {
         Forgot your password?
       </button>
       {resetSent && (
-        <p className="text-scalpel text-sm text-center mt-2 font-mono">Check your email for a reset link.</p>
+        <p className="text-scalpel text-sm text-center mt-2 font-mono">Check your email for a reset link. Check spam if you don&apos;t see it.</p>
       )}
 
       <p className="text-fg-muted text-sm text-center mt-6">
