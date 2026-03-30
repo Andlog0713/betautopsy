@@ -47,7 +47,7 @@ export default function BlogIndexPage() {
         ))}
       </div>
 
-      <div className="card p-8 text-center border-scalpel/20 bg-gradient-to-r from-scalpel/5 to-transparent">
+      <div className="finding-card border-l-scalpel p-8 text-center">
         <span className="text-3xl mb-3 block">🧬</span>
         <h3 className="font-bold text-xl mb-2">Curious about your own biases?</h3>
         <p className="text-fg-muted text-sm mb-4">

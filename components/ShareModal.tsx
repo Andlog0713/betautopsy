@@ -95,7 +95,7 @@ export default function ShareModal({
       role="dialog"
       aria-modal="true"
       aria-label="Share report"
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-black/80"
       style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
       onClick={onClose}
     >

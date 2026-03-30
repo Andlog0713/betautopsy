@@ -83,7 +83,7 @@ export default function AdminReportDetailPage() {
         <p className="text-red-400 mb-4">{error || 'Report not found'}</p>
         <button
           onClick={() => router.push('/admin/reports')}
-          className="text-flame-500 hover:underline text-sm"
+          className="text-scalpel hover:underline text-sm"
         >
           Back to reports
         </button>
@@ -100,13 +100,13 @@ export default function AdminReportDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/admin/reports')}
-            className="text-ink-600 hover:text-[#F0F0F0] transition-colors text-sm"
+            className="text-ink-600 hover:text-[#F0F2F5] transition-colors text-sm"
           >
             &larr; All Reports
           </button>
           <span className="text-white/[0.1]">|</span>
           <div>
-            <p className="text-[#F0F0F0] font-medium text-sm">
+            <p className="text-[#F0F2F5] font-medium text-sm">
               {user?.display_name ?? 'Unknown User'}
             </p>
             <p className="text-ink-600 text-xs">{user?.email ?? report.user_id}</p>

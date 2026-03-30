@@ -543,11 +543,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
-                <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `$${v}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
+                <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip content={<ChartTooltip />} />
-                <ReferenceLine y={0} stroke="#5A5C6F50" />
+                <ReferenceLine y={0} stroke="#51596850" />
                 <Line type="monotone" dataKey="pnl" stroke="#f97316" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -626,13 +626,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="h-40 sm:h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stakeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
-                <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `$${v}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
+                <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#51596830' }} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip content={<ChartTooltip />} />
                 <Bar dataKey="stake" radius={[2, 2, 0, 0]}>
                   {stakeData.map((entry, i) => (
-                    <Cell key={i} fill={entry.afterLoss ? '#f97316' : '#5A5C6F'} />
+                    <Cell key={i} fill={entry.afterLoss ? '#f97316' : '#515968'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -766,9 +766,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
-                <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}%`} />
-                <YAxis type="category" dataKey="category" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={55} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#51596820" horizontal={false} />
+                <XAxis type="number" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `${v}%`} />
+                <YAxis type="category" dataKey="category" tick={{ fill: '#F0F2F5', fontSize: 12 }} tickLine={false} axisLine={false} width={55} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
@@ -782,7 +782,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     );
                   }}
                 />
-                <ReferenceLine x={0} stroke="#5A5C6F50" />
+                <ReferenceLine x={0} stroke="#51596850" />
                 <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                   {roiData.map((entry, i) => (
                     <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
@@ -809,9 +809,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div style={{ height: Math.max(200, analysis.timing_analysis.by_day.filter((d) => d.bets > 0).length * 40) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={analysis.timing_analysis.by_day.filter((d) => d.bets > 0)} layout="vertical" margin={{ left: 35 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}%`} />
-                  <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={30} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#51596820" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `${v}%`} />
+                  <YAxis type="category" dataKey="label" tick={{ fill: '#F0F2F5', fontSize: 12 }} tickLine={false} axisLine={false} width={30} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
@@ -826,7 +826,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       );
                     }}
                   />
-                  <ReferenceLine x={0} stroke="#5A5C6F50" />
+                  <ReferenceLine x={0} stroke="#51596850" />
                   <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                     {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
                       <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
@@ -1002,9 +1002,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42) }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analysis.odds_analysis.buckets.filter((b) => b.bets >= 3)} layout="vertical" margin={{ left: 90 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} tickFormatter={(v: number) => `${v}pp`} />
-                    <YAxis type="category" dataKey="label" tick={{ fill: '#F0F0F0', fontSize: 12 }} tickLine={false} axisLine={false} width={85} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#51596820" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `${v}pp`} />
+                    <YAxis type="category" dataKey="label" tick={{ fill: '#F0F2F5', fontSize: 12 }} tickLine={false} axisLine={false} width={85} />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (!active || !payload?.length) return null;
@@ -1019,7 +1019,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         );
                       }}
                     />
-                    <ReferenceLine x={0} stroke="#5A5C6F50" />
+                    <ReferenceLine x={0} stroke="#51596850" />
                     <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
                       {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
                         <Cell key={i} fill={entry.edge >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
@@ -1602,7 +1602,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="card p-5 border-scalpel/20 bg-gradient-to-r from-scalpel/5 to-transparent">
+                <div className="finding-card border-l-scalpel p-5">
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
                   <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
@@ -1662,7 +1662,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           /* Locked Sharp tab for non-Sharp users */
           <div className="space-y-6 py-4">
             <div className="text-center max-w-md mx-auto space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 rounded-sm bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mx-auto">
                 <svg className="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>

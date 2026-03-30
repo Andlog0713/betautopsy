@@ -2,11 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/types';
 import { Logo } from '@/components/logo';
 
 export default function NavBar() {
+  const pathname = usePathname();
+  const isLanding = pathname === '/';
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -60,7 +63,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className="border-b border-white/[0.04] bg-surface">
+      <nav className={`border-b border-white/[0.04] bg-surface ${isLanding ? '' : 'sticky top-0 z-50'}`}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link href={user ? '/dashboard' : '/'} className="shrink-0">

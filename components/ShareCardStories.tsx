@@ -66,9 +66,9 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
       style={{
         width: 1080,
         height: 1920,
-        background: '#0D1117',
+        background: '#111318',
         fontFamily: "'Inter', -apple-system, sans-serif",
-        color: '#F0F0F0',
+        color: '#F0F2F5',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -98,44 +98,44 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={{ fontSize: 100, marginBottom: 16 }}>{getArchEmoji(archName)}</div>
           <div style={{ fontSize: 72, fontWeight: 800, color: archColor, lineHeight: 1.1, marginBottom: 16 }}>{archName}</div>
-          <div style={{ fontSize: 26, color: '#A0A3B1', maxWidth: 800, margin: '0 auto', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 26, color: '#848D9A', maxWidth: 800, margin: '0 auto', lineHeight: 1.5 }}>
             {data.archetype?.description ?? ''}
           </div>
         </div>
 
         {/* Stats row — big numbers */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 48 }}>
-          <div style={{ background: '#1C1E2D', borderRadius: 16, padding: '24px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 16, color: '#5A5C6F', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>GRADE</div>
+          <div style={{ background: '#161820', borderRadius: 2, padding: '24px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 16, color: '#515968', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>GRADE</div>
             <div style={{ fontSize: 80, fontWeight: 800, color: gc, lineHeight: 1 }}>{data.grade}</div>
           </div>
-          <div style={{ background: '#1C1E2D', borderRadius: 16, padding: '24px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 16, color: '#5A5C6F', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>EMOTION</div>
+          <div style={{ background: '#161820', borderRadius: 2, padding: '24px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 16, color: '#515968', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>EMOTION</div>
             <div style={{ fontSize: 80, fontWeight: 800, color: ec, lineHeight: 1 }}>{data.emotion_score}</div>
           </div>
-          <div style={{ background: '#1C1E2D', borderRadius: 16, padding: '24px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 16, color: '#5A5C6F', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>WIN RATE</div>
-            <div style={{ fontSize: 60, fontWeight: 800, color: '#F0F0F0', lineHeight: 1 }}>{(data.win_rate ?? 0).toFixed(0)}%</div>
+          <div style={{ background: '#161820', borderRadius: 2, padding: '24px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 16, color: '#515968', textTransform: 'uppercase' as const, letterSpacing: 2, marginBottom: 8, fontWeight: 600 }}>WIN RATE</div>
+            <div style={{ fontSize: 60, fontWeight: 800, color: '#F0F2F5', lineHeight: 1 }}>{(data.win_rate ?? 0).toFixed(0)}%</div>
           </div>
         </div>
 
         {/* Edge + Leak row — always lead with the positive */}
         <div style={{ display: 'grid', gridTemplateColumns: (data.best_edge && data.biggest_leak) ? '1fr 1fr' : '1fr', gap: 16, marginBottom: 48 }}>
           {data.best_edge && (
-            <div style={{ background: 'rgba(0,201,167,0.08)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,201,167,0.2)' }}>
+            <div style={{ background: 'rgba(0,201,167,0.08)', borderRadius: 2, padding: 24, border: '1px solid rgba(0,201,167,0.2)' }}>
               <div style={{ fontSize: 16, color: '#00C9A7', fontWeight: 600, marginBottom: 8 }}>BEST EDGE</div>
               <div style={{ fontSize: 28, fontWeight: 700 }}>{data.best_edge.category}</div>
               <div style={{ fontSize: 24, color: '#00C9A7', fontWeight: 700, marginTop: 4 }}>+{data.best_edge.roi.toFixed(1)}%</div>
             </div>
           )}
           {!data.best_edge && data.sharp_score !== null && (
-            <div style={{ background: 'rgba(0,201,167,0.08)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,201,167,0.2)' }}>
+            <div style={{ background: 'rgba(0,201,167,0.08)', borderRadius: 2, padding: 24, border: '1px solid rgba(0,201,167,0.2)' }}>
               <div style={{ fontSize: 16, color: '#00C9A7', fontWeight: 600, marginBottom: 8 }}>SHARP SCORE</div>
               <div style={{ fontSize: 48, fontWeight: 800, color: '#00C9A7' }}>{data.sharp_score}/100</div>
             </div>
           )}
           {data.biggest_leak && (
-            <div style={{ background: 'rgba(248,113,113,0.08)', borderRadius: 16, padding: 24, border: '1px solid rgba(248,113,113,0.2)' }}>
+            <div style={{ background: 'rgba(248,113,113,0.08)', borderRadius: 2, padding: 24, border: '1px solid rgba(248,113,113,0.2)' }}>
               <div style={{ fontSize: 16, color: '#f87171', fontWeight: 600, marginBottom: 8 }}>BIGGEST LEAK</div>
               <div style={{ fontSize: 28, fontWeight: 700 }}>{data.biggest_leak.category}</div>
               <div style={{ fontSize: 24, color: '#f87171', fontWeight: 700, marginTop: 4 }}>{data.biggest_leak.roi.toFixed(1)}%</div>
@@ -152,7 +152,7 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
           const profit = Math.round(Number(best.profit));
           if (profit < 50) return null;
           return (
-            <div style={{ background: 'rgba(0,201,167,0.06)', borderRadius: 16, padding: 24, border: '1px solid rgba(0,201,167,0.15)', marginBottom: 48, textAlign: 'center' }}>
+            <div style={{ background: 'rgba(0,201,167,0.06)', borderRadius: 2, padding: 24, border: '1px solid rgba(0,201,167,0.15)', marginBottom: 48, textAlign: 'center' }}>
               <div style={{ fontSize: 16, color: '#00C9A7', fontWeight: 600, marginBottom: 8 }}>BIGGEST WIN</div>
               <div style={{ fontSize: 48, fontWeight: 800, color: '#00C9A7' }}>+${profit.toLocaleString()}</div>
             </div>
@@ -165,7 +165,7 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
             <div style={{ fontSize: 18, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#fbbf24', marginBottom: 20, fontWeight: 600 }}>THE RECEIPTS</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {roastStats.map((stat, i) => (
-                <div key={i} style={{ background: '#1C1E2D', borderRadius: 14, padding: '20px 24px', fontSize: 22, color: '#A0A3B1', lineHeight: 1.5 }}>
+                <div key={i} style={{ background: '#161820', borderRadius: 2, padding: '20px 24px', fontSize: 22, color: '#848D9A', lineHeight: 1.5 }}>
                   {stat.emoji} {stat.text}
                 </div>
               ))}
@@ -178,13 +178,13 @@ const ShareCardStories = forwardRef<HTMLDivElement, { data: ShareCardData; roast
 
         {/* Bottom */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 18, color: '#5A5C6F', marginBottom: 8 }}>
+          <div style={{ fontSize: 18, color: '#515968', marginBottom: 8 }}>
             {data.record} · {data.total_bets} bets{data.date_range ? ` · ${data.date_range}` : ''}
           </div>
           {data.streak_count && data.streak_count >= 4 && (
             <div style={{ fontSize: 20, color: '#00C9A7', marginBottom: 12 }}>🔥 {data.streak_count}-week streak</div>
           )}
-          <div style={{ fontSize: 28, color: '#F0F0F0', marginTop: 24, fontWeight: 700 }}>Get your autopsy report</div>
+          <div style={{ fontSize: 28, color: '#F0F2F5', marginTop: 24, fontWeight: 700 }}>Get your autopsy report</div>
           <div style={{ fontSize: 24, color: '#00C9A7', marginTop: 8 }}>betautopsy.com</div>
         </div>
       </div>

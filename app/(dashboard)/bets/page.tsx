@@ -513,7 +513,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
           Clear all
         </button>
       ) : (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80 backdrop-blur-sm" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
           <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-bold text-lg">Clear All Bets</h3>
             <p className="text-sm text-fg-bright">

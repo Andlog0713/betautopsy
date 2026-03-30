@@ -31,8 +31,8 @@ interface AdminReport {
 
 function gradeColor(grade: string): string {
   const g = grade.toUpperCase();
-  if (g.startsWith('A')) return 'text-mint-500';
-  if (g.startsWith('B')) return 'text-mint-500/70';
+  if (g.startsWith('A')) return 'text-win';
+  if (g.startsWith('B')) return 'text-win/70';
   if (g.startsWith('C')) return 'text-amber-400';
   if (g.startsWith('D')) return 'text-orange-400';
   return 'text-red-400';
@@ -40,8 +40,8 @@ function gradeColor(grade: string): string {
 
 const tierBadge: Record<string, string> = {
   free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
-  pro: 'bg-flame-500/10 text-flame-500 border border-flame-500/20',
-  sharp: 'bg-mint-500/10 text-mint-500 border border-mint-500/20',
+  pro: 'bg-scalpel-muted text-scalpel border border-scalpel/20',
+  sharp: 'bg-win/10 text-win border border-win/20',
 };
 
 export default function AdminReportsPage() {
@@ -122,11 +122,11 @@ export default function AdminReportsPage() {
             placeholder="Search by email or name..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder-ink-700 focus:outline-none focus:border-flame-500/40 w-64"
+            className="bg-ink-900 border border-white/[0.08] rounded-sm px-3 py-2 text-sm text-[#F0F2F5] placeholder-ink-700 focus:outline-none focus:border-scalpel/40 w-64"
           />
           <button
             type="submit"
-            className="bg-flame-500/10 text-flame-500 hover:bg-flame-500/20 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            className="bg-scalpel-muted text-scalpel hover:bg-scalpel/20 rounded-sm px-4 py-2 text-sm font-medium transition-colors"
           >
             Search
           </button>
@@ -172,7 +172,7 @@ export default function AdminReportsPage() {
                   <tr key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-[#F0F0F0] truncate max-w-[200px]">
+                        <p className="font-medium text-[#F0F2F5] truncate max-w-[200px]">
                           {r.user?.display_name ?? 'Unknown'}
                         </p>
                         <p className="text-ink-600 text-xs truncate max-w-[200px]">
@@ -194,12 +194,12 @@ export default function AdminReportsPage() {
                       {r.bet_count_analyzed}
                     </td>
                     <td className={`px-4 py-3 text-right font-mono font-medium ${
-                      Number(r.total_profit) >= 0 ? 'text-mint-500' : 'text-red-400'
+                      Number(r.total_profit) >= 0 ? 'text-win' : 'text-red-400'
                     }`}>
                       {Number(r.total_profit) >= 0 ? '+' : ''}${Number(r.total_profit).toFixed(0)}
                     </td>
                     <td className={`px-4 py-3 text-right font-mono ${
-                      Number(r.roi_percent) >= 0 ? 'text-mint-500' : 'text-red-400'
+                      Number(r.roi_percent) >= 0 ? 'text-win' : 'text-red-400'
                     }`}>
                       {Number(r.roi_percent).toFixed(1)}%
                     </td>
@@ -233,14 +233,14 @@ export default function AdminReportsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-ink-800 text-ink-500 hover:text-[#F0F0F0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-ink-800 text-ink-500 hover:text-[#F0F0F0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>

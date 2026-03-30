@@ -406,7 +406,7 @@ export default function QuizClient() {
           {/* 7. Share card + buttons */}
           <div className="space-y-3 overflow-hidden">
             <h2 className="font-bold text-xl">Share Your Bet DNA</h2>
-            <div className="overflow-hidden rounded-2xl">
+            <div className="overflow-hidden rounded-sm">
               <QuizResultCard ref={resultCardRef} result={result} />
             </div>
             <div className="flex gap-2">

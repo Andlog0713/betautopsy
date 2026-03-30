@@ -97,7 +97,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>
 
       <div className="space-y-6 pt-8 border-t border-white/[0.04]">
-        <div className="card p-6 text-center border-scalpel/20 bg-gradient-to-r from-scalpel/5 to-transparent">
+        <div className="finding-card border-l-scalpel p-6 text-center">
           <span className="text-2xl mb-2 block">🧬</span>
           <h3 className="font-bold text-lg mb-2">What&apos;s your Bet DNA?</h3>
           <p className="text-fg-muted text-sm mb-4">

@@ -18,10 +18,10 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#5A5C6F20" />
-            <XAxis dataKey="date" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#5A5C6F30' }} />
-            <YAxis yAxisId="emotion" orientation="left" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
-            <YAxis yAxisId="roi" orientation="right" tick={{ fill: '#A0A3B1', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
+            <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} />
+            <YAxis yAxisId="emotion" orientation="left" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
+            <YAxis yAxisId="roi" orientation="right" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
@@ -37,7 +37,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
                 );
               }}
             />
-            <ReferenceLine yAxisId="roi" y={0} stroke="#5A5C6F50" />
+            <ReferenceLine yAxisId="roi" y={0} stroke="#51596850" />
             <Line yAxisId="emotion" type="monotone" dataKey="emotion" stroke="#fbbf24" strokeWidth={2} dot={{ r: 4, fill: '#fbbf24' }} />
             <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#00C9A7" strokeWidth={2} dot={{ r: 4, fill: '#00C9A7' }} />
           </LineChart>

@@ -10,16 +10,17 @@ export default function LandingPage() {
 
       {/* ── Hero — grid-paper background ── */}
       <section className="relative grid-paper">
-        <div className="max-w-5xl mx-auto px-6 pt-28 pb-24 relative">
-          <div className="flex items-center gap-3 mb-8 animate-fade-in">
-            <span className="evidence-tag border-scalpel/30 text-scalpel">Behavioral Analysis</span>
-            <span className="evidence-tag border-bleed/30 text-bleed">AI-Powered</span>
+        <div className="max-w-5xl mx-auto px-6 pt-10 pb-20 relative">
+          <div className="case-header mb-8 animate-fade-in">
+            CASE FILE — BEHAVIORAL ANALYSIS UNIT
           </div>
-          <h1 className="font-bold text-4xl md:text-6xl leading-[1.1] tracking-tight mb-6 text-fg-bright animate-fade-in">
-            Your bets aren&apos;t the problem.{' '}
-            <span className="text-scalpel">Your behavior is.</span>
+          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
+            Your bets aren&apos;t the problem.
           </h1>
-          <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d1">
+          <div className="font-light text-4xl md:text-6xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
+            Your behavior is.
+          </div>
+          <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
             Upload your betting, pick&apos;em, or prediction market history and get an AI-powered behavioral analysis — loss chasing detection,
             emotional betting patterns, cognitive bias identification, and a personalized plan to fix
             what&apos;s costing you money.
@@ -43,8 +44,26 @@ export default function LandingPage() {
               NO CREDIT CARD · WORKS WITH PIKKIT + ANY CSV
             </span>
           </div>
+          {/* EKG flatline accent */}
+          <svg className="w-full h-6 mt-10 opacity-10 animate-fade-in-d4" viewBox="0 0 800 24" preserveAspectRatio="none">
+            <polyline
+              points="0,12 120,12 140,12 156,3 168,21 180,8 192,16 204,12 280,12 800,12"
+              fill="none" stroke="#00C9A7" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"
+            />
+          </svg>
         </div>
       </section>
+
+      {/* ── Evidence bar — supported platforms ── */}
+      <div className="border-y border-white/[0.04] py-5">
+        <div className="max-w-5xl mx-auto px-6 flex flex-wrap gap-2">
+          {['Pikkit', 'DraftKings', 'FanDuel', 'BetMGM', 'PrizePicks', 'Underdog', 'Kalshi', 'Any CSV'].map((name, i) => (
+            <span key={name} className="evidence-tag border-white/[0.06] text-fg-dim">
+              EV-{String(i + 1).padStart(3, '0')} · {name}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ── Problem / Solution — split panel ── */}
       <section className="max-w-5xl mx-auto px-6 py-20">
@@ -66,8 +85,7 @@ export default function LandingPage() {
                 But none of that explains why you doubled your stake after three straight
                 losses last Sunday. Or why you keep firing on NBA player props when
                 you&apos;ve never been profitable on them. Or why your $50 &quot;fun parlay&quot;
-                turned into a $400 chase by the end of the night. Or why you keep stacking
-                5-pick entries when your 2-picks hit at twice the rate.
+                turned into a $400 chase by the end of the night.
               </p>
               <p className="text-fg-bright">
                 The numbers show you what happened. They don&apos;t show you what
@@ -94,41 +112,30 @@ export default function LandingPage() {
                 tracking so you can actually prove to yourself you&apos;re getting sharper.
               </p>
               <p className="text-fg-bright font-medium">
-                Upload your bets, pick&apos;em entries, or prediction market trades. Get your autopsy in 20 seconds. See what you&apos;ve
-                been missing.
+                Upload your bets, pick&apos;em entries, or prediction market trades. Get your autopsy in 20 seconds.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── How It Works — horizontal steps strip ── */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
-        <span className="case-header block text-center mb-10">Procedure</span>
-        <div className="vitals-strip grid-cols-3">
-          {[
-            {
-              step: '01',
-              title: 'Upload',
-              desc: 'Export from Pikkit — it syncs your sportsbooks, DFS apps (PrizePicks, Underdog, Sleeper), and prediction markets (Kalshi) into one place. Or upload any CSV.',
-            },
-            {
-              step: '02',
-              title: 'Analyze',
-              desc: 'AI scans your history for cognitive biases, emotional patterns, and strategic leaks — then generates an Emotion Score, Bet DNA archetype, and Discipline Score.',
-            },
-            {
-              step: '03',
-              title: 'Improve',
-              desc: 'Get a game plan with real numbers. Not \'bet smarter\' — actual rules like \'stop betting heavy favorites on NFL, it\'s costing you $40/week.\'',
-            },
-          ].map((s) => (
-            <div key={s.step} className="vitals-cell p-6 md:p-8">
-              <span className="font-mono text-3xl font-bold text-scalpel/30 block mb-3">{s.step}</span>
-              <h3 className="font-bold text-lg text-fg-bright mb-2">{s.title}</h3>
-              <p className="text-fg-muted text-sm leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
+      {/* ── How It Works — PROTOCOL — THREE STEPS ── */}
+      <section className="py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="case-header mb-8">PROTOCOL — THREE STEPS</div>
+          <div className="vitals-strip grid-cols-1 md:grid-cols-3">
+            {[
+              { step: '01', title: 'Upload', desc: 'Export from Pikkit — it syncs your sportsbooks, DFS apps (PrizePicks, Underdog, Sleeper), and prediction markets (Kalshi) into one place. Or upload any CSV.' },
+              { step: '02', title: 'Analyze', desc: 'AI scans your history for cognitive biases (loss chasing, favorite bias, parlay addiction), emotional patterns (heated sequences, stake escalation), and strategic leaks — then gives you an Emotion Score, Bet DNA archetype, and Discipline Score.' },
+              { step: '03', title: 'Improve', desc: "Get a game plan with real numbers. Not 'bet smarter' — actual rules like 'stop betting heavy favorites on NFL, it's costing you $40/week.'" },
+            ].map(item => (
+              <div key={item.step} className="vitals-cell !p-8">
+                <div className="font-mono text-3xl font-bold text-scalpel/20 mb-4">{item.step}</div>
+                <h3 className="text-lg font-semibold text-fg-bright mb-3">{item.title}</h3>
+                <p className="text-sm text-fg-muted leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -147,36 +154,35 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Interactive Demo Report — browser frame ── */}
-      <section id="sample" className="max-w-4xl mx-auto px-6 py-20">
-        <span className="case-header block text-center mb-3">Exhibit A</span>
-        <h2 className="font-bold text-3xl md:text-4xl text-center tracking-tight mb-3 text-fg-bright">
-          See a real <span className="text-scalpel">autopsy report</span>
-        </h2>
-        <p className="text-fg-muted text-center mb-10 max-w-lg mx-auto text-sm">
-          280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
-        </p>
-        {/* Browser frame */}
-        <div className="border border-white/[0.04] rounded-sm overflow-hidden">
-          <div className="h-8 bg-surface-raised border-b border-white/[0.04] flex items-center px-4 gap-2">
-            <span className="w-2 h-2 rounded-full bg-bleed/40" />
-            <span className="w-2 h-2 rounded-full bg-caution/40" />
-            <span className="w-2 h-2 rounded-full bg-win/40" />
-            <span className="font-mono text-[9px] text-fg-dim ml-3">betautopsy.com/reports</span>
+      {/* ── Interactive Demo Report — browser chrome frame ── */}
+      <section className="py-20" id="sample">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="case-header mb-2">EXHIBIT A — SAMPLE AUTOPSY</div>
+          <p className="text-fg-muted text-sm mb-8 max-w-lg">
+            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea.
+          </p>
+          <div className="border border-white/[0.06] rounded-sm overflow-hidden">
+            {/* Browser chrome */}
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
+              <div className="w-2 h-2 rounded-full bg-loss" />
+              <div className="w-2 h-2 rounded-full bg-caution" />
+              <div className="w-2 h-2 rounded-full bg-win" />
+              <span className="flex-1 text-center font-mono text-[10px] text-fg-dim tracking-wider">betautopsy.com/reports</span>
+            </div>
+            <DemoReportWrapper />
           </div>
-          <DemoReportWrapper />
         </div>
       </section>
 
-      {/* ── Track Progress — vitals display ── */}
+      {/* ── Track Progress ── */}
       <section className="max-w-5xl mx-auto px-6 py-20">
-        <span className="case-header block text-center mb-3">Longitudinal Study</span>
-        <h2 className="font-bold text-3xl md:text-4xl text-center tracking-tight mb-4 text-fg-bright">
+        <span className="case-header block mb-3">Longitudinal Study</span>
+        <h2 className="font-bold text-3xl md:text-4xl tracking-tight mb-4 text-fg-bright">
           One report is a <span className="text-fg-muted">snapshot</span>.
           <br />
           Five reports is <span className="text-scalpel">proof</span>.
         </h2>
-        <p className="text-fg-muted text-center mb-14 max-w-lg mx-auto text-sm">
+        <p className="text-fg-muted mb-14 max-w-lg text-sm">
           Watch your loss-chasing habit shrink. See your emotional betting patterns fade.
           Track the behavioral changes that actually save you money.
         </p>
@@ -242,16 +248,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing — vitals strip ── */}
+      {/* ── Pricing — ACCESS LEVELS ── */}
       <section id="pricing" className="max-w-5xl mx-auto px-6 py-20">
-        <span className="case-header block text-center mb-3">Fee Schedule</span>
-        <h2 className="font-bold text-3xl md:text-4xl text-center tracking-tight mb-4 text-fg-bright">
-          Simple <span className="text-scalpel">pricing</span>
-        </h2>
-        <p className="text-fg-muted text-center mb-14 max-w-md mx-auto text-sm">
+        <div className="case-header mb-2">PRICING — ACCESS LEVELS</div>
+        <p className="text-fg-muted mb-14 max-w-md text-sm">
           Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
         </p>
-        <div className="grid md:grid-cols-3 gap-px bg-white/[0.04] border border-white/[0.04] rounded-sm overflow-hidden">
+        <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
           {/* Free */}
           <div className="bg-base p-7 flex flex-col">
             <span className="case-header block mb-4">Free</span>
@@ -273,10 +276,11 @@ export default function LandingPage() {
 
           {/* Pro */}
           <div className="bg-base p-7 flex flex-col relative border-x border-scalpel/10">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="case-header">Pro</span>
-              <span className="evidence-tag border-scalpel/30 text-scalpel">Most Popular</span>
+            {/* Stamp-style RECOMMENDED badge */}
+            <div className="absolute -top-3 right-4 border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base">
+              <span className="font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
             </div>
+            <span className="case-header block mb-4">Pro</span>
             <div className="mb-5">
               <span className="font-mono text-4xl font-bold text-fg-bright">$9.99</span>
               <span className="text-fg-dim text-sm font-mono">/mo</span>
@@ -328,7 +332,7 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-        <p className="text-fg-dim text-xs text-center mt-6 font-mono">
+        <p className="text-fg-dim text-xs mt-6 font-mono">
           Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
         </p>
       </section>
@@ -346,50 +350,32 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      {/* ── Footer — minimal ── */}
-      <footer className="border-t border-white/[0.04]">
-        <div className="max-w-5xl mx-auto px-6 py-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div>
-              <Logo size="xs" variant="horizontal" theme="dark" />
-              <p className="font-mono text-[10px] text-fg-dim mt-2 max-w-sm tracking-wider">
-                AI-POWERED BEHAVIORAL ANALYSIS FOR SPORTS BETTORS, DFS PLAYERS, AND PREDICTION MARKET TRADERS.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+      {/* ── Footer — minimal monospace ── */}
+      <footer className="border-t border-white/[0.04] py-12">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+            <Logo size="xs" variant="horizontal" theme="dark" />
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               {[
-                { href: '/#pricing', label: 'Pricing', external: true },
-                { href: '/login', label: 'Log in' },
-                { href: '/signup', label: 'Sign up' },
-                { href: '/how-to-upload', label: 'How to Upload' },
-                { href: '/blog', label: 'Blog' },
-                { href: '/quiz', label: 'Quiz' },
-                { href: '/faq', label: 'FAQ' },
-              ].map((link) => (
-                'external' in link ? (
-                  <a key={link.href} href={link.href} className="font-mono text-[11px] text-fg-dim hover:text-fg transition-colors tracking-wider">
-                    {link.label}
-                  </a>
-                ) : (
-                  <Link key={link.href} href={link.href} className="font-mono text-[11px] text-fg-dim hover:text-fg transition-colors tracking-wider">
-                    {link.label}
-                  </Link>
-                )
+                { label: 'Pricing', href: '/#pricing' },
+                { label: 'Blog', href: '/blog' },
+                { label: 'FAQ', href: '/faq' },
+                { label: 'Quiz', href: '/quiz' },
+                { label: 'How to Upload', href: '/how-to-upload' },
+                { label: 'Privacy', href: '/privacy' },
+                { label: 'Log in', href: '/login' },
+                { label: 'Sign up', href: '/signup' },
+              ].map(link => (
+                <Link key={link.href} href={link.href} className="font-mono text-[11px] text-fg-dim hover:text-fg transition-colors tracking-wider">
+                  {link.label}
+                </Link>
               ))}
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-white/[0.04] space-y-3">
-            <div className="flex justify-center">
-              <Link href="/privacy" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
-                Privacy Policy
-              </Link>
-            </div>
-            <p className="font-mono text-[9px] text-fg-dim text-center tracking-wider leading-relaxed max-w-2xl mx-auto">
-              BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS — NOT
-              GAMBLING OR FINANCIAL ADVICE. PAST RESULTS DON&apos;T GUARANTEE FUTURE OUTCOMES.
-              21+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
-            </p>
-          </div>
+          <p className="text-fg-dim text-[11px] font-mono leading-relaxed">
+            BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice.
+            Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+          </p>
         </div>
       </footer>
     </main>
