@@ -504,6 +504,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
           <p className="font-mono text-[10px] text-fg-muted mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
+          {analysis.emotion_percentile && (
+            <p className="font-mono text-[10px] text-scalpel mt-1">Lower than {analysis.emotion_percentile}% of bettors</p>
+          )}
         </div>
         {analysis.discipline_score ? (
           <div className="bg-base p-[18px]">
@@ -518,6 +521,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
             <p className="font-mono text-[10px] text-fg-muted mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
+            {analysis.discipline_score.percentile && (
+              <p className="font-mono text-[10px] text-scalpel mt-1">Better than {analysis.discipline_score.percentile}% of bettors</p>
+            )}
           </div>
         ) : (
           <div className="bg-base p-[18px]">
@@ -610,6 +616,48 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
         )}
       </div>
+
+      {/* ── Enhanced Tilt Signals — Pro/Sharp only ── */}
+      {(tier === 'pro' || tier === 'sharp') && analysis.enhanced_tilt && (
+        <div className="case-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="case-header">TILT SIGNAL BREAKDOWN</div>
+            <span className={`font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${
+              analysis.enhanced_tilt.risk_level === 'critical' ? 'bg-bleed text-base' :
+              analysis.enhanced_tilt.risk_level === 'high' ? 'bg-bleed/80 text-base' :
+              analysis.enhanced_tilt.risk_level === 'elevated' ? 'bg-caution text-base' :
+              analysis.enhanced_tilt.risk_level === 'moderate' ? 'bg-caution/60 text-base' :
+              'bg-scalpel text-base'
+            }`}>
+              {analysis.enhanced_tilt.risk_level}
+            </span>
+          </div>
+          <div className="finding-card border-l-caution mb-4 !p-3">
+            <p className="text-fg-muted text-sm">{analysis.enhanced_tilt.worst_trigger}</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              { label: 'Bet sizing volatility', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
+              { label: 'Loss reaction', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
+              { label: 'Streak behavior', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
+              { label: 'Session discipline', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
+              { label: 'Session acceleration', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25, isNew: true },
+              { label: 'Odds drift after loss', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25, isNew: true },
+            ].map(signal => (
+              <div key={signal.label} className="bg-surface-raised p-3 border border-white/[0.04] rounded-sm">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[11px] text-fg-dim">{signal.label}</span>
+                  {'isNew' in signal && signal.isNew && <span className="font-mono text-[8px] text-scalpel border border-scalpel/20 px-1 rounded-sm">NEW</span>}
+                </div>
+                <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
+                <div className="h-1 mt-1.5 bg-base overflow-hidden">
+                  <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#F85149' : signal.value / signal.max >= 0.4 ? '#D29922' : '#00C9A7' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stake Size Timeline */}
       {hasBets && stakeData.length > 1 && (
@@ -711,6 +759,32 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── Sport-Specific Findings — Pro/Sharp only ── */}
+      {(tier === 'pro' || tier === 'sharp') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
+        <div className="space-y-3">
+          <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
+          {analysis.sport_specific_findings.map((finding) => (
+            <div key={finding.id} className={`finding-card ${finding.severity === 'high' ? 'border-l-bleed' : finding.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <span className={`evidence-tag ${finding.severity === 'high' ? 'text-bleed border-bleed/30' : finding.severity === 'medium' ? 'text-caution border-caution/30' : 'text-scalpel border-scalpel/30'}`}>{finding.id}</span>
+                  <span className="font-semibold text-sm text-fg-bright">{finding.name}</span>
+                </div>
+                <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
+              </div>
+              <p className="text-fg-muted text-sm leading-relaxed mb-2">{finding.description}</p>
+              <p className="text-fg-dim text-xs mb-2 font-mono">{finding.evidence}</p>
+              <div className="flex items-center justify-between">
+                {finding.estimated_cost !== null && (
+                  <span className="font-mono text-sm font-semibold text-loss">est. cost: ${Math.abs(finding.estimated_cost).toLocaleString()}</span>
+                )}
+                <span className="text-scalpel text-xs font-mono ml-auto">{finding.recommendation}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1279,6 +1353,63 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <p className="text-sm text-fg-bright">{analysis.edge_profile.reallocation_advice}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── BetIQ Score — Pro/Sharp only ── */}
+      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && !analysis.betiq.insufficient_data && (
+        <div className="case-card p-6">
+          <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
+            <span className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}</span>
+            <span className="font-mono text-sm text-fg-dim">/100</span>
+            <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
+          </div>
+          <p className="text-fg-muted text-sm mb-6 leading-relaxed">{analysis.betiq.interpretation}</p>
+          <div className="vitals-strip grid-cols-2 md:grid-cols-3">
+            {[
+              { label: 'Line value', val: analysis.betiq.components.line_value, max: 25 },
+              { label: 'Calibration', val: analysis.betiq.components.calibration, max: 20 },
+              { label: 'Sophistication', val: analysis.betiq.components.sophistication, max: 15 },
+              { label: 'Specialization', val: analysis.betiq.components.specialization, max: 15 },
+              { label: 'Timing', val: analysis.betiq.components.timing, max: 10 },
+              { label: 'Sample size', val: analysis.betiq.components.confidence, max: 15 },
+            ].map(c => (
+              <div key={c.label} className="vitals-cell">
+                <div className="data-label mb-1">{c.label}</div>
+                <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
+                <div className="h-1 mt-2 bg-surface-raised overflow-hidden">
+                  <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && analysis.betiq.insufficient_data && (
+        <div className="case-card p-6">
+          <div className="case-header mb-3">BETIQ — SKILL ASSESSMENT</div>
+          <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
+        </div>
+      )}
+      {/* BetIQ — free tier teaser */}
+      {tier === 'free' && analysis.betiq && (
+        <div className="case-card p-6 relative overflow-hidden">
+          <div className="case-header mb-2">BETIQ — SKILL ASSESSMENT</div>
+          <div className="blur-sm pointer-events-none">
+            <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
+            <div className="vitals-strip grid-cols-3 mt-4">
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-xl mb-1">🔒</p>
+              <p className="text-fg-muted text-sm font-mono">Upgrade to Pro to unlock BetIQ</p>
+            </div>
+          </div>
         </div>
       )}
 
