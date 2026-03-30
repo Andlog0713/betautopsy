@@ -7,20 +7,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Base surfaces — 5 elevation levels
-        base: '#0A0C10',
+        // Base surfaces — 5 elevation levels (lightened)
+        base: '#111318',
         surface: {
-          DEFAULT: '#0D0F14',
-          raised: '#12141A',
-          elevated: '#181B23',
-          overlay: '#1E212B',
+          DEFAULT: '#161820',
+          raised: '#1C1F28',
+          elevated: '#222530',
+          overlay: '#282C38',
         },
-        // Text hierarchy — 4 levels
+        // Text hierarchy — 4 levels (brighter)
         fg: {
-          DEFAULT: '#C9CED6',
-          bright: '#E6EDF3',
-          muted: '#6E7681',
-          dim: '#3D424D',
+          DEFAULT: '#D0D5DD',
+          bright: '#F0F2F5',
+          muted: '#848D9A',
+          dim: '#515968',
         },
         // Brand
         scalpel: {
@@ -39,11 +39,11 @@ module.exports = {
         caution: '#D29922',
         // Legacy aliases — KEEP until migration complete
         ink: {
-          900: '#0A0C10',
-          800: '#0D0F14',
-          700: '#3D424D',
-          600: '#6E7681',
-          500: '#8B949E',
+          900: '#111318',
+          800: '#161820',
+          700: '#515968',
+          600: '#848D9A',
+          500: '#9DA5B0',
         },
         flame: { 500: '#00C9A7', 600: '#007D66' },
         mint: { 500: '#3FB950' },

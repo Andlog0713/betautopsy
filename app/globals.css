@@ -30,20 +30,20 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #0A0C10; }
-  ::-webkit-scrollbar-thumb { background: #3D424D; border-radius: 0; }
-  * { scrollbar-width: thin; scrollbar-color: #3D424D #0A0C10; }
+  ::-webkit-scrollbar-track { background: #111318; }
+  ::-webkit-scrollbar-thumb { background: #515968; border-radius: 0; }
+  * { scrollbar-width: thin; scrollbar-color: #515968 #111318; }
 }
 
 @layer components {
   /* ── Case file card ── */
   .case-card {
-    @apply bg-surface border border-white/[0.04] rounded-sm;
+    @apply bg-surface border border-white/[0.06] rounded-sm;
   }
 
   /* Legacy card alias */
   .card {
-    @apply bg-surface border border-white/[0.04] rounded-sm;
+    @apply bg-surface border border-white/[0.06] rounded-sm;
   }
 
   /* ── Buttons ── */
@@ -112,7 +112,7 @@
 
   /* ── Vitals strip ── */
   .vitals-strip {
-    @apply grid gap-px bg-white/[0.04] border border-white/[0.04] rounded-sm overflow-hidden;
+    @apply grid gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
