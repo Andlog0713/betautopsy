@@ -15,8 +15,8 @@ export default function DemoReportWrapper() {
   return (
     <div className="relative">
       {/* ── Floating "DEMO" badge ── */}
-      <div className="sticky top-20 z-30 flex justify-center mb-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/95 border border-scalpel/20 shadow-lg">
+      <div className="flex justify-center px-3 pt-4 mb-4 sm:px-4">
+        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3 py-2 rounded-full bg-surface/95 border border-scalpel/20 shadow-lg text-center sm:px-4">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-scalpel opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-scalpel" />
@@ -24,8 +24,8 @@ export default function DemoReportWrapper() {
           <span className="text-sm font-medium text-fg-bright">
             Interactive Demo
           </span>
-          <span className="text-xs text-fg-muted">
-            — Pro tier report, sample data
+          <span className="text-[11px] text-fg-muted sm:text-xs">
+            Pro tier report, sample data
           </span>
         </div>
       </div>
