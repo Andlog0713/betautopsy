@@ -223,7 +223,12 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         The first step is figuring out which specific cognitive biases in sports betting are costing
         you the most. Not all of them &mdash; just the 2-3 that show up most in your actual bet
-        history. Our free{' '}
+        history. This is precisely what{' '}
+        <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
+          behavioral betting analysis
+        </Link>{' '}
+        is designed to do &mdash; systematically identify and quantify the biases that cost you
+        the most money. Our free{' '}
         <Link href="/quiz">Bet DNA quiz</Link> identifies your dominant biases in about 2 minutes,
         no data upload required.
       </p>

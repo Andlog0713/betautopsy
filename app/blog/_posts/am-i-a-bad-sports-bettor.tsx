@@ -223,7 +223,10 @@ export default function AmIABadSportsBettor() {
       <p>
         Here&apos;s what most &ldquo;how to bet better&rdquo; content won&apos;t tell you: the
         single biggest predictor of improvement isn&apos;t knowledge about sports. It&apos;s
-        self-awareness about your own behavior. The bettor who knows they chase losses and actively
+        self-awareness about your own behavior &mdash; the core principle behind{' '}
+        <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
+          behavioral betting analysis
+        </Link>. The bettor who knows they chase losses and actively
         fights it will outperform the bettor with superior sports knowledge who doesn&apos;t
         recognize the pattern.
       </p>

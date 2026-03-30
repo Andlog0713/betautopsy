@@ -243,7 +243,11 @@ export default function PsychologyOfLossChasing() {
       </p>
 
       <p>
-        That&apos;s why data matters more than intuition here. When you can see your own{' '}
+        That&apos;s why data matters more than intuition here. A proper{' '}
+        <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
+          behavioral betting analysis
+        </Link>{' '}
+        cuts through the self-deception. When you can see your own{' '}
         <strong>post-loss escalation ratio</strong> — the average percentage by which you increase
         your stake after a loss — the pattern becomes impossible to deny.
       </p>

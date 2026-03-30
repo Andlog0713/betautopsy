@@ -49,6 +49,30 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     readTime: '5 min read',
     tags: ['self-assessment', 'betting habits', 'sports betting'],
   },
+  {
+    slug: 'how-to-analyze-your-betting-history',
+    title: 'How to Analyze Your Betting History: A Step-by-Step Guide',
+    description: 'Win/loss record tells you almost nothing. Here are the 5 metrics that actually explain where your money is going — and how to calculate them yourself.',
+    publishedAt: '2026-03-14',
+    readTime: '10 min read',
+    tags: ['betting history', 'data analysis', 'behavioral analysis', 'tracking'],
+  },
+  {
+    slug: 'what-is-behavioral-betting-analysis',
+    title: 'What Is Behavioral Betting Analysis? The Complete Guide',
+    description: 'Two bettors, same picks, opposite results. The difference is behavior. Here\'s the definitive guide to behavioral betting analysis — what it is, how it works, and why it matters more than your picks.',
+    publishedAt: '2026-03-17',
+    readTime: '12 min read',
+    tags: ['behavioral analysis', 'betting psychology', 'betting strategy', 'pillar'],
+  },
+  {
+    slug: 'why-am-i-losing-on-prizepicks',
+    title: 'Why Am I Losing on PrizePicks? 5 Behavioral Mistakes',
+    description: 'PrizePicks losses come from different behavioral traps than sportsbook losses. Here are the 5 mistakes costing you money — and what to do about them.',
+    publishedAt: '2026-03-24',
+    readTime: '8 min read',
+    tags: ['prizepicks', 'DFS', 'behavioral analysis', 'pick\'em'],
+  },
 ];
 
 // ── Future DFS/Pick'em Posts (to be written) ──

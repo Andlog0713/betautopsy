@@ -234,7 +234,11 @@ export default function ParlayAddictionTheRealMath() {
 
       <p>
         Everything above is math in the abstract. But your situation isn&apos;t abstract — you
-        have real bet history, real dollars lost, and real patterns you might not see yet.
+        have real bet history, real dollars lost, and real patterns you might not see yet. A{' '}
+        <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
+          behavioral betting analysis
+        </Link>{' '}
+        can quantify exactly how much your parlay habit costs compared to straight bets.
       </p>
 
       <p>

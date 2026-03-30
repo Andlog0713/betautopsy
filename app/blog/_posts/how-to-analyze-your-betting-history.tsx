@@ -373,7 +373,12 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         Your betting history is a goldmine of behavioral data — if you know how to read it.
-        Win/loss record is the surface. Below it are patterns of loss chasing, emotional sizing,
+        This is the foundation of{' '}
+        <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
+          behavioral betting analysis
+        </Link>{' '}
+        — looking beyond win/loss records to the patterns underneath.
+        Below the surface are patterns of loss chasing, emotional sizing,
         time-based impulsivity, and sport-specific leaks that explain exactly where your money is
         going and why.
       </p>

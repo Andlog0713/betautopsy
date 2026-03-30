@@ -8,6 +8,9 @@ import ParlayAddiction from '../_posts/parlay-addiction-the-real-math';
 import CognitiveBiases from '../_posts/cognitive-biases-destroying-your-bankroll';
 import LossChasing from '../_posts/psychology-of-loss-chasing';
 import AmIBad from '../_posts/am-i-a-bad-sports-bettor';
+import HowToAnalyze from '../_posts/how-to-analyze-your-betting-history';
+import BehavioralAnalysis from '../_posts/what-is-behavioral-betting-analysis';
+import LosingOnPrizePicks from '../_posts/why-am-i-losing-on-prizepicks';
 
 const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'why-am-i-losing-at-sports-betting': WhyAmILosing,
@@ -15,6 +18,9 @@ const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'cognitive-biases-destroying-your-bankroll': CognitiveBiases,
   'psychology-of-loss-chasing': LossChasing,
   'am-i-a-bad-sports-bettor': AmIBad,
+  'how-to-analyze-your-betting-history': HowToAnalyze,
+  'what-is-behavioral-betting-analysis': BehavioralAnalysis,
+  'why-am-i-losing-on-prizepicks': LosingOnPrizePicks,
 };
 
 export function generateStaticParams() {
