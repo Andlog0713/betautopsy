@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
@@ -1106,6 +1106,255 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
   };
 }
 
+// ── Enhanced Tilt Index ──
+
+export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): EnhancedTiltResult {
+  const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+  const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+
+  // SESSION ACCELERATION (0-25)
+  let sessionAcceleration = 0;
+  const sessions: Bet[][] = [];
+  let currentSession: Bet[] = [];
+  for (const bet of sorted) {
+    if (currentSession.length === 0) { currentSession.push(bet); continue; }
+    const lastTime = new Date(currentSession[currentSession.length - 1].placed_at).getTime();
+    const thisTime = new Date(bet.placed_at).getTime();
+    if ((thisTime - lastTime) / (1000 * 60 * 60) <= 3) {
+      currentSession.push(bet);
+    } else {
+      if (currentSession.length >= 4) sessions.push([...currentSession]);
+      currentSession = [bet];
+    }
+  }
+  if (currentSession.length >= 4) sessions.push(currentSession);
+
+  if (sessions.length >= 2) {
+    let acceleratingSessions = 0;
+    let totalAccelRatio = 0;
+    for (const session of sessions) {
+      if (session.length < 4) continue;
+      const mid = Math.floor(session.length / 2);
+      const firstHalf = session.slice(0, mid);
+      const secondHalf = session.slice(mid);
+      const firstSpan = Math.max((new Date(firstHalf[firstHalf.length - 1].placed_at).getTime() - new Date(firstHalf[0].placed_at).getTime()) / 3600000, 0.1);
+      const secondSpan = Math.max((new Date(secondHalf[secondHalf.length - 1].placed_at).getTime() - new Date(secondHalf[0].placed_at).getTime()) / 3600000, 0.1);
+      const firstRate = firstHalf.length / firstSpan;
+      const secondRate = secondHalf.length / secondSpan;
+      if (secondRate > firstRate * 1.3) {
+        acceleratingSessions++;
+        totalAccelRatio += secondRate / firstRate;
+      }
+    }
+    if (sessions.length > 0) {
+      const accelPct = (acceleratingSessions / sessions.length) * 100;
+      const avgRatio = acceleratingSessions > 0 ? totalAccelRatio / acceleratingSessions : 1;
+      if (accelPct >= 60 && avgRatio >= 2.0) sessionAcceleration = 25;
+      else if (accelPct >= 40 && avgRatio >= 1.8) sessionAcceleration = 20;
+      else if (accelPct >= 30) sessionAcceleration = 15;
+      else if (accelPct >= 20) sessionAcceleration = 10;
+      else if (acceleratingSessions >= 1) sessionAcceleration = 5;
+    }
+  }
+
+  // ODDS DRIFT AFTER LOSS (0-25)
+  let oddsDrift = 0;
+  const afterWinOdds: number[] = [];
+  const afterLossOdds: number[] = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const prevResult = sorted[i - 1].result;
+    const odds = Number(sorted[i].odds);
+    const impliedProb = odds > 0
+      ? 100 / (odds + 100) * 100
+      : Math.abs(odds) / (Math.abs(odds) + 100) * 100;
+    if (prevResult === 'win') afterWinOdds.push(impliedProb);
+    else if (prevResult === 'loss') afterLossOdds.push(impliedProb);
+  }
+  if (afterWinOdds.length >= 10 && afterLossOdds.length >= 10) {
+    const avgAfterWin = afterWinOdds.reduce((s, v) => s + v, 0) / afterWinOdds.length;
+    const avgAfterLoss = afterLossOdds.reduce((s, v) => s + v, 0) / afterLossOdds.length;
+    const driftPp = avgAfterWin - avgAfterLoss;
+    if (driftPp >= 8) oddsDrift = 25;
+    else if (driftPp >= 5) oddsDrift = 20;
+    else if (driftPp >= 3) oddsDrift = 15;
+    else if (driftPp >= 1.5) oddsDrift = 10;
+    else if (driftPp >= 0.5) oddsDrift = 5;
+  }
+
+  const signals: TiltSignals = {
+    bet_sizing_volatility: metrics.emotion_breakdown.stake_volatility,
+    loss_reaction: metrics.emotion_breakdown.loss_chasing,
+    streak_behavior: metrics.emotion_breakdown.streak_behavior,
+    session_discipline: metrics.emotion_breakdown.session_discipline,
+    session_acceleration: sessionAcceleration,
+    odds_drift_after_loss: oddsDrift,
+  };
+
+  const score = metrics.emotion_score;
+  const totalSignal = Object.values(signals).reduce((s, v) => s + v, 0);
+  const signalPct = (totalSignal / 150) * 100;
+
+  let riskLevel: EnhancedTiltResult['risk_level'] = 'low';
+  if (signalPct >= 70) riskLevel = 'critical';
+  else if (signalPct >= 55) riskLevel = 'high';
+  else if (signalPct >= 40) riskLevel = 'elevated';
+  else if (signalPct >= 25) riskLevel = 'moderate';
+
+  const signalEntries = Object.entries(signals) as [string, number][];
+  const worstSignal = signalEntries.reduce((a, b) => b[1] > a[1] ? b : a);
+  const triggerDescriptions: Record<string, string> = {
+    bet_sizing_volatility: `Your bet sizes vary wildly — a ${metrics.stake_cv.toFixed(1)}x coefficient of variation suggests emotional sizing.`,
+    loss_reaction: `Your stakes increase ${metrics.loss_chase_ratio.toFixed(1)}x after losses — classic loss chasing.`,
+    streak_behavior: 'Your betting behavior deteriorates significantly during losing streaks.',
+    session_discipline: 'Your losing sessions run much longer than your winning ones — you don\'t know when to stop.',
+    session_acceleration: 'Your bet frequency increases within sessions — you place bets faster as sessions progress, especially after losses.',
+    odds_drift_after_loss: 'After losses, you shift toward longer odds — chasing bigger payouts to recover instead of sticking to your edge.',
+  };
+
+  return {
+    score,
+    signals,
+    risk_level: riskLevel,
+    worst_trigger: triggerDescriptions[worstSignal[0]] ?? 'Multiple emotional signals detected.',
+    percentile: estimatePercentile('emotion_score', score, true),
+  };
+}
+
+// ── Sport-Specific Pattern Detection ──
+
+export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Bet[]): SportSpecificFinding[] {
+  const findings: SportSpecificFinding[] = [];
+  const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+
+  // NFL
+  const nflBets = settled.filter(b => b.sport?.toUpperCase() === 'NFL');
+  if (nflBets.length >= 15) {
+    const nflSpreads = nflBets.filter(b => b.bet_type === 'spread');
+    if (nflSpreads.length >= 10) {
+      const heavyJuice = nflSpreads.filter(b => Number(b.odds) <= -115);
+      const heavyJuicePct = (heavyJuice.length / nflSpreads.length) * 100;
+      const heavyJuiceProfit = heavyJuice.reduce((s, b) => s + Number(b.profit), 0);
+      if (heavyJuicePct >= 40 && heavyJuiceProfit < 0) {
+        findings.push({
+          id: 'NFL-KEY-NUMBERS', name: 'Key number juice overpay', sport: 'NFL',
+          severity: heavyJuicePct >= 60 ? 'high' : 'medium',
+          description: 'You\'re consistently paying premium juice (-115 or worse) on NFL spreads, likely buying through key numbers 3 and 7.',
+          evidence: `${heavyJuicePct.toFixed(0)}% of NFL spread bets at -115 or worse (${heavyJuice.length}/${nflSpreads.length}). Net: $${Math.round(heavyJuiceProfit)}.`,
+          estimated_cost: heavyJuiceProfit < 0 ? Math.round(heavyJuiceProfit) : null,
+          recommendation: 'Shop for better lines instead of paying extra juice. A -110 line costs $4.55 less per $100 staked than -115.',
+        });
+      }
+    }
+    const nflParlays = nflBets.filter(b => b.bet_type === 'parlay' || (b.parlay_legs && b.parlay_legs > 1));
+    const nflParlayPct = (nflParlays.length / nflBets.length) * 100;
+    const nflParlayProfit = nflParlays.reduce((s, b) => s + Number(b.profit), 0);
+    const nflStraightProfit = nflBets.filter(b => b.bet_type !== 'parlay' && (!b.parlay_legs || b.parlay_legs <= 1)).reduce((s, b) => s + Number(b.profit), 0);
+    if (nflParlayPct >= 30 && nflParlayProfit < 0 && nflStraightProfit > 0) {
+      findings.push({
+        id: 'NFL-PARLAY-DRAG', name: 'NFL parlay drag', sport: 'NFL',
+        severity: nflParlayPct >= 50 ? 'high' : 'medium',
+        description: 'Your NFL straight bets are profitable, but NFL parlays are dragging your overall NFL ROI down.',
+        evidence: `NFL straight bets: +$${Math.round(nflStraightProfit)}. NFL parlays (${nflParlayPct.toFixed(0)}%): $${Math.round(nflParlayProfit)}.`,
+        estimated_cost: nflParlayProfit < 0 ? Math.round(nflParlayProfit) : null,
+        recommendation: 'Take your NFL reads and make them singles. Your NFL edge is in straight bets — parlays are erasing it.',
+      });
+    }
+  }
+
+  // NBA
+  const nbaBets = settled.filter(b => b.sport?.toUpperCase() === 'NBA');
+  if (nbaBets.length >= 15) {
+    const nbaProps = nbaBets.filter(b => b.bet_type === 'prop');
+    if (nbaProps.length >= 10) {
+      const nbaPropsStaked = nbaProps.reduce((s, b) => s + Number(b.stake), 0);
+      const nbaPropsProfit = nbaProps.reduce((s, b) => s + Number(b.profit), 0);
+      const nbaPropsROI = nbaPropsStaked > 0 ? (nbaPropsProfit / nbaPropsStaked) * 100 : 0;
+      const nbaPropPct = (nbaProps.length / nbaBets.length) * 100;
+      if (nbaPropPct >= 30 && nbaPropsROI < -5) {
+        findings.push({
+          id: 'NBA-PROP-OVEREXPOSURE', name: 'NBA player prop overexposure', sport: 'NBA',
+          severity: nbaPropsROI < -15 ? 'high' : nbaPropPct >= 50 ? 'high' : 'medium',
+          description: 'Heavy NBA player prop volume with negative returns. The prop market is sharp and the juice is high.',
+          evidence: `${nbaPropPct.toFixed(0)}% of NBA bets are props (${nbaProps.length}). Props ROI: ${nbaPropsROI.toFixed(1)}%, net $${Math.round(nbaPropsProfit)}.`,
+          estimated_cost: nbaPropsProfit < 0 ? Math.round(nbaPropsProfit) : null,
+          recommendation: 'Cut NBA prop volume by at least 50%. Focus on spreads and totals where inefficiency is greater.',
+        });
+      }
+    }
+    const nbaDayGroups = new Map<string, Bet[]>();
+    for (const b of nbaBets) {
+      const day = b.placed_at.split('T')[0];
+      const group = nbaDayGroups.get(day) ?? [];
+      group.push(b);
+      nbaDayGroups.set(day, group);
+    }
+    let rapidNBADays = 0;
+    nbaDayGroups.forEach(dayBets => { if (dayBets.length >= 4) rapidNBADays++; });
+    if (rapidNBADays >= 3) {
+      const rapidDayBets = Array.from(nbaDayGroups.values()).filter(d => d.length >= 4).flat();
+      const rapidProfit = rapidDayBets.reduce((s, b) => s + Number(b.profit), 0);
+      if (rapidProfit < 0) {
+        findings.push({
+          id: 'NBA-RAPID-BETTING', name: 'NBA rapid-fire sessions', sport: 'NBA',
+          severity: rapidNBADays >= 6 ? 'high' : 'medium',
+          description: 'Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.',
+          evidence: `${rapidNBADays} days with 4+ NBA bets. Combined: $${Math.round(rapidProfit)}.`,
+          estimated_cost: rapidProfit < 0 ? Math.round(rapidProfit) : null,
+          recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where tilt gets expensive.',
+        });
+      }
+    }
+  }
+
+  // MLB
+  const mlbBets = settled.filter(b => b.sport?.toUpperCase() === 'MLB');
+  if (mlbBets.length >= 20) {
+    const mlbML = mlbBets.filter(b => b.bet_type === 'moneyline');
+    const mlbMLPct = (mlbML.length / mlbBets.length) * 100;
+    if (mlbMLPct >= 80) {
+      const mlbMLStaked = mlbML.reduce((s, b) => s + Number(b.stake), 0);
+      const mlbMLProfit = mlbML.reduce((s, b) => s + Number(b.profit), 0);
+      const mlbMLROI = mlbMLStaked > 0 ? (mlbMLProfit / mlbMLStaked) * 100 : 0;
+      findings.push({
+        id: 'MLB-ML-ONLY', name: 'MLB moneyline tunnel vision', sport: 'MLB',
+        severity: mlbMLROI < -8 ? 'medium' : 'low',
+        description: 'Almost all your MLB bets are moneylines. Run lines and totals often offer better value in baseball.',
+        evidence: `${mlbMLPct.toFixed(0)}% of MLB bets are moneylines (${mlbML.length}/${mlbBets.length}). ML ROI: ${mlbMLROI.toFixed(1)}%.`,
+        estimated_cost: null,
+        recommendation: 'Explore run lines — the +1.5 on underdogs with good pitching matchups is often where MLB value hides.',
+      });
+    }
+  }
+
+  // DFS
+  if (metrics.dfs.isDFS && metrics.dfs_metrics) {
+    const dm = metrics.dfs_metrics;
+    if (dm.avgPickCount > 4 && dm.highPickROI < -10) {
+      findings.push({
+        id: 'DFS-HIGH-PICK-CHASE', name: 'Multiplier chasing', sport: 'DFS',
+        severity: dm.avgPickCount > 5 ? 'high' : 'medium',
+        description: 'You\'re averaging 5+ picks per entry chasing large multipliers, but expected value drops sharply above 3 picks.',
+        evidence: `Avg ${dm.avgPickCount.toFixed(1)} picks/entry. 4+ pick ROI: ${dm.highPickROI.toFixed(1)}%. 2-3 pick ROI: ${dm.lowPickROI.toFixed(1)}%.`,
+        estimated_cost: null,
+        recommendation: 'Shift to 2-3 pick entries. Your hit rate is almost certainly better at lower pick counts.',
+      });
+    }
+    if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.15) {
+      const ratio = dm.pickCountAfterLoss / dm.pickCountAfterWin;
+      findings.push({
+        id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation after loss', sport: 'DFS',
+        severity: ratio > 1.4 ? 'high' : 'medium',
+        description: 'After losses, you increase your pick count — going for bigger multipliers to recover.',
+        evidence: `Avg picks after loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
+        estimated_cost: null,
+        recommendation: 'Set a rule: your pick count should never change based on your last result.',
+      });
+    }
+  }
+
+  return findings;
+}
+
 export function calculateMetricsOnly(
   bets: Bet[],
   bankroll?: number | null,
@@ -1153,6 +1402,8 @@ export function calculateMetricsOnly(
     discipline_score: disciplineScore ? { ...disciplineScore, percentile: estimatePercentile('discipline_score', disciplineScore.total) } : undefined,
     betiq: calculateBetIQ(metrics, bets),
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    enhanced_tilt: calculateEnhancedTilt(metrics, bets),
+    sport_specific_findings: (() => { const f = detectSportSpecificPatterns(metrics, bets); return f.length > 0 ? f : undefined; })(),
     strategic_leaks: [],
     behavioral_patterns: [],
     recommendations: [],
@@ -1183,6 +1434,15 @@ IMPORTANT: All numerical metrics (ROI, win rate, emotion score, bankroll health,
 - Write all recommendations
 
 You do NOT calculate: emotion_score, roi_percent, win_rate, bankroll_health, category ROIs, bias severity levels, or any other number.
+
+### Sport-Specific Considerations
+When analyzing bets, pay attention to these sport-specific behavioral patterns:
+- **NFL**: Key number overpays (buying through 3/7 at bad juice), primetime game overload, parlay addiction specific to NFL
+- **NBA**: Player prop overexposure (recreational trap), rapid-fire in-game betting suggesting live tilt, back-to-back scheduling awareness
+- **MLB**: Moneyline tunnel vision (ignoring run lines and totals), starting pitcher obsession
+- **DFS**: Multiplier/pick-count chasing (5+ picks for max payout when 2-3 is more profitable), same-player repetition regardless of matchup
+
+These sport-specific patterns are pre-detected by the system. Reference the pre-calculated sport-specific findings in your analysis where relevant.
 
 ## Output Format
 Respond with valid JSON:
@@ -1408,7 +1668,12 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 ===`;
   }
 
-  const userMessage = `${metricsBlock}${dfsPromptBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
+  const sportFindings = detectSportSpecificPatterns(metrics, bets);
+  const sportFindingsBlock = sportFindings.length > 0
+    ? `\n\n=== SPORT-SPECIFIC FINDINGS (pre-detected) ===\n${sportFindings.map(f => `${f.id}: ${f.name} [${f.severity}] — ${f.evidence}`).join('\n')}\n===`
+    : '';
+
+  const userMessage = `${metricsBlock}${dfsPromptBlock}${sportFindingsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
 
   // Step 3: Call Claude for behavioral interpretation
   const message = await client.messages.create({
@@ -1479,6 +1744,10 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     dfs_mode: metrics.dfs.isDFS,
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
+    betiq: calculateBetIQ(metrics, bets),
+    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    enhanced_tilt: calculateEnhancedTilt(metrics, bets),
+    sport_specific_findings: sportFindings.length > 0 ? sportFindings : undefined,
   };
 
   const markdown = generateMarkdownReport(analysis);

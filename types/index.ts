@@ -176,6 +176,8 @@ export interface AutopsyAnalysis {
   };
   betiq?: BetIQResult;
   emotion_percentile?: number;
+  enhanced_tilt?: EnhancedTiltResult;
+  sport_specific_findings?: SportSpecificFinding[];
 }
 
 export interface PersonalRule {
@@ -370,6 +372,38 @@ export interface PercentileBaselines {
   median: number;
   bottom_25: number;
   bottom_10: number;
+}
+
+// ── Enhanced Tilt Signals ──
+
+export interface TiltSignals {
+  bet_sizing_volatility: number;    // 0-25
+  loss_reaction: number;            // 0-25
+  streak_behavior: number;          // 0-25
+  session_discipline: number;       // 0-25
+  session_acceleration: number;     // 0-25: Does bet frequency increase within sessions?
+  odds_drift_after_loss: number;    // 0-25: Do they shift to longer odds after losses?
+}
+
+export interface EnhancedTiltResult {
+  score: number;                    // Same as emotion_score (backward compat)
+  signals: TiltSignals;
+  risk_level: 'low' | 'moderate' | 'elevated' | 'high' | 'critical';
+  worst_trigger: string;
+  percentile: number;
+}
+
+// ── Sport-Specific Findings ──
+
+export interface SportSpecificFinding {
+  id: string;
+  name: string;
+  sport: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  evidence: string;
+  estimated_cost: number | null;
+  recommendation: string;
 }
 
 // ── CSV Parser ──

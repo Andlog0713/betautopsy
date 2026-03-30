@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { runAutopsy, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile } from '@/lib/autopsy-engine';
+import { runAutopsy, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
@@ -230,6 +230,9 @@ export async function POST(request: Request) {
           : undefined;
         analysis.betiq = calculateBetIQ(metricsForDiscipline, betsToAnalyze);
         analysis.emotion_percentile = estimatePercentile('emotion_score', analysis.emotion_score, true);
+        analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
+        const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
+        if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
 
         // Save report
         const { data: savedReport, error: insertError } = await supabase
