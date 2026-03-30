@@ -21,12 +21,13 @@ export default function LandingPage() {
             Your behavior is.
           </div>
           <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
-            Upload your betting, pick&apos;em, or prediction market history and get an AI-powered behavioral analysis — loss chasing detection,
-            emotional betting patterns, cognitive bias identification, and a personalized plan to fix
-            what&apos;s costing you money.
+            BetAutopsy runs your betting history through proprietary scoring models — Emotion Score, BetIQ,
+            Discipline tracking, sport-specific pattern detection — and builds a diagnostic profile that
+            gets smarter every time you upload. This isn&apos;t a chatbot summarizing your CSV.
+            It&apos;s a system that learns your behavioral fingerprint.
           </p>
           <p className="font-mono text-[11px] text-fg-dim tracking-wider mb-8 animate-fade-in-d2">
-            NOT A BET TRACKER. NOT A PICKS SERVICE. A SPORTS PSYCHOLOGIST FOR YOUR BETTING DATA.
+            PROPRIETARY SCORING ENGINE · LONGITUDINAL TRACKING · POPULATION BENCHMARKS
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
@@ -118,16 +119,17 @@ export default function LandingPage() {
             </h2>
             <div className="text-fg-muted space-y-4 text-sm leading-relaxed">
               <p>
-                We find the patterns you can&apos;t see from inside your own head —
-                the emotional triggers, the unconscious habits, the leaks that are
-                quietly draining your bankroll while you focus on your next bet.
+                Our engine detects session-level tilt patterns, odds drift after losses,
+                sport-specific leaks (NFL key number overpays, NBA prop traps, DFS multiplier chasing),
+                and cross-references your behavior against population benchmarks from real bettors.
               </p>
               <p>
-                Then we hand you a plan: specific rules, dollar amounts, and progress
-                tracking so you can actually prove to yourself you&apos;re getting sharper.
+                Then it generates a diagnostic report with your BetIQ skill score, Emotion Score,
+                Discipline tracking, and a prescribed protocol — specific rules with dollar amounts
+                that compound as you upload more data over time.
               </p>
               <p className="text-fg-bright font-medium">
-                Upload your bets, pick&apos;em entries, or prediction market trades. Get your autopsy in 20 seconds.
+                Month 1, you get a snapshot. Month 6, you get proof you&apos;re a different bettor.
               </p>
             </div>
           </div>
