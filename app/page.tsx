@@ -146,9 +146,12 @@ export default function LandingPage() {
       {/* ── Interactive Demo Report — browser chrome frame ── */}
       <section className="py-20" id="sample">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-2">EXHIBIT A — SAMPLE AUTOPSY</div>
+          <div className="case-header mb-3">EXHIBIT A — SAMPLE AUTOPSY</div>
+          <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
+            See what an actual report looks like
+          </h2>
           <p className="text-fg-muted text-sm mb-8 max-w-lg">
-            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea.
+            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge. They had no idea. This is real output — scroll through it.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             {/* Browser chrome */}

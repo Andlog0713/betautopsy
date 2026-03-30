@@ -697,11 +697,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 ) : (
                   <>
                     <p className="text-[12px] text-fg-muted leading-relaxed mb-2.5">{bias.description}</p>
+                    {bias.fix && (
+                      <p className="text-[11px] text-fg-dim mb-2.5"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p>
+                    )}
                     <div className="flex justify-between items-center">
                       <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
                         est. cost: -${Math.abs(bias.estimated_cost).toLocaleString()}/qtr
                       </span>
-                      <span className="font-mono text-[10px] text-scalpel cursor-pointer hover:underline">view protocol →</span>
                     </div>
                   </>
                 )}
@@ -1239,11 +1241,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <div key={i} className="card border-win/20 bg-win/5 p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      <span
+                        title={area.confidence === 'high' ? '75+ bets — statistically reliable' : area.confidence === 'medium' ? '30-75 bets — likely real but needs more data' : 'Under 30 bets — could be noise'}
+                        className={`text-xs px-2 py-0.5 rounded-sm font-mono cursor-help ${
                         area.confidence === 'high' ? 'bg-win/10 text-win' :
                         area.confidence === 'medium' ? 'bg-caution/10 text-caution' :
                         'bg-fg-dim/50 text-fg-muted'
-                      }`}>{area.confidence}</span>
+                      }`}>{area.confidence} conf.</span>
                     </div>
                     <p className="font-mono text-win font-semibold">+{area.roi.toFixed(1)}% ROI</p>
                     <p className="text-fg-muted text-xs">{area.sample_size} bets</p>
