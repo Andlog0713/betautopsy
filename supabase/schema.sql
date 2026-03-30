@@ -19,8 +19,11 @@ create table if not exists profiles (
   streak_count integer default 0,
   streak_last_date date,
   streak_best integer default 0,
+  streak_freezes integer default 1,
   login_count integer default 0,
   is_admin boolean default false,
+  email_digest_enabled boolean default true,
+  last_digest_sent_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -170,6 +173,46 @@ create table if not exists error_logs (
   created_at timestamptz default now()
 );
 
+-- ── Quiz Leads ──
+
+create table if not exists quiz_leads (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  archetype text,
+  emotion_estimate integer,
+  created_at timestamptz default now()
+);
+
+-- ── Email Unsubscribe Tokens ──
+
+create table if not exists email_unsubscribe_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  token text unique not null default encode(gen_random_bytes(32), 'hex'),
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_unsub_token on email_unsubscribe_tokens(token);
+
+-- ── Behavioral Journal ──
+
+create table if not exists bet_journal_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  confidence integer not null check (confidence between 1 and 5),
+  emotional_state text not null check (emotional_state in ('calm', 'excited', 'frustrated', 'anxious', 'bored', 'confident')),
+  research_time text not null check (research_time in ('none', 'under_5', '5_to_15', '15_to_30', 'over_30')),
+  had_alcohol boolean default false,
+  time_pressure boolean default false,
+  chasing_losses boolean default false,
+  notes text,
+  linked_bet_ids uuid[] default '{}',
+  session_result_dollars numeric default null
+);
+
+create index if not exists idx_journal_user_id on bet_journal_entries(user_id, created_at desc);
+
 -- ── Rate Limits ──
 
 create table if not exists rate_limits (
@@ -242,6 +285,21 @@ create policy "Users can view own feedback" on feedback for select using (auth.u
 alter table error_logs enable row level security;
 create policy "Users can insert error logs" on error_logs for insert with check (true);
 create policy "Users can view own error logs" on error_logs for select using (auth.uid() = user_id);
+
+-- Quiz Leads (service role insert, no user access needed)
+alter table quiz_leads enable row level security;
+
+-- Email Unsubscribe Tokens
+alter table email_unsubscribe_tokens enable row level security;
+create policy "Anyone can view unsubscribe tokens" on email_unsubscribe_tokens for select using (true);
+create policy "Users can insert own unsubscribe tokens" on email_unsubscribe_tokens for insert with check (auth.uid() = user_id);
+
+-- Behavioral Journal
+alter table bet_journal_entries enable row level security;
+create policy "Users can view own journal entries" on bet_journal_entries for select using (auth.uid() = user_id);
+create policy "Users can insert own journal entries" on bet_journal_entries for insert with check (auth.uid() = user_id);
+create policy "Users can update own journal entries" on bet_journal_entries for update using (auth.uid() = user_id);
+create policy "Users can delete own journal entries" on bet_journal_entries for delete using (auth.uid() = user_id);
 
 -- Rate Limits (service role only — accessed from API routes, not directly by users)
 alter table rate_limits enable row level security;

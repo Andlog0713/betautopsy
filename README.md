@@ -1,13 +1,16 @@
 # BetAutopsy
 
-BetAutopsy is a web app where sports bettors upload their bet history (CSV or manual entry) and get an AI-powered behavioral analysis. Claude scans bets for cognitive biases (loss chasing, parlay addiction, favorite bias, gambler's fallacy), strategic leaks (bad ROI by sport/bet type/odds range), and behavioral patterns (emotional betting sequences, heated stake sizing). It's like a sports psychologist reviewing your game tape — not a picks service, not a bet tracker.
+AI-powered behavioral analysis for sports bettors. Not a bet tracker, not a picks service — a sports psychologist for your betting data.
+
+Upload your betting history (CSV from Pikkit, DraftKings, FanDuel, or any sportsbook) and get a forensic breakdown: cognitive bias detection with dollar costs, emotion score, discipline score, BetIQ skill assessment, sport-specific pattern detection, and a personalized action plan.
 
 ## Setup
 
 ### 1. Create a Supabase project
 
 - Go to [supabase.com](https://supabase.com) and create a new project
-- Open the SQL Editor and run the contents of `supabase/migration.sql`
+- Open the **SQL Editor** and run the contents of `supabase/schema.sql`
+- This creates all tables (profiles, bets, uploads, reports, snapshots, share_tokens, feedback, error_logs, rate_limits, quiz_leads, email_unsubscribe_tokens, bet_journal_entries) with RLS policies and indexes
 - Go to **Settings → API** and copy your Project URL, anon key, and service role key
 
 ### 2. Create Stripe products
@@ -42,8 +45,11 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRO_PRICE_ID=price_...
 STRIPE_SHARP_PRICE_ID=price_...
+STRIPE_PRO_ANNUAL_PRICE_ID=price_...
+STRIPE_SHARP_ANNUAL_PRICE_ID=price_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+RESEND_API_KEY=re_...
 ```
 
 ### 5. Install and run
@@ -63,6 +69,28 @@ stripe listen --forward-to localhost:3000/api/webhook
 
 Use test card `4242 4242 4242 4242` for payments.
 
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router, TypeScript)
+- **UI**: Tailwind CSS, forensic case-file design system (sharp corners, monospace data, evidence tags)
+- **Database**: Supabase (PostgreSQL + Auth + RLS)
+- **Payments**: Stripe Checkout + Customer Portal + Webhooks (monthly + annual plans)
+- **AI**: Anthropic Claude API (Sonnet for behavioral interpretation)
+- **Email**: Resend (weekly digest, verification)
+- **Hosting**: Vercel (with cron jobs for digest + streak freeze refill)
+
+## Key Features
+
+- **Autopsy Engine**: Hybrid analysis — deterministic JS computes all metrics (ROI, emotion score, biases, timing, odds analysis), then Claude interprets the behavioral patterns
+- **BetIQ Score**: 6-component skill assessment (line value, calibration, sophistication, specialization, timing, sample confidence)
+- **Enhanced Tilt Index**: 6 behavioral signals including session acceleration and odds drift after loss
+- **Sport-Specific Detection**: NFL key number awareness, NBA prop overexposure, MLB moneyline tunnel vision, DFS multiplier chasing
+- **Bet DNA Quiz**: 13-question personality quiz with Spotify Wrapped-style reveal sequence
+- **Behavioral Journal**: Pre-bet mental state logging for future correlation analysis
+- **Weekly Digest**: Automated email with personalized insights (Tuesdays via Vercel cron)
+- **Progress Tracking**: Longitudinal snapshots, streak system, milestone badges
+- **Share Cards**: Stories-format (1080x1920) share cards with bet-slip aesthetic
+
 ## Deployment
 
 1. Push to GitHub
@@ -72,11 +100,7 @@ Use test card `4242 4242 4242 4242` for payments.
 5. Update the Stripe webhook endpoint URL to your production domain
 6. Deploy
 
-## Tech Stack
+## Cron Jobs (vercel.json)
 
-- **Framework**: Next.js 14 (App Router, TypeScript)
-- **UI**: Tailwind CSS, custom dark theme
-- **Database**: Supabase (PostgreSQL + Auth + RLS)
-- **Payments**: Stripe Checkout + Customer Portal + Webhooks
-- **AI**: Anthropic Claude API (Sonnet for analysis)
-- **Hosting**: Vercel
+- **Weekly Digest**: Tuesdays at 2pm UTC — `/api/digest`
+- **Streak Freeze Refill**: 1st of each month — `/api/freeze-refill`
