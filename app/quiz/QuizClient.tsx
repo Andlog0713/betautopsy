@@ -209,7 +209,7 @@ export default function QuizClient() {
                         ? 'border-scalpel bg-scalpel-muted text-fg-bright'
                         : prevAnswer === opt.value
                         ? 'border-white/[0.08] bg-white/[0.03] text-fg-bright'
-                        : 'border-white/[0.04] bg-surface/50 text-fg-muted hover:border-white/[0.08] hover:text-fg-bright hover:bg-surface'
+                        : 'border-white/[0.06] bg-surface text-fg hover:border-white/[0.10] hover:text-fg-bright hover:bg-surface-raised'
                     }`}
                   >
                     <span className="text-sm md:text-base">{opt.label}</span>
