@@ -33,7 +33,7 @@ export default function DemoReportWrapper() {
       {/* ── Report Container ── */}
       <div
         className={`relative overflow-hidden transition-all duration-700 ease-out ${
-          expanded ? 'max-h-none' : 'max-h-[2400px]'
+          expanded ? 'max-h-none' : 'max-h-[1200px]'
         }`}
       >
         {/* Subtle watermark pattern */}
