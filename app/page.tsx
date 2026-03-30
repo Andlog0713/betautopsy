@@ -29,7 +29,7 @@ export default function LandingPage() {
             NOT A BET TRACKER. NOT A PICKS SERVICE. A SPORTS PSYCHOLOGIST FOR YOUR BETTING DATA.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-up-d2">
-            <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
+            <Link href="/signup" className="btn-primary text-base !px-8 !py-3 !bg-[#FFA500] hover:!bg-[#e69500] shadow-lg shadow-[#FFA500]/20">
               Upload Your Bets — It&apos;s Free
             </Link>
           </div>
