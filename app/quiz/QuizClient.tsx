@@ -2,21 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { QUIZ_QUESTIONS, calculateQuizResult, type QuizResult } from '@/lib/quiz-engine';
+import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
-
-const SEVERITY_COLORS: Record<string, string> = {
-  low: 'bg-win/10 text-win border-win/20',
-  medium: 'bg-amber-400/10 text-caution border-amber-400/20',
-  high: 'bg-bleed-muted text-loss border-bleed/20',
-};
-
-const CALCULATING_MESSAGES = [
-  'Analyzing your emotional patterns...',
-  'Detecting cognitive biases...',
-  'Calculating your Emotion Score...',
-  'Generating your Bet DNA profile...',
-];
 
 const ARCH_PRODUCT_TEASER: Record<string, string> = {
   'The Natural': 'A full BetAutopsy would confirm your edges with real data — and catch the blind spots even disciplined bettors miss.',
@@ -30,7 +17,7 @@ const ARCH_PRODUCT_TEASER: Record<string, string> = {
   'The Grinder': 'A full BetAutopsy would reveal whether your consistency is translating to profit — or if you\'re grinding in the wrong direction.',
 };
 
-type Phase = 'intro' | 'questions' | 'calculating' | 'result_preview' | 'full_result';
+type Phase = 'intro' | 'questions' | 'reveal' | 'result_preview' | 'full_result';
 
 export default function QuizClient() {
   const [phase, setPhase] = useState<Phase>('intro');
@@ -40,20 +27,31 @@ export default function QuizClient() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const [email, setEmail] = useState('');
   const [emailSubmitting, setEmailSubmitting] = useState(false);
-  const [calcMsg, setCalcMsg] = useState(0);
+  const [revealSlide, setRevealSlide] = useState(0);
+  const [sliderValue, setSliderValue] = useState<string | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
 
-  // Calculating animation — 3 seconds, rotate every 700ms
+  const accent = QUESTION_ACCENTS[Math.min(currentQ, QUESTION_ACCENTS.length - 1)];
+  const progress = phase === 'questions' ? (5 + ((currentQ + 1) / QUIZ_QUESTIONS.length) * 95) : 0;
+
+  // ── Reveal sequence ──
   useEffect(() => {
-    if (phase !== 'calculating') return;
-    const timer = setInterval(() => setCalcMsg((i) => (i + 1) % CALCULATING_MESSAGES.length), 700);
-    const done = setTimeout(() => {
+    if (phase !== 'reveal') return;
+    // Calculate result on slide 0
+    if (revealSlide === 0) {
       const r = calculateQuizResult(answers);
       setResult(r);
-      setPhase('result_preview');
-    }, 3000);
-    return () => { clearInterval(timer); clearTimeout(done); };
-  }, [phase, answers]);
+    }
+    const durations = [1500, 1500, 2000, 2500];
+    const timer = setTimeout(() => {
+      if (revealSlide < 3) {
+        setRevealSlide(revealSlide + 1);
+      } else {
+        setPhase('result_preview');
+      }
+    }, durations[revealSlide]);
+    return () => clearTimeout(timer);
+  }, [phase, revealSlide, answers]);
 
   const handleAnswer = useCallback((value: string) => {
     setSelectedValue(value);
@@ -63,18 +61,21 @@ export default function QuizClient() {
 
     setTimeout(() => {
       setSelectedValue(null);
+      setSliderValue(null);
       if (currentQ < QUIZ_QUESTIONS.length - 1) {
         setCurrentQ(currentQ + 1);
       } else {
-        setPhase('calculating');
+        setRevealSlide(0);
+        setPhase('reveal');
       }
-    }, 300);
+    }, question.style === 'slider' ? 500 : 300);
   }, [currentQ, answers]);
 
   const handleBack = useCallback(() => {
     if (currentQ > 0) {
       setCurrentQ(currentQ - 1);
       setSelectedValue(null);
+      setSliderValue(null);
     }
   }, [currentQ]);
 
@@ -85,24 +86,22 @@ export default function QuizClient() {
       await fetch('/api/quiz-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          archetype: result?.archetype.name,
-          emotion_estimate: result?.emotion_estimate,
-        }),
+        body: JSON.stringify({ email, archetype: result?.archetype.name, emotion_estimate: result?.emotion_estimate }),
       });
-    } catch {
-      // Silent fail
-    }
+    } catch { /* silent */ }
     setEmailSubmitting(false);
     setPhase('full_result');
   };
 
+  const roasts = result ? generateQuizRoasts(answers) : [];
+
   const handleShare = () => {
     if (!result) return;
-    const text = `My Bet DNA: ${result.archetype.name} ${result.archetype.emoji}\n\nEmotion Score: ${result.emotion_estimate}/100\nTop bias: ${result.biases[0]?.name ?? 'None'}\n\nWhat's yours? 👇`;
+    let text = `My Bet DNA: ${result.archetype.name} ${result.archetype.emoji}\nEmotion Score: ${result.emotion_estimate}/100\n`;
+    if (roasts.length > 0) text += `\n${roasts[0].emoji} ${roasts[0].text}\n`;
+    text += '\nWhat\'s yours? 👇';
     const url = 'https://betautopsy.com/quiz';
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer,width=600,height=400');
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=500');
   };
 
   const handleDownloadCard = async () => {
@@ -126,9 +125,19 @@ export default function QuizClient() {
     setResult(null);
     setEmail('');
     setSelectedValue(null);
+    setSliderValue(null);
   };
 
-  const progress = phase === 'questions' ? ((currentQ + 1) / QUIZ_QUESTIONS.length) * 100 : 0;
+  const handleChallenge = () => {
+    if (!result) return;
+    const text = `I got ${result.archetype.name} on the Bet DNA quiz. Bet yours is worse 💀`;
+    const url = 'https://betautopsy.com/quiz';
+    if (navigator.share) {
+      navigator.share({ text, url });
+    } else {
+      window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`);
+    }
+  };
 
   const gamblingFooter = (
     <p className="text-fg-dim text-xs text-center mt-12">
@@ -137,7 +146,9 @@ export default function QuizClient() {
     </p>
   );
 
-  // ── Intro ──
+  // ══════════════════════════════
+  // INTRO
+  // ══════════════════════════════
   if (phase === 'intro') {
     return (
       <main className="min-h-screen bg-base flex items-center justify-center px-4">
@@ -147,19 +158,16 @@ export default function QuizClient() {
             What&apos;s Your <span className="text-scalpel">Bet DNA</span>?
           </h1>
           <p className="text-fg-muted text-lg mb-8 leading-relaxed">
-            Take this 2-minute quiz to discover your betting personality — the hidden
+            Take this quiz to discover your betting personality — the hidden
             patterns, biases, and tendencies that shape every bet you place.
-          </p>
-          <p className="text-fg-dim text-sm mb-8">
-            No signup. No data needed. Just honest answers.
           </p>
           <button
             onClick={() => setPhase('questions')}
-            className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/20"
+            className="btn-primary text-lg !px-10 !py-3.5"
           >
-            Start Quiz
+            Find Out →
           </button>
-          <p className="text-fg-dim text-xs mt-6">13 questions · 2 minutes · 100% free</p>
+          <p className="text-fg-dim text-xs mt-6">2 minutes · 100% free</p>
           <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors mt-4 inline-block">
             ← Back to BetAutopsy
           </Link>
@@ -169,103 +177,195 @@ export default function QuizClient() {
     );
   }
 
-  // ── Questions ──
+  // ══════════════════════════════
+  // QUESTIONS
+  // ══════════════════════════════
   if (phase === 'questions') {
     const question = QUIZ_QUESTIONS[currentQ];
+    const isBold = question.style === 'bold';
+    const isSlider = question.style === 'slider';
+    const isScenario = question.style === 'scenario';
+
     return (
-      <main className="min-h-screen bg-base px-4 py-6">
+      <main className="min-h-screen bg-base px-4 py-6" style={{ background: `radial-gradient(circle at 50% 30%, ${accent}08 0%, transparent 60%), #111318` }}>
         <div className="max-w-lg mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={handleBack}
-              disabled={currentQ === 0}
-              className="text-sm text-fg-muted hover:text-fg-bright transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              ← Back
-            </button>
-            <span className="text-sm text-fg-muted">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
+          {/* Progress bar */}
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={handleBack} disabled={currentQ === 0} className="text-sm text-fg-muted hover:text-fg-bright transition-colors disabled:opacity-30 disabled:cursor-not-allowed">← Back</button>
+            <span className="text-sm text-fg-muted font-mono">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
           </div>
-          <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-10">
+          <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden mb-10">
             <div
-              className="h-full bg-scalpel rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%`, backgroundColor: accent, boxShadow: `0 0 8px ${accent}40` }}
             />
           </div>
-          <div key={question.id} className="animate-fade-in">
-            <h2 className="font-bold text-xl md:text-2xl mb-2 leading-snug">{question.question}</h2>
-            {question.subtext && <p className="text-fg-muted text-sm mb-6">{question.subtext}</p>}
+
+          {/* Question */}
+          <div key={currentQ} className="quiz-enter">
+            {/* Bet slip visual for scenario questions */}
+            {isScenario && question.id === 'q15' && (
+              <div className="bg-[#1a2332] border border-[#2a3a4a] p-4 rounded-sm mb-6 font-mono text-sm">
+                <div className="text-[#8b9db5] text-xs mb-2">3-LEG PARLAY</div>
+                <div className="space-y-2">
+                  <div className="flex justify-between"><span className="text-[#c8d6e5]">Chiefs -3.5</span><span className="text-[#00C853]">-110</span></div>
+                  <div className="flex justify-between"><span className="text-[#c8d6e5]">Jokic Over 25.5 pts</span><span className="text-[#00C853]">-115</span></div>
+                  <div className="flex justify-between"><span className="text-[#c8d6e5]">Bills ML</span><span className="text-[#00C853]">+140</span></div>
+                </div>
+                <div className="border-t border-[#2a3a4a] mt-3 pt-2 flex justify-between">
+                  <span className="text-[#8b9db5]">$25 to win</span>
+                  <span className="text-[#00C853] font-bold">$162.50</span>
+                </div>
+              </div>
+            )}
+
+            <h2 className={`font-bold leading-snug mb-2 ${isBold ? 'text-2xl md:text-[32px] text-center' : 'text-xl md:text-2xl'}`}>
+              {question.question}
+            </h2>
+            {question.subtext && !isBold && <p className="text-fg-muted text-sm mb-6">{question.subtext}</p>}
+            {question.subtext && isBold && <p className="text-fg-muted text-sm mb-6 text-center">{question.subtext}</p>}
             {!question.subtext && <div className="mb-6" />}
-            <div className="space-y-3">
-              {question.options.map((opt) => {
-                const isSelected = selectedValue === opt.value;
-                const prevAnswer = answers[question.id];
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => handleAnswer(opt.value)}
-                    disabled={selectedValue !== null}
-                    className={`w-full text-left p-4 rounded-sm border transition-all duration-200 ${
-                      isSelected
-                        ? 'border-scalpel bg-scalpel-muted text-fg-bright'
-                        : prevAnswer === opt.value
-                        ? 'border-white/[0.08] bg-white/[0.03] text-fg-bright'
-                        : 'border-white/[0.10] bg-surface-raised text-fg-bright hover:border-white/[0.15] hover:bg-surface-elevated'
-                    }`}
-                  >
-                    <span className="text-sm md:text-base" style={{ color: '#F0F2F5' }}>{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+
+            {/* Slider question */}
+            {isSlider ? (
+              <div className="space-y-6">
+                {sliderValue && (
+                  <p className="text-fg-muted text-sm text-center italic animate-fade-in">{getSliderInterpretation(sliderValue)}</p>
+                )}
+                <div className="flex gap-2">
+                  {question.options.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSliderValue(opt.value);
+                        setTimeout(() => handleAnswer(opt.value), 500);
+                      }}
+                      disabled={selectedValue !== null}
+                      className={`flex-1 py-4 rounded-sm border font-mono text-sm transition-all ${
+                        sliderValue === opt.value || selectedValue === opt.value
+                          ? 'border-scalpel/40 bg-scalpel-muted text-scalpel font-bold scale-105'
+                          : 'border-white/[0.10] bg-surface-raised text-fg-muted hover:border-white/[0.15]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex justify-between text-fg-dim font-mono text-[9px]">
+                  <span>FORGET IT</span>
+                  <span>RUINS MY DAY</span>
+                </div>
+              </div>
+            ) : (
+              /* Regular options */
+              <div className="space-y-3">
+                {question.options.map((opt) => {
+                  const isSelected = selectedValue === opt.value;
+                  const prevAnswer = answers[question.id];
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleAnswer(opt.value)}
+                      disabled={selectedValue !== null}
+                      className={`w-full text-left p-4 rounded-sm border transition-all duration-200 ${
+                        isSelected
+                          ? 'scale-[1.02] border-scalpel/50 bg-scalpel-muted'
+                          : prevAnswer === opt.value
+                          ? 'border-white/[0.08] bg-white/[0.03]'
+                          : 'border-white/[0.10] bg-surface-raised hover:border-white/[0.15] hover:bg-surface-elevated'
+                      }`}
+                    >
+                      <span className="text-sm md:text-base" style={{ color: isSelected ? accent : '#F0F2F5' }}>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <p className="text-fg-dim text-xs text-center mt-10">betautopsy.com</p>
+          <p className="text-fg-dim text-xs text-center mt-10 font-mono">betautopsy.com</p>
         </div>
       </main>
     );
   }
 
-  // ── Calculating ──
-  if (phase === 'calculating') {
-    return (
-      <main className="min-h-screen bg-base flex items-center justify-center px-4">
-        <div className="text-center animate-fade-in">
-          <span className="text-6xl block mb-6 animate-pulse">🧬</span>
-          <h2 className="font-bold text-xl mb-3">Analyzing your patterns...</h2>
-          <p className="text-fg-muted text-sm">{CALCULATING_MESSAGES[calcMsg]}</p>
-          <div className="w-48 h-1.5 bg-surface rounded-full overflow-hidden mx-auto mt-6">
-            <div className="h-full bg-scalpel rounded-full animate-pulse" style={{ width: '60%' }} />
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // ══════════════════════════════
+  // REVEAL SEQUENCE
+  // ══════════════════════════════
+  if (phase === 'reveal' && result) {
+    const emotionWord = result.emotion_estimate <= 25 ? 'LOW' : result.emotion_estimate <= 50 ? 'MODERATE' : result.emotion_estimate <= 75 ? 'HIGH' : 'CRITICAL';
+    const emotionColor = result.emotion_estimate <= 25 ? '#00C9A7' : result.emotion_estimate <= 50 ? '#fbbf24' : result.emotion_estimate <= 75 ? '#f97316' : '#f87171';
+    const biasCount = result.biases.length;
 
-  // ── Result Preview (holds back emotion score + biases to drive email capture) ──
-  if (phase === 'result_preview' && result) {
     return (
-      <main className="min-h-screen bg-base px-4 py-12">
-        <div className="max-w-lg mx-auto animate-fade-in">
-          {/* Archetype reveal only */}
-          <div className="text-center mb-8">
-            <span className="text-6xl block mb-4 animate-bounce">{result.archetype.emoji}</span>
-            <p className="text-fg-muted text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
-            <h1 className="font-extrabold text-4xl mb-3" style={{ color: result.archetype.color }}>
+      <main className="min-h-screen bg-base flex items-center justify-center px-4" onClick={() => revealSlide < 3 && setRevealSlide(revealSlide + 1)}>
+        {/* Slide 0: Intro */}
+        {revealSlide === 0 && (
+          <div className="text-center animate-fade-in">
+            <p className="text-fg-muted text-xl reveal-pulse">Let&apos;s see what your answers say about you...</p>
+          </div>
+        )}
+
+        {/* Slide 1: Emotion color flood */}
+        {revealSlide === 1 && (
+          <div className="text-center animate-fade-in" style={{ color: emotionColor }}>
+            <p className="text-fg-muted text-lg mb-4">Your emotional betting level is...</p>
+            <p className="text-4xl md:text-5xl font-bold" style={{ color: emotionColor }}>{emotionWord}</p>
+          </div>
+        )}
+
+        {/* Slide 2: Bias count */}
+        {revealSlide === 2 && (
+          <div className="text-center animate-fade-in">
+            <p className="text-fg-muted text-base mb-2">We detected</p>
+            <p className="text-6xl md:text-7xl font-bold text-fg-bright reveal-bounce">{biasCount}</p>
+            <p className="text-fg-muted text-base mt-2">behavioral bias{biasCount !== 1 ? 'es' : ''}</p>
+          </div>
+        )}
+
+        {/* Slide 3: Archetype reveal */}
+        {revealSlide === 3 && (
+          <div className="text-center">
+            <div className="text-7xl md:text-8xl reveal-bounce mb-4">{result.archetype.emoji}</div>
+            <h1 className="font-extrabold text-4xl md:text-5xl mb-3 animate-fade-in-d2" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-fg-muted text-sm leading-relaxed max-w-md mx-auto">
-              {result.archetype.description}
-            </p>
-            <p className="text-fg-dim text-xs mt-4">
-              Your full breakdown includes your Emotion Score, detected biases, strengths, and what to watch out for.
-            </p>
+            <p className="text-fg-muted text-sm max-w-sm mx-auto animate-fade-in-d3">{result.archetype.description}</p>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  // ══════════════════════════════
+  // RESULT PREVIEW (share card first, then email gate)
+  // ══════════════════════════════
+  if (phase === 'result_preview' && result) {
+    return (
+      <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
+        <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
+          {/* Share card — FIRST thing they see */}
+          <div className="overflow-hidden rounded-sm" style={{ maxWidth: '100%' }}>
+            <div style={{ transform: 'scale(0.38)', transformOrigin: 'top left', width: 1080, height: 1920 }}>
+              <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
+            </div>
+          </div>
+
+          {/* Share buttons */}
+          <div className="flex gap-2">
+            <button onClick={handleDownloadCard} className="btn-primary text-sm flex-1 flex items-center justify-center gap-1.5 font-mono">
+              Download for Stories
+            </button>
+            <button onClick={handleShare} className="btn-secondary text-sm flex-1 flex items-center justify-center gap-1.5">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share on X
+            </button>
           </div>
 
           {/* Email gate */}
-          <div className="card p-6 text-center space-y-4 border-scalpel/20 bg-scalpel-muted">
-            <p className="text-fg-bright font-medium">Your Emotion Score and biases are ready.</p>
-            <p className="text-fg-muted text-sm">
-              Enter your email to see your full behavioral breakdown — how emotional your betting is,
-              which cognitive biases are affecting you, and what to watch out for.
+          <div className="case-card p-6 text-center space-y-4 border-scalpel/20">
+            <p className="text-fg-bright font-bold text-lg">Your full Bet DNA breakdown is ready.</p>
+            <p className="text-fg-muted text-sm max-w-sm mx-auto">
+              Your Emotion Score, detected biases, strengths, and what to watch out for — where should we send them?
             </p>
             <div className="flex gap-2">
               <input
@@ -274,22 +374,19 @@ export default function QuizClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleEmailSubmit()}
-                className="flex-1 bg-base border border-white/[0.04] rounded-sm px-4 py-2.5 text-sm text-fg-bright placeholder-fg-dim focus:outline-none focus:border-scalpel/40"
+                className="input-field flex-1 text-sm"
               />
               <button
                 onClick={handleEmailSubmit}
                 disabled={emailSubmitting || !email.includes('@')}
                 className="btn-primary text-sm !px-5 whitespace-nowrap disabled:opacity-50"
               >
-                {emailSubmitting ? '...' : 'See My Results'}
+                {emailSubmitting ? '...' : 'Send My Results'}
               </button>
             </div>
-            <p className="text-fg-dim text-xs">No spam. Just your results.</p>
-            <button
-              onClick={() => setPhase('full_result')}
-              className="text-xs text-fg-dim hover:text-fg-muted transition-colors"
-            >
-              Skip — just show me
+            <p className="text-fg-dim text-[10px] font-mono">No spam. Just your results.</p>
+            <button onClick={() => setPhase('full_result')} className="text-xs text-fg-dim hover:text-fg-muted transition-colors">
+              Skip — show me now
             </button>
           </div>
 
@@ -299,38 +396,41 @@ export default function QuizClient() {
     );
   }
 
-  // ── Full Result ──
+  // ══════════════════════════════
+  // FULL RESULT
+  // ══════════════════════════════
   if (phase === 'full_result' && result) {
     const eColor = result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : result.emotion_estimate <= 75 ? 'text-orange-400' : 'text-loss';
-    const eBarColor = result.emotion_estimate <= 30 ? 'bg-win' : result.emotion_estimate <= 55 ? 'bg-amber-400' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-loss';
+    const eBarColor = result.emotion_estimate <= 30 ? 'bg-win' : result.emotion_estimate <= 55 ? 'bg-caution' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-loss';
 
     return (
       <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
 
           {/* 1. Archetype */}
-          <div className="card p-5 sm:p-6 border-white/[0.06] text-center" style={{ borderColor: `${result.archetype.color}30` }}>
+          <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
-            <p className="text-fg-muted text-xs uppercase tracking-widest mb-2">Your Bet DNA</p>
+            <p className="text-fg-muted text-xs uppercase tracking-widest mb-2 font-mono">Your Bet DNA</p>
             <h1 className="font-extrabold text-3xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
-            <p className="text-fg-muted text-xs mt-3 italic">
+            <p className="text-fg-dim text-xs mt-3 italic">
               {ARCH_PRODUCT_TEASER[result.archetype.name] ?? 'A full BetAutopsy would show you exactly how your real betting data compares to this quiz estimate.'}
             </p>
           </div>
 
           {/* 2. Emotion Score */}
-          <div className="card p-5">
+          <div className="case-card p-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-fg-muted">Estimated Emotion Score</span>
-              <span className={`font-mono text-xl font-bold ${eColor}`}>{result.emotion_estimate}/100</span>
+              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
+              <span className={`font-mono text-2xl font-bold ${eColor}`}>{result.emotion_estimate}/100</span>
             </div>
-            <div className="h-2.5 bg-base rounded-full overflow-hidden mb-2">
-              <div className={`h-full rounded-full transition-all duration-1000 ${eBarColor}`} style={{ width: `${result.emotion_estimate}%` }} />
+            <div className="h-1 bg-surface-raised relative mb-2">
+              <div className={`h-full transition-all duration-1000 ${eBarColor}`} style={{ width: `${result.emotion_estimate}%` }} />
+              <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${result.emotion_estimate}%` }} />
             </div>
-            <p className="text-fg-dim text-xs">
+            <p className="text-fg-dim text-xs font-mono">
               {result.emotion_estimate <= 30 ? 'Your emotions seem well under control. That\'s rare.' :
                result.emotion_estimate <= 55 ? 'Mostly disciplined, but emotions creep in sometimes.' :
                result.emotion_estimate <= 75 ? 'Emotions are a factor in your betting. This is costing you.' :
@@ -338,114 +438,110 @@ export default function QuizClient() {
             </p>
           </div>
 
-          {/* 3. Biases */}
+          {/* 3. "Is this accurate?" conversion card */}
+          <div className="finding-card border-l-scalpel p-5 text-center space-y-2">
+            <p className="text-fg-bright font-bold">Think this is right?</p>
+            <p className="text-fg-muted text-sm max-w-sm mx-auto">
+              This quiz estimated your patterns from {QUIZ_QUESTIONS.length} answers. Your actual bet history would reveal the exact dollar cost of each bias.
+            </p>
+            <Link href="/signup" className="btn-primary inline-block !px-6 !py-2.5 text-sm font-mono">
+              Get Your Real Autopsy — Free
+            </Link>
+            <p className="text-fg-dim text-[10px] font-mono">No credit card. Upload takes 2 minutes.</p>
+          </div>
+
+          {/* 4. Biases */}
           <div className="space-y-3">
-            <h2 className="font-bold text-xl">Your Biases</h2>
+            <span className="case-header block">YOUR BIASES</span>
             {result.biases.map((bias) => (
-              <div key={bias.name} className="card p-4">
+              <div key={bias.name} className={`finding-card ${bias.severity === 'high' ? 'border-l-bleed' : bias.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel'}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-medium">{bias.name}</h3>
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[bias.severity]}`}>
-                    {bias.severity.toUpperCase()}
-                  </span>
+                  <h3 className="font-medium text-fg-bright">{bias.name}</h3>
+                  <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${
+                    bias.severity === 'high' ? 'bg-bleed text-base' : bias.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'
+                  }`}>{bias.severity}</span>
                 </div>
                 <p className="text-fg-muted text-sm">{bias.one_liner}</p>
               </div>
             ))}
           </div>
 
-          {/* 4. "Is this accurate?" conversion card */}
-          <div className="card p-6 border-scalpel/20 bg-scalpel-muted text-center space-y-3">
-            <p className="text-fg-bright font-bold text-lg">Think this is accurate?</p>
-            <p className="text-fg-muted text-sm max-w-sm mx-auto">
-              This quiz estimates your patterns from self-reported answers. Your actual bet history tells the
-              real story — upload it and see how your real data compares.
-            </p>
-            <p className="text-fg-dim text-xs">
-              Most bettors are surprised by the gap between what they think and what the data shows.
-            </p>
-            <Link href="/signup" className="btn-primary inline-block !px-8 !py-3">
-              Get Your Real Autopsy — Free
-            </Link>
-            <p className="text-fg-dim text-xs">No credit card. Upload takes 2 minutes.</p>
-          </div>
-
           {/* 5. Strengths */}
           {result.strengths.length > 0 && (
-            <div className="card border-win/20 bg-win/5 p-5">
-              <h3 className="text-win text-xs font-medium uppercase tracking-wider mb-3">Your Strengths</h3>
+            <div className="finding-card border-l-win p-5">
+              <span className="case-header block mb-3 text-win">STRENGTHS</span>
               <ul className="space-y-2">
                 {result.strengths.map((s) => (
                   <li key={s} className="text-sm text-fg-bright flex items-start gap-2">
-                    <span className="text-win mt-0.5 shrink-0">+</span>
-                    {s}
+                    <span className="text-win mt-0.5 shrink-0 font-mono">+</span>{s}
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* 6. Watch Outs — with product teaser on each */}
+          {/* 6. Watch Outs */}
           {result.watch_outs.length > 0 && (
-            <div className="card border-orange-400/20 bg-orange-400/5 p-5">
-              <h3 className="text-orange-400 text-xs font-medium uppercase tracking-wider mb-3">Watch Out For</h3>
+            <div className="finding-card border-l-caution p-5">
+              <span className="case-header block mb-3 text-caution">WATCH OUT FOR</span>
               <ul className="space-y-3">
                 {result.watch_outs.map((w) => (
                   <li key={w}>
                     <div className="text-sm text-fg-bright flex items-start gap-2">
-                      <span className="text-orange-400 mt-0.5 shrink-0">!</span>
-                      {w}
+                      <span className="text-caution mt-0.5 shrink-0">!</span>{w}
                     </div>
-                    <p className="text-fg-dim text-[10px] ml-5 mt-1 italic">A full autopsy would show you exactly how much this costs you.</p>
+                    <p className="text-fg-dim text-[10px] ml-5 mt-1 italic font-mono">A full autopsy would show you the dollar cost of this.</p>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* 7. Share card + buttons */}
-          <div className="space-y-3 overflow-hidden">
-            <h2 className="font-bold text-xl">Share Your Bet DNA</h2>
-            <div className="overflow-hidden rounded-sm">
-              <QuizResultCard ref={resultCardRef} result={result} />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={handleShare} className="btn-secondary text-sm flex-1 flex items-center justify-center gap-1.5">
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                Share on X
-              </button>
-              <button onClick={handleDownloadCard} className="btn-secondary text-sm flex-1 flex items-center justify-center gap-1.5">
-                Download Card
-              </button>
-            </div>
-          </div>
-
-          {/* 8. Retake */}
-          <div className="text-center">
-            <button onClick={handleRetake} className="text-sm text-fg-dim hover:text-fg-muted transition-colors">
-              ↻ Retake Quiz
+          {/* 7. Challenge a friend */}
+          <div className="case-card p-5 text-center space-y-3">
+            <p className="text-fg-bright font-medium">Think your friends are worse?</p>
+            <button onClick={handleChallenge} className="btn-secondary text-sm font-mono">
+              Challenge a Friend
             </button>
           </div>
 
-          {/* 9. Bottom CTA */}
-          <div className="space-y-4 pt-4">
-            <div className="card p-6 text-center space-y-3">
-              <p className="text-fg-bright font-medium">Ready to see the real numbers?</p>
-              <p className="text-fg-muted text-sm">
-                Your quiz says you&apos;re a {result.archetype.name}. Your actual bet history might tell a different story.
-              </p>
-              <Link href="/signup" className="btn-primary inline-block !px-8 !py-3">
-                Upload Your Bets — It&apos;s Free
-              </Link>
+          {/* 8. Share card + buttons (again at bottom) */}
+          <div className="space-y-3 overflow-hidden">
+            <span className="case-header block">SHARE YOUR BET DNA</span>
+            <div className="overflow-hidden rounded-sm" style={{ maxWidth: '100%' }}>
+              <div style={{ transform: 'scale(0.38)', transformOrigin: 'top left', width: 1080, height: 1920 }}>
+                <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
+              </div>
             </div>
-            <p className="text-fg-dim text-xs text-center">
+            <div className="flex gap-2">
+              <button onClick={handleDownloadCard} className="btn-primary text-sm flex-1 font-mono">Download</button>
+              <button onClick={handleShare} className="btn-secondary text-sm flex-1">Share on X</button>
+              <button onClick={handleChallenge} className="btn-secondary text-sm flex-1">Challenge</button>
+            </div>
+          </div>
+
+          {/* 9. Bottom CTA */}
+          <div className="case-card p-6 text-center space-y-3">
+            <p className="text-fg-bright font-medium">Your quiz says you&apos;re a {result.archetype.name}.</p>
+            <p className="text-fg-muted text-sm">Your actual bet history might tell a different story.</p>
+            <Link href="/signup" className="btn-primary inline-block !px-8 !py-3 font-mono">
+              Upload Your Bets — It&apos;s Free
+            </Link>
+            <p className="text-fg-dim text-xs">
               Already have an account? <Link href="/login" className="text-scalpel hover:underline">Sign in</Link>
             </p>
           </div>
 
+          {/* 10. Retake */}
+          <div className="text-center">
+            <button onClick={handleRetake} className="text-sm text-fg-dim hover:text-fg-muted transition-colors font-mono">
+              ↻ Retake Quiz
+            </button>
+          </div>
+
           {/* Responsible gambling */}
           {result.emotion_estimate > 75 && (
-            <div className="card border-amber-400/20 bg-amber-400/5 p-4">
+            <div className="finding-card border-l-caution p-4">
               <p className="text-caution text-sm">
                 Your responses suggest emotions play a significant role in your betting.
                 If gambling is causing stress or financial difficulty, help is available at{' '}
@@ -457,9 +553,7 @@ export default function QuizClient() {
           {gamblingFooter}
 
           <div className="text-center">
-            <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors">
-              ← Back to BetAutopsy
-            </Link>
+            <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors">← Back to BetAutopsy</Link>
           </div>
         </div>
       </main>

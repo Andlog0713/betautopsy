@@ -4,6 +4,7 @@ export interface QuizQuestion {
   id: string;
   question: string;
   subtext?: string;
+  style?: 'default' | 'scenario' | 'slider' | 'bold';
   options: QuizOption[];
 }
 
@@ -22,30 +23,20 @@ export interface QuizOption {
   };
 }
 
+// Color progression: cool → warm as questions get more revealing
+export const QUESTION_ACCENTS = [
+  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00C9A7',
+  '#a3e635', '#facc15', '#fbbf24', '#fb923c', '#f97316',
+  '#ef4444', '#f43f5e', '#f97316',
+];
+
+// Questions ordered for emotional escalation: easy → behavioral → revealing → scenario
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
-  {
-    id: 'q1',
-    question: 'You just lost 3 bets in a row. What do you do?',
-    options: [
-      { label: 'Take a break and come back tomorrow', value: 'break', scores: { discipline: 9, chase_tendency: 1, emotion: 2 } },
-      { label: 'Stick to my plan — the next bet is independent', value: 'plan', scores: { discipline: 7, chase_tendency: 2, emotion: 3 } },
-      { label: 'Bet bigger on the next one to make it back', value: 'bigger', scores: { discipline: 1, chase_tendency: 9, emotion: 8, variance: 8 } },
-      { label: 'Throw a parlay together to get even fast', value: 'parlay', scores: { discipline: 2, chase_tendency: 8, emotion: 7, parlay_lean: 9 } },
-    ],
-  },
-  {
-    id: 'q2',
-    question: 'What percentage of your bets are parlays?',
-    options: [
-      { label: 'Rarely — under 10%', value: 'rare', scores: { parlay_lean: 1, discipline: 8 } },
-      { label: 'Some — maybe 20-30%', value: 'some', scores: { parlay_lean: 5, discipline: 5 } },
-      { label: 'A lot — probably 40-50%', value: 'alot', scores: { parlay_lean: 8, discipline: 3 } },
-      { label: 'Almost everything is a parlay', value: 'everything', scores: { parlay_lean: 10, discipline: 1 } },
-    ],
-  },
+  // 1. Volume (easy warm-up)
   {
     id: 'q3',
     question: 'How many bets do you place in a typical week?',
+    style: 'default',
     options: [
       { label: '1-3 — only when I see something I love', value: 'few', scores: { volume: 2, selectivity: 9 } },
       { label: '5-10 — a few per day on game days', value: 'moderate', scores: { volume: 5, selectivity: 5 } },
@@ -53,9 +44,24 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: '30+ — if there\'s a line, I\'m on it', value: 'max', scores: { volume: 10, selectivity: 1 } },
     ],
   },
+  // 2. Parlay reaction (fun, low stakes)
+  {
+    id: 'q2',
+    question: 'Someone tells you parlays are a sucker\'s bet.',
+    subtext: 'Be honest about your reaction.',
+    style: 'bold',
+    options: [
+      { label: 'They\'re right — I mostly stick to straight bets', value: 'rare', scores: { parlay_lean: 1, discipline: 8 } },
+      { label: 'I know the math, but I still throw a few in for fun', value: 'some', scores: { parlay_lean: 5, discipline: 5 } },
+      { label: 'I show them my one big hit from 3 months ago', value: 'alot', scores: { parlay_lean: 8, discipline: 3 } },
+      { label: 'I add another leg just to prove a point', value: 'everything', scores: { parlay_lean: 10, discipline: 1 } },
+    ],
+  },
+  // 3. Favorite bias (simple preference)
   {
     id: 'q4',
     question: 'Your team is a -300 favorite. Do you bet them?',
+    style: 'default',
     options: [
       { label: 'Absolutely — they\'re going to win', value: 'yes', scores: { fav_lean: 9, discipline: 3 } },
       { label: 'Only if I think the line is off', value: 'value', scores: { fav_lean: 4, discipline: 8 } },
@@ -63,51 +69,12 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: 'I\'d parlay them with something else', value: 'parlay', scores: { fav_lean: 7, parlay_lean: 7 } },
     ],
   },
-  {
-    id: 'q5',
-    question: 'Be honest — do your bet sizes stay consistent?',
-    options: [
-      { label: 'Yes — every bet is basically the same size', value: 'flat', scores: { variance: 1, discipline: 9, emotion: 2 } },
-      { label: 'Mostly, with occasional bigger plays', value: 'mostly', scores: { variance: 4, discipline: 6, emotion: 4 } },
-      { label: 'They swing a lot based on how I\'m feeling', value: 'swing', scores: { variance: 8, discipline: 2, emotion: 8 } },
-      { label: 'I go big when I\'m confident, small when I\'m not', value: 'confidence', scores: { variance: 6, discipline: 4, emotion: 6 } },
-    ],
-  },
-  {
-    id: 'q6',
-    question: 'It\'s 11pm and there\'s a random international soccer game on. Do you bet it?',
-    options: [
-      { label: 'No — I only bet sports I follow closely', value: 'no', scores: { discipline: 9, selectivity: 9, emotion: 1 } },
-      { label: 'Maybe if I\'m bored and the line looks interesting', value: 'maybe', scores: { discipline: 4, emotion: 5, volume: 5 } },
-      { label: 'If I\'ve had a bad day and need some action', value: 'action', scores: { discipline: 1, emotion: 9, chase_tendency: 7 } },
-      { label: 'Absolutely — action is action', value: 'yes', scores: { discipline: 2, emotion: 7, volume: 8 } },
-    ],
-  },
-  {
-    id: 'q7',
-    question: 'You hit a big parlay for +800. What\'s your next move?',
-    options: [
-      { label: 'Withdraw the winnings and reset', value: 'withdraw', scores: { discipline: 9, emotion: 2 } },
-      { label: 'Keep my normal routine — the win doesn\'t change anything', value: 'normal', scores: { discipline: 8, emotion: 3 } },
-      { label: 'Ride the hot streak — bet bigger for a few days', value: 'ride', scores: { discipline: 2, emotion: 7, variance: 7 } },
-      { label: 'Roll it into an even bigger parlay', value: 'roll', scores: { discipline: 1, emotion: 8, parlay_lean: 9, variance: 9 } },
-    ],
-  },
-  {
-    id: 'q13',
-    question: 'You\'re up $300 for the week. Sunday night, one game left. You see a spread you like. How much do you bet?',
-    subtext: 'Be honest — not what you think the "right" answer is.',
-    options: [
-      { label: 'My normal unit — $25-50. The week\'s been good, no reason to change.', value: 'normal', scores: { discipline: 9, emotion: 2, variance: 1 } },
-      { label: 'A little more — maybe $75-100. I\'m playing with house money.', value: 'house_money', scores: { discipline: 5, emotion: 5, variance: 5 } },
-      { label: '$150-200. I\'m up, might as well take a shot.', value: 'bigger', scores: { discipline: 3, emotion: 7, variance: 7 } },
-      { label: 'All of it. If I hit, it\'s a monster week. If I lose, I\'m back to even.', value: 'yolo', scores: { discipline: 1, emotion: 9, variance: 10, chase_tendency: 5 } },
-    ],
-  },
+  // 4. Sportsbooks (factual)
   {
     id: 'q8',
     question: 'How many sportsbooks do you use?',
     subtext: 'Line shopping = using multiple books to find the best odds.',
+    style: 'default',
     options: [
       { label: 'Just one — I\'m loyal', value: 'one', scores: { discipline: 3, selectivity: 4 } },
       { label: '2-3 — I check a couple', value: 'few', scores: { discipline: 6, selectivity: 6 } },
@@ -115,9 +82,71 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: 'Whatever\'s on my phone when I\'m watching', value: 'whatever', scores: { discipline: 2, emotion: 5 } },
     ],
   },
+  // 5. Bet sizing (getting more honest)
+  {
+    id: 'q5',
+    question: 'Be honest — do your bet sizes stay consistent?',
+    style: 'default',
+    options: [
+      { label: 'Yes — every bet is basically the same size', value: 'flat', scores: { variance: 1, discipline: 9, emotion: 2 } },
+      { label: 'Mostly, with occasional bigger plays', value: 'mostly', scores: { variance: 4, discipline: 6, emotion: 4 } },
+      { label: 'They swing a lot based on how I\'m feeling', value: 'swing', scores: { variance: 8, discipline: 2, emotion: 8 } },
+      { label: 'I go big when I\'m confident, small when I\'m not', value: 'confidence', scores: { variance: 6, discipline: 4, emotion: 6 } },
+    ],
+  },
+  // 6. Tracking habits (reveals discipline)
+  {
+    id: 'q11',
+    question: 'Do you track your bets?',
+    style: 'default',
+    options: [
+      { label: 'Every single one in a spreadsheet or app', value: 'every', scores: { discipline: 10, selectivity: 6 } },
+      { label: 'Most of them — I try to keep records', value: 'most', scores: { discipline: 7 } },
+      { label: 'I check my sportsbook balance to see how I\'m doing', value: 'balance', scores: { discipline: 3, emotion: 4 } },
+      { label: 'I check my balance and whatever it says, I don\'t want to talk about it', value: 'no', scores: { discipline: 1, emotion: 5 } },
+    ],
+  },
+  // 7. Losing streak response (behavioral)
+  {
+    id: 'q1',
+    question: 'You just lost 3 bets in a row. What do you do?',
+    style: 'default',
+    options: [
+      { label: 'Take a break and come back tomorrow', value: 'break', scores: { discipline: 9, chase_tendency: 1, emotion: 2 } },
+      { label: 'Stick to my plan — the next bet is independent', value: 'plan', scores: { discipline: 7, chase_tendency: 2, emotion: 3 } },
+      { label: 'Bet bigger on the next one to make it back', value: 'bigger', scores: { discipline: 1, chase_tendency: 9, emotion: 8, variance: 8 } },
+      { label: 'Throw a parlay together to get even fast', value: 'parlay', scores: { discipline: 2, chase_tendency: 8, emotion: 7, parlay_lean: 9 } },
+    ],
+  },
+  // 8. Big parlay win (tests greed/discipline)
+  {
+    id: 'q7',
+    question: 'You hit a big parlay for +800. What\'s your next move?',
+    style: 'default',
+    options: [
+      { label: 'Withdraw the winnings and reset', value: 'withdraw', scores: { discipline: 9, emotion: 2 } },
+      { label: 'Keep my normal routine — the win doesn\'t change anything', value: 'normal', scores: { discipline: 8, emotion: 3 } },
+      { label: 'Ride the hot streak — bet bigger for a few days', value: 'ride', scores: { discipline: 2, emotion: 7, variance: 7 } },
+      { label: 'Roll it into an even bigger parlay', value: 'roll', scores: { discipline: 1, emotion: 8, parlay_lean: 9, variance: 9 } },
+    ],
+  },
+  // 9. Late night scenario (tests impulse)
+  {
+    id: 'q6',
+    question: 'It\'s 11:30pm. You\'re in bed scrolling your sportsbook. There\'s a Turkish basketball game and a random Liga MX match.',
+    style: 'scenario',
+    options: [
+      { label: 'Phone goes on the nightstand. I don\'t bet sports I don\'t watch.', value: 'no', scores: { discipline: 9, selectivity: 9, emotion: 1 } },
+      { label: 'I\'ll peek at the lines... just to look', value: 'maybe', scores: { discipline: 4, emotion: 5, volume: 5 } },
+      { label: 'If I\'ve had a bad day I might need some action to fall asleep', value: 'action', scores: { discipline: 1, emotion: 9, chase_tendency: 7 } },
+      { label: 'I\'m already in. Live bet the over. Let\'s ride.', value: 'yes', scores: { discipline: 2, emotion: 7, volume: 8 } },
+    ],
+  },
+  // 10. 4 weeks losing (emotional resilience)
   {
     id: 'q9',
     question: 'You\'ve lost money 4 weeks in a row. How do you feel?',
+    style: 'default',
     options: [
       { label: 'I review my bets to find what went wrong', value: 'review', scores: { discipline: 9, emotion: 3, chase_tendency: 2 } },
       { label: 'Frustrated but I stick to the process', value: 'frustrated', scores: { discipline: 6, emotion: 5, chase_tendency: 4 } },
@@ -125,37 +154,107 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: 'Time to change everything up', value: 'change', scores: { discipline: 2, emotion: 8, chase_tendency: 6, variance: 7 } },
     ],
   },
+  // 11. Friend's bet slip (fun scenario with visual)
+  {
+    id: 'q15',
+    question: 'Your friend sends you this bet slip. What do you do?',
+    style: 'scenario',
+    options: [
+      { label: 'I do my own research before deciding anything', value: 'research', scores: { discipline: 9, selectivity: 8, emotion: 2 } },
+      { label: 'The line looks decent — I\'m tailing', value: 'tail', scores: { discipline: 5, emotion: 5 } },
+      { label: 'I\'m in, AND I\'m adding 2 more legs to make it spicier', value: 'add_legs', scores: { discipline: 1, emotion: 7, parlay_lean: 9 } },
+      { label: 'I fade it. My friend is always wrong.', value: 'fade', scores: { discipline: 6, emotion: 3, selectivity: 6 } },
+    ],
+  },
+  // 12. Why do you bet (deepest question)
   {
     id: 'q10',
-    question: 'What\'s your primary reason for betting?',
+    question: 'Why do you actually bet?',
+    subtext: 'Not what you tell people. What\'s the real reason.',
+    style: 'bold',
     options: [
-      { label: 'I genuinely think I can beat the market long-term', value: 'edge', scores: { discipline: 7, selectivity: 7 } },
-      { label: 'It makes watching games way more fun', value: 'fun', scores: { discipline: 4, emotion: 5, volume: 5 } },
-      { label: 'The rush of winning — there\'s nothing like it', value: 'rush', scores: { discipline: 2, emotion: 9 } },
-      { label: 'Mix of everything — entertainment plus a chance to make money', value: 'mix', scores: { discipline: 5, emotion: 5 } },
+      { label: 'I genuinely believe I have an edge and can beat the market', value: 'edge', scores: { discipline: 7, selectivity: 7 } },
+      { label: 'It makes watching games 10x better', value: 'fun', scores: { discipline: 4, emotion: 5, volume: 5 } },
+      { label: 'The rush when you hit. Nothing else compares.', value: 'rush', scores: { discipline: 2, emotion: 9 } },
+      { label: 'Honestly? I don\'t know anymore. It\'s just what I do.', value: 'habit', scores: { discipline: 1, emotion: 8, chase_tendency: 5 } },
     ],
   },
+  // 13. Loss impact slider (most vulnerable)
   {
-    id: 'q11',
-    question: 'Do you track your bets?',
+    id: 'q14',
+    question: 'On a scale of 1-10, how much does a loss ruin the rest of your day?',
+    subtext: '1 = I forget about it immediately. 10 = It affects everything.',
+    style: 'slider',
     options: [
-      { label: 'Every single one in a spreadsheet or app', value: 'every', scores: { discipline: 10, selectivity: 6 } },
-      { label: 'Most of them — I try to keep records', value: 'most', scores: { discipline: 7 } },
-      { label: 'I check my sportsbook balance to see how I\'m doing', value: 'balance', scores: { discipline: 3, emotion: 4 } },
-      { label: 'Not really — I bet for fun, not accounting', value: 'no', scores: { discipline: 1, emotion: 5 } },
-    ],
-  },
-  {
-    id: 'q12',
-    question: 'Your friend tells you about a "lock" — a bet they\'re sure about. What do you do?',
-    options: [
-      { label: 'I do my own research before deciding', value: 'research', scores: { discipline: 9, selectivity: 8, emotion: 2 } },
-      { label: 'I\'ll tail it if the line looks right', value: 'tail_value', scores: { discipline: 6, emotion: 4 } },
-      { label: 'I\'m in — my friend knows what they\'re talking about', value: 'tail', scores: { discipline: 3, emotion: 6 } },
-      { label: 'I bet it AND add it to a parlay', value: 'parlay', scores: { discipline: 1, emotion: 7, parlay_lean: 8 } },
+      { label: '1-2', value: 'low', scores: { emotion: 1, discipline: 8, chase_tendency: 1 } },
+      { label: '3-4', value: 'mild', scores: { emotion: 3, discipline: 6, chase_tendency: 3 } },
+      { label: '5-6', value: 'moderate', scores: { emotion: 5, discipline: 4, chase_tendency: 5 } },
+      { label: '7-8', value: 'high', scores: { emotion: 7, discipline: 2, chase_tendency: 7 } },
+      { label: '9-10', value: 'extreme', scores: { emotion: 9, discipline: 1, chase_tendency: 9 } },
     ],
   },
 ];
+
+const SLIDER_INTERPRETATIONS: Record<string, string> = {
+  'low': "It's just a bet. Life goes on.",
+  'mild': "It stings a little, but I move on pretty quick.",
+  'moderate': "It bothers me. I'll probably think about it for a while.",
+  'high': "It genuinely affects my mood. I might chase it.",
+  'extreme': "A bad loss can ruin my whole day. Sometimes my week.",
+};
+
+export function getSliderInterpretation(value: string): string {
+  return SLIDER_INTERPRETATIONS[value] ?? '';
+}
+
+// ── Roast Generator ──
+
+export function generateQuizRoasts(answers: Record<string, string>): { emoji: string; text: string }[] {
+  const roasts: { emoji: string; text: string; priority: number }[] = [];
+
+  const q1 = answers['q1'];
+  if (q1 === 'bigger' || q1 === 'parlay') {
+    roasts.push({ emoji: '💀', text: 'Admitted to chasing losses with bigger bets. We respect the honesty.', priority: 9 });
+  }
+
+  const q2 = answers['q2'];
+  if (q2 === 'alot' || q2 === 'everything') {
+    roasts.push({ emoji: '🎰', text: 'Shows people old parlay wins to justify the habit. Classic.', priority: 8 });
+  }
+
+  const q6 = answers['q6'];
+  if (q6 === 'action' || q6 === 'yes') {
+    roasts.push({ emoji: '🌙', text: 'Bets Turkish basketball at midnight. For the culture.', priority: 7 });
+  }
+
+  const q10 = answers['q10'];
+  if (q10 === 'rush' || q10 === 'habit') {
+    roasts.push({ emoji: '⚡', text: "Doesn't even know why they bet anymore. Just vibes.", priority: 6 });
+  }
+
+  const q11 = answers['q11'];
+  if (q11 === 'balance' || q11 === 'no') {
+    roasts.push({ emoji: '📊', text: 'Checks sportsbook balance instead of tracking. Living dangerously.', priority: 5 });
+  }
+
+  const q7 = answers['q7'];
+  if (q7 === 'roll') {
+    roasts.push({ emoji: '🎢', text: 'Hits +800 and immediately rolls it into another parlay. Legend.', priority: 7 });
+  }
+
+  const q14 = answers['q14'];
+  if (q14 === 'high' || q14 === 'extreme') {
+    roasts.push({ emoji: '😤', text: 'A bad loss ruins the whole day. Maybe the week.', priority: 4 });
+  }
+
+  const q15 = answers['q15'];
+  if (q15 === 'add_legs') {
+    roasts.push({ emoji: '🦵', text: "Friend sends a 3-leg parlay. Adds 2 more legs. Obviously.", priority: 8 });
+  }
+
+  roasts.sort((a, b) => b.priority - a.priority);
+  return roasts.slice(0, 3).map(({ emoji, text }) => ({ emoji, text }));
+}
 
 // ── Scoring Engine ──
 
