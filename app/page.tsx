@@ -22,8 +22,8 @@ export default function LandingPage() {
           </div>
           <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
             Find out exactly which habits are costing you money — and how much. BetAutopsy
-            detects loss chasing, parlay addiction, emotional sizing, late-night tilt, and
-            sport-specific leaks, then gives you a concrete plan to fix them with real dollar amounts.
+            detects loss chasing, parlay addiction, emotional sizing, sport-specific leaks,
+            and much more. Then gives you a concrete plan to fix them with real dollar amounts.
           </p>
           <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
             Powered by proprietary scoring models — your analysis gets more accurate every time
