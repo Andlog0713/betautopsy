@@ -266,6 +266,8 @@ export interface QuizResult {
     color: string;
   };
   emotion_estimate: number;
+  discipline_estimate: number;
+  grade: string;
   biases: {
     name: string;
     severity: 'low' | 'medium' | 'high';
@@ -403,9 +405,27 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   if (avg.discipline <= 3) watchOuts.push('Without a consistent process, you\'re gambling — not betting.');
   if (watchOuts.length === 0) watchOuts.push('Even disciplined bettors have blind spots. A data analysis would reveal yours.');
 
+  // Discipline estimate (0-100)
+  const disciplineEstimate = Math.round(Math.min(95, Math.max(5, avg.discipline * 10)));
+
+  // Grade from composite
+  const gradeScore = Math.round(
+    (100 - emotionEstimate) * 0.4 +
+    disciplineEstimate * 0.4 +
+    (10 - (avg.parlay_lean ?? 5)) * 2
+  );
+  let grade: string;
+  if (gradeScore >= 80) grade = 'A';
+  else if (gradeScore >= 65) grade = 'B';
+  else if (gradeScore >= 50) grade = 'C';
+  else if (gradeScore >= 35) grade = 'D';
+  else grade = 'F';
+
   return {
     archetype,
     emotion_estimate: emotionEstimate,
+    discipline_estimate: disciplineEstimate,
+    grade,
     biases: topBiases,
     strengths: strengths.slice(0, 2),
     watch_outs: watchOuts.slice(0, 2),
