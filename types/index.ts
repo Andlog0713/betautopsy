@@ -457,6 +457,33 @@ export interface CheckoutRequest {
   tier: 'pro' | 'sharp';
 }
 
+// ── Behavioral Journal ──
+
+export interface JournalEntry {
+  id: string;
+  user_id: string;
+  created_at: string;
+  confidence: number;
+  emotional_state: 'calm' | 'excited' | 'frustrated' | 'anxious' | 'bored' | 'confident';
+  research_time: 'none' | 'under_5' | '5_to_15' | '15_to_30' | 'over_30';
+  had_alcohol: boolean;
+  time_pressure: boolean;
+  chasing_losses: boolean;
+  notes: string | null;
+  linked_bet_ids: string[];
+  session_result_dollars: number | null;
+}
+
+export interface JournalEntryInput {
+  confidence: number;
+  emotional_state: JournalEntry['emotional_state'];
+  research_time: JournalEntry['research_time'];
+  had_alcohol: boolean;
+  time_pressure: boolean;
+  chasing_losses: boolean;
+  notes?: string;
+}
+
 export interface APIError {
   error: string;
   code?: string;

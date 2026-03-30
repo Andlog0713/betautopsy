@@ -10,6 +10,7 @@ const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
 });
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
+import JournalEntryModal from '@/components/JournalEntryModal';
 import type { ProgressSnapshot } from '@/types';
 
 interface DashboardStats {
@@ -49,6 +50,8 @@ export default function DashboardPage() {
   const [streakLastDate, setStreakLastDate] = useState<string | null>(null);
   const [streakFreezes, setStreakFreezes] = useState(1);
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
+  const [journalOpen, setJournalOpen] = useState(false);
+  const [journalCount, setJournalCount] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -97,6 +100,16 @@ export default function DashboardPage() {
       if (totalBets === 0 && !skipped) { router.push('/upload'); return; }
 
       setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });
+
+      // Journal count
+      try {
+        const journalRes = await fetch('/api/journal?count=true');
+        if (journalRes.ok) {
+          const jData = await journalRes.json();
+          setJournalCount(jData.count ?? 0);
+        }
+      } catch { /* silent */ }
+
       setLoading(false);
     }
     load();
@@ -483,14 +496,32 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Journal progress */}
+          {journalCount >= 10 && (
+            <div className="finding-card border-l-scalpel">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-fg-bright text-sm font-medium">{journalCount} journal entries logged</p>
+                  <p className="text-fg-dim text-xs font-mono mt-0.5">
+                    {journalCount >= 30
+                      ? 'Correlation analysis available on your next autopsy'
+                      : `${30 - journalCount} more entries until correlation insights unlock`
+                    }
+                  </p>
+                </div>
+                <button onClick={() => setJournalOpen(true)} className="font-mono text-[11px] text-scalpel hover:underline">Log entry →</button>
+              </div>
+            </div>
+          )}
+
           {/* Quick actions */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <Link href="/upload" className="case-card p-6 hover:border-white/[0.08] transition-colors group">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">📤</span>
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Upload More Bets</h3>
-                  <p className="text-fg-muted text-sm mt-1">Import your latest bet history from any tracker via CSV.</p>
+                  <p className="text-fg-muted text-sm mt-1">Import your latest bet history via CSV.</p>
                 </div>
               </div>
             </Link>
@@ -499,11 +530,28 @@ export default function DashboardPage() {
                 <span className="text-3xl">🔬</span>
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Run New Autopsy</h3>
-                  <p className="text-fg-muted text-sm mt-1">Get an AI-powered behavioral analysis of your betting patterns.</p>
+                  <p className="text-fg-muted text-sm mt-1">AI-powered behavioral analysis.</p>
                 </div>
               </div>
             </Link>
+            <button onClick={() => setJournalOpen(true)} className="case-card p-6 hover:border-white/[0.08] transition-colors group text-left">
+              <div className="flex items-start gap-4">
+                <span className="text-3xl">📝</span>
+                <div>
+                  <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">
+                    Log Check-in {journalCount > 0 && <span className="text-scalpel text-sm">({journalCount})</span>}
+                  </h3>
+                  <p className="text-fg-muted text-sm mt-1">Pre-bet mental state journal.</p>
+                </div>
+              </div>
+            </button>
           </div>
+
+          <JournalEntryModal
+            isOpen={journalOpen}
+            onClose={() => setJournalOpen(false)}
+            onSaved={() => setJournalCount(prev => prev + 1)}
+          />
         </>
       )}
     </div>
