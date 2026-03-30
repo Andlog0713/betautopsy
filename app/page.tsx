@@ -44,11 +44,16 @@ export default function LandingPage() {
               NO CREDIT CARD · WORKS WITH PIKKIT + ANY CSV
             </span>
           </div>
-          {/* EKG flatline accent */}
-          <svg className="w-full h-6 mt-10 opacity-10 animate-fade-in-d4" viewBox="0 0 800 24" preserveAspectRatio="none">
+          {/* EKG heartbeat line */}
+          <svg className="w-full h-12 mt-12 animate-fade-in-d4" viewBox="0 0 1000 40" preserveAspectRatio="none">
             <polyline
-              points="0,12 120,12 140,12 156,3 168,21 180,8 192,16 204,12 280,12 800,12"
-              fill="none" stroke="#00C9A7" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"
+              points="0,20 180,20 200,20 215,18 225,20 240,20 260,20 275,6 285,34 295,2 305,38 315,14 325,26 335,20 360,20 380,20 395,18 405,20 420,20 500,20 1000,20"
+              fill="none" stroke="#00C9A7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"
+            />
+            {/* Glow version */}
+            <polyline
+              points="0,20 180,20 200,20 215,18 225,20 240,20 260,20 275,6 285,34 295,2 305,38 315,14 325,26 335,20 360,20 380,20 395,18 405,20 420,20 500,20 1000,20"
+              fill="none" stroke="#00C9A7" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.08"
             />
           </svg>
         </div>
