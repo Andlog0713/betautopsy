@@ -10,8 +10,14 @@ const CHAPTERS = [
   { id: 'chapter-protocol', label: 'PROTOCOL', shortLabel: 'Plan' },
 ];
 
-export default function ChapterNav() {
+interface ChapterNavProps {
+  tier?: 'free' | 'pro' | 'sharp';
+  onSharpClick?: () => void;
+}
+
+export default function ChapterNav({ tier = 'free', onSharpClick }: ChapterNavProps) {
   const [activeChapter, setActiveChapter] = useState('chapter-summary');
+  const isSharp = tier === 'sharp';
 
   useEffect(() => {
     const sections = CHAPTERS.map(c => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];
@@ -65,6 +71,24 @@ export default function ChapterNav() {
             </button>
           );
         })}
+        {/* Sharp tab in nav */}
+        <button
+          onClick={() => {
+            if (isSharp && onSharpClick) {
+              onSharpClick();
+            } else if (!isSharp) {
+              window.location.href = '/pricing';
+            }
+          }}
+          className={`relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors ${
+            isSharp ? 'text-cyan-400/60 hover:text-cyan-400' : 'text-fg-dim/30 hover:text-fg-dim/50'
+          }`}
+        >
+          <span className="font-mono text-[9px] text-fg-dim/40">06</span>
+          {!isSharp && <span className="text-[8px]">🔒</span>}
+          <span className="hidden sm:inline">{isSharp ? 'SHARP' : 'SHARP'}</span>
+          <span className="sm:hidden">{isSharp ? 'Sharp' : '🔒 Sharp'}</span>
+        </button>
       </nav>
     </div>
   );

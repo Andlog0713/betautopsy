@@ -423,7 +423,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      <ChapterNav />
+      <ChapterNav tier={tier} onSharpClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
 
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
@@ -1784,21 +1784,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {!readOnly && (
-        <div className="border-t border-white/[0.04] pt-5 mt-5">
-          <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
-          <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
-        </div>
-      )}
-
-      <div className="case-card p-5 text-center space-y-3 mt-4">
-        <p className="text-fg-bright font-medium">What happens next?</p>
-        <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
-      </div>
-
-      </section>
-
-      {/* Sharp tab nudge */}
+      {/* Sharp tab nudge — above share */}
       {hasSharpContent && !readOnly && (
         isSharp ? (
           <button
@@ -1842,6 +1828,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </a>
         )
       )}
+
+      {!readOnly && (
+        <div className="border-t border-white/[0.04] pt-5 mt-5">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
+          <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+        </div>
+      )}
+
+      <div className="case-card p-5 text-center space-y-3 mt-4">
+        <p className="text-fg-bright font-medium">What happens next?</p>
+        <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
+      </div>
+
+      </section>
 
       {/* Feedback */}
       {!readOnly && <ReportFeedback reportId={reportId} />}
@@ -1960,6 +1960,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     );
                   })}
                 </div>
+              </div>
+            )}
+            {!readOnly && (
+              <div className="border-t border-white/[0.04] pt-5 mt-5">
+                <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
+                <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
               </div>
             )}
             {!readOnly && <ReportFeedback reportId={reportId} />}
