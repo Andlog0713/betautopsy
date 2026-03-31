@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
@@ -53,6 +53,7 @@ export interface CalculatedMetrics {
   dfs: DFSDetection;
   dfs_metrics: DFSMetrics | null;
   sessionDetection: SessionDetectionResult | null;
+  annotations: AnnotationSummary | null;
 }
 
 // ── DFS Detection + Metrics ──
@@ -740,6 +741,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     dfs: detectDFSSource(sorted),
     dfs_metrics: null, // set below
     sessionDetection: sorted.length > 0 ? detectAndGradeSessions(sorted) : null,
+    annotations: null, // set below after DFS detection
   };
 
   // DFS-specific metrics + archetype
@@ -777,6 +779,11 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     }
   } else {
     result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
+  }
+
+  // Bet-by-bet annotations
+  if (sorted.length > 0 && result.sessionDetection) {
+    result.annotations = annotateBets(sorted, result.sessionDetection.sessions, medianStake, result.dfs);
   }
 
   return result;
@@ -1614,6 +1621,303 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
   };
 }
 
+// ── Bet-by-Bet Annotation Engine ──
+
+export function annotateBets(
+  bets: Bet[],
+  sessions: DetectedSession[],
+  medianStake: number,
+  dfs: DFSDetection
+): AnnotationSummary {
+  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+
+  // Session lookup map: betIndex → session
+  const sessionByIndex = new Map<number, DetectedSession>();
+  for (const session of sessions) {
+    for (const idx of session.betIndices) {
+      sessionByIndex.set(idx, session);
+    }
+  }
+
+  const annotations: BetAnnotation[] = [];
+
+  let prevBet: Bet | null = null;
+  let prevResult: 'win' | 'loss' | 'push' | 'void' | 'pending' | null = null;
+  let runningStreak = 0; // positive = wins, negative = losses
+
+  // Track daily bet counts for weekend volume spike
+  const dailyBetCounts = new Map<string, number>();
+
+  for (let i = 0; i < sorted.length; i++) {
+    const bet = sorted[i];
+    const stake = Number(bet.stake);
+    const stakeVsMedian = medianStake > 0 ? stake / medianStake : 1;
+    const betDate = new Date(bet.placed_at);
+    const hour = betDate.getHours();
+    const dayOfWeek = betDate.getDay(); // 0=Sun, 6=Sat
+    const dateKey = betDate.toISOString().split('T')[0];
+
+    // Increment daily count
+    dailyBetCounts.set(dateKey, (dailyBetCounts.get(dateKey) ?? 0) + 1);
+    const dailyCount = dailyBetCounts.get(dateKey)!;
+
+    // Time since last bet
+    let timeSinceLastBet: number | null = null;
+    if (prevBet) {
+      timeSinceLastBet = (betDate.getTime() - new Date(prevBet.placed_at).getTime()) / 60000;
+    }
+
+    // Session info
+    const session = sessionByIndex.get(i) ?? null;
+    const isInHeatedSession = session?.isHeated ?? false;
+
+    // Previous stake and odds
+    const prevStake = prevBet ? Number(prevBet.stake) : 0;
+    const prevOdds = prevBet ? prevBet.odds : 0;
+    const prevProfit = prevBet ? Number(prevBet.profit) : 0;
+    const prevParlayLegs = prevBet?.parlay_legs ?? null;
+    const isParlay = bet.bet_type === 'parlay' || (bet.parlay_legs != null && bet.parlay_legs > 1);
+    const prevIsParlay = prevBet ? (prevBet.bet_type === 'parlay' || (prevBet.parlay_legs != null && prevBet.parlay_legs > 1)) : false;
+
+    // Build signals
+    const signals: BetSignal[] = [];
+
+    // ── Chasing signals ──
+    if (prevResult === 'loss' && prevStake > 0 && stake > prevStake * 1.3) {
+      const ratio = stake / prevStake;
+      const weight = Math.min(10, Math.round(6 + (ratio - 1.3) * 4));
+      signals.push({ name: 'post_loss_escalation', weight, description: `Stake increased ${ratio.toFixed(1)}x after a loss`, category: 'chasing' });
+    }
+
+    if (prevResult === 'loss' && prevBet && bet.sport === prevBet.sport && bet.bet_type === prevBet.bet_type) {
+      signals.push({ name: 'double_down_after_loss', weight: 4, description: `Same sport+type (${bet.sport} ${bet.bet_type}) right after a loss`, category: 'chasing' });
+    }
+
+    if (prevResult === 'loss' && bet.odds > 200 && prevOdds >= -200 && prevOdds <= 150) {
+      signals.push({ name: 'odds_shift_to_longshot', weight: 5, description: `Shifted to longshot odds (+${bet.odds}) after losing at shorter odds`, category: 'chasing' });
+    }
+
+    if (!dfs.isDFS && prevResult === 'loss' && isParlay && !prevIsParlay) {
+      signals.push({ name: 'parlay_after_straight_loss', weight: 5, description: 'Jumped to a parlay after a straight bet loss', category: 'chasing' });
+    }
+
+    if (runningStreak <= -3) {
+      signals.push({ name: 'loss_streak_continuation', weight: 3, description: `Betting during a ${Math.abs(runningStreak)}-loss streak`, category: 'chasing' });
+    }
+
+    if (dfs.isDFS && prevResult === 'loss' && bet.parlay_legs != null && prevParlayLegs != null && bet.parlay_legs > prevParlayLegs) {
+      signals.push({ name: 'dfs_pick_escalation', weight: 5, description: `Increased picks from ${prevParlayLegs} to ${bet.parlay_legs} after a loss`, category: 'chasing' });
+    }
+
+    // ── Emotional signals ──
+    if (stakeVsMedian > 2.0) {
+      const weight = Math.min(8, Math.round(4 + (stakeVsMedian - 2) * 2));
+      signals.push({ name: 'oversized_bet', weight, description: `Stake is ${stakeVsMedian.toFixed(1)}x the median`, category: 'emotional' });
+    }
+
+    if (hour >= 23 || hour <= 4) {
+      signals.push({ name: 'late_night', weight: 3, description: `Placed at ${hour <= 4 ? hour : hour - 12}${hour <= 4 ? 'am' : 'pm'}`, category: 'emotional' });
+    }
+
+    if (timeSinceLastBet !== null && timeSinceLastBet < 5) {
+      signals.push({ name: 'rapid_session_bet', weight: 4, description: `Only ${timeSinceLastBet.toFixed(1)} min since last bet`, category: 'emotional' });
+    }
+
+    if (isInHeatedSession) {
+      signals.push({ name: 'heated_session_context', weight: 3, description: 'Part of a heated session', category: 'emotional' });
+    }
+
+    if (prevResult === 'loss' && prevProfit < -(medianStake * 2) && timeSinceLastBet !== null && timeSinceLastBet < 30) {
+      signals.push({ name: 'tilt_after_big_loss', weight: 6, description: `Bet within ${timeSinceLastBet.toFixed(0)} min of a $${Math.abs(prevProfit).toFixed(0)} loss`, category: 'emotional' });
+    }
+
+    if ((dayOfWeek === 0 || dayOfWeek === 6) && dailyCount >= 4) {
+      signals.push({ name: 'weekend_volume_spike', weight: 2, description: `${dailyCount}th bet on a weekend day`, category: 'emotional' });
+    }
+
+    // ── Impulsive signals ──
+    if (timeSinceLastBet !== null && timeSinceLastBet < 2) {
+      signals.push({ name: 'instant_rebet', weight: 7, description: `Rebet in under ${timeSinceLastBet.toFixed(1)} minutes`, category: 'impulsive' });
+    }
+
+    if (stakeVsMedian < 0.25 && bet.odds > 300) {
+      signals.push({ name: 'undersized_throwaway', weight: 3, description: `Tiny stake (${stakeVsMedian.toFixed(2)}x median) on a longshot (+${bet.odds})`, category: 'impulsive' });
+    }
+
+    // ── Disciplined signals (negative weight) ──
+    if (stakeVsMedian >= 0.7 && stakeVsMedian <= 1.3) {
+      signals.push({ name: 'flat_stake', weight: -4, description: 'Stake is near the median', category: 'disciplined' });
+    }
+
+    if (prevResult === 'loss' && stakeVsMedian >= 0.5 && stakeVsMedian <= 1.2) {
+      signals.push({ name: 'consistent_after_loss', weight: -5, description: 'Maintained discipline after a loss', category: 'disciplined' });
+    }
+
+    if (timeSinceLastBet !== null && timeSinceLastBet > 60) {
+      signals.push({ name: 'reasonable_pace', weight: -2, description: `${timeSinceLastBet.toFixed(0)} min since last bet`, category: 'disciplined' });
+    }
+
+    if (session && (session.grade === 'A' || session.grade === 'B')) {
+      signals.push({ name: 'controlled_in_good_session', weight: -2, description: `In a grade-${session.grade} session`, category: 'disciplined' });
+    }
+
+    if (runningStreak >= 3 && stakeVsMedian <= 1.3) {
+      signals.push({ name: 'win_streak_no_escalation', weight: -4, description: `On a ${runningStreak}-win streak without increasing stakes`, category: 'disciplined' });
+    }
+
+    // ── Classification ──
+    const totalWeight = signals.reduce((sum, s) => sum + s.weight, 0);
+    const absWeight = Math.abs(totalWeight);
+
+    let classification: BetClassification;
+    if (totalWeight <= -6) {
+      classification = 'disciplined';
+    } else if (totalWeight >= 4) {
+      // Count positive signal weights by category
+      const catWeights: Record<string, number> = {};
+      for (const s of signals) {
+        if (s.weight > 0) {
+          catWeights[s.category] = (catWeights[s.category] ?? 0) + s.weight;
+        }
+      }
+      const topCat = Object.entries(catWeights).sort((a, b) => b[1] - a[1])[0];
+      if (topCat) {
+        classification = topCat[0] as BetClassification;
+      } else {
+        classification = 'neutral';
+      }
+    } else {
+      classification = 'neutral';
+    }
+
+    // Confidence
+    let confidence: number;
+    if (absWeight >= 15) confidence = 95;
+    else if (absWeight >= 10) confidence = 80 + Math.round((absWeight - 10) * 3);
+    else if (absWeight >= 6) confidence = 60 + Math.round((absWeight - 6) * 5);
+    else if (absWeight >= 3) confidence = 40 + Math.round((absWeight - 3) * 6.67);
+    else confidence = 20 + Math.round(absWeight * 6.67);
+    confidence = Math.min(95, Math.max(15, confidence));
+
+    // Primary reason: highest absolute weight signal
+    const sortedSignals = [...signals].sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight));
+    const primaryReason = sortedSignals.length > 0 ? sortedSignals[0].description : 'No significant signals';
+
+    annotations.push({
+      betIndex: i,
+      betId: bet.id,
+      classification,
+      confidence,
+      signals,
+      primaryReason,
+      sessionId: session?.id ?? null,
+      sessionGrade: session?.grade ?? null,
+      isInHeatedSession,
+      stakeVsMedian: Math.round(stakeVsMedian * 100) / 100,
+      timeSinceLastBet: timeSinceLastBet !== null ? Math.round(timeSinceLastBet * 10) / 10 : null,
+      currentStreak: runningStreak,
+    });
+
+    // Update streak
+    if (bet.result === 'win') {
+      runningStreak = runningStreak > 0 ? runningStreak + 1 : 1;
+    } else if (bet.result === 'loss') {
+      runningStreak = runningStreak < 0 ? runningStreak - 1 : -1;
+    }
+    // push/void/pending don't change streak
+
+    prevBet = bet;
+    prevResult = bet.result;
+  }
+
+  // ── Aggregates ──
+  const classificationTypes: BetClassification[] = ['disciplined', 'emotional', 'chasing', 'impulsive', 'neutral'];
+  const distribution = {} as AnnotationSummary['distribution'];
+  for (const cls of classificationTypes) {
+    const matching = annotations.filter(a => a.classification === cls);
+    const totalStaked = matching.reduce((s, a) => s + Number(sorted[a.betIndex].stake), 0);
+    const totalProfit = matching.reduce((s, a) => s + Number(sorted[a.betIndex].profit), 0);
+    distribution[cls] = {
+      count: matching.length,
+      percent: annotations.length > 0 ? Math.round((matching.length / annotations.length) * 1000) / 10 : 0,
+      totalStaked: Math.round(totalStaked * 100) / 100,
+      totalProfit: Math.round(totalProfit * 100) / 100,
+      roi: totalStaked > 0 ? Math.round((totalProfit / totalStaked) * 10000) / 100 : 0,
+    };
+  }
+
+  // Emotional cost: how much worse emotional/chasing/impulsive bets perform vs disciplined baseline
+  const disciplinedROI = distribution.disciplined.roi;
+  const emotionalClasses: BetClassification[] = ['emotional', 'chasing', 'impulsive'];
+  const emotionalStaked = emotionalClasses.reduce((s, c) => s + distribution[c].totalStaked, 0);
+  const emotionalROI = emotionalStaked > 0
+    ? emotionalClasses.reduce((s, c) => s + distribution[c].totalProfit, 0) / emotionalStaked * 100
+    : 0;
+  const emotionalCost = Math.round(emotionalStaked * (disciplinedROI - emotionalROI) / 100 * 100) / 100;
+
+  // Worst annotated bet: highest confidence emotional/chasing/impulsive
+  const badAnnotations = annotations.filter(a => emotionalClasses.includes(a.classification));
+  const worstAnnotatedBet = badAnnotations.length > 0
+    ? badAnnotations.reduce((worst, a) => a.confidence > worst.confidence ? a : worst, badAnnotations[0])
+    : null;
+
+  // Best annotated bet: highest confidence disciplined that won
+  const goodAnnotations = annotations.filter(a => a.classification === 'disciplined' && sorted[a.betIndex].result === 'win');
+  const bestAnnotatedBet = goodAnnotations.length > 0
+    ? goodAnnotations.reduce((best, a) => a.confidence > best.confidence ? a : best, goodAnnotations[0])
+    : null;
+
+  // Streak influence
+  const winStreakBets = annotations.filter(a => a.currentStreak >= 3);
+  const lossStreakBets = annotations.filter(a => a.currentStreak <= -3);
+  const neutralStreakBets = annotations.filter(a => a.currentStreak > -3 && a.currentStreak < 3);
+
+  const avgStakeAfterWinStreak3 = winStreakBets.length > 0
+    ? Math.round(winStreakBets.reduce((s, a) => s + Number(sorted[a.betIndex].stake), 0) / winStreakBets.length * 100) / 100
+    : 0;
+  const avgStakeAfterLossStreak3 = lossStreakBets.length > 0
+    ? Math.round(lossStreakBets.reduce((s, a) => s + Number(sorted[a.betIndex].stake), 0) / lossStreakBets.length * 100) / 100
+    : 0;
+  const avgStakeNeutral = neutralStreakBets.length > 0
+    ? Math.round(neutralStreakBets.reduce((s, a) => s + Number(sorted[a.betIndex].stake), 0) / neutralStreakBets.length * 100) / 100
+    : 0;
+
+  // Insight
+  const topClass = classificationTypes
+    .filter(c => c !== 'neutral')
+    .sort((a, b) => distribution[b].count - distribution[a].count)[0];
+  let insight: string;
+  const disciplinedPct = distribution.disciplined.percent;
+  const chasingPct = distribution.chasing.percent;
+  const emotionalPct = distribution.emotional.percent;
+
+  if (disciplinedPct >= 60) {
+    insight = `${disciplinedPct}% of your bets show disciplined patterns — solid self-control across most of your action.`;
+  } else if (chasingPct >= 30) {
+    insight = `${chasingPct}% of bets are classified as chasing, costing an estimated $${Math.abs(emotionalCost).toFixed(0)} in lost edge.`;
+  } else if (emotionalPct >= 25) {
+    insight = `${emotionalPct}% of bets carry emotional signals — late-night, oversized, or heated session bets are dragging your ROI.`;
+  } else if (topClass && distribution[topClass].count > 0) {
+    insight = `Most bets are neutral, but your ${topClass} bets (${distribution[topClass].percent}%) ${distribution[topClass].roi < 0 ? 'are costing you' : 'show promise'}.`;
+  } else {
+    insight = 'Bet patterns are mostly neutral with no dominant behavioral signal.';
+  }
+
+  return {
+    annotations,
+    distribution,
+    emotionalCost,
+    worstAnnotatedBet,
+    bestAnnotatedBet,
+    streakInfluence: {
+      avgStakeAfterWinStreak3,
+      avgStakeAfterLossStreak3,
+      avgStakeNeutral,
+    },
+    insight,
+  };
+}
+
 export function calculateMetricsOnly(
   bets: Bet[],
   bankroll?: number | null,
@@ -1664,6 +1968,7 @@ export function calculateMetricsOnly(
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: (() => { const f = detectSportSpecificPatterns(metrics, bets); return f.length > 0 ? f : undefined; })(),
     session_detection: metrics.sessionDetection ?? undefined,
+    bet_annotations: metrics.annotations ?? undefined,
     strategic_leaks: [],
     behavioral_patterns: [],
     recommendations: [],
@@ -1904,6 +2209,13 @@ Avg ROI by Grade: ${Object.entries(metrics.sessionDetection.avgGradedROI).map(([
 ${metrics.sessionDetection.bestSession ? `Best Session: ${metrics.sessionDetection.bestSession.id} on ${metrics.sessionDetection.bestSession.date} — ${metrics.sessionDetection.bestSession.bets} bets, $${metrics.sessionDetection.bestSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.bestSession.grade}` : ''}
 ${metrics.sessionDetection.worstSession ? `Worst Session: ${metrics.sessionDetection.worstSession.id} on ${metrics.sessionDetection.worstSession.date} — ${metrics.sessionDetection.worstSession.bets} bets, $${metrics.sessionDetection.worstSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.worstSession.grade}${metrics.sessionDetection.worstSession.isHeated ? ' [HEATED]' : ''}` : ''}
 Insight: ${metrics.sessionDetection.insight}
+===` : ''}${metrics.annotations ? `
+
+=== BET ANNOTATIONS (${metrics.annotations.annotations.length} bets annotated) ===
+Distribution: ${(['disciplined', 'emotional', 'chasing', 'impulsive', 'neutral'] as const).map(c => `${c}: ${metrics.annotations!.distribution[c].count} (${metrics.annotations!.distribution[c].percent}%), ROI: ${metrics.annotations!.distribution[c].roi.toFixed(1)}%`).join(' | ')}
+Emotional Cost: $${metrics.annotations.emotionalCost.toFixed(0)} (estimated profit lost to emotional/chasing/impulsive bets)
+Streak Influence: After 3+ win streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterWinStreak3.toFixed(0)} | After 3+ loss streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterLossStreak3.toFixed(0)} | Neutral avg stake $${metrics.annotations.streakInfluence.avgStakeNeutral.toFixed(0)}
+Insight: ${metrics.annotations.insight}
 ===` : ''}`;
 
   const betTable = formatBetTable(bets);
@@ -2021,6 +2333,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: sportFindings.length > 0 ? sportFindings : undefined,
     session_detection: metrics.sessionDetection ?? undefined,
+    bet_annotations: metrics.annotations ?? undefined,
   };
 
   const markdown = generateMarkdownReport(analysis);
