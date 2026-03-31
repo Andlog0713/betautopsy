@@ -148,6 +148,10 @@
   .prose-betautopsy blockquote { @apply border-l-2 border-scalpel/30 pl-4 my-6 text-fg-muted italic; }
   .prose-betautopsy hr { @apply border-white/[0.04] my-8; }
 
+  /* ── Scrollbar hide utility ── */
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
   /* ── Quiz animations ── */
   .quiz-enter { animation: quizSlideIn 300ms ease-out; }
   .quiz-exit { animation: quizSlideOut 200ms ease-in forwards; }
