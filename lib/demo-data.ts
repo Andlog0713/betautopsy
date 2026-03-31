@@ -319,4 +319,29 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     worstSession: { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x', '4 chase bets', '5-bet losing streak'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses'], betIndices: [] },
     insight: 'Your A-graded sessions average +12.4% ROI. Your F sessions average -38.7%. The math is clear — discipline pays.',
   },
+  bet_annotations: {
+    annotations: [
+      { betIndex: 0, betId: 'demo-1', classification: 'disciplined', confidence: 82, signals: [{ name: 'flat_stake', weight: -4, description: 'Stake within normal range (0.9x median)', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'Placed 2h after last bet — deliberate timing', category: 'disciplined' }], primaryReason: 'Stake within normal range (0.9x median)', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 0.9, timeSinceLastBet: null, currentStreak: 0 },
+      { betIndex: 24, betId: 'demo-24', classification: 'chasing', confidence: 88, signals: [{ name: 'post_loss_escalation', weight: 8, description: 'Stake increased 1.8x after previous loss', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 1.8x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 1.6, timeSinceLastBet: 12, currentStreak: -2 },
+      { betIndex: 25, betId: 'demo-25', classification: 'chasing', confidence: 91, signals: [{ name: 'post_loss_escalation', weight: 9, description: 'Stake increased 2.1x after previous loss', category: 'chasing' }, { name: 'rapid_session_bet', weight: 4, description: 'Only 4 minutes after last bet — rapid fire', category: 'emotional' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 2.1x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.4, timeSinceLastBet: 4, currentStreak: -3 },
+      { betIndex: 27, betId: 'demo-27', classification: 'chasing', confidence: 95, signals: [{ name: 'post_loss_escalation', weight: 10, description: 'Stake increased 3.3x after previous loss', category: 'chasing' }, { name: 'oversized_bet', weight: 6, description: 'Stake is 3.0x your median — outsized position', category: 'emotional' }, { name: 'loss_streak_continuation', weight: 3, description: 'Betting through a 5-loss streak', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 3.3x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.0, timeSinceLastBet: 8, currentStreak: -5 },
+      { betIndex: 150, betId: 'demo-150', classification: 'disciplined', confidence: 85, signals: [{ name: 'flat_stake', weight: -4, description: 'Stake within normal range (1.0x median)', category: 'disciplined' }, { name: 'consistent_after_loss', weight: -5, description: 'Maintained discipline after previous loss', category: 'disciplined' }, { name: 'controlled_in_good_session', weight: -2, description: 'Part of a well-managed session (Grade A)', category: 'disciplined' }], primaryReason: 'Maintained discipline after previous loss', sessionId: 'SESSION-022', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 1.0, timeSinceLastBet: 45, currentStreak: -1 },
+    ],
+    distribution: {
+      disciplined: { count: 126, percent: 45, totalStaked: 9450, totalProfit: 680, roi: 7.2 },
+      neutral: { count: 56, percent: 20, totalStaked: 4200, totalProfit: -120, roi: -2.9 },
+      emotional: { count: 50, percent: 18, totalStaked: 5100, totalProfit: -890, roi: -17.5 },
+      chasing: { count: 34, percent: 12, totalStaked: 4800, totalProfit: -1240, roi: -25.8 },
+      impulsive: { count: 14, percent: 5, totalStaked: 850, totalProfit: -310, roi: -36.5 },
+    },
+    emotionalCost: 1420,
+    worstAnnotatedBet: { betIndex: 27, betId: 'demo-27', classification: 'chasing', confidence: 95, signals: [{ name: 'post_loss_escalation', weight: 10, description: 'Stake increased 3.3x after previous loss', category: 'chasing' }], primaryReason: 'Stake increased 3.3x after previous loss + 3.0x median outsized position', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.0, timeSinceLastBet: 8, currentStreak: -5 },
+    bestAnnotatedBet: { betIndex: 150, betId: 'demo-150', classification: 'disciplined', confidence: 85, signals: [{ name: 'consistent_after_loss', weight: -5, description: 'Maintained discipline after previous loss', category: 'disciplined' }], primaryReason: 'Maintained discipline after previous loss', sessionId: 'SESSION-022', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 1.0, timeSinceLastBet: 45, currentStreak: -1 },
+    streakInfluence: {
+      avgStakeAfterWinStreak3: 95,
+      avgStakeAfterLossStreak3: 145,
+      avgStakeNeutral: 82,
+    },
+    insight: '35% of your bets show emotional or chasing behavior — costing you an estimated $1,420. Your disciplined bets return +7.2% ROI vs -22.4% on everything else.',
+  },
 };

@@ -1513,6 +1513,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <SessionAnalysisSection sessionData={analysis.session_detection} />
       )}
 
+      {/* ── Bet-by-Bet Annotations ── */}
+      {analysis.bet_annotations && analysis.bet_annotations.annotations.length > 0 && (
+        <BetAnnotationsSection data={analysis.bet_annotations} />
+      )}
+
       {/* Action Plan */}
       {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
@@ -1846,6 +1851,166 @@ function SummaryItem({ label, value, color, small, hint }: { label: string; valu
     <div>
       <p className="text-fg-muted text-xs mb-0.5">{label}{hint && <span className="text-fg-dim normal-case"> ({hint})</span>}</p>
       <p className={`font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-fg-bright'}`}>{value}</p>
+    </div>
+  );
+}
+
+// ── Bet Annotations Section ──
+
+const CLASSIFICATION_COLORS: Record<string, string> = {
+  disciplined: 'bg-win/20 text-win',
+  neutral: 'bg-fg-dim/20 text-fg-muted',
+  emotional: 'bg-caution/20 text-caution',
+  chasing: 'bg-orange-400/20 text-orange-400',
+  impulsive: 'bg-loss/20 text-loss',
+};
+
+const CLASSIFICATION_BAR_COLORS: Record<string, string> = {
+  disciplined: '#3FB950',
+  neutral: '#515968',
+  emotional: '#D29922',
+  chasing: '#f97316',
+  impulsive: '#F85149',
+};
+
+function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSummary }) {
+  const [showLog, setShowLog] = useState(false);
+  const [expandedBet, setExpandedBet] = useState<number | null>(null);
+
+  const totalBets = Object.values(data.distribution).reduce((s, d) => s + d.count, 0);
+  const disciplinedROI = data.distribution.disciplined.roi;
+  const emotionalBets = data.distribution.emotional.count + data.distribution.chasing.count + data.distribution.impulsive.count;
+  const emotionalPct = totalBets > 0 ? Math.round((emotionalBets / totalBets) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="case-header mb-1">BET-BY-BET ANALYSIS</div>
+        <p className="text-fg-dim text-xs">Every bet, classified by behavioral intent</p>
+      </div>
+
+      {/* Distribution bar */}
+      <div>
+        <div className="flex h-6 rounded-sm overflow-hidden border border-white/[0.04]">
+          {(['disciplined', 'neutral', 'emotional', 'chasing', 'impulsive'] as const).filter(c => data.distribution[c].count > 0).map(c => (
+            <div
+              key={c}
+              style={{ width: `${data.distribution[c].percent}%`, backgroundColor: CLASSIFICATION_BAR_COLORS[c] }}
+              className="flex items-center justify-center"
+              title={`${c}: ${data.distribution[c].count} bets (${data.distribution[c].percent}%)`}
+            >
+              {data.distribution[c].percent >= 12 && <span className="font-mono text-[9px] text-base font-bold capitalize">{c.slice(0, 4)}</span>}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-2 flex-wrap">
+          {(['disciplined', 'neutral', 'emotional', 'chasing', 'impulsive'] as const).filter(c => data.distribution[c].count > 0).map(c => (
+            <span key={c} className="font-mono text-[10px] text-fg-dim">
+              <span className="inline-block w-2 h-2 rounded-sm mr-1" style={{ backgroundColor: CLASSIFICATION_BAR_COLORS[c] }} />
+              {data.distribution[c].count} {c}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Emotional cost callout */}
+      {data.emotionalCost > 0 && (
+        <div className="finding-card border-l-scalpel !p-4">
+          <p className="text-fg-muted text-sm">
+            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${data.emotionalCost.toLocaleString()}</span>.
+            Disciplined bets returned <span className="font-mono text-win">{disciplinedROI.toFixed(1)}%</span> ROI.
+          </p>
+        </div>
+      )}
+
+      {/* ROI comparison strip */}
+      <div className="vitals-strip grid-cols-2 md:grid-cols-5">
+        {(['disciplined', 'neutral', 'emotional', 'chasing', 'impulsive'] as const).filter(c => data.distribution[c].count > 0).map(c => {
+          const d = data.distribution[c];
+          return (
+            <div key={c} className="vitals-cell text-center">
+              <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold mb-1 inline-block ${CLASSIFICATION_COLORS[c]}`}>{c}</span>
+              <div className="font-mono text-sm text-fg-bright">{d.count} bets</div>
+              <div className={`font-mono text-xs font-medium ${d.roi >= 0 ? 'text-win' : 'text-loss'}`}>{d.roi >= 0 ? '+' : ''}{d.roi.toFixed(1)}% ROI</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Insight */}
+      {data.insight && (
+        <div className="finding-card border-l-caution !p-3">
+          <p className="text-fg-muted text-sm">{data.insight}</p>
+        </div>
+      )}
+
+      {/* Worst / Best spotlight */}
+      <div className="grid md:grid-cols-2 gap-3">
+        {data.worstAnnotatedBet && (
+          <div className="case-card border-loss/20 p-4">
+            <span className="font-mono text-[9px] text-loss tracking-widest block mb-2">WORST BEHAVIORAL BET</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${CLASSIFICATION_COLORS[data.worstAnnotatedBet.classification]}`}>{data.worstAnnotatedBet.classification}</span>
+              <span className="font-mono text-[10px] text-fg-dim">{data.worstAnnotatedBet.confidence}% conf.</span>
+            </div>
+            <p className="text-fg-muted text-sm mb-1">{data.worstAnnotatedBet.primaryReason}</p>
+            {data.worstAnnotatedBet.sessionId && (
+              <p className="font-mono text-[10px] text-fg-dim">Part of {data.worstAnnotatedBet.sessionId} (Grade {data.worstAnnotatedBet.sessionGrade}{data.worstAnnotatedBet.isInHeatedSession ? ', heated 🔥' : ''})</p>
+            )}
+          </div>
+        )}
+        {data.bestAnnotatedBet && (
+          <div className="case-card border-win/20 p-4">
+            <span className="font-mono text-[9px] text-win tracking-widest block mb-2">MOST DISCIPLINED BET</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${CLASSIFICATION_COLORS[data.bestAnnotatedBet.classification]}`}>{data.bestAnnotatedBet.classification}</span>
+              <span className="font-mono text-[10px] text-fg-dim">{data.bestAnnotatedBet.confidence}% conf.</span>
+            </div>
+            <p className="text-fg-muted text-sm mb-1">{data.bestAnnotatedBet.primaryReason}</p>
+            {data.bestAnnotatedBet.sessionId && (
+              <p className="font-mono text-[10px] text-fg-dim">Part of {data.bestAnnotatedBet.sessionId} (Grade {data.bestAnnotatedBet.sessionGrade})</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Full bet log */}
+      {data.annotations.length > 5 && (
+        <div>
+          <button onClick={() => setShowLog(!showLog)} className="text-sm text-fg-muted hover:text-fg transition-colors font-mono">
+            {showLog ? 'Hide' : `View all ${data.annotations.length} annotated bets`} <span className="text-fg-dim text-xs">{showLog ? '▴' : '▾'}</span>
+          </button>
+          {showLog && (
+            <div className="mt-2 space-y-1 max-h-[500px] overflow-y-auto">
+              {data.annotations.map((ann, i) => (
+                <div key={ann.betId}>
+                  <button
+                    onClick={() => setExpandedBet(expandedBet === i ? null : i)}
+                    className="w-full bg-surface-raised rounded-sm p-2 flex items-center gap-2 text-xs text-left hover:bg-surface-elevated transition-colors"
+                  >
+                    <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${CLASSIFICATION_COLORS[ann.classification]}`}>{ann.classification.slice(0, 4)}</span>
+                    <span className="font-mono text-fg-dim w-8 shrink-0">{ann.confidence}%</span>
+                    <span className="text-fg-muted truncate flex-1">{ann.primaryReason}</span>
+                    {ann.isInHeatedSession && <span title="Heated session">🔥</span>}
+                    <span className="text-fg-dim">{ann.stakeVsMedian.toFixed(1)}x</span>
+                  </button>
+                  {expandedBet === i && (
+                    <div className="bg-base border border-white/[0.04] rounded-sm p-3 ml-4 mt-1 space-y-1">
+                      {ann.signals.map((sig, j) => (
+                        <div key={j} className="flex items-center gap-2 text-xs">
+                          <span className={`font-mono w-6 text-right shrink-0 ${sig.weight > 0 ? 'text-loss' : 'text-win'}`}>{sig.weight > 0 ? '+' : ''}{sig.weight}</span>
+                          <span className="text-fg-dim">{sig.description}</span>
+                        </div>
+                      ))}
+                      {ann.sessionId && <p className="text-fg-dim text-[10px] font-mono mt-1">{ann.sessionId} · Grade {ann.sessionGrade} · Streak: {ann.currentStreak > 0 ? `+${ann.currentStreak}W` : ann.currentStreak < 0 ? `${ann.currentStreak}L` : '0'}</p>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

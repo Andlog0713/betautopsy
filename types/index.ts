@@ -179,6 +179,7 @@ export interface AutopsyAnalysis {
   enhanced_tilt?: EnhancedTiltResult;
   sport_specific_findings?: SportSpecificFinding[];
   session_detection?: SessionDetectionResult;
+  bet_annotations?: AnnotationSummary;
 }
 
 export interface PersonalRule {
@@ -252,6 +253,46 @@ export interface SessionDetectionResult {
   avgGradedROI: Record<string, number>;
   bestSession: DetectedSession | null;
   worstSession: DetectedSession | null;
+  insight: string;
+}
+
+// ── Bet-by-Bet Annotations ──
+
+export type BetClassification = 'disciplined' | 'emotional' | 'chasing' | 'impulsive' | 'neutral';
+
+export interface BetSignal {
+  name: string;
+  weight: number;
+  description: string;
+  category: BetClassification;
+}
+
+export interface BetAnnotation {
+  betIndex: number;
+  betId: string;
+  classification: BetClassification;
+  confidence: number;
+  signals: BetSignal[];
+  primaryReason: string;
+  sessionId: string | null;
+  sessionGrade: string | null;
+  isInHeatedSession: boolean;
+  stakeVsMedian: number;
+  timeSinceLastBet: number | null;
+  currentStreak: number;
+}
+
+export interface AnnotationSummary {
+  annotations: BetAnnotation[];
+  distribution: Record<BetClassification, { count: number; percent: number; totalStaked: number; totalProfit: number; roi: number }>;
+  emotionalCost: number;
+  worstAnnotatedBet: BetAnnotation | null;
+  bestAnnotatedBet: BetAnnotation | null;
+  streakInfluence: {
+    avgStakeAfterWinStreak3: number;
+    avgStakeAfterLossStreak3: number;
+    avgStakeNeutral: number;
+  };
   insight: string;
 }
 
