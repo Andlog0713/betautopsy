@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
 // ── Deterministic Metrics Calculator ──
@@ -52,6 +52,7 @@ export interface CalculatedMetrics {
   odds: OddsAnalysis;
   dfs: DFSDetection;
   dfs_metrics: DFSMetrics | null;
+  sessionDetection: SessionDetectionResult | null;
 }
 
 // ── DFS Detection + Metrics ──
@@ -738,6 +739,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     odds: calculateOdds(sorted),
     dfs: detectDFSSource(sorted),
     dfs_metrics: null, // set below
+    sessionDetection: sorted.length > 0 ? detectAndGradeSessions(sorted) : null,
   };
 
   // DFS-specific metrics + archetype
@@ -1355,6 +1357,263 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
   return findings;
 }
 
+// ── Session Detection & Grading ──
+
+export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
+  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+
+  if (sorted.length === 0) {
+    return {
+      sessions: [],
+      totalSessions: 0,
+      avgSessionLength: 0,
+      avgSessionDuration: 0,
+      sessionGradeDistribution: [],
+      heatedSessionCount: 0,
+      heatedSessionPercent: 0,
+      avgGradedROI: {},
+      bestSession: null,
+      worstSession: null,
+      insight: 'No bets to analyze.',
+    };
+  }
+
+  // Split bets into sessions (gap > 3 hours)
+  const sessionGroups: { bets: Bet[]; indices: number[] }[] = [];
+  let currentBets: Bet[] = [sorted[0]];
+  let currentIndices: number[] = [0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prevTime = new Date(sorted[i - 1].placed_at).getTime();
+    const thisTime = new Date(sorted[i].placed_at).getTime();
+    if (thisTime - prevTime > 3 * 3600000) {
+      sessionGroups.push({ bets: currentBets, indices: currentIndices });
+      currentBets = [sorted[i]];
+      currentIndices = [i];
+    } else {
+      currentBets.push(sorted[i]);
+      currentIndices.push(i);
+    }
+  }
+  sessionGroups.push({ bets: currentBets, indices: currentIndices });
+
+  // Build DetectedSession for each group
+  const sessions: DetectedSession[] = sessionGroups.map((group, idx) => {
+    const sessionBets = group.bets;
+    const firstBet = sessionBets[0];
+    const lastBet = sessionBets[sessionBets.length - 1];
+    const startDate = new Date(firstBet.placed_at);
+    const endDate = new Date(lastBet.placed_at);
+
+    const durationMinutes = Math.max(0, (endDate.getTime() - startDate.getTime()) / 60000);
+
+    const wins = sessionBets.filter(b => b.result === 'win').length;
+    const losses = sessionBets.filter(b => b.result === 'loss').length;
+    const pushes = sessionBets.filter(b => b.result === 'push').length;
+
+    const stakes = sessionBets.map(b => Number(b.stake));
+    const staked = stakes.reduce((s, v) => s + v, 0);
+    const profit = sessionBets.reduce((s, b) => s + Number(b.profit), 0);
+    const roi = staked > 0 ? (profit / staked) * 100 : 0;
+    const avgStake = sessionBets.length > 0 ? staked / sessionBets.length : 0;
+    const startingStake = Number(firstBet.stake);
+    const endingStake = Number(lastBet.stake);
+    const stakeEscalation = startingStake > 0 ? endingStake / startingStake : 1;
+    const maxStake = Math.max(...stakes);
+    const minStake = Math.min(...stakes);
+
+    // Coefficient of variation of stakes
+    const stakeMean = avgStake;
+    const stakeVariance = stakes.length > 0
+      ? stakes.reduce((s, v) => s + Math.pow(v - stakeMean, 2), 0) / stakes.length
+      : 0;
+    const stakeCv = stakeMean > 0 ? Math.sqrt(stakeVariance) / stakeMean : 0;
+
+    const betsPerHour = sessionBets.length / Math.max(durationMinutes / 60, 0.1);
+
+    // Longest loss streak
+    let longestLossStreak = 0;
+    let currentLossStreak = 0;
+    for (const b of sessionBets) {
+      if (b.result === 'loss') {
+        currentLossStreak++;
+        if (currentLossStreak > longestLossStreak) longestLossStreak = currentLossStreak;
+      } else {
+        currentLossStreak = 0;
+      }
+    }
+
+    // Chase detection
+    let chasedAfterLoss = false;
+    let chaseCount = 0;
+    for (let i = 1; i < sessionBets.length; i++) {
+      if (sessionBets[i - 1].result === 'loss') {
+        if (Number(sessionBets[i].stake) > Number(sessionBets[i - 1].stake)) {
+          chasedAfterLoss = true;
+          chaseCount++;
+        }
+      }
+    }
+
+    // Late night check (any bet after 23:00)
+    const lateNight = sessionBets.some(b => new Date(b.placed_at).getHours() >= 23);
+
+    const id = `SESSION-${String(idx + 1).padStart(3, '0')}`;
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    // Grading (start at 100)
+    let score = 100;
+    const deductions: { points: number; reason: string }[] = [];
+
+    if (stakeEscalation > 2.0) { score -= 20; deductions.push({ points: 20, reason: 'Stakes escalated more than 2x from start to finish' }); }
+    else if (stakeEscalation > 1.5) { score -= 12; deductions.push({ points: 12, reason: 'Stakes escalated more than 1.5x during the session' }); }
+
+    if (stakeCv > 0.8) { score -= 10; deductions.push({ points: 10, reason: 'Highly inconsistent stake sizing within session' }); }
+    else if (stakeCv > 0.5) { score -= 5; deductions.push({ points: 5, reason: 'Moderately inconsistent stake sizing within session' }); }
+
+    if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Increased stakes after a loss' }); }
+    if (chaseCount >= 3) { score -= 12; deductions.push({ points: 12, reason: `Chased losses ${chaseCount} times in a single session` }); }
+
+    if (sessionBets.length > 10) { score -= 15; deductions.push({ points: 15, reason: `Placed ${sessionBets.length} bets in one session — marathon session` }); }
+    else if (sessionBets.length > 7) { score -= 8; deductions.push({ points: 8, reason: `Placed ${sessionBets.length} bets in one session` }); }
+
+    if (betsPerHour > 4) { score -= 10; deductions.push({ points: 10, reason: `Rapid-fire betting at ${betsPerHour.toFixed(1)} bets/hour` }); }
+    else if (betsPerHour > 2.5) { score -= 5; deductions.push({ points: 5, reason: `Elevated pace at ${betsPerHour.toFixed(1)} bets/hour` }); }
+
+    if (lateNight) { score -= 5; deductions.push({ points: 5, reason: 'Late-night betting (after 11pm)' }); }
+
+    if (longestLossStreak >= 5) { score -= 10; deductions.push({ points: 10, reason: `${longestLossStreak} consecutive losses without stopping` }); }
+    else if (longestLossStreak >= 3) { score -= 5; deductions.push({ points: 5, reason: `${longestLossStreak} consecutive losses` }); }
+
+    if (roi < -30) { score -= 8; deductions.push({ points: 8, reason: `Heavy losses this session (${roi.toFixed(1)}% ROI)` }); }
+    else if (roi < -15) { score -= 4; deductions.push({ points: 4, reason: `Significant losses this session (${roi.toFixed(1)}% ROI)` }); }
+
+    score = Math.max(0, score);
+    const grade: DetectedSession['grade'] = score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : score >= 40 ? 'D' : 'F';
+
+    // Top 1-3 deductions as gradeReasons
+    deductions.sort((a, b) => b.points - a.points);
+    const gradeReasons = deductions.slice(0, 3).map(d => d.reason);
+
+    // Heated detection
+    const isHeated =
+      (grade === 'D' || grade === 'F') ||
+      (stakeEscalation > 2.0 && chasedAfterLoss) ||
+      (betsPerHour > 4 && longestLossStreak >= 3) ||
+      (sessionBets.length >= 8 && roi < -25);
+
+    const heatSignals: string[] = [];
+    if (grade === 'D' || grade === 'F') heatSignals.push(`Session grade: ${grade}`);
+    if (stakeEscalation > 2.0 && chasedAfterLoss) heatSignals.push('Stakes more than doubled while chasing losses');
+    if (betsPerHour > 4 && longestLossStreak >= 3) heatSignals.push('Rapid-fire betting during a loss streak');
+    if (sessionBets.length >= 8 && roi < -25) heatSignals.push('Extended session with heavy losses');
+
+    return {
+      id,
+      date: startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      dayOfWeek: dayNames[startDate.getDay()],
+      startTime: startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      endTime: endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      durationMinutes: round2(durationMinutes),
+      bets: sessionBets.length,
+      wins,
+      losses,
+      pushes,
+      staked: round2(staked),
+      profit: round2(profit),
+      roi: round2(roi),
+      avgStake: round2(avgStake),
+      startingStake: round2(startingStake),
+      endingStake: round2(endingStake),
+      stakeEscalation: round2(stakeEscalation),
+      maxStake: round2(maxStake),
+      minStake: round2(minStake),
+      stakeCv: round2(stakeCv),
+      betsPerHour: round2(betsPerHour),
+      longestLossStreak,
+      chasedAfterLoss,
+      chaseCount,
+      lateNight,
+      grade,
+      gradeReasons,
+      isHeated,
+      heatSignals,
+      betIndices: group.indices,
+    };
+  });
+
+  // Aggregates
+  const totalSessions = sessions.length;
+  const avgSessionLength = totalSessions > 0 ? sessions.reduce((s, sess) => s + sess.bets, 0) / totalSessions : 0;
+  const avgSessionDuration = totalSessions > 0 ? sessions.reduce((s, sess) => s + sess.durationMinutes, 0) / totalSessions : 0;
+
+  // Grade distribution
+  const gradeCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+  for (const sess of sessions) gradeCounts[sess.grade]++;
+  const sessionGradeDistribution = Object.entries(gradeCounts).map(([grade, count]) => ({
+    grade,
+    count,
+    percent: totalSessions > 0 ? round2((count / totalSessions) * 100) : 0,
+  }));
+
+  // Average ROI by grade
+  const avgGradedROI: Record<string, number> = {};
+  for (const g of ['A', 'B', 'C', 'D', 'F']) {
+    const gradeSessions = sessions.filter(s => s.grade === g);
+    if (gradeSessions.length > 0) {
+      avgGradedROI[g] = round2(gradeSessions.reduce((s, sess) => s + sess.roi, 0) / gradeSessions.length);
+    }
+  }
+
+  // Heated stats
+  const heatedSessions = sessions.filter(s => s.isHeated);
+  const heatedSessionCount = heatedSessions.length;
+  const heatedSessionPercent = totalSessions > 0 ? round2((heatedSessionCount / totalSessions) * 100) : 0;
+
+  // Best session: highest profit with grade A or B, fallback highest profit
+  const abSessions = sessions.filter(s => s.grade === 'A' || s.grade === 'B');
+  let bestSession: DetectedSession | null = null;
+  if (abSessions.length > 0) {
+    bestSession = abSessions.reduce((best, s) => s.profit > best.profit ? s : best, abSessions[0]);
+  } else if (sessions.length > 0) {
+    bestSession = sessions.reduce((best, s) => s.profit > best.profit ? s : best, sessions[0]);
+  }
+
+  // Worst session: lowest profit that's heated, fallback lowest profit
+  let worstSession: DetectedSession | null = null;
+  if (heatedSessions.length > 0) {
+    worstSession = heatedSessions.reduce((worst, s) => s.profit < worst.profit ? s : worst, heatedSessions[0]);
+  } else if (sessions.length > 0) {
+    worstSession = sessions.reduce((worst, s) => s.profit < worst.profit ? s : worst, sessions[0]);
+  }
+
+  // Insight
+  let insight: string;
+  if (heatedSessionCount === 0) {
+    insight = `Across ${totalSessions} sessions, discipline stayed solid with no heated sessions detected.`;
+  } else if (heatedSessionPercent > 50) {
+    insight = `${heatedSessionCount} of ${totalSessions} sessions (${heatedSessionPercent}%) showed heated behavior — the majority of your betting is happening under emotional pressure.`;
+  } else if (heatedSessionPercent > 25) {
+    insight = `${heatedSessionCount} of ${totalSessions} sessions were heated — about 1 in ${Math.round(totalSessions / heatedSessionCount)} sessions shows signs of tilt or loss chasing.`;
+  } else {
+    insight = `Most sessions look disciplined, but ${heatedSessionCount} of ${totalSessions} had heated moments worth reviewing.`;
+  }
+
+  return {
+    sessions,
+    totalSessions,
+    avgSessionLength: round2(avgSessionLength),
+    avgSessionDuration: round2(avgSessionDuration),
+    sessionGradeDistribution,
+    heatedSessionCount,
+    heatedSessionPercent,
+    avgGradedROI,
+    bestSession,
+    worstSession,
+    insight,
+  };
+}
+
 export function calculateMetricsOnly(
   bets: Bet[],
   bankroll?: number | null,
@@ -1404,6 +1663,7 @@ export function calculateMetricsOnly(
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: (() => { const f = detectSportSpecificPatterns(metrics, bets); return f.length > 0 ? f : undefined; })(),
+    session_detection: metrics.sessionDetection ?? undefined,
     strategic_leaks: [],
     behavioral_patterns: [],
     recommendations: [],
@@ -1632,7 +1892,19 @@ ${metrics.odds.worst_bucket ? `Worst Odds Range: ${metrics.odds.worst_bucket.lab
 ${metrics.biases_detected.length > 0
     ? metrics.biases_detected.map((b) => `- ${b.bias_name}: ${b.severity.toUpperCase()} (${b.data})`).join('\n')
     : 'No significant biases detected at current thresholds.'}
-===`;
+===${metrics.sessionDetection ? `
+
+=== SESSION DETECTION (${metrics.sessionDetection.totalSessions} sessions detected) ===
+Total Sessions: ${metrics.sessionDetection.totalSessions}
+Avg Bets/Session: ${metrics.sessionDetection.avgSessionLength.toFixed(1)}
+Avg Duration: ${metrics.sessionDetection.avgSessionDuration.toFixed(0)} min
+Grade Distribution: ${metrics.sessionDetection.sessionGradeDistribution.filter(g => g.count > 0).map(g => `${g.grade}: ${g.count} (${g.percent}%)`).join(', ')}
+Heated Sessions: ${metrics.sessionDetection.heatedSessionCount} (${metrics.sessionDetection.heatedSessionPercent}%)
+Avg ROI by Grade: ${Object.entries(metrics.sessionDetection.avgGradedROI).map(([g, r]) => `${g}: ${r.toFixed(1)}%`).join(', ')}
+${metrics.sessionDetection.bestSession ? `Best Session: ${metrics.sessionDetection.bestSession.id} on ${metrics.sessionDetection.bestSession.date} — ${metrics.sessionDetection.bestSession.bets} bets, $${metrics.sessionDetection.bestSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.bestSession.grade}` : ''}
+${metrics.sessionDetection.worstSession ? `Worst Session: ${metrics.sessionDetection.worstSession.id} on ${metrics.sessionDetection.worstSession.date} — ${metrics.sessionDetection.worstSession.bets} bets, $${metrics.sessionDetection.worstSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.worstSession.grade}${metrics.sessionDetection.worstSession.isHeated ? ' [HEATED]' : ''}` : ''}
+Insight: ${metrics.sessionDetection.insight}
+===` : ''}`;
 
   const betTable = formatBetTable(bets);
 
@@ -1748,6 +2020,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: sportFindings.length > 0 ? sportFindings : undefined,
+    session_detection: metrics.sessionDetection ?? undefined,
   };
 
   const markdown = generateMarkdownReport(analysis);
