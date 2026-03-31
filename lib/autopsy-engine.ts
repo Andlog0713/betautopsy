@@ -1309,7 +1309,7 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
           description: 'Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.',
           evidence: `${rapidNBADays} days with 4+ NBA bets. Combined: $${Math.round(rapidProfit)}.`,
           estimated_cost: rapidProfit < 0 ? Math.round(rapidProfit) : null,
-          recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where tilt gets expensive.',
+          recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where emotional decisions get expensive.',
         });
       }
     }
@@ -1601,7 +1601,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
   } else if (heatedSessionPercent > 50) {
     insight = `${heatedSessionCount} of ${totalSessions} sessions (${heatedSessionPercent}%) showed heated behavior — the majority of your betting is happening under emotional pressure.`;
   } else if (heatedSessionPercent > 25) {
-    insight = `${heatedSessionCount} of ${totalSessions} sessions were heated — about 1 in ${Math.round(totalSessions / heatedSessionCount)} sessions shows signs of tilt or loss chasing.`;
+    insight = `${heatedSessionCount} of ${totalSessions} sessions were heated — about 1 in ${Math.round(totalSessions / heatedSessionCount)} sessions shows signs of emotional betting or loss chasing.`;
   } else {
     insight = `Most sessions look disciplined, but ${heatedSessionCount} of ${totalSessions} had heated moments worth reviewing.`;
   }
@@ -1728,7 +1728,7 @@ export function annotateBets(
     }
 
     if (prevResult === 'loss' && prevProfit < -(medianStake * 2) && timeSinceLastBet !== null && timeSinceLastBet < 30) {
-      signals.push({ name: 'tilt_after_big_loss', weight: 6, description: `Bet within ${timeSinceLastBet.toFixed(0)} min of a $${Math.abs(prevProfit).toFixed(0)} loss`, category: 'emotional' });
+      signals.push({ name: 'emotional_after_big_loss', weight: 6, description: `Bet within ${timeSinceLastBet.toFixed(0)} min of a $${Math.abs(prevProfit).toFixed(0)} loss`, category: 'emotional' });
     }
 
     if ((dayOfWeek === 0 || dayOfWeek === 6) && dailyCount >= 4) {
@@ -1988,6 +1988,8 @@ function pad(str: string, len: number): string { return str.length >= len ? str.
 
 const SYSTEM_PROMPT = `You are BetAutopsy, an elite sports betting behavioral analyst.
 
+LANGUAGE RULE: NEVER use the word "tilt" or "tilting" — most sports bettors don't know this poker term. Instead say "emotional betting", "heated session", "emotional decisions", "loss-driven behavior", or "chasing". This is critical — your audience is sports bettors, not poker players.
+
 IMPORTANT: All numerical metrics (ROI, win rate, emotion score, bankroll health, category breakdowns, bias classifications) are PRE-CALCULATED and provided to you. NEVER recalculate them. Use the EXACT numbers given. Your role is:
 - Interpret what the numbers mean behaviorally
 - Write descriptions and evidence for each pre-classified bias (do NOT add or remove biases, do NOT change severity levels)
@@ -2003,7 +2005,7 @@ You do NOT calculate: emotion_score, roi_percent, win_rate, bankroll_health, cat
 ### Sport-Specific Considerations
 When analyzing bets, pay attention to these sport-specific behavioral patterns:
 - **NFL**: Key number overpays (buying through 3/7 at bad juice), primetime game overload, parlay addiction specific to NFL
-- **NBA**: Player prop overexposure (recreational trap), rapid-fire in-game betting suggesting live tilt, back-to-back scheduling awareness
+- **NBA**: Player prop overexposure (recreational trap), rapid-fire in-game betting suggesting emotional decisions, back-to-back scheduling awareness
 - **MLB**: Moneyline tunnel vision (ignoring run lines and totals), starting pitcher obsession
 - **DFS**: Multiplier/pick-count chasing (5+ picks for max payout when 2-3 is more profitable), same-player repetition regardless of matchup
 
