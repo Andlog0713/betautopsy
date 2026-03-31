@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -70,15 +71,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSPJZVJ9CF" />
-        <script
-          dangerouslySetInnerHTML={{ __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-KSPJZVJ9CF');
-          `}}
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
@@ -92,7 +84,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+        {children}
+      </body>
     </html>
   );
 }
