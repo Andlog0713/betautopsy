@@ -566,7 +566,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 2</span>
-            <h2 className="font-bold text-xl">Emotion Score</h2>
+            <h2 className="font-bold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
           </div>
           <span className={`font-mono text-2xl font-bold ${
             emotionScore <= 25 ? 'text-win' :
@@ -617,11 +617,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         )}
       </div>
 
-      {/* ── Enhanced Tilt Signals — Pro/Sharp only ── */}
+      {/* ── Emotional Triggers — Pro/Sharp only ── */}
       {(tier === 'pro' || tier === 'sharp') && analysis.enhanced_tilt && (
         <div className="case-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="case-header">TILT SIGNAL BREAKDOWN</div>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="case-header">EMOTIONAL TRIGGER BREAKDOWN</div>
+              <p className="text-fg-dim text-xs mt-1">Six signals that reveal when emotions are driving your bets instead of strategy</p>
+            </div>
             <span className={`font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${
               analysis.enhanced_tilt.risk_level === 'critical' ? 'bg-bleed text-base' :
               analysis.enhanced_tilt.risk_level === 'high' ? 'bg-bleed/80 text-base' :
@@ -629,7 +632,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               analysis.enhanced_tilt.risk_level === 'moderate' ? 'bg-caution/60 text-base' :
               'bg-scalpel text-base'
             }`}>
-              {analysis.enhanced_tilt.risk_level}
+              {analysis.enhanced_tilt.risk_level} risk
             </span>
           </div>
           <div className="finding-card border-l-caution mb-4 !p-3">
@@ -637,17 +640,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              { label: 'Bet sizing volatility', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
-              { label: 'Loss reaction', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
-              { label: 'Streak behavior', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
-              { label: 'Session discipline', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
-              { label: 'Session acceleration', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25, isNew: true },
-              { label: 'Odds drift after loss', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25, isNew: true },
+              { label: 'Bet size swings', hint: 'How much your stakes vary — higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
+              { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
+              { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
+              { label: 'Knowing when to stop', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
+              { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
+              { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing — reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
             ].map(signal => (
               <div key={signal.label} className="bg-surface-raised p-3 border border-white/[0.04] rounded-sm">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-[11px] text-fg-dim">{signal.label}</span>
-                  {'isNew' in signal && signal.isNew && <span className="font-mono text-[8px] text-scalpel border border-scalpel/20 px-1 rounded-sm">NEW</span>}
+                <div className="mb-1.5">
+                  <span className="text-[11px] text-fg-muted block">{signal.label}</span>
+                  <span className="text-[9px] text-fg-dim block leading-tight mt-0.5">{signal.hint}</span>
                 </div>
                 <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
                 <div className="h-1 mt-1.5 bg-base overflow-hidden">
