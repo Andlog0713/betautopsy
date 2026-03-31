@@ -178,6 +178,7 @@ export interface AutopsyAnalysis {
   emotion_percentile?: number;
   enhanced_tilt?: EnhancedTiltResult;
   sport_specific_findings?: SportSpecificFinding[];
+  session_detection?: SessionDetectionResult;
 }
 
 export interface PersonalRule {
@@ -203,6 +204,55 @@ export interface SessionDetail {
   ending_stake?: number;
   net: number;
   description: string;
+}
+
+// ── Session Detection (first-class sessions) ──
+
+export interface DetectedSession {
+  id: string;
+  date: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  bets: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  staked: number;
+  profit: number;
+  roi: number;
+  avgStake: number;
+  startingStake: number;
+  endingStake: number;
+  stakeEscalation: number;
+  maxStake: number;
+  minStake: number;
+  stakeCv: number;
+  betsPerHour: number;
+  longestLossStreak: number;
+  chasedAfterLoss: boolean;
+  chaseCount: number;
+  lateNight: boolean;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  gradeReasons: string[];
+  isHeated: boolean;
+  heatSignals: string[];
+  betIndices: number[];
+}
+
+export interface SessionDetectionResult {
+  sessions: DetectedSession[];
+  totalSessions: number;
+  avgSessionLength: number;
+  avgSessionDuration: number;
+  sessionGradeDistribution: { grade: string; count: number; percent: number }[];
+  heatedSessionCount: number;
+  heatedSessionPercent: number;
+  avgGradedROI: Record<string, number>;
+  bestSession: DetectedSession | null;
+  worstSession: DetectedSession | null;
+  insight: string;
 }
 
 export interface EdgeProfile {

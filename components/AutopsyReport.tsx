@@ -1508,6 +1508,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* ── Session Analysis ── */}
+      {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
+        <SessionAnalysisSection sessionData={analysis.session_detection} />
+      )}
+
       {/* Action Plan */}
       {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
@@ -1841,6 +1846,173 @@ function SummaryItem({ label, value, color, small, hint }: { label: string; valu
     <div>
       <p className="text-fg-muted text-xs mb-0.5">{label}{hint && <span className="text-fg-dim normal-case"> ({hint})</span>}</p>
       <p className={`font-mono font-semibold ${small ? 'text-sm' : 'text-lg'} ${color ?? 'text-fg-bright'}`}>{value}</p>
+    </div>
+  );
+}
+
+// ── Session Analysis Section ──
+
+function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types').SessionDetectionResult }) {
+  const [showAll, setShowAll] = useState(false);
+  const [showHeated, setShowHeated] = useState(false);
+
+  const gradeColors: Record<string, string> = {
+    A: 'bg-win/20 text-win',
+    B: 'bg-win/10 text-win/70',
+    C: 'bg-caution/20 text-caution',
+    D: 'bg-orange-400/20 text-orange-400',
+    F: 'bg-loss/20 text-loss',
+  };
+
+  const gradeBarColors: Record<string, string> = {
+    A: '#3FB950', B: '#3FB95090', C: '#D29922', D: '#f97316', F: '#F85149',
+  };
+
+  const totalForBar = sessionData.sessionGradeDistribution.reduce((s, g) => s + g.count, 0);
+  const heatedSessions = sessionData.sessions.filter(s => s.isHeated);
+  const sortedSessions = [...sessionData.sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="case-header mb-1">SESSION ANALYSIS</div>
+        <p className="text-fg-dim text-xs">Every betting session, detected and graded A through F</p>
+      </div>
+
+      {/* Grade distribution bar */}
+      <div>
+        <div className="flex h-6 rounded-sm overflow-hidden border border-white/[0.04]">
+          {sessionData.sessionGradeDistribution.filter(g => g.count > 0).map(g => (
+            <div
+              key={g.grade}
+              style={{ width: `${(g.count / totalForBar) * 100}%`, backgroundColor: gradeBarColors[g.grade] }}
+              className="flex items-center justify-center"
+              title={`${g.grade}: ${g.count} sessions (${g.percent}%)`}
+            >
+              {g.percent >= 10 && <span className="font-mono text-[10px] text-base font-bold">{g.grade}</span>}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-2 flex-wrap">
+          {sessionData.sessionGradeDistribution.filter(g => g.count > 0).map(g => (
+            <span key={g.grade} className="font-mono text-[10px] text-fg-dim">
+              <span className={`inline-block w-2 h-2 rounded-sm mr-1`} style={{ backgroundColor: gradeBarColors[g.grade] }} />
+              {g.count} {g.grade}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Key stats strip */}
+      <div className="vitals-strip grid-cols-3 md:grid-cols-6">
+        <div className="vitals-cell text-center">
+          <span className="data-label block">Sessions</span>
+          <span className="font-mono text-lg font-bold text-fg-bright">{sessionData.totalSessions}</span>
+        </div>
+        <div className="vitals-cell text-center">
+          <span className="data-label block">Avg Length</span>
+          <span className="font-mono text-lg font-bold text-fg-bright">{sessionData.avgSessionLength.toFixed(1)} bets</span>
+        </div>
+        <div className="vitals-cell text-center">
+          <span className="data-label block">Avg Duration</span>
+          <span className="font-mono text-lg font-bold text-fg-bright">{Math.round(sessionData.avgSessionDuration)}m</span>
+        </div>
+        <div className="vitals-cell text-center">
+          <span className="data-label block">Heated</span>
+          <span className="font-mono text-lg font-bold text-loss">{sessionData.heatedSessionCount}</span>
+        </div>
+        <div className="vitals-cell text-center">
+          <span className="data-label block">A-Grade ROI</span>
+          <span className="font-mono text-lg font-bold text-win">+{(sessionData.avgGradedROI['A'] ?? 0).toFixed(1)}%</span>
+        </div>
+        <div className="vitals-cell text-center">
+          <span className="data-label block">F-Grade ROI</span>
+          <span className="font-mono text-lg font-bold text-loss">{(sessionData.avgGradedROI['F'] ?? 0).toFixed(1)}%</span>
+        </div>
+      </div>
+
+      {/* Insight */}
+      {sessionData.insight && (
+        <div className="finding-card border-l-scalpel !p-3">
+          <p className="text-fg-muted text-sm">{sessionData.insight}</p>
+        </div>
+      )}
+
+      {/* Best / Worst session cards */}
+      <div className="grid md:grid-cols-2 gap-3">
+        {sessionData.bestSession && (
+          <div className="case-card border-win/20 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-fg-dim text-xs font-mono">{sessionData.bestSession.id}</span>
+              <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.bestSession.grade]}`}>{sessionData.bestSession.grade}</span>
+            </div>
+            <p className="text-win font-mono text-xl font-bold">+${sessionData.bestSession.profit.toLocaleString()}</p>
+            <p className="text-fg-dim text-xs font-mono mt-1">{sessionData.bestSession.dayOfWeek} · {sessionData.bestSession.bets} bets · {sessionData.bestSession.startTime}–{sessionData.bestSession.endTime}</p>
+            {sessionData.bestSession.gradeReasons.map((r, i) => (
+              <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
+            ))}
+          </div>
+        )}
+        {sessionData.worstSession && (
+          <div className="case-card border-loss/20 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-fg-dim text-xs font-mono">{sessionData.worstSession.id}</span>
+              <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.worstSession.grade]}`}>{sessionData.worstSession.grade}</span>
+            </div>
+            <p className="text-loss font-mono text-xl font-bold">-${Math.abs(sessionData.worstSession.profit).toLocaleString()}</p>
+            <p className="text-fg-dim text-xs font-mono mt-1">{sessionData.worstSession.dayOfWeek} · {sessionData.worstSession.bets} bets · {sessionData.worstSession.startTime}–{sessionData.worstSession.endTime}</p>
+            {sessionData.worstSession.gradeReasons.map((r, i) => (
+              <p key={i} className="text-fg-muted text-xs mt-1 text-loss/70">- {r}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Heated sessions */}
+      {heatedSessions.length > 0 && (
+        <div>
+          <button onClick={() => setShowHeated(!showHeated)} className="flex items-center gap-2 text-sm text-loss hover:text-loss/80 transition-colors font-mono">
+            🔥 {heatedSessions.length} Heated Session{heatedSessions.length !== 1 ? 's' : ''} <span className="text-fg-dim text-xs">{showHeated ? '▴' : '▾'}</span>
+          </button>
+          {showHeated && (
+            <div className="mt-2 space-y-1.5">
+              {heatedSessions.map(s => (
+                <div key={s.id} className="bg-surface-raised border border-loss/10 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="font-mono text-[10px] text-fg-dim w-24 shrink-0">{s.id}</span>
+                  <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
+                  <span className="text-fg-muted text-xs">{s.dayOfWeek} {s.date.slice(5)}</span>
+                  <span className="text-fg-muted text-xs">{s.bets} bets · {Math.round(s.durationMinutes / 60)}h</span>
+                  <span className="text-loss font-mono text-xs font-medium">{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
+                  <span className="text-fg-dim text-xs italic ml-auto">{s.heatSignals[0]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Full session log */}
+      {sessionData.sessions.length > 4 && (
+        <div>
+          <button onClick={() => setShowAll(!showAll)} className="text-sm text-fg-muted hover:text-fg transition-colors font-mono">
+            {showAll ? 'Hide' : `View all ${sessionData.totalSessions} sessions`} <span className="text-fg-dim text-xs">{showAll ? '▴' : '▾'}</span>
+          </button>
+          {showAll && (
+            <div className="mt-2 space-y-1">
+              {sortedSessions.map(s => (
+                <div key={s.id} className="bg-surface-raised rounded-sm p-2 flex items-center gap-2 text-xs">
+                  <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
+                  <span className="font-mono text-fg-dim w-20 shrink-0">{s.date.slice(5)}</span>
+                  <span className="text-fg-muted">{s.bets} bets</span>
+                  <span className="text-fg-dim">{Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
+                  <span className={`font-mono font-medium ml-auto ${s.profit >= 0 ? 'text-win' : 'text-loss'}`}>{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
+                  {s.isHeated && <span className="text-loss" title="Heated session">🔥</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

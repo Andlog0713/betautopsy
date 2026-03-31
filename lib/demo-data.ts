@@ -295,4 +295,28 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       recommendation: 'Take your NFL reads and make them singles.',
     },
   ],
+  session_detection: {
+    sessions: [
+      { id: 'SESSION-001', date: '2025-11-03', dayOfWeek: 'Sunday', startTime: '12:30 PM', endTime: '5:15 PM', durationMinutes: 285, bets: 6, wins: 4, losses: 2, pushes: 0, staked: 450, profit: 185, roi: 41.1, avgStake: 75, startingStake: 50, endingStake: 75, stakeEscalation: 1.5, maxStake: 100, minStake: 50, stakeCv: 0.3, betsPerHour: 1.3, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent sizing', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [0,1,2,3,4,5] },
+      { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x from start to finish', '4 chase bets after losses', '5-bet losing streak with no cooldown'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses', 'Marathon losing session — 9 bets, -$680'], betIndices: [89,90,91,92,93,94,95,96,97] },
+      { id: 'SESSION-022', date: '2025-12-28', dayOfWeek: 'Saturday', startTime: '1:00 PM', endTime: '3:30 PM', durationMinutes: 150, bets: 4, wins: 2, losses: 2, pushes: 0, staked: 320, profit: 45, roi: 14.1, avgStake: 80, startingStake: 80, endingStake: 80, stakeEscalation: 1.0, maxStake: 80, minStake: 80, stakeCv: 0.0, betsPerHour: 1.6, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Perfectly flat staking', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [150,151,152,153] },
+      { id: 'SESSION-035', date: '2026-01-12', dayOfWeek: 'Sunday', startTime: '12:00 PM', endTime: '6:45 PM', durationMinutes: 405, bets: 11, wins: 4, losses: 6, pushes: 1, staked: 920, profit: -340, roi: -37.0, avgStake: 84, startingStake: 50, endingStake: 200, stakeEscalation: 4.0, maxStake: 200, minStake: 50, stakeCv: 0.65, betsPerHour: 1.6, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: false, grade: 'F', gradeReasons: ['11 bets in one session', 'Stakes escalated 4x', '3 chase bets after losses'], isHeated: true, heatSignals: ['Stakes quadrupled during extended losing session', '11 bets over 6.75 hours'], betIndices: [180,181,182,183,184,185,186,187,188,189,190] },
+    ],
+    totalSessions: 44,
+    avgSessionLength: 6.4,
+    avgSessionDuration: 162,
+    sessionGradeDistribution: [
+      { grade: 'A', count: 8, percent: 18 },
+      { grade: 'B', count: 10, percent: 23 },
+      { grade: 'C', count: 12, percent: 27 },
+      { grade: 'D', count: 8, percent: 18 },
+      { grade: 'F', count: 6, percent: 14 },
+    ],
+    heatedSessionCount: 8,
+    heatedSessionPercent: 18,
+    avgGradedROI: { A: 12.4, B: 3.1, C: -4.2, D: -14.8, F: -38.7 },
+    bestSession: { id: 'SESSION-001', date: '2025-11-03', dayOfWeek: 'Sunday', startTime: '12:30 PM', endTime: '5:15 PM', durationMinutes: 285, bets: 6, wins: 4, losses: 2, pushes: 0, staked: 450, profit: 185, roi: 41.1, avgStake: 75, startingStake: 50, endingStake: 75, stakeEscalation: 1.5, maxStake: 100, minStake: 50, stakeCv: 0.3, betsPerHour: 1.3, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent sizing', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [] },
+    worstSession: { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x', '4 chase bets', '5-bet losing streak'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses'], betIndices: [] },
+    insight: 'Your A-graded sessions average +12.4% ROI. Your F sessions average -38.7%. The math is clear — discipline pays.',
+  },
 };
