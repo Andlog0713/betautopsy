@@ -253,9 +253,7 @@ export default function LandingPage() {
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
             <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
-              <div className="absolute -top-3 right-4 border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base">
-                <span className="font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
-              </div>
+              <span className="inline-block border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold self-end mb-2">RECOMMENDED</span>
               <span className="case-header block mb-3">Pro</span>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
