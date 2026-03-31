@@ -423,51 +423,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Share */}
-      {!readOnly && <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />}
+      <ChapterNav />
 
-      {/* vs. Last Report */}
-      {previousSnapshot && (
-        <div className="card p-6">
-          <h2 className="font-bold text-lg mb-3">
-            vs. Last Report <span className="text-fg-muted text-sm font-normal">({new Date(previousSnapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {compItems.map((item) => {
-              const fromVal = item.from;
-              const toVal = item.to;
-              if (fromVal === null || fromVal === undefined) return null;
-
-              let improved = false;
-              let fromStr = '', toStr = '';
-
-              if (item.isGrade && typeof fromVal === 'string' && typeof toVal === 'string') {
-                fromStr = fromVal;
-                toStr = toVal;
-                const gOrder = ['F', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+'];
-                improved = gOrder.indexOf(toStr) > gOrder.indexOf(fromStr);
-              } else if (typeof fromVal === 'number' && typeof toVal === 'number') {
-                fromStr = `${fromVal.toFixed(1)}${item.suffix ?? ''}`;
-                toStr = `${toVal.toFixed(1)}${item.suffix ?? ''}`;
-                improved = item.lowerBetter ? toVal < fromVal : toVal > fromVal;
-              } else {
-                return null;
-              }
-
-              const same = fromStr === toStr;
-              return (
-                <div key={item.label}>
-                  <p className="text-fg-muted text-xs mb-0.5">{item.label}</p>
-                  <p className={`font-mono text-sm font-medium ${same ? 'text-fg-muted' : improved ? 'text-win' : 'text-loss'}`}>
-                    {fromStr} → {toStr}
-                  </p>
-                  {!same && <p className={`text-xs ${improved ? 'text-win' : 'text-loss'}`}>{improved ? 'improved' : 'regressed'}</p>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* ═══ CHAPTER 1: SUMMARY ═══ */}
+      <section id="chapter-summary">
+      <ChapterHeader number={1} title="Summary" subtitle="The executive briefing" />
 
       {/* ═══ VITALS STRIP — 4-col like mockup ═══ */}
       <div className="vitals-strip grid-cols-2 sm:grid-cols-4 mb-5">
@@ -539,27 +499,275 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         )}
       </div>
 
-      {/* Summary Card — REMOVED (replaced by Behavioral Profile + condensed stats above) */}
+      {/* ── BetIQ Score — Pro/Sharp only ── */}
+      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && !analysis.betiq.insufficient_data && (
+        <div className="case-card p-6">
+          <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
+            <span className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}</span>
+            <span className="font-mono text-sm text-fg-dim">/100</span>
+            <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
+          </div>
+          <p className="text-fg-muted text-sm mb-6 leading-relaxed">{analysis.betiq.interpretation}</p>
+          <div className="vitals-strip grid-cols-2 md:grid-cols-3">
+            {[
+              { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
+              { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
+              { label: 'Sophistication', hint: 'Straight bets vs parlays — higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
+              { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
+              { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
+              { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
+            ].map(c => (
+              <div key={c.label} className="vitals-cell">
+                <div className="data-label mb-0.5">{c.label}</div>
+                <div className="text-[9px] text-fg-dim leading-tight mb-1">{c.hint}</div>
+                <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
+                <div className="h-1 mt-2 bg-surface-raised overflow-hidden">
+                  <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* P&L Over Time Chart */}
-      {hasBets && pnlData.length > 1 && (
+      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && analysis.betiq.insufficient_data && (
+        <div className="case-card p-6">
+          <div className="case-header mb-3">BETIQ — SKILL ASSESSMENT</div>
+          <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
+        </div>
+      )}
+
+      {/* BetIQ — free tier teaser */}
+      {tier === 'free' && analysis.betiq && (
+        <div className="case-card p-6 relative overflow-hidden">
+          <div className="case-header mb-2">BETIQ — SKILL ASSESSMENT</div>
+          <div className="blur-sm pointer-events-none">
+            <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
+            <div className="vitals-strip grid-cols-3 mt-4">
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-xl mb-1">🔒</p>
+              <p className="text-fg-muted text-sm font-mono">Upgrade to Pro to unlock BetIQ</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* vs. Last Report */}
+      {previousSnapshot && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
-            Profit/Loss Over Time
+          <h2 className="font-bold text-lg mb-3">
+            vs. Last Report <span className="text-fg-muted text-sm font-normal">({new Date(previousSnapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
           </h2>
-          <p className="text-fg-dim text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
-          <div className="h-48 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={pnlData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
-                <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `$${v}`} />
-                <Tooltip content={<ChartTooltip />} />
-                <ReferenceLine y={0} stroke="#51596850" />
-                <Line type="monotone" dataKey="pnl" stroke="#f97316" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {compItems.map((item) => {
+              const fromVal = item.from;
+              const toVal = item.to;
+              if (fromVal === null || fromVal === undefined) return null;
+
+              let improved = false;
+              let fromStr = '', toStr = '';
+
+              if (item.isGrade && typeof fromVal === 'string' && typeof toVal === 'string') {
+                fromStr = fromVal;
+                toStr = toVal;
+                const gOrder = ['F', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+'];
+                improved = gOrder.indexOf(toStr) > gOrder.indexOf(fromStr);
+              } else if (typeof fromVal === 'number' && typeof toVal === 'number') {
+                fromStr = `${fromVal.toFixed(1)}${item.suffix ?? ''}`;
+                toStr = `${toVal.toFixed(1)}${item.suffix ?? ''}`;
+                improved = item.lowerBetter ? toVal < fromVal : toVal > fromVal;
+              } else {
+                return null;
+              }
+
+              const same = fromStr === toStr;
+              return (
+                <div key={item.label}>
+                  <p className="text-fg-muted text-xs mb-0.5">{item.label}</p>
+                  <p className={`font-mono text-sm font-medium ${same ? 'text-fg-muted' : improved ? 'text-win' : 'text-loss'}`}>
+                    {fromStr} → {toStr}
+                  </p>
+                  {!same && <p className={`text-xs ${improved ? 'text-win' : 'text-loss'}`}>{improved ? 'improved' : 'regressed'}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Bankroll Health Warning */}
+      {analysis.bankroll_health !== 'healthy' && (
+        <div
+          className={`rounded-sm p-5 border ${
+            analysis.bankroll_health === 'danger'
+              ? 'bg-loss/5 border-loss/30'
+              : 'bg-caution/5 border-caution/30'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">{analysis.bankroll_health === 'danger' ? '🚨' : '⚠️'}</span>
+            <div>
+              <h3 className={`font-medium ${
+                analysis.bankroll_health === 'danger' ? 'text-loss' : 'text-caution'
+              }`}>
+                Bankroll Health: {analysis.bankroll_health === 'danger' ? 'At Risk' : 'Monitor'}
+              </h3>
+              <p className="text-fg-muted text-sm mt-1">
+                {analysis.bankroll_health === 'danger'
+                  ? 'Your stake sizing relative to your bankroll is aggressive. Consider setting hard limits on max bet size to protect your long-term position.'
+                  : 'Your bankroll trajectory could use some adjustments. The recommendations below can help stabilize it.'}
+              </p>
+              {analysis.bankroll_health === 'danger' && (
+                <p className="text-fg-dim text-xs mt-3">
+                  If you feel your gambling is out of control, call <span className="text-fg-bright">1-800-GAMBLER</span> or visit <span className="text-fg-bright">ncpgambling.org</span> for self-exclusion resources.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isPartialReport && totalRecoverable > 0 && (
+        <div
+          className="border border-white/[0.04] p-4 border-l-[3px] border-l-bleed cursor-pointer hover:bg-white/[0.01] transition-colors"
+          onClick={() => {
+            const el = document.getElementById('chapter-cost');
+            if (el) {
+              const top = el.getBoundingClientRect().top + window.scrollY - 60;
+              window.scrollTo({ top, behavior: 'smooth' });
+            }
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">TOTAL RECOVERABLE</p>
+              <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
+              <p className="text-[11px] text-fg-dim mt-1">Estimated money left on the table from all detected leaks and biases</p>
+            </div>
+            <span className="font-mono text-[10px] text-fg-dim">See details →</span>
+          </div>
+        </div>
+      )}
+
+      </section>
+
+      {/* ═══ CHAPTER 2: FINDINGS ═══ */}
+      <section id="chapter-findings">
+      <ChapterHeader number={2} title="Findings" subtitle="Behavioral analysis and pattern detection" />
+
+      {/* FINDINGS — matching mockup exactly */}
+      {biases_detected.length > 0 && (
+        <div className="space-y-2">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">FINDINGS</p>
+          <div className="grid gap-2">
+            {biases_detected.map((bias, i) => {
+              const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
+              return (
+              <div key={i} className={`border border-white/[0.04] p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-[14px] font-semibold text-fg-bright">{bias.bias_name}</span>
+                  </div>
+                  <span className={`font-mono text-[9px] tracking-[1px] font-bold px-2 py-0.5 ${sevColor === 'bleed' ? 'bg-bleed text-base' : sevColor === 'caution' ? 'bg-caution text-base' : 'bg-win text-base'}`}>{bias.severity.toUpperCase()}</span>
+                </div>
+                {!bias.description ? (
+                  <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
+                    <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
+                    Generating analysis for this bias...
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[12px] text-fg-muted leading-relaxed mb-2.5">{bias.description}</p>
+                    {bias.fix && (
+                      <p className="text-[11px] text-fg-dim mb-2.5"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
+                        est. cost: -${Math.abs(bias.estimated_cost).toLocaleString()}/qtr
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Sport-Specific Findings — Pro/Sharp only ── */}
+      {(tier === 'pro' || tier === 'sharp') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
+        <div className="space-y-3">
+          <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
+          {analysis.sport_specific_findings.map((finding) => (
+            <div key={finding.id} className={`finding-card ${finding.severity === 'high' ? 'border-l-bleed' : finding.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <span className={`evidence-tag ${finding.severity === 'high' ? 'text-bleed border-bleed/30' : finding.severity === 'medium' ? 'text-caution border-caution/30' : 'text-scalpel border-scalpel/30'}`}>{finding.id}</span>
+                  <span className="font-semibold text-sm text-fg-bright">{finding.name}</span>
+                </div>
+                <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
+              </div>
+              <p className="text-fg-muted text-sm leading-relaxed mb-2">{finding.description}</p>
+              <p className="text-fg-dim text-xs mb-2 font-mono">{finding.evidence}</p>
+              <div className="flex items-center justify-between">
+                {finding.estimated_cost !== null && (
+                  <span className="font-mono text-sm font-semibold text-loss">est. cost: ${Math.abs(finding.estimated_cost).toLocaleString()}</span>
+                )}
+                <span className="text-scalpel text-xs font-mono ml-auto">{finding.recommendation}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Strategic Leaks */}
+      {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
+      {!isPartialReport && strategic_leaks.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Strategic Leaks</h2>
+          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume — you&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.04]">
+                    <th className="text-left text-fg-muted font-medium px-4 py-3">Category</th>
+                    <th className="text-left text-fg-muted font-medium px-4 py-3">Issue</th>
+                    <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
+                    <th className="text-right text-fg-muted font-medium px-4 py-3 hidden sm:table-cell">Sample</th>
+                    <th className="text-left text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Suggestion</th>
+                    <th className="px-4 py-3 w-20"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {strategic_leaks.map((leak, i) => (
+                    <tr key={i} className="border-b border-white/[0.04]">
+                      <td className="px-4 py-3 font-medium">{formatCategoryLabel(leak.category)}</td>
+                      <td className="px-4 py-3 text-fg-muted">{leak.detail}</td>
+                      <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-win' : 'text-loss'}`}>
+                        {leak.roi_impact >= 0 ? '+' : ''}{leak.roi_impact.toFixed(1)}%
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-fg-muted hidden sm:table-cell">{leak.sample_size}</td>
+                      <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{leak.suggestion}</td>
+                      <td className="px-4 py-3">
+                        <Link href={leakToQuery(leak.category)} className="text-xs text-scalpel hover:underline whitespace-nowrap">
+                          View bets →
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -567,10 +775,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Emotion Score */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 2</span>
-            <h2 className="font-bold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
-          </div>
+          <h2 className="font-bold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
           <span className={`font-mono text-2xl font-bold ${
             emotionScore <= 25 ? 'text-win' :
             emotionScore <= 50 ? 'text-caution' :
@@ -665,6 +870,70 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Behavioral Patterns */}
+      {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
+      {!isPartialReport && behavioral_patterns.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
+          <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting — some help you, some hurt you.</p>
+          <div className="grid gap-3">
+            {behavioral_patterns.map((pat, i) => (
+              <div key={i} className="card p-5 flex gap-4">
+                <span className="text-2xl mt-0.5 shrink-0">
+                  {pat.impact === 'positive' ? '✅' : pat.impact === 'negative' ? '❌' : '➖'}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium">{pat.pattern_name}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      pat.impact === 'positive' ? 'bg-win/10 text-win'
+                        : pat.impact === 'negative' ? 'bg-loss/10 text-loss'
+                        : 'bg-fg-dim/50 text-fg-muted'
+                    }`}>
+                      {pat.impact}
+                    </span>
+                  </div>
+                  <p className="text-fg-bright text-sm">{pat.description}</p>
+                  <div className="flex gap-4 mt-2 text-xs text-fg-muted">
+                    <span>Frequency: {pat.frequency}</span>
+                    <span>Evidence: {pat.data_points}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      </section>
+
+      {/* ═══ CHAPTER 3: YOUR DATA ═══ */}
+      <section id="chapter-data">
+      <ChapterHeader number={3} title="Your Data" subtitle="Charts and evidence supporting the diagnosis" />
+
+      {/* P&L Over Time Chart */}
+      {hasBets && pnlData.length > 1 && (
+        <div className="card p-6">
+          <h2 className="font-bold text-xl mb-1">
+            <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
+            Profit/Loss Over Time
+          </h2>
+          <p className="text-fg-dim text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
+          <div className="h-48 sm:h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={pnlData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
+                <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} tickFormatter={(v: number) => `$${v}`} />
+                <Tooltip content={<ChartTooltip />} />
+                <ReferenceLine y={0} stroke="#51596850" />
+                <Line type="monotone" dataKey="pnl" stroke="#f97316" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Stake Size Timeline */}
       {hasBets && stakeData.length > 1 && (
         <div className="card p-6">
@@ -691,151 +960,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Bankroll Health Warning */}
-      {analysis.bankroll_health !== 'healthy' && (
-        <div
-          className={`rounded-sm p-5 border ${
-            analysis.bankroll_health === 'danger'
-              ? 'bg-loss/5 border-loss/30'
-              : 'bg-caution/5 border-caution/30'
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">{analysis.bankroll_health === 'danger' ? '🚨' : '⚠️'}</span>
-            <div>
-              <h3 className={`font-medium ${
-                analysis.bankroll_health === 'danger' ? 'text-loss' : 'text-caution'
-              }`}>
-                Bankroll Health: {analysis.bankroll_health === 'danger' ? 'At Risk' : 'Monitor'}
-              </h3>
-              <p className="text-fg-muted text-sm mt-1">
-                {analysis.bankroll_health === 'danger'
-                  ? 'Your stake sizing relative to your bankroll is aggressive. Consider setting hard limits on max bet size to protect your long-term position.'
-                  : 'Your bankroll trajectory could use some adjustments. The recommendations below can help stabilize it.'}
-              </p>
-              {analysis.bankroll_health === 'danger' && (
-                <p className="text-fg-dim text-xs mt-3">
-                  If you feel your gambling is out of control, call <span className="text-fg-bright">1-800-GAMBLER</span> or visit <span className="text-fg-bright">ncpgambling.org</span> for self-exclusion resources.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FINDINGS — matching mockup exactly */}
-      {biases_detected.length > 0 && (
-        <div className="space-y-2">
-          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">FINDINGS</p>
-          <div className="grid gap-2">
-            {biases_detected.map((bias, i) => {
-              const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
-              return (
-              <div key={i} className={`border border-white/[0.04] p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
-                    <span className="text-[14px] font-semibold text-fg-bright">{bias.bias_name}</span>
-                  </div>
-                  <span className={`font-mono text-[9px] tracking-[1px] font-bold px-2 py-0.5 ${sevColor === 'bleed' ? 'bg-bleed text-base' : sevColor === 'caution' ? 'bg-caution text-base' : 'bg-win text-base'}`}>{bias.severity.toUpperCase()}</span>
-                </div>
-                {!bias.description ? (
-                  <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
-                    <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
-                    Generating analysis for this bias...
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-[12px] text-fg-muted leading-relaxed mb-2.5">{bias.description}</p>
-                    {bias.fix && (
-                      <p className="text-[11px] text-fg-dim mb-2.5"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p>
-                    )}
-                    <div className="flex justify-between items-center">
-                      <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
-                        est. cost: -${Math.abs(bias.estimated_cost).toLocaleString()}/qtr
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Sport-Specific Findings — Pro/Sharp only ── */}
-      {(tier === 'pro' || tier === 'sharp') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
-        <div className="space-y-3">
-          <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
-          {analysis.sport_specific_findings.map((finding) => (
-            <div key={finding.id} className={`finding-card ${finding.severity === 'high' ? 'border-l-bleed' : finding.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span className={`evidence-tag ${finding.severity === 'high' ? 'text-bleed border-bleed/30' : finding.severity === 'medium' ? 'text-caution border-caution/30' : 'text-scalpel border-scalpel/30'}`}>{finding.id}</span>
-                  <span className="font-semibold text-sm text-fg-bright">{finding.name}</span>
-                </div>
-                <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
-              </div>
-              <p className="text-fg-muted text-sm leading-relaxed mb-2">{finding.description}</p>
-              <p className="text-fg-dim text-xs mb-2 font-mono">{finding.evidence}</p>
-              <div className="flex items-center justify-between">
-                {finding.estimated_cost !== null && (
-                  <span className="font-mono text-sm font-semibold text-loss">est. cost: ${Math.abs(finding.estimated_cost).toLocaleString()}</span>
-                )}
-                <span className="text-scalpel text-xs font-mono ml-auto">{finding.recommendation}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Strategic Leaks */}
-      {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
-      {!isPartialReport && strategic_leaks.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 4</span>
-            <h2 className="font-bold text-2xl">Strategic Leaks</h2>
-          </div>
-          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume — you&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/[0.04]">
-                    <th className="text-left text-fg-muted font-medium px-4 py-3">Category</th>
-                    <th className="text-left text-fg-muted font-medium px-4 py-3">Issue</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3 hidden sm:table-cell">Sample</th>
-                    <th className="text-left text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Suggestion</th>
-                    <th className="px-4 py-3 w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {strategic_leaks.map((leak, i) => (
-                    <tr key={i} className="border-b border-white/[0.04]">
-                      <td className="px-4 py-3 font-medium">{formatCategoryLabel(leak.category)}</td>
-                      <td className="px-4 py-3 text-fg-muted">{leak.detail}</td>
-                      <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-win' : 'text-loss'}`}>
-                        {leak.roi_impact >= 0 ? '+' : ''}{leak.roi_impact.toFixed(1)}%
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-fg-muted hidden sm:table-cell">{leak.sample_size}</td>
-                      <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{leak.suggestion}</td>
-                      <td className="px-4 py-3">
-                        <Link href={leakToQuery(leak.category)} className="text-xs text-scalpel hover:underline whitespace-nowrap">
-                          View bets →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
@@ -879,10 +1003,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Timing Patterns */}
       {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 5</span>
-            <h2 className="font-bold text-2xl">Timing Patterns</h2>
-          </div>
+          <h2 className="font-bold text-2xl">Timing Patterns</h2>
           <p className="text-fg-dim text-xs italic -mt-2">Your performance broken down by when you place bets — reveals hidden patterns in your schedule.</p>
 
           {/* Day of Week Chart */}
@@ -1025,10 +1146,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Odds Intelligence */}
       {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 6</span>
-            <h2 className="font-bold text-2xl">Odds Intelligence</h2>
-          </div>
+          <h2 className="font-bold text-2xl">Odds Intelligence</h2>
           <p className="text-fg-dim text-xs italic -mt-2">How you perform at different price points — and whether you&apos;re finding real value or just getting lucky.</p>
 
           {/* Odds Bucket Table */}
@@ -1278,14 +1396,78 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Session Analysis */}
+      {isPartialReport && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
+      {!isPartialReport && analysis.session_analysis && (
+        <div className="space-y-4">
+          <h2 className="font-bold text-2xl">Session Analysis</h2>
+          <p className="text-fg-dim text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time — like a single night of betting.</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Worst session */}
+            {analysis.session_analysis.worst_session && (
+              <div className="card border-loss/20 bg-loss/5 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-loss">Worst Session</h3>
+                  <span className="text-xs text-fg-muted">{analysis.session_analysis.worst_session.date}</span>
+                </div>
+                <p className="font-mono text-2xl font-bold text-loss mb-2">
+                  {analysis.session_analysis.worst_session.net >= 0 ? '+' : ''}${Math.round(analysis.session_analysis.worst_session.net).toLocaleString()}
+                </p>
+                <div className="flex gap-4 text-xs text-fg-muted mb-3">
+                  <span>{analysis.session_analysis.worst_session.bets} bets</span>
+                  <span>{analysis.session_analysis.worst_session.duration}</span>
+                </div>
+                <p className="text-sm text-fg-bright">{analysis.session_analysis.worst_session.description}</p>
+              </div>
+            )}
+            {/* Best session */}
+            {analysis.session_analysis.best_session && (
+              <div className="card border-win/20 bg-win/5 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-win">Best Session</h3>
+                  <span className="text-xs text-fg-muted">{analysis.session_analysis.best_session.date}</span>
+                </div>
+                <p className="font-mono text-2xl font-bold text-win mb-2">
+                  +${Math.round(analysis.session_analysis.best_session.net).toLocaleString()}
+                </p>
+                <div className="flex gap-4 text-xs text-fg-muted mb-3">
+                  <span>{analysis.session_analysis.best_session.bets} bets</span>
+                  <span>{analysis.session_analysis.best_session.duration}</span>
+                </div>
+                <p className="text-sm text-fg-bright">{analysis.session_analysis.best_session.description}</p>
+              </div>
+            )}
+          </div>
+          <div className="card p-5">
+            <p className="text-sm text-fg-bright">
+              Your winning sessions average{' '}
+              <span className="font-mono font-medium text-win">{analysis.session_analysis.avg_bets_per_winning_session}</span> bets.
+              Your losing sessions average{' '}
+              <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
+            </p>
+            <p className="text-fg-muted text-sm mt-2">{analysis.session_analysis.insight}</p>
+            <p className="text-fg-dim text-xs mt-2">
+              {analysis.session_analysis.total_sessions} sessions analyzed (3+ hour gap = new session)
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Session Analysis ── */}
+      {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
+        <SessionAnalysisSection sessionData={analysis.session_detection} />
+      )}
+
+      {/* ── Bet-by-Bet Annotations ── */}
+      {analysis.bet_annotations && analysis.bet_annotations.annotations.length > 0 && (
+        <BetAnnotationsSection data={analysis.bet_annotations} />
+      )}
+
       {/* Edge Profile */}
       {isPartialReport && <SkeletonSection label="Ranking your edges and leaks by dollar impact..." />}
       {!isPartialReport && analysis.edge_profile && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 7</span>
-            <h2 className="font-bold text-2xl">Edge Profile</h2>
-          </div>
+          <h2 className="font-bold text-2xl">Edge Profile</h2>
           <p className="text-fg-dim text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
           {/* Sharp Score */}
           <div className="card p-6">
@@ -1362,168 +1544,128 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* ── BetIQ Score — Pro/Sharp only ── */}
-      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && !analysis.betiq.insufficient_data && (
-        <div className="case-card p-6">
-          <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
-            <span className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}</span>
-            <span className="font-mono text-sm text-fg-dim">/100</span>
-            <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
-          </div>
-          <p className="text-fg-muted text-sm mb-6 leading-relaxed">{analysis.betiq.interpretation}</p>
-          <div className="vitals-strip grid-cols-2 md:grid-cols-3">
-            {[
-              { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
-              { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
-              { label: 'Sophistication', hint: 'Straight bets vs parlays — higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
-              { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
-              { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
-              { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
-            ].map(c => (
-              <div key={c.label} className="vitals-cell">
-                <div className="data-label mb-0.5">{c.label}</div>
-                <div className="text-[9px] text-fg-dim leading-tight mb-1">{c.hint}</div>
-                <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
-                <div className="h-1 mt-2 bg-surface-raised overflow-hidden">
-                  <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && analysis.betiq.insufficient_data && (
-        <div className="case-card p-6">
-          <div className="case-header mb-3">BETIQ — SKILL ASSESSMENT</div>
-          <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
-        </div>
-      )}
-      {/* BetIQ — free tier teaser */}
-      {tier === 'free' && analysis.betiq && (
-        <div className="case-card p-6 relative overflow-hidden">
-          <div className="case-header mb-2">BETIQ — SKILL ASSESSMENT</div>
-          <div className="blur-sm pointer-events-none">
-            <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
-            <div className="vitals-strip grid-cols-3 mt-4">
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
-            </div>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-xl mb-1">🔒</p>
-              <p className="text-fg-muted text-sm font-mono">Upgrade to Pro to unlock BetIQ</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </section>
 
-      {/* Behavioral Patterns */}
-      {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
-      {!isPartialReport && behavioral_patterns.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 8</span>
-            <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
-          </div>
-          <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting — some help you, some hurt you.</p>
-          <div className="grid gap-3">
-            {behavioral_patterns.map((pat, i) => (
-              <div key={i} className="card p-5 flex gap-4">
-                <span className="text-2xl mt-0.5 shrink-0">
-                  {pat.impact === 'positive' ? '✅' : pat.impact === 'negative' ? '❌' : '➖'}
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium">{pat.pattern_name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      pat.impact === 'positive' ? 'bg-win/10 text-win'
-                        : pat.impact === 'negative' ? 'bg-loss/10 text-loss'
-                        : 'bg-fg-dim/50 text-fg-muted'
-                    }`}>
-                      {pat.impact}
-                    </span>
-                  </div>
-                  <p className="text-fg-bright text-sm">{pat.description}</p>
-                  <div className="flex gap-4 mt-2 text-xs text-fg-muted">
-                    <span>Frequency: {pat.frequency}</span>
-                    <span>Evidence: {pat.data_points}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* ═══ CHAPTER 4: WHAT IT COSTS ═══ */}
+      <section id="chapter-cost">
+      <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
 
-      {/* Session Analysis */}
-      {isPartialReport && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
-      {!isPartialReport && analysis.session_analysis && (
-        <div className="space-y-4">
-          <h2 className="font-bold text-2xl">Session Analysis</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time — like a single night of betting.</p>
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Worst session */}
-            {analysis.session_analysis.worst_session && (
-              <div className="card border-loss/20 bg-loss/5 p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-loss">Worst Session</h3>
-                  <span className="text-xs text-fg-muted">{analysis.session_analysis.worst_session.date}</span>
+            {/* Leak Prioritizer */}
+            {isPartialReport && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
+            {!isPartialReport && prioritizedLeaks.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
+
+                <div className="finding-card border-l-scalpel p-5">
+                  <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
+                  <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
                 </div>
-                <p className="font-mono text-2xl font-bold text-loss mb-2">
-                  {analysis.session_analysis.worst_session.net >= 0 ? '+' : ''}${Math.round(analysis.session_analysis.worst_session.net).toLocaleString()}
-                </p>
-                <div className="flex gap-4 text-xs text-fg-muted mb-3">
-                  <span>{analysis.session_analysis.worst_session.bets} bets</span>
-                  <span>{analysis.session_analysis.worst_session.duration}</span>
+
+                <div className="space-y-3">
+                  {prioritizedLeaks.map((item, i) => {
+                    const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    return (
+                      <div key={i} className="card p-5">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono text-lg font-bold text-scalpel shrink-0">#{i + 1}</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{item.name}</h3>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'bias' ? 'bg-orange-400/10 text-orange-400' : 'bg-loss/10 text-loss'}`}>
+                                  {item.type}
+                                </span>
+                                {item.severity && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.medium}`}>
+                                    {item.severity}
+                                  </span>
+                                )}
+                              </div>
+                              {item.detail && <p className="text-fg-muted text-xs mt-0.5">{item.detail}</p>}
+                            </div>
+                          </div>
+                          <span className="font-mono text-lg font-bold text-loss shrink-0">
+                            -${Math.round(item.cost).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-fg-muted">Share of total leaks</span>
+                            <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-2 bg-base rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="bg-base/50 rounded-sm p-3">
+                          <p className="text-fg-muted text-xs mb-1">Fix</p>
+                          <p className="text-fg-bright text-sm">{item.fix}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-sm text-fg-bright">{analysis.session_analysis.worst_session.description}</p>
               </div>
             )}
-            {/* Best session */}
-            {analysis.session_analysis.best_session && (
-              <div className="card border-win/20 bg-win/5 p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-win">Best Session</h3>
-                  <span className="text-xs text-fg-muted">{analysis.session_analysis.best_session.date}</span>
+
+            {/* What If Simulator */}
+            {isPartialReport && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
+            {!isPartialReport && whatIfs.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="font-bold text-2xl">What-If Simulator</h2>
+                <p className="text-fg-muted text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
+                <div className="grid gap-3">
+                  {whatIfs.map((wi, i) => {
+                    const diff = wi.hypothetical - wi.actual;
+                    const better = diff > 0;
+                    const maxVal = Math.max(Math.abs(wi.actual), Math.abs(wi.hypothetical));
+                    const actualPct = maxVal > 0 ? (Math.abs(wi.actual) / maxVal) * 100 : 0;
+                    const hypoPct = maxVal > 0 ? (Math.abs(wi.hypothetical) / maxVal) * 100 : 0;
+                    return (
+                      <div key={i} className="card p-5">
+                        <p className="text-fg-bright text-sm mb-4">{wi.label}</p>
+                        <div className="space-y-3 mb-4">
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-fg-muted">Actual P&L</span>
+                              <span className={`font-mono font-semibold ${wi.actual >= 0 ? 'text-win' : 'text-loss'}`}>
+                                {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${actualPct}%` }} />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-fg-muted">Hypothetical P&L</span>
+                              <span className={`font-mono font-semibold ${wi.hypothetical >= 0 ? 'text-win' : 'text-loss'}`}>
+                                {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-loss'}`} style={{ width: `${hypoPct}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-mono font-semibold ${better ? 'bg-win/10 text-win' : 'bg-loss/10 text-loss'}`}>
+                          {better ? '↑' : '↓'} {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="font-mono text-2xl font-bold text-win mb-2">
-                  +${Math.round(analysis.session_analysis.best_session.net).toLocaleString()}
-                </p>
-                <div className="flex gap-4 text-xs text-fg-muted mb-3">
-                  <span>{analysis.session_analysis.best_session.bets} bets</span>
-                  <span>{analysis.session_analysis.best_session.duration}</span>
-                </div>
-                <p className="text-sm text-fg-bright">{analysis.session_analysis.best_session.description}</p>
               </div>
             )}
-          </div>
-          <div className="card p-5">
-            <p className="text-sm text-fg-bright">
-              Your winning sessions average{' '}
-              <span className="font-mono font-medium text-win">{analysis.session_analysis.avg_bets_per_winning_session}</span> bets.
-              Your losing sessions average{' '}
-              <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
-            </p>
-            <p className="text-fg-muted text-sm mt-2">{analysis.session_analysis.insight}</p>
-            <p className="text-fg-dim text-xs mt-2">
-              {analysis.session_analysis.total_sessions} sessions analyzed (3+ hour gap = new session)
-            </p>
-          </div>
-        </div>
-      )}
 
-      {/* ── Session Analysis ── */}
-      {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
-        <SessionAnalysisSection sessionData={analysis.session_detection} />
-      )}
+      </section>
 
-      {/* ── Bet-by-Bet Annotations ── */}
-      {analysis.bet_annotations && analysis.bet_annotations.annotations.length > 0 && (
-        <BetAnnotationsSection data={analysis.bet_annotations} />
-      )}
+      {/* ═══ CHAPTER 5: PROTOCOL ═══ */}
+      <section id="chapter-protocol">
+      <ChapterHeader number={5} title="Protocol" subtitle="Your personalized action plan" />
 
       {/* Action Plan */}
       {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
@@ -1550,10 +1692,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 10</span>
-              <h2 className="font-bold text-2xl">Your Rules</h2>
-            </div>
+            <h2 className="font-bold text-2xl">Your Rules</h2>
             <button
               onClick={() => {
                 const text = (analysis.personal_rules ?? [])
@@ -1645,6 +1784,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {!readOnly && (
+        <div className="border-t border-white/[0.04] pt-5 mt-5">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
+          <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+        </div>
+      )}
+
+      <div className="case-card p-5 text-center space-y-3 mt-4">
+        <p className="text-fg-bright font-medium">What happens next?</p>
+        <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
+      </div>
+
+      </section>
+
       {/* Sharp tab nudge */}
       {hasSharpContent && !readOnly && (
         isSharp ? (
@@ -1693,6 +1846,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Feedback */}
       {!readOnly && <ReportFeedback reportId={reportId} />}
       </>}
+
 
       {/* ═══ Sharp Tab ═══ */}
       {activeTab === 'sharp' && (
