@@ -9,6 +9,8 @@ import {
 import ReportFeedback from './ReportFeedback';
 import type { ShareCardData } from './ShareCard';
 import ShareModal from './ShareModal';
+import ChapterNav from './report/ChapterNav';
+import ChapterHeader from './report/ChapterHeader';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
@@ -376,6 +378,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
         </div>
       </div>
+      <p className="text-fg-dim text-[10px] font-mono -mt-5 mb-5">Based on ROI, emotional control, and betting discipline</p>
 
       {/* What this report analyzes — collapsible */}
       <details className="border border-white/[0.04] rounded-sm bg-surface/50 mb-5">
@@ -799,7 +802,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px]">SEC. 4</span>
             <h2 className="font-bold text-2xl">Strategic Leaks</h2>
           </div>
-          <p className="text-fg-dim text-xs italic -mt-2">Specific bet types or sports where you&apos;re consistently losing money.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume — you&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1038,7 +1041,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Bets</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Win Rate</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3 hidden sm:table-cell">Implied</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3">Edge</th>
+                    <th className="text-right text-fg-muted font-medium px-4 py-3" title="Your win rate minus what the odds predict — positive means you're beating the line">Edge vs Odds</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Profit</th>
                   </tr>
@@ -1371,15 +1374,16 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className="text-fg-muted text-sm mb-6 leading-relaxed">{analysis.betiq.interpretation}</p>
           <div className="vitals-strip grid-cols-2 md:grid-cols-3">
             {[
-              { label: 'Line value', val: analysis.betiq.components.line_value, max: 25 },
-              { label: 'Calibration', val: analysis.betiq.components.calibration, max: 20 },
-              { label: 'Sophistication', val: analysis.betiq.components.sophistication, max: 15 },
-              { label: 'Specialization', val: analysis.betiq.components.specialization, max: 15 },
-              { label: 'Timing', val: analysis.betiq.components.timing, max: 10 },
-              { label: 'Sample size', val: analysis.betiq.components.confidence, max: 15 },
+              { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
+              { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
+              { label: 'Sophistication', hint: 'Straight bets vs parlays — higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
+              { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
+              { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
+              { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
             ].map(c => (
               <div key={c.label} className="vitals-cell">
-                <div className="data-label mb-1">{c.label}</div>
+                <div className="data-label mb-0.5">{c.label}</div>
+                <div className="text-[9px] text-fg-dim leading-tight mb-1">{c.hint}</div>
                 <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
                 <div className="h-1 mt-2 bg-surface-raised overflow-hidden">
                   <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
