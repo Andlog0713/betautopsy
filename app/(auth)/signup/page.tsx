@@ -43,6 +43,8 @@ export default function SignupPage() {
     }
 
     trackSignup();
+    // Send welcome onboarding email (fire and forget)
+    fetch('/api/send-welcome', { method: 'POST' }).catch(() => {});
     router.push('/dashboard');
     router.refresh();
   }
