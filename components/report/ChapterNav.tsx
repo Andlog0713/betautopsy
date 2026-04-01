@@ -13,9 +13,10 @@ const CHAPTERS = [
 interface ChapterNavProps {
   tier?: 'free' | 'pro' | 'sharp';
   onSharpClick?: () => void;
+  readOnly?: boolean;
 }
 
-export default function ChapterNav({ tier = 'free', onSharpClick }: ChapterNavProps) {
+export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = false }: ChapterNavProps) {
   const [activeChapter, setActiveChapter] = useState('chapter-summary');
   const isSharp = tier === 'sharp';
 
@@ -74,9 +75,17 @@ export default function ChapterNav({ tier = 'free', onSharpClick }: ChapterNavPr
         {/* Sharp tab in nav */}
         <button
           onClick={() => {
-            if (isSharp && onSharpClick) {
+            if (readOnly) {
+              // In demo/readOnly mode, scroll to pricing on the landing page
+              const pricing = document.getElementById('pricing');
+              if (pricing) {
+                pricing.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                window.location.href = '/#pricing';
+              }
+            } else if (isSharp && onSharpClick) {
               onSharpClick();
-            } else if (!isSharp) {
+            } else {
               window.location.href = '/pricing';
             }
           }}

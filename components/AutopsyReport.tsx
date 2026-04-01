@@ -423,7 +423,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      <ChapterNav tier={tier} onSharpClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+      <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
 
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
