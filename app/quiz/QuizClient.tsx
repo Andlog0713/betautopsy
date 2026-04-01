@@ -175,8 +175,8 @@ export default function QuizClient() {
           >
             Find Out →
           </button>
-          <p className="text-fg-dim text-xs mt-6">2 minutes · 100% free</p>
-          <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors mt-4 inline-block">
+          <p className="text-fg-muted text-xs mt-6">2 minutes · 100% free</p>
+          <Link href="/" className="text-fg-muted text-xs hover:text-fg transition-colors mt-4 inline-block">
             ← Back to BetAutopsy
           </Link>
           {gamblingFooter}
@@ -259,7 +259,7 @@ export default function QuizClient() {
                     </button>
                   ))}
                 </div>
-                <div className="flex justify-between text-fg-dim font-mono text-[9px]">
+                <div className="flex justify-between text-fg-muted font-mono text-xs">
                   <span>FORGET IT</span>
                   <span>RUINS MY DAY</span>
                 </div>
@@ -412,7 +412,7 @@ export default function QuizClient() {
               </button>
             </div>
             <p className="text-fg-dim text-[10px] font-mono">No spam. Just your results.</p>
-            <button onClick={() => setPhase('full_result')} className="text-xs text-fg-dim hover:text-fg-muted transition-colors">
+            <button onClick={() => setPhase('full_result')} className="text-xs text-fg-muted hover:text-fg transition-colors">
               Skip — show me now
             </button>
           </div>
@@ -457,7 +457,7 @@ export default function QuizClient() {
               <div className={`h-full transition-all duration-1000 ${eBarColor}`} style={{ width: `${result.emotion_estimate}%` }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${result.emotion_estimate}%` }} />
             </div>
-            <p className="text-fg-dim text-xs font-mono">
+            <p className="text-fg-muted text-xs">
               {result.emotion_estimate <= 30 ? 'Your emotions seem well under control. That\'s rare.' :
                result.emotion_estimate <= 55 ? 'Mostly disciplined, but emotions creep in sometimes.' :
                result.emotion_estimate <= 75 ? 'Emotions are a factor in your betting. This is costing you.' :
@@ -474,7 +474,7 @@ export default function QuizClient() {
             <Link href="/signup" className="btn-primary inline-block !px-6 !py-2.5 text-sm font-mono">
               Get Your Real Autopsy — Free
             </Link>
-            <p className="text-fg-dim text-[10px] font-mono">No credit card. Upload takes 2 minutes.</p>
+            <p className="text-fg-muted text-xs font-mono">No credit card. Upload takes 2 minutes.</p>
           </div>
 
           {/* 4. Biases */}

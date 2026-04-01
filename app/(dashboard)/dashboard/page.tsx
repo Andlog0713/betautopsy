@@ -222,7 +222,7 @@ export default function DashboardPage() {
             <div className="finding-card border-l-scalpel flex items-center justify-between gap-4">
               <div>
                 <p className="text-fg-bright font-medium">🔥 Start your streak — run an autopsy this week</p>
-                <p className="text-fg-dim text-xs mt-0.5 font-mono">Weekly check-ins unlock milestone badges and keep you accountable.</p>
+                <p className="text-fg-muted text-xs mt-0.5 font-mono">Weekly check-ins unlock milestone badges and keep you accountable.</p>
               </div>
               <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
             </div>
@@ -302,15 +302,15 @@ export default function DashboardPage() {
                       {streakCount > 0 ? `${streakCount}-week streak` : 'No active streak'}
                     </span>
                     {streakBest > 1 && (
-                      <span className="font-mono text-[10px] text-fg-dim">Personal best: {streakBest}</span>
+                      <span className="font-mono text-xs text-fg-muted">Personal best: {streakBest}</span>
                     )}
                   </div>
                   {/* Freeze */}
                   <div className="flex items-center gap-2 mt-2" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
-                    <span className="font-mono text-[10px] text-fg-dim">
+                    <span className="font-mono text-xs text-fg-muted">
                       ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
                     </span>
-                    <span className="font-mono text-[9px] text-fg-dim">— miss a week without losing your streak (resets monthly)</span>
+                    <span className="font-mono text-xs text-fg-muted">— miss a week without losing your streak (resets monthly)</span>
                   </div>
                   {/* Milestone badges */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
@@ -351,7 +351,7 @@ export default function DashboardPage() {
                 <TrendCell label="Parlay %" current={mask(`${latest.parlay_percent.toFixed(0)}%`)} prev={prev?.parlay_percent} unit="%" lowerIsBetter masked={mask('x') !== 'x'} />
               </div>
               {!prev && (
-                <p className="font-mono text-[10px] text-fg-dim tracking-wider">Run another autopsy next week to start tracking progress.</p>
+                <p className="font-mono text-xs text-fg-muted tracking-wider">Run another autopsy next week to start tracking progress.</p>
               )}
             </div>
           )}
@@ -438,13 +438,13 @@ export default function DashboardPage() {
                 <span className="data-label block">Bankroll</span>
                 <p className="font-mono text-lg text-fg-bright">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
               </div>
-              <Link href="/settings" className="font-mono text-[10px] text-fg-dim hover:text-scalpel transition-colors tracking-wider">Edit in Settings</Link>
+              <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider">Edit in Settings</Link>
             </div>
           ) : (
             <div className="case-card p-5 flex items-center justify-between">
               <div>
                 <p className="text-fg-bright text-sm">Set your bankroll for more accurate analysis</p>
-                <p className="font-mono text-[10px] text-fg-dim mt-0.5">Helps us assess your risk level</p>
+                <p className="font-mono text-xs text-fg-muted mt-0.5">Helps us assess your risk level</p>
               </div>
               <Link href="/settings" className="text-sm text-scalpel hover:underline font-mono">Set up your profile →</Link>
             </div>
@@ -466,7 +466,7 @@ export default function DashboardPage() {
                     </div>
                     <p className="text-fg-muted text-xs">{m.criteria}</p>
                     {m.earned && m.date && (
-                      <p className="font-mono text-[10px] text-fg-dim mt-1">{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      <p className="font-mono text-xs text-fg-muted mt-1">{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                     )}
                   </div>
                 ))}
@@ -502,7 +502,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-fg-bright text-sm font-medium">{journalCount} journal entries logged</p>
-                  <p className="text-fg-dim text-xs font-mono mt-0.5">
+                  <p className="text-fg-muted text-xs font-mono mt-0.5">
                     {journalCount >= 30
                       ? 'Correlation analysis available on your next autopsy'
                       : `${30 - journalCount} more entries until correlation insights unlock`
@@ -583,7 +583,7 @@ function TrendCell({
   masked?: boolean;
 }) {
   let changeText = '';
-  let changeColor = 'text-fg-dim';
+  let changeColor = 'text-fg-muted';
 
   if (!masked && prev !== undefined && prev !== null) {
     if (isGrade && typeof prev === 'string') {
@@ -611,7 +611,7 @@ function TrendCell({
     <div className="vitals-cell">
       <span className="data-label block mb-1">{label}</span>
       <p className="font-mono text-xl font-semibold text-fg-bright">{current}</p>
-      {changeText && <p className={`font-mono text-[10px] mt-1 ${changeColor}`}>{changeText}</p>}
+      {changeText && <p className={`font-mono text-xs mt-1 ${changeColor}`}>{changeText}</p>}
     </div>
   );
 }

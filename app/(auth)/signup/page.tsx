@@ -57,7 +57,7 @@ export default function SignupPage() {
         <p className="text-fg-muted text-sm max-w-xs mx-auto">
           We sent a confirmation link to <span className="text-fg-bright font-medium">{email}</span>. Click it to activate your account.
         </p>
-        <p className="font-mono text-[10px] text-fg-dim tracking-wider">
+        <p className="font-mono text-xs text-fg-muted tracking-wider">
           DIDN&apos;T GET IT? CHECK YOUR SPAM FOLDER, OR{' '}
           <button onClick={() => setEmailSent(false)} className="text-scalpel hover:underline">TRY AGAIN</button>.
         </p>

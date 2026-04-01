@@ -389,7 +389,7 @@ export default function ReportsPage() {
         <p className="text-fg-muted text-sm">
           Your betting habits, dissected. No sugarcoating.
         </p>
-        <p className="text-fg-dim text-xs mt-0.5">
+        <p className="text-fg-muted text-xs mt-0.5">
           {reports.length} report{reports.length !== 1 ? 's' : ''} generated
         </p>
       </div>
@@ -784,7 +784,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
       {elapsed > 90 && (
         <p className="text-caution/70 text-xs">Still working — large bet histories take longer to analyze.</p>
       )}
-      <p className="text-fg-dim text-xs font-mono">Elapsed: {timeStr}</p>
+      <p className="text-fg-muted text-xs font-mono">Elapsed: {timeStr}</p>
     </div>
   );
 }
@@ -835,7 +835,7 @@ function AnalyzingProgress() {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="text-fg-dim text-[10px]">{estimate}</p>
+      <p className="text-fg-muted text-xs">{estimate}</p>
     </div>
   );
 }

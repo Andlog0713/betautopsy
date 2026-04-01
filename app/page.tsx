@@ -37,10 +37,10 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
-            <Link href="/how-to-upload" className="font-mono text-[11px] text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
+            <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
               NOT SURE HOW TO GET YOUR DATA? →
             </Link>
-            <span className="font-mono text-[10px] text-fg-dim tracking-wider">
+            <span className="font-mono text-xs text-fg-muted tracking-wider">
               NO CREDIT CARD · WORKS WITH PIKKIT + ANY CSV
             </span>
           </div>
@@ -138,7 +138,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <span className="case-header block mb-1">Emotion Score Over Time</span>
-              <p className="text-fg-dim text-xs mb-3 font-mono">Lower = better. Under 40 = controlled.</p>
+              <p className="text-fg-muted text-xs mb-3 font-mono">Lower = better. Under 40 = controlled.</p>
               <div className="space-y-2.5">
                 {[
                   { score: 72, date: 'Week 1' },
@@ -147,7 +147,7 @@ export default function LandingPage() {
                   { score: 41, date: 'Week 6' },
                 ].map((r) => (
                   <div key={r.date} className="flex items-center gap-3">
-                    <span className="font-mono text-[10px] text-fg-dim w-14 shrink-0">{r.date}</span>
+                    <span className="font-mono text-xs text-fg-muted w-14 shrink-0">{r.date}</span>
                     <div className="flex-1 h-2 bg-surface-raised overflow-hidden rounded-sm">
                       <div className="h-full rounded-sm" style={{ width: `${r.score}%`, background: r.score <= 45 ? '#00C9A7' : r.score <= 60 ? '#D29922' : '#E8453C' }} />
                     </div>
@@ -168,7 +168,7 @@ export default function LandingPage() {
                 <div key={m.label} className="flex items-center justify-between py-0.5">
                   <span className="text-sm text-fg-muted">{m.label}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm text-fg-dim">{m.from}</span>
+                    <span className="font-mono text-sm text-fg-muted">{m.from}</span>
                     <span className="text-scalpel">{m.arrow}</span>
                     <span className="font-mono text-sm font-medium text-scalpel">{m.to}</span>
                   </div>
@@ -194,7 +194,7 @@ export default function LandingPage() {
           <p className="text-fg-muted text-sm mb-4 max-w-xl">
             280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
-          <p className="text-fg-dim text-xs mb-8 max-w-xl font-mono">
+          <p className="text-fg-muted text-xs mb-8 max-w-xl">
             THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
@@ -257,7 +257,7 @@ export default function LandingPage() {
               <span className="case-header block mb-3">Pro</span>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
-                <span className="text-fg-dim text-sm font-mono">/mo</span>
+                <span className="text-fg-muted text-sm font-mono">/mo</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {[
@@ -279,7 +279,7 @@ export default function LandingPage() {
               <span className="case-header block mb-3">Sharp</span>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$24.99</span>
-                <span className="text-fg-dim text-sm font-mono">/mo</span>
+                <span className="text-fg-muted text-sm font-mono">/mo</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {['Everything in Pro', 'Leak Prioritizer (ranked by $ impact)', 'What-If Simulator', 'Early access to new features'].map((f) => (
@@ -291,7 +291,7 @@ export default function LandingPage() {
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
             </div>
           </div>
-          <p className="text-fg-dim text-xs mt-6 font-mono">
+          <p className="text-fg-muted text-xs mt-6">
             Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
           </p>
         </div>
@@ -311,12 +311,12 @@ export default function LandingPage() {
           ].map(post => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="case-card p-5 hover:border-white/[0.08] transition-colors group">
               <h3 className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors mb-2 leading-snug">{post.title}</h3>
-              <span className="font-mono text-[10px] text-fg-dim">{post.time}</span>
+              <span className="font-mono text-xs text-fg-muted">{post.time}</span>
             </Link>
           ))}
         </div>
         <div className="text-center mt-6">
-          <Link href="/blog" className="font-mono text-[11px] text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
+          <Link href="/blog" className="font-mono text-xs text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
         </div>
       </section>
 
@@ -353,13 +353,13 @@ export default function LandingPage() {
                 { label: 'Log in', href: '/login' },
                 { label: 'Sign up', href: '/signup' },
               ].map(link => (
-                <Link key={link.href} href={link.href} className="font-mono text-[11px] text-fg-dim hover:text-fg transition-colors tracking-wider">
+                <Link key={link.href} href={link.href} className="font-mono text-xs text-fg-muted hover:text-fg transition-colors tracking-wider">
                   {link.label}
                 </Link>
               ))}
             </div>
           </div>
-          <p className="text-fg-dim text-[11px] font-mono leading-relaxed">
+          <p className="text-fg-muted text-xs leading-relaxed">
             BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice.
             Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>

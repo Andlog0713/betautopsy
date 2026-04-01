@@ -129,7 +129,7 @@ export default function PricingPage() {
                       ${(config.annualPrice / 12).toFixed(2)}
                     </span>
                     <span className="text-fg-muted text-sm">/mo</span>
-                    <p className="text-fg-dim text-xs mt-1">
+                    <p className="text-fg-muted text-xs mt-1">
                       ${config.annualPrice}/year — save {Math.round((1 - config.annualPrice / (config.price * 12)) * 100)}%
                     </p>
                   </>

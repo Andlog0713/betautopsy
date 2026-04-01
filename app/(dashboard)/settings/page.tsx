@@ -232,7 +232,7 @@ export default function SettingsPage() {
             {bankrollSaved ? '✓ Saved' : bankrollSaving ? '...' : 'Save'}
           </button>
         </div>
-        <p className="text-fg-dim text-xs">
+        <p className="text-fg-muted text-xs">
           This helps us assess your risk level. We never share this.
         </p>
 
