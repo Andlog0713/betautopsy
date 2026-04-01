@@ -271,69 +271,74 @@ export default function DashboardShell({
         )}
       </header>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen">
-        <div className="px-5 pt-5 pb-4">
+      {/* Desktop sidebar — collapsed by default, expands on hover */}
+      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
+        <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
-            <Logo size="xs" variant="horizontal" theme="dark" />
+            <span className="group-hover/sidebar:hidden"><Logo size="xs" variant="mark" theme="dark" /></span>
+            <span className="hidden group-hover/sidebar:block"><Logo size="xs" variant="horizontal" theme="dark" /></span>
           </Link>
         </div>
 
-        <nav className="flex-1 px-2 space-y-0.5">
+        <nav className="flex-1 px-1 group-hover/sidebar:px-2 space-y-0.5 transition-all duration-200">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              title={item.label}
               className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                 pathname === item.href ? activeClass : inactiveClass
               }`}
             >
-              <item.Icon />
-              {item.label}
+              <span className="shrink-0"><item.Icon /></span>
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
             </Link>
           ))}
           <div className="mt-3 pt-3 border-t border-white/[0.04]">
             {profile?.is_admin && (
               <Link
                 href="/admin/reports"
+                title="Admin"
                 className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname.startsWith('/admin') ? activeClass : inactiveClass
                 }`}
               >
-                <IconAdmin />
-                Admin
+                <span className="shrink-0"><IconAdmin /></span>
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Admin</span>
               </Link>
             )}
             {bottomNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
+                title={item.label}
                 className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname === item.href ? activeClass : inactiveClass
                 }`}
               >
-                <item.Icon />
-                {item.label}
+                <span className="shrink-0"><item.Icon /></span>
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
               </Link>
             ))}
           </div>
         </nav>
 
-        <div className="p-4 border-t border-white/[0.04] space-y-3">
+        <div className="p-2 group-hover/sidebar:p-4 border-t border-white/[0.04] space-y-3 transition-all duration-200">
           {tier === 'free' && (
             <Link
               href="/pricing"
-              className="flex items-center justify-center gap-1.5 font-mono text-[11px] tracking-wider bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-sm px-3 py-2 transition-colors border border-scalpel/20"
+              title="Upgrade to Pro"
+              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-sm px-2 py-2 transition-colors border border-scalpel/20"
             >
-              Upgrade to Pro
               <IconArrowUpRight />
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Upgrade to Pro</span>
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-dim shrink-0">
+            <div className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
               <div className="flex items-center gap-1.5">
                 <p className="font-mono text-[10px] text-fg truncate">{profile?.display_name ?? profile?.email}</p>
                 {(profile?.streak_count ?? 0) > 0 && (
@@ -342,14 +347,16 @@ export default function DashboardShell({
               </div>
               <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
             </div>
-            <EyeToggle />
-            <button
-              onClick={handleSignOut}
-              className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-sm hover:bg-white/[0.03]"
-              title="Sign out"
-            >
-              <IconSignOut />
-            </button>
+            <div className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 flex items-center gap-1">
+              <EyeToggle />
+              <button
+                onClick={handleSignOut}
+                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-sm hover:bg-white/[0.03]"
+                title="Sign out"
+              >
+                <IconSignOut />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
