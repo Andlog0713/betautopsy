@@ -148,11 +148,11 @@ export default function NavBar() {
           </div>
           <div className="flex-1 flex flex-col justify-center px-6 space-y-6">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className="font-mono text-lg tracking-wider text-fg-muted hover:text-fg transition-colors">
+              <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-fg-muted hover:text-fg transition-colors">
                 {link.label}
               </Link>
             ))}
-            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="font-mono text-lg tracking-wider text-fg-muted hover:text-fg transition-colors">FAQ</Link>
+            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-fg-muted hover:text-fg transition-colors">FAQ</Link>
             <div className="pt-6 border-t border-white/[0.04]">
               {user ? (
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>

@@ -195,13 +195,13 @@ export default function DashboardShell({
           </button>
         </div>
         {mobileNavOpen && (
-          <nav className="border-t border-white/[0.04] px-3 py-3 space-y-0.5 animate-fade-in bg-surface">
+          <nav className="border-t border-white/[0.04] px-3 py-3 space-y-1 animate-fade-in bg-surface">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
                   pathname === item.href
                     ? 'bg-scalpel-muted text-scalpel'
                     : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
@@ -214,7 +214,7 @@ export default function DashboardShell({
             <Link
               href="/pricing"
               onClick={() => setMobileNavOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
+              className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
                 pathname === '/pricing'
                   ? 'bg-scalpel-muted text-scalpel'
                   : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
@@ -227,7 +227,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/reports"
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
                   pathname.startsWith('/admin')
                     ? 'bg-scalpel-muted text-scalpel'
                     : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
@@ -242,7 +242,7 @@ export default function DashboardShell({
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
                   pathname === item.href
                     ? 'bg-scalpel-muted text-scalpel'
                     : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
@@ -284,7 +284,7 @@ export default function DashboardShell({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                 pathname === item.href ? activeClass : inactiveClass
               }`}
             >
@@ -296,7 +296,7 @@ export default function DashboardShell({
             {profile?.is_admin && (
               <Link
                 href="/admin/reports"
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname.startsWith('/admin') ? activeClass : inactiveClass
                 }`}
               >
@@ -308,7 +308,7 @@ export default function DashboardShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm font-mono text-[11px] tracking-wider transition-all duration-150 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname === item.href ? activeClass : inactiveClass
                 }`}
               >
