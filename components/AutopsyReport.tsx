@@ -291,11 +291,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
     strategic_leaks.forEach((leak) => {
       if (leak.roi_impact < 0) {
-        // Find matching bets to compute actual dollar loss
-        const lower = leak.category.toLowerCase();
+        // Find matching bets — use exact sport and/or bet_type matching, not fuzzy includes
+        const lower = leak.category.toLowerCase().trim();
         const matching = settled.filter((b) => {
-          const key = `${b.sport} ${b.bet_type}`.toLowerCase();
-          return key.includes(lower) || lower.includes(b.sport.toLowerCase()) || lower.includes(b.bet_type.toLowerCase());
+          const sport = b.sport.toLowerCase();
+          const betType = b.bet_type.toLowerCase();
+          const combined = `${sport} ${betType}`;
+          // Exact match: "nba props" matches sport=nba + bet_type=prop/props
+          // Or single-word match: "nba" matches sport=nba, "parlays" matches bet_type=parlay
+          return combined === lower
+            || sport === lower
+            || betType === lower
+            || (lower.includes(' ') && sport === lower.split(' ')[0] && lower.split(' ').slice(1).some(w => betType.includes(w)));
         });
         const totalLoss = matching.reduce((s, b) => s + Number(b.profit), 0);
         const cost = Math.abs(totalLoss);
@@ -1699,7 +1706,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   .map((r: PersonalRule, i: number) => `${i + 1}. ${r.rule}\n   Why: ${r.reason}`)
                   .join('\n\n');
                 navigator.clipboard.writeText(text);
+                const btn = document.getElementById('copy-rules-btn');
+                if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = 'Copy Rules'; }, 2000); }
               }}
+              id="copy-rules-btn"
               className="text-xs text-fg-muted hover:text-scalpel transition-colors"
             >
               Copy Rules
