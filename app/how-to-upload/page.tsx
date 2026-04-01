@@ -110,7 +110,7 @@ export default function HowToUploadPage() {
               <p className="text-xs text-fg-muted mt-2">
                 💰 From Pikkit: you&apos;ll get <span className="text-fg-bright">$3–$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
               </p>
-              <p className="text-xs text-fg-dim mt-3">
+              <p className="text-xs text-fg-muted mt-3">
                 Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
               </p>
               <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
@@ -196,7 +196,7 @@ export default function HowToUploadPage() {
         </div>
 
         {/* Disclaimer */}
-        <p className="text-fg-dim text-xs text-center mt-12">
+        <p className="text-fg-muted text-xs text-center mt-12">
           BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
         </p>
       </div>
@@ -239,7 +239,7 @@ function AiPromptBlock() {
           )}
         </button>
       </div>
-      <p className="text-xs text-fg-dim mt-2">
+      <p className="text-xs text-fg-muted mt-2">
         Paste the AI&apos;s output into a text file, save as .csv, and upload it here.
       </p>
     </div>

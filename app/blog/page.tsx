@@ -51,7 +51,7 @@ export default function BlogIndexPage() {
               {post.title}
             </h2>
             <p className="text-fg-muted text-sm mb-3">{post.description}</p>
-            <div className="flex items-center gap-3 text-xs text-fg-dim">
+            <div className="flex items-center gap-3 text-xs text-fg-muted">
               <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
               <span>·</span>
               <span>{post.readTime}</span>

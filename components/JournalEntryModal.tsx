@@ -88,7 +88,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.04]">
           <div>
             <div className="case-header">PRE-BET CHECK-IN</div>
-            <p className="text-fg-dim text-xs font-mono mt-1">Log your state before you bet. 30 seconds.</p>
+            <p className="text-fg-muted text-xs font-mono mt-1">Log your state before you bet. 30 seconds.</p>
           </div>
           <button onClick={onClose} className="text-fg-dim hover:text-fg transition-colors text-lg leading-none">&times;</button>
         </div>
@@ -113,8 +113,8 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
               ))}
             </div>
             <div className="flex justify-between mt-1">
-              <span className="font-mono text-[9px] text-fg-dim">GUESSING</span>
-              <span className="font-mono text-[9px] text-fg-dim">LOCKED IN</span>
+              <span className="font-mono text-xs text-fg-muted">GUESSING</span>
+              <span className="font-mono text-xs text-fg-muted">LOCKED IN</span>
             </div>
           </div>
 
@@ -147,7 +147,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                 <button
                   key={t.value}
                   onClick={() => setResearchTime(t.value as JournalEntryInput['research_time'])}
-                  className={`py-1.5 px-3 font-mono text-[11px] rounded-sm border transition-colors ${
+                  className={`py-1.5 px-3 font-mono text-xs rounded-sm border transition-colors ${
                     researchTime === t.value
                       ? 'border-scalpel/40 bg-scalpel-muted text-scalpel'
                       : 'border-white/[0.06] bg-surface-raised text-fg-dim hover:border-white/[0.1]'
@@ -179,7 +179,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                 >
                   <span>{toggle.icon}</span>
                   <span>{toggle.label}</span>
-                  <span className="ml-auto font-mono text-[10px]">{toggle.value ? 'YES' : 'NO'}</span>
+                  <span className="ml-auto font-mono text-xs">{toggle.value ? 'YES' : 'NO'}</span>
                 </button>
               ))}
             </div>
@@ -207,7 +207,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
             {saving ? 'Saving...' : 'Log Entry'}
           </button>
 
-          <p className="text-fg-dim text-[10px] font-mono text-center leading-relaxed">
+          <p className="text-fg-muted text-xs text-center leading-relaxed">
             After 30+ entries, BetAutopsy will correlate your mental state with your actual results — showing which emotions and contexts cost you money.
           </p>
         </div>

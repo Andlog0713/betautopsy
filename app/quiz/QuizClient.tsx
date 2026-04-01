@@ -148,7 +148,7 @@ export default function QuizClient() {
   };
 
   const gamblingFooter = (
-    <p className="text-fg-dim text-xs text-center mt-12">
+    <p className="text-fg-muted text-xs text-center mt-12">
       For entertainment and educational purposes only. Not gambling advice. 21+.
       If you or someone you know has a gambling problem, call 1-800-GAMBLER.
     </p>
@@ -290,7 +290,7 @@ export default function QuizClient() {
               </div>
             )}
           </div>
-          <p className="text-fg-dim text-xs text-center mt-10 font-mono">betautopsy.com</p>
+          <p className="text-fg-muted text-xs text-center mt-10 font-mono">betautopsy.com</p>
         </div>
       </main>
     );
@@ -374,7 +374,7 @@ export default function QuizClient() {
                 <span className={`font-mono text-xl font-bold block ${result.discipline_estimate >= 70 ? 'text-win' : result.discipline_estimate >= 40 ? 'text-caution' : 'text-loss'}`}>{result.discipline_estimate}</span>
               </div>
             </div>
-            <p className="text-fg-dim text-xs mt-4 font-mono">Download the card to share on Stories</p>
+            <p className="text-fg-muted text-xs mt-4 font-mono">Download the card to share on Stories</p>
           </div>
 
           {/* Share buttons */}
@@ -411,7 +411,7 @@ export default function QuizClient() {
                 {emailSubmitting ? '...' : 'Send My Results'}
               </button>
             </div>
-            <p className="text-fg-dim text-[10px] font-mono">No spam. Just your results.</p>
+            <p className="text-fg-muted text-xs font-mono">No spam. Just your results.</p>
             <button onClick={() => setPhase('full_result')} className="text-xs text-fg-muted hover:text-fg transition-colors">
               Skip — show me now
             </button>
@@ -442,7 +442,7 @@ export default function QuizClient() {
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
-            <p className="text-fg-dim text-xs mt-3 italic">
+            <p className="text-fg-muted text-xs mt-3 italic">
               {ARCH_PRODUCT_TEASER[result.archetype.name] ?? 'A full BetAutopsy would show you exactly how your real betting data compares to this quiz estimate.'}
             </p>
           </div>
@@ -517,7 +517,7 @@ export default function QuizClient() {
                     <div className="text-sm text-fg-bright flex items-start gap-2">
                       <span className="text-caution mt-0.5 shrink-0">!</span>{w}
                     </div>
-                    <p className="text-fg-dim text-[10px] ml-5 mt-1 italic font-mono">A full autopsy would show you the dollar cost of this.</p>
+                    <p className="text-fg-muted text-xs ml-5 mt-1 italic">A full autopsy would show you the dollar cost of this.</p>
                   </li>
                 ))}
               </ul>
@@ -549,14 +549,14 @@ export default function QuizClient() {
             <Link href="/signup" className="btn-primary inline-block !px-8 !py-3 font-mono">
               Upload Your Bets — It&apos;s Free
             </Link>
-            <p className="text-fg-dim text-xs">
+            <p className="text-fg-muted text-xs">
               Already have an account? <Link href="/login" className="text-scalpel hover:underline">Sign in</Link>
             </p>
           </div>
 
           {/* 10. Retake */}
           <div className="text-center">
-            <button onClick={handleRetake} className="text-sm text-fg-dim hover:text-fg-muted transition-colors font-mono">
+            <button onClick={handleRetake} className="text-sm text-fg-muted hover:text-fg transition-colors font-mono">
               ↻ Retake Quiz
             </button>
           </div>
@@ -575,7 +575,7 @@ export default function QuizClient() {
           {gamblingFooter}
 
           <div className="text-center">
-            <Link href="/" className="text-fg-dim text-xs hover:text-fg-muted transition-colors">← Back to BetAutopsy</Link>
+            <Link href="/" className="text-fg-muted text-xs hover:text-fg transition-colors">← Back to BetAutopsy</Link>
           </div>
         </div>
       </main>
