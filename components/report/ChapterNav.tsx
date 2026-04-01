@@ -57,10 +57,10 @@ export default function ChapterNav({ tier = 'free', onSharpClick }: ChapterNavPr
               key={ch.id}
               onClick={() => scrollTo(ch.id)}
               className={`relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors ${
-                isActive ? 'text-scalpel' : 'text-fg-dim hover:text-fg-muted'
+                isActive ? 'text-scalpel' : 'text-fg-muted hover:text-fg'
               }`}
             >
-              <span className={`font-mono text-[9px] ${isActive ? 'text-scalpel/60' : 'text-fg-dim/40'}`}>
+              <span className={`font-mono text-[9px] ${isActive ? 'text-scalpel/60' : 'text-fg-muted/50'}`}>
                 {String(i + 1).padStart(2, '0')}
               </span>
               <span className="hidden sm:inline">{ch.label}</span>
@@ -81,7 +81,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick }: ChapterNavPr
             }
           }}
           className={`relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors ${
-            isSharp ? 'text-cyan-400/60 hover:text-cyan-400' : 'text-fg-dim/30 hover:text-fg-dim/50'
+            isSharp ? 'text-cyan-400/60 hover:text-cyan-400' : 'text-fg-muted/50 hover:text-fg-muted'
           }`}
         >
           <span className="font-mono text-[9px] text-fg-dim/40">06</span>
