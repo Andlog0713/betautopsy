@@ -79,7 +79,7 @@
   }
 
   .label {
-    @apply text-xs font-mono font-medium text-fg-dim uppercase tracking-wider mb-1.5 block;
+    @apply text-xs font-medium text-fg-muted uppercase tracking-wider mb-1.5 block;
   }
 
   /* ── Evidence tag ── */
@@ -107,7 +107,7 @@
     @apply font-mono text-2xl font-bold tabular-nums tracking-tight;
   }
   .data-label {
-    @apply font-mono text-[10px] text-fg-dim uppercase tracking-widest;
+    @apply font-mono text-xs text-fg-muted uppercase tracking-widest;
   }
 
   /* ── Vitals strip ── */

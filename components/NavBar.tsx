@@ -74,11 +74,11 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               link.href.startsWith('#') || link.href.startsWith('/#') ? (
-                <a key={link.href} href={link.href} className="font-mono text-[11px] tracking-wider text-fg-muted hover:text-fg transition-colors">
+                <a key={link.href} href={link.href} className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors">
                   {link.label}
                 </a>
               ) : (
-                <Link key={link.href} href={link.href} className="font-mono text-[11px] tracking-wider text-fg-muted hover:text-fg transition-colors">
+                <Link key={link.href} href={link.href} className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors">
                   {link.label}
                 </Link>
               )
@@ -94,7 +94,7 @@ export default function NavBar() {
                 {(profile?.streak_count ?? 0) > 0 && (
                   <span className="font-mono text-[10px] text-scalpel" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
                 )}
-                <Link href="/dashboard" className="font-mono text-[11px] tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/dashboard" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Dashboard
                 </Link>
                 <div className="relative" ref={menuRef}>
@@ -107,20 +107,20 @@ export default function NavBar() {
                   {menuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-surface border border-white/[0.06] rounded-sm p-1 shadow-2xl shadow-black/40 animate-fade-in z-50">
                       <div className="px-3 py-2 border-b border-white/[0.04] mb-1">
-                        <p className="font-mono text-[10px] text-fg-dim truncate">{user.email}</p>
+                        <p className="font-mono text-xs text-fg-muted truncate">{user.email}</p>
                         <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
                       </div>
-                      <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Dashboard</Link>
-                      <Link href="/settings" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Settings</Link>
-                      <button onClick={handleSignOut} className="w-full text-left px-3 py-2 font-mono text-[11px] text-fg-muted hover:text-loss hover:bg-white/[0.03] rounded-sm transition-colors">Sign out</button>
+                      <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-xs text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Dashboard</Link>
+                      <Link href="/settings" onClick={() => setMenuOpen(false)} className="block px-3 py-2 font-mono text-xs text-fg-muted hover:text-fg hover:bg-white/[0.03] rounded-sm transition-colors">Settings</Link>
+                      <button onClick={handleSignOut} className="w-full text-left px-3 py-2 font-mono text-xs text-fg-muted hover:text-loss hover:bg-white/[0.03] rounded-sm transition-colors">Sign out</button>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               <>
-                <Link href="/login" className="font-mono text-[11px] tracking-wider text-fg-muted hover:text-fg transition-colors hidden sm:block">Log in</Link>
-                <Link href="/signup" className="font-mono text-[11px] tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/login" className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors hidden sm:block">Log in</Link>
+                <Link href="/signup" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Upload bets
                 </Link>
               </>
