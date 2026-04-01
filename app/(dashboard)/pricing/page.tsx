@@ -22,7 +22,10 @@ export default function PricingPage() {
     async function load() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setPageLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from('profiles')
         .select('*')
@@ -35,6 +38,11 @@ export default function PricingPage() {
   }, []);
 
   async function handleUpgrade(tier: 'pro' | 'sharp') {
+    if (!profile) {
+      // Not logged in — send to signup
+      window.location.href = '/signup';
+      return;
+    }
     setLoadingTier(tier);
     try {
       const res = await fetch('/api/checkout', {

@@ -273,7 +273,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
+              <Link href="/pricing" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
             </div>
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Sharp</span>
@@ -288,7 +288,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
+              <Link href="/pricing" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
             </div>
           </div>
           <p className="text-fg-muted text-xs mt-6">
