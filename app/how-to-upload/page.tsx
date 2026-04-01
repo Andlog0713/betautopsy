@@ -23,7 +23,7 @@ export default function HowToUploadPage() {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
     name: 'How to Upload Your Betting History to BetAutopsy',
-    description: 'Get your sports betting data into BetAutopsy for AI-powered behavioral analysis in 5 simple steps.',
+    description: 'Get your sports betting data into BetAutopsy for AI-powered behavioral analysis — three methods from easiest to most involved.',
     step: [
       {
         '@type': 'HowToStep',
@@ -69,67 +69,171 @@ export default function HowToUploadPage() {
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl mb-3">How to get your betting history</h1>
         <p className="text-fg-muted text-lg mb-12">
-          Two ways to get your data in, from easiest to most involved.
+          Three ways to get your data in, from easiest to most involved.
         </p>
 
-        {/* Method 1 */}
+        {/* ── METHOD 1: Pikkit ── */}
         <div className="card p-6 md:p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-bold text-lg font-bold">1</span>
-            <h2 className="font-bold text-2xl">Use a bet tracker</h2>
-            <span className="text-xs font-medium bg-win/10 text-win px-2 py-0.5 rounded-sm">RECOMMENDED</span>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">1</span>
+            <h2 className="font-bold text-2xl">Import full history with Pikkit</h2>
+            <span className="text-xs font-medium bg-win/10 text-win px-2 py-0.5 rounded-sm">RECOMMENDED FOR NEW USERS</span>
           </div>
+          <span className="case-header block mb-4">BEST FOR: Getting your complete sportsbook history in one shot</span>
+
           <p className="text-fg-muted text-sm mb-6">
             Pikkit connects directly to your sportsbook accounts and pulls your full bet
             history automatically — no manual logging needed, even if you&apos;ve never used
             a tracker before.
           </p>
 
-          <div className="space-y-4">
-            {/* Pikkit */}
-            <div className="bg-surface-raised rounded-sm p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <h3 className="font-medium">Pikkit</h3>
-                <span className="text-xs font-medium bg-scalpel-muted text-scalpel px-2 py-0.5 rounded-sm">RECOMMENDED FOR MOST PEOPLE</span>
-              </div>
-              <p className="text-sm text-fg-muted mb-3">
-                Pikkit <span className="text-fg-bright">connects directly to your sportsbook accounts</span> and
-                pulls your full bet history automatically — even if you&apos;ve never tracked a bet before.
-                New users get a free 7-day Pro trial, no payment upfront.
+          <div className="bg-surface-raised rounded-sm p-4">
+            <ol className="space-y-2.5 text-sm text-fg-muted">
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">01</span>
+                <span><a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Download Pikkit</a> and connect your sportsbooks</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">02</span>
+                <span>Activate the free Pro trial (tap the Pro tab &rarr; start trial)</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">03</span>
+                <span>Go to Pro tab &rarr; Settings (top-right) &rarr; Data Exports</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">04</span>
+                <span>Set your date range and tap <span className="text-fg-bright">Send CSV</span> — it&apos;ll be emailed to you</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">05</span>
+                <span>Upload that CSV here and you&apos;re done</span>
+              </li>
+            </ol>
+
+            <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors mt-4">
+              Get Pikkit &rarr;
+            </a>
+
+            <div className="finding-card border-l-scalpel mt-4">
+              <p className="text-xs text-fg-muted">
+                This is a one-time import. Once your history is in BetAutopsy, you won&apos;t need Pikkit anymore.
               </p>
-              <ol className="list-decimal list-inside space-y-1.5 text-sm text-fg-muted">
-                <li><a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Download Pikkit</a> and connect your sportsbooks</li>
-                <li>Activate the free Pro trial (tap the Pro tab → start trial)</li>
-                <li>Go to Pro tab → Settings (top-right) → Data Exports</li>
-                <li>Set your date range and tap <span className="text-fg-bright">Send CSV</span> — it&apos;ll be emailed to you</li>
-                <li>Upload that CSV here and you&apos;re done</li>
-              </ol>
-              <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors mt-4">
-                Get Pikkit →
-              </a>
-              <p className="text-xs text-fg-muted mt-2">
-                💰 From Pikkit: you&apos;ll get <span className="text-fg-bright">$3–$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
+              <p className="text-xs text-fg-muted mt-1.5">
+                Pikkit Pro gives you 7 free days to export — plenty of time to get your complete history.
               </p>
-              <p className="text-xs text-fg-muted mt-3">
-                Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
+            </div>
+
+            <p className="text-xs text-fg-muted mt-3">
+              Get <span className="text-fg-bright">$3&ndash;$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
+            </p>
+
+            <p className="text-xs text-fg-muted mt-2">
+              Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
+            </p>
+
+            <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
+              <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
+              <p className="text-sm text-fg-muted">
+                Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, Thrive Fantasy, and Kalshi</span> too.
+                Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets — one export covers everything.
               </p>
-              <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
-                <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
-                <p className="text-sm text-fg-muted">
-                  Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, Thrive Fantasy, and Kalshi</span> too.
-                  Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets — one export covers everything.
-                </p>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Method 2 */}
+        {/* ── METHOD 2: Paste from Sportsbook ── */}
+        <div className="card p-6 md:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">2</span>
+            <h2 className="font-bold text-2xl">Paste from your sportsbook</h2>
+            <span className="text-xs font-medium bg-scalpel-muted text-scalpel px-2 py-0.5 rounded-sm">BEST FOR ONGOING UPDATES</span>
+          </div>
+          <span className="case-header block mb-4">BEST FOR: Adding recent bets after your initial import</span>
+
+          <p className="text-fg-muted text-sm mb-6">
+            Copy your settled bet history straight from your sportsbook&apos;s website and paste it into BetAutopsy.
+            Our AI figures out the format automatically.
+          </p>
+
+          <div className="bg-surface-raised rounded-sm p-4">
+            <ol className="space-y-2.5 text-sm text-fg-muted">
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">01</span>
+                <span>Log into your sportsbook on desktop</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">02</span>
+                <span>Navigate to My Bets &rarr; Settled</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">03</span>
+                <span>Select all (<span className="font-mono text-fg-bright">Ctrl+A</span> / <span className="font-mono text-fg-bright">Cmd+A</span>)</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">04</span>
+                <span>Copy (<span className="font-mono text-fg-bright">Ctrl+C</span> / <span className="font-mono text-fg-bright">Cmd+C</span>)</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">05</span>
+                <span>Go to the <Link href="/upload" className="text-scalpel hover:underline">BetAutopsy Upload page</Link> &rarr; &quot;Paste from sportsbook&quot; tab</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">06</span>
+                <span>Paste and click <span className="text-fg-bright">&quot;Parse Bets&quot;</span></span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">07</span>
+                <span>Review, uncheck any bad parses, and import</span>
+              </li>
+            </ol>
+
+            <div className="finding-card border-l-scalpel mt-4">
+              <p className="text-xs text-fg-bright font-medium">Works with every sportsbook.</p>
+              <p className="text-xs text-fg-muted mt-0.5">Our AI figures out the format automatically.</p>
+            </div>
+
+            {/* Per-sportsbook navigation paths */}
+            <div className="mt-4">
+              <span className="case-header block mb-2">QUICK NAVIGATION PATHS</span>
+              <div className="space-y-1.5 text-sm text-fg-muted">
+                <div className="flex gap-3">
+                  <span className="font-mono text-fg-bright w-24 shrink-0">DraftKings</span>
+                  <span>My Bets &rarr; Settled</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="font-mono text-fg-bright w-24 shrink-0">FanDuel</span>
+                  <span>My Bets &rarr; Settled</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="font-mono text-fg-bright w-24 shrink-0">BetMGM</span>
+                  <span>My Bets &rarr; Settled</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="font-mono text-fg-bright w-24 shrink-0">Caesars</span>
+                  <span>Profile &rarr; Betting History</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="font-mono text-fg-bright w-24 shrink-0">ESPN Bet</span>
+                  <span>My Bets &rarr; Settled</span>
+                </div>
+              </div>
+            </div>
+
+            <Link href="/upload" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors mt-4">
+              Go to Upload Page &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* ── METHOD 3: Manual CSV / Spreadsheet ── */}
         <div className="card p-6 md:p-8 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-bold text-lg font-bold">2</span>
-            <h2 className="font-bold text-2xl">Manual entry or spreadsheet</h2>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">3</span>
+            <h2 className="font-bold text-2xl">Manual CSV or spreadsheet</h2>
           </div>
+          <span className="case-header block mb-4">BEST FOR: People who track in spreadsheets or need full control</span>
+
           <p className="text-fg-muted text-sm mb-4">
             For people who track in spreadsheets or don&apos;t use any tracker.
           </p>
@@ -137,7 +241,7 @@ export default function HowToUploadPage() {
           <div className="space-y-4">
             <div>
               <a href="/api/template" className="text-sm text-scalpel hover:underline">
-                ↓ Download our CSV template
+                &darr; Download our CSV template
               </a>
             </div>
 

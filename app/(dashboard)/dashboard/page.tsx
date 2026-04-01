@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
   const [journalOpen, setJournalOpen] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
+  const [daysSinceLastBet, setDaysSinceLastBet] = useState<number | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -95,6 +96,15 @@ export default function DashboardPage() {
         const newBets = bets.filter((b) => new Date(b.placed_at) > lastDate);
         setNewBetsSinceReport(newBets.length);
         setDaysSinceReport(Math.floor((Date.now() - lastDate.getTime()) / 86400000));
+      }
+
+      // Compute days since most recent bet
+      if (bets.length > 0) {
+        const mostRecentBet = bets.reduce((latest, b) => {
+          const d = new Date(b.placed_at).getTime();
+          return d > latest ? d : latest;
+        }, 0);
+        setDaysSinceLastBet(Math.floor((Date.now() - mostRecentBet) / 86400000));
       }
 
       const skipped = typeof window !== 'undefined' && sessionStorage.getItem('onboarding_skip');
@@ -261,6 +271,19 @@ export default function DashboardPage() {
                 <p className="text-fg-muted text-sm font-mono">Time for a check-up? ({daysSinceReport} days ago)</p>
               </div>
               <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
+            </div>
+          )}
+
+          {/* Upload nudge — haven't added bets in >14 days */}
+          {stats.reportCount > 0 && daysSinceLastBet !== null && daysSinceLastBet > 14 && (
+            <div className="finding-card border-l-caution">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-fg-bright text-sm font-medium">Your last upload was {daysSinceLastBet} days ago</p>
+                  <p className="text-fg-muted text-xs mt-0.5">Add your recent bets for a more accurate analysis.</p>
+                </div>
+                <Link href="/upload" className="btn-primary text-sm shrink-0 font-mono">Add Bets</Link>
+              </div>
             </div>
           )}
 
