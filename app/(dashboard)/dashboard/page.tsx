@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
@@ -449,12 +449,18 @@ export default function DashboardPage() {
               <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider">Edit in Settings</Link>
             </div>
           ) : (
-            <div className="case-card p-5 flex items-center justify-between">
-              <div>
-                <p className="text-fg-bright text-sm">Set your bankroll for more accurate analysis</p>
-                <p className="font-mono text-xs text-fg-muted mt-0.5">Helps us assess your risk level</p>
+            <div className="finding-card border-l-caution p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-fg-bright text-sm font-medium">⚠️ Your bankroll isn&apos;t set — this affects your grade</p>
+                  <p className="text-fg-muted text-xs mt-1">
+                    Your bankroll is the total amount you&apos;ve set aside for betting across all sportsbooks.
+                    Without it, we have to guess — and that guess directly impacts your overall grade, bankroll health rating,
+                    and risk analysis. Even a rough estimate makes your report significantly more accurate.
+                  </p>
+                </div>
+                <Link href="/settings" className="btn-primary text-sm shrink-0 font-mono !px-4 !py-2">Set Bankroll</Link>
               </div>
-              <Link href="/settings" className="text-sm text-scalpel hover:underline font-mono">Set up your profile →</Link>
             </div>
           )}
 

@@ -568,7 +568,9 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const emotionScore = Math.min(100, stakeVolatility + lossChasingPts + streakBehaviorPts + sessionDisciplinePts);
 
   // Bankroll health
-  const br = bankroll ? Number(bankroll) : avgStake * 20;
+  // If bankroll not set, estimate conservatively — avgStake * 50 assumes reasonable bankroll management
+  // (previously avgStake * 20 which was too aggressive and caused grade penalties for normal betting)
+  const br = bankroll ? Number(bankroll) : avgStake * 50;
   let bankrollHealth: 'healthy' | 'caution' | 'danger' = 'healthy';
   if (br > 0) {
     const betsOver10pct = sorted.filter((b) => Number(b.stake) > br * 0.1).length;
@@ -2161,7 +2163,7 @@ Median Stake: $${metrics.summary.median_stake.toFixed(2)}
 Max Stake: $${metrics.summary.max_stake.toFixed(0)} | Min Stake: $${metrics.summary.min_stake.toFixed(0)}
 Total Staked: $${metrics.summary.total_staked.toFixed(2)}
 Date Range: ${metrics.summary.date_range}
-Bankroll: ${metrics.bankroll_used ? `$${metrics.bankroll_used.toLocaleString()}` : 'Not set (estimated at $' + Math.round(metrics.summary.avg_stake * 20).toLocaleString() + ')'}
+Bankroll: ${metrics.bankroll_used ? `$${metrics.bankroll_used.toLocaleString()}` : 'Not set (estimated at $' + Math.round(metrics.summary.avg_stake * 50).toLocaleString() + ') — user should set this for accurate grading'}
 Bankroll Health: ${metrics.bankroll_health === 'danger' ? 'At Risk' : metrics.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}
 Overall Grade: ${metrics.summary.overall_grade} (pre-calculated, do not override)
 Bet DNA: ${metrics.betting_archetype.name} — ${metrics.betting_archetype.description}
