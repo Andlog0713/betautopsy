@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import TikTokPixel from '@/components/TikTokPixel';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -85,7 +86,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /></>}
         {children}
       </body>
     </html>
