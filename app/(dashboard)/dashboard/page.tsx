@@ -509,7 +509,7 @@ export default function DashboardPage() {
                     }
                   </p>
                 </div>
-                <button onClick={() => setJournalOpen(true)} className="font-mono text-[11px] text-scalpel hover:underline">Log entry →</button>
+                <button onClick={() => setJournalOpen(true)} className="font-mono text-xs text-scalpel hover:underline">Log entry →</button>
               </div>
             </div>
           )}

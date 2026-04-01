@@ -450,7 +450,7 @@ export default function QuizClient() {
           {/* 2. Emotion Score */}
           <div className="case-card p-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
+              <span className="font-mono text-xs text-fg-muted tracking-[1.5px]">EMOTION SCORE</span>
               <span className={`font-mono text-2xl font-bold ${eColor}`}>{result.emotion_estimate}/100</span>
             </div>
             <div className="h-1 bg-surface-raised relative mb-2">
