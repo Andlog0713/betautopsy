@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { isResendConfigured, getResend } from '@/lib/resend';
-import { renderDay3Email, renderDay5Email, renderDay7HasBetsEmail } from '@/lib/onboarding-emails';
+import { renderWelcomeEmail, renderDay3Email, renderDay5Email, renderDay7HasBetsEmail } from '@/lib/onboarding-emails';
 import type { Profile } from '@/types';
 
 export const maxDuration = 120;
@@ -28,8 +28,9 @@ export async function GET(request: Request) {
   let skipped = 0;
   const errors: string[] = [];
 
-  // Process Day 3, Day 5, Day 7 emails
+  // Process Day 0 (welcome, sent ~1 day after signup), Day 3, Day 5, Day 7
   for (const { day, emailKey } of [
+    { day: 1, emailKey: 'welcome' },
     { day: 3, emailKey: 'day3' },
     { day: 5, emailKey: 'day5' },
     { day: 7, emailKey: 'day7' },
@@ -75,7 +76,12 @@ export async function GET(request: Request) {
 
         let email: { subject: string; html: string } | null = null;
 
-        if (emailKey === 'day3') {
+        if (emailKey === 'welcome') {
+          email = renderWelcomeEmail({
+            displayName: typedProfile.display_name || 'there',
+            appUrl,
+          });
+        } else if (emailKey === 'day3') {
           // Only send if no bets yet
           if (bets > 0) { skipped++; continue; }
           email = renderDay3Email({

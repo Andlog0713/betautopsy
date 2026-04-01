@@ -43,8 +43,7 @@ export default function SignupPage() {
     }
 
     trackSignup();
-    // Send welcome onboarding email (fire and forget)
-    fetch('/api/send-welcome', { method: 'POST' }).catch(() => {});
+    // Welcome email sent via daily onboarding cron (1hr+ delay so it doesn't compete with the UI)
     router.push('/dashboard');
     router.refresh();
   }

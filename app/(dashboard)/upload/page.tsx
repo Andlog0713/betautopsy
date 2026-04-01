@@ -22,6 +22,7 @@ export default function UploadPage() {
   const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
   const [lastBetDate, setLastBetDate] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('paste');
+  const [showDataSection, setShowDataSection] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -172,39 +173,63 @@ export default function UploadPage() {
         </div>
       )}
 
+      {/* ── First-upload celebration ── */}
+      {initialBetCount === 0 && uploadSucceeded && (
+        <div className="case-card p-8 text-center space-y-4 border-scalpel/20">
+          <div className="text-5xl">{'\uD83D\uDD2C'}</div>
+          <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
+          <p className="text-fg-muted text-sm max-w-md mx-auto">
+            This is where it gets interesting. Your free autopsy will reveal the cognitive biases
+            and behavioral patterns hiding in your data.
+          </p>
+          <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+            Run Your First Autopsy {'\u2192'}
+          </Link>
+        </div>
+      )}
+
+      {/* ── New user: collapsible data section ── */}
       {betCount === 0 && (
-        <p className="case-header">Already have your data?</p>
+        <button
+          onClick={() => setShowDataSection((prev) => !prev)}
+          className="text-fg-muted hover:text-fg-bright text-sm transition-colors flex items-center gap-2"
+        >
+          Already have your data?
+          <span className="text-xs">{showDataSection ? '\u25B4' : '\u25BE'}</span>
+        </button>
       )}
 
       {/* ── Tab bar ── */}
-      <div className="flex gap-0 border-b border-white/[0.06]">
-        <button
-          onClick={() => setActiveTab('paste')}
-          className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === 'paste'
-              ? 'border-scalpel text-fg-bright'
-              : 'border-transparent text-fg-muted hover:text-fg'
-          }`}
-        >
-          Paste from Sportsbook
-        </button>
-        <button
-          onClick={() => setActiveTab('csv')}
-          className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === 'csv'
-              ? 'border-scalpel text-fg-bright'
-              : 'border-transparent text-fg-muted hover:text-fg'
-          }`}
-        >
-          CSV Upload
-        </button>
-      </div>
+      {(betCount > 0 || showDataSection) && (
+        <div className="flex gap-0 border-b border-white/[0.06]">
+          <button
+            onClick={() => setActiveTab('paste')}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'paste'
+                ? 'border-scalpel text-fg-bright'
+                : 'border-transparent text-fg-muted hover:text-fg'
+            }`}
+          >
+            Paste from Sportsbook
+          </button>
+          <button
+            onClick={() => setActiveTab('csv')}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'csv'
+                ? 'border-scalpel text-fg-bright'
+                : 'border-transparent text-fg-muted hover:text-fg'
+            }`}
+          >
+            CSV Upload
+          </button>
+        </div>
+      )}
 
       {/* ── Paste tab ── */}
-      {activeTab === 'paste' && <PasteParser />}
+      {(betCount > 0 || showDataSection) && activeTab === 'paste' && <PasteParser />}
 
       {/* ── CSV tab ── */}
-      {activeTab === 'csv' && (
+      {(betCount > 0 || showDataSection) && activeTab === 'csv' && (
         <div className="space-y-6">
           {/* How to get your data — prominent banner */}
           <Link

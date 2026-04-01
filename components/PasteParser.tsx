@@ -32,6 +32,14 @@ interface UploadResult {
   errors: string[];
 }
 
+const sportsbookHints: Record<string, string> = {
+  'DraftKings': 'Make sure you copy from My Bets \u2192 Settled, not the transaction history.',
+  'FanDuel': 'Copy from My Bets \u2192 Settled tab, not Account \u2192 Transactions.',
+  'BetMGM': 'Copy from My Bets \u2192 Settled, not Wallet history.',
+  'Caesars': 'Copy from Profile \u2192 Betting History \u2192 Settled.',
+  'ESPN Bet': 'Copy from My Bets \u2192 Settled tab.',
+};
+
 export default function PasteParser() {
   const [state, setState] = useState<PasteState>('input');
   const [text, setText] = useState('');
@@ -195,6 +203,17 @@ export default function PasteParser() {
         {noBets ? (
           <div className="card p-8 text-center space-y-4">
             <p className="text-fg-muted">No bets were found in the pasted text.</p>
+            {sportsbook !== 'Auto-detect' && sportsbookHints[sportsbook] && (
+              <p className="text-caution text-xs">
+                {sportsbookHints[sportsbook]}
+              </p>
+            )}
+            <div className="mt-3">
+              <a href="mailto:support@betautopsy.com?subject=Paste%20parser%20issue&body=The%20paste%20parser%20couldn't%20extract%20my%20bets.%20Here's%20what%20I%20pasted%3A%0A%0A"
+                 className="text-scalpel text-xs hover:underline">
+                Didn&apos;t work? Email us what you pasted and we&apos;ll help {'\u2192'}
+              </a>
+            </div>
             <button onClick={resetToInput} className="btn-secondary">
               Try Again
             </button>
@@ -289,6 +308,11 @@ export default function PasteParser() {
       {error && (
         <div className="bg-bleed-muted text-loss p-3 text-sm rounded-sm">{error}</div>
       )}
+
+      {/* Supported sportsbooks note */}
+      <p className="text-fg-muted text-xs mb-3">
+        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, ESPN Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste — our AI figures out the format.
+      </p>
 
       {/* Textarea */}
       <div className="relative">
