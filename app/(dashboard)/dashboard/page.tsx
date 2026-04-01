@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
+import { trackPurchase } from '@/lib/tiktok-events';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
@@ -111,6 +112,13 @@ export default function DashboardPage() {
       } catch { /* silent */ }
 
       setLoading(false);
+
+      // Track TikTok purchase event on post-checkout redirect
+      if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
+        const price = profileTier === 'sharp' ? 24.99 : profileTier === 'pro' ? 9.99 : 0;
+        if (price > 0) trackPurchase(profileTier ?? 'pro', price);
+        window.history.replaceState({}, '', '/dashboard');
+      }
     }
     load();
   }, [router]);

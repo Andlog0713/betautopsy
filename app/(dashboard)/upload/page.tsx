@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { trackUpload } from '@/lib/tiktok-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import type { UploadResponse, Profile } from '@/types';
 
@@ -67,6 +68,7 @@ export default function UploadPage() {
       }
 
       setResult(data as UploadResponse);
+      trackUpload();
       setState('success');
     } catch {
       setError('Upload failed. Please try again.');

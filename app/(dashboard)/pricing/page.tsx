@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
+import { trackCheckout } from '@/lib/tiktok-events';
 import type { Profile, SubscriptionTier } from '@/types';
 import { TIER_LIMITS } from '@/types';
 
@@ -43,6 +44,7 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (data.url) {
+        trackCheckout(tier, tier === 'pro' ? 9.99 : 24.99);
         window.location.href = data.url;
       }
     } catch {

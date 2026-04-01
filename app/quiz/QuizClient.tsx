@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
+import { trackQuizComplete } from '@/lib/tiktok-events';
 
 function gradeColor(g: string): string {
   if (g === 'A') return '#00C853';
@@ -55,6 +56,7 @@ export default function QuizClient() {
       if (revealSlide < 3) {
         setRevealSlide(revealSlide + 1);
       } else {
+        trackQuizComplete(result?.archetype.name ?? 'unknown');
         setPhase('result_preview');
       }
     }, durations[revealSlide]);

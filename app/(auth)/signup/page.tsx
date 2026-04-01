@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { trackSignup } from '@/lib/tiktok-events';
 import { createClient } from '@/lib/supabase';
 import OAuthButtons from '@/components/OAuthButtons';
 
@@ -41,6 +42,7 @@ export default function SignupPage() {
       return;
     }
 
+    trackSignup();
     router.push('/dashboard');
     router.refresh();
   }
