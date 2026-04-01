@@ -169,7 +169,7 @@ export default function DashboardShell({
   const tier = profile?.subscription_tier ?? 'free';
 
   const activeClass = 'bg-scalpel-muted text-scalpel border-l-2 border-scalpel';
-  const inactiveClass = 'text-fg-dim hover:text-fg hover:bg-white/[0.03] border-l-2 border-transparent';
+  const inactiveClass = 'text-fg-muted hover:text-fg hover:bg-white/[0.03] border-l-2 border-transparent';
 
   return (
     <PrivacyProvider>
@@ -204,7 +204,7 @@ export default function DashboardShell({
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname === item.href
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
+                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <item.Icon />
@@ -217,7 +217,7 @@ export default function DashboardShell({
               className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                 pathname === '/pricing'
                   ? 'bg-scalpel-muted text-scalpel'
-                  : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
+                  : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
               }`}
             >
               <IconPricing />
@@ -230,7 +230,7 @@ export default function DashboardShell({
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname.startsWith('/admin')
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
+                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <IconAdmin />
@@ -245,7 +245,7 @@ export default function DashboardShell({
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-sm font-mono text-[11px] tracking-wider transition-colors ${
                   pathname === item.href
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
+                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 <item.Icon />
