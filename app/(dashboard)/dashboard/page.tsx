@@ -64,7 +64,7 @@ export default function DashboardPage() {
       if (!user) return;
 
       const [betsRes, profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
-        supabase.from('bets').select('result, profit, stake, placed_at').eq('user_id', user.id),
+        supabase.from('bets').select('result, profit, stake, placed_at, created_at').eq('user_id', user.id),
         supabase.from('profiles').select('bankroll, subscription_tier, subscription_status, trial_ends_at, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
@@ -102,13 +102,13 @@ export default function DashboardPage() {
         setDaysSinceReport(Math.floor((Date.now() - lastDate.getTime()) / 86400000));
       }
 
-      // Compute days since most recent bet
+      // Compute days since most recent UPLOAD (created_at), not when bet was placed
       if (bets.length > 0) {
-        const mostRecentBet = bets.reduce((latest, b) => {
-          const d = new Date(b.placed_at).getTime();
+        const mostRecentUpload = bets.reduce((latest, b) => {
+          const d = new Date(b.created_at ?? b.placed_at).getTime();
           return d > latest ? d : latest;
         }, 0);
-        setDaysSinceLastBet(Math.floor((Date.now() - mostRecentBet) / 86400000));
+        setDaysSinceLastBet(Math.floor((Date.now() - mostRecentUpload) / 86400000));
       }
 
       const skipped = typeof window !== 'undefined' && sessionStorage.getItem('onboarding_skip');
