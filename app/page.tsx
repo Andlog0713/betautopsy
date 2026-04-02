@@ -234,16 +234,15 @@ export default function LandingPage() {
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
-        {/* Pricing glow */}
-        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[700px] md:w-[900px] h-[600px] bg-scalpel/[0.06] rounded-full blur-[120px] pointer-events-none" />
+        {/* Pricing glow - centered vertically to cover all cards */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.05] rounded-full blur-[150px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
           </p>
-          <div className="finding-card border-l-scalpel p-4 mb-6">
-            <p className="text-fg-bright text-sm font-medium">🎉 Limited time: Sign up now and get 7 days of Pro free, no credit card.</p>
-            <p className="text-fg-muted text-xs mt-1">Full access to unlimited reports, bias detection, BetIQ, and everything else. This offer won&apos;t last.</p>
+          <div className="finding-card border-l-scalpel p-3 mb-6">
+            <p className="text-fg-bright text-sm font-medium">🎉 7 days of Pro free. No credit card.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
@@ -261,8 +260,10 @@ export default function LandingPage() {
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
             <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
-              <span className="inline-block border border-scalpel/30 px-2 py-0.5 -rotate-2 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold self-end mb-2">RECOMMENDED</span>
-              <span className="case-header block mb-3">Pro</span>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="case-header">Pro</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
+              </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
