@@ -219,7 +219,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="text-fg-bright text-sm font-medium">
-                🎉 You&apos;re on a free 7-day Pro trial
+                🎉 You&apos;re on a free Pro trial
               </p>
               <p className="text-fg-muted text-xs mt-0.5">
                 {(() => {

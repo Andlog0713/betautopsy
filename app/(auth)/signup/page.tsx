@@ -70,7 +70,9 @@ export default function SignupPage() {
 
   return (
     <div className="case-card p-8 animate-fade-in">
-      <p className="text-fg-muted text-sm text-center mb-2">Your behavioral analysis is one upload away.</p>
+      <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-3 text-center mb-4">
+        <p className="text-scalpel text-sm font-medium">🎉 Limited time: 7 days of Pro free — no credit card</p>
+      </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 
       <OAuthButtons />

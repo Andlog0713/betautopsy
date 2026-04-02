@@ -35,7 +35,7 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Start Free Pro Trial
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">7 days of Pro — no credit card</span>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: 7 days of Pro free — no credit card</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
@@ -239,8 +239,8 @@ export default function LandingPage() {
             Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
           </p>
           <div className="finding-card border-l-scalpel p-4 mb-6">
-            <p className="text-fg-bright text-sm font-medium">🎉 Sign up now and get 7 days of Pro — free, no credit card.</p>
-            <p className="text-fg-muted text-xs mt-1">Full access to unlimited reports, bias detection, BetIQ, and everything else. Limited time offer.</p>
+            <p className="text-fg-bright text-sm font-medium">🎉 Limited time: Sign up now and get 7 days of Pro — free, no credit card.</p>
+            <p className="text-fg-muted text-xs mt-1">Full access to unlimited reports, bias detection, BetIQ, and everything else. This offer won&apos;t last.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="bg-base p-6 flex flex-col">

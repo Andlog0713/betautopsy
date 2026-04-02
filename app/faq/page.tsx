@@ -61,7 +61,7 @@ const FAQ_DATA: FAQSection[] = [
     title: 'Plans & Pricing',
     items: [
       { q: 'What\'s free vs. paid?', a: 'Free: 1 autopsy report covering your 50 most recent bets, basic bias detection, and summary stats. Pro ($9.99/month or $99/year): unlimited reports up to 2,000 bets, the full bias suite, strategic leaks, behavioral patterns, weekly email digest, and PDF export. Sharp ($24.99/month or $199/year): everything in Pro plus the Leak Prioritizer, the full What-If Simulator, and early access to new features.' },
-      { q: 'Is there a free trial?', a: 'The free tier is available permanently — no credit card required, no time limit. You can run your first full autopsy report for free to see if the analysis is useful before upgrading.' },
+      { q: 'Is there a free trial?', a: 'For a limited time, every new account gets 7 days of full Pro access for free — no credit card required. You get unlimited reports, full bias detection, BetIQ, sport-specific analysis, and everything else Pro includes. After 7 days, you can upgrade to keep Pro or continue on the free tier (1 report, 50 most recent bets).' },
       { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no cancellation fees. You can cancel directly from your account settings and you\'ll retain access through the end of your billing period.' },
       { q: 'Do you offer annual billing?', a: 'Yes. Pro is $99/year (vs. $9.99/month) and Sharp is $199/year (vs. $24.99/month). Annual billing saves you about 17% on Pro and about 33% on Sharp.' },
       { q: 'What payment methods do you accept?', a: 'All major credit and debit cards via Stripe. We never see or store your full card number. Stripe handles all payment processing.' },
