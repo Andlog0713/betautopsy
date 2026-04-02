@@ -119,7 +119,7 @@ export default function UploadPage() {
           <p className="text-fg-bright font-bold text-lg">🎉 Welcome! You&apos;re on a free Pro trial.</p>
           <p className="text-fg-muted text-sm">
             You have 7 days of full Pro access — unlimited reports, BetIQ, sport-specific analysis, and more.
-            No credit card needed. Import your bets below to get started.
+            Import your bets below to get started.
           </p>
         </div>
       )}
