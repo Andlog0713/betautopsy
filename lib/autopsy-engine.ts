@@ -644,7 +644,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // Stake size chaos
   if (stakeCv >= 0.5) {
     const sev = stakeCv >= 1.8 ? 'critical' : stakeCv >= 1.2 ? 'high' : stakeCv >= 0.8 ? 'medium' : 'low';
-    biases.push({ bias_name: 'Stake Volatility', severity: sev, data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}) — ${stakeCv >= 1.0 ? 'wildly' : 'noticeably'} inconsistent sizing` });
+    biases.push({ bias_name: 'Stake Volatility', severity: sev, data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}) . ${stakeCv >= 1.0 ? 'wildly' : 'noticeably'} inconsistent sizing` });
   }
 
   // Favorite bias
@@ -771,7 +771,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     }
     if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2 && countAfterLoss > 2) {
       const sev = dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.4 ? 'high' : 'medium';
-      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win — chasing bigger multipliers to recover` });
+      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win . chasing bigger multipliers to recover` });
     }
     const topPlayer = dm.playerConcentration[0];
     if (topPlayer && topPlayer.percent >= 25) {
@@ -821,18 +821,18 @@ function determineArchetype(
   }
   // Sniper — selective bettor
   if (totalBets < 50 && sportCount <= 2) {
-    return { name: 'Sniper', description: "Selective and focused. You pick your spots — now it's about sharpening the edge." };
+    return { name: 'Sniper', description: "Selective and focused. You pick your spots . now it's about sharpening the edge." };
   }
   // Volume Warrior — lots of bets, flat stakes
   if (totalBets >= 150 && stakeCv < 0.8) {
-    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach — now find the leaks in the volume." };
+    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach . now find the leaks in the volume." };
   }
   // Degen King — high variance, mixed, emotional
   if (stakeCv >= 1.0 && parlayPct >= 20 && emotionScore > 40) {
-    return { name: 'Degen King', description: "You're here for the ride. Embrace it — but know which parts of the ride are costing you." };
+    return { name: 'Degen King', description: "You're here for the ride. Embrace it , but know which parts of the ride are costing you." };
   }
   // Default
-  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation — the analysis shows where to build on it." };
+  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation . the analysis shows where to build on it." };
 }
 
 function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: number): { name: string; description: string } {
@@ -842,7 +842,7 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
 
   // Multiplier Chaser — high pick count + bad ROI on high picks
   if (dm.avgPickCount > 4.5 && dm.highPickROI < -40) {
-    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket — and it performs like one too." };
+    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket , and it performs like one too." };
   }
   // All-or-Nothing — Power heavy + Flex is better
   if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
@@ -855,19 +855,19 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   // Loyalty Bettor — player concentration + emotional
   const topPlayer = dm.playerConcentration[0];
   if (topPlayer && topPlayer.percent >= 25 && emotionScore > 45) {
-    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy — it's a relationship.` };
+    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy . it's a relationship.` };
   }
   // Fall through to standard archetypes based on discipline/emotion
   if (emotionScore <= 30 && stakeCv < 0.8) {
     return { name: 'The Natural', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
   }
   if (emotionScore > 55 && dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2) {
-    return { name: 'Heated Bettor', description: "Your reads aren't bad — but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
+    return { name: 'Heated Bettor', description: "Your reads aren't bad , but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
   }
   if (highPickPct > 60) {
     return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
   }
-  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation — the analysis shows where to build on it." };
+  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation . the analysis shows where to build on it." };
 }
 
 // ── Discipline Score Calculator ──
@@ -1103,10 +1103,10 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
 
   let interpretation = '';
   if (score >= 75) interpretation = 'Elite-level betting skill. You consistently find value and specialize where you have edge.';
-  else if (score >= 60) interpretation = 'Above-average skill. You have identifiable edges — the question is whether you\'re exploiting them enough.';
+  else if (score >= 60) interpretation = 'Above-average skill. You have identifiable edges . the question is whether you\'re exploiting them enough.';
   else if (score >= 45) interpretation = 'Moderate skill level. Some promising spots, but you\'re also making bets without clear edge.';
   else if (score >= 30) interpretation = 'Below average. Focus on the 1-2 areas where you actually show positive ROI and cut everything else.';
-  else interpretation = 'Significant room for improvement. Your bet selection suggests recreational patterns — start tracking WHY you make each bet.';
+  else interpretation = 'Significant room for improvement. Your bet selection suggests recreational patterns . start tracking WHY you make each bet.';
 
   return {
     score,
@@ -1214,12 +1214,12 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
   const signalEntries = Object.entries(signals) as [string, number][];
   const worstSignal = signalEntries.reduce((a, b) => b[1] > a[1] ? b : a);
   const triggerDescriptions: Record<string, string> = {
-    bet_sizing_volatility: `Your bet sizes vary wildly — a ${metrics.stake_cv.toFixed(1)}x coefficient of variation suggests emotional sizing.`,
-    loss_reaction: `Your stakes increase ${metrics.loss_chase_ratio.toFixed(1)}x after losses — classic loss chasing.`,
+    bet_sizing_volatility: `Your bet sizes vary wildly . a ${metrics.stake_cv.toFixed(1)}x coefficient of variation suggests emotional sizing.`,
+    loss_reaction: `Your stakes increase ${metrics.loss_chase_ratio.toFixed(1)}x after losses . classic loss chasing.`,
     streak_behavior: 'Your betting behavior deteriorates significantly during losing streaks.',
-    session_discipline: 'Your losing sessions run much longer than your winning ones — you don\'t know when to stop.',
-    session_acceleration: 'Your bet frequency increases within sessions — you place bets faster as sessions progress, especially after losses.',
-    odds_drift_after_loss: 'After losses, you shift toward longer odds — chasing bigger payouts to recover instead of sticking to your edge.',
+    session_discipline: 'Your losing sessions run much longer than your winning ones . you don\'t know when to stop.',
+    session_acceleration: 'Your bet frequency increases within sessions . you place bets faster as sessions progress, especially after losses.',
+    odds_drift_after_loss: 'After losses, you shift toward longer odds . chasing bigger payouts to recover instead of sticking to your edge.',
   };
 
   return {
@@ -1267,7 +1267,7 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
         description: 'Your NFL straight bets are profitable, but NFL parlays are dragging your overall NFL ROI down.',
         evidence: `NFL straight bets: +$${Math.round(nflStraightProfit)}. NFL parlays (${nflParlayPct.toFixed(0)}%): $${Math.round(nflParlayProfit)}.`,
         estimated_cost: nflParlayProfit < 0 ? Math.round(nflParlayProfit) : null,
-        recommendation: 'Take your NFL reads and make them singles. Your NFL edge is in straight bets — parlays are erasing it.',
+        recommendation: 'Take your NFL reads and make them singles. Your NFL edge is in straight bets . parlays are erasing it.',
       });
     }
   }
@@ -1332,7 +1332,7 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
         description: 'Almost all your MLB bets are moneylines. Run lines and totals often offer better value in baseball.',
         evidence: `${mlbMLPct.toFixed(0)}% of MLB bets are moneylines (${mlbML.length}/${mlbBets.length}). ML ROI: ${mlbMLROI.toFixed(1)}%.`,
         estimated_cost: null,
-        recommendation: 'Explore run lines — the +1.5 on underdogs with good pitching matchups is often where MLB value hides.',
+        recommendation: 'Explore run lines . the +1.5 on underdogs with good pitching matchups is often where MLB value hides.',
       });
     }
   }
@@ -1355,7 +1355,7 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       findings.push({
         id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation after loss', sport: 'DFS',
         severity: ratio > 1.4 ? 'high' : 'medium',
-        description: 'After losses, you increase your pick count — going for bigger multipliers to recover.',
+        description: 'After losses, you increase your pick count . going for bigger multipliers to recover.',
         evidence: `Avg picks after loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
         estimated_cost: null,
         recommendation: 'Set a rule: your pick count should never change based on your last result.',
@@ -1483,7 +1483,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Increased stakes after a loss' }); }
     if (chaseCount >= 3) { score -= 12; deductions.push({ points: 12, reason: `Chased losses ${chaseCount} times in a single session` }); }
 
-    if (sessionBets.length > 10) { score -= 15; deductions.push({ points: 15, reason: `Placed ${sessionBets.length} bets in one session — marathon session` }); }
+    if (sessionBets.length > 10) { score -= 15; deductions.push({ points: 15, reason: `Placed ${sessionBets.length} bets in one session . marathon session` }); }
     else if (sessionBets.length > 7) { score -= 8; deductions.push({ points: 8, reason: `Placed ${sessionBets.length} bets in one session` }); }
 
     if (betsPerHour > 4) { score -= 10; deductions.push({ points: 10, reason: `Rapid-fire betting at ${betsPerHour.toFixed(1)} bets/hour` }); }
@@ -1601,9 +1601,9 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
   if (heatedSessionCount === 0) {
     insight = `Across ${totalSessions} sessions, discipline stayed solid with no heated sessions detected.`;
   } else if (heatedSessionPercent > 50) {
-    insight = `${heatedSessionCount} of ${totalSessions} sessions (${heatedSessionPercent}%) showed heated behavior — the majority of your betting is happening under emotional pressure.`;
+    insight = `${heatedSessionCount} of ${totalSessions} sessions (${heatedSessionPercent}%) showed heated behavior . the majority of your betting is happening under emotional pressure.`;
   } else if (heatedSessionPercent > 25) {
-    insight = `${heatedSessionCount} of ${totalSessions} sessions were heated — about 1 in ${Math.round(totalSessions / heatedSessionCount)} sessions shows signs of emotional betting or loss chasing.`;
+    insight = `${heatedSessionCount} of ${totalSessions} sessions were heated . about 1 in ${Math.round(totalSessions / heatedSessionCount)} sessions shows signs of emotional betting or loss chasing.`;
   } else {
     insight = `Most sessions look disciplined, but ${heatedSessionCount} of ${totalSessions} had heated moments worth reviewing.`;
   }
@@ -1894,11 +1894,11 @@ export function annotateBets(
   const emotionalPct = distribution.emotional.percent;
 
   if (disciplinedPct >= 60) {
-    insight = `${disciplinedPct}% of your bets show disciplined patterns — solid self-control across most of your action.`;
+    insight = `${disciplinedPct}% of your bets show disciplined patterns . solid self-control across most of your action.`;
   } else if (chasingPct >= 30) {
     insight = `${chasingPct}% of bets are classified as chasing, costing an estimated $${Math.abs(emotionalCost).toFixed(0)} in lost edge.`;
   } else if (emotionalPct >= 25) {
-    insight = `${emotionalPct}% of bets carry emotional signals — late-night, oversized, or heated session bets are dragging your ROI.`;
+    insight = `${emotionalPct}% of bets carry emotional signals . late-night, oversized, or heated session bets are dragging your ROI.`;
   } else if (topClass && distribution[topClass].count > 0) {
     insight = `Most bets are neutral, but your ${topClass} bets (${distribution[topClass].percent}%) ${distribution[topClass].roi < 0 ? 'are costing you' : 'show promise'}.`;
   } else {
@@ -1990,7 +1990,7 @@ function pad(str: string, len: number): string { return str.length >= len ? str.
 
 const SYSTEM_PROMPT = `You are BetAutopsy, an elite sports betting behavioral analyst.
 
-LANGUAGE RULE: NEVER use the word "tilt" or "tilting" — most sports bettors don't know this poker term. Instead say "emotional betting", "heated session", "emotional decisions", "loss-driven behavior", or "chasing". This is critical — your audience is sports bettors, not poker players.
+LANGUAGE RULE: NEVER use the word "tilt" or "tilting" . most sports bettors don't know this poker term. Instead say "emotional betting", "heated session", "emotional decisions", "loss-driven behavior", or "chasing". This is critical . your audience is sports bettors, not poker players.
 
 IMPORTANT: All numerical metrics (ROI, win rate, emotion score, bankroll health, category breakdowns, bias classifications) are PRE-CALCULATED and provided to you. NEVER recalculate them. Use the EXACT numbers given. Your role is:
 - Interpret what the numbers mean behaviorally
@@ -2016,7 +2016,7 @@ These sport-specific patterns are pre-detected by the system. Reference the pre-
 ## Output Format
 Respond with valid JSON:
 {
-  "overall_grade": "use the exact pre-calculated grade provided — do not assign a different one",
+  "overall_grade": "use the exact pre-calculated grade provided . do not assign a different one",
   "biases_detected": [
     {
       "bias_name": "exact name from pre-classified list",
@@ -2078,7 +2078,7 @@ Respond with valid JSON:
 }
 
 ## Voice & Tone
-You sound like a sharp friend who watches games and actually bets — not a data scientist reading a report. Use real betting language naturally, not forced.
+You sound like a sharp friend who watches games and actually bets . not a data scientist reading a report. Use real betting language naturally, not forced.
 
 Vocabulary to use when it fits naturally:
 - "chalk" instead of "favorite"
@@ -2094,13 +2094,15 @@ Vocabulary to use when it fits naturally:
 - "unit" / "units" when discussing stake sizing (explain: "a unit is whatever your standard bet size is")
 
 Tone rules:
-- Celebrate wins and edges with real energy: "Your unders game is legit — that's a real edge, not just a hot streak"
-- Be real about losses without being clinical: "That March 9 session was rough — 3 Ls in a row and the stakes crept up."
+- Celebrate wins and edges with real energy: "Your unders game is legit . that's a real edge, not just a hot streak"
+- Be real about losses without being clinical: "That March 9 session was rough . 3 Ls in a row and the stakes crept up."
 - Reference specific bets by description when possible
-- Never sound like a textbook: "Your coefficient of variation is elevated" = bad. "Your bet sizing is all over the place — $50 one play, $400 the next" = good
-- Be direct: "You're laying way too much juice on chalk. 22 bets at -150 or worse with a -8% ROI — you're paying a tax to feel safe."
-- When they have no edge somewhere, say it straight: "Real talk — your NHL bets are cooked. 2-9 with -44% ROI. Either find a real angle or cut it entirely."
+- Never sound like a textbook: "Your coefficient of variation is elevated" = bad. "Your bet sizing is all over the place . $50 one play, $400 the next" = good
+- Be direct: "You're laying way too much juice on chalk. 22 bets at -150 or worse with a -8% ROI . you're paying a tax to feel safe."
+- When they have no edge somewhere, say it straight: "Your NHL bets are cooked. 2-9 with -44% ROI. Either find a real angle or cut it entirely."
 - Frame everything around behavior improvement, never around "winning more"
+
+PUNCTUATION RULE: Never use em-dashes in any output. Use periods to separate independent thoughts. Use commas for dependent clauses. Use parentheses for interjections. Use colons before explanations or lists. This is a hard rule with zero exceptions.
 
 CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT before addressing problems.
 - Start with their best quality or strongest area
@@ -2113,7 +2115,7 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 ## Critical Rules
 - NEVER recommend specific bets or picks
 - NEVER promise profitability
-- NEVER recalculate any numbers — use only what is provided
+- NEVER recalculate any numbers . use only what is provided
 - If bankroll_health is "danger", mention responsible bankroll management but do NOT use alarmist language
 - If data is sparse (<20 bets), say so and give limited analysis`;
 
@@ -2132,7 +2134,7 @@ function formatBetTable(bets: Bet[]): string {
     const stake = pad(`$${Number(b.stake).toFixed(0)}`, 6);
     const result = pad(b.result.toUpperCase(), 6);
     const profit = pad(`${Number(b.profit) >= 0 ? '+' : ''}$${Number(b.profit).toFixed(0)}`, 7);
-    const book = b.sportsbook ?? '—';
+    const book = b.sportsbook ?? '-';
     const bonus = b.is_bonus_bet ? ' [BONUS]' : '';
     const legs = b.parlay_legs && b.parlay_legs > 1 ? ` [${b.parlay_legs}L]` : '';
     return `${date} | ${sport} | ${type} | ${desc} | ${odds} | ${stake} | ${result} | ${profit} | ${book}${bonus}${legs}`;
@@ -2163,10 +2165,10 @@ Median Stake: $${metrics.summary.median_stake.toFixed(2)}
 Max Stake: $${metrics.summary.max_stake.toFixed(0)} | Min Stake: $${metrics.summary.min_stake.toFixed(0)}
 Total Staked: $${metrics.summary.total_staked.toFixed(2)}
 Date Range: ${metrics.summary.date_range}
-Bankroll: ${metrics.bankroll_used ? `$${metrics.bankroll_used.toLocaleString()}` : 'Not set (estimated at $' + Math.round(metrics.summary.avg_stake * 50).toLocaleString() + ') — user should set this for accurate grading'}
+Bankroll: ${metrics.bankroll_used ? `$${metrics.bankroll_used.toLocaleString()}` : 'Not set (estimated at $' + Math.round(metrics.summary.avg_stake * 50).toLocaleString() + '). user should set this for accurate grading'}
 Bankroll Health: ${metrics.bankroll_health === 'danger' ? 'At Risk' : metrics.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}
 Overall Grade: ${metrics.summary.overall_grade} (pre-calculated, do not override)
-Bet DNA: ${metrics.betting_archetype.name} — ${metrics.betting_archetype.description}
+Bet DNA: ${metrics.betting_archetype.name}: ${metrics.betting_archetype.description}
 Emotion Score: ${metrics.emotion_score}/100 (bet_sizing: ${metrics.emotion_breakdown.stake_volatility}/25, loss_reaction: ${metrics.emotion_breakdown.loss_chasing}/25, streak_behavior: ${metrics.emotion_breakdown.streak_behavior}/25, knowing_when_to_stop: ${metrics.emotion_breakdown.session_discipline}/25)
 Bet Sizing Consistency: ${metrics.stake_cv < 0.5 ? 'very consistent' : metrics.stake_cv < 0.8 ? 'somewhat varied' : metrics.stake_cv < 1.2 ? 'inconsistent' : 'wildly inconsistent'} (variability score: ${metrics.stake_cv.toFixed(2)})
 Loss Chase Ratio: ${metrics.loss_chase_ratio.toFixed(2)}x
@@ -2183,8 +2185,8 @@ ${metrics.timing.by_day.filter((d) => d.bets >= 1).map((d) => `${d.label}: ${d.r
 
 By Time of Day:
 ${metrics.timing.by_hour.filter((h) => h.bets >= 1).map((h) => `${h.label}: ${h.roi.toFixed(1)}% ROI (${h.bets} bets, ${h.win_rate.toFixed(0)}% win rate, $${h.profit.toFixed(0)} profit)`).join('\n')}
-${metrics.timing.best_window ? `\nBest Window: ${metrics.timing.best_window.label} — ${metrics.timing.best_window.roi.toFixed(1)}% ROI (${metrics.timing.best_window.count} bets)` : ''}
-${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.label} — ${metrics.timing.worst_window.roi.toFixed(1)}% ROI (${metrics.timing.worst_window.count} bets)` : ''}
+${metrics.timing.best_window ? `\nBest Window: ${metrics.timing.best_window.label}: ${metrics.timing.best_window.roi.toFixed(1)}% ROI (${metrics.timing.best_window.count} bets)` : ''}
+${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.label}: ${metrics.timing.worst_window.roi.toFixed(1)}% ROI (${metrics.timing.worst_window.count} bets)` : ''}
 ${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : 'No time-of-day data available (timestamps are date-only).'}
 ===
 
@@ -2197,7 +2199,7 @@ ${metrics.odds.best_bucket ? `Best Odds Range: ${metrics.odds.best_bucket.label}
 ${metrics.odds.worst_bucket ? `Worst Odds Range: ${metrics.odds.worst_bucket.label} (${metrics.odds.worst_bucket.edge >= 0 ? '+' : ''}${metrics.odds.worst_bucket.edge.toFixed(1)}pp edge, ${metrics.odds.worst_bucket.count} bets)` : ''}
 ===
 
-=== PRE-CLASSIFIED BIASES (do not change bias names or severity levels — write descriptions and evidence for each) ===
+=== PRE-CLASSIFIED BIASES (do not change bias names or severity levels. write descriptions and evidence for each) ===
 ${metrics.biases_detected.length > 0
     ? metrics.biases_detected.map((b) => `- ${b.bias_name}: ${b.severity.toUpperCase()} (${b.data})`).join('\n')
     : 'No significant biases detected at current thresholds.'}
@@ -2210,8 +2212,8 @@ Avg Duration: ${metrics.sessionDetection.avgSessionDuration.toFixed(0)} min
 Grade Distribution: ${metrics.sessionDetection.sessionGradeDistribution.filter(g => g.count > 0).map(g => `${g.grade}: ${g.count} (${g.percent}%)`).join(', ')}
 Heated Sessions: ${metrics.sessionDetection.heatedSessionCount} (${metrics.sessionDetection.heatedSessionPercent}%)
 Avg ROI by Grade: ${Object.entries(metrics.sessionDetection.avgGradedROI).map(([g, r]) => `${g}: ${r.toFixed(1)}%`).join(', ')}
-${metrics.sessionDetection.bestSession ? `Best Session: ${metrics.sessionDetection.bestSession.id} on ${metrics.sessionDetection.bestSession.date} — ${metrics.sessionDetection.bestSession.bets} bets, $${metrics.sessionDetection.bestSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.bestSession.grade}` : ''}
-${metrics.sessionDetection.worstSession ? `Worst Session: ${metrics.sessionDetection.worstSession.id} on ${metrics.sessionDetection.worstSession.date} — ${metrics.sessionDetection.worstSession.bets} bets, $${metrics.sessionDetection.worstSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.worstSession.grade}${metrics.sessionDetection.worstSession.isHeated ? ' [HEATED]' : ''}` : ''}
+${metrics.sessionDetection.bestSession ? `Best Session: ${metrics.sessionDetection.bestSession.id} on ${metrics.sessionDetection.bestSession.date}: ${metrics.sessionDetection.bestSession.bets} bets, $${metrics.sessionDetection.bestSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.bestSession.grade}` : ''}
+${metrics.sessionDetection.worstSession ? `Worst Session: ${metrics.sessionDetection.worstSession.id} on ${metrics.sessionDetection.worstSession.date}: ${metrics.sessionDetection.worstSession.bets} bets, $${metrics.sessionDetection.worstSession.profit.toFixed(0)} profit, grade ${metrics.sessionDetection.worstSession.grade}${metrics.sessionDetection.worstSession.isHeated ? ' [HEATED]' : ''}` : ''}
 Insight: ${metrics.sessionDetection.insight}
 ===` : ''}${metrics.annotations ? `
 
@@ -2232,8 +2234,8 @@ Insight: ${metrics.annotations.insight}
 This user plays on ${metrics.dfs.primaryPlatform ?? 'a DFS platform'}. ALL entries are multi-pick (2-6 player prop predictions). There are no "straight bets."
 
 CRITICAL LANGUAGE RULES:
-- NEVER call their activity "parlay addiction" — multi-pick entries are the only format
-- NEVER advise "cut parlays" or "switch to straight bets" — impossible on this platform
+- NEVER call their activity "parlay addiction" . multi-pick entries are the only format
+- NEVER advise "cut parlays" or "switch to straight bets" . impossible on this platform
 - Use "entries" not "bets" and "picks" not "legs"
 - Say "2-pick entry" not "straight bet" and "5-pick entry" not "5-leg parlay"
 - Say "entry fee" not "stake" and "Power Play" / "Flex Play" not "all-or-nothing"
@@ -2258,7 +2260,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 
   const sportFindings = detectSportSpecificPatterns(metrics, bets);
   const sportFindingsBlock = sportFindings.length > 0
-    ? `\n\n=== SPORT-SPECIFIC FINDINGS (pre-detected) ===\n${sportFindings.map(f => `${f.id}: ${f.name} [${f.severity}] — ${f.evidence}`).join('\n')}\n===`
+    ? `\n\n=== SPORT-SPECIFIC FINDINGS (pre-detected) ===\n${sportFindings.map(f => `${f.id}: ${f.name} [${f.severity}]: ${f.evidence}`).join('\n')}\n===`
     : '';
 
   const userMessage = `${metricsBlock}${dfsPromptBlock}${sportFindingsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
@@ -2437,7 +2439,7 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
       lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${b.win_rate.toFixed(0)}% | ${b.implied_prob.toFixed(0)}% | ${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp | ${b.roi.toFixed(1)}% | $${b.profit.toFixed(0)} |`);
     }
     lines.push('');
-    lines.push(`- **Luck vs Skill:** ${a.odds_analysis.actual_wins} actual wins vs ${a.odds_analysis.expected_wins.toFixed(1)} expected — ${a.odds_analysis.luck_label}`);
+    lines.push(`- **Luck vs Skill:** ${a.odds_analysis.actual_wins} actual wins vs ${a.odds_analysis.expected_wins.toFixed(1)} expected: ${a.odds_analysis.luck_label}`);
     if (a.odds_analysis.best_bucket) lines.push(`- **Best Odds Range:** ${a.odds_analysis.best_bucket.label} (${a.odds_analysis.best_bucket.edge >= 0 ? '+' : ''}${a.odds_analysis.best_bucket.edge.toFixed(1)}pp edge)`);
     if (a.odds_analysis.worst_bucket) lines.push(`- **Worst Odds Range:** ${a.odds_analysis.worst_bucket.label} (${a.odds_analysis.worst_bucket.edge >= 0 ? '+' : ''}${a.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge)`);
     lines.push('');
@@ -2447,6 +2449,6 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     for (const r of a.recommendations) { lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`); lines.push(`${r.description}\n`); }
   }
   lines.push('---');
-  lines.push('*BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don\'t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
+  lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
   return lines.join('\n');
 }
