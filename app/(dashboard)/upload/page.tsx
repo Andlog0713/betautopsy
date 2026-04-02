@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { trackUpload } from '@/lib/tiktok-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
-import OnboardingBanner from '@/components/OnboardingBanner';
 import PasteParser from '@/components/PasteParser';
 import type { UploadResponse, Profile } from '@/types';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
-type ActiveTab = 'paste' | 'csv';
+type ActiveMethod = 'pikkit' | 'paste' | 'csv';
 
 export default function UploadPage() {
   const [state, setState] = useState<UploadState>('idle');
@@ -21,8 +20,8 @@ export default function UploadPage() {
   const [reportCount, setReportCount] = useState<number | null>(null);
   const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
   const [lastBetDate, setLastBetDate] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('paste');
-  const [showDataSection, setShowDataSection] = useState(false);
+  const [activeMethod, setActiveMethod] = useState<ActiveMethod>('pikkit');
+  const [showPikkitSteps, setShowPikkitSteps] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,8 +38,7 @@ export default function UploadPage() {
         setProfile(profileRes.data as Profile);
         const bc = (profileRes.data as Profile).bet_count;
         setInitialBetCount(bc);
-        // Default tab: paste if has bets, csv if no bets
-        setActiveTab(bc > 0 ? 'paste' : 'csv');
+        setActiveMethod(bc > 0 ? 'paste' : 'pikkit');
       }
       setReportCount(reportsRes.count ?? 0);
       if (lastBetRes.data && lastBetRes.data.length > 0) {
@@ -59,28 +57,15 @@ export default function UploadPage() {
       setState('error');
       return;
     }
-
     setState('uploading');
     setError('');
     setResult(null);
-
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Upload failed');
-        setState('error');
-        return;
-      }
-
+      if (!res.ok) { setError(data.error || 'Upload failed'); setState('error'); return; }
       setResult(data as UploadResponse);
       trackUpload();
       setState('success');
@@ -103,338 +88,215 @@ export default function UploadPage() {
   }
 
   const tier = profile?.subscription_tier ?? 'free';
-
   const uploadSucceeded = state === 'success' && result && result.bets_imported > 0;
+  const daysSinceLastBet = lastBetDate ? Math.floor((Date.now() - new Date(lastBetDate).getTime()) / 86400000) : null;
 
-  // Days since last bet upload
-  const daysSinceLastBet = lastBetDate
-    ? Math.floor((Date.now() - new Date(lastBetDate).getTime()) / (1000 * 60 * 60 * 24))
-    : null;
+  const methods = [
+    { id: 'pikkit' as const, icon: '📱', label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
+    { id: 'paste' as const, icon: '📋', label: 'Paste', desc: 'Copy from sportsbook', badge: betCount > 0 ? 'RECOMMENDED' : undefined },
+    { id: 'csv' as const, icon: '📄', label: 'CSV Upload', desc: 'Upload a file' },
+  ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Onboarding step indicator */}
-      {isOnboarding && initialBetCount === 0 && (
+    <div className="space-y-6 animate-fade-in">
+      {/* Onboarding steps */}
+      {isOnboarding && initialBetCount === 0 && !uploadSucceeded && (
         <div className="space-y-3">
-          <OnboardingSteps
-            active={uploadSucceeded ? 2 : 1}
-            completed={uploadSucceeded ? [1] : []}
-          />
+          <OnboardingSteps active={1} completed={[]} />
           <div className="text-center">
-            <button
-              onClick={() => {
-                sessionStorage.setItem('onboarding_skip', '1');
-                window.location.href = '/dashboard';
-              }}
-              className="text-xs text-fg-dim hover:text-fg-muted transition-colors"
-            >
+            <button onClick={() => { sessionStorage.setItem('onboarding_skip', '1'); window.location.href = '/dashboard'; }} className="text-xs text-fg-muted hover:text-fg transition-colors">
               Skip for now
             </button>
           </div>
         </div>
       )}
 
-      {/* ── New user: OnboardingBanner prominently at top ── */}
-      {betCount === 0 && reportCount !== null && (
-        <OnboardingBanner betCount={betCount} reportCount={reportCount} />
-      )}
-
-      {/* ── Returning user with bets but no reports: ready banner ── */}
-      {betCount > 0 && reportCount !== null && reportCount === 0 && (
-        <OnboardingBanner betCount={betCount} reportCount={reportCount} />
+      {/* First-upload celebration */}
+      {initialBetCount === 0 && uploadSucceeded && (
+        <div className="case-card p-8 text-center space-y-4 border-scalpel/20">
+          <div className="text-5xl">🔬</div>
+          <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
+          <p className="text-fg-muted text-sm max-w-md mx-auto">
+            This is where it gets interesting. Your free autopsy will reveal the cognitive biases and behavioral patterns hiding in your data.
+          </p>
+          <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+            Run Your First Autopsy →
+          </Link>
+        </div>
       )}
 
       {/* Header */}
-      {betCount === 0 ? (
+      {!uploadSucceeded && (
         <div>
-          <h1 className="font-bold text-3xl mb-2 text-fg-bright">Upload Bets</h1>
-          <p className="text-fg-muted">
-            Drop your CSV and we&apos;ll find the behavioral patterns hiding in your betting history.
-          </p>
-        </div>
-      ) : (
-        <div>
-          <h1 className="font-bold text-3xl mb-2 text-fg-bright">Add More Bets</h1>
-          <p className="text-fg-muted">
-            {daysSinceLastBet !== null
-              ? `Last uploaded: ${daysSinceLastBet === 0 ? 'today' : `${daysSinceLastBet} day${daysSinceLastBet !== 1 ? 's' : ''} ago`}. `
-              : ''}
-            Paste from your sportsbook or upload a CSV.
+          <h1 className="font-bold text-2xl mb-1 text-fg-bright">
+            {betCount === 0 ? 'Get Your Bets Into BetAutopsy' : 'Add More Bets'}
+          </h1>
+          <p className="text-fg-muted text-sm">
+            {betCount === 0
+              ? 'Choose any method below.'
+              : daysSinceLastBet !== null
+                ? `Last uploaded: ${daysSinceLastBet === 0 ? 'today' : `${daysSinceLastBet} day${daysSinceLastBet !== 1 ? 's' : ''} ago`}.`
+                : 'Add your recent bets for a more accurate analysis.'}
           </p>
         </div>
       )}
 
       {/* Tier info */}
-      {tier === 'free' && (
-        <div className="card p-4">
-          <p className="text-fg-muted text-sm">
-            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent). Upgrade to Pro for unlimited reports across your full history.
+      {tier === 'free' && !uploadSucceeded && (
+        <div className="card p-3">
+          <p className="text-fg-muted text-xs">
+            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets — you get 1 free autopsy report (covers your 50 most recent).
           </p>
         </div>
       )}
 
-      {/* ── First-upload celebration ── */}
-      {initialBetCount === 0 && uploadSucceeded && (
-        <div className="case-card p-8 text-center space-y-4 border-scalpel/20">
-          <div className="text-5xl">{'\uD83D\uDD2C'}</div>
-          <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
-          <p className="text-fg-muted text-sm max-w-md mx-auto">
-            This is where it gets interesting. Your free autopsy will reveal the cognitive biases
-            and behavioral patterns hiding in your data.
-          </p>
-          <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            Run Your First Autopsy {'\u2192'}
-          </Link>
-        </div>
-      )}
-
-      {/* ── New user: collapsible data section ── */}
-      {betCount === 0 && (
-        <button
-          onClick={() => setShowDataSection((prev) => !prev)}
-          className="text-fg-muted hover:text-fg-bright text-sm transition-colors flex items-center gap-2"
-        >
-          Already have your data?
-          <span className="text-xs">{showDataSection ? '\u25B4' : '\u25BE'}</span>
-        </button>
-      )}
-
-      {/* ── Tab bar ── */}
-      {(betCount > 0 || showDataSection) && (
-        <div className="flex gap-0 border-b border-white/[0.06]">
-          <button
-            onClick={() => setActiveTab('paste')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === 'paste'
-                ? 'border-scalpel text-fg-bright'
-                : 'border-transparent text-fg-muted hover:text-fg'
-            }`}
-          >
-            Paste from Sportsbook
-          </button>
-          <button
-            onClick={() => setActiveTab('csv')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === 'csv'
-                ? 'border-scalpel text-fg-bright'
-                : 'border-transparent text-fg-muted hover:text-fg'
-            }`}
-          >
-            CSV Upload
-          </button>
-        </div>
-      )}
-
-      {/* ── Paste tab ── */}
-      {(betCount > 0 || showDataSection) && activeTab === 'paste' && <PasteParser />}
-
-      {/* ── CSV tab ── */}
-      {(betCount > 0 || showDataSection) && activeTab === 'csv' && (
-        <div className="space-y-6">
-          {/* How to get your data — prominent banner */}
-          <Link
-            href="/how-to-upload"
-            className="block card border-scalpel/20 bg-scalpel-muted hover:bg-scalpel-muted p-4 transition-colors"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-fg-bright font-medium text-sm">Don&apos;t have a CSV yet?</p>
-                <p className="text-fg-muted text-sm mt-0.5">
-                  We&apos;ll show you how to get your bet history into BetAutopsy — step by step for every method.
-                </p>
-              </div>
-              <span className="text-scalpel text-lg shrink-0 ml-4">{'\u2192'}</span>
-            </div>
-          </Link>
-
-          {/* Template download */}
-          <div className="text-sm">
-            <a href="/api/template" className="text-scalpel hover:underline">
-              {'\u2193'} Download CSV template
-            </a>
+      {/* ═══ Three method cards ═══ */}
+      {!uploadSucceeded && (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {methods.map(m => (
+              <button
+                key={m.id}
+                onClick={() => setActiveMethod(m.id)}
+                className={`relative p-4 rounded-sm border text-center transition-all ${
+                  activeMethod === m.id
+                    ? 'border-scalpel/40 bg-scalpel-muted'
+                    : 'border-white/[0.06] bg-surface hover:border-white/[0.10]'
+                }`}
+              >
+                {m.badge && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 font-mono text-[8px] text-scalpel bg-base border border-scalpel/30 px-1.5 py-0.5 rounded-sm tracking-wider">
+                    {m.badge}
+                  </span>
+                )}
+                <div className="text-2xl mb-1">{m.icon}</div>
+                <div className="text-sm font-medium text-fg-bright">{m.label}</div>
+                <div className="text-xs text-fg-muted mt-0.5">{m.desc}</div>
+              </button>
+            ))}
           </div>
 
-          {/* Drop zone */}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`card p-12 text-center cursor-pointer transition-all duration-200 ${
-              dragOver
-                ? 'border-scalpel bg-scalpel-muted'
-                : 'hover:border-white/[0.08]'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+          {/* ═══ Method content ═══ */}
 
-            {state === 'uploading' ? (
-              <div className="space-y-3">
-                <div className="text-4xl animate-pulse">{'\u23F3'}</div>
-                <p className="text-fg-muted">Parsing and importing your bets...</p>
-                <div className="w-48 h-1.5 bg-surface rounded-full mx-auto overflow-hidden">
-                  <div className="h-full bg-scalpel rounded-full animate-pulse w-2/3" />
+          {/* Pikkit method */}
+          {activeMethod === 'pikkit' && (
+            <div className="space-y-4">
+              <div className="finding-card border-l-scalpel p-5">
+                <p className="text-fg-muted text-sm mb-3">
+                  Pikkit syncs with your sportsbooks and exports your complete history as a CSV.{' '}
+                  <strong className="text-fg-bright">Free for 7 days</strong> — that&apos;s all you need.
+                </p>
+                <p className="text-fg-muted text-xs mb-4">
+                  This is a <strong className="text-fg-bright">one-time import</strong>. After your history is in, keep it updated by pasting new bets — no Pikkit needed.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+                  <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">
+                    Get Pikkit (Free 7-Day Trial)
+                  </a>
+                  <span className="text-fg-muted text-xs">💰 Get $3–$100 cash from Pikkit when you sign up and sync 10+ bets</span>
+                </div>
+
+                <button onClick={() => setShowPikkitSteps(!showPikkitSteps)} className="text-fg-muted text-xs hover:text-fg transition-colors flex items-center gap-1">
+                  {showPikkitSteps ? 'Hide instructions' : 'See step-by-step instructions'} <span className="text-[10px]">{showPikkitSteps ? '▴' : '▾'}</span>
+                </button>
+
+                {showPikkitSteps && (
+                  <div className="bg-surface-raised rounded-sm p-4 mt-3 space-y-2">
+                    <ol className="text-fg-muted text-sm space-y-1.5 list-none">
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">01</span> Download Pikkit and create an account</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">02</span> Connect your sportsbooks — DraftKings, FanDuel, BetMGM, etc.</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">03</span> Start the free 7-day Pro trial (required to export)</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">04</span> Wait for Pikkit to sync your bets (a few minutes)</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">05</span> Go to Pro → Settings → Data Exports → Download CSV</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">06</span> Upload that CSV using the CSV method card above</li>
+                    </ol>
+                  </div>
+                )}
+              </div>
+
+              {/* Also show the CSV drop zone since Pikkit exports CSV */}
+              <p className="text-fg-muted text-xs">Once you have the CSV from Pikkit, drop it here:</p>
+              {renderDropZone()}
+            </div>
+          )}
+
+          {/* Paste method */}
+          {activeMethod === 'paste' && <PasteParser />}
+
+          {/* CSV method */}
+          {activeMethod === 'csv' && (
+            <div className="space-y-4">
+              {renderDropZone()}
+              <div className="card p-5 space-y-3">
+                <h3 className="text-fg-bright text-sm font-medium">Supported Formats</h3>
+                <p className="text-fg-muted text-xs">We auto-detect columns from Pikkit, DraftKings, FanDuel, and generic CSV exports.</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit'].map(col => (
+                    <span key={col} className="font-mono text-[10px] bg-base border border-white/[0.04] rounded-sm px-1.5 py-0.5">{col}</span>
+                  ))}
                 </div>
               </div>
-            ) : state === 'success' && result ? (
-              <div className="space-y-3">
-                <div className="text-4xl">{result.bets_imported > 0 ? '\u2705' : '\u2139\uFE0F'}</div>
-                {result.bets_imported > 0 ? (
-                  <p className="text-win font-medium text-lg">
-                    {result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
-                    {result.duplicates_skipped > 0 && (
-                      <span className="text-fg-muted font-normal text-sm block mt-1">
-                        {result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped
-                      </span>
-                    )}
-                  </p>
-                ) : (
-                  <p className="text-fg-muted font-medium text-lg">
-                    All {result.duplicates_skipped} bet{result.duplicates_skipped !== 1 ? 's were' : ' was'} already in your history — nothing new to import.
-                  </p>
-                )}
-                {result.warnings.length > 0 && (
-                  <div className="text-left max-w-md mx-auto mt-4">
-                    <p className="text-caution text-sm font-medium mb-1">Warnings:</p>
-                    <ul className="text-caution/70 text-xs space-y-1">
-                      {result.warnings.slice(0, 5).map((w, i) => (
-                        <li key={i}>{'\u2022'} {w}</li>
-                      ))}
-                      {result.warnings.length > 5 && (
-                        <li>...and {result.warnings.length - 5} more</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {result.bets_imported > 0 ? (
-                  <div className="space-y-3 mt-2">
-                    {isOnboarding ? (
-                      <Link
-                        href="/reports?run=true"
-                        className="btn-primary inline-block text-lg !px-8 !py-3"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Run Your First Autopsy {'\u2192'}
-                      </Link>
-                    ) : (
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        {result.upload_id && (
-                          <Link
-                            href={`/reports?upload_id=${result.upload_id}`}
-                            className="btn-primary text-sm"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Analyze This Upload
-                          </Link>
-                        )}
-                        <Link
-                          href="/reports?run=true"
-                          className="btn-secondary text-sm"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Analyze All Bets
-                        </Link>
-                      </div>
-                    )}
-                    <div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setState('idle');
-                          setResult(null);
-                        }}
-                        className="text-sm text-fg-muted hover:text-fg transition-colors"
-                      >
-                        Upload more bets first
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setState('idle');
-                      setResult(null);
-                    }}
-                    className="btn-secondary text-sm mt-2"
-                  >
-                    Upload Another
-                  </button>
-                )}
-              </div>
-            ) : state === 'error' ? (
-              <div className="space-y-3">
-                <div className="text-4xl">{'\u274C'}</div>
-                <p className="text-loss">{error}</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setState('idle');
-                    setError('');
-                  }}
-                  className="btn-secondary text-sm mt-2"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="text-5xl">{'\uD83D\uDCE4'}</div>
-                <p className="text-fg-bright font-medium text-lg">
-                  Drag &amp; drop your CSV here
-                </p>
-                <p className="text-fg-muted text-sm">or click to browse files</p>
-              </div>
-            )}
-          </div>
-
-          {/* Format guide */}
-          <div className="card p-6 space-y-4">
-            <h2 className="font-bold text-xl text-fg-bright">Supported Formats</h2>
-            <p className="text-fg-muted text-sm">
-              We auto-detect columns from Pikkit (including DFS/pick&apos;em and prediction market data)
-              and generic CSV exports.
-            </p>
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-fg-muted">Expected columns:</h3>
-              <div className="flex flex-wrap gap-2">
-                {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
-                  (col) => (
-                    <span key={col} className="font-mono text-xs bg-base border border-white/[0.04] rounded px-2 py-1">
-                      {col}
-                    </span>
-                  )
-                )}
-              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-fg-muted mb-2">Sample CSV:</h3>
-              <pre className="font-mono text-xs text-fg-muted bg-base border border-white/[0.04] rounded-sm p-4 overflow-x-auto">
-{`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
-2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
-2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM
-2025-01-07,NBA,parlay,3-leg parlay,+550,25,loss,-25,FanDuel`}
-              </pre>
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Bottom links */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm">
-        <a href="/api/template" className="text-scalpel hover:underline">
-          {'\u2193'} Download CSV template
-        </a>
-        <Link href="/bets" className="text-fg-muted hover:text-fg transition-colors">
-          Or enter bets manually
-        </Link>
+        <a href="/api/template" className="text-scalpel hover:underline text-xs">↓ Download CSV template</a>
+        <Link href="/bets" className="text-fg-muted hover:text-fg transition-colors text-xs">Or enter bets manually</Link>
+        <Link href="/how-to-upload" className="text-fg-muted hover:text-fg transition-colors text-xs">Detailed upload guide</Link>
       </div>
     </div>
   );
+
+  function renderDropZone() {
+    return (
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        className={`card p-10 text-center cursor-pointer transition-all duration-200 ${
+          dragOver ? 'border-scalpel bg-scalpel-muted' : 'hover:border-white/[0.08]'
+        }`}
+      >
+        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
+        {state === 'uploading' ? (
+          <div className="space-y-3">
+            <div className="text-3xl animate-pulse">⏳</div>
+            <p className="text-fg-muted text-sm">Parsing and importing your bets...</p>
+          </div>
+        ) : state === 'success' && result ? (
+          <div className="space-y-3">
+            <div className="text-3xl">{result.bets_imported > 0 ? '✅' : 'ℹ️'}</div>
+            {result.bets_imported > 0 ? (
+              <p className="text-win font-medium">{result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
+                {result.duplicates_skipped > 0 && <span className="text-fg-muted font-normal text-sm block mt-1">{result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped</span>}
+              </p>
+            ) : (
+              <p className="text-fg-muted">All bets were already in your history.</p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
+              <Link href="/reports?run=true" className="btn-primary text-sm" onClick={(e) => e.stopPropagation()}>Run Autopsy</Link>
+              <button onClick={(e) => { e.stopPropagation(); setState('idle'); setResult(null); }} className="btn-secondary text-sm">Upload More</button>
+            </div>
+          </div>
+        ) : state === 'error' ? (
+          <div className="space-y-3">
+            <div className="text-3xl">❌</div>
+            <p className="text-loss text-sm">{error}</p>
+            <button onClick={(e) => { e.stopPropagation(); setState('idle'); setError(''); }} className="btn-secondary text-sm mt-2">Try Again</button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="text-4xl">📤</div>
+            <p className="text-fg-bright font-medium">Drag & drop your CSV here</p>
+            <p className="text-fg-muted text-sm">or click to browse files</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 }

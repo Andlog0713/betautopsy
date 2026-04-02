@@ -46,7 +46,7 @@ export default function OnboardingBanner({ betCount, reportCount }: OnboardingBa
             Get Pikkit (Free 7-Day Trial)
           </a>
           <span className="text-fg-muted text-xs">
-            {'\uD83D\uDCB0'} Get $3–$100 cash when you sign up and sync a sportsbook with 10+ bets
+            {'\uD83D\uDCB0'} Get $3–$100 cash from Pikkit when you sign up and sync a sportsbook with 10+ bets
           </span>
         </div>
 
@@ -62,9 +62,10 @@ export default function OnboardingBanner({ betCount, reportCount }: OnboardingBa
             <ol className="text-fg-muted text-sm space-y-1.5 list-none pt-1">
               <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">01</span> Download Pikkit and create an account (use our link for a cash bonus)</li>
               <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">02</span> Connect your sportsbooks — DraftKings, FanDuel, BetMGM, etc. (takes 2 min)</li>
-              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">03</span> Wait for Pikkit to sync your bets (usually a few minutes)</li>
-              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">04</span> Go to Pikkit Pro {'\u2192'} Settings {'\u2192'} Data Exports {'\u2192'} Download CSV</li>
-              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">05</span> Upload that CSV here using the &quot;Upload CSV&quot; tab below</li>
+              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">03</span> Start the free 7-day Pro trial (required to export your data)</li>
+              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">04</span> Wait for Pikkit to sync your bets (usually a few minutes)</li>
+              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">05</span> Go to Pikkit Pro {'\u2192'} Settings {'\u2192'} Data Exports {'\u2192'} Download CSV</li>
+              <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">06</span> Upload that CSV here using the &quot;Upload CSV&quot; tab below</li>
             </ol>
           )}
         </div>
