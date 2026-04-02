@@ -233,7 +233,9 @@ export default function LandingPage() {
       {/* PRICING — surface bg, visually        */}
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
-      <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
+      <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
+        {/* Pricing glow */}
+        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[500px] bg-scalpel/[0.03] rounded-full blur-[150px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
