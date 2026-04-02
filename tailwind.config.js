@@ -19,8 +19,8 @@ module.exports = {
         fg: {
           DEFAULT: '#D0D5DD',
           bright: '#F0F2F5',
-          muted: '#848D9A',
-          dim: '#515968',
+          muted: '#A0A8B4',
+          dim: '#5D6673',
         },
         // Brand
         scalpel: {
@@ -41,9 +41,9 @@ module.exports = {
         ink: {
           900: '#111318',
           800: '#161820',
-          700: '#515968',
-          600: '#848D9A',
-          500: '#9DA5B0',
+          700: '#5D6673',
+          600: '#A0A8B4',
+          500: '#B0B8C4',
         },
         flame: { 500: '#00C9A7', 600: '#007D66' },
         mint: { 500: '#3FB950' },

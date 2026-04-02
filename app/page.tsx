@@ -22,7 +22,7 @@ export default function LandingPage() {
           <div className="font-light text-4xl md:text-6xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
             Your behavior is.
           </div>
-          <p className="text-fg-muted text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
+          <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
             Find out exactly which habits are costing you money — and how much. BetAutopsy
             detects loss chasing, parlay addiction, emotional sizing, sport-specific leaks,
             and much more. Then gives you a concrete plan to fix them with real dollar amounts.
@@ -74,7 +74,7 @@ export default function LandingPage() {
               You know <span className="text-fg-muted">what</span> happened.
               <br />You don&apos;t know <span className="text-scalpel">why.</span>
             </h2>
-            <p className="text-fg-muted text-sm leading-relaxed mb-3">
+            <p className="text-fg text-sm leading-relaxed mb-3">
               Why you doubled your stake after three straight losses. Why your $50 parlay
               turned into a $400 chase. Why you keep betting NBA props at a -18% ROI.
             </p>
@@ -88,7 +88,7 @@ export default function LandingPage() {
               BetAutopsy reads your history like a{' '}
               <span className="text-scalpel">case file.</span>
             </h2>
-            <p className="text-fg-muted text-sm leading-relaxed mb-3">
+            <p className="text-fg text-sm leading-relaxed mb-3">
               Your Tuesday night parlays cost $340 last quarter. Your stakes jump 1.8x after
               a loss. You&apos;re profitable on NFL spreads but bleeding on props. Specific patterns,
               specific dollars, specific fixes.
@@ -115,7 +115,7 @@ export default function LandingPage() {
               <div key={item.step} className="vitals-cell !p-6 md:!p-8">
                 <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
                 <h3 className="text-lg font-semibold text-fg-bright mb-2">{item.title}</h3>
-                <p className="text-sm text-fg-muted leading-relaxed">{item.desc}</p>
+                <p className="text-sm text-fg leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>

@@ -473,7 +473,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #D29922, #E8453C)' }} />
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
-          <p className="font-mono text-[10px] text-fg-muted mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
+          <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
           {analysis.emotion_percentile && (
             <p className="font-mono text-[10px] text-scalpel mt-1">Lower than {analysis.emotion_percentile}% of bettors</p>
           )}
@@ -490,7 +490,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #D29922, #00C9A7)' : 'linear-gradient(90deg, #E8453C, #D29922)' }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
-            <p className="font-mono text-[10px] text-fg-muted mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
+            <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
             {analysis.discipline_score.percentile && (
               <p className="font-mono text-[10px] text-scalpel mt-1">Better than {analysis.discipline_score.percentile}% of bettors</p>
             )}
