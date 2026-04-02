@@ -214,7 +214,7 @@ export default function HowToUploadPage() {
                   <span>Profile &rarr; Betting History</span>
                 </div>
                 <div className="flex gap-3">
-                  <span className="font-mono text-fg-bright w-24 shrink-0">ESPN Bet</span>
+                  <span className="font-mono text-fg-bright w-24 shrink-0">theScore Bet</span>
                   <span>My Bets &rarr; Settled</span>
                 </div>
               </div>

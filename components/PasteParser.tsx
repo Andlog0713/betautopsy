@@ -12,7 +12,7 @@ const SPORTSBOOKS = [
   'FanDuel',
   'BetMGM',
   'Caesars',
-  'ESPN Bet',
+  'theScore Bet',
   'Fanatics',
   'bet365',
   'BetRivers',
@@ -37,7 +37,7 @@ const sportsbookHints: Record<string, string> = {
   'FanDuel': 'Copy from My Bets \u2192 Settled tab, not Account \u2192 Transactions.',
   'BetMGM': 'Copy from My Bets \u2192 Settled, not Wallet history.',
   'Caesars': 'Copy from Profile \u2192 Betting History \u2192 Settled.',
-  'ESPN Bet': 'Copy from My Bets \u2192 Settled tab.',
+  'theScore Bet': 'Copy from My Bets \u2192 Settled tab.',
 };
 
 export default function PasteParser() {
@@ -311,7 +311,7 @@ export default function PasteParser() {
 
       {/* Supported sportsbooks note */}
       <p className="text-fg-muted text-xs mb-3">
-        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, ESPN Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste — our AI figures out the format.
+        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste — our AI figures out the format.
       </p>
 
       {/* Textarea */}
