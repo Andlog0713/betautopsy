@@ -34,7 +34,8 @@ export interface Profile {
   display_name: string;
   stripe_customer_id: string | null;
   subscription_tier: 'free' | 'pro' | 'sharp';
-  subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled';
+  subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled' | 'trial';
+  trial_ends_at: string | null;
   bet_count: number;
   bankroll: number | null;
   streak_count: number;

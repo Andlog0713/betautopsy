@@ -31,10 +31,11 @@ export default function LandingPage() {
             Powered by proprietary scoring models — your analysis gets more accurate every time
             you upload, benchmarked against thousands of real bettors.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 animate-slide-up-d2">
+          <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-              Upload Your Bets — It&apos;s Free
+              Start Free Pro Trial
             </Link>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">7 days of Pro — no credit card</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
@@ -237,6 +238,10 @@ export default function LandingPage() {
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
           </p>
+          <div className="finding-card border-l-scalpel p-4 mb-6">
+            <p className="text-fg-bright text-sm font-medium">🎉 Sign up now and get 7 days of Pro — free, no credit card.</p>
+            <p className="text-fg-muted text-xs mt-1">Full access to unlimited reports, bias detection, BetIQ, and everything else. Limited time offer.</p>
+          </div>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free</span>
