@@ -44,7 +44,7 @@ export default function SignupPage() {
 
     trackSignup();
     // Welcome email sent via daily onboarding cron (1hr+ delay so it doesn't compete with the UI)
-    router.push('/upload');
+    router.push('/');
     router.refresh();
   }
 

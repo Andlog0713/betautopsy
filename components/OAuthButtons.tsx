@@ -25,7 +25,7 @@ export default function OAuthButtons() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/upload`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 

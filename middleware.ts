@@ -75,19 +75,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users from landing page to upload (if new) or dashboard (if returning)
-  if (pathname === '/' && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('bet_count')
-      .eq('id', user.id)
-      .single();
-
-    const url = request.nextUrl.clone();
-    url.pathname = (profile?.bet_count ?? 0) === 0 ? '/upload' : '/dashboard';
-    return NextResponse.redirect(url);
-  }
-
   return supabaseResponse;
 }
 
