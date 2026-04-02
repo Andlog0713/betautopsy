@@ -6,10 +6,11 @@ import { createClient } from '@/lib/supabase';
 import { trackUpload } from '@/lib/tiktok-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
+import ScreenshotParser from '@/components/ScreenshotParser';
 import type { UploadResponse, Profile } from '@/types';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
-type ActiveMethod = 'pikkit' | 'paste' | 'csv';
+type ActiveMethod = 'pikkit' | 'screenshot' | 'paste' | 'csv';
 
 export default function UploadPage() {
   const [state, setState] = useState<UploadState>('idle');
@@ -38,7 +39,7 @@ export default function UploadPage() {
         setProfile(profileRes.data as Profile);
         const bc = (profileRes.data as Profile).bet_count;
         setInitialBetCount(bc);
-        setActiveMethod(bc > 0 ? 'paste' : 'pikkit');
+        setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
       }
       setReportCount(reportsRes.count ?? 0);
       if (lastBetRes.data && lastBetRes.data.length > 0) {
@@ -93,8 +94,9 @@ export default function UploadPage() {
 
   const methods = [
     { id: 'pikkit' as const, icon: '📱', label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
-    { id: 'paste' as const, icon: '📋', label: 'Paste', desc: 'Copy from sportsbook', badge: betCount > 0 ? 'RECOMMENDED' : undefined },
-    { id: 'csv' as const, icon: '📄', label: 'CSV Upload', desc: 'Upload a file' },
+    { id: 'screenshot' as const, icon: '📸', label: 'Screenshot', desc: 'From mobile app', badge: betCount > 0 ? 'RECOMMENDED' : undefined },
+    { id: 'paste' as const, icon: '📋', label: 'Paste', desc: 'From desktop browser' },
+    { id: 'csv' as const, icon: '📄', label: 'CSV', desc: 'Upload a file' },
   ];
 
   return (
@@ -153,7 +155,7 @@ export default function UploadPage() {
       {/* ═══ Three method cards ═══ */}
       {!uploadSucceeded && (
         <>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {methods.map(m => (
               <button
                 key={m.id}
@@ -220,6 +222,9 @@ export default function UploadPage() {
               {renderDropZone()}
             </div>
           )}
+
+          {/* Screenshot method */}
+          {activeMethod === 'screenshot' && <ScreenshotParser />}
 
           {/* Paste method */}
           {activeMethod === 'paste' && <PasteParser />}
