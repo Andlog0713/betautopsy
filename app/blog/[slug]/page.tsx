@@ -133,7 +133,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="card p-6 text-center">
           <h3 className="font-bold text-lg mb-2">Want the data, not just the theory?</h3>
           <p className="text-fg-muted text-sm mb-4">
-            Upload your bet history and get an AI-powered behavioral analysis, free.
+            Upload your bet history and get a full behavioral analysis, free.
           </p>
           <Link href="/signup" className="btn-secondary inline-block text-sm">
             Get Your Free Autopsy

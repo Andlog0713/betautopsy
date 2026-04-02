@@ -112,7 +112,7 @@ export default function ScreenshotParser() {
     return (
       <div className="space-y-4">
         <p className="text-fg-muted text-xs">
-          Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, Fanatics, bet365, BetRivers</span>, and more. Screenshot your settled bets page. We extract every bet.
+          Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, Fanatics, bet365, BetRivers</span>. Screenshot your settled bets page. We extract every bet.
         </p>
 
         {/* Drop zone */}

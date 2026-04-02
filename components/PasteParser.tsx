@@ -311,7 +311,7 @@ export default function PasteParser() {
 
       {/* Supported sportsbooks note */}
       <p className="text-fg-muted text-xs mb-3">
-        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste. We figure out the format.
+        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, Fanatics, BetRivers</span>. Just copy-paste. We figure out the format.
       </p>
 
       {/* Textarea */}

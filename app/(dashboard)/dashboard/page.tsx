@@ -276,7 +276,7 @@ export default function DashboardPage() {
               <div className="text-4xl">🔬</div>
               <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
               <p className="text-fg-muted max-w-md mx-auto">
-                You&apos;ve got {stats.totalBets} bets loaded. Get an AI-powered behavioral
+                You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
                 analysis in about 20 seconds.
               </p>
               <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
@@ -591,7 +591,7 @@ export default function DashboardPage() {
                 <span className="text-3xl">🔬</span>
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Run New Autopsy</h3>
-                  <p className="text-fg-muted text-sm mt-1">AI-powered behavioral analysis.</p>
+                  <p className="text-fg-muted text-sm mt-1">Full behavioral analysis.</p>
                 </div>
               </div>
             </Link>

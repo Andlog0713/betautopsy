@@ -330,7 +330,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         Rather than dumping raw numbers on you, BetAutopsy translates behavioral data into
         actionable scores. Your emotion score, discipline rating, and risk profile are calculated
-        using proprietary models calibrated against thousands of betting histories. You get a clear
+        using scoring models built on academic gambling research. You get a clear
         picture of where you stand relative to the behavioral benchmarks that separate profitable
         bettors from the 96% who lose.
       </p>

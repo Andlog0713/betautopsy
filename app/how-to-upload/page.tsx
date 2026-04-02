@@ -29,7 +29,7 @@ export default function HowToUploadPage() {
         '@type': 'HowToStep',
         position: 1,
         name: 'Download Pikkit',
-        text: 'Download the Pikkit app and connect your sportsbook accounts (DraftKings, FanDuel, BetMGM, Caesars, and more).',
+        text: 'Download the Pikkit app and connect your sportsbook accounts (DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365).',
       },
       {
         '@type': 'HowToStep',
@@ -129,7 +129,7 @@ export default function HowToUploadPage() {
             </p>
 
             <p className="text-xs text-fg-muted mt-2">
-              Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, and more.
+              Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365.
             </p>
 
             <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">

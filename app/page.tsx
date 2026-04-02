@@ -25,11 +25,10 @@ export default function LandingPage() {
           <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
             Find out exactly which habits are costing you money, and how much. BetAutopsy
             detects loss chasing, parlay addiction, emotional sizing, sport-specific leaks,
-            and much more. Then gives you a concrete plan to fix them with real dollar amounts.
+            and late-night overreaction. Then gives you a concrete plan to fix them with real dollar amounts.
           </p>
           <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Powered by proprietary scoring models. Your analysis gets more accurate every time
-            you upload, benchmarked against thousands of real bettors.
+            Every upload sharpens the picture. Your third report catches patterns your first one couldn&apos;t.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
@@ -109,7 +108,7 @@ export default function LandingPage() {
           <div className="vitals-strip grid-cols-1 md:grid-cols-3">
             {[
               { step: '01', title: 'Upload', desc: 'Export from Pikkit, any sportsbook, DFS app, or prediction market. Or upload any CSV.' },
-              { step: '02', title: 'Analyze', desc: 'Proprietary engine scans for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
+              { step: '02', title: 'Analyze', desc: 'We scan for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
               { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
             ].map(item => (
               <div key={item.step} className="vitals-cell !p-6 md:!p-8">
