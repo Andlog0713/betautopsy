@@ -208,7 +208,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
           </button>
 
           <p className="text-fg-muted text-xs text-center leading-relaxed">
-            After 30+ entries, BetAutopsy will correlate your mental state with your actual results — showing which emotions and contexts cost you money.
+            After 30+ entries, BetAutopsy will correlate your mental state with your actual results. Showing which emotions and contexts cost you money.
           </p>
         </div>
       </div>

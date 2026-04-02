@@ -124,10 +124,10 @@ export default function SharedReport({ data }: { data: ShareData }) {
         {/* CTA */}
         <div className="text-center space-y-4 pt-4">
           <Link href="/signup" className="btn-primary inline-block">
-            Get Your Own Autopsy — Free
+            Get Your Own Autopsy, Free
           </Link>
           <p className="text-fg-dim text-xs">
-            BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice.
+            BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice.
           </p>
         </div>
       </div>

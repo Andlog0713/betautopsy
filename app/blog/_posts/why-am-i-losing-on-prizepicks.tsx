@@ -31,7 +31,7 @@ export default function WhyAmILosingOnPrizePicks() {
       <p>
         Traditional sportsbook losses come from loss chasing, favorite bias, and parlay
         overallocation. PrizePicks losses stem from a different set of behavioral patterns
-        &mdash; ones that the platform&apos;s design actively encourages. Here are the five
+        , ones that the platform&apos;s design actively encourages. Here are the five
         that cost PrizePicks players the most money.
       </p>
 
@@ -45,9 +45,9 @@ export default function WhyAmILosingOnPrizePicks() {
 
       <p>
         But here&apos;s the math nobody does before building their slip. Assume each pick is
-        roughly 50/50 (which is generous &mdash; PrizePicks sets lines to favor the house).
+        roughly 50/50 (which is generous , PrizePicks sets lines to favor the house).
         The probability of hitting all 5 picks at 50% each is 0.5^5 = <strong>3.125%</strong>.
-        At a 10x payout, the expected value of a $10 five-pick entry is $3.13 &mdash; meaning
+        At a 10x payout, the expected value of a $10 five-pick entry is $3.13 , meaning
         you&apos;re losing $6.87 in expected value every time you submit one. That&apos;s a
         <strong>-68.7% EV</strong>.
       </p>
@@ -60,7 +60,7 @@ export default function WhyAmILosingOnPrizePicks() {
 
       <p>
         <strong>Every pick you add to your slip doesn&apos;t just reduce your chances
-        linearly &mdash; it compounds the platform&apos;s edge exponentially.</strong> The 5-pick
+        linearly , it compounds the platform&apos;s edge exponentially.</strong> The 5-pick
         entry feels like a smart play because 10x sounds huge. It&apos;s actually the worst
         bet on the platform by expected value. This is the same compounding-vig mechanism
         that makes{' '}
@@ -81,7 +81,7 @@ export default function WhyAmILosingOnPrizePicks() {
       <p>
         This is a mistake for the same reason that choosing a 6-leg parlay over two 3-leg
         parlays is a mistake. The higher payout comes with disproportionately worse odds.
-        Flex Play entries have a built-in insurance mechanism &mdash; you can miss one or even
+        Flex Play entries have a built-in insurance mechanism , you can miss one or even
         two picks and still receive a reduced payout. Over hundreds of entries, that insurance
         has real mathematical value.
       </p>
@@ -111,7 +111,7 @@ export default function WhyAmILosingOnPrizePicks() {
 
       <p>
         The problem is threefold. First, <strong>over-concentration on a single player creates
-        correlated risk</strong> &mdash; if Luka has a bad game, you lose multiple picks at
+        correlated risk</strong> , if Luka has a bad game, you lose multiple picks at
         once. Second, PrizePicks adjusts lines after big performances, so the over you&apos;re
         taking on Luka today is already inflated beyond his season average. Third, your
         &ldquo;deep knowledge&rdquo; of a player is almost always just{' '}
@@ -140,7 +140,7 @@ export default function WhyAmILosingOnPrizePicks() {
 
       <p>
         This is the game-script trap, and it&apos;s one of the most expensive mistakes in DFS.
-        The problem is that correlated picks <strong>don&apos;t reduce your risk &mdash; they
+        The problem is that correlated picks <strong>don&apos;t reduce your risk , they
         amplify it</strong>. When the game script goes your way, all three hit and you feel
         like a genius. When it doesn&apos;t (the Pacers build a 25-point lead and the starters
         sit the fourth quarter), all three miss simultaneously.
@@ -148,7 +148,7 @@ export default function WhyAmILosingOnPrizePicks() {
 
       <p>
         Correlation creates an illusion of diversification when you actually have all your eggs
-        in one basket. You&apos;re not making three independent picks &mdash; you&apos;re making
+        in one basket. You&apos;re not making three independent picks , you&apos;re making
         one bet on a game-script outcome and expressing it through three props. Your 3-pick
         entry has the effective diversification of a 1-pick entry with worse odds.
       </p>
@@ -239,7 +239,7 @@ export default function WhyAmILosingOnPrizePicks() {
       <h2>The Bigger Picture</h2>
 
       <p>
-        PrizePicks isn&apos;t a different game from sports betting &mdash; it&apos;s the same
+        PrizePicks isn&apos;t a different game from sports betting , it&apos;s the same
         game with different packaging. The fundamental forces that drive losses are identical:
         cognitive biases, emotional decision-making, poor staking discipline, and a platform
         designed to encourage your worst instincts. The multiplier is the parlay. Player
@@ -251,7 +251,7 @@ export default function WhyAmILosingOnPrizePicks() {
         Once you see PrizePicks through this lens, the path forward becomes clear. It&apos;s
         not about finding better player projections. It&apos;s about fixing the behavioral
         patterns that turn decent projections into consistent losses. The players who profit
-        on PrizePicks &mdash; and they exist, though they&apos;re a small minority &mdash;
+        on PrizePicks , and they exist, though they&apos;re a small minority ,
         aren&apos;t meaningfully better at projecting stats. They&apos;re better at managing
         themselves.
       </p>
@@ -261,13 +261,13 @@ export default function WhyAmILosingOnPrizePicks() {
         <Link href="/quiz" className="text-scalpel hover:underline">
           Bet DNA quiz
         </Link>{' '}
-        takes two minutes and identifies your dominant biases and tendencies &mdash; whether
+        takes two minutes and identifies your dominant biases and tendencies , whether
         you bet on PrizePicks, DraftKings, FanDuel, or all of the above. The biases don&apos;t
         care which platform you use. Neither does the analysis.
       </p>
 
       <p>
-        <strong>Stop blaming the players. Start examining the player &mdash; you.</strong>
+        <strong>Stop blaming the players. Start examining the player , you.</strong>
       </p>
 
       <h2>Keep Reading</h2>

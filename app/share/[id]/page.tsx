@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!data) return { title: 'BetAutopsy' };
 
   const title = data.archetype
-    ? `My BetAutopsy: ${data.grade} — ${data.archetype.name}`
+    ? `My BetAutopsy: ${data.grade} | ${data.archetype.name}`
     : `My BetAutopsy: Grade ${data.grade}`;
   const desc = `Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}% | ${data.record}${data.archetype ? ` | ${data.archetype.description}` : ''}`;
   const ogImage = `${process.env.NEXT_PUBLIC_APP_URL || 'https://betautopsy.com'}/api/og/${id}`;

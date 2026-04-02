@@ -15,15 +15,15 @@ function gradeColor(g: string): string {
 }
 
 const ARCH_PRODUCT_TEASER: Record<string, string> = {
-  'The Natural': 'A full BetAutopsy would confirm your edges with real data — and catch the blind spots even disciplined bettors miss.',
+  'The Natural': 'A full BetAutopsy would confirm your edges with real data and catch the blind spots even disciplined bettors miss.',
   'Sharp Sleeper': 'A full BetAutopsy would pinpoint exactly where your edges are and show you how much your sizing inconsistency is costing.',
-  'Heated Bettor': 'A full BetAutopsy would show you exactly which losses triggered your biggest chases — and put a dollar amount on what your emotions cost you.',
-  'Parlay Dreamer': 'A full BetAutopsy would show your parlay ROI vs straight bet ROI side by side — most Parlay Dreamers are shocked by the gap.',
-  'Chalk Grinder': 'A full BetAutopsy would show whether your favorites are actually beating the vig — or if you\'re paying a premium to feel safe.',
-  'Volume Warrior': 'A full BetAutopsy would separate your high-conviction bets from your filler — and show you how much the filler is dragging your ROI.',
+  'Heated Bettor': 'A full BetAutopsy would show you exactly which losses triggered your biggest chases and put a dollar amount on what your emotions cost you.',
+  'Parlay Dreamer': 'A full BetAutopsy would show your parlay ROI vs straight bet ROI side by side. Most Parlay Dreamers are shocked by the gap.',
+  'Chalk Grinder': 'A full BetAutopsy would show whether your favorites are actually beating the vig, or if you\'re paying a premium to feel safe.',
+  'Volume Warrior': 'A full BetAutopsy would separate your high-conviction bets from your filler and show you how much the filler is dragging your ROI.',
   'Sniper': 'A full BetAutopsy would validate your selectivity with data and reveal if there are profitable spots you\'re leaving on the table.',
-  'Degen King': 'A full BetAutopsy would be a wake-up call — in the best way. See exactly where the damage is happening and what one or two changes would save you.',
-  'The Grinder': 'A full BetAutopsy would reveal whether your consistency is translating to profit — or if you\'re grinding in the wrong direction.',
+  'Degen King': 'A full BetAutopsy would be a wake-up call, in the best way. See exactly where the damage is happening and what one or two changes would save you.',
+  'The Grinder': 'A full BetAutopsy would reveal whether your consistency is translating to profit, or if you\'re grinding in the wrong direction.',
 };
 
 type Phase = 'intro' | 'questions' | 'reveal' | 'result_preview' | 'full_result';
@@ -168,7 +168,7 @@ export default function QuizClient() {
             What&apos;s Your <span className="text-scalpel">Bet DNA</span>?
           </h1>
           <p className="text-fg-muted text-lg mb-8 leading-relaxed">
-            Take this quiz to discover your betting personality — the hidden
+            Take this quiz to discover your betting personality: the hidden
             patterns, biases, and tendencies that shape every bet you place.
           </p>
           <button
@@ -353,7 +353,7 @@ export default function QuizClient() {
     return (
       <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
-          {/* Share card — rendered off-screen for download, preview shown as image */}
+          {/* Share card. rendered off-screen for download, preview shown as image */}
           <div style={{ position: 'absolute', left: -9999, top: 0 }}>
             <QuizResultCard ref={resultCardRef} result={result} roasts={roasts} />
           </div>
@@ -394,7 +394,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center space-y-4 border-scalpel/20">
             <p className="text-fg-bright font-bold text-lg">Your full Bet DNA breakdown is ready.</p>
             <p className="text-fg-muted text-sm max-w-sm mx-auto">
-              Your Emotion Score, detected biases, strengths, and what to watch out for — where should we send them?
+              Your Emotion Score, detected biases, strengths, and what to watch out for. Where should we send them?
             </p>
             <div className="flex gap-2">
               <input
@@ -415,7 +415,7 @@ export default function QuizClient() {
             </div>
             <p className="text-fg-muted text-xs font-mono">No spam. Just your results.</p>
             <button onClick={() => setPhase('full_result')} className="text-xs text-fg-muted hover:text-fg transition-colors">
-              Skip — show me now
+              Skip, show me now
             </button>
           </div>
 
@@ -474,7 +474,7 @@ export default function QuizClient() {
               This quiz estimated your patterns from {QUIZ_QUESTIONS.length} answers. Your actual bet history would reveal the exact dollar cost of each bias.
             </p>
             <Link href="/signup" className="btn-primary inline-block !px-6 !py-2.5 text-sm font-mono">
-              Get Your Real Autopsy — Free
+              Get Your Real Autopsy, Free
             </Link>
             <p className="text-fg-muted text-xs font-mono">No credit card. Upload takes 2 minutes.</p>
           </div>
@@ -549,7 +549,7 @@ export default function QuizClient() {
             <p className="text-fg-bright font-medium">Your quiz says you&apos;re <span style={{ color: result.archetype.color }}>{result.archetype.name}</span>.</p>
             <p className="text-fg-muted text-sm">Your actual bet history might tell a different story.</p>
             <Link href="/signup" className="btn-primary inline-block !px-8 !py-3 font-mono">
-              Upload Your Bets — It&apos;s Free
+              Upload Your Bets, It&apos;s Free
             </Link>
             <p className="text-fg-muted text-xs">
               Already have an account? <Link href="/login" className="text-scalpel hover:underline">Sign in</Link>
