@@ -14,7 +14,7 @@ export default function LandingPage() {
       <section className="relative grid-paper">
         <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative">
           <div className="case-header mb-8 animate-fade-in">
-            CASE FILE — BEHAVIORAL ANALYSIS UNIT
+            CASE FILE // BEHAVIORAL ANALYSIS UNIT
           </div>
           <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
             Your bets aren&apos;t the problem.
@@ -23,19 +23,19 @@ export default function LandingPage() {
             Your behavior is.
           </div>
           <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
-            Find out exactly which habits are costing you money — and how much. BetAutopsy
+            Find out exactly which habits are costing you money, and how much. BetAutopsy
             detects loss chasing, parlay addiction, emotional sizing, sport-specific leaks,
             and much more. Then gives you a concrete plan to fix them with real dollar amounts.
           </p>
           <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Powered by proprietary scoring models — your analysis gets more accurate every time
+            Powered by proprietary scoring models. Your analysis gets more accurate every time
             you upload, benchmarked against thousands of real bettors.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Start Free Pro Trial
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: 7 days of Pro free — no credit card</span>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: 7 days of Pro free, no credit card</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
@@ -105,12 +105,12 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-8">PROTOCOL — THREE STEPS</div>
+          <div className="case-header mb-8">PROTOCOL // THREE STEPS</div>
           <div className="vitals-strip grid-cols-1 md:grid-cols-3">
             {[
               { step: '01', title: 'Upload', desc: 'Export from Pikkit, any sportsbook, DFS app, or prediction market. Or upload any CSV.' },
               { step: '02', title: 'Analyze', desc: 'Proprietary engine scans for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
-              { step: '03', title: 'Improve', desc: "Get rules with real numbers — 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
+              { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
             ].map(item => (
               <div key={item.step} className="vitals-cell !p-6 md:!p-8">
                 <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
@@ -186,7 +186,7 @@ export default function LandingPage() {
       <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="case-header">EXHIBIT A — PRO TIER SAMPLE</div>
+            <div className="case-header">EXHIBIT A // PRO TIER SAMPLE</div>
             <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
           </div>
           <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
@@ -196,7 +196,7 @@ export default function LandingPage() {
             280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
           <p className="text-fg-muted text-xs mb-8 max-w-xl">
-            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE — LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
+            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE: LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
@@ -234,12 +234,12 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-2">PRICING — ACCESS LEVELS</div>
+          <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
           </p>
           <div className="finding-card border-l-scalpel p-4 mb-6">
-            <p className="text-fg-bright text-sm font-medium">🎉 Limited time: Sign up now and get 7 days of Pro — free, no credit card.</p>
+            <p className="text-fg-bright text-sm font-medium">🎉 Limited time: Sign up now and get 7 days of Pro free, no credit card.</p>
             <p className="text-fg-muted text-xs mt-1">Full access to unlimited reports, bias detection, BetIQ, and everything else. This offer won&apos;t last.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
@@ -365,7 +365,7 @@ export default function LandingPage() {
             </div>
           </div>
           <p className="text-fg-muted text-xs leading-relaxed">
-            BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice.
+            BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice.
             Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>
         </div>

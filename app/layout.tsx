@@ -5,15 +5,15 @@ import TikTokPixel from '@/components/TikTokPixel';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
-  title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
+  title: 'BetAutopsy | Sports Betting Behavioral Analysis',
   description:
-    'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
+    'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
   icons: {
     icon: '/favicon.svg',
   },
   openGraph: {
-    title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
-    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
+    title: 'BetAutopsy | Sports Betting Behavioral Analysis',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
     url: 'https://www.betautopsy.com',
     siteName: 'BetAutopsy',
     images: [{ url: '/api/og', width: 1200, height: 630 }],
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BetAutopsy — AI-Powered Sports Betting Behavioral Analysis',
-    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis.',
+    title: 'BetAutopsy | Sports Betting Behavioral Analysis',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis.',
     images: ['/api/og'],
   },
   alternates: {
@@ -41,7 +41,7 @@ export default function RootLayout({
     name: 'BetAutopsy',
     url: 'https://www.betautopsy.com',
     logo: 'https://www.betautopsy.com/icon.png',
-    description: 'AI-powered sports betting behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns in your betting.',
+    description: 'Sports betting behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns in your betting.',
     sameAs: [],
   };
 
@@ -52,7 +52,7 @@ export default function RootLayout({
     url: 'https://www.betautopsy.com',
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Web',
-    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get an AI-powered behavioral analysis — cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
+    description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis: cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
     offers: [
       { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free' },
       { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },
@@ -65,7 +65,7 @@ export default function RootLayout({
     '@type': 'WebSite',
     name: 'BetAutopsy',
     url: 'https://www.betautopsy.com',
-    description: 'AI-powered sports betting behavioral analysis.',
+    description: 'Sports betting behavioral analysis.',
   };
 
   return (

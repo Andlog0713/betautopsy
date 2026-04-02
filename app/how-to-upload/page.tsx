@@ -23,7 +23,7 @@ export default function HowToUploadPage() {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
     name: 'How to Upload Your Betting History to BetAutopsy',
-    description: 'Get your sports betting data into BetAutopsy for AI-powered behavioral analysis — three methods from easiest to most involved.',
+    description: 'Get your sports betting data into BetAutopsy for behavioral analysis. Three methods from easiest to most involved.',
     step: [
       {
         '@type': 'HowToStep',
@@ -53,7 +53,7 @@ export default function HowToUploadPage() {
         '@type': 'HowToStep',
         position: 5,
         name: 'Get Your Autopsy Report',
-        text: 'Your AI-powered behavioral analysis will be generated in about 20 seconds, revealing cognitive biases, strategic leaks, and emotional patterns.',
+        text: 'Your behavioral analysis will be generated in about 20 seconds, revealing cognitive biases, strategic leaks, and emotional patterns.',
       },
     ],
   };
@@ -83,7 +83,7 @@ export default function HowToUploadPage() {
 
           <p className="text-fg-muted text-sm mb-6">
             Pikkit connects directly to your sportsbook accounts and pulls your full bet
-            history automatically — no manual logging needed, even if you&apos;ve never used
+            history automatically. No manual logging needed, even if you&apos;ve never used
             a tracker before.
           </p>
 
@@ -103,7 +103,7 @@ export default function HowToUploadPage() {
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-scalpel font-bold shrink-0">04</span>
-                <span>Set your date range and tap <span className="text-fg-bright">Send CSV</span> — it&apos;ll be emailed to you</span>
+                <span>Set your date range and tap <span className="text-fg-bright">Send CSV</span>. It&apos;ll be emailed to you</span>
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-scalpel font-bold shrink-0">05</span>
@@ -120,7 +120,7 @@ export default function HowToUploadPage() {
                 This is a one-time import. Once your history is in BetAutopsy, you won&apos;t need Pikkit anymore.
               </p>
               <p className="text-xs text-fg-muted mt-1.5">
-                Pikkit Pro gives you 7 free days to export — plenty of time to get your complete history.
+                Pikkit Pro gives you 7 free days to export, plenty of time to get your complete history.
               </p>
             </div>
 
@@ -136,7 +136,7 @@ export default function HowToUploadPage() {
               <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
               <p className="text-sm text-fg-muted">
                 Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, Thrive Fantasy, and Kalshi</span> too.
-                Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets — one export covers everything.
+                Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets. One export covers everything.
               </p>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function HowToUploadPage() {
 
           <p className="text-fg-muted text-sm mb-6">
             Copy your settled bet history straight from your sportsbook&apos;s website and paste it into BetAutopsy.
-            Our AI figures out the format automatically.
+            We figure out the format automatically.
           </p>
 
           <div className="bg-surface-raised rounded-sm p-4">
@@ -301,7 +301,7 @@ export default function HowToUploadPage() {
 
         {/* Disclaimer */}
         <p className="text-fg-muted text-xs text-center mt-12">
-          BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+          BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
         </p>
       </div>
     </main>

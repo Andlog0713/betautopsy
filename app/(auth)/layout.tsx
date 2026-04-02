@@ -21,7 +21,7 @@ export default function AuthLayout({
             </div>
           </div>
           <p className="text-fg-muted text-sm leading-relaxed mt-4 mb-8">
-            Upload your betting history and get an AI-powered forensic analysis in 20 seconds.
+            Upload your betting history and get a full forensic analysis in 20 seconds.
           </p>
           <div className="space-y-3">
             {[
@@ -53,7 +53,7 @@ export default function AuthLayout({
         </div>
 
         <p className="text-fg-dim text-[10px] font-mono text-center mt-8 max-w-sm leading-relaxed tracking-wider">
-          BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS — NOT GAMBLING
+          BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS. NOT GAMBLING
           OR FINANCIAL ADVICE. 21+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
         </p>
       </div>

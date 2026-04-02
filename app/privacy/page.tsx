@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc list-inside space-y-2">
               <li>All data is transmitted over HTTPS (TLS encryption)</li>
               <li>Passwords are hashed using industry-standard algorithms</li>
-              <li>Database access is restricted with row-level security &mdash; you can only access your own data</li>
+              <li>Database access is restricted with row-level security, so you can only access your own data</li>
               <li>Our infrastructure is hosted on secure, SOC 2-compliant platforms (Vercel and Supabase)</li>
             </ul>
           </section>
@@ -85,10 +85,10 @@ export default function PrivacyPolicyPage() {
               your personal information. We only share data with:
             </p>
             <ul className="list-disc list-inside space-y-2">
-              <li><span className="text-[#F0F2F5]">Supabase</span> &mdash; database and authentication provider</li>
-              <li><span className="text-[#F0F2F5]">Stripe</span> &mdash; payment processing</li>
-              <li><span className="text-[#F0F2F5]">Vercel</span> &mdash; hosting and deployment</li>
-              <li><span className="text-[#F0F2F5]">Anthropic</span> &mdash; AI-powered analysis (your data is sent to generate reports but is not used to train models)</li>
+              <li><span className="text-[#F0F2F5]">Supabase</span>: database and authentication provider</li>
+              <li><span className="text-[#F0F2F5]">Stripe</span>: payment processing</li>
+              <li><span className="text-[#F0F2F5]">Vercel</span>: hosting and deployment</li>
+              <li><span className="text-[#F0F2F5]">Anthropic</span>: analysis engine (your data is sent to generate reports but is not used to train models)</li>
             </ul>
           </section>
 
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">7. Cookies</h2>
             <p>
-              We use essential cookies only &mdash; specifically authentication session cookies
+              We use essential cookies only, specifically authentication session cookies
               managed by Supabase. We do not use advertising or tracking cookies.
             </p>
           </section>
@@ -163,7 +163,7 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <p className="text-ink-700 text-xs text-center mt-16">
-          BetAutopsy provides behavioral analysis and educational insights &mdash; not gambling or
+          BetAutopsy provides behavioral analysis and educational insights, not gambling or
           financial advice. Past results don&apos;t guarantee future outcomes. 21+. If you or
           someone you know has a gambling problem, call 1-800-GAMBLER.
         </p>
