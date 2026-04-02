@@ -12,7 +12,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         Below are seven cognitive biases that show up constantly in recreational bettors&apos;
         histories. Each one costs real money, and each one has a concrete fix. If you recognize
-        even two or three of these in your own behavior, you are not alone &mdash; but you are
+        even two or three of these in your own behavior, you are not alone, but you are
         leaving money on the table.
       </p>
 
@@ -27,7 +27,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         <strong>How it shows up:</strong> You lose a 7 PM NBA play, then fire off a rushed bet on
         the 10 PM West Coast game at double your normal unit size. You did not research the late
-        game &mdash; you just needed action to erase the sting. Average bettors who chase increase
+        game. You just needed action to erase the sting. Average bettors who chase increase
         their stake by 40-60% on the follow-up wager.
       </p>
       <p>
@@ -38,8 +38,8 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         moment the stakes go up.
       </p>
       <p>
-        <strong>How to counter it:</strong> Set a hard daily loss limit &mdash; 3 units or 5% of
-        your bankroll, whichever is smaller &mdash; and stop when you hit it. No exceptions.
+        <strong>How to counter it:</strong> Set a hard daily loss limit (3 units or 5% of
+        your bankroll, whichever is smaller) and stop when you hit it. No exceptions.
         Pre-commit to your bet sizes before the day starts, and write them down. We break this one
         down in detail in our{' '}
         <Link href="/blog/psychology-of-loss-chasing">deep dive on the psychology of loss chasing</Link>.
@@ -49,7 +49,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
 
       <h2>2. Favorite Bias</h2>
       <p>
-        <strong>What it is:</strong> The tendency to bet on well-known, popular teams &mdash; not
+        <strong>What it is:</strong> The tendency to bet on well-known, popular teams, not
         because the line offers value, but because picking a favorite feels safer. You would rather
         lose on the Chiefs than win on the Jaguars.
       </p>
@@ -63,7 +63,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         <strong>What it costs:</strong> That 10-15% premium in juice on public favorites means you
         need to win at an even higher rate just to break even. At standard -110, you need 52.4% to
         break even. At -125 (which is where many shaded favorites land), you need 55.6%. That
-        3.2% difference over 500 bets is roughly 16 extra losses &mdash; pure margin, straight to
+        3.2% difference over 500 bets is roughly 16 extra losses: pure margin, straight to
         the book.
       </p>
       <p>
@@ -98,7 +98,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         <strong>How to counter it:</strong> Before placing any bet, spend 2 minutes actively
         looking for reasons the play will lose. Write down at least two. If those reasons are
         stronger than your supporting evidence, pass. This is called a &ldquo;pre-mortem&rdquo;
-        &mdash; imagine the bet already lost and work backward to figure out why.
+        : imagine the bet already lost and work backward to figure out why.
       </p>
 
       <hr />
@@ -106,7 +106,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <h2>4. Gambler&apos;s Fallacy</h2>
       <p>
         <strong>What it is:</strong> The belief that past outcomes influence future independent
-        events. &ldquo;The Celtics lost 4 in a row &mdash; they HAVE to win tonight.&rdquo;
+        events. &ldquo;The Celtics lost 4 in a row. They HAVE to win tonight.&rdquo;
       </p>
       <p>
         <strong>How it shows up:</strong> A team is 1-6 ATS in their last 7 games. You see
@@ -117,7 +117,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         <strong>What it costs:</strong> Bettors who chase &ldquo;due&rdquo; teams end up on the
         wrong side of legitimate slides. When a team is 1-6 ATS, often the market has already
-        adjusted &mdash; or worse, there is an underlying reason (injury, scheme change, schedule
+        adjusted, or worse, there is an underlying reason (injury, scheme change, schedule
         difficulty) that the streak reflects. Betting against momentum without understanding
         <em>why</em> costs 2-4 units per month for the average recreational bettor.
       </p>
@@ -164,7 +164,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         <strong>How it shows up:</strong> You are down $800 betting on the Cowboys this season.
         They are 3-7 ATS. But you keep betting them because &ldquo;eventually they&apos;ll turn it
-        around and I&apos;ll make it all back.&rdquo; You are not making a bet &mdash; you are
+        around and I&apos;ll make it all back.&rdquo; You are not making a bet. You are
         servicing an emotional debt. The $800 you already lost has zero bearing on whether the
         Cowboys cover next Sunday.
       </p>
@@ -191,7 +191,7 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       <p>
         <strong>How it shows up:</strong> Your buddy hit a 10-leg parlay last March for $12,000.
         He still talks about it. Now you both think 10-leg parlays are a viable strategy. What
-        you do not remember is the 340+ parlays he lost before that one hit &mdash; because
+        you do not remember is the 340+ parlays he lost before that one hit because
         losing tickets do not make the group chat. You recall the one vivid win and estimate the
         probability of parlays hitting at maybe 5-10%, when the actual hit rate for a 10-legger
         is roughly 0.1%.
@@ -201,12 +201,12 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
         <Link href="/blog/parlay-addiction-the-real-math" className="text-scalpel hover:underline">parlay addiction</Link>. It
         makes lottery-odds bets feel &ldquo;close to hitting.&rdquo; A bettor placing five 10-leg
         parlays a week at $20 each is spending $5,200 per year with an expected return of about
-        $2,600 &mdash; a 50% loss rate that gets buried under the memory of the one ticket that
+        $2,600, a 50% loss rate that gets buried under the memory of the one ticket that
         cashed.
       </p>
       <p>
         <strong>How to counter it:</strong> Track every parlay you place for 90 days. Every single
-        one &mdash; wins and losses. At the end, calculate your actual ROI. The number will be
+        one: wins and losses. At the end, calculate your actual ROI. The number will be
         brutal, but it will also be real. Vivid memories are not data. Your spreadsheet is.
       </p>
 
@@ -222,12 +222,12 @@ export default function CognitiveBiasesDestroyingYourBankroll() {
       </p>
       <p>
         The first step is figuring out which specific cognitive biases in sports betting are costing
-        you the most. Not all of them &mdash; just the 2-3 that show up most in your actual bet
+        you the most. Not all of them, just the 2-3 that show up most in your actual bet
         history. This is precisely what{' '}
         <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
           behavioral betting analysis
         </Link>{' '}
-        is designed to do &mdash; systematically identify and quantify the biases that cost you
+        is designed to do: systematically identify and quantify the biases that cost you
         the most money. Our free{' '}
         <Link href="/quiz">Bet DNA quiz</Link> identifies your dominant biases in about 2 minutes,
         no data upload required.

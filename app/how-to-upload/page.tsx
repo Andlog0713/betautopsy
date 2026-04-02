@@ -190,7 +190,7 @@ export default function HowToUploadPage() {
 
             <div className="finding-card border-l-scalpel mt-4">
               <p className="text-xs text-fg-bright font-medium">Works with every sportsbook.</p>
-              <p className="text-xs text-fg-muted mt-0.5">Our AI figures out the format automatically.</p>
+              <p className="text-xs text-fg-muted mt-0.5">We figure out the format automatically.</p>
             </div>
 
             {/* Per-sportsbook navigation paths */}
@@ -271,7 +271,7 @@ export default function HowToUploadPage() {
             <div className="bg-surface-raised rounded-sm p-4 text-sm text-fg-muted space-y-2">
               <p>
                 If you track bets in Google Sheets or Excel, just make sure your columns
-                roughly match these names and save as .csv. Our parser is flexible — it
+                roughly match these names and save as .csv. Our parser is flexible. It
                 auto-detects most column naming variations.
               </p>
               <p>

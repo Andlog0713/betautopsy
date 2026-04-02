@@ -4,7 +4,7 @@ export default function AmIABadSportsBettor() {
   return (
     <>
       <p>
-        You&apos;re probably worse than you think. Not because your picks are bad — because your brain
+        You&apos;re probably worse than you think. Not because your picks are bad, but because your brain
         is lying to you about how you&apos;re doing.
       </p>
 
@@ -16,7 +16,7 @@ export default function AmIABadSportsBettor() {
       </p>
 
       <p>
-        So when someone asks, <strong>&ldquo;Am I a bad sports bettor?&rdquo;</strong> — the honest
+        So when someone asks, <strong>&ldquo;Am I a bad sports bettor?&rdquo;</strong>, the honest
         answer is: you probably don&apos;t know. And that&apos;s the real problem.
       </p>
 
@@ -31,7 +31,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         Your brain treats wins and losses asymmetrically. A winning bet produces a dopamine hit that
-        encodes the memory vividly — the game, the score, the moment you knew it would hit. Losses
+        encodes the memory vividly: the game, the score, the moment you knew it would hit. Losses
         get filed under &ldquo;bad luck&rdquo; and quietly forgotten. Over weeks and months, this
         creates a highlight reel in your head that looks nothing like your actual record.
       </p>
@@ -60,7 +60,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         This is the silent killer. Many bettors lump their straight bets and parlays into one mental
-        ledger. Your straight bets might actually be profitable — solid analysis, disciplined sizing,
+        ledger. Your straight bets might actually be profitable: solid analysis, disciplined sizing,
         decent returns. But if 40% of your action goes to parlays with a built-in house edge north of
         20%, those winners are subsidizing a losing habit. You&apos;d never know unless you separate
         the two.
@@ -79,7 +79,7 @@ export default function AmIABadSportsBettor() {
       <h2>The 10-Point Self-Assessment</h2>
 
       <p>
-        Here&apos;s where we get honest. Answer each question below truthfully — not the version you
+        Here&apos;s where we get honest. Answer each question below truthfully, not the version you
         want to believe, the version your betting history would confirm. Keep a running count of how
         many you answer &ldquo;no&rdquo; or &ldquo;I don&apos;t know.&rdquo;
       </p>
@@ -88,7 +88,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         Not your approximate win rate. Not &ldquo;I&apos;m up a little.&rdquo; Your actual return on
-        investment — total profit or loss divided by total amount wagered, expressed as a percentage.
+        investment: total profit or loss divided by total amount wagered, expressed as a percentage.
         If you can&apos;t state this number within a few percentage points, you&apos;re operating
         blind. Professional bettors know their ROI to the decimal. Most recreational bettors
         can&apos;t even tell you whether they&apos;re positive or negative over the last six months.
@@ -100,7 +100,7 @@ export default function AmIABadSportsBettor() {
         Do you have a standard unit size? Do you stick to it? Or does a &ldquo;lock of the
         century&rdquo; get five times your normal stake while a regular Tuesday play gets the
         minimum? Emotional sizing is one of the fastest ways to erode a bankroll because your biggest
-        bets tend to come at the worst times — after losses, on high-profile games, or when you
+        bets tend to come at the worst times: after losses, on high-profile games, or when you
         &ldquo;feel it.&rdquo;
       </p>
 
@@ -117,7 +117,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         Loss chasing is the most destructive pattern in sports betting. After a bad day, something in
-        your brain whispers that you&apos;re &ldquo;due&rdquo; — that the next bet will even things
+        your brain whispers that you&apos;re &ldquo;due,&rdquo; that the next bet will even things
         out. It won&apos;t. Every bet is independent. If you find yourself increasing stakes after
         losing streaks, you&apos;re not making strategic decisions. You&apos;re reacting emotionally.
         We wrote a full breakdown of{' '}
@@ -133,7 +133,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         Betting on the Korean Baseball Organization at 3 AM because there&apos;s nothing else on the
-        board isn&apos;t analysis — it&apos;s action addiction. If you can&apos;t name five players
+        board isn&apos;t analysis. It&apos;s action addiction. If you can&apos;t name five players
         on both teams, you have no edge. You&apos;re donating to the sportsbook. Discipline means
         sitting out when you don&apos;t have an informed opinion.
       </p>
@@ -144,7 +144,7 @@ export default function AmIABadSportsBettor() {
         Late-night betting is where bankrolls go to die. Fatigue lowers inhibition. Alcohol loosens
         standards. The lines available at midnight are often for sports and leagues you know nothing
         about. If your betting app shows a cluster of activity between 11 PM and 2 AM, that&apos;s a
-        red flag — not a strategy.
+        red flag, not a strategy.
       </p>
 
       <h3>7. Do You Know Your Most and Least Profitable Sport or Bet Type?</h3>
@@ -152,7 +152,7 @@ export default function AmIABadSportsBettor() {
       <p>
         Maybe you crush NFL totals but lose consistently on NBA spreads. Maybe your live bets are
         disasters while your pre-game plays are solid. Most bettors have no idea where their edge
-        lives — or where they&apos;re leaking money. Without this knowledge, you can&apos;t double
+        lives, or where they&apos;re leaking money. Without this knowledge, you can&apos;t double
         down on what works or cut what doesn&apos;t.
       </p>
 
@@ -170,7 +170,7 @@ export default function AmIABadSportsBettor() {
       <p>
         &ldquo;I like the Chiefs&rdquo; is not a reason. &ldquo;Kansas City&apos;s defensive pressure
         rate ranks top-5 against bottom-10 offensive lines, and the line hasn&apos;t adjusted for the
-        opponent&apos;s starting tackle being questionable&rdquo; — that&apos;s a reason. Every bet
+        opponent&apos;s starting tackle being questionable&rdquo;: that&apos;s a reason. Every bet
         should have a thesis. If you can&apos;t explain why you&apos;re taking a position in one or
         two sentences that reference specific factors, you&apos;re gambling, not betting.
       </p>
@@ -181,7 +181,7 @@ export default function AmIABadSportsBettor() {
         Not mental guidelines. Not things you &ldquo;usually&rdquo; do. Actual written rules.
         Maximum bet size. Maximum number of bets per day. Sports you will and won&apos;t bet.
         Conditions under which you won&apos;t bet at all. If it&apos;s not written down, it&apos;s
-        not a rule — it&apos;s a suggestion, and suggestions collapse under pressure.
+        not a rule. It&apos;s a suggestion, and suggestions collapse under pressure.
       </p>
 
       <hr />
@@ -223,7 +223,7 @@ export default function AmIABadSportsBettor() {
       <p>
         Here&apos;s what most &ldquo;how to bet better&rdquo; content won&apos;t tell you: the
         single biggest predictor of improvement isn&apos;t knowledge about sports. It&apos;s
-        self-awareness about your own behavior &mdash; the core principle behind{' '}
+        self-awareness about your own behavior, the core principle behind{' '}
         <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
           behavioral betting analysis
         </Link>. The bettor who knows they chase losses and actively
@@ -232,7 +232,7 @@ export default function AmIABadSportsBettor() {
       </p>
 
       <p>
-        You just took the hardest step — being honest about where you stand. Now you can actually
+        You just took the hardest step: being honest about where you stand. Now you can actually
         do something about it.
       </p>
 
@@ -249,7 +249,7 @@ export default function AmIABadSportsBettor() {
       </p>
 
       <p>
-        And most importantly — take breaks. Step away. A bettor who sits out a week and comes back
+        And most importantly, take breaks. Step away. A bettor who sits out a week and comes back
         with fresh eyes and a clear process will always outperform the one who grinds every single
         day because the action feels like oxygen.
       </p>
@@ -258,7 +258,7 @@ export default function AmIABadSportsBettor() {
 
       <p>
         This checklist is a solid starting point, but it only scratches the surface. Your betting
-        patterns contain layers that a yes-or-no questionnaire can&apos;t reach — timing patterns,
+        patterns contain layers that a yes-or-no questionnaire can&apos;t reach: timing patterns,
         emotional triggers, sport-specific blind spots, and more.
       </p>
 

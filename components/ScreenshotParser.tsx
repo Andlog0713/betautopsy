@@ -112,7 +112,7 @@ export default function ScreenshotParser() {
     return (
       <div className="space-y-4">
         <p className="text-fg-muted text-xs">
-          Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, Fanatics, bet365, BetRivers</span>, and more. Screenshot your settled bets page — we extract every bet.
+          Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, Fanatics, bet365, BetRivers</span>, and more. Screenshot your settled bets page. We extract every bet.
         </p>
 
         {/* Drop zone */}
@@ -132,7 +132,7 @@ export default function ScreenshotParser() {
           />
           <div className="text-4xl mb-2">📸</div>
           <p className="text-fg-bright font-medium">Drop screenshots here or click to browse</p>
-          <p className="text-fg-muted text-xs mt-1">PNG, JPG, or WEBP — up to 10 at once</p>
+          <p className="text-fg-muted text-xs mt-1">PNG, JPG, or WEBP, up to 10 at once</p>
         </div>
 
         {/* Preview thumbnails */}
@@ -168,7 +168,7 @@ export default function ScreenshotParser() {
         )}
 
         <p className="text-fg-muted text-xs">
-          Tip: Screenshot your sportsbook&apos;s Settled/History page — each screenshot can contain many bets. We extract them all and skip duplicates.
+          Tip: Screenshot your sportsbook&apos;s Settled/History page. Each screenshot can contain many bets. We extract them all and skip duplicates.
         </p>
       </div>
     );

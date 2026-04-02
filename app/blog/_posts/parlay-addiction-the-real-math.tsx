@@ -5,12 +5,12 @@ export default function ParlayAddictionTheRealMath() {
     <>
       <p>
         Parlays are the single most profitable product for sportsbooks. If you&apos;re building
-        4-leg parlays every Sunday, you&apos;re not betting — you&apos;re donating.
+        4-leg parlays every Sunday, you&apos;re not betting. You&apos;re donating.
       </p>
 
       <p>
         That sounds harsh. It&apos;s also mathematically provable. Let&apos;s walk through the
-        numbers so you can see exactly what parlay addiction costs you — and what to do about it.
+        numbers so you can see exactly what parlay addiction costs you, and what to do about it.
       </p>
 
       <h2>The Raw Math: How Each Leg Multiplies the House Edge</h2>
@@ -18,13 +18,13 @@ export default function ParlayAddictionTheRealMath() {
       <p>
         Start with a single bet at standard -110 odds. You risk $110 to win $100. The implied
         probability the sportsbook assigns is 52.38%, but the true probability of a coin-flip
-        event is 50%. That gap — roughly 4.55% — is the vigorish (vig). It&apos;s the
+        event is 50%. That gap (roughly 4.55%) is the vigorish (vig). It&apos;s the
         sportsbook&apos;s built-in edge on every single wager.
       </p>
 
       <p>
         Now here&apos;s where parlays get brutal. Each leg you add doesn&apos;t just <em>add</em>{' '}
-        to the vig — it <em>multiplies</em> it. The sportsbook takes its cut on every leg, and
+        to the vig. It <em>multiplies</em> it. The sportsbook takes its cut on every leg, and
         those cuts compound.
       </p>
 
@@ -46,7 +46,7 @@ export default function ParlayAddictionTheRealMath() {
 
       <p>
         Here&apos;s a concrete example. Say you place a $25 four-leg parlay every Sunday for a
-        full NFL season — 18 weeks. That&apos;s $450 wagered. With a 17% effective vig, the
+        full NFL season, 18 weeks. That&apos;s $450 wagered. With a 17% effective vig, the
         sportsbook&apos;s expected profit from you is about $77. On straight bets at -110, that
         same $450 would cost you roughly $20 in expected vig. You&apos;re paying nearly 4x more
         for the privilege of &quot;bigger payouts.&quot;
@@ -55,15 +55,15 @@ export default function ParlayAddictionTheRealMath() {
       <h2>Why Sportsbooks Push Parlays So Hard</h2>
 
       <p>
-        This isn&apos;t a secret to the industry. Parlays — especially Same Game Parlays (SGPs)
-        — are the highest-margin product sportsbooks sell. Period.
+        This isn&apos;t a secret to the industry. Parlays, especially Same Game Parlays (SGPs),
+        are the highest-margin product sportsbooks sell. Period.
       </p>
 
       <p>
         Open any sportsbook app right now. What do you see on the home screen? Featured SGPs.
         &quot;Boost your parlay.&quot; &quot;Build your own.&quot; Pre-built parlay cards. The
         entire UX is designed to funnel you toward multi-leg bets because that&apos;s where the
-        money is — for them.
+        money is, for them.
       </p>
 
       <p>
@@ -89,7 +89,7 @@ export default function ParlayAddictionTheRealMath() {
 
       <p>
         <strong>Intermittent reinforcement.</strong> You lose most parlays. But every few weeks,
-        one hits — and the payout feels massive relative to the stake. That unpredictable
+        one hits, and the payout feels massive relative to the stake. That unpredictable
         reward schedule is the most powerful form of behavioral conditioning known to psychology.
         It&apos;s the exact mechanism that keeps people pulling the slot lever.
       </p>
@@ -115,7 +115,7 @@ export default function ParlayAddictionTheRealMath() {
       <p>
         <strong>Near-miss dopamine.</strong> When your 4-leg parlay goes 3-for-4, it doesn&apos;t
         feel like a loss. It feels like you were <em>close</em>. So you run it back next week
-        with slightly different legs. The near-miss keeps you hooked — even though 3-for-4 pays
+        with slightly different legs. The near-miss keeps you hooked, even though 3-for-4 pays
         exactly zero dollars.
       </p>
 
@@ -134,7 +134,7 @@ export default function ParlayAddictionTheRealMath() {
           depending on leg count and bet type.
         </li>
         <li>
-          Straight-bet ROI for recreational bettors typically runs <strong>-3% to -7%</strong> —
+          Straight-bet ROI for recreational bettors typically runs <strong>-3% to -7%</strong>,
           much closer to breakeven.
         </li>
         <li>
@@ -159,7 +159,7 @@ export default function ParlayAddictionTheRealMath() {
       <h2>2-Leg vs. 6-Leg: A Dollar-for-Dollar Comparison</h2>
 
       <p>
-        Let&apos;s make this tangible. Assume you&apos;re betting $50 per week for 20 weeks — $1,000
+        Let&apos;s make this tangible. Assume you&apos;re betting $50 per week for 20 weeks ($1,000
         total wagered. All legs are at -110.
       </p>
 
@@ -178,9 +178,9 @@ export default function ParlayAddictionTheRealMath() {
         <li>True win probability per parlay: ~1.56%</li>
         <li>Payout per win: ~$2,350</li>
         <li>Expected wins over 20 weeks: ~0.31 (you&apos;ll likely hit zero)</li>
-        <li>Expected return: ~$730 in theory — but in practice, most bettors see $0 returned</li>
+        <li>Expected return: ~$730 in theory, but in practice, most bettors see $0 returned</li>
         <li>Expected loss: ~$750 or the full $1,000 in most realistic scenarios</li>
-        <li><strong>You keep about $0.25 of every dollar wagered — on average. Usually you keep $0.</strong></li>
+        <li><strong>You keep about $0.25 of every dollar wagered, on average. Usually you keep $0.</strong></li>
       </ul>
 
       <p>
@@ -193,7 +193,7 @@ export default function ParlayAddictionTheRealMath() {
       <h2>What to Do About It</h2>
 
       <p>
-        Quitting parlays cold turkey isn&apos;t realistic for most people — and honestly,
+        Quitting parlays cold turkey isn&apos;t realistic for most people, and honestly,
         a well-structured 2-leg parlay isn&apos;t financial suicide. The goal is discipline,
         not abstinence. Here are concrete rules:
       </p>
@@ -220,7 +220,7 @@ export default function ParlayAddictionTheRealMath() {
         <li>
           <strong>Track your parlay ROI separately.</strong> Most bettors have no idea how much
           parlays specifically cost them because they lump everything together. Separate the data.
-          You&apos;ll be surprised — and probably disturbed.
+          You&apos;ll be surprised, and probably disturbed.
         </li>
         <li>
           <strong>Take the quiz.</strong> If you&apos;re not sure whether your parlay habits
@@ -233,7 +233,7 @@ export default function ParlayAddictionTheRealMath() {
       <h2>Stop Guessing. See Your Actual Numbers.</h2>
 
       <p>
-        Everything above is math in the abstract. But your situation isn&apos;t abstract — you
+        Everything above is math in the abstract. But your situation isn&apos;t abstract. You
         have real bet history, real dollars lost, and real patterns you might not see yet. A{' '}
         <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
           behavioral betting analysis
@@ -254,7 +254,7 @@ export default function ParlayAddictionTheRealMath() {
       </p>
 
       <p>
-        Because the first step to fixing parlay addiction isn&apos;t willpower — it&apos;s seeing
+        Because the first step to fixing parlay addiction isn&apos;t willpower. It&apos;s seeing
         what it&apos;s actually costing you.
       </p>
 

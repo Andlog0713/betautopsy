@@ -264,7 +264,7 @@ export default function PasteParser() {
                         />
                       </td>
                       <td className="p-3 font-mono text-xs text-fg-muted whitespace-nowrap">
-                        {bet.placed_at?.slice(0, 10) ?? '—'}
+                        {bet.placed_at?.slice(0, 10) ?? '-'}
                       </td>
                       <td className="p-3 text-fg-muted">{bet.sport}</td>
                       <td className="p-3 text-fg-muted">{bet.bet_type}</td>
@@ -311,7 +311,7 @@ export default function PasteParser() {
 
       {/* Supported sportsbooks note */}
       <p className="text-fg-muted text-xs mb-3">
-        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste — our AI figures out the format.
+        Works with <span className="text-fg-bright">DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, Fanatics, BetRivers</span>, and more. Just copy-paste. We figure out the format.
       </p>
 
       {/* Textarea */}
@@ -365,7 +365,7 @@ export default function PasteParser() {
 
       {/* Tip */}
       <p className="text-fg-dim text-xs">
-        Sportsbooks usually show 20-50 bets per page. Paste multiple pages — we skip duplicates.
+        Sportsbooks usually show 20-50 bets per page. Paste multiple pages. We skip duplicates.
       </p>
     </div>
   );

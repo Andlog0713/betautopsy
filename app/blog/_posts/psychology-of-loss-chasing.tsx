@@ -4,15 +4,15 @@ export default function PsychologyOfLossChasing() {
   return (
     <>
       <p>
-        You just lost $100 on the Celtics. The game wasn&apos;t even close — they went down by 14 in
+        You just lost $100 on the Celtics. The game wasn&apos;t even close. They went down by 14 in
         the third quarter and never recovered. You close the app. You open it again 30 seconds later.
         What happens next?
       </p>
 
       <p>
         For <strong>60–70% of recreational bettors</strong>, the answer is the same: bet bigger.
-        Not smarter. Not more selectively. Just bigger. And that single impulse — loss chasing in
-        sports betting — is responsible for more bankroll destruction than bad picks, bad odds, or
+        Not smarter. Not more selectively. Just bigger. And that single impulse, loss chasing in
+        sports betting, is responsible for more bankroll destruction than bad picks, bad odds, or
         bad luck combined.
       </p>
 
@@ -34,13 +34,13 @@ export default function PsychologyOfLossChasing() {
 
       <p>
         Lose $100, and the emotional impact is about the same as winning $200. Your brain doesn&apos;t
-        treat money symmetrically. It treats losses as threats — urgent, alarming signals that
+        treat money symmetrically. It treats losses as threats: urgent, alarming signals that
         demand action.
       </p>
 
       <p>
         This is <strong>loss aversion</strong>, and it&apos;s not a personality flaw. It&apos;s
-        hardwired. Functional MRI studies show that financial losses activate the amygdala — the
+        hardwired. Functional MRI studies show that financial losses activate the amygdala, the
         same brain region that fires when you&apos;re physically threatened. Your brain literally
         interprets a losing bet the way it interprets danger. And when you&apos;re in danger, your
         brain doesn&apos;t want you to sit still and think clearly. It wants you to act. Fast.
@@ -49,7 +49,7 @@ export default function PsychologyOfLossChasing() {
       <p>
         That&apos;s the trap. The urgency you feel after a loss isn&apos;t rational analysis telling
         you there&apos;s value in the next game. It&apos;s your amygdala screaming at you to fix the
-        pain. And the fastest way to &quot;fix&quot; it? Bet again — bigger this time — so you can
+        pain. And the fastest way to &quot;fix&quot; it? Bet again, bigger this time, so you can
         erase the loss and feel whole.
       </p>
 
@@ -74,7 +74,7 @@ export default function PsychologyOfLossChasing() {
         </li>
         <li>
           After <strong>3 or more consecutive losses</strong>, the average stake increase exceeds{' '}
-          <strong>100%</strong> — bettors more than double their typical wager.
+          <strong>100%</strong>. Bettors more than double their typical wager.
         </li>
         <li>
           Post-loss bets are placed <strong>2–3x faster</strong> than normal bets, with less time
@@ -89,7 +89,7 @@ export default function PsychologyOfLossChasing() {
       <p>
         This isn&apos;t speculation. These are behavioral patterns visible in millions of bet
         records. And they tell a clear story: the decisions you make after a loss are
-        fundamentally different — and worse — than the decisions you make at the start of a session.
+        fundamentally different, and worse, than the decisions you make at the start of a session.
       </p>
 
       <h2>The Escalation Pattern: A $50 Bettor&apos;s Worst Night</h2>
@@ -112,12 +112,12 @@ export default function PsychologyOfLossChasing() {
       <p>
         Four bets. The bettor&apos;s standard unit is $50, which means a normal four-bet losing
         streak would cost $200. Instead, loss chasing turned a $200 problem into a{' '}
-        <strong>$525 hole</strong> — a <strong>162% increase in damage</strong>.
+        <strong>$525 hole</strong>, a <strong>162% increase in damage</strong>.
       </p>
 
       <p>
         And here&apos;s the part nobody talks about: even if Bet 4 had won at -110 odds, the payout
-        would have been about $227. The bettor would still be down nearly $50 for the session — and
+        would have been about $227. The bettor would still be down nearly $50 for the session, and
         would have risked $525 to get there. The math of chasing never works in your favor, even
         when you win.
       </p>
@@ -142,7 +142,7 @@ export default function PsychologyOfLossChasing() {
 
       <ul>
         <li>
-          You <strong>chase odds you&apos;d normally skip</strong> — taking -250 favorites or coin-flip
+          You <strong>chase odds you&apos;d normally skip</strong>, taking -250 favorites or coin-flip
           parlays because the payout matches what you&apos;re down.
         </li>
         <li>
@@ -150,7 +150,7 @@ export default function PsychologyOfLossChasing() {
           works for your need to recover now.
         </li>
         <li>
-          You <strong>ignore bankroll management</strong> entirely — 10%, 15%, 20% of your bankroll
+          You <strong>ignore bankroll management</strong> entirely. 10%, 15%, 20% of your bankroll
           on a single bet becomes normal.
         </li>
         <li>
@@ -162,7 +162,7 @@ export default function PsychologyOfLossChasing() {
       <p>
         If this pattern sounds familiar, you&apos;re not alone. It&apos;s one of the most common
         behavioral signatures we cover in{' '}
-        <Link href="/blog/am-i-a-bad-sports-bettor">Am I a Bad Sports Bettor?</Link> — and
+        <Link href="/blog/am-i-a-bad-sports-bettor">Am I a Bad Sports Bettor?</Link>, and
         recognizing it is the first step toward fixing it.
       </p>
 
@@ -171,7 +171,7 @@ export default function PsychologyOfLossChasing() {
       <p>
         Knowing loss chasing is irrational doesn&apos;t stop it. Kahneman himself wrote that
         understanding bias doesn&apos;t make you immune to it. What works are{' '}
-        <strong>rules set before the emotion hits</strong> — bright lines you commit to when
+        <strong>rules set before the emotion hits</strong>: bright lines you commit to when
         you&apos;re thinking clearly.
       </p>
 
@@ -179,7 +179,7 @@ export default function PsychologyOfLossChasing() {
 
       <p>
         Before you place your first bet, define your unit size and commit to a hard stop at 3 units
-        lost. If your unit is $50, your session ends — no exceptions — at -$150. This number
+        lost. If your unit is $50, your session ends (no exceptions) at -$150. This number
         isn&apos;t arbitrary. It&apos;s small enough to absorb comfortably and large enough to
         allow a normal losing streak without triggering the chase instinct.
       </p>
@@ -207,7 +207,7 @@ export default function PsychologyOfLossChasing() {
         After every session, answer two questions: <strong>Did I increase my bet size after a
         loss?</strong> and <strong>Did I bet on something I wouldn&apos;t have bet on if I
         were starting fresh?</strong> Track these honestly. Over a month, the pattern will be
-        undeniable — and that data becomes your strongest motivation to change.
+        undeniable, and that data becomes your strongest motivation to change.
       </p>
 
       <h2>The Emotional Trigger Audit</h2>
@@ -217,7 +217,7 @@ export default function PsychologyOfLossChasing() {
       </p>
 
       <blockquote>
-        &quot;Am I betting because I see value — or because I want to get even?&quot;
+        &quot;Am I betting because I see value, or because I want to get even?&quot;
       </blockquote>
 
       <p>
@@ -229,15 +229,15 @@ export default function PsychologyOfLossChasing() {
       <p>
         This doesn&apos;t mean you can never bet after a loss. It means every post-loss bet
         needs to pass a higher standard. You should be able to articulate exactly why the bet has
-        value <em>independent</em> of your session results. If you can&apos;t — if the honest
-        reason is &quot;I&apos;m down and I want to fix it&quot; — then the right bet is no bet.
+        value <em>independent</em> of your session results. If you can&apos;t, if the honest
+        reason is &quot;I&apos;m down and I want to fix it,&quot; then the right bet is no bet.
       </p>
 
       <h2>Seeing Your Own Pattern</h2>
 
       <p>
         Loss chasing sports betting behavior is hard to see in yourself in the moment. That&apos;s
-        by design — your brain is actively hiding the irrationality from you. The urgency feels
+        by design. Your brain is actively hiding the irrationality from you. The urgency feels
         rational. The bigger bet feels justified. The need to get even feels like discipline, not
         desperation.
       </p>
@@ -248,13 +248,13 @@ export default function PsychologyOfLossChasing() {
           behavioral betting analysis
         </Link>{' '}
         cuts through the self-deception. When you can see your own{' '}
-        <strong>post-loss escalation ratio</strong> — the average percentage by which you increase
-        your stake after a loss — the pattern becomes impossible to deny.
+        <strong>post-loss escalation ratio</strong>, the average percentage by which you increase
+        your stake after a loss, the pattern becomes impossible to deny.
       </p>
 
       <p>
         <Link href="/signup">BetAutopsy calculates this automatically</Link>. Upload your bet
-        history and we&apos;ll show you exactly how your behavior changes after losses — how much
+        history and we&apos;ll show you exactly how your behavior changes after losses: how much
         bigger you bet, how much faster you place them, and how much it&apos;s costing you compared
         to flat staking. No judgment. Just the numbers.
       </p>
@@ -267,7 +267,7 @@ export default function PsychologyOfLossChasing() {
       <p>
         Not sure if loss chasing is your primary issue?{' '}
         <Link href="/quiz">Take the free Bet DNA quiz</Link> to find out which behavioral patterns
-        are actually costing you money — it takes two minutes, and the results might surprise you.
+        are actually costing you money. It takes two minutes, and the results might surprise you.
       </p>
 
       <h2>Keep Reading</h2>

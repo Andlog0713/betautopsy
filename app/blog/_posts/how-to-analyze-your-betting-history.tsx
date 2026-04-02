@@ -5,14 +5,14 @@ export default function HowToAnalyzeYourBettingHistory() {
     <>
       <p>
         You know your record. Maybe you even know your win percentage. But if that&apos;s all
-        you&apos;re looking at, you&apos;re flying blind — and it&apos;s costing you real money.
+        you&apos;re looking at, you&apos;re flying blind, and it&apos;s costing you real money.
       </p>
 
       <p>
         Most sports bettors track exactly one thing: wins and losses. Maybe they glance at their
         sportsbook balance every couple of weeks. A few keep a spreadsheet. But almost nobody digs
         into the behavioral data that actually explains <em>why</em> their bankroll is moving in a
-        given direction. And that gap — between what bettors track and what they should track — is
+        given direction. And that gap (between what bettors track and what they should track) is
         where hundreds or thousands of dollars disappear every month.
       </p>
 
@@ -61,7 +61,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         Your overall ROI is a blended number that hides critical information. Most bettors are
-        profitable in one or two sports and hemorrhaging money in the rest — but they never see it
+        profitable in one or two sports and hemorrhaging money in the rest, but they never see it
         because they&apos;re looking at the aggregate.
       </p>
 
@@ -78,7 +78,7 @@ export default function HowToAnalyzeYourBettingHistory() {
       </ul>
 
       <p>
-        This bettor is actually a profitable NFL bettor. Their problem isn&apos;t betting — it&apos;s
+        This bettor is actually a profitable NFL bettor. Their problem isn&apos;t betting. It&apos;s
         betting on sports where they have no edge. Cut the MLB and NHL bets entirely and their
         overall ROI flips positive. That insight is invisible if you only look at the aggregate number.
       </p>
@@ -104,13 +104,13 @@ export default function HowToAnalyzeYourBettingHistory() {
       </p>
 
       <p>
-        A ratio of 1.0 means you bet the same amount regardless of your last result — perfect
+        A ratio of 1.0 means you bet the same amount regardless of your last result. Perfect
         discipline. Most recreational bettors land between <strong>1.3 and 1.8</strong>, meaning
         they increase their stakes 30-80% after losses. Anything above 1.5 is a serious red flag.
       </p>
 
       <p>
-        We&apos;ve seen bettors with loss chase ratios above 2.5 — literally betting more than
+        We&apos;ve seen bettors with loss chase ratios above 2.5, literally betting more than
         double after a loss. One bettor had a 58% win rate and still lost $4,700 over three months
         because his post-loss stakes averaged $340 versus $120 post-win. His wins were small and his
         losses were catastrophic.
@@ -133,8 +133,8 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         Here&apos;s what this looks like in practice. Bettor A averages $100 per bet with a standard
-        deviation of $25. Their coefficient of variation is 0.25 — tight, disciplined sizing. Bettor
-        B also averages $100 per bet, but with a standard deviation of $120. Their CoV is 1.2 —
+        deviation of $25. Their coefficient of variation is 0.25, tight, disciplined sizing. Bettor
+        B also averages $100 per bet, but with a standard deviation of $120. Their CoV is 1.2,
         meaning they&apos;re bouncing between $10 bets and $500 bets with no consistent logic.
       </p>
 
@@ -154,10 +154,10 @@ export default function HowToAnalyzeYourBettingHistory() {
       </p>
 
       <ul>
-        <li><strong>Morning (6am-12pm):</strong> +3.1% ROI — bets placed with a clear head, often researched</li>
-        <li><strong>Afternoon (12pm-6pm):</strong> +0.8% ROI — neutral, moderate performance</li>
-        <li><strong>Evening (6pm-10pm):</strong> -4.2% ROI — primetime bias kicks in, larger stakes</li>
-        <li><strong>Late night (10pm-2am):</strong> -18.6% ROI — impulsive bets, often post-loss, often after drinking</li>
+        <li><strong>Morning (6am-12pm):</strong> +3.1% ROI. Bets placed with a clear head, often researched</li>
+        <li><strong>Afternoon (12pm-6pm):</strong> +0.8% ROI. Neutral, moderate performance</li>
+        <li><strong>Evening (6pm-10pm):</strong> -4.2% ROI. Primetime bias kicks in, larger stakes</li>
+        <li><strong>Late night (10pm-2am):</strong> -18.6% ROI. Impulsive bets, often post-loss, often after drinking</li>
       </ul>
 
       <p>
@@ -168,7 +168,7 @@ export default function HowToAnalyzeYourBettingHistory() {
       </p>
 
       <p>
-        The fix is absurdly simple — stop betting after a certain hour — but you can&apos;t implement
+        The fix is absurdly simple (stop betting after a certain hour) but you can&apos;t implement
         it if you never analyze the data in the first place.
       </p>
 
@@ -211,7 +211,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         Look for sequences where you placed 3 or more bets within 30 minutes of a loss. These
-        clusters are almost always revenge bets — rapid-fire wagers placed to &quot;get back to
+        clusters are almost always revenge bets: rapid-fire wagers placed to &quot;get back to
         even&quot; while your brain is flooded with frustration. They tend to be poorly researched,
         oversized, and heavily skewed toward parlays (because you need a big payout to recover
         quickly).
@@ -219,7 +219,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         One pattern we see repeatedly: a bettor loses a $150 straight bet, then within 20 minutes
-        places a $50 four-leg parlay. The parlay feels like a cheap shot at recovery — just $50! —
+        places a $50 four-leg parlay. The parlay feels like a cheap shot at recovery (just $50!)
         but the expected value is abysmal. Over time, these revenge clusters can account for{' '}
         <strong>20-40% of total losses</strong> despite being a small fraction of total bets.
       </p>
@@ -237,7 +237,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         Tag each of your bets as favorite or underdog. Most recreational bettors lean heavily toward
-        favorites — often 65-75% of their bets. The problem is that favorites are the most
+        favorites, often 65-75% of their bets. The problem is that favorites are the most
         efficiently priced lines on the board because the public hammers them, which means the value
         tends to sit on the other side. A strong favorite bias doesn&apos;t guarantee losses, but it
         does mean you&apos;re consistently paying a premium.
@@ -271,7 +271,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         If your book doesn&apos;t offer a direct export, you can usually copy and paste from the
-        settled bets page into a spreadsheet. Tedious but doable. Go back at least 3 months — 6
+        settled bets page into a spreadsheet. Tedious but doable. Go back at least 3 months. 6
         months is better. You need enough data for patterns to emerge.
       </p>
 
@@ -282,7 +282,7 @@ export default function HowToAnalyzeYourBettingHistory() {
       </p>
 
       <ol>
-        <li><strong>Date and time placed</strong> (not the game time — when you placed the bet)</li>
+        <li><strong>Date and time placed</strong> (not the game time, when you placed the bet)</li>
         <li><strong>Sport and league</strong></li>
         <li><strong>Bet type</strong> (straight, parlay, teaser, prop)</li>
         <li><strong>Odds</strong></li>
@@ -302,7 +302,7 @@ export default function HowToAnalyzeYourBettingHistory() {
 
       <p>
         With your data organized, calculate each of the five key metrics described above. For each
-        one, write down the number and what it tells you. Be honest with yourself — this only works
+        one, write down the number and what it tells you. Be honest with yourself. This only works
         if you don&apos;t flinch from bad numbers.
       </p>
 
@@ -356,7 +356,7 @@ export default function HowToAnalyzeYourBettingHistory() {
       <p>
         That&apos;s exactly why we built BetAutopsy.{' '}
         <strong>Upload your bet history and get a complete behavioral analysis in about 20
-        seconds</strong> — all five key metrics, emotional pattern detection, sport-by-sport
+        seconds</strong>: all five key metrics, emotional pattern detection, sport-by-sport
         breakdowns, time-of-day analysis, and a personalized action plan. No spreadsheets. No
         formulas. Just the diagnosis.
       </p>
@@ -372,20 +372,20 @@ export default function HowToAnalyzeYourBettingHistory() {
       <h2>The Bottom Line</h2>
 
       <p>
-        Your betting history is a goldmine of behavioral data — if you know how to read it.
+        Your betting history is a goldmine of behavioral data, if you know how to read it.
         This is the foundation of{' '}
         <Link href="/blog/what-is-behavioral-betting-analysis" className="text-scalpel hover:underline">
           behavioral betting analysis
         </Link>{' '}
-        — looking beyond win/loss records to the patterns underneath.
+        , looking beyond win/loss records to the patterns underneath.
         Below the surface are patterns of loss chasing, emotional sizing,
         time-based impulsivity, and sport-specific leaks that explain exactly where your money is
         going and why.
       </p>
 
       <p>
-        The five metrics in this guide — ROI by sport, loss chase ratio, bet sizing consistency,
-        time-of-day patterns, and parlay vs. straight bet ROI — will give you a clearer picture of
+        The five metrics in this guide (ROI by sport, loss chase ratio, bet sizing consistency,
+        time-of-day patterns, and parlay vs. straight bet ROI) will give you a clearer picture of
         your betting behavior than years of gut-feel self-assessment.
       </p>
 
@@ -393,7 +393,7 @@ export default function HowToAnalyzeYourBettingHistory() {
         If you recognized yourself in the patterns described above, you&apos;re not alone. We
         covered the deeper psychology behind these tendencies in{' '}
         <Link href="/blog/why-am-i-losing-at-sports-betting">Why Am I Losing at Sports
-        Betting?</Link> — it&apos;s the companion piece to this guide.
+        Betting?</Link>. It&apos;s the companion piece to this guide.
       </p>
 
       <p>

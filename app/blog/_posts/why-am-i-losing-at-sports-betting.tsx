@@ -4,7 +4,7 @@ export default function WhyAmILosingAtSportsBetting() {
   return (
     <>
       <p>
-        96% of sports bettors lose money. Not because they pick wrong — because of 5 behavioral
+        96% of sports bettors lose money. Not because they pick wrong, but because of 5 behavioral
         mistakes they repeat over and over without realizing it.
       </p>
 
@@ -15,7 +15,7 @@ export default function WhyAmILosingAtSportsBetting() {
       </p>
 
       <p>
-        If you&apos;re asking yourself <strong>&quot;why am I losing at sports betting?&quot;</strong> — good.
+        If you&apos;re asking yourself <strong>&quot;why am I losing at sports betting?&quot;</strong>, good.
         That question is the first crack in the wall. Most bettors never ask it. They blame bad
         beats, refs, injuries, or &quot;variance.&quot; The real answers are less comfortable and far
         more fixable.
@@ -29,7 +29,7 @@ export default function WhyAmILosingAtSportsBetting() {
 
       <p>
         Before you place a single bet, the sportsbook has already won. At standard -110 odds, you
-        risk $110 to win $100. That built-in margin — the vig, or juice — means you need to win{' '}
+        risk $110 to win $100. That built-in margin (the vig, or juice) means you need to win{' '}
         <strong>52.4% of your bets just to break even</strong>.
       </p>
 
@@ -42,7 +42,7 @@ export default function WhyAmILosingAtSportsBetting() {
 
       <p>
         This is the baseline. Everything else stacks on top of it. And the five patterns below?
-        They push your effective win rate well below 50% — sometimes into the low 40s.
+        They push your effective win rate well below 50%, sometimes into the low 40s.
       </p>
 
       <h2>Pattern #1: Chasing Losses</h2>
@@ -56,7 +56,7 @@ export default function WhyAmILosingAtSportsBetting() {
         Data from behavioral betting studies shows the average recreational bettor{' '}
         <strong>increases their stake 40-80% on the bet immediately following a loss</strong>. After
         two consecutive losses, that jump can exceed 100%. You&apos;re not making a calculated
-        decision — you&apos;re responding to a neurochemical alarm that says &quot;fix this now.&quot;
+        decision. You&apos;re responding to a neurochemical alarm that says &quot;fix this now.&quot;
       </p>
 
       <p>
@@ -80,7 +80,7 @@ export default function WhyAmILosingAtSportsBetting() {
 
       <p>
         Parlays account for <strong>30-40% of all recreational sports bets</strong>. They&apos;re
-        also the worst expected value bet on the board — and it&apos;s not close.
+        also the worst expected value bet on the board, and it&apos;s not close.
       </p>
 
       <p>
@@ -120,12 +120,12 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         Almost nobody does. The typical pattern looks like this:{' '}
         <strong>$50 on Tuesday, $300 on Saturday night</strong>. Not because Saturday games offer
-        better value — but because Saturday feels bigger. More games on. Friends watching. A few
+        better value, but because Saturday feels bigger. More games on. Friends watching. A few
         drinks in. The emotional volume knob is turned up, and your bet sizing follows it.
       </p>
 
       <p>
-        This is emotional sizing — one of the{' '}
+        This is emotional sizing, one of the{' '}
         <Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">cognitive biases that silently destroy your bankroll</Link>{' '}
         — and it systematically wrecks results. Your largest bets
         aren&apos;t correlated with your best edges — they&apos;re correlated with your highest
@@ -137,14 +137,14 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         Professional bettors size positions based on edge, not excitement. A sharp bettor might put
         their biggest bet of the week on a Tuesday night NCAAB under that the market hasn&apos;t
-        priced correctly — and sit out the NFL Sunday entirely. That feels wrong to a recreational
+        priced correctly, and sit out the NFL Sunday entirely. That feels wrong to a recreational
         bettor. Which is exactly the point.
       </p>
 
       <h2>Pattern #4: Volume Without Edge</h2>
 
       <p>
-        More games does not equal more profit. More games without an edge equals more losses —
+        More games does not equal more profit. More games without an edge equals more losses,
         faster.
       </p>
 
@@ -158,7 +158,7 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         Yet the recreational bettor&apos;s instinct runs in the opposite direction.{' '}
         <strong>Losing bettors average 2-3x more bets per week than winning bettors</strong> in
-        most sportsbook datasets. They bet more sports, more markets, more game props — spreading
+        most sportsbook datasets. They bet more sports, more markets, more game props, spreading
         themselves across areas where they have zero informational advantage.
       </p>
 
@@ -233,7 +233,7 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         The sports betting industry is designed to exploit these exact behavioral patterns. Every
         same-game parlay promo, every &quot;boost,&quot; every push notification about a live line
-        — it&apos;s all engineered to trigger impulsive, high-margin bets. You&apos;re not fighting
+        . It&apos;s all engineered to trigger impulsive, high-margin bets. You&apos;re not fighting
         the sportsbook&apos;s odds. You&apos;re fighting your own wiring.
       </p>
 
@@ -250,7 +250,7 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         That&apos;s exactly what we built <Link href="/quiz">the BetAutopsy quiz</Link> to do.
         It takes two minutes, identifies your dominant behavioral patterns, and gives you a
-        personalized Bet DNA profile — your unique combination of biases, tendencies, and blind
+        personalized Bet DNA profile: your unique combination of biases, tendencies, and blind
         spots as a bettor.
       </p>
 
