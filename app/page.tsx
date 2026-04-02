@@ -11,7 +11,9 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* HERO — grid-paper bg                  */}
       {/* ══════════════════════════════════════ */}
-      <section className="relative grid-paper">
+      <section className="relative grid-paper overflow-hidden">
+        {/* Glow behind hero text */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-scalpel/[0.04] rounded-full blur-[120px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative">
           <div className="case-header mb-8 animate-fade-in">
             CASE FILE // BEHAVIORAL ANALYSIS UNIT
