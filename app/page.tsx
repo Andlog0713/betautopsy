@@ -139,7 +139,7 @@ export default function LandingPage() {
             280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
           <p className="text-fg-muted text-xs mb-8 max-w-xl">
-            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE: LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND BETIQ SKILL ASSESSMENT.
+            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE: LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND EARLY ACCESS TO NEW FEATURES.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
