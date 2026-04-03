@@ -64,8 +64,8 @@ export function Logo({
   const strokeColor = theme === 'dark' ? '#00C9A7' : '#0d1117';
   const textColor = theme === 'dark' ? 'text-[#F0F6FC]' : 'text-[#0d1117]';
 
-  // For horizontal lockup, match mark height to text cap height (~1.1x font-size)
-  const matchHeight = variant === 'horizontal' ? Math.round(s.textPx * 1.15) : undefined;
+  // For horizontal lockup, mark is ~1.6x the text height (like PrizePicks ratio)
+  const matchHeight = variant === 'horizontal' ? Math.round(s.textPx * 1.6) : undefined;
 
   const mark = (
     <IncisionMark
