@@ -25,9 +25,9 @@ export default function LandingPage() {
             Your behavior is.
           </div>
           <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
-            Find out exactly which habits are costing you money, and how much. BetAutopsy
-            detects loss chasing, parlay addiction, emotional sizing, sport-specific leaks,
-            and late-night overreaction. Then gives you a concrete plan to fix them with real dollar amounts.
+            Find out exactly which habits are costing you money, and how much. Upload your
+            bet history and BetAutopsy breaks down every bias hiding in your data. The patterns
+            you can&apos;t see on your own, what each one is actually costing you, and a concrete plan to fix them.
           </p>
           <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
             Every upload sharpens the picture. Your third report catches patterns your first one couldn&apos;t.
@@ -282,7 +282,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pricing" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
+              <Link href="/signup?next=/pricing" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
             </div>
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Sharp</span>
@@ -297,7 +297,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pricing" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
+              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
             </div>
           </div>
           <p className="text-fg-muted text-xs mt-6">

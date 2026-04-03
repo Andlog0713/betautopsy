@@ -106,7 +106,7 @@ export default function UploadPage() {
         <div className="space-y-3">
           <OnboardingSteps active={1} completed={[]} />
           <div className="text-center">
-            <button onClick={() => { sessionStorage.setItem('onboarding_skip', '1'); window.location.href = '/dashboard'; }} className="text-xs text-fg-muted hover:text-fg transition-colors">
+            <button onClick={() => { localStorage.setItem('onboarding_skip', '1'); window.location.href = '/dashboard'; }} className="text-xs text-fg-muted hover:text-fg transition-colors">
               Skip for now
             </button>
           </div>

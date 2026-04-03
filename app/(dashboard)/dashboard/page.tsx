@@ -111,7 +111,7 @@ export default function DashboardPage() {
         setDaysSinceLastBet(Math.floor((Date.now() - mostRecentUpload) / 86400000));
       }
 
-      const skipped = typeof window !== 'undefined' && sessionStorage.getItem('onboarding_skip');
+      const skipped = typeof window !== 'undefined' && localStorage.getItem('onboarding_skip');
       if (totalBets === 0 && !skipped) { router.push('/upload'); return; }
 
       setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });

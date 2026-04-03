@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { trackSignup } from '@/lib/tiktok-events';
 import { createClient } from '@/lib/supabase';
 import OAuthButtons from '@/components/OAuthButtons';
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -44,7 +46,7 @@ export default function SignupPage() {
 
     trackSignup();
     // Welcome email sent via daily onboarding cron (1hr+ delay so it doesn't compete with the UI)
-    router.push('/');
+    router.push(next || '/');
     router.refresh();
   }
 
@@ -75,7 +77,7 @@ export default function SignupPage() {
       </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 
-      <OAuthButtons />
+      <OAuthButtons next={next} />
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
@@ -149,5 +151,13 @@ export default function SignupPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="case-card p-8 h-96 animate-pulse" />}>
+      <SignupForm />
+    </Suspense>
   );
 }

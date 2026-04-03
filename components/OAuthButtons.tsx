@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 
-export default function OAuthButtons() {
+export default function OAuthButtons({ next }: { next?: string | null }) {
   const [loading, setLoading] = useState<'google' | 'discord' | null>(null);
   const [error, setError] = useState('');
 
@@ -25,7 +25,7 @@ export default function OAuthButtons() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`,
       },
     });
 
