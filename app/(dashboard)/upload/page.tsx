@@ -33,7 +33,7 @@ export default function UploadPage() {
       const [profileRes, reportsRes, lastBetRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('bets').select('placed_at').eq('user_id', user.id).order('placed_at', { ascending: false }).limit(1),
+        supabase.from('bets').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
       ]);
       if (profileRes.data) {
         setProfile(profileRes.data as Profile);
@@ -43,7 +43,7 @@ export default function UploadPage() {
       }
       setReportCount(reportsRes.count ?? 0);
       if (lastBetRes.data && lastBetRes.data.length > 0) {
-        setLastBetDate(lastBetRes.data[0].placed_at);
+        setLastBetDate(lastBetRes.data[0].created_at);
       }
     }
     loadProfile();
