@@ -124,64 +124,6 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
-      {/* PROGRESS TRACKING — why ongoing       */}
-      {/* value matters (before the demo)       */}
-      {/* ══════════════════════════════════════ */}
-      <section className="max-w-5xl mx-auto px-6 py-16 md:py-20">
-        <span className="case-header block mb-3">Longitudinal Study</span>
-        <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
-          One report is a <span className="text-fg-muted">snapshot</span>.
-          Five reports is <span className="text-scalpel">proof</span>.
-        </h2>
-        <p className="text-fg-muted mb-10 max-w-lg text-sm">
-          Track the behavioral changes that actually save you money.
-        </p>
-        <div className="case-card p-5 md:p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <span className="case-header block mb-1">Emotion Score Over Time</span>
-              <p className="text-fg-muted text-xs mb-3 font-mono">Lower = better. Under 40 = controlled.</p>
-              <div className="space-y-2.5">
-                {[
-                  { score: 72, date: 'Week 1' },
-                  { score: 58, date: 'Week 2' },
-                  { score: 47, date: 'Week 4' },
-                  { score: 41, date: 'Week 6' },
-                ].map((r) => (
-                  <div key={r.date} className="flex items-center gap-3">
-                    <span className="font-mono text-xs text-fg-muted w-14 shrink-0">{r.date}</span>
-                    <div className="flex-1 h-2 bg-surface-raised overflow-hidden rounded-sm">
-                      <div className="h-full rounded-sm" style={{ width: `${r.score}%`, background: r.score <= 45 ? '#00C9A7' : r.score <= 60 ? '#D29922' : '#E8453C' }} />
-                    </div>
-                    <span className={`font-mono text-sm w-8 text-right ${r.score <= 45 ? 'text-scalpel' : r.score <= 60 ? 'text-caution' : 'text-bleed'}`}>{r.score}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-scalpel text-xs mt-2 font-mono">↓ 31 points in 6 weeks</p>
-            </div>
-            <div className="space-y-3">
-              <span className="case-header block mb-1">Vital Signs</span>
-              {[
-                { label: 'Discipline', from: '34', to: '67', arrow: '↑' },
-                { label: 'Loss Chase Ratio', from: '1.8x', to: '1.1x', arrow: '↓' },
-                { label: 'Parlay %', from: '42%', to: '18%', arrow: '↓' },
-                { label: 'ROI', from: '-8.2%', to: '-1.4%', arrow: '↑' },
-              ].map((m) => (
-                <div key={m.label} className="flex items-center justify-between py-0.5">
-                  <span className="text-sm text-fg-muted">{m.label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm text-fg-muted">{m.from}</span>
-                    <span className="text-scalpel">{m.arrow}</span>
-                    <span className="font-mono text-sm font-medium text-scalpel">{m.to}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════ */}
       {/* DEMO REPORT — proof, see it yourself  */}
       {/* ══════════════════════════════════════ */}
       <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
