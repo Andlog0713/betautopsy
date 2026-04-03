@@ -81,7 +81,7 @@ export default function DemoReportWrapper() {
                   href="/signup"
                   className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/10 inline-block"
                 >
-                  Get Your Free Autopsy
+                  Upload Your Bets
                 </Link>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function DemoReportWrapper() {
             href="/signup"
             className="btn-primary text-lg !px-10 !py-3.5 shadow-lg shadow-scalpel/10 inline-block"
           >
-            Get Your Free Autopsy
+            Upload Your Bets
           </Link>
         </div>
       )}

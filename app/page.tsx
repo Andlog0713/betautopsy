@@ -340,7 +340,7 @@ export default function LandingPage() {
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
         <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
-          Get Your Free Autopsy
+          Upload Your Bets
         </Link>
       </section>
 

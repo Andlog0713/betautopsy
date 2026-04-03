@@ -302,7 +302,7 @@ export default function SettingsPage() {
               <li>— Weekly check-ins so you don&apos;t have to remember to log in</li>
             </ul>
             <p className="text-fg-muted text-xs">Most users make back the subscription cost from the first leak they plug.</p>
-            <a href="/pricing" className="btn-primary inline-block text-sm">Go Pro</a>
+            <a href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro</a>
           </div>
         )}
       </div>
