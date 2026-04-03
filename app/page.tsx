@@ -43,7 +43,7 @@ export default function LandingPage() {
               NOT SURE HOW TO GET YOUR DATA? →
             </Link>
             <span className="font-mono text-xs text-fg-muted tracking-wider">
-              NO CREDIT CARD · WORKS WITH PIKKIT + ANY CSV
+              NO CREDIT CARD · WORKS WITH ANY CSV
             </span>
           </div>
           {/* EKG heartbeat line */}
