@@ -42,7 +42,7 @@ export const DEMO_BETS: Bet[] = [
   { id: 'demo-22', user_id: 'demo', placed_at: '2025-12-15T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '3-leg NFL parlay', odds: 500, stake: 60, result: 'loss', profit: -60, payout: 0, sportsbook: 'Caesars', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-12-15T13:00:00Z' },
   { id: 'demo-23', user_id: 'demo', placed_at: '2025-12-22T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '6-leg mega parlay', odds: 5000, stake: 10, result: 'loss', profit: -10, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: 6, tags: null, notes: null, upload_id: null, created_at: '2025-12-22T19:00:00Z' },
 
-  // === LOSS CHASING SEQUENCE (Dec 14 — visible stake escalation) ===
+  // === LOSS CHASING SEQUENCE (Dec 14, visible stake escalation) ===
   { id: 'demo-24', user_id: 'demo', placed_at: '2025-12-14T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'spread', description: 'Bucks -5.5', odds: -110, stake: 50, result: 'loss', profit: -50, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T19:30:00Z' },
   { id: 'demo-25', user_id: 'demo', placed_at: '2025-12-14T20:15:00Z', sport: 'NBA', league: 'NBA', bet_type: 'spread', description: 'Heat +3.5', odds: -110, stake: 100, result: 'loss', profit: -100, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T20:15:00Z' },
   { id: 'demo-26', user_id: 'demo', placed_at: '2025-12-14T21:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'moneyline', description: 'Suns ML', odds: 160, stake: 200, result: 'loss', profit: -200, payout: 0, sportsbook: 'FanDuel', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T21:00:00Z' },
@@ -85,14 +85,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
 
   betting_archetype: {
     name: 'The Parlay Dreamer',
-    description: 'The big ticket is always calling. Your straight bet game is probably better than you think — but the parlay habit is dragging your numbers down hard.',
+    description: 'The big ticket is always calling. Your straight bet game is probably better than you think, but the parlay habit is dragging your numbers down hard.',
   },
 
   biases_detected: [
     {
       bias_name: 'Post-Loss Escalation',
       severity: 'high',
-      description: 'Your average stake jumps from $72 to $134 after a loss — an 86% increase. After losing streaks of 3+, you placed 14 bets over $200. Nine of those lost.',
+      description: 'Your average stake jumps from $72 to $134 after a loss. That\'s an 86% increase. After losing streaks of 3+, you placed 14 bets over $200. Nine of those lost.',
       evidence: 'Avg stake after loss: $134 vs $72 after win. 14 bets >$200 following 3+ loss streaks (9 lost, -$1,180).',
       estimated_cost: 480,
       fix: 'Set a hard ceiling: no bet can exceed 1.5x your average stake ($123). After 3 losses in a row, stop for the day.',
@@ -100,10 +100,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       bias_name: 'Heavy Parlay Tendency',
       severity: 'medium',
-      description: '31% of your bets are parlays, but they account for 52% of your total losses. Your straight bet ROI is actually +2.1% — parlays are the anchor dragging you underwater.',
+      description: '31% of your bets are parlays, but they account for 52% of your total losses. Your straight bet ROI is actually +2.1%. Parlays are the anchor dragging you underwater.',
       evidence: '87 parlays at -38.4% ROI vs 193 straight bets at +2.1% ROI. Parlays cost an estimated $620.',
       estimated_cost: 620,
-      fix: 'Cap parlays at 10% of weekly volume. No parlays over 3 legs — your 4+ leg parlays are 3-29.',
+      fix: 'Cap parlays at 10% of weekly volume. No parlays over 3 legs. Your 4+ leg parlays are 3-29.',
     },
     {
       bias_name: 'Favorite-Heavy Lean',
@@ -111,7 +111,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       description: '68% of your bets are on favorites. You\'re paying premium juice for the comfort of siding with the better team, but your dog plays actually hit at a higher rate.',
       evidence: '68% favorites at -4.2% ROI. Underdogs at +6.1% ROI (42 bets).',
       estimated_cost: 140,
-      fix: 'Track your underdog conviction plays separately. You have a real edge there — lean into it.',
+      fix: 'Track your underdog conviction plays separately. You have a real edge there. Lean into it.',
     },
   ],
 
@@ -142,7 +142,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   behavioral_patterns: [
     {
       pattern_name: 'Weekend Warrior',
-      description: 'You place 63% of your bets on Saturday and Sunday. Your weekend ROI is -9.2% vs -2.1% on weekdays — more volume, less discipline.',
+      description: 'You place 63% of your bets on Saturday and Sunday. Your weekend ROI is -9.2% vs -2.1% on weekdays. More volume, less discipline.',
       frequency: 'Every week',
       impact: 'negative',
       data_points: '176 weekend bets at -9.2% ROI vs 104 weekday bets at -2.1% ROI.',
@@ -219,7 +219,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       net: 282,
       description: 'Disciplined NFL Sunday. Three pre-researched spread plays, all winners. Didn\'t chase or add bets after going up.',
     },
-    insight: 'Your winning sessions average 3.8 bets. Your losing sessions average 6.2. More bets = more losses — you\'re at your best when you\'re selective.',
+    insight: 'Your winning sessions average 3.8 bets. Your losing sessions average 6.2. More bets = more losses. You\'re at your best when you\'re selective.',
   },
 
   edge_profile: {
@@ -270,7 +270,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       odds_drift_after_loss: 11,
     },
     risk_level: 'elevated',
-    worst_trigger: 'Your stakes increase 1.9x after losses — classic loss chasing.',
+    worst_trigger: 'Your stakes increase 1.9x after losses. Classic loss chasing.',
     percentile: 30,
   },
   sport_specific_findings: [
@@ -298,7 +298,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   session_detection: {
     sessions: [
       { id: 'SESSION-001', date: '2025-11-03', dayOfWeek: 'Sunday', startTime: '12:30 PM', endTime: '5:15 PM', durationMinutes: 285, bets: 6, wins: 4, losses: 2, pushes: 0, staked: 450, profit: 185, roi: 41.1, avgStake: 75, startingStake: 50, endingStake: 75, stakeEscalation: 1.5, maxStake: 100, minStake: 50, stakeCv: 0.3, betsPerHour: 1.3, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent sizing', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [0,1,2,3,4,5] },
-      { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x from start to finish', '4 chase bets after losses', '5-bet losing streak with no cooldown'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses', 'Marathon losing session — 9 bets, -$680'], betIndices: [89,90,91,92,93,94,95,96,97] },
+      { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x from start to finish', '4 chase bets after losses', '5-bet losing streak with no cooldown'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses', 'Marathon losing session: 9 bets, -$680'], betIndices: [89,90,91,92,93,94,95,96,97] },
       { id: 'SESSION-022', date: '2025-12-28', dayOfWeek: 'Saturday', startTime: '1:00 PM', endTime: '3:30 PM', durationMinutes: 150, bets: 4, wins: 2, losses: 2, pushes: 0, staked: 320, profit: 45, roi: 14.1, avgStake: 80, startingStake: 80, endingStake: 80, stakeEscalation: 1.0, maxStake: 80, minStake: 80, stakeCv: 0.0, betsPerHour: 1.6, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Perfectly flat staking', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [150,151,152,153] },
       { id: 'SESSION-035', date: '2026-01-12', dayOfWeek: 'Sunday', startTime: '12:00 PM', endTime: '6:45 PM', durationMinutes: 405, bets: 11, wins: 4, losses: 6, pushes: 1, staked: 920, profit: -340, roi: -37.0, avgStake: 84, startingStake: 50, endingStake: 200, stakeEscalation: 4.0, maxStake: 200, minStake: 50, stakeCv: 0.65, betsPerHour: 1.6, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: false, grade: 'F', gradeReasons: ['11 bets in one session', 'Stakes escalated 4x', '3 chase bets after losses'], isHeated: true, heatSignals: ['Stakes quadrupled during extended losing session', '11 bets over 6.75 hours'], betIndices: [180,181,182,183,184,185,186,187,188,189,190] },
     ],
@@ -317,14 +317,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     avgGradedROI: { A: 12.4, B: 3.1, C: -4.2, D: -14.8, F: -38.7 },
     bestSession: { id: 'SESSION-001', date: '2025-11-03', dayOfWeek: 'Sunday', startTime: '12:30 PM', endTime: '5:15 PM', durationMinutes: 285, bets: 6, wins: 4, losses: 2, pushes: 0, staked: 450, profit: 185, roi: 41.1, avgStake: 75, startingStake: 50, endingStake: 75, stakeEscalation: 1.5, maxStake: 100, minStake: 50, stakeCv: 0.3, betsPerHour: 1.3, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent sizing', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [] },
     worstSession: { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x', '4 chase bets', '5-bet losing streak'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses'], betIndices: [] },
-    insight: 'Your A-graded sessions average +12.4% ROI. Your F sessions average -38.7%. The math is clear — discipline pays.',
+    insight: 'Your A-graded sessions average +12.4% ROI. Your F sessions average -38.7%. The math is clear. Discipline pays.',
   },
   bet_annotations: {
     annotations: [
-      { betIndex: 0, betId: 'demo-1', classification: 'disciplined', confidence: 82, signals: [{ name: 'flat_stake', weight: -4, description: 'Stake within normal range (0.9x median)', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'Placed 2h after last bet — deliberate timing', category: 'disciplined' }], primaryReason: 'Stake within normal range (0.9x median)', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 0.9, timeSinceLastBet: null, currentStreak: 0 },
+      { betIndex: 0, betId: 'demo-1', classification: 'disciplined', confidence: 82, signals: [{ name: 'flat_stake', weight: -4, description: 'Stake within normal range (0.9x median)', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'Placed 2h after last bet, deliberate timing', category: 'disciplined' }], primaryReason: 'Stake within normal range (0.9x median)', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 0.9, timeSinceLastBet: null, currentStreak: 0 },
       { betIndex: 24, betId: 'demo-24', classification: 'chasing', confidence: 88, signals: [{ name: 'post_loss_escalation', weight: 8, description: 'Stake increased 1.8x after previous loss', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 1.8x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 1.6, timeSinceLastBet: 12, currentStreak: -2 },
-      { betIndex: 25, betId: 'demo-25', classification: 'chasing', confidence: 91, signals: [{ name: 'post_loss_escalation', weight: 9, description: 'Stake increased 2.1x after previous loss', category: 'chasing' }, { name: 'rapid_session_bet', weight: 4, description: 'Only 4 minutes after last bet — rapid fire', category: 'emotional' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 2.1x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.4, timeSinceLastBet: 4, currentStreak: -3 },
-      { betIndex: 27, betId: 'demo-27', classification: 'chasing', confidence: 95, signals: [{ name: 'post_loss_escalation', weight: 10, description: 'Stake increased 3.3x after previous loss', category: 'chasing' }, { name: 'oversized_bet', weight: 6, description: 'Stake is 3.0x your median — outsized position', category: 'emotional' }, { name: 'loss_streak_continuation', weight: 3, description: 'Betting through a 5-loss streak', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 3.3x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.0, timeSinceLastBet: 8, currentStreak: -5 },
+      { betIndex: 25, betId: 'demo-25', classification: 'chasing', confidence: 91, signals: [{ name: 'post_loss_escalation', weight: 9, description: 'Stake increased 2.1x after previous loss', category: 'chasing' }, { name: 'rapid_session_bet', weight: 4, description: 'Only 4 minutes after last bet. Rapid fire', category: 'emotional' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 2.1x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.4, timeSinceLastBet: 4, currentStreak: -3 },
+      { betIndex: 27, betId: 'demo-27', classification: 'chasing', confidence: 95, signals: [{ name: 'post_loss_escalation', weight: 10, description: 'Stake increased 3.3x after previous loss', category: 'chasing' }, { name: 'oversized_bet', weight: 6, description: 'Stake is 3.0x your median. Outsized position', category: 'emotional' }, { name: 'loss_streak_continuation', weight: 3, description: 'Betting through a 5-loss streak', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Stake increased 3.3x after previous loss', sessionId: 'SESSION-014', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.0, timeSinceLastBet: 8, currentStreak: -5 },
       { betIndex: 150, betId: 'demo-150', classification: 'disciplined', confidence: 85, signals: [{ name: 'flat_stake', weight: -4, description: 'Stake within normal range (1.0x median)', category: 'disciplined' }, { name: 'consistent_after_loss', weight: -5, description: 'Maintained discipline after previous loss', category: 'disciplined' }, { name: 'controlled_in_good_session', weight: -2, description: 'Part of a well-managed session (Grade A)', category: 'disciplined' }], primaryReason: 'Maintained discipline after previous loss', sessionId: 'SESSION-022', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 1.0, timeSinceLastBet: 45, currentStreak: -1 },
     ],
     distribution: {
@@ -342,6 +342,6 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       avgStakeAfterLossStreak3: 145,
       avgStakeNeutral: 82,
     },
-    insight: '35% of your bets show emotional or chasing behavior — costing you an estimated $1,420. Your disciplined bets return +7.2% ROI vs -22.4% on everything else.',
+    insight: '35% of your bets show emotional or chasing behavior, costing you an estimated $1,420. Your disciplined bets return +7.2% ROI vs -22.4% on everything else.',
   },
 };
