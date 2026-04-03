@@ -8,21 +8,21 @@ interface LogoProps {
   showTagline?: boolean;
 }
 
+// textPx = the font-size in px for the wordmark, used to match mark height
 const SIZES = {
-  xs:  { h: 18, sw: 1.4, r: 1.4, ep: 0.8,  text: 'text-[11px]', gap: 'gap-1.5' },
-  sm:  { h: 22, sw: 1.6, r: 1.6, ep: 1,   text: 'text-xs',   gap: 'gap-2' },
-  md:  { h: 36, sw: 2.2, r: 2.4, ep: 1.4,  text: 'text-sm',   gap: 'gap-2.5' },
-  lg:  { h: 60, sw: 2.8, r: 3.2, ep: 1.8,  text: 'text-xl',   gap: 'gap-3' },
-  xl:  { h: 120, sw: 3,  r: 4,   ep: 2,    text: 'text-3xl',  gap: 'gap-4' },
+  xs:  { h: 18, sw: 1.4, r: 1.4, ep: 0.8,  text: 'text-[11px]', textPx: 11, gap: 'gap-1.5' },
+  sm:  { h: 22, sw: 1.6, r: 1.6, ep: 1,   text: 'text-xs',   textPx: 12, gap: 'gap-2' },
+  md:  { h: 36, sw: 2.2, r: 2.4, ep: 1.4,  text: 'text-sm',   textPx: 14, gap: 'gap-2' },
+  lg:  { h: 60, sw: 2.8, r: 3.2, ep: 1.8,  text: 'text-xl',   textPx: 20, gap: 'gap-3' },
+  xl:  { h: 120, sw: 3,  r: 4,   ep: 2,    text: 'text-3xl',  textPx: 30, gap: 'gap-4' },
 };
 
 function IncisionMark({
-  height, strokeWidth, dotRadius, endpointRadius, strokeColor,
+  height, strokeWidth, dotRadius, endpointRadius, strokeColor, matchHeight,
 }: {
-  height: number; strokeWidth: number; dotRadius: number; endpointRadius: number; strokeColor: string;
+  height: number; strokeWidth: number; dotRadius: number; endpointRadius: number; strokeColor: string; matchHeight?: number;
 }) {
   const w = height * 0.6;
-  // Arms are 30% at small sizes (more visible), 25% at larger sizes
   const armEnd = height <= 30 ? height * 0.30 : height * 0.25;
   const padX = dotRadius + 2;
   const padY = dotRadius + 2;
@@ -31,8 +31,12 @@ function IncisionMark({
   const viewW = w + padX * 2;
   const viewH = height + padY * 2;
 
+  // If matchHeight is provided, scale the SVG to that pixel height
+  const displayH = matchHeight ?? viewH;
+  const displayW = (viewW / viewH) * displayH;
+
   return (
-    <svg width={viewW} height={viewH} viewBox={`0 0 ${viewW} ${viewH}`} fill="none">
+    <svg width={displayW} height={displayH} viewBox={`0 0 ${viewW} ${viewH}`} fill="none">
       <path
         d={`M${padX},${padY} Q${padX + w * 0.15},${padY + armEnd * 0.5} ${cx},${cy}`}
         stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
@@ -60,10 +64,14 @@ export function Logo({
   const strokeColor = theme === 'dark' ? '#00C9A7' : '#0d1117';
   const textColor = theme === 'dark' ? 'text-[#F0F6FC]' : 'text-[#0d1117]';
 
+  // For horizontal lockup, match mark height to text cap height (~1.1x font-size)
+  const matchHeight = variant === 'horizontal' ? Math.round(s.textPx * 1.15) : undefined;
+
   const mark = (
     <IncisionMark
       height={s.h} strokeWidth={s.sw} dotRadius={s.r}
       endpointRadius={s.ep} strokeColor={strokeColor}
+      matchHeight={matchHeight}
     />
   );
 
@@ -72,7 +80,10 @@ export function Logo({
   if (variant === 'stacked') {
     return (
       <div className={`flex flex-col items-center ${className}`}>
-        {mark}
+        <IncisionMark
+          height={s.h} strokeWidth={s.sw} dotRadius={s.r}
+          endpointRadius={s.ep} strokeColor={strokeColor}
+        />
         <div className={`${s.text} tracking-wider mt-2 ${textColor}`}>
           <span className="font-black">BET</span>
           <span className="font-light">AUTOPSY</span>
@@ -90,7 +101,7 @@ export function Logo({
     <div className={`flex items-center ${s.gap} ${className}`}>
       {mark}
       <div>
-        <div className={`${s.text} tracking-wider ${textColor}`}>
+        <div className={`${s.text} tracking-wider ${textColor} leading-none`}>
           <span className="font-black">BET</span>
           <span className="font-light">AUTOPSY</span>
         </div>
