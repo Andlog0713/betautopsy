@@ -10,11 +10,11 @@ interface LogoProps {
 
 // textPx = the font-size in px for the wordmark, used to match mark height
 const SIZES = {
-  xs:  { h: 18, sw: 1.4, r: 1.4, ep: 0.8,  text: 'text-[11px]', textPx: 11, gap: 'gap-1.5' },
-  sm:  { h: 22, sw: 1.6, r: 1.6, ep: 1,   text: 'text-xs',   textPx: 12, gap: 'gap-2' },
-  md:  { h: 36, sw: 2.2, r: 2.4, ep: 1.4,  text: 'text-sm',   textPx: 14, gap: 'gap-2' },
-  lg:  { h: 60, sw: 2.8, r: 3.2, ep: 1.8,  text: 'text-xl',   textPx: 20, gap: 'gap-3' },
-  xl:  { h: 120, sw: 3,  r: 4,   ep: 2,    text: 'text-3xl',  textPx: 30, gap: 'gap-4' },
+  xs:  { h: 22, sw: 1.6, r: 1.6, ep: 1,   text: 'text-sm',    textPx: 14, gap: 'gap-2' },
+  sm:  { h: 28, sw: 1.8, r: 1.8, ep: 1.2,  text: 'text-base',  textPx: 16, gap: 'gap-2.5' },
+  md:  { h: 36, sw: 2.2, r: 2.4, ep: 1.4,  text: 'text-lg',    textPx: 18, gap: 'gap-2.5' },
+  lg:  { h: 60, sw: 2.8, r: 3.2, ep: 1.8,  text: 'text-2xl',   textPx: 24, gap: 'gap-3' },
+  xl:  { h: 120, sw: 3,  r: 4,   ep: 2,    text: 'text-4xl',   textPx: 36, gap: 'gap-4' },
 };
 
 function IncisionMark({
