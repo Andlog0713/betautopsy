@@ -416,7 +416,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     reportsPerMonth: 3,
     features: [
       '3 full reports per month included',
-      'Up to 5,000 bets per report',
+      '5,000 bets deep per report',
       'Full bias suite with dollar costs',
       'Leak Prioritizer + What-If Simulator',
       'BetIQ + Emotion + Discipline breakdown',
@@ -428,7 +428,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
 
 // Limits for one-time $9.99 report purchases (non-Pro users)
 export const REPORT_PURCHASE_LIMITS = {
-  maxBetsPerReport: 2000,
+  maxBetsPerReport: 5000,
   price: 9.99,
 };
 

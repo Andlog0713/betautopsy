@@ -402,7 +402,7 @@ export default function ReportsPage() {
               This is a snapshot. The full report goes much deeper.
             </p>
             <p className="text-fg-muted text-sm mb-4">
-              A full report analyzes up to 2,000 bets with dollar costs for every bias, strategic leak detection, and a personalized action plan.
+              A full report goes 5,000 bets deep with dollar costs for every bias, strategic leak detection, and a personalized action plan.
             </p>
             <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>

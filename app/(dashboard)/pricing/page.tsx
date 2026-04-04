@@ -122,7 +122,7 @@ export default function PricingPage() {
           <ul className="space-y-2 flex-1 mb-6">
             <li className="text-sm text-fg-muted flex items-start gap-2">
               <span className="text-win mt-0.5">&#10003;</span>
-              Up to {REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets analyzed
+              Analyzes {REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets deep
             </li>
             <li className="text-sm text-fg-muted flex items-start gap-2">
               <span className="text-win mt-0.5">&#10003;</span>
