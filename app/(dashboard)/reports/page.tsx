@@ -122,7 +122,6 @@ export default function ReportsPage() {
     // The second-most-recent snapshot is the "previous" one
     const snaps = (snapshotsRes.data ?? []) as ProgressSnapshot[];
     if (snaps.length >= 2) setPrevSnapshot(snaps[1]);
-    else if (snaps.length === 1) setPrevSnapshot(snaps[0]);
     const count = betsRes.count ?? 0;
     setTotalBetCount(count);
     setFilteredCount(count);
@@ -340,13 +339,12 @@ export default function ReportsPage() {
         {tierLimited && (
           <div className="card border-scalpel/20 bg-scalpel-muted p-5">
             <p className="text-fg-bright text-sm">
-              This analysis covers your <span className="font-medium">50 most recent bets</span>.
-              Upgrade to Pro to unlock full analysis across all{' '}
-              <span className="font-mono">{totalBetsAll}</span> of your bets — more data means
-              more accurate bias detection and pattern recognition.
+              This snapshot covers your <span className="font-medium">50 most recent bets</span>.
+              You have <span className="font-mono">{totalBetsAll}</span> total bets — a full report
+              analyzes up to 2,000 for more accurate bias detection.
             </p>
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
-              Upgrade to Pro
+              Get Full Report — $9.99
             </a>
           </div>
         )}
@@ -402,16 +400,16 @@ export default function ReportsPage() {
         <div className="space-y-4">
           <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
             <p className="text-fg-bright mb-2">
-              This report analyzed your 50 most recent bets. Your full behavioral picture needs more data.
+              This snapshot analyzed your 50 most recent bets. The full report goes deeper.
             </p>
             <p className="text-fg-muted text-sm mb-4">
-              With Pro, your behavioral analysis covers your <strong className="text-fg-bright">entire</strong> bet history — more bets means more accurate bias detection, real trend tracking, and personal rules backed by statistical significance.
+              A full report analyzes up to 2,000 bets with dollar costs for every bias, strategic leak detection, and a personalized action plan.
             </p>
             <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Session-by-session analysis — see exactly when and why you go off-script</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data — not generic advice</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Weekly reports tracking whether your behavioral patterns are improving</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Discipline Score tracking over time — proof that you&apos;re getting sharper</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Strategic leaks ranked by impact</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator — see what fixing each leak saves you</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
               Unlock Full Report — $9.99
@@ -442,9 +440,9 @@ export default function ReportsPage() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="card bg-surface/95 p-6 text-center max-w-sm">
                 <p className="text-2xl mb-2">🔒</p>
-                <p className="text-fg-bright font-medium mb-1">Pro unlocks your full behavioral analysis</p>
-                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and progress tracking that proves you&apos;re actually changing.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">See pricing</a>
+                <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
+                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report — $9.99</a>
               </div>
             </div>
           </div>

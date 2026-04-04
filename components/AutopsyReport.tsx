@@ -2006,7 +2006,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </svg>
               </div>
               <h2 className="font-bold text-2xl">Analysis Tools</h2>
-              <p className="text-fg-muted text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first — and simulate how much you&apos;d save.</p>
+              <p className="text-fg-muted text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first and simulate how much you&apos;d save.</p>
               <a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>
             </div>
 
