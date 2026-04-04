@@ -4,7 +4,7 @@ import { getStripe, tierFromPriceId } from '@/lib/stripe';
 import type Stripe from 'stripe';
 import { logErrorServer } from '@/lib/log-error-server';
 
-// Use service role key — this endpoint is called by Stripe, not a user session
+// Use service role key -- this endpoint is called by Stripe, not a user session
 function createServiceClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,19 +45,54 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.supabase_user_id;
-        const tier = session.metadata?.tier;
 
-        if (userId && tier) {
-          await supabase
-            .from('profiles')
-            .update({
-              subscription_tier: tier,
-              subscription_status: 'active',
-              stripe_customer_id: session.customer as string,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId);
+        if (session.mode === 'payment') {
+          // One-time report purchase ($9.99 or $4.99 extra)
+          const reportId = session.metadata?.report_id;
+          const userId = session.metadata?.supabase_user_id;
+          const paymentIntentId = typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent?.id;
+
+          if (reportId && userId) {
+            // Mark the snapshot as paid so it can be upgraded to full
+            await supabase
+              .from('autopsy_reports')
+              .update({
+                is_paid: true,
+                stripe_payment_intent_id: paymentIntentId || null,
+              })
+              .eq('id', reportId)
+              .eq('user_id', userId);
+
+            // Save customer ID to profile if not already there
+            if (session.customer) {
+              await supabase
+                .from('profiles')
+                .update({
+                  stripe_customer_id: session.customer as string,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', userId);
+            }
+          }
+        } else if (session.mode === 'subscription') {
+          // Pro subscription
+          const userId = session.metadata?.supabase_user_id;
+
+          if (userId) {
+            await supabase
+              .from('profiles')
+              .update({
+                subscription_tier: 'pro',
+                subscription_status: 'active',
+                stripe_customer_id: session.customer as string,
+                reports_used_this_period: 0,
+                current_period_start: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', userId);
+          }
         }
         break;
       }
@@ -70,7 +105,7 @@ export async function POST(request: Request) {
 
         if (priceId) {
           const tier = tierFromPriceId(priceId);
-          const updateData: Record<string, string> = {
+          const updateData: Record<string, string | number> = {
             updated_at: new Date().toISOString(),
           };
 
@@ -83,6 +118,13 @@ export async function POST(request: Request) {
           } else if (status === 'canceled' || status === 'unpaid') {
             updateData.subscription_status = 'canceled';
             updateData.subscription_tier = 'free';
+          }
+
+          // Reset report counter on billing cycle renewal
+          const periodStart = (subscription as unknown as { current_period_start: number }).current_period_start;
+          if (periodStart) {
+            updateData.current_period_start = new Date(periodStart * 1000).toISOString();
+            updateData.reports_used_this_period = 0;
           }
 
           await supabase

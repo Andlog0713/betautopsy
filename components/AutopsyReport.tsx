@@ -231,7 +231,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro' | 'sharp'; readOnly?: boolean }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
@@ -249,7 +249,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const roiData = useMemo(() => buildROIData(bets), [bets]);
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
-  const isSharp = tier === 'sharp';
+  const isSharp = tier === 'pro'; // Sharp features now included in Pro
 
   // Detect mixed sportsbook + DFS data
   const mixedDataInfo = useMemo(() => {
@@ -507,7 +507,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ── BetIQ Score — Pro/Sharp only ── */}
-      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && !analysis.betiq.insufficient_data && (
+      {(tier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
@@ -538,7 +538,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {(tier === 'pro' || tier === 'sharp') && analysis.betiq && analysis.betiq.insufficient_data && (
+      {(tier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-3">BETIQ — SKILL ASSESSMENT</div>
           <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
@@ -711,7 +711,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* ── Sport-Specific Findings — Pro/Sharp only ── */}
-      {(tier === 'pro' || tier === 'sharp') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
+      {(tier === 'pro') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
         <div className="space-y-3">
           <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
           {analysis.sport_specific_findings.map((finding) => (
@@ -833,7 +833,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ── Emotional Triggers — Pro/Sharp only ── */}
-      {(tier === 'pro' || tier === 'sharp') && analysis.enhanced_tilt && (
+      {(tier === 'pro') && analysis.enhanced_tilt && (
         <div className="case-card p-6">
           <div className="flex items-center justify-between mb-2">
             <div>

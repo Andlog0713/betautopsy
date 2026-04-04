@@ -129,7 +129,7 @@ export default function DashboardPage() {
 
       // Track TikTok purchase event on post-checkout redirect
       if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
-        const price = profileTier === 'sharp' ? 24.99 : profileTier === 'pro' ? 9.99 : 0;
+        const price = profileTier === 'pro' ? 19.99 : 0;
         if (price > 0) trackPurchase(profileTier ?? 'pro', price);
         window.history.replaceState({}, '', '/dashboard');
       }
@@ -150,7 +150,7 @@ export default function DashboardPage() {
     );
   }
   const hasBets = stats && stats.totalBets > 0;
-  const isPaid = tier === 'pro' || tier === 'sharp';
+  const isPaid = tier === 'pro';
   const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const prev = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
 

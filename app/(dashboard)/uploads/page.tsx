@@ -100,7 +100,7 @@ export default function UploadsPage() {
     }
   }
 
-  const isPaid = tier === 'pro' || tier === 'sharp';
+  const isPaid = tier === 'pro';
   const totalSelectedBets = uploads.filter((u) => selected.has(u.id)).reduce((s, u) => s + u.bet_count, 0);
 
   if (loading) {

@@ -4,18 +4,12 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { trackCheckout } from '@/lib/tiktok-events';
 import type { Profile, SubscriptionTier } from '@/types';
-import { TIER_LIMITS } from '@/types';
-
-const tiers: { key: SubscriptionTier; highlight?: boolean }[] = [
-  { key: 'free' },
-  { key: 'pro', highlight: true },
-  { key: 'sharp' },
-];
+import { TIER_LIMITS, REPORT_PURCHASE_LIMITS } from '@/types';
 
 export default function PricingPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
 
   useEffect(() => {
@@ -37,26 +31,25 @@ export default function PricingPage() {
     load();
   }, []);
 
-  async function handleUpgrade(tier: 'pro' | 'sharp') {
+  async function handleSubscribe() {
     if (!profile) {
-      // Not logged in — send to signup
       window.location.href = '/signup';
       return;
     }
-    setLoadingTier(tier);
+    setLoadingAction('pro');
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, interval }),
+        body: JSON.stringify({ type: 'subscription', interval }),
       });
       const data = await res.json();
       if (data.url) {
-        trackCheckout(tier, tier === 'pro' ? 9.99 : 24.99);
+        trackCheckout('pro', interval === 'annual' ? 149.99 : 19.99);
         window.location.href = data.url;
       }
     } catch {
-      setLoadingTier(null);
+      setLoadingAction(null);
     }
   }
 
@@ -71,7 +64,8 @@ export default function PricingPage() {
   }
 
   const currentTier = profile?.subscription_tier ?? 'free';
-  const isPaid = currentTier === 'pro' || currentTier === 'sharp';
+  const isPro = currentTier === 'pro';
+  const proConfig = TIER_LIMITS.pro;
 
   if (pageLoading) {
     return (
@@ -90,121 +84,135 @@ export default function PricingPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
-        <h1 className="font-bold text-3xl mb-2">Choose Your Plan</h1>
+        <h1 className="font-bold text-3xl mb-2">Pricing</h1>
         <p className="text-fg-muted">
-          Unlock deeper insights into your betting behavior.
+          Free snapshots forever. Pay only when you want the full analysis.
         </p>
       </div>
 
-      {/* Billing interval toggle */}
-      <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm ${interval === 'monthly' ? 'text-fg-bright' : 'text-fg-muted'}`}>Monthly</span>
-        <button
-          onClick={() => setInterval(interval === 'monthly' ? 'annual' : 'monthly')}
-          className="relative w-14 h-7 rounded-full bg-surface border border-white/[0.04] transition-colors"
-        >
-          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-scalpel transition-transform ${interval === 'annual' ? 'translate-x-7' : 'translate-x-0.5'}`} />
-        </button>
-        <span className={`text-sm ${interval === 'annual' ? 'text-fg-bright' : 'text-fg-muted'}`}>
-          Annual
-          <span className="text-win text-xs ml-1.5">Save up to 34%</span>
-        </span>
-      </div>
-
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        {tiers.map(({ key, highlight }) => {
-          const config = TIER_LIMITS[key];
-          const isActive = currentTier === key;
+        {/* Free Snapshot */}
+        <div className="card p-6 flex flex-col">
+          <h2 className="font-bold text-2xl">Free Snapshot</h2>
+          <div className="mt-2 mb-4">
+            <span className="font-mono text-3xl font-bold">$0</span>
+          </div>
+          <ul className="space-y-2 flex-1 mb-6">
+            {TIER_LIMITS.free.features.map((f) => (
+              <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                <span className="text-win mt-0.5">&#10003;</span>{f}
+              </li>
+            ))}
+          </ul>
+          <div className="text-center text-sm text-fg-muted py-2">
+            Always free, no credit card
+          </div>
+        </div>
 
-          return (
-            <div
-              key={key}
-              className={`card p-6 flex flex-col ${
-                highlight
-                  ? 'border-scalpel/30 shadow-lg shadow-scalpel/10'
-                  : ''
-              } ${isActive ? 'ring-2 ring-scalpel/20' : ''}`}
-            >
-              {highlight && (
-                <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
-                  Most Popular
+        {/* Single Report */}
+        <div className="card p-6 flex flex-col">
+          <h2 className="font-bold text-2xl">Full Report</h2>
+          <div className="mt-2 mb-4">
+            <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
+            <span className="text-fg-muted text-sm"> one-time</span>
+          </div>
+          <ul className="space-y-2 flex-1 mb-6">
+            <li className="text-sm text-fg-muted flex items-start gap-2">
+              <span className="text-win mt-0.5">&#10003;</span>
+              Up to {REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets analyzed
+            </li>
+            <li className="text-sm text-fg-muted flex items-start gap-2">
+              <span className="text-win mt-0.5">&#10003;</span>
+              Complete 5-chapter forensic report
+            </li>
+            <li className="text-sm text-fg-muted flex items-start gap-2">
+              <span className="text-win mt-0.5">&#10003;</span>
+              All biases with dollar costs
+            </li>
+            <li className="text-sm text-fg-muted flex items-start gap-2">
+              <span className="text-win mt-0.5">&#10003;</span>
+              Full action plan + personal rules
+            </li>
+            <li className="text-sm text-fg-muted flex items-start gap-2">
+              <span className="text-win mt-0.5">&#10003;</span>
+              BetIQ + Emotion + Discipline breakdown
+            </li>
+          </ul>
+          <div className="text-center text-sm text-fg-muted py-2">
+            Pay per report, no subscription
+          </div>
+        </div>
+
+        {/* Pro */}
+        <div className="card p-6 flex flex-col border-scalpel/30 shadow-lg shadow-scalpel/10">
+          <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
+            Best Value
+          </span>
+          <h2 className="font-bold text-2xl">Pro</h2>
+          <div className="mt-2 mb-4">
+            {interval === 'annual' && proConfig.annualPrice ? (
+              <>
+                <span className="font-mono text-3xl font-bold">
+                  ${(proConfig.annualPrice / 12).toFixed(2)}
                 </span>
-              )}
+                <span className="text-fg-muted text-sm">/mo</span>
+                <p className="text-fg-muted text-xs mt-1">
+                  ${proConfig.annualPrice}/year. Save {Math.round((1 - proConfig.annualPrice / (proConfig.price * 12)) * 100)}%
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="font-mono text-3xl font-bold">${proConfig.price}</span>
+                <span className="text-fg-muted text-sm">/mo</span>
+              </>
+            )}
+          </div>
 
-              <h2 className="font-bold text-2xl">{config.name}</h2>
-              <div className="mt-2 mb-4">
-                {config.price > 0 && config.annualPrice && interval === 'annual' ? (
-                  <>
-                    <span className="font-mono text-3xl font-bold">
-                      ${(config.annualPrice / 12).toFixed(2)}
-                    </span>
-                    <span className="text-fg-muted text-sm">/mo</span>
-                    <p className="text-fg-muted text-xs mt-1">
-                      ${config.annualPrice}/year — save {Math.round((1 - config.annualPrice / (config.price * 12)) * 100)}%
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-mono text-3xl font-bold">
-                      ${config.price}
-                    </span>
-                    {config.price > 0 && (
-                      <span className="text-fg-muted text-sm">/mo</span>
-                    )}
-                  </>
-                )}
-              </div>
+          {/* Billing toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              onClick={() => setInterval('monthly')}
+              className={`text-xs px-2 py-1 rounded-sm ${interval === 'monthly' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
+            >Monthly</button>
+            <button
+              onClick={() => setInterval('annual')}
+              className={`text-xs px-2 py-1 rounded-sm ${interval === 'annual' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
+            >Annual</button>
+          </div>
 
-              <ul className="space-y-2 flex-1 mb-6">
-                <li className="text-sm text-fg-muted flex items-start gap-2">
-                  <span className="text-win mt-0.5">✓</span>
-                  {config.maxBets === null ? 'Unlimited bets' : `Up to ${config.maxBets} bets`}
-                </li>
-                <li className="text-sm text-fg-muted flex items-start gap-2">
-                  <span className="text-win mt-0.5">✓</span>
-                  {config.maxReports === null
-                    ? 'Unlimited reports'
-                    : `${config.maxReports} report`}
-                </li>
-                {config.features.map((f) => (
-                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="text-win mt-0.5">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
+          <ul className="space-y-2 flex-1 mb-6">
+            {proConfig.features.map((f) => (
+              <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                <span className="text-win mt-0.5">&#10003;</span>{f}
+              </li>
+            ))}
+          </ul>
 
-              {isActive ? (
-                <div className="text-center">
-                  <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-sm px-4 py-2">
-                    ✓ Active
-                  </span>
-                </div>
-              ) : key === 'free' ? (
-                <div className="text-center text-sm text-fg-muted py-2">
-                  Free forever
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleUpgrade(key as 'pro' | 'sharp')}
-                  disabled={loadingTier !== null}
-                  className={`w-full ${highlight ? 'btn-primary' : 'btn-secondary'}`}
-                >
-                  {loadingTier === key ? 'Redirecting...' : `Upgrade to ${config.name}`}
-                </button>
-              )}
+          {isPro ? (
+            <div className="text-center">
+              <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-sm px-4 py-2">
+                &#10003; Active
+              </span>
             </div>
-          );
-        })}
+          ) : (
+            <button
+              onClick={handleSubscribe}
+              disabled={loadingAction !== null}
+              className="w-full btn-primary"
+            >
+              {loadingAction === 'pro' ? 'Redirecting...' : 'Subscribe to Pro'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {isPaid && profile?.stripe_customer_id && (
+      {isPro && profile?.stripe_customer_id && (
         <div className="text-center">
           <button
             onClick={handleManage}
             className="text-sm text-fg-muted hover:text-scalpel transition-colors"
           >
-            Manage Subscription →
+            Manage Subscription &rarr;
           </button>
         </div>
       )}

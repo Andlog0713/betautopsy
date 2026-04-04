@@ -349,7 +349,7 @@ export default function ReportsPage() {
         )}
         {/* Compact progress bar while Claude is still analyzing */}
         {running && <AnalyzingProgress />}
-        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro' | 'sharp'} />
+        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
           <div className="card p-5 text-center space-y-2">

@@ -12,9 +12,9 @@ create table if not exists profiles (
   email text,
   display_name text,
   stripe_customer_id text,
-  subscription_tier text default 'pro' check (subscription_tier in ('free', 'pro', 'sharp')),
-  subscription_status text default 'trial' check (subscription_status in ('active', 'inactive', 'past_due', 'canceled', 'trial')),
-  trial_ends_at timestamptz default (now() + interval '7 days'),
+  subscription_tier text default 'free' check (subscription_tier in ('free', 'pro')),
+  subscription_status text default 'active' check (subscription_status in ('active', 'inactive', 'past_due', 'canceled', 'trial')),
+  trial_ends_at timestamptz,
   bet_count integer default 0,
   bankroll numeric(12,2),
   streak_count integer default 0,
@@ -25,6 +25,8 @@ create table if not exists profiles (
   is_admin boolean default false,
   email_digest_enabled boolean default true,
   last_digest_sent_at timestamptz,
+  reports_used_this_period integer default 0,
+  current_period_start timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -104,7 +106,7 @@ create table if not exists bets (
 create table if not exists autopsy_reports (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references profiles(id) on delete cascade not null,
-  report_type text not null check (report_type in ('full', 'weekly', 'quick')),
+  report_type text not null check (report_type in ('snapshot', 'full', 'weekly', 'quick')),
   bet_count_analyzed integer not null,
   date_range_start timestamptz,
   date_range_end timestamptz,
@@ -113,6 +115,9 @@ create table if not exists autopsy_reports (
   model_used text,
   tokens_used integer,
   cost_cents integer,
+  is_paid boolean default false,
+  stripe_payment_intent_id text,
+  upgraded_from_snapshot_id uuid references autopsy_reports(id),
   created_at timestamptz default now()
 );
 

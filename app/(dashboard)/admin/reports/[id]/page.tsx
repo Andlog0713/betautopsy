@@ -131,7 +131,7 @@ export default function AdminReportDetailPage() {
       <AutopsyReport
         analysis={analysis}
         reportId={report.id}
-        tier={(user?.subscription_tier as 'free' | 'pro' | 'sharp') ?? 'free'}
+        tier={(user?.subscription_tier as 'free' | 'pro') ?? 'free'}
       />
     </div>
   );

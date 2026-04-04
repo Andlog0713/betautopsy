@@ -350,7 +350,7 @@ export default function BetsPage() {
                   <SortTh col="result" label="Result" align="center" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="profit" label="P&L" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <th className="px-4 py-3 w-10">
-                    {(tier === 'pro' || tier === 'sharp') && (
+                    {(tier === 'pro') && (
                       <ClearAllBets betCount={bets.length} onCleared={loadBets} />
                     )}
                   </th>

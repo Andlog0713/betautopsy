@@ -33,7 +33,7 @@ export interface Profile {
   email: string;
   display_name: string;
   stripe_customer_id: string | null;
-  subscription_tier: 'free' | 'pro' | 'sharp';
+  subscription_tier: 'free' | 'pro';
   subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled' | 'trial';
   trial_ends_at: string | null;
   bet_count: number;
@@ -46,6 +46,8 @@ export interface Profile {
   is_admin: boolean;
   email_digest_enabled: boolean;
   last_digest_sent_at: string | null;
+  reports_used_this_period: number;
+  current_period_start: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -181,6 +183,14 @@ export interface AutopsyAnalysis {
   sport_specific_findings?: SportSpecificFinding[];
   session_detection?: SessionDetectionResult;
   bet_annotations?: AnnotationSummary;
+  // Snapshot-only: counts for locked sections so paywall UI can show "3 leaks detected" etc.
+  _snapshot_counts?: {
+    leaks: number;
+    patterns: number;
+    sessions: number;
+    sport_findings: number;
+    total_biases: number;
+  };
 }
 
 export interface PersonalRule {
@@ -370,51 +380,57 @@ export interface TierConfig {
   maxBets: number | null; // null = unlimited
   maxReports: number | null; // null = unlimited
   maxBetsPerReport: number | null; // null = unlimited
+  reportsPerMonth?: number; // Pro: 3 included per billing cycle
   features: string[];
   stripePriceId?: string;
 }
 
-export type SubscriptionTier = 'free' | 'pro' | 'sharp';
+export type SubscriptionTier = 'free' | 'pro';
+
+export type ReportType = 'snapshot' | 'full';
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   free: {
-    name: 'Free',
+    name: 'Free Snapshot',
     price: 0,
     maxBets: null,
-    maxReports: 1,
+    maxReports: null, // unlimited snapshots
     maxBetsPerReport: 50,
-    features: ['1 autopsy report (50 most recent bets)', 'Basic bias detection', 'Summary stats'],
+    features: [
+      'Unlimited snapshot reports (50 most recent bets)',
+      'Overall grade + archetype',
+      'Top bias fully explained',
+      'BetIQ score',
+    ],
   },
   pro: {
     name: 'Pro',
-    price: 9.99,
-    annualPrice: 99,
-    maxBets: null,
-    maxReports: null,
-    maxBetsPerReport: 2000,
-    features: [
-      'Full bias suite',
-      'Strategic leaks',
-      'Behavioral patterns',
-      'Weekly reports',
-      'PDF export',
-    ],
-  },
-  sharp: {
-    name: 'Sharp',
-    price: 24.99,
-    annualPrice: 199,
+    price: 19.99,
+    annualPrice: 149.99,
     maxBets: null,
     maxReports: null,
     maxBetsPerReport: 5000,
+    reportsPerMonth: 3,
     features: [
-      'Everything in Pro',
-      'Leak Prioritizer — ranked by $ impact',
-      'Full What-If Simulator',
-      'Early access to new features',
+      '3 full reports per month included',
+      'Up to 5,000 bets per report',
+      'Full bias suite with dollar costs',
+      'Leak Prioritizer + What-If Simulator',
+      'BetIQ + Emotion + Discipline breakdown',
+      'Weekly email digest',
+      'Progress tracking over time',
     ],
   },
 };
+
+// Limits for one-time $9.99 report purchases (non-Pro users)
+export const REPORT_PURCHASE_LIMITS = {
+  maxBetsPerReport: 2000,
+  price: 9.99,
+};
+
+// Extra report price for Pro users who exceed their monthly allocation
+export const EXTRA_REPORT_PRICE = 4.99;
 
 // ── DFS Detection ──
 
@@ -546,7 +562,9 @@ export interface UploadResponse {
 }
 
 export interface CheckoutRequest {
-  tier: 'pro' | 'sharp';
+  type: 'subscription' | 'report';
+  interval?: 'monthly' | 'annual'; // for subscription
+  snapshotReportId?: string; // for report purchase
 }
 
 // ── Behavioral Journal ──

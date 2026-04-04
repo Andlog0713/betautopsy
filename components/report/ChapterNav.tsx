@@ -11,14 +11,14 @@ const CHAPTERS = [
 ];
 
 interface ChapterNavProps {
-  tier?: 'free' | 'pro' | 'sharp';
+  tier?: 'free' | 'pro';
   onSharpClick?: () => void;
   readOnly?: boolean;
 }
 
 export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = false }: ChapterNavProps) {
   const [activeChapter, setActiveChapter] = useState('chapter-summary');
-  const isSharp = tier === 'sharp';
+  const isSharp = tier === 'pro';
 
   useEffect(() => {
     const sections = CHAPTERS.map(c => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];

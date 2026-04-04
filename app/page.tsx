@@ -139,7 +139,7 @@ export default function LandingPage() {
             280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
           <p className="text-fg-muted text-xs mb-8 max-w-xl">
-            THIS IS A PRO REPORT. SHARP TIER UNLOCKS EVEN MORE: LEAK PRIORITIZER, WHAT-IF SIMULATOR, AND EARLY ACCESS TO NEW FEATURES.
+            THIS IS A FULL REPORT. FREE SNAPSHOTS SHOW YOUR GRADE AND TOP BIAS. UNLOCK THE COMPLETE ANALYSIS FOR $9.99.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
@@ -183,63 +183,59 @@ export default function LandingPage() {
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
           </p>
-          <div className="finding-card border-l-scalpel p-3 mb-6">
-            <p className="text-fg-bright text-sm font-medium">🎉 7 days of Pro free. No credit card.</p>
-          </div>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
-              <span className="case-header block mb-3">Free</span>
+              <span className="case-header block mb-3">Free Snapshot</span>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$0</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
-                {['1 report (50 most recent bets)', 'Basic bias detection', 'Summary stats'].map((f) => (
+                {['Unlimited snapshot reports', 'Overall grade + archetype', 'Top bias fully explained', 'BetIQ score'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
             <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="case-header">Pro</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
-              </div>
+              <span className="case-header block mb-3">Full Report</span>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
-                <span className="text-fg-muted text-sm font-mono">/mo</span>
+                <span className="text-fg-muted text-sm font-mono"> one-time</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {[
-                  'Unlimited bets & reports',
-                  'Full bias detection + dollar costs',
-                  'BetIQ score + sport-specific leaks',
-                  'Emotion + Discipline tracking',
-                  'Personal rules & action plans',
-                  'Progress tracking over time',
+                  'Up to 2,000 bets analyzed',
+                  'Complete 5-chapter report',
+                  'All biases with dollar costs',
+                  'Full action plan + personal rules',
+                  'BetIQ + Emotion + Discipline',
                 ].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-primary text-center w-full font-mono text-sm">Get Pro</Link>
+              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Your Report</Link>
             </div>
             <div className="bg-base p-6 flex flex-col">
-              <span className="case-header block mb-3">Sharp</span>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="case-header">Pro</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">BEST VALUE</span>
+              </div>
               <div className="mb-4">
-                <span className="font-mono text-3xl font-bold text-fg-bright">$24.99</span>
+                <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
-                {['Everything in Pro', 'Leak Prioritizer (ranked by $ impact)', 'What-If Simulator', 'Early access to new features'].map((f) => (
+                {['3 full reports per month', 'Up to 5,000 bets per report', 'Leak Prioritizer + What-If Simulator', 'Weekly email digest', 'Progress tracking over time'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">✓</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Get Sharp</Link>
+              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Go Pro</Link>
             </div>
           </div>
           <p className="text-fg-muted text-xs mt-6">

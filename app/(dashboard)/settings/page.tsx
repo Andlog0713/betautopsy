@@ -141,7 +141,7 @@ export default function SettingsPage() {
   }
 
   const tier = profile?.subscription_tier ?? 'free';
-  const isPaid = tier === 'pro' || tier === 'sharp';
+  const isPaid = tier === 'pro';
 
   const tierBadge: Record<string, string> = {
     free: 'bg-surface text-fg-muted border border-white/[0.04]',
