@@ -13,6 +13,7 @@ function SignupForm() {
   const next = searchParams.get('next');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,10 @@ function SignupForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setLoading(true);
 
     const supabase = createClient();
@@ -128,6 +133,22 @@ function SignupForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="input-field w-full"
+            placeholder="••••••••"
+            minLength={6}
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className="label">
+            Re-enter Password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             className="input-field w-full"
             placeholder="••••••••"
             minLength={6}
