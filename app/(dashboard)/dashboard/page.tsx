@@ -51,7 +51,6 @@ export default function DashboardPage() {
   const [streakLastDate, setStreakLastDate] = useState<string | null>(null);
   const [streakFreezes, setStreakFreezes] = useState(1);
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
-  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('inactive');
   const [journalOpen, setJournalOpen] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
@@ -65,7 +64,7 @@ export default function DashboardPage() {
 
       const [betsRes, profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
         supabase.from('bets').select('result, profit, stake, placed_at, created_at').eq('user_id', user.id),
-        supabase.from('profiles').select('bankroll, subscription_tier, subscription_status, trial_ends_at, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
+        supabase.from('profiles').select('bankroll, subscription_tier, subscription_status, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
         supabase.from('autopsy_reports').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
@@ -90,7 +89,7 @@ export default function DashboardPage() {
       const profileTier = profileRes.data?.subscription_tier;
       if (profileTier) setTier(profileTier);
       setSubscriptionStatus(profileRes.data?.subscription_status ?? 'inactive');
-      setTrialEndsAt((profileRes.data as Record<string, unknown>)?.trial_ends_at as string ?? null);
+
       if (profileRes.error) console.error('Profile query error:', profileRes.error);
       if (snapshotsRes.data) setSnapshots(snapshotsRes.data as ProgressSnapshot[]);
 
@@ -212,26 +211,6 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <h1 className="font-bold text-3xl text-fg-bright">Dashboard</h1>
-
-      {/* Trial banner */}
-      {subscriptionStatus === 'trial' && trialEndsAt && (
-        <div className="finding-card border-l-scalpel p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <p className="text-fg-bright text-sm font-medium">
-                🎉 You&apos;re on a free Pro trial
-              </p>
-              <p className="text-fg-muted text-xs mt-0.5">
-                {(() => {
-                  const days = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000));
-                  return days === 0 ? 'Expires today' : `${days} day${days !== 1 ? 's' : ''} remaining — full Pro access, no credit card needed`;
-                })()}
-              </p>
-            </div>
-            <Link href="/pricing" className="btn-primary text-xs shrink-0 font-mono !px-4 !py-2">Keep Pro →</Link>
-          </div>
-        </div>
-      )}
 
       {!hasBets ? (
         <div className="case-card p-12 text-center">
