@@ -145,7 +145,7 @@ export default function ScreenshotParser() {
                   <img src={src} alt={`Screenshot ${i + 1}`} className="w-20 h-20 object-cover rounded-sm border border-white/[0.06]" />
                   <button
                     onClick={(e) => { e.stopPropagation(); removeFile(i); }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-loss text-base rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-loss text-base rounded-none text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ×
                   </button>
@@ -274,7 +274,7 @@ export default function ScreenshotParser() {
   if (phase === 'success' && importResult) {
     return (
       <div className="text-center py-8 space-y-4">
-        <div className="text-4xl">✅</div>
+        <div className="text-2xl"><span className="stamp-note">OK</span></div>
         <p className="text-fg-bright font-medium text-lg">
           {importResult.imported} bet{importResult.imported !== 1 ? 's' : ''} imported
           {importResult.skipped > 0 && (

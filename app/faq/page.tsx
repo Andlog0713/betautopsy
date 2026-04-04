@@ -96,7 +96,7 @@ function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: b
         <span className="font-medium text-fg-bright text-base">{item.q}</span>
         <span className={`text-fg-muted text-lg shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>+</span>
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ease-out ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`overflow-hidden transition-colors duration-100 ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
         <p className="text-sm text-fg-muted leading-relaxed px-4 pb-4">{item.a}</p>
       </div>
     </div>

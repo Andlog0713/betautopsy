@@ -74,6 +74,7 @@ export default function HowToUploadPage() {
 
         {/* ── METHOD 1: Pikkit ── */}
         <div className="card p-6 md:p-8 mb-6">
+          <span className="case-header block mb-2">METHOD 01</span>
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">1</span>
             <h2 className="font-bold text-2xl">Import full history with Pikkit</h2>
@@ -144,6 +145,7 @@ export default function HowToUploadPage() {
 
         {/* ── METHOD 2: Paste from Sportsbook ── */}
         <div className="card p-6 md:p-8 mb-6">
+          <span className="case-header block mb-2">METHOD 02</span>
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">2</span>
             <h2 className="font-bold text-2xl">Paste from your sportsbook</h2>
@@ -228,6 +230,7 @@ export default function HowToUploadPage() {
 
         {/* ── METHOD 3: Manual CSV / Spreadsheet ── */}
         <div className="card p-6 md:p-8 mb-8">
+          <span className="case-header block mb-2">METHOD 03</span>
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">3</span>
             <h2 className="font-bold text-2xl">Manual CSV or spreadsheet</h2>

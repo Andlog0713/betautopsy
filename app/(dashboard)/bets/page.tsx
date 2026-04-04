@@ -197,7 +197,7 @@ export default function BetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative">
           <div className="absolute -top-1 right-0"><EyeToggle /></div>
-          <h1 className="font-bold text-3xl mb-1">Bet History</h1>
+          <h1 className="font-bold text-2xl mb-1">Bet History</h1>
           <p className="text-fg-muted text-sm">{bets.length} total bets</p>
         </div>
         <button
@@ -314,7 +314,7 @@ export default function BetsPage() {
       {loading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 bg-surface rounded-sm animate-pulse" />
+            <div key={i} className="h-14 bg-surface rounded-none animate-pulse" />
           ))}
         </div>
       ) : bets.length === 0 ? (
@@ -342,7 +342,7 @@ export default function BetsPage() {
                     />
                   </th>
                   <SortTh col="placed_at" label="Date" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-                  <th className="text-left text-fg-muted font-medium px-4 py-3">Description</th>
+                  <th className="text-left font-mono text-[9px] tracking-[2px] uppercase text-fg-dim px-4 py-3">Description</th>
                   <SortTh col="sport" label="Sport" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="bet_type" label="Type" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="odds" label="Odds" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -360,7 +360,7 @@ export default function BetsPage() {
                 {paginated.map((bet) => (
                   <tr
                     key={bet.id}
-                    className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
+                    className={`border-b border-dashed border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
                       selected.has(bet.id) ? 'bg-scalpel-muted' : ''
                     }`}
                   >
@@ -813,8 +813,8 @@ function SortTh({
 
   return (
     <th
-      className={`text-${align} font-medium px-4 py-3 cursor-pointer select-none transition-colors ${
-        active ? 'text-fg-bright' : 'text-fg-muted hover:text-fg'
+      className={`text-${align} font-mono text-[9px] tracking-[2px] uppercase px-4 py-3 cursor-pointer select-none transition-colors ${
+        active ? 'text-fg-bright' : 'text-fg-dim hover:text-fg'
       } ${className ?? ''}`}
       onClick={() => onSort(col)}
     >

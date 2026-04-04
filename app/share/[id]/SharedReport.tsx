@@ -113,8 +113,8 @@ export default function SharedReport({ data }: { data: ShareData }) {
                   <p className="text-fg-muted text-xs">Sharp Score</p>
                   <p className="font-mono text-sm text-cyan-400">{data.sharp_score}/100</p>
                 </div>
-                <div className="h-2 bg-base rounded-full overflow-hidden">
-                  <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${data.sharp_score}%` }} />
+                <div className="h-2 bg-base rounded-none overflow-hidden">
+                  <div className="h-full bg-cyan-400 rounded-none" style={{ width: `${data.sharp_score}%` }} />
                 </div>
               </div>
             )}

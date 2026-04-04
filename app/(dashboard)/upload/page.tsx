@@ -184,7 +184,7 @@ export default function UploadPage() {
                     setBankrollSaved(true);
                   }}
                   disabled={bankrollSaving || !bankrollInput}
-                  className="btn-secondary text-sm !px-4 !py-2 shrink-0"
+                  className="btn-secondary text-sm shrink-0"
                 >
                   {bankrollSaving ? 'Saving...' : 'Set'}
                 </button>
@@ -195,7 +195,7 @@ export default function UploadPage() {
             <p className="text-win text-sm">Bankroll set. Your report will use this for grading.</p>
           )}
 
-          <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+          <Link href="/reports?run=true" className="btn-primary inline-block">
             {tier === 'pro' ? 'Run Your Autopsy →' : promoEligible ? 'Run Your Free Full Report →' : 'Run Your Free Snapshot →'}
           </Link>
         </div>
@@ -234,7 +234,7 @@ export default function UploadPage() {
               <button
                 key={m.id}
                 onClick={() => setActiveMethod(m.id)}
-                className={`relative p-4 rounded-sm border text-center transition-all ${
+                className={`relative p-4 rounded-sm border text-center transition-colors duration-100 ${
                   activeMethod === m.id
                     ? 'border-scalpel/40 bg-scalpel-muted'
                     : 'border-white/[0.06] bg-surface hover:border-white/[0.10]'
@@ -337,19 +337,19 @@ export default function UploadPage() {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`card p-10 text-center cursor-pointer transition-all duration-200 ${
+        className={`card p-10 text-center cursor-pointer transition-colors duration-100 ${
           dragOver ? 'border-scalpel bg-scalpel-muted' : 'hover:border-white/[0.08]'
         }`}
       >
         <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
         {state === 'uploading' ? (
           <div className="space-y-3">
-            <div className="text-3xl animate-pulse">⏳</div>
+            <div className="text-2xl animate-pulse font-mono text-fg-muted">PROCESSING...</div>
             <p className="text-fg-muted text-sm">Parsing and importing your bets...</p>
           </div>
         ) : state === 'success' && result ? (
           <div className="space-y-3">
-            <div className="text-3xl">{result.bets_imported > 0 ? '✅' : 'ℹ️'}</div>
+            <div className="text-2xl font-mono">{result.bets_imported > 0 ? <span className="stamp-note">OK</span> : <span className="text-fg-muted">INFO</span>}</div>
             {result.bets_imported > 0 ? (
               <p className="text-win font-medium">{result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
                 {result.duplicates_skipped > 0 && <span className="text-fg-muted font-normal text-sm block mt-1">{result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped</span>}
@@ -364,7 +364,7 @@ export default function UploadPage() {
           </div>
         ) : state === 'error' ? (
           <div className="space-y-3">
-            <div className="text-3xl">❌</div>
+            <div className="text-2xl"><span className="stamp-alert">ERROR</span></div>
             <p className="text-loss text-sm">{error}</p>
             <button onClick={(e) => { e.stopPropagation(); setState('idle'); setError(''); }} className="btn-secondary text-sm mt-2">Try Again</button>
           </div>

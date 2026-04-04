@@ -210,7 +210,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <h1 className="font-bold text-3xl text-fg-bright">Dashboard</h1>
+      <h1 className="font-bold text-2xl text-fg-bright">Dashboard</h1>
 
       {!hasBets ? (
         <div className="case-card p-12 text-center">
@@ -258,7 +258,7 @@ export default function DashboardPage() {
                 You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
                 analysis in about 20 seconds.
               </p>
-              <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+              <Link href="/reports?run=true" className="btn-primary inline-block text-lg font-mono">
                 Run Your Autopsy Now →
               </Link>
             </div>
@@ -311,7 +311,7 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
+                    <span className="font-mono text-2xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -478,14 +478,14 @@ export default function DashboardPage() {
             <div className="finding-card border-l-caution p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-fg-bright text-sm font-medium">⚠️ Your bankroll isn&apos;t set, and this affects your grade</p>
+                  <p className="text-fg-bright text-sm font-medium"><span className="stamp-caution">CAUTION</span> Your bankroll isn&apos;t set, and this affects your grade</p>
                   <p className="text-fg-muted text-xs mt-1">
                     Your bankroll is the total amount you&apos;ve set aside for betting across all sportsbooks.
                     Without it, we have to guess, and that guess directly impacts your overall grade, bankroll health rating,
                     and risk analysis. Even a rough estimate makes your report significantly more accurate.
                   </p>
                 </div>
-                <Link href="/settings" className="btn-primary text-sm shrink-0 font-mono !px-4 !py-2">Set Bankroll</Link>
+                <Link href="/settings" className="btn-primary text-sm shrink-0 font-mono">Set Bankroll</Link>
               </div>
             </div>
           )}

@@ -180,7 +180,7 @@ export default function ShareModal({
             onClick={handleCopyLink}
             className="btn-secondary text-sm"
           >
-            {linkCopied ? '✓ Copied' : 'Copy Report Link'}
+            {linkCopied ? 'Copied!' : 'Copy Report Link'}
           </button>
           <button
             onClick={handleShareTwitter}

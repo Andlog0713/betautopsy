@@ -23,7 +23,7 @@ export default function OnboardingSteps({
           <div key={step.num} className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
+                className={`inline-flex items-center justify-center w-7 h-7 rounded-none text-xs font-bold transition-colors ${
                   isDone
                     ? 'bg-win/20 text-win'
                     : isActive

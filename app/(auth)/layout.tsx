@@ -13,10 +13,10 @@ export default function AuthLayout({
         <div className="max-w-md">
           <Link href="/"><Logo size="md" variant="horizontal" theme="dark" /></Link>
           <div className="mt-10 mb-2">
-            <div className="text-3xl font-bold text-fg-bright tracking-tight leading-[1.15]">
+            <div className="text-2xl font-bold text-fg-bright tracking-tight leading-[1.15]">
               Stop guessing.
             </div>
-            <div className="text-3xl font-light text-scalpel tracking-tight leading-[1.15]">
+            <div className="text-2xl font-light text-scalpel tracking-tight leading-[1.15]">
               Start understanding.
             </div>
           </div>

@@ -79,7 +79,7 @@ function ResetPasswordForm() {
   if (checking) {
     return (
       <div className="min-h-screen bg-base flex items-center justify-center">
-        <div className="text-fg-muted font-mono text-sm animate-pulse">Verifying reset link...</div>
+        <div className="text-fg-muted font-mono text-sm animate-pulse rounded-none">Verifying reset link...</div>
       </div>
     );
   }
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-sm text-center space-y-4">
-          <div className="text-4xl">✓</div>
+          <div className="text-4xl font-mono text-win">OK</div>
           <h1 className="font-bold text-2xl text-fg-bright">Password updated</h1>
           <p className="text-fg-muted text-sm">Redirecting to your dashboard...</p>
         </div>
@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-base flex items-center justify-center">
-        <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
+        <div className="text-fg-muted font-mono text-sm animate-pulse rounded-none">Loading...</div>
       </div>
     }>
       <ResetPasswordForm />
