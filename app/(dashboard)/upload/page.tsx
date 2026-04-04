@@ -23,6 +23,9 @@ export default function UploadPage() {
   const [lastBetDate, setLastBetDate] = useState<string | null>(null);
   const [activeMethod, setActiveMethod] = useState<ActiveMethod>('pikkit');
   const [showPikkitSteps, setShowPikkitSteps] = useState(false);
+  const [bankrollInput, setBankrollInput] = useState('');
+  const [bankrollSaving, setBankrollSaving] = useState(false);
+  const [bankrollSaved, setBankrollSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -113,14 +116,58 @@ export default function UploadPage() {
         </div>
       )}
 
-      {/* First-upload celebration */}
+      {/* First-upload celebration + bankroll prompt */}
       {initialBetCount === 0 && uploadSucceeded && (
-        <div className="case-card p-8 text-center space-y-4 border-scalpel/20">
+        <div className="case-card p-8 text-center space-y-5 border-scalpel/20">
           <div className="text-5xl">🔬</div>
           <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
           <p className="text-fg-muted text-sm max-w-md mx-auto">
             Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
           </p>
+
+          {/* Bankroll prompt — only if not already set */}
+          {!profile?.bankroll && !bankrollSaved && (
+            <div className="bg-surface border border-white/[0.06] rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
+              <p className="text-fg-bright text-sm font-medium">Set your bankroll for a more accurate report</p>
+              <p className="text-fg-muted text-xs">
+                How much total do you have across all your sportsbook accounts right now? A rough number is fine. If you&apos;re not sure, add up your balances on each app.
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted text-sm">$</span>
+                  <input
+                    type="number"
+                    placeholder="e.g. 500"
+                    value={bankrollInput}
+                    onChange={(e) => setBankrollInput(e.target.value)}
+                    className="w-full bg-base border border-white/[0.08] rounded-sm px-3 py-2 pl-7 text-sm font-mono text-fg-bright placeholder:text-fg-dim focus:outline-none focus:border-scalpel/40"
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    const val = parseFloat(bankrollInput);
+                    if (!val || val <= 0) return;
+                    setBankrollSaving(true);
+                    const supabase = createClient();
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      await supabase.from('profiles').update({ bankroll: val }).eq('id', user.id);
+                    }
+                    setBankrollSaving(false);
+                    setBankrollSaved(true);
+                  }}
+                  disabled={bankrollSaving || !bankrollInput}
+                  className="btn-secondary text-sm !px-4 !py-2 shrink-0"
+                >
+                  {bankrollSaving ? 'Saving...' : 'Set'}
+                </button>
+              </div>
+            </div>
+          )}
+          {bankrollSaved && (
+            <p className="text-win text-sm">Bankroll set. Your report will use this for grading.</p>
+          )}
+
           <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
             Run Your Free Snapshot →
           </Link>
