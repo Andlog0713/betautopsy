@@ -6,9 +6,7 @@ import { tierFromPriceId } from '@/lib/stripe';
 describe('tierFromPriceId', () => {
   beforeEach(() => {
     vi.stubEnv('STRIPE_PRO_PRICE_ID', 'price_pro_monthly');
-    vi.stubEnv('STRIPE_SHARP_PRICE_ID', 'price_sharp_monthly');
     vi.stubEnv('STRIPE_PRO_ANNUAL_PRICE_ID', 'price_pro_annual');
-    vi.stubEnv('STRIPE_SHARP_ANNUAL_PRICE_ID', 'price_sharp_annual');
   });
 
   it('returns pro for monthly pro price ID', () => {
@@ -17,14 +15,6 @@ describe('tierFromPriceId', () => {
 
   it('returns pro for annual pro price ID', () => {
     expect(tierFromPriceId('price_pro_annual')).toBe('pro');
-  });
-
-  it('returns sharp for monthly sharp price ID', () => {
-    expect(tierFromPriceId('price_sharp_monthly')).toBe('sharp');
-  });
-
-  it('returns sharp for annual sharp price ID', () => {
-    expect(tierFromPriceId('price_sharp_annual')).toBe('sharp');
   });
 
   it('returns null for unknown price ID', () => {
@@ -37,27 +27,37 @@ describe('tierFromPriceId', () => {
 });
 
 // ── Webhook event handler logic tests ──
-// These test the business logic of each webhook event type
-// without hitting real Stripe or Supabase APIs.
 
 describe('webhook handler logic', () => {
-  // Simulate what the webhook handler does for each event type
-  // by extracting the logic into testable functions
-
   function handleCheckoutCompleted(session: {
-    metadata?: { supabase_user_id?: string; tier?: string };
+    mode: 'subscription' | 'payment';
+    metadata?: { supabase_user_id?: string; tier?: string; report_id?: string; type?: string };
     customer?: string;
-  }): { userId: string; update: Record<string, string> } | null {
+    payment_intent?: string;
+  }): { userId: string; update: Record<string, string | number | boolean | null> } | null {
+    if (session.mode === 'payment') {
+      const reportId = session.metadata?.report_id;
+      const userId = session.metadata?.supabase_user_id;
+      if (!reportId || !userId) return null;
+      return {
+        userId,
+        update: {
+          is_paid: true,
+          stripe_payment_intent_id: session.payment_intent || null,
+        },
+      };
+    }
+
     const userId = session.metadata?.supabase_user_id;
-    const tier = session.metadata?.tier;
-    if (!userId || !tier) return null;
+    if (!userId) return null;
 
     return {
       userId,
       update: {
-        subscription_tier: tier,
+        subscription_tier: 'pro',
         subscription_status: 'active',
         stripe_customer_id: session.customer as string,
+        reports_used_this_period: 0,
       },
     };
   }
@@ -114,16 +114,15 @@ describe('webhook handler logic', () => {
 
   beforeEach(() => {
     vi.stubEnv('STRIPE_PRO_PRICE_ID', 'price_pro_monthly');
-    vi.stubEnv('STRIPE_SHARP_PRICE_ID', 'price_sharp_monthly');
     vi.stubEnv('STRIPE_PRO_ANNUAL_PRICE_ID', 'price_pro_annual');
-    vi.stubEnv('STRIPE_SHARP_ANNUAL_PRICE_ID', 'price_sharp_annual');
   });
 
-  // ── checkout.session.completed ──
+  // ── checkout.session.completed (subscription) ──
 
-  describe('checkout.session.completed', () => {
+  describe('checkout.session.completed - subscription', () => {
     it('sets tier to pro and status to active', () => {
       const result = handleCheckoutCompleted({
+        mode: 'subscription',
         metadata: { supabase_user_id: 'user-123', tier: 'pro' },
         customer: 'cus_abc',
       });
@@ -133,37 +132,42 @@ describe('webhook handler logic', () => {
       expect(result!.update.subscription_tier).toBe('pro');
       expect(result!.update.subscription_status).toBe('active');
       expect(result!.update.stripe_customer_id).toBe('cus_abc');
-    });
-
-    it('sets tier to sharp', () => {
-      const result = handleCheckoutCompleted({
-        metadata: { supabase_user_id: 'user-456', tier: 'sharp' },
-        customer: 'cus_def',
-      });
-
-      expect(result!.update.subscription_tier).toBe('sharp');
+      expect(result!.update.reports_used_this_period).toBe(0);
     });
 
     it('returns null when metadata is missing user ID', () => {
       const result = handleCheckoutCompleted({
+        mode: 'subscription',
         metadata: { tier: 'pro' },
         customer: 'cus_abc',
       });
 
       expect(result).toBeNull();
     });
+  });
 
-    it('returns null when metadata is missing tier', () => {
+  // ── checkout.session.completed (payment / report purchase) ──
+
+  describe('checkout.session.completed - report purchase', () => {
+    it('marks report as paid', () => {
       const result = handleCheckoutCompleted({
-        metadata: { supabase_user_id: 'user-123' },
-        customer: 'cus_abc',
+        mode: 'payment',
+        metadata: { supabase_user_id: 'user-123', report_id: 'rpt-456', type: 'report_purchase' },
+        payment_intent: 'pi_abc',
       });
 
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.update.is_paid).toBe(true);
+      expect(result!.update.stripe_payment_intent_id).toBe('pi_abc');
     });
 
-    it('returns null when metadata is undefined', () => {
-      const result = handleCheckoutCompleted({ customer: 'cus_abc' });
+    it('returns null when report_id is missing', () => {
+      const result = handleCheckoutCompleted({
+        mode: 'payment',
+        metadata: { supabase_user_id: 'user-123' },
+        payment_intent: 'pi_abc',
+      });
+
       expect(result).toBeNull();
     });
   });
@@ -179,17 +183,6 @@ describe('webhook handler logic', () => {
       });
 
       expect(result!.update.subscription_tier).toBe('pro');
-      expect(result!.update.subscription_status).toBe('active');
-    });
-
-    it('upgrades to sharp when status is active', () => {
-      const result = handleSubscriptionUpdated({
-        customer: 'cus_abc',
-        status: 'active',
-        items: { data: [{ price: { id: 'price_sharp_monthly' } }] },
-      });
-
-      expect(result!.update.subscription_tier).toBe('sharp');
       expect(result!.update.subscription_status).toBe('active');
     });
 
@@ -239,7 +232,7 @@ describe('webhook handler logic', () => {
       const result = handleSubscriptionUpdated({
         customer: 'cus_abc',
         status: 'unpaid',
-        items: { data: [{ price: { id: 'price_sharp_monthly' } }] },
+        items: { data: [{ price: { id: 'price_pro_monthly' } }] },
       });
 
       expect(result!.update.subscription_tier).toBe('free');
@@ -300,27 +293,6 @@ describe('webhook handler logic', () => {
   // ── Edge cases ──
 
   describe('tier transition edge cases', () => {
-    it('pro → sharp upgrade via subscription.updated', () => {
-      const result = handleSubscriptionUpdated({
-        customer: 'cus_abc',
-        status: 'active',
-        items: { data: [{ price: { id: 'price_sharp_monthly' } }] },
-      });
-
-      expect(result!.update.subscription_tier).toBe('sharp');
-      expect(result!.update.subscription_status).toBe('active');
-    });
-
-    it('sharp → pro downgrade via subscription.updated', () => {
-      const result = handleSubscriptionUpdated({
-        customer: 'cus_abc',
-        status: 'active',
-        items: { data: [{ price: { id: 'price_pro_monthly' } }] },
-      });
-
-      expect(result!.update.subscription_tier).toBe('pro');
-    });
-
     it('monthly → annual switch keeps same tier', () => {
       const monthly = handleSubscriptionUpdated({
         customer: 'cus_abc',

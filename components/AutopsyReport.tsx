@@ -322,8 +322,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   const hasBets = bets.length > 0;
 
-  const [activeTab, setActiveTab] = useState<'report' | 'sharp'>('report');
-  const hasSharpContent = whatIfs.length > 0 || prioritizedLeaks.length > 0;
+  const [activeTab, setActiveTab] = useState<'report' | 'tools'>('report');
+  const hasToolsContent = whatIfs.length > 0 || prioritizedLeaks.length > 0;
 
   // Comparison data
   const compItems = previousSnapshot ? [
@@ -337,7 +337,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Tab Bar — hidden in readOnly/demo mode */}
-      {hasSharpContent && !readOnly && (
+      {hasToolsContent && !readOnly && (
         <div className="flex gap-1 bg-base p-1 rounded-sm w-fit">
           <button
             onClick={() => setActiveTab('report')}
@@ -350,14 +350,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             Report
           </button>
           <button
-            onClick={() => setActiveTab('sharp')}
+            onClick={() => setActiveTab('tools')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-              activeTab === 'sharp'
+              activeTab === 'tools'
                 ? 'bg-cyan-400/10 text-cyan-400 shadow-sm border border-cyan-400/20'
                 : 'text-cyan-400/60 hover:text-cyan-400'
             }`}
           >
-            Sharp
+            Tools
             {!isSharp && (
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -432,7 +432,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {!readOnly && <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+      {!readOnly && <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
 
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
@@ -508,7 +508,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         )}
       </div>
 
-      {/* ── BetIQ Score — Pro/Sharp only ── */}
+      {/* ── BetIQ Score — Pro only ── */}
       {(tier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
@@ -745,7 +745,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* ── Sport-Specific Findings — Pro/Sharp only ── */}
+      {/* ── Sport-Specific Findings — Pro only ── */}
       {(tier === 'pro') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
         <div className="space-y-3">
           <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
@@ -867,7 +867,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         )}
       </div>
 
-      {/* ── Emotional Triggers — Pro/Sharp only ── */}
+      {/* ── Emotional Triggers — Pro only ── */}
       {(tier === 'pro') && analysis.enhanced_tilt && (
         <div className="case-card p-6">
           <div className="flex items-center justify-between mb-2">
@@ -1829,49 +1829,27 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Sharp tab nudge — above share */}
-      {hasSharpContent && !readOnly && (
-        isSharp ? (
-          <button
-            onClick={() => { setActiveTab('sharp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-sm bg-cyan-400/10 flex items-center justify-center shrink-0">
-                  <svg className="w-4.5 h-4.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-fg-bright group-hover:text-cyan-400 transition-colors">View Sharp Analysis</p>
-                  <p className="text-fg-muted text-xs mt-0.5">Your leaks are ranked and ready. See what to fix first.</p>
-                </div>
+      {/* Tools tab nudge — above share */}
+      {hasToolsContent && !readOnly && isSharp && (
+        <button
+          onClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className="w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-sm bg-cyan-400/10 flex items-center justify-center shrink-0">
+                <svg className="w-4.5 h-4.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
               </div>
-              <span className="text-fg-dim group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">Sharp →</span>
-            </div>
-          </button>
-        ) : (
-          <a
-            href="/pricing"
-            className="block w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-sm bg-cyan-400/10 flex items-center justify-center shrink-0">
-                  <svg className="w-4.5 h-4.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-fg-bright group-hover:text-cyan-400 transition-colors">Unlock Sharp Analysis</p>
-                  <p className="text-fg-muted text-xs mt-0.5">See every leak ranked by dollar cost and simulate what fixing each one saves you.</p>
-                </div>
+              <div>
+                <p className="font-medium text-sm text-fg-bright group-hover:text-cyan-400 transition-colors">View Analysis Tools</p>
+                <p className="text-fg-muted text-xs mt-0.5">Your leaks are ranked and ready. See what to fix first.</p>
               </div>
-              <span className="text-fg-dim group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">See plans →</span>
             </div>
-          </a>
-        )
+            <span className="text-fg-dim group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">Tools &rarr;</span>
+          </div>
+        </button>
       )}
 
       {!readOnly && (
@@ -1896,8 +1874,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </>}
 
 
-      {/* ═══ Sharp Tab ═══ */}
-      {activeTab === 'sharp' && (
+      {/* ═══ Tools Tab (Leak Prioritizer + What-If Simulator) ═══ */}
+      {activeTab === 'tools' && (
         isSharp ? (
           <div className="space-y-8">
             {/* What If Simulator */}
@@ -2019,7 +1997,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {!readOnly && <ReportFeedback reportId={reportId} />}
           </div>
         ) : (
-          /* Locked Sharp tab for non-Sharp users */
+          /* Locked tools tab for non-Pro users */
           <div className="space-y-6 py-4">
             <div className="text-center max-w-md mx-auto space-y-4">
               <div className="w-16 h-16 rounded-sm bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mx-auto">
@@ -2027,30 +2005,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h2 className="font-bold text-2xl">Sharp Analysis</h2>
+              <h2 className="font-bold text-2xl">Analysis Tools</h2>
               <p className="text-fg-muted text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first — and simulate how much you&apos;d save.</p>
-              {/* Blurred Leak Prioritizer preview */}
-              <div className="relative mb-6">
-                <div className="blur-sm pointer-events-none opacity-50 space-y-2">
-                  {[
-                    { name: 'Loss Chasing', cost: 340, pct: 38 },
-                    { name: 'Parlay Overexposure', cost: 210, pct: 23 },
-                    { name: 'Late Night Impulse Bets', cost: 180, pct: 20 },
-                    { name: 'Favorite Bias (NFL)', cost: 170, pct: 19 },
-                  ].map((item) => (
-                    <div key={item.name} className="card p-4">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">{item.name}</span>
-                        <span className="font-mono text-loss text-sm">-${item.cost}/mo</span>
-                      </div>
-                      <div className="h-2 bg-base rounded-full overflow-hidden">
-                        <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${item.pct}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <a href="/pricing" className="btn-primary inline-block">Unlock Sharp — $24.99/mo</a>
+              <a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>
             </div>
 
             {!readOnly && <ReportFeedback reportId={reportId} />}

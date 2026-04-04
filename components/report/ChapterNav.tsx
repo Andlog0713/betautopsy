@@ -18,7 +18,7 @@ interface ChapterNavProps {
 
 export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = false }: ChapterNavProps) {
   const [activeChapter, setActiveChapter] = useState('chapter-summary');
-  const isSharp = tier === 'pro';
+  const isPro = tier === 'pro';
 
   useEffect(() => {
     const sections = CHAPTERS.map(c => document.getElementById(c.id)).filter(Boolean) as HTMLElement[];
@@ -72,32 +72,21 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
             </button>
           );
         })}
-        {/* Sharp tab in nav */}
-        <button
-          onClick={() => {
-            if (readOnly) {
-              // In demo/readOnly mode, scroll to pricing on the landing page
-              const pricing = document.getElementById('pricing');
-              if (pricing) {
-                pricing.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                window.location.href = '/#pricing';
+        {/* Tools tab in nav */}
+        {isPro && (
+          <button
+            onClick={() => {
+              if (onSharpClick) {
+                onSharpClick();
               }
-            } else if (isSharp && onSharpClick) {
-              onSharpClick();
-            } else {
-              window.location.href = '/pricing';
-            }
-          }}
-          className={`relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors ${
-            isSharp ? 'text-cyan-400/60 hover:text-cyan-400' : 'text-fg-muted/50 hover:text-fg-muted'
-          }`}
-        >
-          <span className="font-mono text-[9px] text-fg-dim/40">06</span>
-          {!isSharp && <span className="text-[8px]">🔒</span>}
-          <span className="hidden sm:inline">{isSharp ? 'SHARP' : 'SHARP'}</span>
-          <span className="sm:hidden">{isSharp ? 'Sharp' : '🔒 Sharp'}</span>
-        </button>
+            }}
+            className="relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors text-cyan-400/60 hover:text-cyan-400"
+          >
+            <span className="font-mono text-[9px] text-fg-dim/40">06</span>
+            <span className="hidden sm:inline">TOOLS</span>
+            <span className="sm:hidden">Tools</span>
+          </button>
+        )}
       </nav>
     </div>
   );
