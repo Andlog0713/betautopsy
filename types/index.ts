@@ -79,7 +79,7 @@ export interface Bet {
 export interface AutopsyReport {
   id: string;
   user_id: string;
-  report_type: 'full' | 'weekly' | 'quick';
+  report_type: 'snapshot' | 'full' | 'weekly' | 'quick';
   bet_count_analyzed: number;
   date_range_start: string | null;
   date_range_end: string | null;
@@ -88,6 +88,9 @@ export interface AutopsyReport {
   model_used: string | null;
   tokens_used: number | null;
   cost_cents: number | null;
+  is_paid: boolean;
+  stripe_payment_intent_id: string | null;
+  upgraded_from_snapshot_id: string | null;
   created_at: string;
 }
 

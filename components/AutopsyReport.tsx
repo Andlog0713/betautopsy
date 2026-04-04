@@ -11,6 +11,7 @@ import type { ShareCardData } from './ShareCard';
 import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
+import SnapshotPaywall from './SnapshotPaywall';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
@@ -231,8 +232,9 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
+  const snapshotLocked = isSnapshot && !readOnly;
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
@@ -664,6 +666,39 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       </section>
+
+      {/* ═══ SNAPSHOT PAYWALL: wraps Chapters 2-5 for free snapshot reports ═══ */}
+      {snapshotLocked ? (
+        <SnapshotPaywall reportId={reportId} isPro={tier === 'pro'} counts={analysis._snapshot_counts}>
+          <div className="space-y-8">
+            <section id="chapter-findings">
+              <ChapterHeader number={2} title="Findings" subtitle="What we found in your betting data" />
+              <div className="card p-6 space-y-4">
+                <p className="text-fg-muted text-sm">Detailed bias analysis with dollar costs, strategic leak detection, and behavioral pattern mapping.</p>
+              </div>
+            </section>
+            <section id="chapter-data">
+              <ChapterHeader number={3} title="Your Data" subtitle="Charts and evidence supporting the diagnosis" />
+              <div className="card p-6 space-y-4">
+                <p className="text-fg-muted text-sm">P&L curves, stake distribution, timing patterns, odds intelligence, and category breakdowns.</p>
+              </div>
+            </section>
+            <section id="chapter-cost">
+              <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
+              <div className="card p-6 space-y-4">
+                <p className="text-fg-muted text-sm">Leak Prioritizer ranked by dollar impact and What-If Simulator showing recoverable profit.</p>
+              </div>
+            </section>
+            <section id="chapter-protocol">
+              <ChapterHeader number={5} title="Protocol" subtitle="Your personalized action plan" />
+              <div className="card p-6 space-y-4">
+                <p className="text-fg-muted text-sm">Prescribed protocols, personal rules, and session-by-session grading.</p>
+              </div>
+            </section>
+          </div>
+        </SnapshotPaywall>
+      ) : (
+      <>
 
       {/* ═══ CHAPTER 2: FINDINGS ═══ */}
       <section id="chapter-findings">
@@ -1852,6 +1887,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       </section>
+
+      </>
+      )}
 
       {/* Feedback */}
       {!readOnly && <ReportFeedback reportId={reportId} />}

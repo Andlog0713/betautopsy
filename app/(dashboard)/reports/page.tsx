@@ -164,7 +164,7 @@ export default function ReportsPage() {
     setActiveReport(null);
 
     try {
-      const body: Record<string, string | string[]> = { report_type: 'full' };
+      const body: Record<string, string | string[]> = { report_type: tier === 'pro' ? 'full' : 'snapshot' };
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
       if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
@@ -232,7 +232,7 @@ export default function ReportsPage() {
                 const tempReport: AutopsyReportType = {
                   id: 'loading',
                   user_id: '',
-                  report_type: 'full',
+                  report_type: tier === 'pro' ? 'full' : 'snapshot',
                   bet_count_analyzed: d.partial_analysis.summary.total_bets,
                   date_range_start: null,
                   date_range_end: null,
@@ -241,6 +241,9 @@ export default function ReportsPage() {
                   model_used: null,
                   tokens_used: null,
                   cost_cents: null,
+                  is_paid: tier === 'pro',
+                  stripe_payment_intent_id: null,
+                  upgraded_from_snapshot_id: null,
                   created_at: new Date().toISOString(),
                 };
                 setActiveReport(tempReport);
@@ -349,7 +352,7 @@ export default function ReportsPage() {
         )}
         {/* Compact progress bar while Claude is still analyzing */}
         {running && <AnalyzingProgress />}
-        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} />
+        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
           <div className="card p-5 text-center space-y-2">
@@ -643,7 +646,7 @@ export default function ReportsPage() {
                             Math.abs(new Date(u.created_at).getTime() - new Date(report.created_at).getTime()) < 86400000
                           );
                           if (matchingUpload?.filename) return matchingUpload.filename;
-                          return report.report_type === 'full' ? 'Full Autopsy' : report.report_type === 'weekly' ? 'Weekly Report' : 'Quick Scan';
+                          return report.report_type === 'snapshot' ? 'Snapshot' : report.report_type === 'full' ? 'Full Autopsy' : report.report_type === 'weekly' ? 'Weekly Report' : 'Quick Scan';
                         })()}
                       </p>
                       <p className="text-fg-muted text-sm">
