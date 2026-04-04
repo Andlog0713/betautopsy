@@ -2347,6 +2347,125 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   return { analysis, markdown, tokensUsed, model };
 }
 
+// ── Run a snapshot (free, cheap) ──
+
+const SNAPSHOT_SYSTEM_PROMPT = `You are a sports betting analyst writing a brief snapshot report. You will receive pre-calculated metrics and a top bias to explain.
+
+Your job is to write a compelling, specific explanation of the user's #1 bias. Make the reader think "damn, that's exactly what I do."
+
+Rules:
+- Use real betting language: chalk, dog, juice, SGP, steam, sharp. Never say "wager" or "proposition."
+- Never use the word "tilt." Use "emotion score" instead.
+- Be direct and specific. Reference their actual numbers.
+- No em-dashes. Use periods for independent thoughts.
+- Keep it punchy. 3-4 sentences for description, 2-3 for evidence, 1-2 for fix.
+- Return valid JSON only.`;
+
+export async function runSnapshot(
+  bets: Bet[],
+  bankroll?: number | null
+): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const model = 'claude-haiku-4-5-20251001';
+
+  const metrics = calculateMetrics(bets, bankroll);
+  const topBias = metrics.biases_detected.length > 0 ? metrics.biases_detected[0] : null;
+
+  let claudeData: Record<string, unknown> = {};
+  let tokensUsed = 0;
+
+  if (topBias) {
+    const prompt = `=== USER STATS ===
+Record: ${metrics.summary.record} (${metrics.summary.total_bets} bets)
+ROI: ${metrics.summary.roi_percent.toFixed(1)}%
+Net P&L: $${metrics.summary.total_profit.toFixed(2)}
+Overall Grade: ${metrics.summary.overall_grade}
+Archetype: ${metrics.betting_archetype.name}
+Emotion Score: ${metrics.emotion_score}/100
+===
+
+The user's #1 detected bias is: "${topBias.bias_name}" (severity: ${topBias.severity})
+Raw data: ${topBias.data}
+
+Write a JSON object with these fields for this single bias:
+{
+  "description": "3-4 sentence explanation of what this bias is and how it shows up in their betting",
+  "evidence": "2-3 sentences citing their specific numbers",
+  "estimated_cost": <number, estimated quarterly dollar cost>,
+  "fix": "1-2 sentence actionable fix"
+}
+
+Return ONLY the JSON object, nothing else.`;
+
+    const message = await client.messages.create({
+      model,
+      max_tokens: 512,
+      temperature: 0,
+      system: SNAPSHOT_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const textBlock = message.content.find((block) => block.type === 'text');
+    if (textBlock && textBlock.type === 'text') {
+      claudeData = parseResponseJSON(textBlock.text);
+    }
+    tokensUsed = (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0);
+  }
+
+  // Build snapshot analysis — most sections empty/locked
+  const snapshotCounts = {
+    leaks: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
+    patterns: Math.min(metrics.biases_detected.length, 5),
+    sessions: metrics.sessionDetection?.totalSessions ?? 0,
+    sport_findings: detectSportSpecificPatterns(metrics, bets).length,
+    total_biases: metrics.biases_detected.length,
+  };
+
+  const analysis: AutopsyAnalysis = {
+    summary: {
+      total_bets: metrics.summary.total_bets,
+      record: metrics.summary.record,
+      total_profit: metrics.summary.total_profit,
+      roi_percent: metrics.summary.roi_percent,
+      avg_stake: metrics.summary.avg_stake,
+      date_range: metrics.summary.date_range,
+      overall_grade: metrics.summary.overall_grade,
+    },
+    // Only the top bias is fully explained; rest are stubs
+    biases_detected: topBias ? [{
+      bias_name: topBias.bias_name,
+      severity: topBias.severity as 'low' | 'medium' | 'high' | 'critical',
+      description: (claudeData.description as string) ?? `${topBias.bias_name} detected with ${topBias.severity} severity.`,
+      evidence: (claudeData.evidence as string) ?? topBias.data,
+      estimated_cost: (claudeData.estimated_cost as number) ?? 0,
+      fix: (claudeData.fix as string) ?? 'Upgrade to see the fix.',
+    }] : [],
+    strategic_leaks: [], // locked
+    behavioral_patterns: [], // locked
+    recommendations: [], // locked
+    emotion_score: metrics.emotion_score,
+    tilt_score: metrics.emotion_score,
+    emotion_breakdown: metrics.emotion_breakdown,
+    tilt_breakdown: metrics.emotion_breakdown,
+    bankroll_health: metrics.bankroll_health,
+    betting_archetype: metrics.betting_archetype,
+    timing_analysis: metrics.timing,
+    odds_analysis: metrics.odds,
+    dfs_mode: metrics.dfs.isDFS,
+    dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
+    dfs_metrics: metrics.dfs_metrics ?? undefined,
+    betiq: calculateBetIQ(metrics, bets),
+    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    session_detection: metrics.sessionDetection ?? undefined,
+    bet_annotations: metrics.annotations ?? undefined,
+    _snapshot_counts: snapshotCounts,
+  };
+
+  const markdown = generateMarkdownReport(analysis);
+
+  return { analysis, markdown, tokensUsed, model };
+}
+
 // ── Parse JSON from response ──
 
 function parseResponseJSON(raw: string): Record<string, unknown> {

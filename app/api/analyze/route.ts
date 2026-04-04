@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { runAutopsy, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
+import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
@@ -40,23 +40,8 @@ export async function POST(request: Request) {
 
 
 
-  // Check report limits for free tier
-  if (limits.maxReports !== null) {
-    const { count } = await supabase
-      .from('autopsy_reports')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if ((count ?? 0) >= limits.maxReports) {
-      return NextResponse.json(
-        { error: `Free tier is limited to ${limits.maxReports} report. Upgrade to Pro for unlimited reports.` },
-        { status: 403 }
-      );
-    }
-  }
-
   // Parse optional body
-  let reportType: 'full' | 'weekly' | 'quick' = 'full';
+  let reportType: 'snapshot' | 'full' | 'weekly' | 'quick' = 'snapshot';
   let dateFrom: string | null = null;
   let dateTo: string | null = null;
   let uploadIds: string[] = [];
@@ -203,8 +188,14 @@ export async function POST(request: Request) {
           analyzed_bets: betsToAnalyze,
         });
 
-        // ── Phase 2: Run full autopsy (Claude call) ──
-        const { analysis, markdown, tokensUsed, model } = await runAutopsy(betsToAnalyze, userBankroll);
+        // ── Phase 2: Run analysis ──
+        // Free users get snapshots; full reports require Pro or a prior payment
+        const isSnapshot = reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
+        const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
+
+        const { analysis, markdown, tokensUsed, model } = isSnapshot
+          ? await runSnapshot(betsToAnalyze, userBankroll)
+          : await runAutopsy(betsToAnalyze, userBankroll);
 
         const costCents = Math.ceil(tokensUsed * 0.001);
         const dateStart = betsToAnalyze[0]?.placed_at ?? null;
@@ -234,12 +225,23 @@ export async function POST(request: Request) {
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
 
+        // For Pro users running full reports, track usage
+        if (!isSnapshot && tier === 'pro') {
+          await supabase
+            .from('profiles')
+            .update({
+              reports_used_this_period: (typedProfile.reports_used_this_period ?? 0) + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+        }
+
         // Save report
         const { data: savedReport, error: insertError } = await supabase
           .from('autopsy_reports')
           .insert({
             user_id: user.id,
-            report_type: reportType,
+            report_type: effectiveReportType,
             bet_count_analyzed: betsToAnalyze.length,
             date_range_start: dateStart,
             date_range_end: dateEnd,
@@ -248,6 +250,7 @@ export async function POST(request: Request) {
             model_used: model,
             tokens_used: tokensUsed,
             cost_cents: costCents,
+            is_paid: !isSnapshot,
           })
           .select()
           .single();
