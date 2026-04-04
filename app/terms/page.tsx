@@ -7,7 +7,7 @@ export default function TermsOfUsePage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl mb-3">Terms of Use</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2025</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
