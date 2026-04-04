@@ -172,6 +172,23 @@ function SignupForm() {
         </button>
       </form>
 
+      <div className="flex items-center justify-center gap-3 flex-wrap mt-4">
+        <span className="flex items-center gap-1.5 font-mono text-[10px] text-fg-dim">
+          <svg className="w-3 h-3 text-scalpel" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V4.5a3 3 0 0 1 6 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Never sold
+        </span>
+        <span className="text-fg-dim text-[10px]">·</span>
+        <span className="flex items-center gap-1.5 font-mono text-[10px] text-fg-dim">
+          <svg className="w-3 h-3 text-scalpel" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 7 3-1.5 5.5-3.5 5.5-7V4L8 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+          Not stored by AI
+        </span>
+        <span className="text-fg-dim text-[10px]">·</span>
+        <span className="flex items-center gap-1.5 font-mono text-[10px] text-fg-dim">
+          <svg className="w-3 h-3 text-scalpel" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M4 4l.7 9.1a1.5 1.5 0 0 0 1.5 1.4h3.6a1.5 1.5 0 0 0 1.5-1.4L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Delete anytime
+        </span>
+      </div>
+
       <p className="text-fg-muted text-sm text-center mt-6">
         Already have an account?{' '}
         <Link href="/login" className="text-scalpel hover:underline">
