@@ -50,11 +50,15 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">5. Subscriptions and billing</h2>
+            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">5. Payments and billing</h2>
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-[#F0F2F5] mb-1">Free tier</h3>
                 <p>BetAutopsy offers a free tier with limited features. No payment information is required to use the free tier.</p>
+              </div>
+              <div>
+                <h3 className="font-medium text-[#F0F2F5] mb-1">One-time purchases</h3>
+                <p>Certain features, such as individual full reports, may be purchased as one-time transactions through Stripe. These purchases are non-recurring and grant access to the specific item purchased. All one-time purchases are final and non-refundable.</p>
               </div>
               <div>
                 <h3 className="font-medium text-[#F0F2F5] mb-1">Paid subscriptions</h3>
