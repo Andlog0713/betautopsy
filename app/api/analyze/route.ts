@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
+import { TIER_LIMITS } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
@@ -189,23 +189,8 @@ export async function POST(request: Request) {
         });
 
         // ── Phase 2: Run analysis ──
-        // Check launch promo: first full report free for new signups
-        const hasUsedPromo = (rptCount ?? 0) > 0 && await (async () => {
-          const { count } = await supabase
-            .from('autopsy_reports')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('report_type', 'full');
-          return (count ?? 0) > 0;
-        })();
-        const promoEligible = tier === 'free'
-          && userQualifiesForPromo(typedProfile.created_at)
-          && !hasUsedPromo;
-
-        // Free users get snapshots; full reports require Pro, payment, or promo
-        const isSnapshot = promoEligible
-          ? false // promo users get a full report
-          : reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
+        // Free users get snapshots; full reports require Pro or payment
+        const isSnapshot = reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
         const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
 
         const { analysis, markdown, tokensUsed, model } = isSnapshot

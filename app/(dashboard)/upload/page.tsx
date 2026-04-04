@@ -8,7 +8,6 @@ import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
 import type { UploadResponse, Profile } from '@/types';
-import { userQualifiesForPromo } from '@/types';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 type ActiveMethod = 'pikkit' | 'screenshot' | 'paste' | 'csv';
@@ -27,7 +26,6 @@ export default function UploadPage() {
   const [bankrollInput, setBankrollInput] = useState('');
   const [bankrollSaving, setBankrollSaving] = useState(false);
   const [bankrollSaved, setBankrollSaved] = useState(false);
-  const [promoEligible, setPromoEligible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,15 +44,6 @@ export default function UploadPage() {
         const bc = p.bet_count;
         setInitialBetCount(bc);
         setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
-        // Check promo eligibility
-        if (p.subscription_tier === 'free' && userQualifiesForPromo(p.created_at)) {
-          const { count: fullCount } = await supabase
-            .from('autopsy_reports')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('report_type', 'full');
-          if ((fullCount ?? 0) === 0) setPromoEligible(true);
-        }
       }
       setReportCount(reportsRes.count ?? 0);
       if (lastBetRes.data && lastBetRes.data.length > 0) {
@@ -137,15 +126,6 @@ export default function UploadPage() {
             <p className="text-fg-muted text-sm max-w-md mx-auto">
               Your full autopsy report will analyze every bet for cognitive biases, strategic leaks, and behavioral patterns.
             </p>
-          ) : promoEligible ? (
-            <>
-              <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm px-4 py-2 inline-block">
-                <p className="text-scalpel text-sm font-medium">Your first full report is free.</p>
-              </div>
-              <p className="text-fg-muted text-sm max-w-md mx-auto">
-                Complete 5-chapter analysis with all biases, dollar costs, strategic leaks, and a personalized action plan.
-              </p>
-            </>
           ) : (
             <p className="text-fg-muted text-sm max-w-md mx-auto">
               Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
@@ -196,7 +176,7 @@ export default function UploadPage() {
           )}
 
           <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            {tier === 'pro' ? 'Run Your Autopsy →' : promoEligible ? 'Run Your Free Full Report →' : 'Run Your Free Snapshot →'}
+            {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Free Snapshot →'}
           </Link>
         </div>
       )}

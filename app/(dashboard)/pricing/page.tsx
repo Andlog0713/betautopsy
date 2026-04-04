@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { trackCheckout } from '@/lib/tiktok-events';
-import { isLaunchPromoActive } from '@/types';
 import type { Profile, SubscriptionTier } from '@/types';
 import { TIER_LIMITS, REPORT_PURCHASE_LIMITS } from '@/types';
 
@@ -90,14 +89,6 @@ export default function PricingPage() {
           Free snapshots forever. Pay only when you want the full analysis.
         </p>
       </div>
-
-      {isLaunchPromoActive() && (
-        <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-4 text-center max-w-lg mx-auto">
-          <p className="text-scalpel text-sm font-medium">
-            Launch offer: your first full report is free. Sign up and run your autopsy.
-          </p>
-        </div>
-      )}
 
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         {/* Free Snapshot */}
