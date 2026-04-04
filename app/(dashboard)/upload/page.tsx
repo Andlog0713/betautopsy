@@ -128,9 +128,9 @@ export default function UploadPage() {
           {/* Bankroll prompt — only if not already set */}
           {!profile?.bankroll && !bankrollSaved && (
             <div className="bg-surface border border-white/[0.06] rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
-              <p className="text-fg-bright text-sm font-medium">Set your bankroll for a more accurate report</p>
+              <p className="text-fg-bright text-sm font-medium">Set your bankroll for a more accurate grade</p>
               <p className="text-fg-muted text-xs">
-                How much total do you have across all your sportsbook accounts right now? A rough number is fine. If you&apos;re not sure, add up your balances on each app.
+                How much money do you have set aside for betting? This is the total amount you&apos;d be comfortable having in action, whether it&apos;s sitting in your sportsbook accounts, ready to deposit, or both. A rough estimate is fine.
               </p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
