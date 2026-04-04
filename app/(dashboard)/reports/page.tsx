@@ -340,11 +340,11 @@ export default function ReportsPage() {
           <div className="card border-scalpel/20 bg-scalpel-muted p-5">
             <p className="text-fg-bright text-sm">
               This snapshot covers your <span className="font-medium">50 most recent bets</span>.
-              You have <span className="font-mono">{totalBetsAll}</span> total bets — a full report
+              You have <span className="font-mono">{totalBetsAll}</span> total bets. A full report
               analyzes up to 2,000 for more accurate bias detection.
             </p>
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
-              Get Full Report — $9.99
+              Get Full Report: $9.99
             </a>
           </div>
         )}

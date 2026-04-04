@@ -242,7 +242,7 @@ export default function DashboardPage() {
           {stats.reportCount > 0 && streakCount === 0 && (
             <div className="finding-card border-l-scalpel flex items-center justify-between gap-4">
               <div>
-                <p className="text-fg-bright font-medium">🔥 Start your streak — run an autopsy this week</p>
+                <p className="text-fg-bright font-medium">🔥 Start your streak. Run an autopsy this week</p>
                 <p className="text-fg-muted text-xs mt-0.5 font-mono">Weekly check-ins unlock milestone badges and keep you accountable.</p>
               </div>
               <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
@@ -311,7 +311,7 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '—'}</span>
+                    <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -344,7 +344,7 @@ export default function DashboardPage() {
                     <span className="font-mono text-xs text-fg-muted">
                       ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
                     </span>
-                    <span className="font-mono text-xs text-fg-muted">— miss a week without losing your streak (resets monthly)</span>
+                    <span className="font-mono text-xs text-fg-muted">· miss a week without losing your streak (resets monthly)</span>
                   </div>
                   {/* Milestone badges */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
@@ -399,7 +399,7 @@ export default function DashboardPage() {
           {isPaid && !latest && stats.reportCount > 0 && (
             <div className="finding-card border-l-scalpel p-5 text-center space-y-3">
               <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
-              <p className="text-fg-muted text-sm">Your reports will generate progress snapshots — emotion score, ROI, and discipline trends over time.</p>
+              <p className="text-fg-muted text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
               <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
             </div>
           )}
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                 Right now you&apos;re guessing whether you&apos;re getting better.
               </p>
               <p className="text-fg-muted text-sm mb-4">
-                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks — and
+                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks, and
                 saw it in the numbers. Your first report was a snapshot. Your fifth report is
                 proof you&apos;re a different bettor.
               </p>
@@ -453,7 +453,7 @@ export default function DashboardPage() {
               return (
                 <div className="finding-card border-l-caution">
                   <p className="text-caution text-sm font-mono">
-                    Your {streakCount}-report streak is at risk — run an autopsy in the next {daysLeft} day{daysLeft !== 1 ? 's' : ''} to keep it alive.
+                    Your {streakCount}-report streak is at risk. Run an autopsy in the next {daysLeft} day{daysLeft !== 1 ? 's' : ''} to keep it alive.
                     {newBetsSinceReport > 0 && ` You have ${newBetsSinceReport} new bets since your last check-in.`}
                   </p>
                   <Link href="/reports?run=true" className="text-sm text-scalpel hover:underline mt-1 inline-block font-mono">
@@ -478,10 +478,10 @@ export default function DashboardPage() {
             <div className="finding-card border-l-caution p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-fg-bright text-sm font-medium">⚠️ Your bankroll isn&apos;t set — this affects your grade</p>
+                  <p className="text-fg-bright text-sm font-medium">⚠️ Your bankroll isn&apos;t set, and this affects your grade</p>
                   <p className="text-fg-muted text-xs mt-1">
                     Your bankroll is the total amount you&apos;ve set aside for betting across all sportsbooks.
-                    Without it, we have to guess — and that guess directly impacts your overall grade, bankroll health rating,
+                    Without it, we have to guess, and that guess directly impacts your overall grade, bankroll health rating,
                     and risk analysis. Even a rough estimate makes your report significantly more accurate.
                   </p>
                 </div>
@@ -525,7 +525,7 @@ export default function DashboardPage() {
                   </p>
                 ) : daysSinceReport !== null && daysSinceReport > 12 ? (
                   <p className="text-fg-bright">
-                    It&apos;s been {daysSinceReport} days since your last autopsy — upload your recent bets and check in.
+                    It&apos;s been {daysSinceReport} days since your last autopsy. Upload your recent bets and check in.
                   </p>
                 ) : (
                   <p className="text-fg-bright">
