@@ -232,7 +232,7 @@ export default function LandingPage() {
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
-                {['3 full reports per month', '5,000 bets deep per report', 'Leak Prioritizer + What-If Simulator', 'Weekly email digest', 'Progress tracking over time'].map((f) => (
+                {['3 full reports per month', 'Leak Prioritizer + What-If Simulator', 'Weekly email digest', 'Progress tracking over time'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
                     <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
