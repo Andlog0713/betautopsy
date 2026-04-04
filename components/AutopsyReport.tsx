@@ -283,36 +283,95 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const prioritizedLeaks = useMemo(() => {
     const items: { name: string; type: 'bias' | 'leak'; cost: number; severity?: string; fix: string; detail?: string }[] = [];
 
+    // Known overlaps: bias name keywords → strategic leak category keywords
+    // When both refer to the same behavior, we keep whichever has the higher cost
+    const OVERLAP_KEYWORDS: [string[], string[]][] = [
+      [['parlay'], ['parlay']],
+      [['post-loss', 'post loss', 'chase', 'chasing', 'escalat'], ['post-loss', 'post loss', 'chase', 'chasing', 'escalat', 'tilt']],
+      [['recency'], ['recency', 'recent']],
+      [['favorite', 'favourite'], ['favorite', 'favourite', 'chalk']],
+      [['prop'], ['prop']],
+      [['live', 'in-game', 'in game'], ['live', 'in-game', 'in game']],
+      [['late night', 'late-night'], ['late night', 'late-night']],
+      [['underdog'], ['underdog']],
+    ];
+
+    const biasItems: typeof items = [];
     biases_detected.forEach((b) => {
       if (b.estimated_cost > 0) {
-        items.push({ name: b.bias_name, type: 'bias', cost: Math.abs(b.estimated_cost), severity: b.severity, fix: b.fix });
+        biasItems.push({ name: b.bias_name, type: 'bias', cost: Math.abs(b.estimated_cost), severity: b.severity, fix: b.fix });
       }
     });
 
     // Estimate $ cost for strategic leaks from bets data
     const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+    const avgStake = settled.length > 0 ? settled.reduce((s, b) => s + Math.abs(Number(b.stake)), 0) / settled.length : 0;
+
+    const leakItems: typeof items = [];
     strategic_leaks.forEach((leak) => {
       if (leak.roi_impact < 0) {
-        // Find matching bets — use exact sport and/or bet_type matching, not fuzzy includes
         const lower = leak.category.toLowerCase().trim();
+        // Strip leading "all " (e.g. "All Parlays" → "parlays")
+        const normalized = lower.replace(/^all\s+/, '');
+        // Singular form for matching (strip trailing 's')
+        const singular = normalized.replace(/s$/, '');
+
+        // Find matching bets with normalized matching
         const matching = settled.filter((b) => {
           const sport = b.sport.toLowerCase();
           const betType = b.bet_type.toLowerCase();
+          const betTypeSingular = betType.replace(/s$/, '');
           const combined = `${sport} ${betType}`;
-          // Exact match: "nba props" matches sport=nba + bet_type=prop/props
-          // Or single-word match: "nba" matches sport=nba, "parlays" matches bet_type=parlay
-          return combined === lower
-            || sport === lower
-            || betType === lower
-            || (lower.includes(' ') && sport === lower.split(' ')[0] && lower.split(' ').slice(1).some(w => betType.includes(w)));
+          const combinedSingular = `${sport} ${betTypeSingular}`;
+          return combined === normalized
+            || combinedSingular === singular
+            || sport === normalized || sport === singular
+            || betType === normalized || betTypeSingular === singular
+            || (normalized.includes(' ') && sport === normalized.split(' ')[0] && normalized.split(' ').slice(1).some(w => betType.includes(w) || betTypeSingular.includes(w.replace(/s$/, ''))));
         });
-        const totalLoss = matching.reduce((s, b) => s + Number(b.profit), 0);
-        const cost = Math.abs(totalLoss);
+
+        let cost: number;
+        if (matching.length > 0) {
+          // Use actual bet data
+          const totalLoss = matching.reduce((s, b) => s + Number(b.profit), 0);
+          cost = Math.abs(totalLoss);
+        } else if (leak.sample_size > 0 && avgStake > 0) {
+          // Fallback for time-based or unmatched categories: estimate from roi_impact
+          cost = Math.abs(leak.roi_impact / 100) * avgStake * leak.sample_size;
+        } else {
+          cost = 0;
+        }
+
         if (cost > 0) {
-          items.push({ name: leak.category, type: 'leak', cost, fix: leak.suggestion, detail: leak.detail });
+          leakItems.push({ name: leak.category, type: 'leak', cost, fix: leak.suggestion, detail: leak.detail });
         }
       }
     });
+
+    // De-duplicate: when a bias and leak overlap, keep the one with higher cost
+    const usedBiasIndices = new Set<number>();
+    const usedLeakIndices = new Set<number>();
+
+    for (let bi = 0; bi < biasItems.length; bi++) {
+      const biasLower = biasItems[bi].name.toLowerCase();
+      for (let li = 0; li < leakItems.length; li++) {
+        const leakLower = leakItems[li].name.toLowerCase();
+        const overlaps = OVERLAP_KEYWORDS.some(([biasKws, leakKws]) =>
+          biasKws.some(kw => biasLower.includes(kw)) && leakKws.some(kw => leakLower.includes(kw))
+        );
+        if (overlaps) {
+          // Keep the higher cost, mark the other as used
+          if (biasItems[bi].cost >= leakItems[li].cost) {
+            usedLeakIndices.add(li);
+          } else {
+            usedBiasIndices.add(bi);
+          }
+        }
+      }
+    }
+
+    biasItems.forEach((item, i) => { if (!usedBiasIndices.has(i)) items.push(item); });
+    leakItems.forEach((item, i) => { if (!usedLeakIndices.has(i)) items.push(item); });
 
     items.sort((a, b) => b.cost - a.cost);
     return items;
@@ -658,7 +717,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div>
               <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">TOTAL RECOVERABLE</p>
               <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
-              <p className="text-[11px] text-fg-dim mt-1">Estimated money left on the table from all detected leaks and biases</p>
+              <p className="text-[11px] text-fg-dim mt-1">Estimated money left on the table from all detected leaks and biases. Some leaks may overlap.</p>
             </div>
             <span className="font-mono text-[10px] text-fg-dim">See details →</span>
           </div>
@@ -1602,6 +1661,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
                   <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+                  <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-3">
@@ -1938,6 +1998,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
                   <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+                  <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-3">
