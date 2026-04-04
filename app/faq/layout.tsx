@@ -17,7 +17,12 @@ export default function FAQLayout({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <footer className="border-t border-white/[0.04]">
-        <div className="max-w-3xl mx-auto px-4 md:px-8 py-8">
+        <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <a href="/privacy" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Privacy Policy</a>
+            <span className="text-fg-dim text-xs">·</span>
+            <a href="/terms" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Terms of Use</a>
+          </div>
           <p className="text-fg-dim text-xs text-center">
             For entertainment and educational purposes only. Not gambling advice. 21+.
             If you or someone you know has a gambling problem, call 1-800-GAMBLER.

@@ -300,6 +300,7 @@ export default function LandingPage() {
                 { label: 'Quiz', href: '/quiz' },
                 { label: 'How to Upload', href: '/how-to-upload' },
                 { label: 'Privacy', href: '/privacy' },
+                { label: 'Terms', href: '/terms' },
                 { label: 'Log in', href: '/login' },
                 { label: 'Sign up', href: '/signup' },
               ].map(link => (

@@ -9,7 +9,12 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <footer className="border-t border-white/[0.04]">
-        <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <a href="/privacy" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Privacy Policy</a>
+            <span className="text-fg-dim text-xs">·</span>
+            <a href="/terms" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Terms of Use</a>
+          </div>
           <p className="text-fg-dim text-xs text-center">
             BetAutopsy provides behavioral analysis and educational insights, not
             gambling or financial advice. Past results don&apos;t guarantee future outcomes.

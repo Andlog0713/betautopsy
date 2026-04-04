@@ -367,9 +367,15 @@ export default function DashboardShell({
           {children}
         </div>
         <footer className="text-center py-6 px-4 space-y-2">
-          <Link href="/privacy" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
-            Privacy Policy
-          </Link>
+          <div className="flex items-center justify-center gap-2">
+            <Link href="/privacy" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
+              Privacy Policy
+            </Link>
+            <span className="text-fg-dim text-[10px]">·</span>
+            <Link href="/terms" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
+              Terms of Use
+            </Link>
+          </div>
           <p className="font-mono text-[9px] text-fg-dim tracking-wider max-w-xl mx-auto leading-relaxed">
             BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS. NOT
             GAMBLING OR FINANCIAL ADVICE. PAST RESULTS DON&apos;T GUARANTEE FUTURE OUTCOMES.
