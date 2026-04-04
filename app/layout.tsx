@@ -54,9 +54,9 @@ export default function RootLayout({
     operatingSystem: 'Web',
     description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis: cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
     offers: [
-      { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free' },
-      { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },
-      { '@type': 'Offer', price: '24.99', priceCurrency: 'USD', name: 'Sharp', billingIncrement: 'P1M' },
+      { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free Snapshot' },
+      { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Full Report' },
+      { '@type': 'Offer', price: '19.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },
     ],
   };
 

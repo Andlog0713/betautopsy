@@ -414,7 +414,7 @@ export default function ReportsPage() {
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Discipline Score tracking over time — proof that you&apos;re getting sharper</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Analysis — $9.99/mo
+              Unlock Full Report — $9.99
             </a>
           </div>
 
@@ -444,7 +444,7 @@ export default function ReportsPage() {
                 <p className="text-2xl mb-2">🔒</p>
                 <p className="text-fg-bright font-medium mb-1">Pro unlocks your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and progress tracking that proves you&apos;re actually changing.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Unlock with Pro — $9.99/mo</a>
+                <a href="/pricing" className="btn-primary inline-block text-sm">See pricing</a>
               </div>
             </div>
           </div>
@@ -453,7 +453,7 @@ export default function ReportsPage() {
 
       {/* Free tier note */}
       {tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
-        <p className="text-fg-muted text-sm">Free tier: 1 autopsy report included (analyzes your 50 most recent bets).</p>
+        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports (analyzes your 50 most recent bets). Unlock the full analysis for $9.99.</p>
       )}
 
       {/* Analyze controls */}

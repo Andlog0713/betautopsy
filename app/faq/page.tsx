@@ -138,12 +138,12 @@ export default function FAQPage() {
       {
         '@type': 'Question',
         name: 'How many bets do I need for a meaningful analysis?',
-        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. The free tier analyzes your 50 most recent bets. Pro analyzes up to 2,000, and Sharp up to 5,000.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze your 50 most recent bets. Full reports analyze up to 2,000 bets, and Pro subscribers can analyze up to 5,000.' },
       },
       {
         '@type': 'Question',
         name: 'What\'s free vs. paid?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Free: 1 autopsy report covering your 50 most recent bets. Pro ($9.99/month): unlimited reports up to 2,000 bets, full bias suite, weekly digest, PDF export. Sharp ($24.99/month): everything in Pro plus Leak Prioritizer and What-If Simulator.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'Free: unlimited snapshot reports (50 most recent bets) showing grade, archetype, and top bias. Full Report ($9.99 one-time): complete 5-chapter analysis of up to 2,000 bets. Pro ($19.99/month or $149.99/year): 3 full reports per month, up to 5,000 bets, weekly digest, and progress tracking.' },
       },
       {
         '@type': 'Question',

@@ -34,9 +34,9 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-              Start Free Pro Trial
+              Upload Your Bets — Free
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: 7 days of Pro free, no credit card</span>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Free snapshot report. No credit card.</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
@@ -199,10 +199,13 @@ export default function LandingPage() {
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
             <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
-              <span className="case-header block mb-3">Full Report</span>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="case-header">Full Report</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
+              </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
-                <span className="text-fg-muted text-sm font-mono"> one-time</span>
+                <p className="text-fg-muted text-xs mt-1">Pay once. No subscription.</p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {[

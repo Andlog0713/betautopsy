@@ -111,10 +111,13 @@ export default function PricingPage() {
 
         {/* Single Report */}
         <div className="card p-6 flex flex-col">
-          <h2 className="font-bold text-2xl">Full Report</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-bold text-2xl">Full Report</h2>
+            <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
+          </div>
           <div className="mt-2 mb-4">
             <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
-            <span className="text-fg-muted text-sm"> one-time</span>
+            <p className="text-fg-muted text-xs mt-1">Pay once. Keep the report forever.</p>
           </div>
           <ul className="space-y-2 flex-1 mb-6">
             <li className="text-sm text-fg-muted flex items-start gap-2">

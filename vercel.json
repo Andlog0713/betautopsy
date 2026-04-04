@@ -11,10 +11,6 @@
     {
       "path": "/api/onboarding-emails",
       "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/expire-trials",
-      "schedule": "0 6 * * *"
     }
   ]
 }

@@ -107,9 +107,9 @@ export default function ComparePage() {
           <h2 className="font-bold text-2xl">Upload Comparison</h2>
           <p className="text-fg-muted text-sm max-w-md mx-auto">
             Compare how you perform across different sportsbooks, time periods, or bet sources.
-            Available on Pro and Sharp.
+            Available with Pro subscription.
           </p>
-          <Link href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro — $9.99/mo</Link>
+          <Link href="/pricing" className="btn-primary inline-block text-sm">Go Pro — $19.99/mo</Link>
         </div>
       </div>
     );

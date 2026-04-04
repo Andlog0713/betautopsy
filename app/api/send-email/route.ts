@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
   let html = '';
 
-  if (template === 'lifetime-sharp') {
+  if (template === 'lifetime-pro') {
     const name = searchParams.get('name') || 'there';
     html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -47,14 +47,14 @@ export async function GET(request: Request) {
 
 <!-- Content -->
 <tr><td style="padding:32px">
-  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Sharp — for life.</h1>
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Pro — for life.</h1>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
     Hey ${name},
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
-    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Sharp subscription</strong> — our highest tier.
+    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Pro subscription</strong> — our top tier.
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px">
