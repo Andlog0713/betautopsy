@@ -158,7 +158,7 @@ export default function NavBar() {
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>
               ) : (
                 <div className="space-y-3">
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Upload bets — free</Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Upload bets, free</Link>
                   <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="btn-secondary text-center block font-mono text-sm">Log in</Link>
                 </div>
               )}

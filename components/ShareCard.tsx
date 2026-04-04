@@ -284,7 +284,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData; roastStats?:
 
         {/* CTA */}
         <div style={{ textAlign: 'center', fontSize: 12, color: '#848D9A', marginTop: 8 }}>
-          betautopsy.com — get your autopsy report
+          betautopsy.com | get your autopsy report
         </div>
       </div>
     </div>

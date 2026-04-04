@@ -34,7 +34,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-              Upload Your Bets — Free
+              Upload Your Bets, Free
             </Link>
             <span className="text-fg-muted text-xs mt-3 sm:mt-4">Free snapshot report. No credit card.</span>
           </div>

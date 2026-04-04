@@ -157,7 +157,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '🔥',
       headline: 'Your stakes jumped after losses',
-      detail: `Your average bet was $${stats.avgStakeAfterLoss.toLocaleString()} after a loss vs $${stats.avgStakeAfterWin.toLocaleString()} after a win — a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
+      detail: `Your average bet was $${stats.avgStakeAfterLoss.toLocaleString()} after a loss vs $${stats.avgStakeAfterWin.toLocaleString()} after a win, a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
     };
   }
 
@@ -167,7 +167,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '🎰',
       headline: `${pct}% of your bets were parlays`,
-      detail: `Your parlay ROI this week: ${stats.parlayRoi >= 0 ? '+' : ''}${stats.parlayRoi}%. Your straight bet ROI: ${stats.straightBetRoi >= 0 ? '+' : ''}${stats.straightBetRoi}%. ${stats.straightBetRoi > stats.parlayRoi ? 'Your straight bets are outperforming — consider shifting volume.' : 'Keep an eye on this — parlays carry significantly higher sportsbook edge.'}`,
+      detail: `Your parlay ROI this week: ${stats.parlayRoi >= 0 ? '+' : ''}${stats.parlayRoi}%. Your straight bet ROI: ${stats.straightBetRoi >= 0 ? '+' : ''}${stats.straightBetRoi}%. ${stats.straightBetRoi > stats.parlayRoi ? 'Your straight bets are outperforming. Consider shifting volume.' : 'Keep an eye on this. Parlays carry significantly higher sportsbook edge.'}`,
     };
   }
 
@@ -176,7 +176,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '🌙',
       headline: `${stats.lateNightBets} late-night bets this week`,
-      detail: 'Bets placed late at night tend to be less researched and more impulsive. Consider setting a betting cutoff time — your morning-you makes better decisions than your midnight-you.',
+      detail: 'Bets placed late at night tend to be less researched and more impulsive. Consider setting a betting cutoff time. Your morning-you makes better decisions than your midnight-you.',
     };
   }
 
@@ -194,7 +194,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '📈',
       headline: `+${stats.roi}% ROI this week`,
-      detail: `Strong week — ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
+      detail: `Strong week. ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
     };
   }
 
@@ -203,7 +203,7 @@ export function generateInsight(stats: DigestStats): Insight {
     return {
       emoji: '📉',
       headline: 'Tough week',
-      detail: `${stats.wins}-${stats.losses} for -$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. Everyone has down weeks — the key is whether your behavior stayed consistent. Did bet sizes stay flat? Did you avoid chasing? If yes, the process is working even when results don't show it yet.`,
+      detail: `${stats.wins}-${stats.losses} for -$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. Everyone has down weeks. The key is whether your behavior stayed consistent. Did bet sizes stay flat? Did you avoid chasing? If yes, the process is working even when results don't show it yet.`,
     };
   }
 
@@ -234,5 +234,5 @@ export function generatePositiveLead(stats: DigestStats): PositiveLead {
   if (stats.longestWinStreak >= 3) {
     return { emoji: '🔥', text: `${stats.longestWinStreak}-bet win streak this week` };
   }
-  return { emoji: '📊', text: `${stats.totalBets} bets placed this week — let's see how they went` };
+  return { emoji: '📊', text: `${stats.totalBets} bets placed this week. Let's see how they went` };
 }

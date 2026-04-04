@@ -191,7 +191,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Any context — what game, why this bet, how you're feeling..."
+              placeholder="Any context: what game, why this bet, how you're feeling..."
               className="input-field w-full h-20 resize-none text-sm"
               maxLength={500}
             />

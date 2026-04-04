@@ -94,7 +94,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
               disabled={loading || !reportId}
               className="btn-primary w-full"
             >
-              {loading ? 'Redirecting...' : isPro ? 'Unlock Report — $4.99' : 'Unlock Report — $9.99'}
+              {loading ? 'Redirecting...' : isPro ? 'Unlock Report: $4.99' : 'Unlock Report: $9.99'}
             </button>
             {!isPro && (
               <a href="/pricing" className="block text-xs text-fg-muted hover:text-scalpel transition-colors">

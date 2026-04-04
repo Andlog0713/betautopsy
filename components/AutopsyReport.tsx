@@ -374,7 +374,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="flex justify-between items-start mb-7">
         <div>
           <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1.5">
-            AUTOPSY REPORT — #{reportId ? `BA-${reportId.slice(0, 4).toUpperCase()}` : 'BA-LIVE'}
+            AUTOPSY REPORT #{reportId ? `BA-${reportId.slice(0, 4).toUpperCase()}` : 'BA-LIVE'}
             {analysis.dfs_mode && <span className="ml-2 text-purple-400">· {analysis.dfs_platform ?? 'DFS'}</span>}
           </p>
           <p className="font-mono text-[10px] text-fg-dim tracking-[1px]">
@@ -395,7 +395,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <span className="text-fg-dim">▸</span> ABOUT THIS REPORT
         </summary>
         <div className="px-4 pb-4 text-xs text-fg-muted leading-relaxed border-t border-white/[0.04]">
-          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong> — the psychological patterns, emotional responses, and cognitive biases that affect every bet you place.
+          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong>: the psychological patterns, emotional responses, and cognitive biases that affect every bet you place.
         </div>
       </details>
 
@@ -511,7 +511,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ── BetIQ Score — Pro only ── */}
       {(tier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
-          <div className="case-header mb-4">BETIQ — SKILL ASSESSMENT</div>
+          <div className="case-header mb-4">BETIQ: SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
             <span className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}</span>
             <span className="font-mono text-sm text-fg-dim">/100</span>
@@ -522,7 +522,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {[
               { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
               { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
-              { label: 'Sophistication', hint: 'Straight bets vs parlays — higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
+              { label: 'Sophistication', hint: 'Straight bets vs parlays. Higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
               { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
               { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
               { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
@@ -542,7 +542,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {(tier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
-          <div className="case-header mb-3">BETIQ — SKILL ASSESSMENT</div>
+          <div className="case-header mb-3">BETIQ: SKILL ASSESSMENT</div>
           <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
         </div>
       )}
@@ -550,7 +550,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* BetIQ — free tier teaser */}
       {tier === 'free' && analysis.betiq && (
         <div className="case-card p-6 relative overflow-hidden">
-          <div className="case-header mb-2">BETIQ — SKILL ASSESSMENT</div>
+          <div className="case-header mb-2">BETIQ: SKILL ASSESSMENT</div>
           <div className="blur-sm pointer-events-none">
             <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
             <div className="vitals-strip grid-cols-3 mt-4">
@@ -776,7 +776,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && strategic_leaks.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Strategic Leaks</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume — you&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume. You&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -834,7 +834,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
         <p className="text-fg-muted text-sm mb-2">{emotionLabel(emotionScore)}</p>
         <p className="text-fg-dim text-xs mb-3 italic">
-          Measures how much emotions drive your betting decisions — chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
+          Measures how much emotions drive your betting decisions: chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
         {emotionBreakdown && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.04]">
@@ -890,12 +890,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              { label: 'Bet size swings', hint: 'How much your stakes vary — higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
+              { label: 'Bet size swings', hint: 'How much your stakes vary. Higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
               { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
               { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
               { label: 'Knowing when to stop', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
               { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
-              { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing — reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
+              { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
             ].map(signal => (
               <div key={signal.label} className="bg-surface-raised p-3 border border-white/[0.04] rounded-sm">
                 <div className="mb-1.5">
@@ -917,7 +917,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting — some help you, some hurt you.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting. Some help you, some hurt you.</p>
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
               <div key={i} className="card p-5 flex gap-4">
@@ -1046,7 +1046,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Timing Patterns</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Your performance broken down by when you place bets — reveals hidden patterns in your schedule.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
 
           {/* Day of Week Chart */}
           <div className="card p-6">
@@ -1189,7 +1189,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Odds Intelligence</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">How you perform at different price points — and whether you&apos;re finding real value or just getting lucky.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
 
           {/* Odds Bucket Table */}
           <div className="card overflow-hidden">
@@ -1201,7 +1201,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Bets</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Win Rate</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3 hidden sm:table-cell">Implied</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3" title="Your win rate minus what the odds predict — positive means you're beating the line">Edge vs Odds</th>
+                    <th className="text-right text-fg-muted font-medium px-4 py-3" title="Your win rate minus what the odds predict. Positive means you're beating the line">Edge vs Odds</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Profit</th>
                   </tr>
@@ -1307,9 +1307,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <p className="text-fg-dim text-[10px] mt-2 italic">
                 {analysis.odds_analysis.luck_rating > 1
-                  ? 'You\'re winning more than the odds predict. Could be skill, could be variance — more bets will tell.'
+                  ? 'You\'re winning more than the odds predict. Could be skill, could be variance. More bets will tell.'
                   : analysis.odds_analysis.luck_rating < -1
-                  ? 'You\'re winning less than expected. Could be bad luck — or the lines you\'re taking aren\'t as good as they look.'
+                  ? 'You\'re winning less than expected. Could be bad luck, or the lines you\'re taking aren\'t as good as they look.'
                   : 'Your results are tracking close to what the odds predict. Solid baseline.'}
               </p>
             </div>
@@ -1443,7 +1443,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time — like a single night of betting.</p>
+          <p className="text-fg-dim text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time, like a single night of betting.</p>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Worst session */}
             {analysis.session_analysis.worst_session && (
@@ -1546,7 +1546,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
                       <span
-                        title={area.confidence === 'high' ? '75+ bets — statistically reliable' : area.confidence === 'medium' ? '30-75 bets — likely real but needs more data' : 'Under 30 bets — could be noise'}
+                        title={area.confidence === 'high' ? '75+ bets, statistically reliable' : area.confidence === 'medium' ? '30-75 bets, likely real but needs more data' : 'Under 30 bets, could be noise'}
                         className={`text-xs px-2 py-0.5 rounded-sm font-mono cursor-help ${
                         area.confidence === 'high' ? 'bg-win/10 text-win' :
                         area.confidence === 'medium' ? 'bg-caution/10 text-caution' :
@@ -1776,7 +1776,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </span>
           </div>
           <p className="text-fg-muted text-xs">
-            Measures how consistently you&apos;re building better betting habits — tracking, sizing, emotional control, and strategic focus.
+            Measures how consistently you&apos;re building better betting habits: tracking, sizing, emotional control, and strategic focus.
           </p>
           <div className="w-full h-3 bg-base rounded-full overflow-hidden">
             <div
@@ -1792,7 +1792,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {([
               { label: 'Tracking', val: analysis.discipline_score.tracking, hint: 'Consistency of uploading and reviewing your bets' },
               { label: 'Sizing', val: analysis.discipline_score.sizing, hint: 'How flat and controlled your bet sizing is' },
-              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score — staying cool means more control' },
+              { label: 'Control', val: analysis.discipline_score.control, hint: 'Tied to your emotion score. Staying cool means more control' },
               { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
             ]).map(({ label, val, hint }) => (
               <div key={label}>
@@ -1822,7 +1822,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             };
             return (
               <p className="text-fg-muted text-xs">
-                Weakest area: <span className="text-fg-bright">{weakest.name} ({weakest.val}/25)</span> — {tips[weakest.name]}
+                Weakest area: <span className="text-fg-bright">{weakest.name} ({weakest.val}/25)</span>. {tips[weakest.name]}
               </p>
             );
           })()}

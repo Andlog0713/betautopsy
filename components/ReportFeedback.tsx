@@ -28,7 +28,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
   if (submitted) {
     return (
       <div className="card p-5 text-center">
-        <p className="text-fg-muted text-sm">Thanks — this helps us get sharper.</p>
+        <p className="text-fg-muted text-sm">Thanks, this helps us get sharper.</p>
       </div>
     );
   }

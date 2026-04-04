@@ -12,7 +12,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'why-am-i-losing-at-sports-betting',
     title: 'Why Am I Losing at Sports Betting? A Behavioral Analysis',
-    description: 'Most bettors lose money — but not for the reasons they think. Here are the 5 behavioral patterns that silently drain your bankroll.',
+    description: 'Most bettors lose money, but not for the reasons they think. Here are the 5 behavioral patterns that silently drain your bankroll.',
     publishedAt: '2026-02-10',
     readTime: '7 min read',
     tags: ['betting psychology', 'behavioral analysis', 'bankroll management'],
@@ -20,7 +20,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'parlay-addiction-the-real-math',
     title: 'The Real Math Behind Parlay Addiction',
-    description: 'Parlays are the most popular bet type in America — and the most profitable for sportsbooks. Here\'s what the math actually says.',
+    description: 'Parlays are the most popular bet type in America, and the most profitable for sportsbooks. Here\'s what the math actually says.',
     publishedAt: '2026-02-17',
     readTime: '6 min read',
     tags: ['parlays', 'expected value', 'sportsbook edge'],
@@ -28,7 +28,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'cognitive-biases-destroying-your-bankroll',
     title: '7 Cognitive Biases That Are Destroying Your Bankroll',
-    description: 'Loss chasing, favorite bias, and 5 other cognitive traps that cost recreational bettors hundreds every month — and how to spot them.',
+    description: 'Loss chasing, favorite bias, and 5 other cognitive traps that cost recreational bettors hundreds every month, and how to spot them.',
     publishedAt: '2026-02-24',
     readTime: '8 min read',
     tags: ['cognitive biases', 'loss chasing', 'favorite bias', 'betting psychology'],
@@ -36,7 +36,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'psychology-of-loss-chasing',
     title: 'The Psychology of Loss Chasing: Why You Can\'t Stop',
-    description: 'After a losing streak, something in your brain says "bet bigger." Here\'s the neuroscience behind it — and a practical framework to stop.',
+    description: 'After a losing streak, something in your brain says "bet bigger." Here\'s the neuroscience behind it, and a practical framework to stop.',
     publishedAt: '2026-03-03',
     readTime: '7 min read',
     tags: ['loss chasing', 'betting psychology', 'behavioral patterns'],
@@ -52,7 +52,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-analyze-your-betting-history',
     title: 'How to Analyze Your Betting History (Beyond Win/Loss Record)',
-    description: 'Win rate tells you almost nothing. Here are the 5 metrics that actually explain where your money is going — and how to calculate them from your own data.',
+    description: 'Win rate tells you almost nothing. Here are the 5 metrics that actually explain where your money is going, and how to calculate them from your own data.',
     publishedAt: '2026-03-17',
     readTime: '8 min read',
     tags: ['betting history', 'bet tracking', 'ROI analysis', 'behavioral analysis'],
@@ -68,7 +68,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'why-am-i-losing-on-prizepicks',
     title: 'Why Am I Losing on PrizePicks? 5 Behavioral Mistakes',
-    description: 'PrizePicks losses come from different behavioral traps than sportsbook losses. Here are the 5 mistakes costing you money — and what to do about them.',
+    description: 'PrizePicks losses come from different behavioral traps than sportsbook losses. Here are the 5 mistakes costing you money, and what to do about them.',
     publishedAt: '2026-03-24',
     readTime: '8 min read',
     tags: ['prizepicks', 'DFS', 'behavioral analysis', 'pick\'em'],

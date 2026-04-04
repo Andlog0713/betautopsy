@@ -409,10 +409,10 @@ export default function ReportsPage() {
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Strategic leaks ranked by impact</li>
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator — see what fixing each leak saves you</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Report — $9.99
+              Unlock Full Report: $9.99
             </a>
           </div>
 
@@ -431,9 +431,9 @@ export default function ReportsPage() {
               <div className="card p-5 mt-3">
                 <h3 className="font-bold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet — your oversized bets lose at 71%</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm — your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume — you&apos;re currently at 43%</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>
@@ -442,7 +442,7 @@ export default function ReportsPage() {
                 <p className="text-2xl mb-2">🔒</p>
                 <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report — $9.99</a>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: $9.99</a>
               </div>
             </div>
           </div>
@@ -473,7 +473,7 @@ export default function ReportsPage() {
                 <optgroup label="By Upload">
                   {uploads.map((u) => (
                     <option key={u.id} value={`upload:${u.id}`}>
-                      {u.filename ?? 'Upload'} — {u.bet_count} bets, {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {u.filename ?? 'Upload'}: {u.bet_count} bets, {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </option>
                   ))}
                 </optgroup>
@@ -753,10 +753,10 @@ function AnalyzingState({ betCount }: { betCount: number }) {
   const estimate = betCount < 50
     ? 'This usually takes about 15 seconds.'
     : betCount <= 150
-    ? `Analyzing ${betCount} bets — this usually takes 30-45 seconds.`
+    ? `Analyzing ${betCount} bets, this usually takes 30-45 seconds.`
     : betCount <= 500
-    ? `Deep analysis on ${betCount} bets — this can take 1-2 minutes.`
-    : `Comprehensive analysis on ${betCount} bets — sit tight, this may take a few minutes.`;
+    ? `Deep analysis on ${betCount} bets. This can take 1-2 minutes.`
+    : `Comprehensive analysis on ${betCount} bets. Sit tight, this may take a few minutes.`;
 
   // Simulated progress
   const progress = Math.min(92,
@@ -783,7 +783,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
         </div>
       </div>
       {elapsed > 90 && (
-        <p className="text-caution/70 text-xs">Still working — large bet histories take longer to analyze.</p>
+        <p className="text-caution/70 text-xs">Still working. Large bet histories take longer to analyze.</p>
       )}
       <p className="text-fg-muted text-xs font-mono">Elapsed: {timeStr}</p>
     </div>

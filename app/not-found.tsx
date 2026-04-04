@@ -20,7 +20,7 @@ export default function NotFound() {
         </div>
       </div>
       <p className="text-fg-dim text-xs text-center mt-16 max-w-sm">
-        BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+        BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
       </p>
     </div>
   );

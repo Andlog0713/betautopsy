@@ -38,10 +38,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     question: 'How many bets do you place in a typical week?',
     style: 'default',
     options: [
-      { label: '1-3 — only when I see something I love', value: 'few', scores: { volume: 2, selectivity: 9 } },
-      { label: '5-10 — a few per day on game days', value: 'moderate', scores: { volume: 5, selectivity: 5 } },
-      { label: '15-25 — I bet most games I watch', value: 'high', scores: { volume: 8, selectivity: 3 } },
-      { label: '30+ — if there\'s a line, I\'m on it', value: 'max', scores: { volume: 10, selectivity: 1 } },
+      { label: '1-3, only when I see something I love', value: 'few', scores: { volume: 2, selectivity: 9 } },
+      { label: '5-10, a few per day on game days', value: 'moderate', scores: { volume: 5, selectivity: 5 } },
+      { label: '15-25, I bet most games I watch', value: 'high', scores: { volume: 8, selectivity: 3 } },
+      { label: '30+, if there\'s a line, I\'m on it', value: 'max', scores: { volume: 10, selectivity: 1 } },
     ],
   },
   // 2. Parlay reaction (fun, low stakes)
@@ -51,7 +51,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     subtext: 'Be honest about your reaction.',
     style: 'bold',
     options: [
-      { label: 'They\'re right — I mostly stick to straight bets', value: 'rare', scores: { parlay_lean: 1, discipline: 8 } },
+      { label: 'They\'re right. I mostly stick to straight bets', value: 'rare', scores: { parlay_lean: 1, discipline: 8 } },
       { label: 'I know the math, but I still throw a few in for fun', value: 'some', scores: { parlay_lean: 5, discipline: 5 } },
       { label: 'I show them my one big hit from 3 months ago', value: 'alot', scores: { parlay_lean: 8, discipline: 3 } },
       { label: 'I add another leg just to prove a point', value: 'everything', scores: { parlay_lean: 10, discipline: 1 } },
@@ -63,7 +63,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     question: 'Your team is a -300 favorite. Do you bet them?',
     style: 'default',
     options: [
-      { label: 'Absolutely — they\'re going to win', value: 'yes', scores: { fav_lean: 9, discipline: 3 } },
+      { label: 'Absolutely, they\'re going to win', value: 'yes', scores: { fav_lean: 9, discipline: 3 } },
       { label: 'Only if I think the line is off', value: 'value', scores: { fav_lean: 4, discipline: 8 } },
       { label: 'I\'d rather take the dog at +250', value: 'dog', scores: { fav_lean: 1, discipline: 6 } },
       { label: 'I\'d parlay them with something else', value: 'parlay', scores: { fav_lean: 7, parlay_lean: 7 } },
@@ -76,19 +76,19 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     subtext: 'Line shopping = using multiple books to find the best odds.',
     style: 'default',
     options: [
-      { label: 'Just one — I\'m loyal', value: 'one', scores: { discipline: 3, selectivity: 4 } },
-      { label: '2-3 — I check a couple', value: 'few', scores: { discipline: 6, selectivity: 6 } },
-      { label: '4+ — I always shop for the best line', value: 'many', scores: { discipline: 9, selectivity: 8 } },
+      { label: 'Just one. I\'m loyal', value: 'one', scores: { discipline: 3, selectivity: 4 } },
+      { label: '2-3, I check a couple', value: 'few', scores: { discipline: 6, selectivity: 6 } },
+      { label: '4+, I always shop for the best line', value: 'many', scores: { discipline: 9, selectivity: 8 } },
       { label: 'Whatever\'s on my phone when I\'m watching', value: 'whatever', scores: { discipline: 2, emotion: 5 } },
     ],
   },
   // 5. Bet sizing (getting more honest)
   {
     id: 'q5',
-    question: 'Be honest — do your bet sizes stay consistent?',
+    question: 'Be honest: do your bet sizes stay consistent?',
     style: 'default',
     options: [
-      { label: 'Yes — every bet is basically the same size', value: 'flat', scores: { variance: 1, discipline: 9, emotion: 2 } },
+      { label: 'Yes, every bet is basically the same size', value: 'flat', scores: { variance: 1, discipline: 9, emotion: 2 } },
       { label: 'Mostly, with occasional bigger plays', value: 'mostly', scores: { variance: 4, discipline: 6, emotion: 4 } },
       { label: 'They swing a lot based on how I\'m feeling', value: 'swing', scores: { variance: 8, discipline: 2, emotion: 8 } },
       { label: 'I go big when I\'m confident, small when I\'m not', value: 'confidence', scores: { variance: 6, discipline: 4, emotion: 6 } },
@@ -101,7 +101,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     style: 'default',
     options: [
       { label: 'Every single one in a spreadsheet or app', value: 'every', scores: { discipline: 10, selectivity: 6 } },
-      { label: 'Most of them — I try to keep records', value: 'most', scores: { discipline: 7 } },
+      { label: 'Most of them. I try to keep records', value: 'most', scores: { discipline: 7 } },
       { label: 'I check my sportsbook balance to see how I\'m doing', value: 'balance', scores: { discipline: 3, emotion: 4 } },
       { label: 'I check my balance and whatever it says, I don\'t want to talk about it', value: 'no', scores: { discipline: 1, emotion: 5 } },
     ],
@@ -113,7 +113,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     style: 'default',
     options: [
       { label: 'Take a break and come back tomorrow', value: 'break', scores: { discipline: 9, chase_tendency: 1, emotion: 2 } },
-      { label: 'Stick to my plan — the next bet is independent', value: 'plan', scores: { discipline: 7, chase_tendency: 2, emotion: 3 } },
+      { label: 'Stick to my plan. The next bet is independent', value: 'plan', scores: { discipline: 7, chase_tendency: 2, emotion: 3 } },
       { label: 'Bet bigger on the next one to make it back', value: 'bigger', scores: { discipline: 1, chase_tendency: 9, emotion: 8, variance: 8 } },
       { label: 'Throw a parlay together to get even fast', value: 'parlay', scores: { discipline: 2, chase_tendency: 8, emotion: 7, parlay_lean: 9 } },
     ],
@@ -125,8 +125,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     style: 'default',
     options: [
       { label: 'Withdraw the winnings and reset', value: 'withdraw', scores: { discipline: 9, emotion: 2 } },
-      { label: 'Keep my normal routine — the win doesn\'t change anything', value: 'normal', scores: { discipline: 8, emotion: 3 } },
-      { label: 'Ride the hot streak — bet bigger for a few days', value: 'ride', scores: { discipline: 2, emotion: 7, variance: 7 } },
+      { label: 'Keep my normal routine. The win doesn\'t change anything', value: 'normal', scores: { discipline: 8, emotion: 3 } },
+      { label: 'Ride the hot streak, bet bigger for a few days', value: 'ride', scores: { discipline: 2, emotion: 7, variance: 7 } },
       { label: 'Roll it into an even bigger parlay', value: 'roll', scores: { discipline: 1, emotion: 8, parlay_lean: 9, variance: 9 } },
     ],
   },
@@ -150,7 +150,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     options: [
       { label: 'I review my bets to find what went wrong', value: 'review', scores: { discipline: 9, emotion: 3, chase_tendency: 2 } },
       { label: 'Frustrated but I stick to the process', value: 'frustrated', scores: { discipline: 6, emotion: 5, chase_tendency: 4 } },
-      { label: 'I\'m due — variance has to swing back', value: 'due', scores: { discipline: 3, emotion: 6, chase_tendency: 7 } },
+      { label: 'I\'m due. Variance has to swing back', value: 'due', scores: { discipline: 3, emotion: 6, chase_tendency: 7 } },
       { label: 'Time to change everything up', value: 'change', scores: { discipline: 2, emotion: 8, chase_tendency: 6, variance: 7 } },
     ],
   },
@@ -161,7 +161,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     style: 'scenario',
     options: [
       { label: 'I do my own research before deciding anything', value: 'research', scores: { discipline: 9, selectivity: 8, emotion: 2 } },
-      { label: 'The line looks decent — I\'m tailing', value: 'tail', scores: { discipline: 5, emotion: 5 } },
+      { label: 'The line looks decent, I\'m tailing', value: 'tail', scores: { discipline: 5, emotion: 5 } },
       { label: 'I\'m in, AND I\'m adding 2 more legs to make it spicier', value: 'add_legs', scores: { discipline: 1, emotion: 7, parlay_lean: 9 } },
       { label: 'I fade it. My friend is always wrong.', value: 'fade', scores: { discipline: 6, emotion: 3, selectivity: 6 } },
     ],
@@ -305,23 +305,23 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   let archetype: QuizResult['archetype'];
 
   if (avg.discipline >= 7.5 && avg.emotion <= 3.5 && avg.selectivity >= 6) {
-    archetype = { name: 'The Natural', emoji: '🧊', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge — most bettors would kill for your self-control.' };
+    archetype = { name: 'The Natural', emoji: '🧊', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
   } else if (avg.discipline >= 6 && avg.variance >= 6 && avg.selectivity >= 5) {
     archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
   } else if (avg.emotion >= 6 && avg.chase_tendency >= 6 && avg.discipline <= 4) {
-    archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#f97316', description: 'Your reads aren\'t bad — but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
+    archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#f97316', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
   } else if (avg.fav_lean >= 7 && avg.discipline >= 4) {
-    archetype = { name: 'Chalk Grinder', emoji: '📋', color: '#fbbf24', description: 'You play it safe with favorites and that feels smart — but you\'re paying a tax on every bet. The juice is eating you alive.' };
+    archetype = { name: 'Chalk Grinder', emoji: '📋', color: '#fbbf24', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
   } else if (avg.parlay_lean >= 7) {
-    archetype = { name: 'Parlay Dreamer', emoji: '🎰', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid — the parlays are where the dream meets reality (and reality usually wins).' };
+    archetype = { name: 'Parlay Dreamer', emoji: '🎰', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
   } else if (avg.selectivity >= 7 && avg.volume <= 4) {
-    archetype = { name: 'Sniper', emoji: '🎯', color: '#60a5fa', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused — now it\'s about sharpening the edge on the shots you do take.' };
+    archetype = { name: 'Sniper', emoji: '🎯', color: '#60a5fa', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused. Now it\'s about sharpening the edge on the shots you do take.' };
   } else if (avg.volume >= 7 && avg.variance <= 4) {
-    archetype = { name: 'Volume Warrior', emoji: '⚔️', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable — the question is whether there are leaks hiding in the volume.' };
+    archetype = { name: 'Volume Warrior', emoji: '⚔️', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
   } else if (avg.variance >= 7 && avg.parlay_lean >= 5 && avg.emotion >= 5) {
-    archetype = { name: 'Degen King', emoji: '👑', color: '#f87171', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges — if you can find them.' };
+    archetype = { name: 'Degen King', emoji: '👑', color: '#f87171', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
   } else {
-    archetype = { name: 'The Grinder', emoji: '💪', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make — the question is whether you\'re leaving edges on the table.' };
+    archetype = { name: 'The Grinder', emoji: '💪', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
   }
 
   // ── Emotion estimate (0-100) ──
@@ -350,7 +350,7 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
     biasPool.push({
       name: 'Favorite Bias',
       severity: avg.fav_lean >= 8 ? 'high' : 'medium',
-      one_liner: 'You gravitate toward favorites because winning feels safer — but you\'re paying premium juice for that comfort.',
+      one_liner: 'You gravitate toward favorites because winning feels safer, but you\'re paying premium juice for that comfort.',
     });
   }
   if (avg.emotion >= 6 && avg.variance >= 5) {
@@ -364,7 +364,7 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
     biasPool.push({
       name: 'Action Hunger',
       severity: 'medium',
-      one_liner: 'You bet because you want action, not because you see value. Late-night random lines, sports you don\'t follow — sound familiar?',
+      one_liner: 'You bet because you want action, not because you see value. Late-night random lines, sports you don\'t follow. Sound familiar?',
     });
   }
   if (avg.selectivity <= 3) {
@@ -379,7 +379,7 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
     biasPool.push({
       name: 'Confirmation Bias',
       severity: 'low',
-      one_liner: 'Everyone has it — you tend to seek information that confirms bets you already want to make.',
+      one_liner: 'Everyone has it. You tend to seek information that confirms bets you already want to make.',
     });
   }
 
@@ -389,12 +389,12 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
 
   // ── Strengths ──
   const strengths: string[] = [];
-  if (avg.discipline >= 7) strengths.push('Strong discipline — you have rules and you stick to them.');
-  if (avg.selectivity >= 7) strengths.push('Selective bettor — you don\'t bet just to bet.');
-  if (avg.variance <= 3) strengths.push('Consistent sizing — your stakes don\'t swing on emotion.');
-  if (avg.chase_tendency <= 3) strengths.push('Loss resilience — you don\'t chase after bad beats.');
-  if (avg.emotion <= 3) strengths.push('Cool under pressure — emotions don\'t drive your decisions.');
-  if (strengths.length === 0) strengths.push('Self-awareness — taking this quiz means you care about improving.');
+  if (avg.discipline >= 7) strengths.push('Strong discipline. You have rules and you stick to them.');
+  if (avg.selectivity >= 7) strengths.push('Selective bettor. You don\'t bet just to bet.');
+  if (avg.variance <= 3) strengths.push('Consistent sizing. Your stakes don\'t swing on emotion.');
+  if (avg.chase_tendency <= 3) strengths.push('Loss resilience. You don\'t chase after bad beats.');
+  if (avg.emotion <= 3) strengths.push('Cool under pressure. Emotions don\'t drive your decisions.');
+  if (strengths.length === 0) strengths.push('Self-awareness. Taking this quiz means you care about improving.');
 
   // ── Watch outs ──
   const watchOuts: string[] = [];
@@ -402,7 +402,7 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   if (avg.parlay_lean >= 7) watchOuts.push('Your parlay volume is probably costing more than you realize.');
   if (avg.emotion >= 7) watchOuts.push('Your emotions have too much influence on when and how much you bet.');
   if (avg.fav_lean >= 7) watchOuts.push('Leaning on favorites feels safe but the juice adds up fast.');
-  if (avg.discipline <= 3) watchOuts.push('Without a consistent process, you\'re gambling — not betting.');
+  if (avg.discipline <= 3) watchOuts.push('Without a consistent process, you\'re gambling, not betting.');
   if (watchOuts.length === 0) watchOuts.push('Even disciplined bettors have blind spots. A data analysis would reveal yours.');
 
   // Discipline estimate (0-100)

@@ -18,7 +18,7 @@ ${content}
 <tr><td style="padding:24px 24px">
   <div style="border-top:1px solid #e5e5e5;padding-top:16px">
     <div style="font-family:'Courier New',monospace;font-size:10px;color:#999;line-height:1.7;text-align:center">
-      BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 21+.
+      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 21+.
     </div>
     ${unsubscribeUrl ? `<div style="text-align:center;margin-top:10px"><a href="${esc(unsubscribeUrl)}" style="font-size:10px;color:#999;text-decoration:underline">Unsubscribe</a></div>` : ''}
   </div>
@@ -60,7 +60,7 @@ export function renderWelcomeEmail(props: { displayName: string; appUrl: string;
 
 <tr><td style="padding:0 24px 16px">
   <div style="font-size:12px;color:#888;line-height:1.6;background:#f8f9fa;padding:12px;text-align:center">
-    <strong style="color:#555">This is a one-time import.</strong> After your history is in, you'll keep it updated by pasting new bets directly — takes 30 seconds.
+    <strong style="color:#555">This is a one-time import.</strong> After your history is in, you'll keep it updated by pasting new bets directly. Takes 30 seconds.
   </div>
 </td></tr>
 
@@ -81,7 +81,7 @@ export function renderDay3Email(props: { displayName: string; appUrl: string; un
 <tr><td style="padding:24px 24px 0">
   <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Hey ${esc(displayName)}, your free export window is open.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    You signed up for BetAutopsy but haven't imported your bets yet. Your Pikkit free trial has 4 days left — here's what you're missing:
+    You signed up for BetAutopsy but haven't imported your bets yet. Your Pikkit free trial has 4 days left. Here's what you're missing:
   </div>
 </td></tr>
 
@@ -113,7 +113,7 @@ export function renderDay5Email(props: { displayName: string; appUrl: string; un
 <tr><td style="padding:24px 24px 0">
   <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Your free export window closes in 2 days.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    ${esc(displayName)}, your Pikkit free trial expires soon. After that, exporting costs $3.33/month. Right now it's free — and it takes 3 minutes.
+    ${esc(displayName)}, your Pikkit free trial expires soon. After that, exporting costs $3.33/month. Right now it's free, and it takes 3 minutes.
   </div>
 </td></tr>
 
@@ -129,7 +129,7 @@ export function renderDay5Email(props: { displayName: string; appUrl: string; un
 export function renderDay7HasBetsEmail(props: { displayName: string; betCount: number; appUrl: string; unsubscribeUrl?: string }): { subject: string; html: string } {
   const { displayName, betCount, appUrl, unsubscribeUrl } = props;
   return {
-    subject: betCount > 0 ? 'Your bets are uploaded — time for your autopsy' : 'No Pikkit? No problem — here are other ways in',
+    subject: betCount > 0 ? 'Your bets are uploaded. Time for your autopsy' : 'No Pikkit? No problem. Here are other ways in',
     html: betCount > 0 ? emailShell(`
 <tr><td style="padding:24px 24px 0">
   <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Your ${betCount} bets are ready, ${esc(displayName)}.</div>

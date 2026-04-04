@@ -194,7 +194,7 @@ export default function UploadPage() {
       {tier === 'free' && !uploadSucceeded && (
         <div className="card p-3">
           <p className="text-fg-muted text-xs">
-            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets — get unlimited snapshot reports (analyzes your 50 most recent bets each time).
+            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets. Get unlimited snapshot reports (analyzes your 50 most recent bets each time).
           </p>
         </div>
       )}
@@ -233,10 +233,10 @@ export default function UploadPage() {
               <div className="finding-card border-l-scalpel p-5">
                 <p className="text-fg-muted text-sm mb-3">
                   Pikkit syncs with your sportsbooks and exports your complete history as a CSV.{' '}
-                  <strong className="text-fg-bright">Free for 7 days</strong> — that&apos;s all you need.
+                  <strong className="text-fg-bright">Free for 7 days</strong>, that&apos;s all you need.
                 </p>
                 <p className="text-fg-muted text-xs mb-4">
-                  This is a <strong className="text-fg-bright">one-time import</strong>. After your history is in, keep it updated by pasting new bets — no Pikkit needed.
+                  This is a <strong className="text-fg-bright">one-time import</strong>. After your history is in, keep it updated by pasting new bets. No Pikkit needed.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
@@ -254,7 +254,7 @@ export default function UploadPage() {
                   <div className="bg-surface-raised rounded-sm p-4 mt-3 space-y-2">
                     <ol className="text-fg-muted text-sm space-y-1.5 list-none">
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">01</span> Download Pikkit and create an account</li>
-                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">02</span> Connect your sportsbooks — DraftKings, FanDuel, BetMGM, etc.</li>
+                      <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">02</span> Connect your sportsbooks: DraftKings, FanDuel, BetMGM, etc.</li>
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">03</span> Start the free 7-day Pro trial (required to export)</li>
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">04</span> Wait for Pikkit to sync your bets (a few minutes)</li>
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">05</span> Go to Pro → Settings → Data Exports → Download CSV</li>

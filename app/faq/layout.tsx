@@ -3,7 +3,7 @@ import NavBar from '@/components/NavBar';
 
 export const metadata: Metadata = {
   title: 'FAQ | BetAutopsy',
-  description: 'Answers to common questions about BetAutopsy — how it works, what\'s analyzed, supported formats, pricing, and data privacy.',
+  description: 'Answers to common questions about BetAutopsy: how it works, what\'s analyzed, supported formats, pricing, and data privacy.',
   alternates: {
     canonical: '/faq',
   },

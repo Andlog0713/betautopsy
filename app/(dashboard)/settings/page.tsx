@@ -247,17 +247,17 @@ export default function SettingsPage() {
           <div className="bg-surface-raised rounded-sm p-4 text-sm text-fg-muted space-y-3">
             <p>
               Your bankroll is the total amount of money you&apos;ve set aside
-              specifically for betting — across all your sportsbooks combined.
+              specifically for betting, across all your sportsbooks combined.
               It&apos;s not your savings account or your rent money. It&apos;s the
               dedicated pool you bet from.
             </p>
-            <p>It&apos;s okay to estimate — a rough number is better than nothing.</p>
+            <p>It&apos;s okay to estimate. A rough number is better than nothing.</p>
             <p>
               <span className="text-fg-bright">Why this matters:</span>{' '}
               BetAutopsy uses your bankroll to assess whether your bet sizing
               is sustainable. A $200 bet means something very different if your
               bankroll is $1,000 versus $20,000. Without this number, we have
-              to estimate — and we&apos;d rather be accurate.
+              to estimate, and we&apos;d rather be accurate.
             </p>
             <p>Make sure to update this once in a while so your analysis stays accurate.</p>
           </div>
@@ -296,10 +296,10 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <p className="text-fg-bright text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
             <ul className="text-fg-muted text-sm space-y-1">
-              <li>— Unlimited reports as you add bets weekly</li>
-              <li>— Progress tracking that shows whether your habits are actually improving</li>
-              <li>— Full analysis across ALL your bets, not just the last 50</li>
-              <li>— Weekly check-ins so you don&apos;t have to remember to log in</li>
+              <li>Unlimited reports as you add bets weekly</li>
+              <li>Progress tracking that shows whether your habits are actually improving</li>
+              <li>Full analysis across ALL your bets, not just the last 50</li>
+              <li>Weekly check-ins so you don&apos;t have to remember to log in</li>
             </ul>
             <p className="text-fg-muted text-xs">Most users make back the subscription cost from the first leak they plug.</p>
             <a href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro</a>
