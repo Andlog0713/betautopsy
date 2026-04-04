@@ -7,7 +7,7 @@ export default function PrivacyPolicyPage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl mb-3">Privacy Policy</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: March 24, 2025</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2025</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
@@ -15,8 +15,7 @@ export default function PrivacyPolicyPage() {
             <p>
               BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;) operates the website{' '}
               <span className="text-[#F0F2F5]">betautopsy.com</span> and provides sports betting
-              analytics and behavioral analysis tools. This policy explains how we collect, use,
-              and protect your personal information.
+              behavioral analysis tools. This policy explains how we collect, use, and protect your personal information.
             </p>
           </section>
 
@@ -50,8 +49,7 @@ export default function PrivacyPolicyPage() {
               <div>
                 <h3 className="font-medium text-[#F0F2F5] mb-1">Usage data</h3>
                 <p>
-                  We may collect basic analytics like page views and feature usage to improve the
-                  product. We do not use third-party tracking or advertising pixels.
+                  We collect basic analytics like page views and feature usage through Google Analytics (GA4) to improve the product. We use cookies only as described in Section 7.
                 </p>
               </div>
             </div>
@@ -61,10 +59,12 @@ export default function PrivacyPolicyPage() {
             <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">3. How we use your information</h2>
             <ul className="list-disc list-inside space-y-2">
               <li>To provide, maintain, and improve our analytics services</li>
-              <li>To generate personalized betting reports and insights</li>
+              <li>To generate personalized betting reports and behavioral insights</li>
               <li>To process payments and manage your subscription</li>
               <li>To communicate with you about your account or service updates</li>
+              <li>To send weekly email digests and report notifications (you can opt out at any time)</li>
               <li>To detect and prevent fraud or abuse</li>
+              <li>To develop anonymized, aggregated benchmarks and improve our analysis engine</li>
             </ul>
           </section>
 
@@ -88,8 +88,13 @@ export default function PrivacyPolicyPage() {
               <li><span className="text-[#F0F2F5]">Supabase</span>: database and authentication provider</li>
               <li><span className="text-[#F0F2F5]">Stripe</span>: payment processing</li>
               <li><span className="text-[#F0F2F5]">Vercel</span>: hosting and deployment</li>
-              <li><span className="text-[#F0F2F5]">Anthropic</span>: analysis engine (your data is sent to generate reports but is not used to train models)</li>
+              <li><span className="text-[#F0F2F5]">Anthropic</span>: analysis engine (your data is sent to generate reports but is not stored by Anthropic or used to train models)</li>
+              <li><span className="text-[#F0F2F5]">Resend</span>: transactional email delivery</li>
+              <li><span className="text-[#F0F2F5]">Google Analytics</span>: anonymized usage data only</li>
             </ul>
+            <p className="mt-3">
+              We may also disclose information if required by law, subpoena, or court order, or to protect our rights, safety, or the safety of others.
+            </p>
           </section>
 
           <section>
@@ -104,8 +109,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">7. Cookies</h2>
             <p>
-              We use essential cookies only, specifically authentication session cookies
-              managed by Supabase. We do not use advertising or tracking cookies.
+              We use essential cookies for authentication session management (via Supabase). Google Analytics may set cookies for anonymized usage tracking. We do not use advertising or third-party tracking cookies. You can disable non-essential cookies in your browser settings.
             </p>
           </section>
 
@@ -117,6 +121,7 @@ export default function PrivacyPolicyPage() {
               <li>Correct inaccurate information</li>
               <li>Delete your account and all associated data</li>
               <li>Opt out of non-essential communications</li>
+              <li>Request details about what data we hold about you</li>
             </ul>
             <p className="mt-3">
               To exercise any of these rights, contact us at{' '}
@@ -131,19 +136,28 @@ export default function PrivacyPolicyPage() {
             <p>
               We retain your data for as long as your account is active. If you delete your
               account, all personal data and betting history is permanently removed within 30 days.
+              Anonymized, aggregated data that cannot identify you may be retained indefinitely.
             </p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">10. Age requirement</h2>
+            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">10. California residents (CCPA)</h2>
+            <p>
+              If you are a California resident, you have the right to know what personal information we collect, request deletion, and opt out of the sale of personal information. We do not sell personal information. To exercise your rights, contact{' '}
+              <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">support@betautopsy.com</a>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">11. Age requirement</h2>
             <p>
               BetAutopsy is intended for users who are 21 years of age or older. We do not
-              knowingly collect information from anyone under 21.
+              knowingly collect information from anyone under 21. If we learn we have collected data from someone under 21, we will delete it promptly.
             </p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">11. Changes to this policy</h2>
+            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">12. Changes to this policy</h2>
             <p>
               We may update this policy from time to time. If we make significant changes, we will
               notify you by email or by posting a notice on the site. Continued use of BetAutopsy
@@ -152,7 +166,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">12. Contact</h2>
+            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">13. Contact</h2>
             <p>
               Questions or concerns? Reach us at{' '}
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">

@@ -160,6 +160,13 @@ function SignupForm() {
           <p className="text-bleed text-sm font-mono">{error}</p>
         )}
 
+        <p className="text-fg-dim text-xs text-center">
+          By signing up, you agree to our{' '}
+          <a href="/terms" className="text-fg-muted hover:text-scalpel transition-colors underline">Terms of Use</a>
+          {' '}and{' '}
+          <a href="/privacy" className="text-fg-muted hover:text-scalpel transition-colors underline">Privacy Policy</a>.
+        </p>
+
         <button type="submit" disabled={loading} className="btn-primary w-full font-mono">
           {loading ? 'Creating account...' : 'Create Account'}
         </button>
