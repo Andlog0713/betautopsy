@@ -194,7 +194,7 @@ export default function UploadPage() {
       {tier === 'free' && !uploadSucceeded && (
         <div className="card p-3">
           <p className="text-fg-muted text-xs">
-            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets. Get unlimited snapshot reports (analyzes your 50 most recent bets each time).
+            <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets. Get unlimited free snapshot reports analyzing your full history.
           </p>
         </div>
       )}

@@ -298,7 +298,7 @@ export default function SettingsPage() {
             <ul className="text-fg-muted text-sm space-y-1">
               <li>Unlimited reports as you add bets weekly</li>
               <li>Progress tracking that shows whether your habits are actually improving</li>
-              <li>Full analysis across ALL your bets, not just the last 50</li>
+              <li>Full 5-chapter analysis with dollar costs and action plan</li>
               <li>Weekly check-ins so you don&apos;t have to remember to log in</li>
             </ul>
             <p className="text-fg-muted text-xs">Most users make back the subscription cost from the first leak they plug.</p>

@@ -31,7 +31,7 @@ const FAQ_DATA: FAQSection[] = [
       { q: 'What CSV format does BetAutopsy accept?', a: 'We auto-detect columns from Pikkit exports and most standard bet tracker CSVs. We look for: date, sport, bet_type, description, odds, stake, result, profit, and sportsbook. You don\'t need every column. We\'ll infer what we can. We also convert decimal odds to American odds automatically and detect sports from bet descriptions if no sport column is present.' },
       { q: 'What sportsbooks are supported?', a: 'Any sportsbook that exports to CSV or is supported by Pikkit. That includes DraftKings, FanDuel, BetMGM, Caesars, PointsBet, and many more. BetAutopsy doesn\'t connect directly to sportsbooks. You export from your tracker and upload here. This keeps your sportsbook credentials completely private.' },
       { q: 'I don\'t use a tracker. Can I still use BetAutopsy?', a: 'Yes. You can manually enter bets or build a spreadsheet with our template. There\'s also a guide on the upload page that lets you paste your betting data into any AI chatbot (like ChatGPT or Claude) and ask it to format it into our CSV template. It usually takes about 2 minutes.' },
-      { q: 'How many bets do I need for a meaningful analysis?', a: 'The more the better, but you\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze your 50 most recent bets. Full reports analyze up to 2,000 bets, and Pro subscribers can analyze up to 5,000. Analyses based on very small samples will note where statistical confidence is limited.' },
+      { q: 'How many bets do I need for a meaningful analysis?', a: 'The more the better, but you\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze all your bets. Full reports go deeper with up to 2,000 bets, and Pro subscribers can analyze up to 5,000. Analyses based on very small samples will note where statistical confidence is limited.' },
       { q: 'Do I need to clean up my CSV before uploading?', a: 'Usually not. Our parser handles common formatting issues: varied date formats, decimal vs. American odds, inconsistent result labels (W/L/win/loss/hit), and quoted fields with commas. If something can\'t be parsed, we\'ll flag it with a specific warning rather than silently dropping the row.' },
     ],
   },
@@ -60,7 +60,7 @@ const FAQ_DATA: FAQSection[] = [
   {
     title: 'Plans & Pricing',
     items: [
-      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports (your 50 most recent bets) showing your overall grade, archetype, top bias fully explained, and BetIQ score. Full Report ($9.99 one-time): complete 5-chapter analysis of up to 2,000 bets with all biases, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan. Pro ($19.99/month or $149.99/year): 3 full reports per month, up to 5,000 bets per report, weekly email digest, and progress tracking.' },
+      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports analyzing all your bets, showing your overall grade, archetype, top bias fully explained, and BetIQ score. Full Report ($9.99 one-time): complete 5-chapter analysis of up to 2,000 bets with all biases, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan. Pro ($19.99/month or $149.99/year): 3 full reports per month, up to 5,000 bets per report, weekly email digest, and progress tracking.' },
       { q: 'Is there a free trial?', a: 'No trial needed. Free snapshots are always free with no credit card required. You can run unlimited snapshots to see your grade, top bias, and BetIQ score. When you want the complete analysis, buy a single report for $9.99 or subscribe to Pro.' },
       { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no cancellation fees. You can cancel directly from your account settings and you\'ll retain access through the end of your billing period.' },
       { q: 'Do you offer annual billing?', a: 'Yes. Pro is $149.99/year (vs. $19.99/month), saving you about 37%.' },
@@ -138,12 +138,12 @@ export default function FAQPage() {
       {
         '@type': 'Question',
         name: 'How many bets do I need for a meaningful analysis?',
-        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze your 50 most recent bets. Full reports analyze up to 2,000 bets, and Pro subscribers can analyze up to 5,000.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze all your bets. Full reports go deeper with up to 2,000 bets, and Pro subscribers can analyze up to 5,000.' },
       },
       {
         '@type': 'Question',
         name: 'What\'s free vs. paid?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Free: unlimited snapshot reports (50 most recent bets) showing grade, archetype, and top bias. Full Report ($9.99 one-time): complete 5-chapter analysis of up to 2,000 bets. Pro ($19.99/month or $149.99/year): 3 full reports per month, up to 5,000 bets, weekly digest, and progress tracking.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'Free: unlimited snapshot reports analyzing all your bets, showing grade, archetype, and top bias. Full Report ($9.99 one-time): complete 5-chapter analysis of up to 2,000 bets. Pro ($19.99/month or $149.99/year): 3 full reports per month, up to 5,000 bets, weekly digest, and progress tracking.' },
       },
       {
         '@type': 'Question',

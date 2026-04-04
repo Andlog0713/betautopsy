@@ -181,7 +181,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
-            Try it free with your latest 50 bets. Upgrade for unlimited bets, deeper analysis, progress tracking, and more.
+            Free snapshots analyze all your bets. Upgrade for the full 5-chapter report with dollar costs, action plan, and more.
           </p>
           <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="bg-base p-6 flex flex-col">

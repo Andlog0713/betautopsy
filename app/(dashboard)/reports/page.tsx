@@ -339,9 +339,8 @@ export default function ReportsPage() {
         {tierLimited && (
           <div className="card border-scalpel/20 bg-scalpel-muted p-5">
             <p className="text-fg-bright text-sm">
-              This snapshot covers your <span className="font-medium">50 most recent bets</span>.
-              You have <span className="font-mono">{totalBetsAll}</span> total bets. A full report
-              analyzes up to 2,000 for more accurate bias detection.
+              This is a snapshot. The full report unlocks all 5 chapters
+              with dollar costs, strategic leaks, and a personalized action plan.
             </p>
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
               Get Full Report: $9.99
@@ -400,7 +399,7 @@ export default function ReportsPage() {
         <div className="space-y-4">
           <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
             <p className="text-fg-bright mb-2">
-              This snapshot analyzed your 50 most recent bets. The full report goes deeper.
+              This is a snapshot. The full report goes much deeper.
             </p>
             <p className="text-fg-muted text-sm mb-4">
               A full report analyzes up to 2,000 bets with dollar costs for every bias, strategic leak detection, and a personalized action plan.
@@ -451,7 +450,7 @@ export default function ReportsPage() {
 
       {/* Free tier note */}
       {tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
-        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports (analyzes your 50 most recent bets). Unlock the full analysis for $9.99.</p>
+        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $9.99.</p>
       )}
 
       {/* Analyze controls */}

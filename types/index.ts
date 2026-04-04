@@ -398,9 +398,9 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     price: 0,
     maxBets: null,
     maxReports: null, // unlimited snapshots
-    maxBetsPerReport: 50,
+    maxBetsPerReport: null, // snapshots analyze all bets (Claude cost is fixed)
     features: [
-      'Unlimited snapshot reports (50 most recent bets)',
+      'Unlimited snapshot reports (all your bets)',
       'Overall grade + archetype',
       'Top bias fully explained',
       'BetIQ score',
