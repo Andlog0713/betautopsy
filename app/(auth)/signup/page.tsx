@@ -78,7 +78,7 @@ function SignupForm() {
   return (
     <div className="case-card p-8 animate-fade-in">
       <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-3 text-center mb-4">
-        <p className="text-scalpel text-sm font-medium">Get your free snapshot in 3 minutes. Full reports start at $9.99.</p>
+        <p className="text-scalpel text-sm font-medium">Limited time: your first full report is free. No credit card.</p>
       </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 

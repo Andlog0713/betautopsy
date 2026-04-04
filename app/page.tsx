@@ -34,9 +34,9 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-              Upload Your Bets
+              Get Your Free Full Report
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Free snapshot report. No credit card.</span>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
