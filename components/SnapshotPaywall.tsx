@@ -54,27 +54,35 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
             </svg>
           </div>
           <h3 className="font-bold text-lg text-fg-bright mb-2">Full Report Locked</h3>
-          <p className="text-fg-muted text-sm mb-1">
-            We found <span className="text-fg-bright font-medium">{totalFindings} findings</span> in your betting data.
-          </p>
-          {counts && (
-            <div className="flex flex-wrap justify-center gap-3 my-3">
-              {counts.total_biases > 1 && (
-                <span className="text-xs font-mono bg-loss/10 text-loss px-2 py-1 rounded-sm">
-                  {counts.total_biases} biases
-                </span>
+          {totalFindings > 0 ? (
+            <>
+              <p className="text-fg-muted text-sm mb-1">
+                We found <span className="text-fg-bright font-medium">{totalFindings} findings</span> in your betting data.
+              </p>
+              {counts && (
+                <div className="flex flex-wrap justify-center gap-3 my-3">
+                  {counts.total_biases > 1 && (
+                    <span className="text-xs font-mono bg-loss/10 text-loss px-2 py-1 rounded-sm">
+                      {counts.total_biases} biases
+                    </span>
+                  )}
+                  {counts.leaks > 0 && (
+                    <span className="text-xs font-mono bg-caution/10 text-caution px-2 py-1 rounded-sm">
+                      {counts.leaks} strategic leaks
+                    </span>
+                  )}
+                  {counts.patterns > 0 && (
+                    <span className="text-xs font-mono bg-scalpel/10 text-scalpel px-2 py-1 rounded-sm">
+                      {counts.patterns} behavioral patterns
+                    </span>
+                  )}
+                </div>
               )}
-              {counts.leaks > 0 && (
-                <span className="text-xs font-mono bg-caution/10 text-caution px-2 py-1 rounded-sm">
-                  {counts.leaks} strategic leaks
-                </span>
-              )}
-              {counts.patterns > 0 && (
-                <span className="text-xs font-mono bg-scalpel/10 text-scalpel px-2 py-1 rounded-sm">
-                  {counts.patterns} behavioral patterns
-                </span>
-              )}
-            </div>
+            </>
+          ) : (
+            <p className="text-fg-muted text-sm mb-1">
+              Your full report includes detailed bias analysis, strategic leaks, behavioral patterns, and more.
+            </p>
           )}
           <p className="text-fg-muted text-sm mb-5">
             Unlock the complete 5-chapter analysis with dollar costs, action plan, and personal rules.
