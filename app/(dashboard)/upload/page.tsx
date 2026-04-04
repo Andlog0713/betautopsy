@@ -119,10 +119,10 @@ export default function UploadPage() {
           <div className="text-5xl">🔬</div>
           <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
           <p className="text-fg-muted text-sm max-w-md mx-auto">
-            This is where it gets interesting. Your free autopsy will reveal the cognitive biases and behavioral patterns hiding in your data.
+            Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
           </p>
           <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            Run Your First Autopsy →
+            Run Your Free Snapshot →
           </Link>
         </div>
       )}
