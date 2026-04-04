@@ -121,9 +121,15 @@ export default function UploadPage() {
         <div className="case-card p-8 text-center space-y-5 border-scalpel/20">
           <div className="text-5xl">🔬</div>
           <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
-          <p className="text-fg-muted text-sm max-w-md mx-auto">
-            Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
-          </p>
+          {tier === 'pro' ? (
+            <p className="text-fg-muted text-sm max-w-md mx-auto">
+              Your full autopsy report will analyze every bet for cognitive biases, strategic leaks, and behavioral patterns.
+            </p>
+          ) : (
+            <p className="text-fg-muted text-sm max-w-md mx-auto">
+              Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
+            </p>
+          )}
 
           {/* Bankroll prompt — only if not already set */}
           {!profile?.bankroll && !bankrollSaved && (
@@ -169,7 +175,7 @@ export default function UploadPage() {
           )}
 
           <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            Run Your Free Snapshot →
+            {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Free Snapshot →'}
           </Link>
         </div>
       )}
