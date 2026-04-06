@@ -8,7 +8,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         {children}
       </div>
 
-      <footer className="border-t border-white/[0.04]">
+      <footer className="border-t border-border-subtle">
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-3">
           <div className="flex items-center justify-center gap-2">
             <a href="/privacy" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Privacy Policy</a>

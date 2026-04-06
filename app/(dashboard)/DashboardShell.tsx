@@ -175,7 +175,7 @@ export default function DashboardShell({
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile top nav */}
-      <header className="md:hidden border-b border-white/[0.04] bg-surface sticky top-0 z-40">
+      <header className="md:hidden border-b border-border-subtle bg-surface-1 sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <Link href="/dashboard">
@@ -195,7 +195,7 @@ export default function DashboardShell({
           </button>
         </div>
         {mobileNavOpen && (
-          <nav className="border-t border-white/[0.04] px-3 py-3 space-y-1 animate-fade-in bg-surface">
+          <nav className="border-t border-border-subtle px-3 py-3 space-y-1 animate-fade-in bg-surface-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -252,7 +252,7 @@ export default function DashboardShell({
                 {item.label}
               </Link>
             ))}
-            <div className="border-t border-white/[0.04] pt-3 mt-3 px-3">
+            <div className="border-t border-border-subtle pt-3 mt-3 px-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-mono text-[10px] text-fg-dim truncate">{profile?.email}</p>
@@ -272,7 +272,7 @@ export default function DashboardShell({
       </header>
 
       {/* Desktop sidebar — collapsed by default, expands on hover */}
-      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
+      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-border-subtle bg-surface-1 sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
         <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
             <span className="group-hover/sidebar:hidden"><Logo size="xs" variant="mark" theme="dark" /></span>
@@ -294,7 +294,7 @@ export default function DashboardShell({
               <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
             </Link>
           ))}
-          <div className="mt-3 pt-3 border-t border-white/[0.04]">
+          <div className="mt-3 pt-3 border-t border-border-subtle">
             {profile?.is_admin && (
               <Link
                 href="/admin/reports"
@@ -323,7 +323,7 @@ export default function DashboardShell({
           </div>
         </nav>
 
-        <div className="p-2 group-hover/sidebar:p-4 border-t border-white/[0.04] space-y-3 transition-all duration-200">
+        <div className="p-2 group-hover/sidebar:p-4 border-t border-border-subtle space-y-3 transition-all duration-200">
           {tier === 'free' && (
             <Link
               href="/pricing"
@@ -335,7 +335,7 @@ export default function DashboardShell({
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
+            <div className="w-7 h-7 rounded-sm bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">

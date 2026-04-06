@@ -39,7 +39,7 @@ function gradeColor(grade: string): string {
 }
 
 const tierBadge: Record<string, string> = {
-  free: 'bg-ink-700/30 text-ink-500 border border-white/[0.06]',
+  free: 'bg-ink-700/30 text-ink-500 border border-border-subtle',
   pro: 'bg-scalpel-muted text-scalpel border border-scalpel/20',
   sharp: 'bg-win/10 text-win border border-win/20',
 };
@@ -122,7 +122,7 @@ export default function AdminReportsPage() {
             placeholder="Search by email or name..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="bg-ink-900 border border-white/[0.08] rounded-sm px-3 py-2 text-sm text-[#F0F2F5] placeholder-ink-700 focus:outline-none focus:border-scalpel/40 w-64"
+            className="bg-ink-900 border border-border rounded-sm px-3 py-2 text-sm text-[#F0F2F5] placeholder-ink-700 focus:outline-none focus:border-scalpel/40 w-64"
           />
           <button
             type="submit"
@@ -154,7 +154,7 @@ export default function AdminReportsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-border-subtle">
                   <th className="text-left text-ink-600 font-medium px-4 py-3">User</th>
                   <th className="text-left text-ink-600 font-medium px-4 py-3">Tier</th>
                   <th className="text-center text-ink-600 font-medium px-4 py-3">Grade</th>
@@ -169,7 +169,7 @@ export default function AdminReportsPage() {
               </thead>
               <tbody>
                 {reports.map((r) => (
-                  <tr key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors cursor-pointer">
+                  <tr key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="border-b border-border-subtle hover:bg-white/[0.02] transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-medium text-[#F0F2F5] truncate max-w-[200px]">
@@ -225,7 +225,7 @@ export default function AdminReportsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
               <p className="text-ink-600 text-xs">
                 Page {page} of {totalPages}
               </p>

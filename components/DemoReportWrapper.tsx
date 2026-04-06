@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
-  loading: () => <div className="h-96 bg-surface rounded-sm animate-pulse" />,
+  loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
 
 export default function DemoReportWrapper() {
@@ -16,7 +16,7 @@ export default function DemoReportWrapper() {
     <div className="relative">
       {/* ── Floating "DEMO" badge ── */}
       <div className="flex justify-center px-3 pt-4 mb-4 sm:px-4">
-        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3 py-2 rounded-full bg-surface/95 border border-scalpel/20 shadow-lg text-center sm:px-4">
+        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3 py-2 rounded-full bg-surface-1/95 border border-scalpel/20 shadow-lg text-center sm:px-4">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-scalpel opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-scalpel" />

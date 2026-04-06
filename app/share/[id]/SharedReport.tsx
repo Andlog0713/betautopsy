@@ -89,7 +89,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
             </div>
 
             {(data.best_edge || data.biggest_leak) && (
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/[0.04]">
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border-subtle">
                 {data.best_edge && (
                   <div className="text-center">
                     <p className="text-fg-muted text-xs">Best Edge</p>
@@ -108,7 +108,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
             )}
 
             {data.sharp_score !== null && (
-              <div className="pt-2 border-t border-white/[0.04]">
+              <div className="pt-2 border-t border-border-subtle">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-fg-muted text-xs">Sharp Score</p>
                   <p className="font-mono text-sm text-cyan-400">{data.sharp_score}/100</p>

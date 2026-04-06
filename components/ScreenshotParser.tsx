@@ -120,7 +120,7 @@ export default function ScreenshotParser() {
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
-          className="card p-8 text-center cursor-pointer hover:border-white/[0.08] transition-colors"
+          className="card p-8 text-center cursor-pointer hover:border-border transition-colors"
         >
           <input
             ref={fileInputRef}
@@ -142,7 +142,7 @@ export default function ScreenshotParser() {
             <div className="flex gap-2 flex-wrap">
               {previews.map((src, i) => (
                 <div key={i} className="relative group">
-                  <img src={src} alt={`Screenshot ${i + 1}`} className="w-20 h-20 object-cover rounded-sm border border-white/[0.06]" />
+                  <img src={src} alt={`Screenshot ${i + 1}`} className="w-20 h-20 object-cover rounded-sm border border-border-subtle" />
                   <button
                     onClick={(e) => { e.stopPropagation(); removeFile(i); }}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-loss text-base rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -201,7 +201,7 @@ export default function ScreenshotParser() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/[0.06]">
+              <tr className="border-b border-border-subtle">
                 <th className="p-2 w-8">
                   <input
                     type="checkbox"
@@ -221,7 +221,7 @@ export default function ScreenshotParser() {
             </thead>
             <tbody>
               {parsedBets.map((bet, i) => (
-                <tr key={i} className="border-b border-white/[0.04]">
+                <tr key={i} className="border-b border-border-subtle">
                   <td className="p-2">
                     <input
                       type="checkbox"

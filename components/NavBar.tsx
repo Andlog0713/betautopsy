@@ -63,7 +63,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className={`border-b border-white/[0.04] bg-surface ${isLanding ? '' : 'sticky top-0 z-50'}`}>
+      <nav className={`border-b border-border-subtle bg-surface-1 ${isLanding ? '' : 'sticky top-0 z-50'}`}>
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link href={user ? '/dashboard' : '/'} className="shrink-0">
@@ -100,13 +100,13 @@ export default function NavBar() {
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="w-7 h-7 rounded-sm bg-surface-raised border border-white/[0.06] flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted hover:border-white/[0.12] transition-colors"
+                    className="w-7 h-7 rounded-sm bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted hover:border-border-strong transition-colors"
                   >
                     {initial}
                   </button>
                   {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-surface border border-white/[0.06] rounded-sm p-1 shadow-2xl shadow-black/40 animate-fade-in z-50">
-                      <div className="px-3 py-2 border-b border-white/[0.04] mb-1">
+                    <div className="absolute right-0 mt-2 w-48 bg-surface-1 border border-border-subtle rounded-sm p-1 shadow-2xl shadow-black/40 animate-fade-in z-50">
+                      <div className="px-3 py-2 border-b border-border-subtle mb-1">
                         <p className="font-mono text-xs text-fg-muted truncate">{user.email}</p>
                         <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
                       </div>
@@ -140,7 +140,7 @@ export default function NavBar() {
       {/* Mobile full-screen overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-base flex flex-col">
-          <div className="flex items-center justify-between px-6 h-14 border-b border-white/[0.04]">
+          <div className="flex items-center justify-between px-6 h-14 border-b border-border-subtle">
             <Logo size="xs" variant="horizontal" theme="dark" />
             <button onClick={() => setMobileMenuOpen(false)} className="text-fg-muted hover:text-fg">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -153,7 +153,7 @@ export default function NavBar() {
               </Link>
             ))}
             <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-fg-muted hover:text-fg transition-colors">FAQ</Link>
-            <div className="pt-6 border-t border-white/[0.04]">
+            <div className="pt-6 border-t border-border-subtle">
               {user ? (
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>
               ) : (

@@ -49,7 +49,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
   }
 
   return (
-    <div className="sticky top-0 z-30 bg-base/95 border-b border-white/[0.04] -mx-1 px-1 mb-6">
+    <div className="sticky top-0 z-30 bg-base/95 border-b border-border-subtle -mx-1 px-1 mb-6">
       <nav className="flex items-center gap-0 overflow-x-auto scrollbar-hide py-2">
         {CHAPTERS.map((ch, i) => {
           const isActive = activeChapter === ch.id;

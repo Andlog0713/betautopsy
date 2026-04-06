@@ -4,6 +4,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import TikTokPixel from '@/components/TikTokPixel';
 import NextTopLoader from 'nextjs-toploader';
 import { jakarta, ibmPlexMono } from './fonts';
+import { NoiseOverlay } from '@/components/NoiseOverlay';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -95,6 +96,7 @@ export default function RootLayout({
       </head>
       <body>
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
+        <NoiseOverlay />
         {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /></>}
         {children}
       </body>

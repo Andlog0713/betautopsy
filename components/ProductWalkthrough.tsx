@@ -42,8 +42,8 @@ function CsvVisual() {
     ['NBA', 'BOS -7', 'Win', '+$45'],
   ];
   return (
-    <div className="bg-surface rounded-sm overflow-hidden">
-      <div className="px-4 py-2 border-b border-white/[0.04] flex items-center gap-2">
+    <div className="bg-surface-1 rounded-sm overflow-hidden">
+      <div className="px-4 py-2 border-b border-border-subtle flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full bg-scalpel/40" />
         <span className="font-mono text-[10px] text-fg-dim tracking-wider">betting_history.csv</span>
       </div>
@@ -76,7 +76,7 @@ function CsvVisual() {
 
 function ScanVisual() {
   return (
-    <div className="bg-surface rounded-sm p-4 space-y-3">
+    <div className="bg-surface-1 rounded-sm p-4 space-y-3">
       {SCAN_BARS.map((bar, i) => (
         <div key={i} className="space-y-1">
           <div className="flex justify-between">
@@ -100,7 +100,7 @@ function ScanVisual() {
 
 function ReportVisual() {
   return (
-    <div className="bg-surface rounded-sm p-4 space-y-4">
+    <div className="bg-surface-1 rounded-sm p-4 space-y-4">
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="font-mono text-[10px] text-fg-dim tracking-wider">BETIQ SCORE</span>

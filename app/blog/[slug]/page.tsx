@@ -118,7 +118,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <PostContent />
       </div>
 
-      <div className="space-y-6 pt-8 border-t border-white/[0.04]">
+      <div className="space-y-6 pt-8 border-t border-border-subtle">
         <div className="finding-card border-l-scalpel p-6 text-center">
           <span className="text-2xl mb-2 block">🧬</span>
           <h3 className="font-bold text-lg mb-2">What&apos;s your Bet DNA?</h3>
@@ -147,7 +147,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <Link
                 key={p.slug}
                 href={`/blog/${p.slug}`}
-                className="card p-4 hover:border-white/[0.04] transition-colors"
+                className="card p-4 hover:border-border-subtle transition-colors"
               >
                 <h4 className="font-medium text-sm mb-1">{p.title}</h4>
                 <p className="text-fg-dim text-xs">{p.readTime}</p>

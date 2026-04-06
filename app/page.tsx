@@ -70,7 +70,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* TRUST BAR — integration logos         */}
       {/* ══════════════════════════════════════ */}
-      <section className="border-y border-white/[0.04] py-5">
+      <section className="border-y border-border-subtle py-5">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 sm:gap-x-10 gap-y-4">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
@@ -95,7 +95,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <AnimatedSection>
       <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
-        <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
+        <div className="grid md:grid-cols-2 gap-px bg-border-subtle">
           <div className="bg-base p-6 md:p-8">
             <span className="case-header block mb-4">The Problem</span>
             <h2 className="font-bold text-xl md:text-2xl leading-snug mb-4 text-fg-bright">
@@ -124,7 +124,7 @@ export default function LandingPage() {
       {/* HOW IT WORKS — interactive walkthrough */}
       {/* ══════════════════════════════════════ */}
       <AnimatedSection delay={0.05}>
-      <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
+      <section className="bg-surface-1 border-y border-border-subtle py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-8">PROTOCOL // HOW IT WORKS</div>
           <ProductWalkthrough />
@@ -136,7 +136,7 @@ export default function LandingPage() {
       {/* DEMO REPORT — proof, see it yourself  */}
       {/* ══════════════════════════════════════ */}
       <AnimatedSection delay={0.1}>
-      <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden" id="sample">
+      <section className="bg-surface-2 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden" id="sample">
         <div className="absolute -top-10 -left-20 w-[400px] h-[300px] bg-cyan-500/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="flex items-center gap-3 mb-3">
@@ -149,8 +149,8 @@ export default function LandingPage() {
           <p className="text-fg-muted text-sm mb-8 max-w-xl">
             280 bets. 3 months. 3 biases found. $480/quarter in recoverable losses.
           </p>
-          <div className="border border-white/[0.06] rounded-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
+          <div className="border border-border-subtle rounded-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle bg-surface-1">
               <div className="w-2 h-2 rounded-full bg-loss" />
               <div className="w-2 h-2 rounded-full bg-caution" />
               <div className="w-2 h-2 rounded-full bg-win" />
@@ -204,7 +204,7 @@ export default function LandingPage() {
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
       <AnimatedSection delay={0.05}>
-      <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
+      <section id="pricing" className="bg-surface-1 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden">
         {/* Pricing glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[#00FFCB]/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
@@ -212,7 +212,7 @@ export default function LandingPage() {
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Start free. Upgrade for the full report with dollar costs and action plans.
           </p>
-          <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-white/[0.06] md:border border-white/[0.06] rounded-sm md:overflow-hidden">
+          <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-border-subtle md:border border-border-subtle rounded-sm md:overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free Snapshot</span>
               <div className="mb-4">
@@ -271,7 +271,7 @@ export default function LandingPage() {
             </div>
           </div>
           {/* Trust block */}
-          <div className="mt-10 border border-white/[0.04] rounded px-4 py-3 max-w-3xl mx-auto">
+          <div className="mt-10 border border-border-subtle rounded px-4 py-3 max-w-3xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V4.5a3 3 0 0 1 6 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -311,7 +311,7 @@ export default function LandingPage() {
             { title: 'The Real Math Behind Parlay Addiction', slug: 'parlay-addiction-the-real-math', time: '6 min' },
             { title: '7 Cognitive Biases Destroying Your Bankroll', slug: 'cognitive-biases-destroying-your-bankroll', time: '8 min' },
           ].map(post => (
-            <Link key={post.slug} href={`/blog/${post.slug}`} className="case-card p-5 hover:border-white/[0.08] transition-colors group">
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="case-card p-5 hover:border-border transition-colors group">
               <h3 className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors mb-2 leading-snug">{post.title}</h3>
               <span className="font-mono text-xs text-fg-muted">{post.time}</span>
             </Link>
@@ -343,7 +343,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* FOOTER                                */}
       {/* ══════════════════════════════════════ */}
-      <footer className="border-t border-white/[0.04] bg-surface py-10">
+      <footer className="border-t border-border-subtle bg-surface-1 py-10">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
             <Logo size="xs" variant="horizontal" theme="dark" />

@@ -84,8 +84,8 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-base/80" onClick={onClose} />
 
-      <div className="relative bg-surface border border-white/[0.06] rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.04]">
+      <div className="relative bg-surface-1 border border-border-subtle rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
           <div>
             <div className="case-header">PRE-BET CHECK-IN</div>
             <p className="text-fg-muted text-xs font-mono mt-1">Log your state before you bet. 30 seconds.</p>
@@ -105,7 +105,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                   className={`flex-1 py-2 font-mono text-sm rounded-sm border transition-colors ${
                     confidence === n
                       ? 'border-scalpel/40 bg-scalpel-muted text-scalpel font-bold'
-                      : 'border-white/[0.06] bg-surface-raised text-fg-dim hover:border-white/[0.1]'
+                      : 'border-border-subtle bg-surface-2 text-fg-dim hover:border-border'
                   }`}
                 >
                   {n}
@@ -129,7 +129,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                   className={`py-2 px-3 text-xs rounded-sm border transition-colors text-center ${
                     emotionalState === state.value
                       ? 'border-scalpel/40 bg-scalpel-muted text-scalpel font-medium'
-                      : 'border-white/[0.06] bg-surface-raised text-fg-dim hover:border-white/[0.1]'
+                      : 'border-border-subtle bg-surface-2 text-fg-dim hover:border-border'
                   }`}
                 >
                   <span className="text-base block mb-0.5">{state.icon}</span>
@@ -150,7 +150,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                   className={`py-1.5 px-3 font-mono text-xs rounded-sm border transition-colors ${
                     researchTime === t.value
                       ? 'border-scalpel/40 bg-scalpel-muted text-scalpel'
-                      : 'border-white/[0.06] bg-surface-raised text-fg-dim hover:border-white/[0.1]'
+                      : 'border-border-subtle bg-surface-2 text-fg-dim hover:border-border'
                   }`}
                 >
                   {t.label}
@@ -174,7 +174,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
                   className={`w-full flex items-center gap-3 py-2 px-3 rounded-sm border text-left text-sm transition-colors ${
                     toggle.value
                       ? 'border-bleed/30 bg-bleed-muted text-bleed'
-                      : 'border-white/[0.06] bg-surface-raised text-fg-dim hover:border-white/[0.1]'
+                      : 'border-border-subtle bg-surface-2 text-fg-dim hover:border-border'
                   }`}
                 >
                   <span>{toggle.icon}</span>

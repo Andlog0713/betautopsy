@@ -154,7 +154,7 @@ export default function UploadPage() {
 
           {/* Bankroll prompt — only if not already set */}
           {!profile?.bankroll && !bankrollSaved && (
-            <div className="bg-surface border border-white/[0.06] rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
+            <div className="bg-surface-1 border border-border-subtle rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
               <p className="text-fg-bright text-sm font-medium">Set your bankroll for a more accurate grade</p>
               <p className="text-fg-muted text-xs">
                 How much money do you have set aside for betting? This is the total amount you&apos;d be comfortable having in action, whether it&apos;s sitting in your sportsbook accounts, ready to deposit, or both. A rough estimate is fine.
@@ -167,7 +167,7 @@ export default function UploadPage() {
                     placeholder="e.g. 500"
                     value={bankrollInput}
                     onChange={(e) => setBankrollInput(e.target.value)}
-                    className="w-full bg-base border border-white/[0.08] rounded-sm px-3 py-2 pl-7 text-sm font-mono text-fg-bright placeholder:text-fg-dim focus:outline-none focus:border-scalpel/40"
+                    className="w-full bg-base border border-border rounded-sm px-3 py-2 pl-7 text-sm font-mono text-fg-bright placeholder:text-fg-dim focus:outline-none focus:border-scalpel/40"
                   />
                 </div>
                 <button
@@ -237,7 +237,7 @@ export default function UploadPage() {
                 className={`relative p-4 rounded-sm border text-center transition-all ${
                   activeMethod === m.id
                     ? 'border-scalpel/40 bg-scalpel-muted'
-                    : 'border-white/[0.06] bg-surface hover:border-white/[0.10]'
+                    : 'border-border-subtle bg-surface-1 hover:border-border'
                 }`}
               >
                 {m.badge && (
@@ -277,7 +277,7 @@ export default function UploadPage() {
                 </button>
 
                 {showPikkitSteps && (
-                  <div className="bg-surface-raised rounded-sm p-4 mt-3 space-y-2">
+                  <div className="bg-surface-2 rounded-sm p-4 mt-3 space-y-2">
                     <ol className="text-fg-muted text-sm space-y-1.5 list-none">
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">01</span> Download Pikkit and create an account</li>
                       <li className="flex gap-2"><span className="font-mono text-scalpel shrink-0">02</span> Connect your sportsbooks: DraftKings, FanDuel, BetMGM, etc.</li>
@@ -311,7 +311,7 @@ export default function UploadPage() {
                 <p className="text-fg-muted text-xs">We auto-detect columns from Pikkit, DraftKings, FanDuel, and generic CSV exports.</p>
                 <div className="flex flex-wrap gap-1.5">
                   {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit'].map(col => (
-                    <span key={col} className="font-mono text-[10px] bg-base border border-white/[0.04] rounded-sm px-1.5 py-0.5">{col}</span>
+                    <span key={col} className="font-mono text-[10px] bg-base border border-border-subtle rounded-sm px-1.5 py-0.5">{col}</span>
                   ))}
                 </div>
               </div>
@@ -337,7 +337,7 @@ export default function UploadPage() {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={`card p-10 text-center cursor-pointer transition-all duration-200 ${
-          dragOver ? 'border-scalpel bg-scalpel-muted' : 'hover:border-white/[0.08]'
+          dragOver ? 'border-scalpel bg-scalpel-muted' : 'hover:border-border'
         }`}
       >
         <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />

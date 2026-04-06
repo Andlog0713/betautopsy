@@ -228,7 +228,7 @@ export default function PasteParser() {
             <div className="card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
+                  <tr className="border-b border-border-subtle">
                     <th className="p-3 text-left w-10">
                       <input
                         type="checkbox"
@@ -251,7 +251,7 @@ export default function PasteParser() {
                   {parsedBets.map((bet, i) => (
                     <tr
                       key={i}
-                      className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
+                      className={`border-b border-border-subtle hover:bg-white/[0.02] transition-colors ${
                         !checked[i] ? 'opacity-40' : ''
                       }`}
                     >
@@ -321,7 +321,7 @@ export default function PasteParser() {
           onChange={(e) => setText(e.target.value)}
           readOnly={state === 'parsing'}
           placeholder="Go to your sportsbook → My Bets → Settled, select the page, copy it, and paste here. Works with DraftKings, FanDuel, BetMGM, and every other major sportsbook."
-          className={`w-full min-h-[250px] bg-base border border-white/[0.06] rounded-sm p-4 font-mono text-sm text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-all ${
+          className={`w-full min-h-[250px] bg-base border border-border-subtle rounded-sm p-4 font-mono text-sm text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-all ${
             state === 'parsing' ? 'opacity-50' : ''
           }`}
         />

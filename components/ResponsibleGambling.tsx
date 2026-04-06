@@ -2,10 +2,10 @@ import Link from 'next/link';
 
 export default function ResponsibleGambling() {
   return (
-    <div className="border-t border-white/[0.06]">
+    <div className="border-t border-border-subtle">
       <div className="max-w-4xl mx-auto py-6 px-4 text-center">
         <div className="flex items-center justify-center gap-3 mb-2">
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/[0.1] text-fg-dim text-xs font-bold">
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border text-fg-dim text-xs font-bold">
             21+
           </span>
           <span className="text-fg-muted text-sm">

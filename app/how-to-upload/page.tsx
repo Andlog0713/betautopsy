@@ -84,7 +84,7 @@ export default function HowToUploadPage() {
             <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app that connects to your sportsbook accounts and exports your complete history as a CSV. Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, PrizePicks, Underdog, Sleeper, and Kalshi. You only need it once — after that, keep your data updated with screenshots or paste.
           </p>
 
-          <div className="bg-surface-raised rounded-sm p-4">
+          <div className="bg-surface-2 rounded-sm p-4">
             <ol className="space-y-2.5 text-sm text-fg-muted">
               <li className="flex gap-3">
                 <span className="font-mono text-scalpel font-bold shrink-0">01</span>
@@ -130,7 +130,7 @@ export default function HowToUploadPage() {
             Take a screenshot of your settled bets from your sportsbook&apos;s mobile app. Our AI reads the image and extracts your bets automatically.
           </p>
 
-          <div className="bg-surface-raised rounded-sm p-4">
+          <div className="bg-surface-2 rounded-sm p-4">
             <ol className="space-y-2.5 text-sm text-fg-muted">
               <li className="flex gap-3">
                 <span className="font-mono text-scalpel font-bold shrink-0">01</span>
@@ -182,7 +182,7 @@ export default function HowToUploadPage() {
             We figure out the format automatically.
           </p>
 
-          <div className="bg-surface-raised rounded-sm p-4">
+          <div className="bg-surface-2 rounded-sm p-4">
             <ol className="space-y-2.5 text-sm text-fg-muted">
               <li className="flex gap-3">
                 <span className="font-mono text-scalpel font-bold shrink-0">01</span>
@@ -276,7 +276,7 @@ export default function HowToUploadPage() {
               <div className="flex flex-wrap gap-2">
                 {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit', 'sportsbook'].map(
                   (col) => (
-                    <span key={col} className="font-mono text-xs bg-base border border-white/[0.04] rounded px-2 py-1">
+                    <span key={col} className="font-mono text-xs bg-base border border-border-subtle rounded px-2 py-1">
                       {col}
                     </span>
                   )
@@ -286,7 +286,7 @@ export default function HowToUploadPage() {
 
             <div>
               <h3 className="text-sm font-medium text-fg-muted mb-2">Example rows:</h3>
-              <pre className="font-mono text-xs text-fg-muted bg-base border border-white/[0.04] rounded-sm p-4 overflow-x-auto">
+              <pre className="font-mono text-xs text-fg-muted bg-base border border-border-subtle rounded-sm p-4 overflow-x-auto">
 {`date,sport,bet_type,description,odds,stake,result,profit,sportsbook
 2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
 2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM
@@ -294,7 +294,7 @@ export default function HowToUploadPage() {
               </pre>
             </div>
 
-            <div className="bg-surface-raised rounded-sm p-4 text-sm text-fg-muted space-y-2">
+            <div className="bg-surface-2 rounded-sm p-4 text-sm text-fg-muted space-y-2">
               <p>
                 If you track bets in Google Sheets or Excel, just make sure your columns
                 roughly match these names and save as .csv. Our parser is flexible. It
@@ -350,7 +350,7 @@ function AiPromptBlock() {
         Copy and paste this prompt into ChatGPT, Claude, or any AI assistant along with your data to convert it automatically:
       </p>
       <div className="relative">
-        <pre className="font-mono text-xs text-fg-muted bg-base border border-white/[0.04] rounded-sm p-4 pr-12 overflow-x-auto whitespace-pre-wrap">
+        <pre className="font-mono text-xs text-fg-muted bg-base border border-border-subtle rounded-sm p-4 pr-12 overflow-x-auto whitespace-pre-wrap">
           {AI_PROMPT}
         </pre>
         <button

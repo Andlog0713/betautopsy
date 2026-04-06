@@ -28,7 +28,7 @@ export default function OnboardingSteps({
                     ? 'bg-win/20 text-win'
                     : isActive
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'bg-surface text-fg-dim'
+                    : 'bg-surface-1 text-fg-dim'
                 }`}
               >
                 {isDone ? '✓' : step.num}

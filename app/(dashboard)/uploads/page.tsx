@@ -106,8 +106,8 @@ export default function UploadsPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-32 bg-surface rounded" />
-        {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-surface rounded-sm" />)}
+        <div className="h-8 w-32 bg-surface-1 rounded" />
+        {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-surface-1 rounded-sm" />)}
       </div>
     );
   }
@@ -152,7 +152,7 @@ export default function UploadsPage() {
                     type="checkbox"
                     checked={selected.has(u.id)}
                     onChange={() => toggleSelect(u.id)}
-                    className="mt-1 rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
+                    className="mt-1 rounded border-border-subtle bg-surface-1 text-scalpel focus:ring-scalpel/40 cursor-pointer"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -178,7 +178,7 @@ export default function UploadsPage() {
                           </button>
                         </>
                       )}
-                      <span className={`text-xs px-2 py-0.5 rounded-sm ${u.analyzed ? 'bg-win/10 text-win' : 'bg-surface text-fg-muted'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-sm ${u.analyzed ? 'bg-win/10 text-win' : 'bg-surface-1 text-fg-muted'}`}>
                         {u.analyzed ? 'Analyzed' : 'Not analyzed'}
                       </span>
                     </div>

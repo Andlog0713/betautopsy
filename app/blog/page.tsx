@@ -38,7 +38,7 @@ export default function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="block card p-6 hover:border-white/[0.04] transition-colors group"
+            className="block card p-6 hover:border-border-subtle transition-colors group"
           >
             <div className="flex flex-wrap gap-2 mb-3">
               {post.tags.slice(0, 3).map((tag) => (

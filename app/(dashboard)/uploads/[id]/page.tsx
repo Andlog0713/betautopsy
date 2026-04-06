@@ -56,8 +56,8 @@ export default function UploadDetailPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-surface rounded" />
-        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-sm" />)}
+        <div className="h-8 w-48 bg-surface-1 rounded" />
+        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface-1 rounded-sm" />)}
       </div>
     );
   }
@@ -97,13 +97,13 @@ export default function UploadDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/[0.04]">
+              <tr className="border-b border-border-subtle">
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={() => allSelected ? setSelected(new Set()) : setSelected(new Set(bets.map((b) => b.id)))}
-                    className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
+                    className="rounded border-border-subtle bg-surface-1 text-scalpel focus:ring-scalpel/40 cursor-pointer"
                   />
                 </th>
                 <th className="text-left text-fg-muted font-medium px-4 py-3">Date</th>
@@ -119,13 +119,13 @@ export default function UploadDetailPage() {
             </thead>
             <tbody>
               {bets.map((bet) => (
-                <tr key={bet.id} className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-scalpel-muted' : ''}`}>
+                <tr key={bet.id} className={`border-b border-border-subtle hover:bg-white/[0.02] transition-colors ${selected.has(bet.id) ? 'bg-scalpel-muted' : ''}`}>
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.has(bet.id)}
                       onChange={() => { const n = new Set(selected); n.has(bet.id) ? n.delete(bet.id) : n.add(bet.id); setSelected(n); }}
-                      className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
+                      className="rounded border-border-subtle bg-surface-1 text-scalpel focus:ring-scalpel/40 cursor-pointer"
                     />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-fg-muted">
@@ -153,7 +153,7 @@ export default function UploadDetailPage() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-sm ${
                       bet.result === 'win' ? 'bg-win/10 text-win'
                       : bet.result === 'loss' ? 'bg-bleed-muted text-loss'
-                      : 'bg-surface text-fg-muted'
+                      : 'bg-surface-1 text-fg-muted'
                     }`}>{bet.result.toUpperCase()}</span>
                   </td>
                   <td className={`px-4 py-3 text-right font-mono font-medium ${Number(bet.profit) > 0 ? 'text-win' : Number(bet.profit) < 0 ? 'text-loss' : 'text-fg-muted'}`}>

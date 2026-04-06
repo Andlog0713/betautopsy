@@ -47,7 +47,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
         <button
           onClick={() => setRating('positive')}
           className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
-            rating === 'positive' ? 'bg-win/15 text-win border border-win/30' : 'bg-surface text-fg-muted hover:text-win'
+            rating === 'positive' ? 'bg-win/15 text-win border border-win/30' : 'bg-surface-1 text-fg-muted hover:text-win'
           }`}
         >
           👍 Nailed it
@@ -55,7 +55,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
         <button
           onClick={() => setRating('neutral')}
           className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
-            rating === 'neutral' ? 'bg-caution/15 text-caution border border-caution/30' : 'bg-surface text-fg-muted hover:text-caution'
+            rating === 'neutral' ? 'bg-caution/15 text-caution border border-caution/30' : 'bg-surface-1 text-fg-muted hover:text-caution'
           }`}
         >
           😐 It was okay
@@ -63,7 +63,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
         <button
           onClick={() => setRating('negative')}
           className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm transition-colors ${
-            rating === 'negative' ? 'bg-loss/15 text-loss border border-loss/30' : 'bg-surface text-fg-muted hover:text-loss'
+            rating === 'negative' ? 'bg-loss/15 text-loss border border-loss/30' : 'bg-surface-1 text-fg-muted hover:text-loss'
           }`}
         >
           👎 Missed it

@@ -50,7 +50,7 @@ export default function OnboardingBanner({ betCount, reportCount }: OnboardingBa
           </span>
         </div>
 
-        <div className="bg-surface-raised rounded-sm p-4 space-y-2">
+        <div className="bg-surface-2 rounded-sm p-4 space-y-2">
           <button
             onClick={() => setShowSteps((prev) => !prev)}
             className="text-fg-bright text-sm font-medium w-full text-left flex items-center justify-between"

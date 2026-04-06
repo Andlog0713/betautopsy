@@ -133,9 +133,9 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 w-32 bg-surface rounded" />
-        <div className="h-40 bg-surface rounded-sm" />
-        <div className="h-40 bg-surface rounded-sm" />
+        <div className="h-8 w-32 bg-surface-1 rounded" />
+        <div className="h-40 bg-surface-1 rounded-sm" />
+        <div className="h-40 bg-surface-1 rounded-sm" />
       </div>
     );
   }
@@ -144,7 +144,7 @@ export default function SettingsPage() {
   const isPaid = tier === 'pro';
 
   const tierBadge: Record<string, string> = {
-    free: 'bg-surface text-fg-muted border border-white/[0.04]',
+    free: 'bg-surface-1 text-fg-muted border border-border-subtle',
     pro: 'bg-scalpel-muted text-scalpel border border-scalpel/20',
     sharp: 'bg-win/10 text-win border border-win/20',
   };
@@ -185,7 +185,7 @@ export default function SettingsPage() {
           </button>
 
           {/* Streak info */}
-          <div className="pt-4 border-t border-white/[0.04] space-y-2">
+          <div className="pt-4 border-t border-border-subtle space-y-2">
             <p className="text-fg-muted text-xs uppercase tracking-wider font-medium">Streak</p>
             <div className="flex gap-6 text-sm">
               <div>
@@ -244,7 +244,7 @@ export default function SettingsPage() {
           What&apos;s a bankroll?
         </button>
         {bankrollExpanded && (
-          <div className="bg-surface-raised rounded-sm p-4 text-sm text-fg-muted space-y-3">
+          <div className="bg-surface-2 rounded-sm p-4 text-sm text-fg-muted space-y-3">
             <p>
               Your bankroll is the total amount of money you&apos;ve set aside
               specifically for betting, across all your sportsbooks combined.
@@ -326,7 +326,7 @@ export default function SettingsPage() {
                 .eq('id', profile!.id);
               if (error) setDigestEnabled(!newVal); // revert on error
             }}
-            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface-1'}`}
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${digestEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
           </button>
@@ -349,7 +349,7 @@ export default function SettingsPage() {
 
         {/* Clear all bets */}
         {isPaid && betCount > 0 && (
-          <div className="pt-3 border-t border-white/[0.04]">
+          <div className="pt-3 border-t border-border-subtle">
             {!showClearBets ? (
               <button
                 onClick={() => setShowClearBets(true)}

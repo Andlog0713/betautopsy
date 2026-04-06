@@ -83,9 +83,9 @@ function SkeletonSection({ label }: { label: string }) {
         <span className="inline-block w-4 h-4 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
         {label}
       </div>
-      <div className="h-4 bg-surface rounded animate-pulse w-full" />
-      <div className="h-4 bg-surface rounded animate-pulse w-2/3" />
-      <div className="h-4 bg-surface rounded animate-pulse w-4/5" />
+      <div className="h-4 bg-surface-1 rounded animate-pulse w-full" />
+      <div className="h-4 bg-surface-1 rounded animate-pulse w-2/3" />
+      <div className="h-4 bg-surface-1 rounded animate-pulse w-4/5" />
     </div>
   );
 }
@@ -221,7 +221,7 @@ function buildWhatIfs(bets: Bet[]) {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+    <div className="bg-surface-1 border border-border-subtle rounded-sm px-3 py-2 text-xs shadow-lg">
       <p className="text-fg-muted">{label}</p>
       <p className={`font-mono font-medium ${payload[0].value >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
         ${payload[0].value.toLocaleString()}
@@ -402,7 +402,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             onClick={() => setActiveTab('report')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'report'
-                ? 'bg-surface text-fg-bright shadow-sm'
+                ? 'bg-surface-1 text-fg-bright shadow-sm'
                 : 'text-fg-muted hover:text-fg-muted'
             }`}
           >
@@ -448,11 +448,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* What this report analyzes — collapsible */}
-      <details className="border border-white/[0.04] rounded-sm bg-surface/50 mb-5">
+      <details className="border border-border-subtle rounded-sm bg-surface-1/50 mb-5">
         <summary className="px-4 py-3 text-sm text-fg-muted cursor-pointer hover:text-fg flex items-center gap-2 font-mono text-[11px] tracking-wider">
           <span className="text-fg-dim">▸</span> ABOUT THIS REPORT
         </summary>
-        <div className="px-4 pb-4 text-xs text-fg-muted leading-relaxed border-t border-white/[0.04]">
+        <div className="px-4 pb-4 text-xs text-fg-muted leading-relaxed border-t border-border-subtle">
           Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong>: the psychological patterns, emotional responses, and cognitive biases that affect every bet you place.
         </div>
       </details>
@@ -467,7 +467,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
             <div className="flex gap-2 shrink-0">
               {mixedDataInfo.sportsBook && (
-                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.sportsBook)}`} className="text-xs font-medium bg-base hover:bg-surface text-fg-bright px-3 py-2 rounded-sm transition-colors">
+                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.sportsBook)}`} className="text-xs font-medium bg-base hover:bg-surface-1 text-fg-bright px-3 py-2 rounded-sm transition-colors">
                   Sportsbook Only
                 </a>
               )}
@@ -483,7 +483,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Subject Classification — Bet DNA (purple left border like mockup) */}
       {analysis.betting_archetype && (
-        <div className="border border-white/[0.04] p-[18px] border-l-[3px] border-l-purple-500 mb-5">
+        <div className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
           <h2 className="font-bold text-xl text-purple-400 mb-1">{analysis.betting_archetype.name}</h2>
           <p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p>
@@ -528,7 +528,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ═══ SCORES — side-by-side with gradient bars + needle ═══ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] border border-white/[0.04] mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] border border-border-subtle mb-6">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
             <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
@@ -536,7 +536,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-orange-400' : 'text-loss'
             }`}>{emotionScore}</span>
           </div>
-          <div className="h-1 bg-surface-raised relative">
+          <div className="h-1 bg-surface-2 relative">
             <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00FFCB, #D29922, #E8453C)' }} />
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
@@ -553,7 +553,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
               }`}>{analysis.discipline_score.total}</span>
             </div>
-            <div className="h-1 bg-surface-raised relative">
+            <div className="h-1 bg-surface-2 relative">
               <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #D29922, #00FFCB)' : 'linear-gradient(90deg, #E8453C, #D29922)' }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
@@ -596,7 +596,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <div className="data-label mb-0.5">{c.label}</div>
                 <div className="text-[9px] text-fg-dim leading-tight mb-1">{c.hint}</div>
                 <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
-                <div className="h-1 mt-2 bg-surface-raised overflow-hidden">
+                <div className="h-1 mt-2 bg-surface-2 overflow-hidden">
                   <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
                 </div>
               </div>
@@ -619,9 +619,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="blur-sm pointer-events-none">
             <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
             <div className="vitals-strip grid-cols-3 mt-4">
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
-              <div className="vitals-cell"><div className="h-4 bg-surface-raised rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
+              <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
             </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -710,7 +710,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {!isPartialReport && totalRecoverable > 0 && (
         <div
-          className="border border-white/[0.04] p-4 border-l-[3px] border-l-bleed cursor-pointer hover:bg-white/[0.01] transition-colors"
+          className="border border-border-subtle p-4 border-l-[3px] border-l-bleed cursor-pointer hover:bg-white/[0.01] transition-colors"
           onClick={() => {
             const el = document.getElementById('chapter-cost');
             if (el) {
@@ -777,7 +777,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {biases_detected.map((bias, i) => {
               const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
               return (
-              <div key={i} className={`border border-white/[0.04] p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
+              <div key={i} className={`border border-border-subtle p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2.5">
                     <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
@@ -846,7 +846,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.04]">
+                  <tr className="border-b border-border-subtle">
                     <th className="text-left text-fg-muted font-medium px-4 py-3">Category</th>
                     <th className="text-left text-fg-muted font-medium px-4 py-3">Issue</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
@@ -857,7 +857,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </thead>
                 <tbody>
                   {strategic_leaks.map((leak, i) => (
-                    <tr key={i} className="border-b border-white/[0.04]">
+                    <tr key={i} className="border-b border-border-subtle">
                       <td className="px-4 py-3 font-medium">{formatCategoryLabel(leak.category)}</td>
                       <td className="px-4 py-3 text-fg-muted">{leak.detail}</td>
                       <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-win' : 'text-loss'}`}>
@@ -902,7 +902,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           Measures how much emotions drive your betting decisions: chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
         {emotionBreakdown && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-white/[0.04]">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-border-subtle">
             {([
               { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const, hint: 'How much your bet sizes vary after accounting for odds differences' },
               { label: 'Reaction to Losses', key: 'loss_chasing' as const, hint: 'Whether your stakes increase after losing bets compared to after wins' },
@@ -962,7 +962,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
               { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
             ].map(signal => (
-              <div key={signal.label} className="bg-surface-raised p-3 border border-white/[0.04] rounded-sm">
+              <div key={signal.label} className="bg-surface-2 p-3 border border-border-subtle rounded-sm">
                 <div className="mb-1.5">
                   <span className="text-[11px] text-fg-muted block">{signal.label}</span>
                   <span className="text-[9px] text-fg-dim block leading-tight mt-0.5">{signal.hint}</span>
@@ -1087,7 +1087,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     if (!active || !payload?.length) return null;
                     const d = payload[0].payload as { category: string; roi: number; count: number };
                     return (
-                      <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+                      <div className="bg-surface-1 border border-border-subtle rounded-sm px-3 py-2 text-xs shadow-lg">
                         <p className="text-fg-bright font-medium">{d.category}</p>
                         <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi}% ROI</p>
                         <p className="text-fg-muted">{d.count} bets</p>
@@ -1127,7 +1127,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload as TimingBucket;
                       return (
-                        <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+                        <div className="bg-surface-1 border border-border-subtle rounded-sm px-3 py-2 text-xs shadow-lg">
                           <p className="text-fg-bright font-medium">{d.label}</p>
                           <p className={`font-mono ${d.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
@@ -1179,7 +1179,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       </div>
                       {/* Hover tooltip */}
                       {hasBets && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface border border-white/[0.04] rounded-sm px-2.5 py-1.5 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-1 border border-border-subtle rounded-sm px-2.5 py-1.5 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
                           <p className="text-fg-bright font-medium">{h.label}</p>
                           <p className={`font-mono ${h.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
@@ -1226,7 +1226,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
             )}
             {analysis.timing_analysis.late_night_stats && (
-              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-white/[0.04]'}`}>
+              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-border-subtle'}`}>
                 <p className="text-fg-muted text-xs mb-1">Late Night (11pm–4am)</p>
                 <p className="font-bold text-xl text-fg-bright">{analysis.timing_analysis.late_night_stats.count} bets</p>
                 <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-orange-400'}`}>
@@ -1261,7 +1261,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.04]">
+                  <tr className="border-b border-border-subtle">
                     <th className="text-left text-fg-muted font-medium px-4 py-3">Odds Range</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Bets</th>
                     <th className="text-right text-fg-muted font-medium px-4 py-3">Win Rate</th>
@@ -1273,7 +1273,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </thead>
                 <tbody>
                   {analysis.odds_analysis.buckets.filter((b) => b.bets > 0).map((bucket, i) => (
-                    <tr key={i} className="border-b border-white/[0.04]">
+                    <tr key={i} className="border-b border-border-subtle">
                       <td className="px-4 py-3">
                         <span className="font-medium">{bucket.label}</span>
                         <span className="text-fg-dim text-xs ml-1.5 hidden sm:inline">({bucket.range})</span>
@@ -1295,7 +1295,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-2.5 border-t border-white/[0.04] bg-base/30">
+            <div className="px-4 py-2.5 border-t border-border-subtle bg-base/30">
               <p className="text-fg-dim text-xs">
                 <span className="text-fg-muted">Edge</span> = your actual win rate minus the implied probability from the odds. Positive edge means you&apos;re beating the line at that price point.
               </p>
@@ -1317,7 +1317,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload as OddsBucket;
                         return (
-                          <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+                          <div className="bg-surface-1 border border-border-subtle rounded-sm px-3 py-2 text-xs shadow-lg">
                             <p className="text-fg-bright font-medium">{d.label}</p>
                             <p className={`font-mono ${d.edge >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
                             <p className="text-fg-muted">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
@@ -1344,7 +1344,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className={`card p-5 ${
               analysis.odds_analysis.luck_rating > 1 ? 'border-caution/20 bg-caution/5' :
               analysis.odds_analysis.luck_rating < -1 ? 'border-cyan-400/20 bg-cyan-400/5' :
-              'border-white/[0.04]'
+              'border-border-subtle'
             }`}>
               <p className="text-fg-muted text-xs mb-1">Luck vs Skill</p>
               <p className={`font-bold text-xl ${
@@ -1363,7 +1363,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <span className="text-fg-muted">Actual wins</span>
                   <span className="font-mono text-fg-bright">{analysis.odds_analysis.actual_wins}</span>
                 </div>
-                <div className="flex justify-between text-xs border-t border-white/[0.04] pt-1">
+                <div className="flex justify-between text-xs border-t border-border-subtle pt-1">
                   <span className="text-fg-muted">Difference</span>
                   <span className={`font-mono font-semibold ${analysis.odds_analysis.luck_rating >= 0 ? 'text-caution' : 'text-cyan-400'}`}>
                     {analysis.odds_analysis.luck_rating >= 0 ? '+' : ''}{analysis.odds_analysis.luck_rating.toFixed(1)} wins
@@ -1415,7 +1415,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.04]">
+                <tr className="border-b border-border-subtle">
                   <th className="text-left text-fg-muted font-medium px-3 py-2">Picks</th>
                   <th className="text-right text-fg-muted font-medium px-3 py-2">Entries</th>
                   <th className="text-right text-fg-muted font-medium px-3 py-2">Win Rate</th>
@@ -1425,7 +1425,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </thead>
               <tbody>
                 {analysis.dfs_metrics.pickCountDistribution.map((d) => (
-                  <tr key={d.picks} className="border-b border-white/[0.04]">
+                  <tr key={d.picks} className="border-b border-border-subtle">
                     <td className="px-3 py-2 font-medium">{d.picks}-pick</td>
                     <td className="px-3 py-2 text-right font-mono text-fg-muted">{d.count}</td>
                     <td className="px-3 py-2 text-right font-mono">{d.winRate}%</td>
@@ -1477,7 +1477,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.04]">
+                <tr className="border-b border-border-subtle">
                   <th className="text-left text-fg-muted font-medium px-3 py-2">Player</th>
                   <th className="text-right text-fg-muted font-medium px-3 py-2">Appearances</th>
                   <th className="text-right text-fg-muted font-medium px-3 py-2">% of Entries</th>
@@ -1486,7 +1486,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </thead>
               <tbody>
                 {analysis.dfs_metrics.playerConcentration.slice(0, 10).map((p) => (
-                  <tr key={p.player} className="border-b border-white/[0.04]">
+                  <tr key={p.player} className="border-b border-border-subtle">
                     <td className="px-3 py-2 font-medium">{p.player}</td>
                     <td className="px-3 py-2 text-right font-mono text-fg-muted">{p.count}</td>
                     <td className={`px-3 py-2 text-right font-mono ${p.percent >= 30 ? 'text-loss' : p.percent >= 20 ? 'text-caution' : 'text-fg-muted'}`}>
@@ -1781,7 +1781,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-1.5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
           {recommendations.map((rec, i) => (
-            <div key={i} className="border border-white/[0.04] p-4 border-l-[3px] border-l-scalpel">
+            <div key={i} className="border border-border-subtle p-4 border-l-[3px] border-l-scalpel">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i + 1).padStart(2, '0')}</span>
                 <span className="text-[14px] font-semibold text-fg-bright">{rec.title}</span>
@@ -1818,7 +1818,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="space-y-3">
             {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
-              <div key={i} className="card border-l-4 border-l-scalpel bg-surface/60 p-5">
+              <div key={i} className="card border-l-4 border-l-scalpel bg-surface-1/60 p-5">
                 <p className="text-fg-bright font-medium mb-2">{rule.rule}</p>
                 <p className="text-fg-muted text-sm mb-2">{rule.reason}</p>
                 <p className="text-fg-dim text-xs">Based on: {rule.based_on}</p>
@@ -1919,7 +1919,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {!readOnly && (
-        <div className="border-t border-white/[0.04] pt-5 mt-5">
+        <div className="border-t border-border-subtle pt-5 mt-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
           <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
         </div>
@@ -2056,7 +2056,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
             )}
             {!readOnly && (
-              <div className="border-t border-white/[0.04] pt-5 mt-5">
+              <div className="border-t border-border-subtle pt-5 mt-5">
                 <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-3">SHARE YOUR RESULTS</p>
                 <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
               </div>
@@ -2130,7 +2130,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 
       {/* Distribution bar */}
       <div>
-        <div className="flex h-6 rounded-sm overflow-hidden border border-white/[0.04]">
+        <div className="flex h-6 rounded-sm overflow-hidden border border-border-subtle">
           {(['disciplined', 'neutral', 'emotional', 'chasing', 'impulsive'] as const).filter(c => data.distribution[c].count > 0).map(c => (
             <div
               key={c}
@@ -2225,7 +2225,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                 <div key={ann.betId}>
                   <button
                     onClick={() => setExpandedBet(expandedBet === i ? null : i)}
-                    className="w-full bg-surface-raised rounded-sm p-2 flex items-center gap-2 text-xs text-left hover:bg-surface-elevated transition-colors"
+                    className="w-full bg-surface-2 rounded-sm p-2 flex items-center gap-2 text-xs text-left hover:bg-surface-3 transition-colors"
                   >
                     <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${CLASSIFICATION_COLORS[ann.classification]}`}>{ann.classification.slice(0, 4)}</span>
                     <span className="font-mono text-fg-dim w-8 shrink-0">{ann.confidence}%</span>
@@ -2234,7 +2234,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className="text-fg-dim">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
-                    <div className="bg-base border border-white/[0.04] rounded-sm p-3 ml-4 mt-1 space-y-1">
+                    <div className="bg-base border border-border-subtle rounded-sm p-3 ml-4 mt-1 space-y-1">
                       {ann.signals.map((sig, j) => (
                         <div key={j} className="flex items-center gap-2 text-xs">
                           <span className={`font-mono w-6 text-right shrink-0 ${sig.weight > 0 ? 'text-loss' : 'text-win'}`}>{sig.weight > 0 ? '+' : ''}{sig.weight}</span>
@@ -2285,7 +2285,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
 
       {/* Grade distribution bar */}
       <div>
-        <div className="flex h-6 rounded-sm overflow-hidden border border-white/[0.04]">
+        <div className="flex h-6 rounded-sm overflow-hidden border border-border-subtle">
           {sessionData.sessionGradeDistribution.filter(g => g.count > 0).map(g => (
             <div
               key={g.grade}
@@ -2381,7 +2381,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
           {showHeated && (
             <div className="mt-2 space-y-1.5">
               {heatedSessions.map(s => (
-                <div key={s.id} className="bg-surface-raised border border-loss/10 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                <div key={s.id} className="bg-surface-2 border border-loss/10 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center gap-2">
                   <span className="font-mono text-[10px] text-fg-dim w-24 shrink-0">{s.id}</span>
                   <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
                   <span className="text-fg-muted text-xs">{s.dayOfWeek} {s.date.slice(5)}</span>
@@ -2404,7 +2404,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
           {showAll && (
             <div className="mt-2 space-y-1">
               {sortedSessions.map(s => (
-                <div key={s.id} className="bg-surface-raised rounded-sm p-2 flex items-center gap-2 text-xs">
+                <div key={s.id} className="bg-surface-2 rounded-sm p-2 flex items-center gap-2 text-xs">
                   <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
                   <span className="font-mono text-fg-dim w-20 shrink-0">{s.date.slice(5)}</span>
                   <span className="text-fg-muted">{s.bets} bets</span>

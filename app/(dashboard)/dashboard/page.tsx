@@ -140,9 +140,9 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 w-48 bg-surface-raised rounded-sm" />
+        <div className="h-8 w-48 bg-surface-2 rounded-sm" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-surface-raised rounded-sm" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-surface-2 rounded-sm" />)}
         </div>
       </div>
     );
@@ -358,7 +358,7 @@ export default function DashboardPage() {
                         <span
                           key={m.weeks}
                           className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm border ${
-                            earned ? m.color : 'bg-surface-raised text-fg-dim border-white/[0.04]'
+                            earned ? m.color : 'bg-surface-2 text-fg-dim border-border-subtle'
                           }`}
                         >
                           {!earned && <span className="mr-0.5">🔒</span>}
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                     {[65, 52, 47, 38].map((h, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <span className="font-mono text-[10px] text-fg-dim w-16">Week {i + 1}</span>
-                        <div className="flex-1 h-2 bg-surface-raised overflow-hidden rounded-sm">
+                        <div className="flex-1 h-2 bg-surface-2 overflow-hidden rounded-sm">
                           <div className="h-full bg-scalpel rounded-sm" style={{ width: `${h}%` }} />
                         </div>
                       </div>
@@ -555,7 +555,7 @@ export default function DashboardPage() {
 
           {/* Quick actions */}
           <div className="grid md:grid-cols-3 gap-4">
-            <Link href="/upload" className="case-card p-6 hover:border-white/[0.08] transition-colors group">
+            <Link href="/upload" className="case-card p-6 hover:border-border transition-colors group">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">📤</span>
                 <div>
@@ -564,7 +564,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </Link>
-            <Link href="/reports" className="case-card p-6 hover:border-white/[0.08] transition-colors group">
+            <Link href="/reports" className="case-card p-6 hover:border-border transition-colors group">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">🔬</span>
                 <div>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </Link>
-            <button onClick={() => setJournalOpen(true)} className="case-card p-6 hover:border-white/[0.08] transition-colors group text-left">
+            <button onClick={() => setJournalOpen(true)} className="case-card p-6 hover:border-border transition-colors group text-left">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">📝</span>
                 <div>

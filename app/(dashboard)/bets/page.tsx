@@ -229,7 +229,7 @@ export default function BetsPage() {
                 className={`px-3 py-1.5 rounded-sm text-sm whitespace-nowrap transition-colors ${
                   sportFilter === sport
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.04]'
+                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 {sport === 'all' ? 'All Sports' : sport}
@@ -244,7 +244,7 @@ export default function BetsPage() {
                 className={`px-3 py-1.5 rounded-sm text-xs whitespace-nowrap transition-colors ${
                   typeFilter === bt
                     ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.04]'
+                    : 'text-fg-dim hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
                 {bt === 'all' ? 'All Types' : bt}
@@ -314,7 +314,7 @@ export default function BetsPage() {
       {loading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 bg-surface rounded-sm animate-pulse" />
+            <div key={i} className="h-14 bg-surface-1 rounded-sm animate-pulse" />
           ))}
         </div>
       ) : bets.length === 0 ? (
@@ -331,14 +331,14 @@ export default function BetsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.04]">
+                <tr className="border-b border-border-subtle">
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={allFilteredSelected}
                       onChange={toggleSelectAll}
                       aria-label="Select all bets on this page"
-                      className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
+                      className="rounded border-border-subtle bg-surface-1 text-scalpel focus:ring-scalpel/40 cursor-pointer"
                     />
                   </th>
                   <SortTh col="placed_at" label="Date" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -360,7 +360,7 @@ export default function BetsPage() {
                 {paginated.map((bet) => (
                   <tr
                     key={bet.id}
-                    className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
+                    className={`border-b border-border-subtle hover:bg-white/[0.02] transition-colors ${
                       selected.has(bet.id) ? 'bg-scalpel-muted' : ''
                     }`}
                   >
@@ -370,7 +370,7 @@ export default function BetsPage() {
                         checked={selected.has(bet.id)}
                         onChange={() => toggleSelect(bet.id)}
                         aria-label={`Select bet: ${bet.description}`}
-                        className="rounded border-white/[0.04] bg-surface text-scalpel focus:ring-scalpel/40 cursor-pointer"
+                        className="rounded border-border-subtle bg-surface-1 text-scalpel focus:ring-scalpel/40 cursor-pointer"
                       />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-fg-muted">
@@ -400,7 +400,7 @@ export default function BetsPage() {
                         </span>
                       )}
                       {bet.parlay_legs && bet.parlay_legs > 1 && (
-                        <span className="ml-2 text-xs bg-surface text-fg-muted px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs bg-surface-1 text-fg-muted px-1.5 py-0.5 rounded">
                           {bet.parlay_legs}L
                         </span>
                       )}
@@ -418,7 +418,7 @@ export default function BetsPage() {
                             ? 'bg-win/10 text-win'
                             : bet.result === 'loss'
                             ? 'bg-bleed-muted text-loss'
-                            : 'bg-surface text-fg-muted'
+                            : 'bg-surface-1 text-fg-muted'
                         }`}
                       >
                         {bet.result.toUpperCase()}
@@ -451,7 +451,7 @@ export default function BetsPage() {
           </div>
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.04]">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
               <p className="text-xs text-fg-muted">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
@@ -459,7 +459,7 @@ export default function BetsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.04]"
+                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.03]"
                 >
                   Prev
                 </button>
@@ -467,7 +467,7 @@ export default function BetsPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.04]"
+                  className="px-3 py-1 text-sm rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-fg-muted hover:text-fg hover:bg-white/[0.03]"
                 >
                   Next
                 </button>
@@ -514,7 +514,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
         </button>
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
-          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
+          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface-1 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-lg">Clear All Bets</h3>
             <p className="text-sm text-fg-bright">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of
@@ -759,7 +759,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
               type="checkbox"
               checked={form.is_bonus_bet}
               onChange={(e) => update('is_bonus_bet', e.target.checked)}
-              className="rounded border-white/[0.04] bg-base text-scalpel focus:ring-scalpel/40"
+              className="rounded border-border-subtle bg-base text-scalpel focus:ring-scalpel/40"
             />
             <span className="text-sm text-fg-muted">Bonus Bet</span>
           </label>

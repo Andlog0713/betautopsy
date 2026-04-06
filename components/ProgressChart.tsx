@@ -26,7 +26,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
+                  <div className="bg-surface-1 border border-border-subtle rounded-sm px-3 py-2 text-xs shadow-lg">
                     <p className="text-fg-muted">{label}</p>
                     {payload.map((p) => (
                       <p key={p.dataKey as string} style={{ color: p.color }} className="font-mono">

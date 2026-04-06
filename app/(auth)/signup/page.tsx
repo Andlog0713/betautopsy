@@ -86,10 +86,10 @@ function SignupForm() {
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/[0.04]" />
+          <div className="w-full border-t border-border-subtle" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-surface px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
+          <span className="bg-surface-1 px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
         </div>
       </div>
 

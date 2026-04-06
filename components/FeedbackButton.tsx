@@ -36,7 +36,7 @@ export default function FeedbackButton() {
       {/* Tab button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-surface border border-white/[0.04] border-r-0 rounded-l-sm px-2 py-3 text-fg-muted hover:text-fg hover:bg-surface/80 transition-colors"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-surface-1 border border-border-subtle border-r-0 rounded-l-sm px-2 py-3 text-fg-muted hover:text-fg hover:bg-surface-1/80 transition-colors"
         style={{ writingMode: 'vertical-rl' }}
       >
         <span className="text-xs tracking-wider">Feedback</span>
@@ -46,7 +46,7 @@ export default function FeedbackButton() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 w-80 bg-surface border border-white/[0.04] rounded-l-sm p-5 shadow-2xl shadow-black/40 space-y-4 animate-fade-in">
+          <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 w-80 bg-surface-1 border border-border-subtle rounded-l-sm p-5 shadow-2xl shadow-black/40 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-sm">Send Feedback</h3>
               <button onClick={() => setOpen(false)} aria-label="Close feedback" className="text-fg-muted hover:text-fg text-sm">✕</button>

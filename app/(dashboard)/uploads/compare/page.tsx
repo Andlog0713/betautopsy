@@ -50,7 +50,7 @@ function CompareMetric({ label, a, b, suffix, lowerBetter }: { label: string; a:
   const bWins = lowerBetter ? b < a : b > a;
   const same = Math.abs(a - b) < 0.1;
   return (
-    <tr className="border-b border-white/[0.04]">
+    <tr className="border-b border-border-subtle">
       <td className={`px-4 py-3 text-right font-mono ${!same && aWins ? 'text-win' : !same && bWins ? 'text-loss' : 'text-fg-bright'}`}>
         {a >= 0 && suffix === '$' ? '+' : ''}{suffix === '$' ? `$${Math.round(a).toLocaleString()}` : `${a.toFixed(1)}${s}`}
       </td>
@@ -118,8 +118,8 @@ export default function ComparePage() {
   if (loading || !a || !b) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-surface rounded" />
-        <div className="h-64 bg-surface rounded-sm" />
+        <div className="h-8 w-48 bg-surface-1 rounded" />
+        <div className="h-64 bg-surface-1 rounded-sm" />
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function ComparePage() {
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/[0.04]">
+            <tr className="border-b border-border-subtle">
               <th className="text-right text-fg-muted font-medium px-4 py-3 w-1/3">
                 <div className="truncate">{nameA}</div>
                 <div className="text-xs font-normal">{a.bets.length} bets</div>
@@ -166,7 +166,7 @@ export default function ComparePage() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-white/[0.04]">
+            <tr className="border-b border-border-subtle">
               <td className="px-4 py-3 text-right font-mono text-fg-bright">{a.record}</td>
               <td className="px-4 py-3 text-center text-fg-muted text-sm">Record</td>
               <td className="px-4 py-3 font-mono text-fg-bright">{b.record}</td>

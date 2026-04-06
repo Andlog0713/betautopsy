@@ -204,7 +204,7 @@ export default function QuizClient() {
             <button onClick={handleBack} disabled={currentQ === 0} className="text-sm text-fg-muted hover:text-fg-bright transition-colors disabled:opacity-30 disabled:cursor-not-allowed">← Back</button>
             <span className="text-sm text-fg-muted font-mono">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
           </div>
-          <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden mb-10">
+          <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden mb-10">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%`, backgroundColor: accent, boxShadow: `0 0 8px ${accent}40` }}
@@ -254,7 +254,7 @@ export default function QuizClient() {
                       className={`flex-1 py-4 rounded-sm border font-mono text-sm transition-all ${
                         sliderValue === opt.value || selectedValue === opt.value
                           ? 'border-scalpel/40 bg-scalpel-muted text-scalpel font-bold scale-105'
-                          : 'border-white/[0.10] bg-surface-raised text-fg-muted hover:border-white/[0.15]'
+                          : 'border-border bg-surface-2 text-fg-muted hover:border-border-strong'
                       }`}
                     >
                       {opt.label}
@@ -281,8 +281,8 @@ export default function QuizClient() {
                         isSelected
                           ? 'scale-[1.02] border-scalpel/50 bg-scalpel-muted'
                           : prevAnswer === opt.value
-                          ? 'border-white/[0.08] bg-white/[0.03]'
-                          : 'border-white/[0.10] bg-surface-raised hover:border-white/[0.15] hover:bg-surface-elevated'
+                          ? 'border-border bg-white/[0.03]'
+                          : 'border-border bg-surface-2 hover:border-border-strong hover:bg-surface-3'
                       }`}
                     >
                       <span className="text-sm md:text-base" style={{ color: isSelected ? accent : '#F0F2F5' }}>{opt.label}</span>
@@ -367,11 +367,11 @@ export default function QuizClient() {
               <span className="font-mono text-4xl font-bold" style={{ color: gradeColor(result.grade) }}>{result.grade}</span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-left mt-2">
-              <div className="bg-surface-raised p-3 rounded-sm">
+              <div className="bg-surface-2 p-3 rounded-sm">
                 <span className="font-mono text-[9px] text-fg-dim tracking-wider">EMOTION</span>
                 <span className={`font-mono text-xl font-bold block ${result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : 'text-loss'}`}>{result.emotion_estimate}</span>
               </div>
-              <div className="bg-surface-raised p-3 rounded-sm">
+              <div className="bg-surface-2 p-3 rounded-sm">
                 <span className="font-mono text-[9px] text-fg-dim tracking-wider">DISCIPLINE</span>
                 <span className={`font-mono text-xl font-bold block ${result.discipline_estimate >= 70 ? 'text-win' : result.discipline_estimate >= 40 ? 'text-caution' : 'text-loss'}`}>{result.discipline_estimate}</span>
               </div>
@@ -455,7 +455,7 @@ export default function QuizClient() {
               <span className="font-mono text-xs text-fg-muted tracking-[1.5px]">EMOTION SCORE</span>
               <span className={`font-mono text-2xl font-bold ${eColor}`}>{result.emotion_estimate}/100</span>
             </div>
-            <div className="h-1 bg-surface-raised relative mb-2">
+            <div className="h-1 bg-surface-2 relative mb-2">
               <div className={`h-full transition-all duration-1000 ${eBarColor}`} style={{ width: `${result.emotion_estimate}%` }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${result.emotion_estimate}%` }} />
             </div>

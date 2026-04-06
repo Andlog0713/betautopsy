@@ -3,19 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    background-color: #07070b;
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-base text-fg font-sans antialiased;
   }
 
-  /* Noise overlay — organic depth */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.02;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  ::selection {
+    background-color: rgba(0, 201, 167, 0.3);
+    color: white;
   }
 
   /* Grid-paper background */
@@ -28,20 +27,20 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #131620; }
+  ::-webkit-scrollbar-track { background: #07070b; }
   ::-webkit-scrollbar-thumb { background: #515968; border-radius: 0; }
-  * { scrollbar-width: thin; scrollbar-color: #515968 #131620; }
+  * { scrollbar-width: thin; scrollbar-color: #515968 #07070b; }
 }
 
 @layer components {
   /* ── Case file card ── */
   .case-card {
-    @apply bg-surface border border-white/[0.06] rounded-sm;
+    @apply bg-surface-1 border border-border-subtle rounded-sm;
   }
 
   /* Legacy card alias */
   .card {
-    @apply bg-surface border border-white/[0.06] rounded-sm;
+    @apply bg-surface-1 border border-border-subtle rounded-sm;
   }
 
   /* ── Buttons ── */
@@ -53,8 +52,8 @@
   }
 
   .btn-secondary {
-    @apply bg-transparent border border-white/[0.08] text-fg font-medium px-6 py-2.5 rounded-sm
-           hover:bg-white/[0.03] hover:border-white/[0.12] transition-all duration-150
+    @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-sm
+           hover:bg-white/[0.03] hover:border-border-strong transition-all duration-150
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
@@ -70,7 +69,7 @@
 
   /* ── Inputs ── */
   .input-field {
-    @apply bg-surface-raised border border-white/[0.06] text-fg rounded-sm px-4 py-2.5
+    @apply bg-surface-2 border border-border-subtle text-fg rounded-sm px-4 py-2.5
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
            transition-all duration-150;
@@ -110,7 +109,7 @@
 
   /* ── Vitals strip ── */
   .vitals-strip {
-    @apply grid gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden;
+    @apply grid gap-px bg-border-subtle border border-border-subtle rounded-sm overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
@@ -144,7 +143,7 @@
   .prose-betautopsy li { @apply text-fg-muted; }
   .prose-betautopsy a { @apply text-scalpel hover:underline; }
   .prose-betautopsy blockquote { @apply border-l-2 border-scalpel/30 pl-4 my-6 text-fg-muted italic; }
-  .prose-betautopsy hr { @apply border-white/[0.04] my-8; }
+  .prose-betautopsy hr { @apply border-border-subtle my-8; }
 
   /* ── Scrollbar hide utility ── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }

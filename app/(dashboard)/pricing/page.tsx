@@ -72,11 +72,11 @@ export default function PricingPage() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="text-center space-y-2">
-          <div className="h-8 w-48 bg-surface rounded mx-auto" />
-          <div className="h-4 w-64 bg-surface rounded mx-auto" />
+          <div className="h-8 w-48 bg-surface-1 rounded mx-auto" />
+          <div className="h-4 w-64 bg-surface-1 rounded mx-auto" />
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-surface rounded-sm" />)}
+          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-surface-1 rounded-sm" />)}
         </div>
       </div>
     );

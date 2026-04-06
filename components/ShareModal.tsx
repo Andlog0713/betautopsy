@@ -138,7 +138,7 @@ export default function ShareModal({
           className="min-h-full flex items-start justify-center p-4 sm:p-8"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="w-full max-w-md bg-base border border-white/[0.06] rounded-sm p-5 my-4">
+          <div className="w-full max-w-md bg-base border border-border-subtle rounded-sm p-5 my-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <span className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Share Report</span>
@@ -148,7 +148,7 @@ export default function ShareModal({
             </div>
 
             {/* Section 1: Share full report */}
-            <div className="bg-surface rounded-sm p-4 mb-5">
+            <div className="bg-surface-1 rounded-sm p-4 mb-5">
               <p className="text-sm text-fg-bright font-medium mb-1">Share your full interactive report</p>
               <p className="text-xs text-fg-muted mb-3">Anyone with the link can view your complete autopsy report.</p>
               <div className="flex gap-2">
@@ -157,14 +157,14 @@ export default function ShareModal({
                   className={`flex-1 py-2 rounded-sm text-xs font-mono transition-colors ${
                     linkCopied
                       ? 'bg-scalpel text-base'
-                      : 'bg-surface-raised border border-white/[0.06] text-fg hover:border-white/[0.12]'
+                      : 'bg-surface-2 border border-border-subtle text-fg hover:border-border-strong'
                   }`}
                 >
                   {linkCopied ? 'Copied to clipboard' : shareUrl ? 'Copy report link' : 'Generating link...'}
                 </button>
                 <button
                   onClick={handleShareTwitter}
-                  className="py-2 px-4 rounded-sm text-xs font-mono bg-surface-raised border border-white/[0.06] text-fg hover:border-white/[0.12] transition-colors flex items-center gap-1.5"
+                  className="py-2 px-4 rounded-sm text-xs font-mono bg-surface-2 border border-border-subtle text-fg hover:border-border-strong transition-colors flex items-center gap-1.5"
                 >
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                   Post on X
@@ -176,11 +176,11 @@ export default function ShareModal({
             <div className="mb-3">
               <p className="text-xs text-fg-muted mb-3">Or download a share card image for social media:</p>
 
-              <div className="flex gap-1 bg-surface p-1 rounded-sm mb-3">
+              <div className="flex gap-1 bg-surface-1 p-1 rounded-sm mb-3">
                 <button
                   onClick={() => setFormat('stories')}
                   className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
-                    format === 'stories' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
+                    format === 'stories' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
                   }`}
                 >
                   Stories
@@ -188,7 +188,7 @@ export default function ShareModal({
                 <button
                   onClick={() => setFormat('card')}
                   className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
-                    format === 'card' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
+                    format === 'card' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
                   }`}
                 >
                   Card
@@ -204,7 +204,7 @@ export default function ShareModal({
                       className={`py-1.5 rounded-sm text-[10px] font-mono text-center transition-colors ${
                         activeSlide === i
                           ? 'bg-scalpel text-base'
-                          : 'bg-surface text-fg-muted hover:text-fg'
+                          : 'bg-surface-1 text-fg-muted hover:text-fg'
                       }`}
                     >
                       {label}
@@ -213,7 +213,7 @@ export default function ShareModal({
                 </div>
               )}
 
-              <div className="bg-surface rounded-sm overflow-hidden mb-3">
+              <div className="bg-surface-1 rounded-sm overflow-hidden mb-3">
                 {format === 'stories' ? (
                   <div style={{ aspectRatio: '9/16', overflow: 'hidden' }}>
                     <div style={{ width: 1080, height: 1920, transform: 'scale(var(--preview-scale))', transformOrigin: 'top left' }}>

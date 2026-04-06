@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
-  loading: () => <div className="h-96 bg-surface rounded-sm animate-pulse" />,
+  loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
 
@@ -309,8 +309,8 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-48 bg-surface rounded" />
-        <div className="h-40 bg-surface rounded-sm" />
+        <div className="h-8 w-48 bg-surface-1 rounded" />
+        <div className="h-40 bg-surface-1 rounded-sm" />
       </div>
     );
   }
@@ -421,23 +421,23 @@ export default function ReportsPage() {
               <div className="card p-5">
                 <h3 className="font-semibold text-lg mb-2">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
                 </div>
               </div>
               <div className="card p-5 mt-3">
                 <h3 className="font-semibold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="card bg-surface/95 p-6 text-center max-w-sm">
+              <div className="card bg-surface-1/95 p-6 text-center max-w-sm">
                 <p className="text-2xl mb-2">🔒</p>
                 <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
@@ -533,7 +533,7 @@ export default function ReportsPage() {
                   className={`px-3 py-1 rounded-sm text-xs transition-colors ${
                     isActive
                       ? 'bg-scalpel-muted text-scalpel'
-                      : 'text-fg-muted hover:text-fg hover:bg-white/[0.04]'
+                      : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                   }`}
                 >
                   {f.label}
@@ -617,7 +617,7 @@ export default function ReportsPage() {
               <button
                 key={report.id}
                 onClick={() => openReport(report)}
-                className="card p-5 w-full text-left hover:border-white/[0.08] transition-colors"
+                className="card p-5 w-full text-left hover:border-border transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
@@ -774,7 +774,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
           <span>{estimate}</span>
           <span className="font-mono">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 bg-surface rounded-full overflow-hidden">
+        <div className="h-2 bg-surface-1 rounded-full overflow-hidden">
           <div
             className="h-full bg-scalpel rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}

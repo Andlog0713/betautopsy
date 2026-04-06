@@ -166,7 +166,7 @@ export default function FAQPage() {
 
       {FAQ_DATA.map((section, si) => (
         <div key={section.title}>
-          {si > 0 && <div className="border-t border-white/[0.04] my-10" />}
+          {si > 0 && <div className="border-t border-border-subtle my-10" />}
           <h2 className="text-xs uppercase tracking-widest text-scalpel mb-4 font-semibold">{section.title}</h2>
           <div className="space-y-0.5">
             {section.items.map((item) => {
@@ -185,7 +185,7 @@ export default function FAQPage() {
       ))}
 
       {/* Still have questions */}
-      <div className="border-t border-white/[0.04] my-10" />
+      <div className="border-t border-border-subtle my-10" />
       <div className="text-center space-y-3 py-8">
         <p className="text-fg-bright font-medium text-lg">Still have questions?</p>
         <p className="text-fg-muted text-sm">We&apos;re happy to help.</p>
