@@ -81,10 +81,11 @@ export default function HowToUploadPage() {
           </div>
           <span className="case-header block mb-4">BEST FOR: Getting your complete sportsbook history in one shot</span>
 
-          <p className="text-fg-muted text-sm mb-6">
-            Pikkit connects directly to your sportsbook accounts and pulls your full bet
-            history automatically. No manual logging needed, even if you&apos;ve never used
-            a tracker before.
+          <p className="text-fg-muted text-sm mb-3">
+            <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a free third-party bet tracking app (not affiliated with BetAutopsy) that connects to your sportsbook accounts and pulls your full betting history automatically. No manual logging needed, even if you&apos;ve never used a tracker before.
+          </p>
+          <p className="text-fg-muted text-xs mb-6">
+            You only need Pikkit once to get your history out. After that, keep it updated with screenshots or paste. Their free 7-day Pro trial is enough to export everything.
           </p>
 
           <div className="bg-surface-raised rounded-sm p-4">
