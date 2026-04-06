@@ -75,7 +75,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
-            {['Pikkit', 'DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Any CSV'].map(name => (
+            {['DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Pikkit', 'Any CSV'].map(name => (
               <span key={name} className="font-mono text-xs text-fg-muted tracking-wider">{name}</span>
             ))}
           </div>
