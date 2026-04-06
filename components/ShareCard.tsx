@@ -74,7 +74,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
             {roastLine}
           </div>
         </div>
-        <div style={{ flex: 0.4 }} />
+        <div style={{ flex: 1 }} />
       </div>
 
       {/* Right dark panel */}
@@ -92,7 +92,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
           <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>
             {insight.heroStat}
           </div>
-          <div style={{ fontSize: 34, color: '#D0D5DD', marginTop: 16, lineHeight: 1.3, fontWeight: 500 }}>
+          <div style={{ fontSize: 34, color: '#F0F2F5', marginTop: 16, lineHeight: 1.3, fontWeight: 500 }}>
             {insight.heroLabel}
           </div>
         </div>
@@ -103,14 +103,14 @@ const ShareCard = forwardRef<HTMLDivElement, {
             Your behavior changes your results
           </div>
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 20, color: '#A0A8B4', marginBottom: 6 }}>{comparison.topLabel}</div>
+            <div style={{ fontSize: 20, color: '#D0D5DD', marginBottom: 6 }}>{comparison.topLabel}</div>
             <div style={{ fontSize: 72, fontWeight: 900, letterSpacing: -2 }}>{comparison.topValue}</div>
           </div>
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 20, color: '#A0A8B4', marginBottom: 6 }}>{comparison.bottomLabel}</div>
+            <div style={{ fontSize: 20, color: '#D0D5DD', marginBottom: 6 }}>{comparison.bottomLabel}</div>
             <div style={{ fontSize: 72, fontWeight: 900, color: '#E8453C', letterSpacing: -2 }}>{comparison.bottomValue}</div>
           </div>
-          <div style={{ fontSize: 20, color: '#A0A8B4', marginTop: 8, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 20, color: '#D0D5DD', marginTop: 8, lineHeight: 1.4 }}>
             {comparison.punchline}
           </div>
         </div>
