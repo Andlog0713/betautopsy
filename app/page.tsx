@@ -2,6 +2,8 @@ import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
+import AnimatedSection from '@/components/AnimatedSection';
+import AnimatedCounter from '@/components/AnimatedCounter';
 
 export default function LandingPage() {
   return (
@@ -36,6 +38,22 @@ export default function LandingPage() {
             <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
           </div>
 
+          {/* Social proof counter strip */}
+          <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={47000} suffix="+" /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Bets Analyzed</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={2100} suffix="+" /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={12} duration={1} /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Biases Detected</span>
+            </div>
+          </div>
+
           {/* EKG heartbeat line */}
           <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
@@ -57,6 +75,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* PROBLEM / SOLUTION — same bg as hero  */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection>
       <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
           <div className="bg-base p-6 md:p-8">
@@ -90,10 +109,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* HOW IT WORKS — raised bg-surface      */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.05}>
       <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-8">PROTOCOL // THREE STEPS</div>
@@ -112,10 +133,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* DEMO REPORT — proof, see it yourself  */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.1}>
       <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
@@ -142,11 +165,13 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* QUIZ CTA — low-commitment alternative */}
       {/* after they've seen the product        */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection>
       <section className="max-w-3xl mx-auto px-6 py-12">
         <div className="finding-card border-l-scalpel p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -160,11 +185,13 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* PRICING — surface bg, visually        */}
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.05}>
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
         {/* Pricing glow - centered vertically to cover all cards */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.10] rounded-full blur-[150px] pointer-events-none" />
@@ -258,10 +285,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* BLOG — pass PageRank to content       */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.1}>
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="case-header mb-3">FROM THE POST-MORTEM</div>
         <p className="text-fg-muted text-sm mb-6">Deep dives into the behavioral side of sports betting.</p>
@@ -281,10 +310,12 @@ export default function LandingPage() {
           <Link href="/blog" className="font-mono text-xs text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* FINAL CTA — base bg                   */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection>
       <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
         <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           Stop betting on autopilot. Start <span className="text-scalpel">understanding your behavior.</span>
@@ -296,6 +327,7 @@ export default function LandingPage() {
           Upload Your Bets
         </Link>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* FOOTER                                */}
