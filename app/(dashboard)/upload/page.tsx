@@ -259,7 +259,7 @@ export default function UploadPage() {
             <div className="space-y-4">
               <div className="finding-card border-l-scalpel p-5">
                 <p className="text-fg-muted text-sm mb-3">
-                  <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a free third-party bet tracking app that connects to your sportsbook accounts and pulls your full betting history automatically. We&apos;re not affiliated with Pikkit — we just recommend it because it&apos;s the easiest way to export your data as a CSV.
+                  <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app that connects to your sportsbook accounts and pulls your full betting history automatically. We recommend it because it&apos;s the easiest way to export your data as a CSV.
                 </p>
                 <p className="text-fg-muted text-xs mb-4">
                   This is a <strong className="text-fg-bright">one-time import</strong>. You only need Pikkit to get your history out. After that, keep it updated with screenshots or paste. Their free 7-day Pro trial is enough to export everything.
