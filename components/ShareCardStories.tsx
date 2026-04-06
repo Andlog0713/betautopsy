@@ -94,12 +94,12 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <div style={{ fontSize: 80, fontWeight: 700, marginTop: 50, lineHeight: 1.3 }}>
           {insight.heroLabel}
         </div>
-        <div style={{ fontSize: 55, color: '#515968', marginTop: 70, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 55, color: '#848D9A', marginTop: 70, lineHeight: 1.5 }}>
           {insight.verdict}
         </div>
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ fontSize: 40, color: '#515968' }}>betautopsy.com</div>
+      <div style={{ fontSize: 40, color: '#848D9A' }}>betautopsy.com</div>
     </div>
   );
 });
