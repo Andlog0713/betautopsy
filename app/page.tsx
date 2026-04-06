@@ -72,11 +72,20 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="border-y border-white/[0.04] py-5">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 gap-y-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 sm:gap-x-10 gap-y-4">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
-            {['DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Pikkit', 'Any CSV'].map(name => (
-              <span key={name} className="font-mono text-xs text-fg-muted tracking-wider">{name}</span>
+            {[
+              { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-5' },
+              { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
+              { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
+              { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-5' },
+              { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-5' },
+              { src: '/logo/underdog.svg', alt: 'Underdog Fantasy', h: 'h-5' },
+              { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
+            ].map(logo => (
+              <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity`} />
             ))}
+            <span className="font-mono text-xs text-fg-muted/50 tracking-wider">+ Any CSV</span>
           </div>
         </div>
       </section>
