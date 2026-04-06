@@ -32,7 +32,6 @@ export default function ShareModal({
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Derived data
   const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
   const insight = useMemo(() => deriveBehavioralInsight(data.bets, data.emotion_score), [data.bets, data.emotion_score]);
   const comparison = useMemo(() => derivePatternComparison(data.bets), [data.bets]);
@@ -40,10 +39,20 @@ export default function ShareModal({
 
   const slideProps: StorySlideProps = { data, insight, comparison, roastLine };
 
-  // Lock body scroll when modal is open
+  // Prevent background scroll while keeping modal scrollable
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, scrollY);
+    };
   }, []);
 
   useEffect(() => {
@@ -117,148 +126,129 @@ export default function ShareModal({
   const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Share report"
-      className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center"
-      style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
-      onClick={onClose}
-    >
-      {/* Close button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onClose(); }}
-        aria-label="Close share modal"
-        className="fixed top-4 right-4 z-[60] text-fg-muted hover:text-fg transition-colors"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-
+    <>
+      {/* Full-screen backdrop — clicking anywhere closes */}
       <div
-        className="w-full max-w-lg px-4 py-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Format toggle */}
-        <div className="flex gap-1 bg-surface p-1 rounded-sm mb-4 w-fit mx-auto">
-          <button
-            onClick={() => setFormat('stories')}
-            className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
-              format === 'stories' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
-            }`}
-          >
-            Stories
-          </button>
-          <button
-            onClick={() => setFormat('card')}
-            className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
-              format === 'card' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
-            }`}
-          >
-            Card
-          </button>
-        </div>
+        className="fixed inset-0 z-50 bg-black/85"
+        onClick={onClose}
+        role="presentation"
+      />
 
-        {/* Slide picker thumbnails (stories only) */}
-        {format === 'stories' && (
-          <div className="flex gap-2 justify-center mb-4">
-            {SLIDE_LABELS.map((label, i) => (
+      {/* Modal content — scrollable, on top of backdrop */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share report"
+        className="fixed inset-0 z-50 overflow-y-auto pointer-events-none"
+      >
+        <div className="min-h-full flex items-start justify-center py-8 px-4">
+          <div
+            className="w-full max-w-lg pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <div className="flex justify-end mb-3">
               <button
-                key={label}
-                onClick={() => setActiveSlide(i)}
-                className={`px-3 py-1.5 rounded-sm text-xs font-mono transition-colors ${
-                  activeSlide === i
-                    ? 'bg-scalpel text-base'
-                    : 'bg-surface border border-white/[0.06] text-fg-muted hover:text-fg'
+                onClick={onClose}
+                aria-label="Close"
+                className="text-fg-muted hover:text-fg transition-colors p-1"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Format toggle */}
+            <div className="flex gap-1 bg-surface p-1 rounded-sm mb-4 w-fit mx-auto">
+              <button
+                onClick={() => setFormat('stories')}
+                className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                  format === 'stories' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
                 }`}
               >
-                {label}
+                Stories
               </button>
-            ))}
-          </div>
-        )}
-
-        {/* Preview — scaled to fit */}
-        <div className="flex justify-center mb-5">
-          {format === 'stories' ? (
-            <div style={{
-              width: '100%',
-              maxWidth: 270,
-              aspectRatio: '9/16',
-              overflow: 'hidden',
-              borderRadius: 4,
-            }}>
-              <div style={{
-                width: 1080,
-                height: 1920,
-                transform: 'scale(0.25)',
-                transformOrigin: 'top left',
-              }}>
-                {(() => {
-                  const Comp = SlideComponents[activeSlide];
-                  return <Comp {...slideProps} ref={null} />;
-                })()}
-              </div>
+              <button
+                onClick={() => setFormat('card')}
+                className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                  format === 'card' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
+                }`}
+              >
+                Card
+              </button>
             </div>
-          ) : (
-            <div style={{
-              width: '100%',
-              maxWidth: 400,
-              aspectRatio: '1/1',
-              overflow: 'hidden',
-              borderRadius: 4,
-            }}>
-              <div style={{
-                width: 1080,
-                height: 1080,
-                transform: 'scale(0.37)',
-                transformOrigin: 'top left',
-              }}>
-                <ShareCard ref={null} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+
+            {/* Slide picker (stories only) */}
+            {format === 'stories' && (
+              <div className="flex gap-2 justify-center mb-4">
+                {SLIDE_LABELS.map((label, i) => (
+                  <button
+                    key={label}
+                    onClick={() => setActiveSlide(i)}
+                    className={`px-3 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                      activeSlide === i
+                        ? 'bg-scalpel text-base'
+                        : 'bg-surface border border-white/[0.06] text-fg-muted hover:text-fg'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+            )}
+
+            {/* Preview */}
+            <div className="flex justify-center mb-5 overflow-hidden rounded-sm">
+              {format === 'stories' ? (
+                <div style={{ width: 270, height: 480, overflow: 'hidden' }}>
+                  <div style={{ width: 1080, height: 1920, transform: 'scale(0.25)', transformOrigin: 'top left' }}>
+                    {(() => {
+                      const Comp = SlideComponents[activeSlide];
+                      return <Comp {...slideProps} ref={null} />;
+                    })()}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ width: 400, height: 400, overflow: 'hidden' }}>
+                  <div style={{ width: 1080, height: 1080, transform: 'scale(0.37)', transformOrigin: 'top left' }}>
+                    <ShareCard ref={null} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Action buttons */}
-        <div className="space-y-2">
-          {/* Download image */}
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="btn-primary w-full text-sm"
-          >
-            {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]} Slide` : 'Download Card Image'}
-          </button>
-
-          {/* Share report actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopyLink}
-              className="btn-secondary flex-1 text-sm"
-            >
-              {linkCopied ? 'Copied' : 'Copy Report Link'}
-            </button>
-            <button
-              onClick={handleShareTwitter}
-              className="btn-secondary flex-1 text-sm flex items-center justify-center gap-1.5"
-            >
-              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              Share on X
-            </button>
+            {/* Action buttons */}
+            <div className="space-y-2 pb-4">
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="btn-primary w-full text-sm"
+              >
+                {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]} Slide` : 'Download Card Image'}
+              </button>
+              <div className="flex gap-2">
+                <button onClick={handleCopyLink} className="btn-secondary flex-1 text-sm">
+                  {linkCopied ? 'Copied' : 'Copy Report Link'}
+                </button>
+                <button onClick={handleShareTwitter} className="btn-secondary flex-1 text-sm flex items-center justify-center gap-1.5">
+                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Share on X
+                </button>
+              </div>
+              <p className="text-fg-dim text-[10px] font-mono text-center mt-1">
+                Report link and X share link to your full interactive report
+              </p>
+            </div>
           </div>
-          <p className="text-fg-dim text-[10px] font-mono text-center mt-1">
-            Report link and X share link to your full interactive report
-          </p>
         </div>
       </div>
 
       {/* Off-screen renders for toPng capture */}
-      <div style={{ position: 'absolute', left: -9999, top: 0, opacity: 0, pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', left: -9999, top: 0, pointerEvents: 'none' }} aria-hidden="true">
         {SlideComponents.map((Comp, i) => (
           <Comp key={i} ref={slideRefs[i]} {...slideProps} />
         ))}
         <ShareCard ref={cardRef} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
       </div>
-    </div>
+    </>
   );
 }
