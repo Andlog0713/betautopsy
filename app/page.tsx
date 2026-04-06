@@ -29,9 +29,7 @@ export default function LandingPage() {
             Your behavior is.
           </div>
           <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Find out exactly which habits are costing you money, and how much. Upload your
-            bet history and BetAutopsy breaks down every bias hiding in your data. The patterns
-            you can&apos;t see on your own, what each one is actually costing you, and a concrete plan to fix them.
+            Upload your bet history. See exactly which habits are costing you money, how much, and how to fix them.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
@@ -95,12 +93,8 @@ export default function LandingPage() {
               You know <span className="text-fg-muted">what</span> happened.
               <br />You don&apos;t know <span className="text-scalpel">why.</span>
             </h2>
-            <p className="text-fg text-sm leading-relaxed mb-3">
-              Why you doubled your stake after three straight losses. Why your $50 parlay
-              turned into a $400 chase. Why you keep betting NBA props at a -18% ROI.
-            </p>
-            <p className="text-fg-bright text-sm font-medium">
-              The numbers show what happened. They don&apos;t show what you&apos;re doing to yourself.
+            <p className="text-fg text-sm leading-relaxed">
+              Why your $50 parlay turned into a $400 chase. Why you keep betting NBA props at -18% ROI.
             </p>
           </div>
           <div className="bg-base p-6 md:p-8 border-l border-scalpel/10">
@@ -109,13 +103,8 @@ export default function LandingPage() {
               BetAutopsy reads your history like a{' '}
               <span className="text-scalpel">case file.</span>
             </h2>
-            <p className="text-fg text-sm leading-relaxed mb-3">
-              Your Tuesday night parlays cost $340 last quarter. Your stakes jump 1.8x after
-              a loss. You&apos;re profitable on NFL spreads but bleeding on props. Specific patterns,
-              specific dollars, specific fixes.
-            </p>
-            <p className="text-fg-bright text-sm font-medium">
-              Month 1, you see what&apos;s costing you. Month 6, you see how much you&apos;ve saved.
+            <p className="text-fg text-sm leading-relaxed">
+              Your Tuesday night parlays cost $340 last quarter. Your stakes jump 1.8x after a loss. Specific patterns, specific dollars, specific fixes.
             </p>
           </div>
         </div>
@@ -146,13 +135,10 @@ export default function LandingPage() {
             <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
           </div>
           <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
-            This is what a Pro autopsy looks like
+            See a real autopsy report
           </h2>
-          <p className="text-fg-muted text-sm mb-4 max-w-xl">
-            280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
-          </p>
-          <p className="text-fg-muted text-xs mb-8 max-w-xl">
-            THIS IS A FULL REPORT. FREE SNAPSHOTS SHOW YOUR GRADE AND TOP BIAS. UNLOCK THE COMPLETE ANALYSIS FOR $9.99.
+          <p className="text-fg-muted text-sm mb-8 max-w-xl">
+            280 bets. 3 months. 3 biases found. $480/quarter in recoverable losses.
           </p>
           <div className="border border-white/[0.06] rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
@@ -176,17 +162,17 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-3 gap-4">
           {[
             {
-              quote: "I knew I was losing on parlays but had no idea it was $1,200 in 3 months. The breakdown by sport was eye-opening. Cut my parlay spending by 80%.",
+              quote: "Had no idea parlays were costing me $1,200 in 3 months. Cut my parlay spending by 80%.",
               name: 'Mike R.',
               detail: '340 bets analyzed',
             },
             {
-              quote: "The emotion score hit different. Seeing a 78/100 next to my actual loss-chasing pattern made it real. I set a rule and my ROI improved within a month.",
+              quote: "Seeing a 78/100 emotion score next to my loss-chasing pattern made it real. ROI improved within a month.",
               name: 'Jordan T.',
               detail: 'Full Report user',
             },
             {
-              quote: "I thought I was a sharp bettor. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else. Now I stick to what works.",
+              quote: "Thought I was sharp. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else.",
               name: 'Chris D.',
               detail: '500+ bets analyzed',
             },
@@ -215,7 +201,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
-            Free snapshots analyze all your bets. Upgrade for the full 5-chapter report with dollar costs, action plan, and more.
+            Start free. Upgrade for the full report with dollar costs and action plans.
           </p>
           <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-white/[0.06] md:border border-white/[0.06] rounded-sm md:overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
@@ -309,7 +295,7 @@ export default function LandingPage() {
       <AnimatedSection delay={0.1}>
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="case-header mb-3">FROM THE POST-MORTEM</div>
-        <p className="text-fg-muted text-sm mb-6">Deep dives into the behavioral side of sports betting.</p>
+        <p className="text-fg-muted text-sm mb-6">The behavioral side of sports betting.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {[
             { title: 'Why Am I Losing at Sports Betting?', slug: 'why-am-i-losing-at-sports-betting', time: '7 min' },

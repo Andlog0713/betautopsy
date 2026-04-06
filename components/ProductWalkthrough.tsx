@@ -6,22 +6,22 @@ const STEPS = [
   {
     num: '01',
     title: 'Upload',
-    headline: 'Export from any sportsbook or tracking app',
-    description: 'FanDuel, DraftKings, BetMGM, Caesars, bet365, PrizePicks, or any CSV. Pikkit users can export directly. Takes 30 seconds.',
+    headline: 'Export from any sportsbook',
+    description: 'FanDuel, DraftKings, BetMGM, Caesars, bet365, Pikkit, or any CSV. Takes 30 seconds.',
     visual: 'csv',
   },
   {
     num: '02',
     title: 'Analyze',
-    headline: '47 behavioral metrics in 60 seconds',
-    description: 'We scan every bet for emotional patterns, loss-chasing sequences, stake escalation, and hidden edges. No judgment, just the data.',
+    headline: '47 behavioral metrics. 60 seconds.',
+    description: 'Emotional patterns, loss-chasing, stake escalation, hidden edges. No judgment, just the data.',
     visual: 'scan',
   },
   {
     num: '03',
     title: 'Report',
-    headline: 'A forensic breakdown with dollar amounts',
-    description: 'Five chapters: BetIQ Score, emotion patterns, discipline grade, profitable edges, and a concrete recovery plan.',
+    headline: 'Your forensic breakdown',
+    description: 'BetIQ Score, emotion patterns, discipline grade, edges, and a dollar-amount recovery plan.',
     visual: 'report',
   },
 ] as const;
