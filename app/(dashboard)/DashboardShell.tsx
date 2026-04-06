@@ -272,21 +272,21 @@ export default function DashboardShell({
       </header>
 
       {/* Desktop sidebar — collapsed by default, expands on hover */}
-      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen transition-colors duration-100 overflow-hidden group/sidebar">
-        <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-colors duration-100">
+      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-white/[0.04] bg-surface sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
+        <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
             <span className="group-hover/sidebar:hidden"><Logo size="xs" variant="mark" theme="dark" /></span>
             <span className="hidden group-hover/sidebar:block"><Logo size="xs" variant="horizontal" theme="dark" /></span>
           </Link>
         </div>
 
-        <nav className="flex-1 px-1 group-hover/sidebar:px-2 space-y-0.5 transition-colors duration-100">
+        <nav className="flex-1 px-1 group-hover/sidebar:px-2 space-y-0.5 transition-all duration-200">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-colors duration-100 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                 pathname === item.href ? activeClass : inactiveClass
               }`}
             >
@@ -299,7 +299,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/reports"
                 title="Admin"
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-colors duration-100 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname.startsWith('/admin') ? activeClass : inactiveClass
                 }`}
               >
@@ -312,7 +312,7 @@ export default function DashboardShell({
                 key={item.href}
                 href={item.href}
                 title={item.label}
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-colors duration-100 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
                   pathname === item.href ? activeClass : inactiveClass
                 }`}
               >
@@ -323,7 +323,7 @@ export default function DashboardShell({
           </div>
         </nav>
 
-        <div className="p-2 group-hover/sidebar:p-4 border-t border-white/[0.04] space-y-3 transition-colors duration-100">
+        <div className="p-2 group-hover/sidebar:p-4 border-t border-white/[0.04] space-y-3 transition-all duration-200">
           {tier === 'free' && (
             <Link
               href="/pricing"
@@ -366,17 +366,17 @@ export default function DashboardShell({
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
           {children}
         </div>
-        <footer className="border-t border-dashed border-white/[0.06] text-center py-6 px-4 space-y-2">
+        <footer className="text-center py-6 px-4 space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <Link href="/privacy" className="font-mono text-[10px] tracking-[2px] uppercase text-fg-dim hover:text-fg transition-colors duration-100">
+            <Link href="/privacy" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
               Privacy Policy
             </Link>
             <span className="text-fg-dim text-[10px]">·</span>
-            <Link href="/terms" className="font-mono text-[10px] tracking-[2px] uppercase text-fg-dim hover:text-fg transition-colors duration-100">
+            <Link href="/terms" className="font-mono text-[10px] text-fg-dim hover:text-fg transition-colors tracking-wider">
               Terms of Use
             </Link>
           </div>
-          <p className="font-mono text-[10px] text-fg-dim tracking-wider max-w-xl mx-auto leading-relaxed">
+          <p className="font-mono text-[9px] text-fg-dim tracking-wider max-w-xl mx-auto leading-relaxed">
             BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS. NOT
             GAMBLING OR FINANCIAL ADVICE. PAST RESULTS DON&apos;T GUARANTEE FUTURE OUTCOMES.
             21+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.

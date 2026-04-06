@@ -142,7 +142,7 @@ export default function AdminReportsPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="card h-20 animate-pulse bg-ink-800 rounded-none" />
+            <div key={i} className="card h-20 animate-pulse bg-ink-800" />
           ))}
         </div>
       ) : reports.length === 0 ? (

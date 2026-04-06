@@ -56,8 +56,8 @@ export default function UploadDetailPage() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-surface rounded-none" />
-        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-none" />)}
+        <div className="h-8 w-48 bg-surface rounded" />
+        {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-sm" />)}
       </div>
     );
   }

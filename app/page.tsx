@@ -18,13 +18,13 @@ export default function LandingPage() {
           <div className="case-header mb-8 animate-fade-in">
             CASE FILE // BEHAVIORAL ANALYSIS UNIT
           </div>
-          <h1 className="font-bold text-4xl md:text-5xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
+          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
             Your bets aren&apos;t the problem.
           </h1>
-          <div className="font-light text-4xl md:text-5xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
+          <div className="font-light text-4xl md:text-6xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
             Your behavior is.
           </div>
-          <p className="text-fg text-sm md:text-base max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
+          <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
             Find out exactly which habits are costing you money, and how much. Upload your
             bet history and BetAutopsy breaks down every bias hiding in your data. The patterns
             you can&apos;t see on your own, what each one is actually costing you, and a concrete plan to fix them.
@@ -33,35 +33,35 @@ export default function LandingPage() {
             Every upload sharpens the picture. Your third report catches patterns your first one couldn&apos;t.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
-            <Link href="/signup" className="btn-primary">
+            <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Get Your Free Full Report
             </Link>
             <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
           </div>
           <div className="mt-6 animate-fade-in-d3">
-            <Link href="/how-to-upload" className="font-mono text-[11px] tracking-[2px] text-scalpel hover:text-scalpel/80 transition-colors duration-100 uppercase">
-              Not sure how to get your data? →
+            <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
+              NOT SURE HOW TO GET YOUR DATA? →
             </Link>
           </div>
 
           {/* Trust block */}
-          <div className="mt-6 border border-white/[0.06] border-t-white/[0.10] rounded-none px-4 py-3 animate-fade-in-d3">
+          <div className="mt-6 border border-white/[0.04] rounded px-4 py-3 animate-fade-in-d3">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V4.5a3 3 0 0 1 6 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                <span className="font-mono text-[10px] text-fg-muted tracking-wider">Data never sold or shared</span>
+                <span className="font-mono text-xs text-fg-muted">Data never sold or shared</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 7 3-1.5 5.5-3.5 5.5-7V4L8 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
-                <span className="font-mono text-[10px] text-fg-muted tracking-wider">Not stored by our AI provider</span>
+                <span className="font-mono text-xs text-fg-muted">Not stored by our AI provider</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" strokeWidth="1.5"/><line x1="6" y1="6" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5"/></svg>
-                <span className="font-mono text-[10px] text-fg-muted tracking-wider">Row-level security on all data</span>
+                <span className="font-mono text-xs text-fg-muted">Row-level security on all data</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M4 4l.7 9.1a1.5 1.5 0 0 0 1.5 1.4h3.6a1.5 1.5 0 0 0 1.5-1.4L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                <span className="font-mono text-[10px] text-fg-muted tracking-wider">Delete your data anytime</span>
+                <span className="font-mono text-xs text-fg-muted">Delete your data anytime</span>
               </div>
             </div>
           </div>
@@ -89,9 +89,9 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
-          <div className="bg-base p-5 md:p-8">
+          <div className="bg-base p-6 md:p-8">
             <span className="case-header block mb-4">The Problem</span>
-            <h2 className="font-bold text-xl leading-snug mb-4 text-fg-bright">
+            <h2 className="font-bold text-xl md:text-2xl leading-snug mb-4 text-fg-bright">
               You know <span className="text-fg-muted">what</span> happened.
               <br />You don&apos;t know <span className="text-scalpel">why.</span>
             </h2>
@@ -103,9 +103,9 @@ export default function LandingPage() {
               The numbers show what happened. They don&apos;t show what you&apos;re doing to yourself.
             </p>
           </div>
-          <div className="bg-base p-5 md:p-8 border-l border-scalpel/10">
+          <div className="bg-base p-6 md:p-8 border-l border-scalpel/10">
             <span className="case-header block mb-4 text-scalpel">The Solution</span>
-            <h2 className="font-bold text-xl leading-snug mb-4 text-fg-bright">
+            <h2 className="font-bold text-xl md:text-2xl leading-snug mb-4 text-fg-bright">
               BetAutopsy reads your history like a{' '}
               <span className="text-scalpel">case file.</span>
             </h2>
@@ -133,9 +133,9 @@ export default function LandingPage() {
               { step: '02', title: 'Analyze', desc: 'We scan for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
               { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
             ].map(item => (
-              <div key={item.step} className="vitals-cell !p-5 md:!p-8">
-                <div className="font-mono text-2xl font-bold text-scalpel/20 mb-3">{item.step}</div>
-                <h3 className="text-base font-medium text-fg-bright mb-2">{item.title}</h3>
+              <div key={item.step} className="vitals-cell !p-6 md:!p-8">
+                <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
+                <h3 className="text-lg font-semibold text-fg-bright mb-2">{item.title}</h3>
                 <p className="text-sm text-fg leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -152,21 +152,21 @@ export default function LandingPage() {
             <div className="case-header">EXHIBIT A // PRO TIER SAMPLE</div>
             <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
           </div>
-          <h2 className="font-bold text-xl md:text-2xl text-fg-bright mb-3">
+          <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
             This is what a Pro autopsy looks like
           </h2>
           <p className="text-fg-muted text-sm mb-4 max-w-xl">
             280 bets. NFL &amp; NBA. 3 months. We found 3 cognitive biases, a loss-chasing habit costing $480/quarter, and a parlay addiction erasing their entire edge.
           </p>
-          <p className="font-mono text-[9px] tracking-[2px] text-fg-dim uppercase mb-8 max-w-xl">
-            This is a full report. Free snapshots show your grade and top bias. Unlock the complete analysis for $9.99.
+          <p className="text-fg-muted text-xs mb-8 max-w-xl">
+            THIS IS A FULL REPORT. FREE SNAPSHOTS SHOW YOUR GRADE AND TOP BIAS. UNLOCK THE COMPLETE ANALYSIS FOR $9.99.
           </p>
-          <div className="border border-white/[0.06] rounded-none overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-dashed border-white/[0.04] bg-surface">
-              <span className="w-1.5 h-1.5 rounded-none bg-loss" />
-              <span className="w-1.5 h-1.5 rounded-none bg-caution" />
-              <span className="w-1.5 h-1.5 rounded-none bg-win" />
-              <span className="flex-1 text-center font-mono text-[9px] text-fg-dim tracking-[2px]">betautopsy.com/reports</span>
+          <div className="border border-white/[0.06] rounded-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04] bg-surface">
+              <div className="w-2 h-2 rounded-full bg-loss" />
+              <div className="w-2 h-2 rounded-full bg-caution" />
+              <div className="w-2 h-2 rounded-full bg-win" />
+              <span className="flex-1 text-center font-mono text-[10px] text-fg-dim tracking-wider">betautopsy.com/reports</span>
             </div>
             <DemoReportWrapper />
           </div>
@@ -178,13 +178,13 @@ export default function LandingPage() {
       {/* after they've seen the product        */}
       {/* ══════════════════════════════════════ */}
       <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="finding-card border-l-scalpel p-5">
+        <div className="finding-card border-l-scalpel p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-medium text-base text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
+              <h3 className="font-bold text-lg text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
               <p className="text-fg-muted text-sm">Discover your Bet DNA in 2 minutes. No signup, no data needed.</p>
             </div>
-            <Link href="/quiz" className="btn-secondary shrink-0">
+            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
               Take the Quiz
             </Link>
           </div>
@@ -196,35 +196,35 @@ export default function LandingPage() {
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
-        {/* Pricing glow */}
+        {/* Pricing glow - centered vertically to cover all cards */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.05] rounded-full blur-[150px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Free snapshots analyze all your bets. Upgrade for the full 5-chapter report with dollar costs, action plan, and more.
           </p>
-          <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-none overflow-hidden">
-            <div className="bg-base p-5 flex flex-col">
+          <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
+            <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free Snapshot</span>
               <div className="mb-4">
-                <span className="font-mono text-2xl font-bold text-fg-bright">$0</span>
+                <span className="font-mono text-3xl font-bold text-fg-bright">$0</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {['Unlimited snapshot reports', 'Overall grade + archetype', 'Top bias fully explained', 'BetIQ score'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-secondary text-center w-full">Start Free</Link>
+              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
-            <div className="bg-base p-5 flex flex-col relative border-x border-scalpel/10">
+            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header">Full Report</span>
-                <span className="evidence-tag border-scalpel/30 text-scalpel">ONE-TIME</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
               </div>
               <div className="mb-4">
-                <span className="font-mono text-2xl font-bold text-fg-bright">$9.99</span>
+                <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
                 <p className="text-fg-muted text-xs mt-1">Pay once. No subscription.</p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
@@ -236,29 +236,29 @@ export default function LandingPage() {
                   'BetIQ + Emotion + Discipline',
                 ].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-primary text-center w-full">Get Your Report</Link>
+              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Your Report</Link>
             </div>
-            <div className="bg-base p-5 flex flex-col">
+            <div className="bg-base p-6 flex flex-col">
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header">Pro</span>
-                <span className="evidence-tag border-scalpel/30 text-scalpel">BEST VALUE</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">BEST VALUE</span>
               </div>
               <div className="mb-4">
-                <span className="font-mono text-2xl font-bold text-fg-bright">$19.99</span>
+                <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {['3 full reports per month', 'Leak Prioritizer + What-If Simulator', 'Weekly email digest', 'Progress tracking over time'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>{f}
+                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full">Go Pro</Link>
+              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Go Pro</Link>
             </div>
           </div>
           <p className="text-fg-muted text-xs mt-6">
@@ -273,20 +273,20 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="case-header mb-3">FROM THE POST-MORTEM</div>
         <p className="text-fg-muted text-sm mb-6">Deep dives into the behavioral side of sports betting.</p>
-        <div className="grid md:grid-cols-3 gap-px bg-white/[0.04]">
+        <div className="grid md:grid-cols-3 gap-4">
           {[
             { title: 'Why Am I Losing at Sports Betting?', slug: 'why-am-i-losing-at-sports-betting', time: '7 min' },
             { title: 'The Real Math Behind Parlay Addiction', slug: 'parlay-addiction-the-real-math', time: '6 min' },
             { title: '7 Cognitive Biases Destroying Your Bankroll', slug: 'cognitive-biases-destroying-your-bankroll', time: '8 min' },
           ].map(post => (
-            <Link key={post.slug} href={`/blog/${post.slug}`} className="bg-base p-5 hover:bg-white/[0.015] transition-colors duration-100 group block">
-              <h3 className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors duration-100 mb-2 leading-snug">{post.title}</h3>
-              <span className="font-mono text-[10px] text-fg-dim tracking-wider">{post.time}</span>
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="case-card p-5 hover:border-white/[0.08] transition-colors group">
+              <h3 className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors mb-2 leading-snug">{post.title}</h3>
+              <span className="font-mono text-xs text-fg-muted">{post.time}</span>
             </Link>
           ))}
         </div>
         <div className="text-center mt-6">
-          <Link href="/blog" className="font-mono text-[11px] tracking-[2px] text-scalpel hover:text-fg transition-colors duration-100 uppercase">View all posts →</Link>
+          <Link href="/blog" className="font-mono text-xs text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
         </div>
       </section>
 
@@ -294,14 +294,13 @@ export default function LandingPage() {
       {/* FINAL CTA — base bg                   */}
       {/* ══════════════════════════════════════ */}
       <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
-        <div className="case-header mb-4">NEXT STEPS</div>
-        <h2 className="font-bold text-xl md:text-2xl tracking-tight mb-4 text-fg-bright">
+        <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           Stop betting on autopilot. Start <span className="text-scalpel">understanding your behavior.</span>
         </h2>
         <p className="text-fg-muted mb-8 max-w-lg mx-auto text-sm">
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
-        <Link href="/signup" className="btn-primary">
+        <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
           Upload Your Bets
         </Link>
       </section>
@@ -309,11 +308,11 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* FOOTER                                */}
       {/* ══════════════════════════════════════ */}
-      <footer className="border-t border-dashed border-white/[0.06] bg-surface py-10">
+      <footer className="border-t border-white/[0.04] bg-surface py-10">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
             <Logo size="xs" variant="horizontal" theme="dark" />
-            <div className="flex flex-wrap items-center gap-y-2">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               {[
                 { label: 'Pricing', href: '/#pricing' },
                 { label: 'Blog', href: '/blog' },
@@ -324,23 +323,17 @@ export default function LandingPage() {
                 { label: 'Terms', href: '/terms' },
                 { label: 'Log in', href: '/login' },
                 { label: 'Sign up', href: '/signup' },
-              ].map((link, i, arr) => (
-                <span key={link.href} className="flex items-center">
-                  <Link href={link.href} className="font-mono text-[10px] tracking-[2px] uppercase text-fg-dim hover:text-fg transition-colors duration-100">
-                    {link.label}
-                  </Link>
-                  {i < arr.length - 1 && <span className="text-fg-dim text-[10px] mx-3">·</span>}
-                </span>
+              ].map(link => (
+                <Link key={link.href} href={link.href} className="font-mono text-xs text-fg-muted hover:text-fg transition-colors tracking-wider">
+                  {link.label}
+                </Link>
               ))}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <p className="font-mono text-[10px] text-fg-dim tracking-wider leading-relaxed max-w-xl">
-              BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice.
-              Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
-            </p>
-            <span className="font-mono text-[8px] text-fg-dim tracking-[2px] shrink-0">CLASSIFICATION: PUBLIC · REF BA-2026</span>
-          </div>
+          <p className="text-fg-muted text-xs leading-relaxed">
+            BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice.
+            Past results don&apos;t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+          </p>
         </div>
       </footer>
     </main>

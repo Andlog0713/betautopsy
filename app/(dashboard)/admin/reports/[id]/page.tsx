@@ -71,8 +71,8 @@ export default function AdminReportDetailPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="card h-12 animate-pulse bg-ink-800 rounded-none" />
-        <div className="card h-96 animate-pulse bg-ink-800 rounded-none" />
+        <div className="card h-12 animate-pulse bg-ink-800" />
+        <div className="card h-96 animate-pulse bg-ink-800" />
       </div>
     );
   }

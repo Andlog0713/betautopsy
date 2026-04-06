@@ -70,13 +70,13 @@ export default function PricingPage() {
 
   if (pageLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 animate-pulse">
         <div className="text-center space-y-2">
-          <div className="h-8 w-48 bg-surface rounded-none mx-auto" />
-          <div className="h-4 w-64 bg-surface rounded-none mx-auto" />
+          <div className="h-8 w-48 bg-surface rounded mx-auto" />
+          <div className="h-4 w-64 bg-surface rounded mx-auto" />
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-surface rounded-none" />)}
+          {[...Array(3)].map((_, i) => <div key={i} className="h-80 bg-surface rounded-sm" />)}
         </div>
       </div>
     );
@@ -85,14 +85,14 @@ export default function PricingPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
-        <h1 className="font-bold text-2xl mb-2">Pricing</h1>
+        <h1 className="font-bold text-3xl mb-2">Pricing</h1>
         <p className="text-fg-muted">
           Free snapshots forever. Pay only when you want the full analysis.
         </p>
       </div>
 
       {isLaunchPromoActive() && (
-        <div className="bg-scalpel-muted border border-scalpel/20 rounded-none p-4 text-center max-w-lg mx-auto">
+        <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-4 text-center max-w-lg mx-auto">
           <p className="text-scalpel text-sm font-medium">
             Launch offer: your first full report is free. Sign up and run your autopsy.
           </p>
@@ -104,12 +104,12 @@ export default function PricingPage() {
         <div className="card p-6 flex flex-col">
           <h2 className="font-bold text-2xl">Free Snapshot</h2>
           <div className="mt-2 mb-4">
-            <span className="font-mono text-2xl font-bold">$0</span>
+            <span className="font-mono text-3xl font-bold">$0</span>
           </div>
           <ul className="space-y-2 flex-1 mb-6">
             {TIER_LIMITS.free.features.map((f) => (
               <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>{f}
+                <span className="text-win mt-0.5">&#10003;</span>{f}
               </li>
             ))}
           </ul>
@@ -125,28 +125,28 @@ export default function PricingPage() {
             <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
           </div>
           <div className="mt-2 mb-4">
-            <span className="font-mono text-2xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
+            <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
             <p className="text-fg-muted text-xs mt-1">Pay once. Keep the report forever.</p>
           </div>
           <ul className="space-y-2 flex-1 mb-6">
             <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>
+              <span className="text-win mt-0.5">&#10003;</span>
               Analyzes {REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets deep
             </li>
             <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>
+              <span className="text-win mt-0.5">&#10003;</span>
               Complete 5-chapter forensic report
             </li>
             <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>
+              <span className="text-win mt-0.5">&#10003;</span>
               All biases with dollar costs
             </li>
             <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>
+              <span className="text-win mt-0.5">&#10003;</span>
               Full action plan + personal rules
             </li>
             <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>
+              <span className="text-win mt-0.5">&#10003;</span>
               BetIQ + Emotion + Discipline breakdown
             </li>
           </ul>
@@ -156,15 +156,15 @@ export default function PricingPage() {
         </div>
 
         {/* Pro */}
-        <div className="card p-6 flex flex-col border-scalpel/30">
-          <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-none px-3 py-1 self-start mb-4">
+        <div className="card p-6 flex flex-col border-scalpel/30 shadow-lg shadow-scalpel/10">
+          <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
             Best Value
           </span>
           <h2 className="font-bold text-2xl">Pro</h2>
           <div className="mt-2 mb-4">
             {interval === 'annual' && proConfig.annualPrice ? (
               <>
-                <span className="font-mono text-2xl font-bold">
+                <span className="font-mono text-3xl font-bold">
                   ${(proConfig.annualPrice / 12).toFixed(2)}
                 </span>
                 <span className="text-fg-muted text-sm">/mo</span>
@@ -174,7 +174,7 @@ export default function PricingPage() {
               </>
             ) : (
               <>
-                <span className="font-mono text-2xl font-bold">${proConfig.price}</span>
+                <span className="font-mono text-3xl font-bold">${proConfig.price}</span>
                 <span className="text-fg-muted text-sm">/mo</span>
               </>
             )}
@@ -184,26 +184,26 @@ export default function PricingPage() {
           <div className="flex items-center gap-2 mb-4">
             <button
               onClick={() => setInterval('monthly')}
-              className={`text-xs px-2 py-1 rounded-none ${interval === 'monthly' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
+              className={`text-xs px-2 py-1 rounded-sm ${interval === 'monthly' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
             >Monthly</button>
             <button
               onClick={() => setInterval('annual')}
-              className={`text-xs px-2 py-1 rounded-none ${interval === 'annual' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
+              className={`text-xs px-2 py-1 rounded-sm ${interval === 'annual' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
             >Annual</button>
           </div>
 
           <ul className="space-y-2 flex-1 mb-6">
             {proConfig.features.map((f) => (
               <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span>{f}
+                <span className="text-win mt-0.5">&#10003;</span>{f}
               </li>
             ))}
           </ul>
 
           {isPro ? (
             <div className="text-center">
-              <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-none px-4 py-2">
-                <span className="font-mono text-[10px] text-scalpel mt-0.5 shrink-0">&gt;</span> Active
+              <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-sm px-4 py-2">
+                &#10003; Active
               </span>
             </div>
           ) : (

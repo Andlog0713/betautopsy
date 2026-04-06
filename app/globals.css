@@ -38,45 +38,36 @@
 @layer components {
   /* ── Case file card ── */
   .case-card {
-    @apply bg-surface border border-white/[0.06] border-t-white/[0.10] rounded-none;
+    @apply bg-surface border border-white/[0.06] rounded-sm;
   }
 
   /* Legacy card alias */
   .card {
-    @apply bg-surface border border-white/[0.06] border-t-white/[0.10] rounded-none;
+    @apply bg-surface border border-white/[0.06] rounded-sm;
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply bg-scalpel text-base font-mono text-[11px] tracking-[2px] uppercase
-           px-5 py-2.5 rounded-sm border border-scalpel
-           transition-colors duration-100
-           hover:bg-scalpel/90
-           focus:outline-1 focus:outline-offset-2 focus:outline-scalpel/50
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-scalpel text-base font-semibold px-6 py-2.5 rounded-sm
+           transition-all duration-150
+           hover:brightness-110
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-transparent border border-white/[0.08] text-fg-muted
-           font-mono text-[11px] tracking-[2px] uppercase
-           px-5 py-2.5 rounded-sm
-           transition-colors duration-100
-           hover:border-white/[0.15] hover:text-fg
-           focus:outline-1 focus:outline-offset-2 focus:outline-scalpel/50
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-transparent border border-white/[0.08] text-fg font-medium px-6 py-2.5 rounded-sm
+           hover:bg-white/[0.03] hover:border-white/[0.12] transition-all duration-150
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply text-fg-muted font-mono text-[11px] tracking-[2px] uppercase
-           px-4 py-2.5 rounded-sm
-           hover:text-fg hover:bg-white/[0.03] transition-colors duration-100;
+    @apply text-fg-muted font-medium px-4 py-2.5 rounded-sm
+           hover:text-fg hover:bg-white/[0.03] transition-all duration-150;
   }
 
   .btn-danger {
-    @apply bg-bleed-muted border border-bleed/20 text-bleed
-           font-mono text-[11px] tracking-[2px] uppercase
-           px-5 py-2.5 rounded-sm
-           hover:bg-bleed/20 hover:border-bleed/30 transition-colors duration-100;
+    @apply bg-bleed-muted border border-bleed/20 text-bleed font-medium px-6 py-2.5 rounded-sm
+           hover:bg-bleed/20 hover:border-bleed/30 transition-all duration-150;
   }
 
   /* ── Inputs ── */
@@ -84,45 +75,31 @@
     @apply bg-surface-raised border border-white/[0.06] text-fg rounded-sm px-4 py-2.5
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
-           transition-colors duration-100;
+           transition-all duration-150;
   }
 
   .label {
-    @apply font-mono text-[9px] font-medium text-fg-dim uppercase tracking-[2px] mb-1.5 block;
+    @apply text-xs font-medium text-fg-muted uppercase tracking-wider mb-1.5 block;
   }
 
   /* ── Evidence tag ── */
   .evidence-tag {
-    @apply inline-block font-mono text-[9px] tracking-[1px] uppercase
-           px-1.5 py-px border rounded-none;
+    @apply inline-block font-mono text-[10px] tracking-wider uppercase
+           px-2 py-0.5 border rounded-sm;
   }
 
   /* ── Severity markers ── */
   .severity-high {
-    @apply font-mono text-[9px] tracking-[1px] uppercase
-           bg-bleed text-base px-2 py-0.5 rounded-none font-bold;
+    @apply font-mono text-[10px] tracking-wider uppercase
+           bg-bleed text-base px-2 py-0.5 rounded-sm font-bold;
   }
   .severity-medium {
-    @apply font-mono text-[9px] tracking-[1px] uppercase
-           bg-caution text-base px-2 py-0.5 rounded-none font-bold;
+    @apply font-mono text-[10px] tracking-wider uppercase
+           bg-caution text-base px-2 py-0.5 rounded-sm font-bold;
   }
   .severity-low {
-    @apply font-mono text-[9px] tracking-[1px] uppercase
-           bg-scalpel text-base px-2 py-0.5 rounded-none font-bold;
-  }
-
-  /* ── Alert stamps ── */
-  .stamp-alert {
-    @apply inline-block font-mono text-[9px] tracking-[2px] uppercase
-           bg-loss text-base px-2 py-0.5 rounded-none font-bold;
-  }
-  .stamp-caution {
-    @apply inline-block font-mono text-[9px] tracking-[2px] uppercase
-           bg-caution text-base px-2 py-0.5 rounded-none font-bold;
-  }
-  .stamp-note {
-    @apply inline-block font-mono text-[9px] tracking-[2px] uppercase
-           bg-scalpel text-base px-2 py-0.5 rounded-none font-bold;
+    @apply font-mono text-[10px] tracking-wider uppercase
+           bg-scalpel text-base px-2 py-0.5 rounded-sm font-bold;
   }
 
   /* ── Data display ── */
@@ -130,12 +107,12 @@
     @apply font-mono text-2xl font-bold tabular-nums tracking-tight;
   }
   .data-label {
-    @apply font-mono text-[9px] text-fg-dim uppercase tracking-[2px];
+    @apply font-mono text-xs text-fg-muted uppercase tracking-widest;
   }
 
   /* ── Vitals strip ── */
   .vitals-strip {
-    @apply grid gap-px bg-white/[0.06] border border-white/[0.06] rounded-none overflow-hidden;
+    @apply grid gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
@@ -148,27 +125,18 @@
 
   /* ── Case header ── */
   .case-header {
-    @apply font-mono text-[9px] text-fg-dim tracking-[3px] uppercase;
-  }
-
-  /* ── Section header with rule ── */
-  .section-header {
-    @apply flex items-center gap-4;
-  }
-  .section-header::after {
-    content: '';
-    @apply flex-1 border-t border-white/[0.04];
+    @apply font-mono text-[10px] text-fg-dim tracking-[3px] uppercase;
   }
 
   /* ── Blog prose ── */
   .prose-betautopsy {
-    @apply text-fg-muted text-sm leading-relaxed;
+    @apply text-fg-muted text-[15px] leading-relaxed;
   }
   .prose-betautopsy h2 {
     @apply font-bold text-xl text-fg-bright mt-10 mb-4;
   }
   .prose-betautopsy h3 {
-    @apply font-bold text-base text-fg-bright mt-8 mb-3;
+    @apply font-bold text-lg text-fg-bright mt-8 mb-3;
   }
   .prose-betautopsy p { @apply mb-4; }
   .prose-betautopsy strong { @apply text-fg-bright font-semibold; }

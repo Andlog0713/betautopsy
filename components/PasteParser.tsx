@@ -158,7 +158,7 @@ export default function PasteParser() {
     return (
       <div className="card p-8 text-center space-y-4 animate-fade-in">
         <p className="text-lg font-medium text-fg-bright">
-          <span className="stamp-note">OK</span> {uploadResult.bets_imported} bet{uploadResult.bets_imported !== 1 ? 's' : ''} imported
+          {'\u2705'} {uploadResult.bets_imported} bet{uploadResult.bets_imported !== 1 ? 's' : ''} imported
           {uploadResult.duplicates_skipped > 0 && (
             <span className="text-fg-muted font-normal text-sm block mt-1">
               {uploadResult.duplicates_skipped} duplicate{uploadResult.duplicates_skipped !== 1 ? 's' : ''} skipped
@@ -321,7 +321,7 @@ export default function PasteParser() {
           onChange={(e) => setText(e.target.value)}
           readOnly={state === 'parsing'}
           placeholder="Go to your sportsbook → My Bets → Settled, select the page, copy it, and paste here. Works with DraftKings, FanDuel, BetMGM, and every other major sportsbook."
-          className={`w-full min-h-[250px] bg-base border border-white/[0.06] rounded-sm p-4 font-mono text-sm text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-colors duration-100 ${
+          className={`w-full min-h-[250px] bg-base border border-white/[0.06] rounded-sm p-4 font-mono text-sm text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-all ${
             state === 'parsing' ? 'opacity-50' : ''
           }`}
         />
@@ -349,7 +349,7 @@ export default function PasteParser() {
 
         {state === 'parsing' ? (
           <button disabled className="btn-primary flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-none bg-base animate-pulse" />
+            <span className="inline-block w-2 h-2 rounded-full bg-base animate-pulse" />
             Extracting your bets...
           </button>
         ) : (

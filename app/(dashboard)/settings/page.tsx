@@ -151,7 +151,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      <h1 className="font-bold text-2xl">Settings</h1>
+      <h1 className="font-bold text-3xl">Settings</h1>
 
       {/* ── Profile ── */}
       <div className="card p-6 space-y-4">
@@ -181,7 +181,7 @@ export default function SettingsPage() {
             disabled={profileSaving}
             className="btn-primary text-sm"
           >
-            {profileSaved ? 'SAVED' : profileSaving ? 'Saving...' : 'Save Profile'}
+            {profileSaved ? '✓ Saved' : profileSaving ? 'Saving...' : 'Save Profile'}
           </button>
 
           {/* Streak info */}
@@ -198,7 +198,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <span className="text-fg-muted">Freezes: </span>
-                <span className="text-fg-bright font-mono">{profile?.streak_freezes ?? 1}</span>
+                <span className="text-fg-bright font-mono">❄️ {profile?.streak_freezes ?? 1}</span>
               </div>
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
             disabled={bankrollSaving}
             className="btn-primary text-sm"
           >
-            {bankrollSaved ? 'SAVED' : bankrollSaving ? '...' : 'Save'}
+            {bankrollSaved ? '✓ Saved' : bankrollSaving ? '...' : 'Save'}
           </button>
         </div>
         <p className="text-fg-muted text-xs">
@@ -326,9 +326,9 @@ export default function SettingsPage() {
                 .eq('id', profile!.id);
               if (error) setDigestEnabled(!newVal); // revert on error
             }}
-            className={`relative w-11 h-6 rounded-none transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface'}`}
           >
-            <div className={`absolute top-0.5 w-5 h-5 rounded-none bg-white transition-transform ${digestEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${digestEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
           </button>
         </div>
       </div>
@@ -401,7 +401,7 @@ export default function SettingsPage() {
         <h2 className="font-bold text-xl">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
-            {passwordResetSent ? 'Reset email sent' : 'Change Password'}
+            {passwordResetSent ? '✓ Reset email sent' : 'Change Password'}
           </button>
           <button onClick={handleSignOut} className="btn-secondary text-sm">
             Sign Out

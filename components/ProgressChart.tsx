@@ -18,15 +18,15 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="2 6" stroke="#51596810" />
-            <XAxis dataKey="date" tick={{ fill: '#515968', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="emotion" orientation="left" tick={{ fill: '#515968', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
-            <YAxis yAxisId="roi" orientation="right" tick={{ fill: '#515968', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#51596820" />
+            <XAxis dataKey="date" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#51596830' }} />
+            <YAxis yAxisId="emotion" orientation="left" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={false} reversed domain={[0, 100]} />
+            <YAxis yAxisId="roi" orientation="right" tick={{ fill: '#848D9A', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 return (
-                  <div className="bg-surface border border-white/[0.04] rounded-none px-3 py-2 text-xs">
+                  <div className="bg-surface border border-white/[0.04] rounded-sm px-3 py-2 text-xs shadow-lg">
                     <p className="text-fg-muted">{label}</p>
                     {payload.map((p) => (
                       <p key={p.dataKey as string} style={{ color: p.color }} className="font-mono">
@@ -38,8 +38,8 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
               }}
             />
             <ReferenceLine yAxisId="roi" y={0} stroke="#51596850" />
-            <Line yAxisId="emotion" type="linear" dataKey="emotion" stroke="#fbbf24" strokeWidth={1.5} dot={{ r: 4, fill: '#fbbf24' }} />
-            <Line yAxisId="roi" type="linear" dataKey="roi" stroke="#00C9A7" strokeWidth={1.5} dot={{ r: 4, fill: '#00C9A7' }} />
+            <Line yAxisId="emotion" type="monotone" dataKey="emotion" stroke="#fbbf24" strokeWidth={2} dot={{ r: 4, fill: '#fbbf24' }} />
+            <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#00C9A7" strokeWidth={2} dot={{ r: 4, fill: '#00C9A7' }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

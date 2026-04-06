@@ -118,8 +118,8 @@ export default function ComparePage() {
   if (loading || !a || !b) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-surface rounded-none" />
-        <div className="h-64 bg-surface rounded-none" />
+        <div className="h-8 w-48 bg-surface rounded" />
+        <div className="h-64 bg-surface rounded-sm" />
       </div>
     );
   }
@@ -136,7 +136,7 @@ export default function ComparePage() {
         ← Back to Uploads
       </Link>
 
-      <h1 className="font-bold text-xl">Compare Uploads</h1>
+      <h1 className="font-bold text-2xl">Compare Uploads</h1>
 
       {/* Summary */}
       {roiDiff > 0.5 && (

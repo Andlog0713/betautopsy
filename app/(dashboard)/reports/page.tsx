@@ -385,7 +385,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="font-bold text-2xl mb-1">Reports</h1>
+        <h1 className="font-bold text-3xl mb-1">Reports</h1>
         <p className="text-fg-muted text-sm">
           Your betting habits, dissected. No sugarcoating.
         </p>
@@ -774,9 +774,9 @@ function AnalyzingState({ betCount }: { betCount: number }) {
           <span>{estimate}</span>
           <span className="font-mono">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 bg-surface rounded-none overflow-hidden">
+        <div className="h-2 bg-surface rounded-full overflow-hidden">
           <div
-            className="h-full bg-scalpel rounded-none transition-colors duration-100"
+            className="h-full bg-scalpel rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -829,9 +829,9 @@ function AnalyzingProgress() {
         </div>
         <span className="text-fg-dim text-xs font-mono shrink-0">{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 bg-base rounded-none overflow-hidden">
+      <div className="h-1.5 bg-base rounded-full overflow-hidden">
         <div
-          className="h-full bg-scalpel rounded-none transition-colors duration-100"
+          className="h-full bg-scalpel rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>

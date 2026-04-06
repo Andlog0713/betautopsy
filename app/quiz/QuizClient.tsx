@@ -173,7 +173,7 @@ export default function QuizClient() {
           </p>
           <button
             onClick={() => setPhase('questions')}
-            className="btn-primary text-lg"
+            className="btn-primary text-lg !px-10 !py-3.5"
           >
             Find Out →
           </button>
@@ -204,9 +204,9 @@ export default function QuizClient() {
             <button onClick={handleBack} disabled={currentQ === 0} className="text-sm text-fg-muted hover:text-fg-bright transition-colors disabled:opacity-30 disabled:cursor-not-allowed">← Back</button>
             <span className="text-sm text-fg-muted font-mono">{currentQ + 1} of {QUIZ_QUESTIONS.length}</span>
           </div>
-          <div className="h-1 bg-white/[0.04] rounded-none overflow-hidden mb-10">
+          <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden mb-10">
             <div
-              className="h-full rounded-none transition-all duration-500 ease-out"
+              className="h-full rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%`, backgroundColor: accent, boxShadow: `0 0 8px ${accent}40` }}
             />
           </div>
@@ -251,7 +251,7 @@ export default function QuizClient() {
                         setTimeout(() => handleAnswer(opt.value), 500);
                       }}
                       disabled={selectedValue !== null}
-                      className={`flex-1 py-4 rounded-sm border font-mono text-sm transition-colors duration-100 ${
+                      className={`flex-1 py-4 rounded-sm border font-mono text-sm transition-all ${
                         sliderValue === opt.value || selectedValue === opt.value
                           ? 'border-scalpel/40 bg-scalpel-muted text-scalpel font-bold scale-105'
                           : 'border-white/[0.10] bg-surface-raised text-fg-muted hover:border-white/[0.15]'
@@ -277,7 +277,7 @@ export default function QuizClient() {
                       key={opt.value}
                       onClick={() => handleAnswer(opt.value)}
                       disabled={selectedValue !== null}
-                      className={`w-full text-left p-4 rounded-sm border transition-colors duration-100 ${
+                      className={`w-full text-left p-4 rounded-sm border transition-all duration-200 ${
                         isSelected
                           ? 'scale-[1.02] border-scalpel/50 bg-scalpel-muted'
                           : prevAnswer === opt.value
@@ -361,7 +361,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="font-mono text-[10px] text-fg-dim tracking-widest mb-2">YOUR BET DNA</p>
-            <h2 className="font-extrabold text-2xl mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
+            <h2 className="font-extrabold text-3xl mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
             <p className="text-fg-muted text-sm mb-4">{result.archetype.description}</p>
             <div className={`inline-block border-2 px-4 py-1 -rotate-3 mb-4`} style={{ borderColor: `${gradeColor(result.grade)}30` }}>
               <span className="font-mono text-4xl font-bold" style={{ color: gradeColor(result.grade) }}>{result.grade}</span>
@@ -440,7 +440,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="text-fg-muted text-xs uppercase tracking-widest mb-2 font-mono">Your Bet DNA</p>
-            <h1 className="font-extrabold text-2xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
+            <h1 className="font-extrabold text-3xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
@@ -473,7 +473,7 @@ export default function QuizClient() {
             <p className="text-fg-muted text-sm max-w-sm mx-auto">
               This quiz estimated your patterns from {QUIZ_QUESTIONS.length} answers. Your actual bet history would reveal the exact dollar cost of each bias.
             </p>
-            <Link href="/signup" className="btn-primary inline-block text-sm font-mono">
+            <Link href="/signup" className="btn-primary inline-block !px-6 !py-2.5 text-sm font-mono">
               Get Your Real Autopsy, Free
             </Link>
             <p className="text-fg-muted text-xs font-mono">No credit card. Upload takes 2 minutes.</p>
@@ -548,7 +548,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center space-y-3">
             <p className="text-fg-bright font-medium">Your quiz says you&apos;re <span style={{ color: result.archetype.color }}>{result.archetype.name}</span>.</p>
             <p className="text-fg-muted text-sm">Your actual bet history might tell a different story.</p>
-            <Link href="/signup" className="btn-primary inline-block font-mono">
+            <Link href="/signup" className="btn-primary inline-block !px-8 !py-3 font-mono">
               Upload Your Bets, It&apos;s Free
             </Link>
             <p className="text-fg-muted text-xs">
