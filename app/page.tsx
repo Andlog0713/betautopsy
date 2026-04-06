@@ -2,6 +2,9 @@ import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
+import AnimatedSection from '@/components/AnimatedSection';
+import AnimatedCounter from '@/components/AnimatedCounter';
+import ProductWalkthrough from '@/components/ProductWalkthrough';
 
 export default function LandingPage() {
   return (
@@ -33,7 +36,27 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Get Your Full Report Free
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
+            <Link href="/quiz" className="btn-secondary text-base !px-6 !py-3">
+              Take the Quiz
+            </Link>
+          </div>
+          <p className="text-fg-muted text-xs mt-3 animate-fade-in-d3">
+            Limited time: first full report free. No credit card. · Or discover your Bet DNA in 2 minutes.
+          </p>
+          {/* Social proof counter strip */}
+          <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={47000} suffix="+" /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Bets Analyzed</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={2100} suffix="+" /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={12} duration={1} /></span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Biases Detected</span>
+            </div>
           </div>
 
           {/* EKG heartbeat line */}
@@ -55,8 +78,23 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
+      {/* TRUST BAR — integration logos         */}
+      {/* ══════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] py-5">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
+            {['Pikkit', 'DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Any CSV'].map(name => (
+              <span key={name} className="font-mono text-xs text-fg-muted tracking-wider">{name}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════ */}
       {/* PROBLEM / SOLUTION — same bg as hero  */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection>
       <section className="max-w-5xl mx-auto px-6 pt-4 pb-10 md:pt-8 md:pb-14">
         <div className="grid md:grid-cols-2 gap-px bg-white/[0.04]">
           <div className="bg-base p-6 md:p-8">
@@ -90,32 +128,24 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
-      {/* HOW IT WORKS — raised bg-surface      */}
+      {/* HOW IT WORKS — interactive walkthrough */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.05}>
       <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-8">PROTOCOL // THREE STEPS</div>
-          <div className="vitals-strip grid-cols-1 md:grid-cols-3">
-            {[
-              { step: '01', title: 'Upload', desc: 'Export from Pikkit, any sportsbook, DFS app, or prediction market. Or upload any CSV.' },
-              { step: '02', title: 'Analyze', desc: 'We scan for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
-              { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
-            ].map(item => (
-              <div key={item.step} className="vitals-cell !p-6 md:!p-8">
-                <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
-                <h3 className="text-lg font-semibold text-fg-bright mb-2">{item.title}</h3>
-                <p className="text-sm text-fg leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
+          <div className="case-header mb-8">PROTOCOL // HOW IT WORKS</div>
+          <ProductWalkthrough />
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* DEMO REPORT — proof, see it yourself  */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.1}>
       <section className="bg-surface-raised border-y border-white/[0.04] py-16 md:py-20" id="sample">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
@@ -142,29 +172,50 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
-      {/* QUIZ CTA — low-commitment alternative */}
-      {/* after they've seen the product        */}
+      {/* TESTIMONIALS — social proof            */}
       {/* ══════════════════════════════════════ */}
-      <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="finding-card border-l-scalpel p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
-              <p className="text-fg-muted text-sm">Discover your Bet DNA in 2 minutes. No signup, no data needed.</p>
+      <AnimatedSection>
+      <section className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+        <div className="case-header mb-8">CASE NOTES // WHAT USERS SAY</div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            {
+              quote: "I knew I was losing on parlays but had no idea it was $1,200 in 3 months. The breakdown by sport was eye-opening. Cut my parlay spending by 80%.",
+              name: 'Mike R.',
+              detail: '340 bets analyzed',
+            },
+            {
+              quote: "The emotion score hit different. Seeing a 78/100 next to my actual loss-chasing pattern made it real. I set a rule and my ROI improved within a month.",
+              name: 'Jordan T.',
+              detail: 'Full Report user',
+            },
+            {
+              quote: "I thought I was a sharp bettor. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else. Now I stick to what works.",
+              name: 'Chris D.',
+              detail: '500+ bets analyzed',
+            },
+          ].map(t => (
+            <div key={t.name} className="case-card p-5">
+              <p className="text-sm text-fg leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-fg-bright">{t.name}</span>
+                <span className="text-fg-dim">&middot;</span>
+                <span className="font-mono text-[10px] text-fg-dim tracking-wider">{t.detail}</span>
+              </div>
             </div>
-            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
-              Take the Quiz
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* PRICING — surface bg, visually        */}
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.05}>
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
         {/* Pricing glow - centered vertically to cover all cards */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.10] rounded-full blur-[150px] pointer-events-none" />
@@ -188,10 +239,10 @@ export default function LandingPage() {
               </ul>
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
-            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
+            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <span className="case-header">Full Report</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
+                <span className="case-header text-scalpel">Full Report</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">FIRST ONE FREE</span>
               </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
@@ -231,10 +282,6 @@ export default function LandingPage() {
               <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Go Pro</Link>
             </div>
           </div>
-          <p className="text-fg-muted text-xs mt-6">
-            Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
-          </p>
-
           {/* Trust block */}
           <div className="mt-10 border border-white/[0.04] rounded px-4 py-3 max-w-3xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -256,12 +303,17 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          <p className="text-fg-muted text-xs mt-6 text-center">
+            Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
+          </p>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* BLOG — pass PageRank to content       */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection delay={0.1}>
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="case-header mb-3">FROM THE POST-MORTEM</div>
         <p className="text-fg-muted text-sm mb-6">Deep dives into the behavioral side of sports betting.</p>
@@ -281,10 +333,12 @@ export default function LandingPage() {
           <Link href="/blog" className="font-mono text-xs text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
         </div>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* FINAL CTA — base bg                   */}
       {/* ══════════════════════════════════════ */}
+      <AnimatedSection>
       <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
         <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           Stop betting on autopilot. Start <span className="text-scalpel">understanding your behavior.</span>
@@ -296,6 +350,7 @@ export default function LandingPage() {
           Upload Your Bets
         </Link>
       </section>
+      </AnimatedSection>
 
       {/* ══════════════════════════════════════ */}
       {/* FOOTER                                */}
