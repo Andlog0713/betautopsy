@@ -1,0 +1,28 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="640" height="640" fill="#0d1117"/>
+
+  <!-- Subtle grid paper -->
+  <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+    <line x1="0" y1="0" x2="0" y2="24" stroke="rgba(0,201,167,0.04)" stroke-width="1"/>
+    <line x1="0" y1="0" x2="24" y2="0" stroke="rgba(0,201,167,0.04)" stroke-width="1"/>
+  </pattern>
+  <rect width="640" height="640" fill="url(#grid)"/>
+
+  <!-- Y-incision logo, centered and large -->
+  <g transform="translate(320, 260) scale(6)">
+    <path d="M-7,-7 Q-5,-4 0,0" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M7,-7 Q5,-4 0,0" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <line x1="0" y1="0" x2="0" y2="15" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="1.8" fill="#E8453C"/>
+  </g>
+
+  <!-- Text: BETAUTOPSY -->
+  <text x="320" y="420" text-anchor="middle" font-family="monospace" font-size="42" font-weight="700" letter-spacing="8" fill="#F0F2F5">BETAUTOPSY</text>
+
+  <!-- Tagline -->
+  <text x="320" y="460" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="4" fill="#5D6673">BEHAVIORAL ANALYSIS FOR BETTORS</text>
+
+  <!-- Bottom dashed rule -->
+  <line x1="160" y1="520" x2="480" y2="520" stroke="#5D6673" stroke-width="0.5" stroke-dasharray="4 4"/>
+</svg>

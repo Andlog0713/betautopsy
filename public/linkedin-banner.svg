@@ -1,0 +1,60 @@
+<svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1584" height="396" fill="#0d1117"/>
+
+  <!-- Grid paper -->
+  <pattern id="bgrid" width="24" height="24" patternUnits="userSpaceOnUse">
+    <line x1="0" y1="0" x2="0" y2="24" stroke="rgba(0,201,167,0.04)" stroke-width="1"/>
+    <line x1="0" y1="0" x2="24" y2="0" stroke="rgba(0,201,167,0.04)" stroke-width="1"/>
+  </pattern>
+  <rect width="1584" height="396" fill="url(#bgrid)"/>
+
+  <!-- Subtle glow behind center -->
+  <ellipse cx="792" cy="198" rx="500" ry="200" fill="#00C9A7" opacity="0.03"/>
+
+  <!-- EKG line spanning full width -->
+  <polyline points="0,198 100,198 140,198 160,195 170,198 220,198 280,198 310,198 322,188 328,198 334,178 340,218 346,160 352,236 358,182 364,214 370,198 400,198 430,195 440,198 520,198 600,198 640,198 660,195 670,198 720,198 780,198 810,198 822,188 828,198 834,178 840,218 846,160 852,236 858,182 864,214 870,198 900,198 930,195 940,198 1020,198 1100,198 1140,198 1160,195 1170,198 1220,198 1280,198 1310,198 1322,188 1328,198 1334,178 1340,218 1346,160 1352,236 1358,182 1364,214 1370,198 1400,198 1430,195 1440,198 1584,198" fill="none" stroke="#00C9A7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.25"/>
+
+  <!-- Y-incision logo, left side -->
+  <g transform="translate(180, 170) scale(4)">
+    <path d="M-7,-7 Q-5,-4 0,0" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M7,-7 Q5,-4 0,0" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <line x1="0" y1="0" x2="0" y2="15" stroke="#00C9A7" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="1.8" fill="#E8453C"/>
+  </g>
+
+  <!-- Case header -->
+  <text x="280" y="148" font-family="monospace" font-size="10" letter-spacing="3" fill="#5D6673">CASE FILE // BEHAVIORAL ANALYSIS UNIT</text>
+
+  <!-- Main headline -->
+  <text x="280" y="195" font-family="sans-serif" font-size="36" font-weight="700" fill="#F0F2F5">Your bets tell a story.</text>
+  <text x="280" y="235" font-family="sans-serif" font-size="36" font-weight="300" fill="#00C9A7">We read it.</text>
+
+  <!-- Tagline -->
+  <text x="280" y="275" font-family="monospace" font-size="12" letter-spacing="2" fill="#A0A8B4">COGNITIVE BIASES · DOLLAR COSTS · ACTION PLANS</text>
+
+  <!-- Right side: data vitals strip -->
+  <rect x="1020" y="110" width="1" height="180" fill="#5D6673" opacity="0.2"/>
+
+  <!-- Vitals -->
+  <text x="1060" y="148" font-family="monospace" font-size="9" letter-spacing="3" fill="#5D6673">BETIQ SCORE</text>
+  <text x="1060" y="172" font-family="monospace" font-size="28" font-weight="700" fill="#00C9A7">74</text>
+
+  <text x="1220" y="148" font-family="monospace" font-size="9" letter-spacing="3" fill="#5D6673">EMOTION SCORE</text>
+  <text x="1220" y="172" font-family="monospace" font-size="28" font-weight="700" fill="#D29922">38</text>
+
+  <text x="1380" y="148" font-family="monospace" font-size="9" letter-spacing="3" fill="#5D6673">GRADE</text>
+  <text x="1380" y="172" font-family="monospace" font-size="28" font-weight="700" fill="#F0F2F5">B-</text>
+
+  <text x="1060" y="230" font-family="monospace" font-size="9" letter-spacing="3" fill="#5D6673">BIASES DETECTED</text>
+  <text x="1060" y="254" font-family="monospace" font-size="28" font-weight="700" fill="#E8453C">3</text>
+
+  <text x="1220" y="230" font-family="monospace" font-size="9" letter-spacing="3" fill="#5D6673">RECOVERABLE</text>
+  <text x="1220" y="254" font-family="monospace" font-size="28" font-weight="700" fill="#E8453C">$1,240</text>
+
+  <!-- Bottom dashed rule -->
+  <line x1="100" y1="340" x2="1484" y2="340" stroke="#5D6673" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+  <!-- URL -->
+  <text x="792" y="370" text-anchor="middle" font-family="monospace" font-size="11" letter-spacing="3" fill="#5D6673">BETAUTOPSY.COM</text>
+</svg>

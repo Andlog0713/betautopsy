@@ -38,13 +38,10 @@ export default function LandingPage() {
             </Link>
             <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
+          <div className="mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-[11px] tracking-[2px] text-scalpel hover:text-scalpel/80 transition-colors duration-100 uppercase">
               Not sure how to get your data? →
             </Link>
-            <span className="font-mono text-[11px] tracking-[2px] text-fg-muted uppercase">
-              No credit card · Works with any CSV
-            </span>
           </div>
 
           {/* Trust block */}
