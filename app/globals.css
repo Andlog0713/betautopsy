@@ -4,7 +4,7 @@
 
 @layer base {
   html {
-    background-color: #07070b;
+    background-color: #0a0a12;
     color-scheme: dark;
   }
 
@@ -27,9 +27,9 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #07070b; }
+  ::-webkit-scrollbar-track { background: #0a0a12; }
   ::-webkit-scrollbar-thumb { background: #515968; border-radius: 0; }
-  * { scrollbar-width: thin; scrollbar-color: #515968 #07070b; }
+  * { scrollbar-width: thin; scrollbar-color: #515968 #0a0a12; }
 }
 
 @layer components {

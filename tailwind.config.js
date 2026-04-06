@@ -8,17 +8,17 @@ module.exports = {
     extend: {
       colors: {
         // Base surfaces — 4-level dark system
-        base: '#07070b',
+        base: '#0a0a12',
         surface: {
-          DEFAULT: '#0f0f17',
-          base: '#07070b',
-          1: '#0f0f17',
-          2: '#171721',
-          3: '#1f1f2e',
+          DEFAULT: '#12121c',
+          base: '#0a0a12',
+          1: '#12121c',
+          2: '#1a1a26',
+          3: '#222232',
           // Legacy aliases — KEEP until migration complete
-          raised: '#171721',
-          elevated: '#1f1f2e',
-          overlay: '#1f1f2e',
+          raised: '#1a1a26',
+          elevated: '#222232',
+          overlay: '#222232',
         },
         border: {
           subtle: 'rgba(255, 255, 255, 0.06)',
@@ -49,7 +49,7 @@ module.exports = {
         caution: '#D29922',
         // Legacy aliases — KEEP until migration complete
         ink: {
-          900: '#07070b',
+          900: '#0a0a12',
           800: '#0f0f17',
           700: '#5D6673',
           600: '#A0A8B4',
