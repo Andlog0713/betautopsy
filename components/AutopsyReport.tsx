@@ -1063,8 +1063,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </h2>
           <p className="text-fg-dim text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
           <p className="text-fg-muted text-xs mb-4">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#5f594f] mr-1 align-middle" /> Normal
-            <span className="inline-block w-2 h-2 rounded-full bg-[#f97316] mr-1 ml-3 align-middle" /> Within 1hr of a loss
+            <span className="inline-block w-2 h-2 rounded-full bg-white/10 border border-white/20 mr-1 align-middle" /> Normal
+            <span className="inline-block w-2 h-2 rounded-full bg-[#E8453C] mr-1 ml-3 align-middle" /> Within 1hr of a loss
           </p>
           <div className="h-40 sm:h-48">
             <ResponsiveContainer width="100%" height="100%">
