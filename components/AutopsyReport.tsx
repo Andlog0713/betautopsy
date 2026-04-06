@@ -610,7 +610,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {(tier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-3">BETIQ: SKILL ASSESSMENT</div>
-          <p className="text-fg-dim text-sm font-mono">{analysis.betiq.interpretation}</p>
+          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-dim text-sm">{analysis.betiq.interpretation}</p></div>
         </div>
       )}
 
