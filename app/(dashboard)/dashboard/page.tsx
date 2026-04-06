@@ -272,7 +272,7 @@ export default function DashboardPage() {
   return (
     <div className="animate-fade-in">
       {/* ── Page header ── */}
-      <div className="mb-6">
+      <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Dashboard</h1>
         <p className="text-sm text-fg-muted mt-1">Overview of your betting behavior</p>
       </div>

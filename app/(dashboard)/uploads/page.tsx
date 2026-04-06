@@ -115,10 +115,11 @@ export default function UploadsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-bold text-3xl tracking-tight mb-1">Uploads</h1>
-          <p className="text-fg-muted text-sm">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Upload History</h1>
+          <p className="text-sm text-fg-muted mt-1">Your previous imports</p>
+          <p className="text-xs text-fg-muted mt-0.5">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
         </div>
         <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>
       </div>

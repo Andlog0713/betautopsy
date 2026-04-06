@@ -385,12 +385,10 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="font-bold text-3xl tracking-tight mb-1">Reports</h1>
-        <p className="text-fg-muted text-sm">
-          Your betting habits, dissected. No sugarcoating.
-        </p>
-        <p className="text-fg-muted text-xs mt-0.5">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Reports</h1>
+        <p className="text-sm text-fg-muted mt-1">Run analysis and view past reports</p>
+        <p className="text-xs text-fg-muted mt-0.5">
           {reports.length} report{reports.length !== 1 ? 's' : ''} generated
         </p>
       </div>

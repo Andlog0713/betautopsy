@@ -22,7 +22,6 @@ export default function UploadPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reportCount, setReportCount] = useState<number | null>(null);
   const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
-  const [lastBetDate, setLastBetDate] = useState<string | null>(null);
   const [activeMethod, setActiveMethod] = useState<ActiveMethod>('pikkit');
   const [showPikkitSteps, setShowPikkitSteps] = useState(false);
   const [bankrollInput, setBankrollInput] = useState('');
@@ -36,10 +35,9 @@ export default function UploadPage() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const [profileRes, reportsRes, lastBetRes] = await Promise.all([
+      const [profileRes, reportsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('bets').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
       ]);
       if (profileRes.data) {
         const p = profileRes.data as Profile;
@@ -58,9 +56,6 @@ export default function UploadPage() {
         }
       }
       setReportCount(reportsRes.count ?? 0);
-      if (lastBetRes.data && lastBetRes.data.length > 0) {
-        setLastBetDate(lastBetRes.data[0].created_at);
-      }
     }
     loadProfile();
   }, []);
@@ -106,7 +101,6 @@ export default function UploadPage() {
 
   const tier = profile?.subscription_tier ?? 'free';
   const uploadSucceeded = state === 'success' && result && result.bets_imported > 0;
-  const daysSinceLastBet = lastBetDate ? Math.floor((Date.now() - new Date(lastBetDate).getTime()) / 86400000) : null;
 
   const methods = [
     { id: 'pikkit' as const, icon: <Smartphone size={24} className="text-fg-muted" />, label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
@@ -203,20 +197,10 @@ export default function UploadPage() {
       )}
 
       {/* Header */}
-      {!uploadSucceeded && (
-        <div>
-          <h1 className="font-bold text-2xl mb-1 text-fg-bright">
-            {betCount === 0 ? 'Get Your Bets Into BetAutopsy' : 'Add More Bets'}
-          </h1>
-          <p className="text-fg-muted text-sm">
-            {betCount === 0
-              ? 'Choose any method below.'
-              : daysSinceLastBet !== null
-                ? `Last uploaded: ${daysSinceLastBet === 0 ? 'today' : `${daysSinceLastBet} day${daysSinceLastBet !== 1 ? 's' : ''} ago`}.`
-                : 'Add your recent bets for a more accurate analysis.'}
-          </p>
-        </div>
-      )}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Upload Bets</h1>
+        <p className="text-sm text-fg-muted mt-1">Import your betting history</p>
+      </div>
 
       {/* Tier info */}
       {tier === 'free' && !uploadSucceeded && (

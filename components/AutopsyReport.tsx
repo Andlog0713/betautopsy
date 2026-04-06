@@ -488,7 +488,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
           <h2 className="font-bold text-xl text-purple-400 mb-1">{analysis.betting_archetype.name}</h2>
-          <p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p>
+          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p></div>
         </div>
       )}
 
@@ -584,7 +584,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="font-mono text-sm text-fg-dim">/100</span>
             <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
           </div>
-          <p className="text-fg-muted text-sm mb-6 leading-relaxed">{analysis.betiq.interpretation}</p>
+          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-6"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
           <div className="vitals-strip grid-cols-2 md:grid-cols-3">
             {[
               { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
@@ -794,9 +794,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </div>
                 ) : (
                   <>
-                    <p className="text-[12px] text-fg-muted leading-relaxed mb-2.5">{bias.description}</p>
+                    <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[12px] text-fg-muted leading-relaxed">{bias.description}</p></div>
                     {bias.fix && (
-                      <p className="text-[11px] text-fg-dim mb-2.5"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p>
+                      <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[11px] text-fg-dim"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p></div>
                     )}
                     <div className="flex justify-between items-center">
                       <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
@@ -825,7 +825,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
                 <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
               </div>
-              <p className="text-fg-muted text-sm leading-relaxed mb-2">{finding.description}</p>
+              <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm leading-relaxed">{finding.description}</p></div>
               <p className="text-fg-dim text-xs mb-2 font-mono">{finding.evidence}</p>
               <div className="flex items-center justify-between">
                 {finding.estimated_cost !== null && (
@@ -1621,7 +1621,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       }`}>{area.confidence} conf.</span>
                     </div>
                     <p className="font-mono text-win font-semibold">+{area.roi.toFixed(1)}% ROI</p>
-                    <p className="text-fg-muted text-xs">{area.sample_size} bets</p>
+                    <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
                   </div>
                 ))
               )}
@@ -1638,7 +1638,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       <span className="text-xs text-loss font-mono">-${Math.abs(area.estimated_loss).toLocaleString()}</span>
                     </div>
                     <p className="font-mono text-loss font-semibold">{area.roi.toFixed(1)}% ROI</p>
-                    <p className="text-fg-muted text-xs">{area.sample_size} bets</p>
+                    <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
                   </div>
                 ))
               )}
@@ -1647,7 +1647,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           {/* Reallocation advice */}
           {analysis.edge_profile.reallocation_advice && (
             <div className="card border-scalpel/20 bg-scalpel-muted p-5">
-              <p className="text-sm text-fg-bright">{analysis.edge_profile.reallocation_advice}</p>
+              <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-sm text-fg-bright">{analysis.edge_profile.reallocation_advice}</p></div>
             </div>
           )}
         </div>
@@ -1712,7 +1712,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
                         <div className="bg-base/50 rounded-sm p-3">
                           <p className="text-fg-muted text-xs mb-1">Fix</p>
-                          <p className="text-fg-bright text-sm">{item.fix}</p>
+                          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-bright text-sm">{item.fix}</p></div>
                         </div>
                       </div>
                     );
@@ -1788,10 +1788,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i + 1).padStart(2, '0')}</span>
                 <span className="text-[14px] font-semibold text-fg-bright">{rec.title}</span>
               </div>
-              <p className="text-[12px] text-fg-muted leading-relaxed ml-[50px]">
-                {rec.description}{' '}
-                <span className="font-mono text-[11px] text-scalpel">{rec.expected_improvement}</span>
-              </p>
+              <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright ml-[50px]">
+                <p className="text-[12px] text-fg-muted leading-relaxed">{rec.description}{' '}<span className="font-mono text-[11px] text-scalpel">{rec.expected_improvement}</span></p>
+              </div>
             </div>
           ))}
         </div>
@@ -1822,7 +1821,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
               <div key={i} className="card border-l-4 border-l-scalpel bg-surface-1/60 p-5">
                 <p className="text-fg-bright font-medium mb-2">{rule.rule}</p>
-                <p className="text-fg-muted text-sm mb-2">{rule.reason}</p>
+                <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
                 <p className="text-fg-dim text-xs">Based on: {rule.based_on}</p>
               </div>
             ))}
@@ -2049,7 +2048,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
                         <div className="bg-base/50 rounded-sm p-3">
                           <p className="text-fg-muted text-xs mb-1">Fix</p>
-                          <p className="text-fg-bright text-sm">{item.fix}</p>
+                          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-bright text-sm">{item.fix}</p></div>
                         </div>
                       </div>
                     );
@@ -2387,7 +2386,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
                   <span className="font-mono text-[10px] text-fg-dim w-24 shrink-0">{s.id}</span>
                   <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
                   <span className="text-fg-muted text-xs">{s.dayOfWeek} {s.date.slice(5)}</span>
-                  <span className="text-fg-muted text-xs">{s.bets} bets · {Math.round(s.durationMinutes / 60)}h</span>
+                  <span className="text-fg-muted text-xs font-mono">{s.bets} bets · {Math.round(s.durationMinutes / 60)}h</span>
                   <span className="text-loss font-mono text-xs font-medium">{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
                   <span className="text-fg-dim text-xs italic ml-auto">{s.heatSignals[0]}</span>
                 </div>
@@ -2409,8 +2408,8 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
                 <div key={s.id} className="bg-surface-2 rounded-sm p-2 flex items-center gap-2 text-xs">
                   <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
                   <span className="font-mono text-fg-dim w-20 shrink-0">{s.date.slice(5)}</span>
-                  <span className="text-fg-muted">{s.bets} bets</span>
-                  <span className="text-fg-dim">{Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
+                  <span className="text-fg-muted font-mono">{s.bets} bets</span>
+                  <span className="text-fg-dim font-mono">{Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
                   <span className={`font-mono font-medium ml-auto ${s.profit >= 0 ? 'text-win' : 'text-loss'}`}>{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
                   {s.isHeated && <span title="Heated session"><Flame size={14} className="text-loss" /></span>}
                 </div>

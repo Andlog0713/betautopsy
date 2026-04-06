@@ -147,7 +147,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      <h1 className="font-bold text-3xl tracking-tight">Settings</h1>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Settings</h1>
+        <p className="text-sm text-fg-muted mt-1">Manage your account and preferences</p>
+      </div>
 
       {/* ── Profile ── */}
       <div className="card p-6 space-y-4">

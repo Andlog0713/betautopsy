@@ -66,6 +66,11 @@ export default function DashboardShell({
     router.refresh();
   }
 
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -76,14 +81,14 @@ export default function DashboardShell({
 
   const tier = profile?.subscription_tier ?? 'free';
 
-  const activeClass = 'bg-scalpel-muted text-scalpel border-l-2 border-scalpel';
-  const inactiveClass = 'text-fg-muted hover:text-fg hover:bg-white/[0.03] border-l-2 border-transparent';
+  const isActive = (href: string) => pathname === href;
+  const isAdminActive = pathname.startsWith('/admin');
 
   return (
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Mobile top nav */}
-      <header className="md:hidden border-b border-border-subtle bg-surface-1 sticky top-0 z-40">
+      {/* ── Mobile header ── */}
+      <header className="md:hidden border-b border-border-subtle bg-base sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <Link href="/dashboard">
@@ -97,78 +102,110 @@ export default function DashboardShell({
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={mobileNavOpen}
-            className="text-fg-dim hover:text-fg p-1.5 rounded-sm hover:bg-white/[0.03] transition-colors"
+            className="text-fg-dim hover:text-fg p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
           >
             {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
-        {mobileNavOpen && (
-          <nav className="border-t border-border-subtle px-3 py-3 space-y-1 animate-fade-in bg-surface-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
+      </header>
+
+      {/* ── Mobile slide-in nav ── */}
+      {mobileNavOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          {/* Panel */}
+          <nav className="fixed inset-y-0 left-0 z-50 w-[280px] max-w-[80vw] bg-base border-r border-border-subtle flex flex-col md:hidden animate-slide-in-left">
+            <div className="px-5 pt-5 pb-4 flex items-center justify-between">
+              <Link href="/dashboard" onClick={() => setMobileNavOpen(false)}>
+                <Logo size="xs" variant="horizontal" theme="dark" />
+              </Link>
+              <button
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
+                className="text-fg-dim hover:text-fg p-1 rounded-lg hover:bg-surface-1 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive(item.href)
+                      ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                      : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                  }`}
+                >
+                  <item.Icon size={18} />
+                  {item.label}
+                </Link>
+              ))}
+
+              <div className="my-2 border-t border-border-subtle" />
+
+              <Link
+                href="/pricing"
+                onClick={() => setMobileNavOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isActive('/pricing')
+                    ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                    : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
                 }`}
               >
-                <item.Icon />
-                {item.label}
+                <Gem size={18} />
+                Pricing
               </Link>
-            ))}
-            <Link
-              href="/pricing"
-              onClick={() => setMobileNavOpen(false)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
-                pathname === '/pricing'
-                  ? 'bg-scalpel-muted text-scalpel'
-                  : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
-              }`}
-            >
-              <Gem size={18} />
-              Pricing
-            </Link>
-            {profile?.is_admin && (
-              <Link
-                href="/admin/reports"
-                onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
-                  pathname.startsWith('/admin')
-                    ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
-                }`}
-              >
-                <Shield size={18} />
-                Admin
-              </Link>
-            )}
-            {bottomNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-sm text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? 'bg-scalpel-muted text-scalpel'
-                    : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
-                }`}
-              >
-                <item.Icon />
-                {item.label}
-              </Link>
-            ))}
-            <div className="border-t border-border-subtle pt-3 mt-3 px-3">
+
+              {profile?.is_admin && (
+                <Link
+                  href="/admin/reports"
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isAdminActive
+                      ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                      : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                  }`}
+                >
+                  <Shield size={18} />
+                  Admin
+                </Link>
+              )}
+
+              <div className="my-2 border-t border-border-subtle" />
+
+              {bottomNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive(item.href)
+                      ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                      : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                  }`}
+                >
+                  <item.Icon size={18} />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-border-subtle">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0">
                   <p className="font-mono text-[10px] text-fg-dim truncate">{profile?.email}</p>
                   <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="text-fg-dim hover:text-loss p-1.5 rounded-sm hover:bg-white/[0.03] transition-colors"
+                  className="text-fg-dim hover:text-loss p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
                   aria-label="Sign out"
                 >
                   <LogOut size={16} />
@@ -176,11 +213,11 @@ export default function DashboardShell({
               </div>
             </div>
           </nav>
-        )}
-      </header>
+        </>
+      )}
 
-      {/* Desktop sidebar — collapsed by default, expands on hover */}
-      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-border-subtle bg-surface-1 sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
+      {/* ── Desktop sidebar — collapsed by default, expands on hover ── */}
+      <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-border-subtle bg-base sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
         <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
             <span className="group-hover/sidebar:hidden"><Logo size="xs" variant="mark" theme="dark" /></span>
@@ -194,41 +231,48 @@ export default function DashboardShell({
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
-                pathname === item.href ? activeClass : inactiveClass
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive(item.href)
+                  ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                  : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
               }`}
             >
-              <span className="shrink-0"><item.Icon /></span>
+              <span className="shrink-0"><item.Icon size={18} /></span>
               <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
             </Link>
           ))}
-          <div className="mt-3 pt-3 border-t border-border-subtle">
-            {profile?.is_admin && (
-              <Link
-                href="/admin/reports"
-                title="Admin"
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
-                  pathname.startsWith('/admin') ? activeClass : inactiveClass
-                }`}
-              >
-                <span className="shrink-0"><Shield size={18} /></span>
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Admin</span>
-              </Link>
-            )}
-            {bottomNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={item.label}
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-medium tracking-wide transition-all duration-150 ${
-                  pathname === item.href ? activeClass : inactiveClass
-                }`}
-              >
-                <span className="shrink-0"><item.Icon /></span>
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
-              </Link>
-            ))}
-          </div>
+
+          <div className="my-2 border-t border-border-subtle" />
+
+          {profile?.is_admin && (
+            <Link
+              href="/admin/reports"
+              title="Admin"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isAdminActive
+                  ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                  : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+              }`}
+            >
+              <span className="shrink-0"><Shield size={18} /></span>
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Admin</span>
+            </Link>
+          )}
+          {bottomNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive(item.href)
+                  ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                  : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+              }`}
+            >
+              <span className="shrink-0"><item.Icon size={18} /></span>
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">{item.label}</span>
+            </Link>
+          ))}
         </nav>
 
         <div className="p-2 group-hover/sidebar:p-4 border-t border-border-subtle space-y-3 transition-all duration-200">
@@ -236,14 +280,14 @@ export default function DashboardShell({
             <Link
               href="/pricing"
               title="Upgrade to Pro"
-              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-sm px-2 py-2 transition-colors border border-scalpel/20"
+              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-lg px-2 py-2 transition-colors border border-scalpel/20"
             >
               <ArrowUpRight size={14} />
               <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Upgrade to Pro</span>
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-sm bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
@@ -259,7 +303,7 @@ export default function DashboardShell({
               <EyeToggle />
               <button
                 onClick={handleSignOut}
-                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-sm hover:bg-white/[0.03]"
+                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-lg hover:bg-surface-1"
                 title="Sign out"
               >
                 <LogOut size={16} />
@@ -269,7 +313,7 @@ export default function DashboardShell({
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── Main content ── */}
       <main className="flex-1 min-h-screen">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
           {children}

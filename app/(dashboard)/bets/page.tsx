@@ -198,8 +198,11 @@ export default function BetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative">
           <div className="absolute -top-1 right-0"><EyeToggle /></div>
-          <h1 className="font-bold text-3xl tracking-tight mb-1">Bet History</h1>
-          <p className="text-fg-muted text-sm">{bets.length} total bets</p>
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Bet History</h1>
+            <p className="text-sm text-fg-muted mt-1">All your recorded bets</p>
+            <p className="text-xs text-fg-muted mt-0.5">{bets.length} total bets</p>
+          </div>
         </div>
         <button
           onClick={() => { setShowForm(!showForm); if (showForm) setPrefill(null); }}

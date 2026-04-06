@@ -81,6 +81,10 @@ module.exports = {
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
         },
+        'slide-in-left': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out both',
@@ -97,6 +101,7 @@ module.exports = {
         'slide-up-d5': 'slide-up 0.5s ease-out 0.5s both',
         'slide-up-d6': 'slide-up 0.5s ease-out 0.6s both',
         shimmer: 'shimmer 2s infinite',
+        'slide-in-left': 'slide-in-left 0.2s ease-out',
       },
     },
   },
