@@ -23,7 +23,7 @@ export default function HowToUploadPage() {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
     name: 'How to Upload Your Betting History to BetAutopsy',
-    description: 'Get your sports betting data into BetAutopsy for behavioral analysis. Three methods from easiest to most involved.',
+    description: 'Get your sports betting data into BetAutopsy for behavioral analysis. Four methods from easiest to most involved.',
     step: [
       {
         '@type': 'HowToStep',
@@ -69,7 +69,7 @@ export default function HowToUploadPage() {
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl mb-3">How to get your betting history</h1>
         <p className="text-fg-muted text-lg mb-12">
-          Three ways to get your data in, from easiest to most involved.
+          Four ways to get your data in, from easiest to most involved.
         </p>
 
         {/* ── METHOD 1: Pikkit ── */}
@@ -142,14 +142,65 @@ export default function HowToUploadPage() {
           </div>
         </div>
 
-        {/* ── METHOD 2: Paste from Sportsbook ── */}
+        {/* ── METHOD 2: Screenshot ── */}
         <div className="card p-6 md:p-8 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">2</span>
-            <h2 className="font-bold text-2xl">Paste from your sportsbook</h2>
+            <h2 className="font-bold text-2xl">Screenshot your bet history</h2>
             <span className="text-xs font-medium bg-scalpel-muted text-scalpel px-2 py-0.5 rounded-sm">BEST FOR ONGOING UPDATES</span>
           </div>
-          <span className="case-header block mb-4">BEST FOR: Adding recent bets after your initial import</span>
+          <span className="case-header block mb-4">BEST FOR: Adding recent bets from your phone</span>
+
+          <p className="text-fg-muted text-sm mb-6">
+            Take a screenshot of your settled bets from your sportsbook&apos;s mobile app. Our AI reads the image and extracts your bets automatically.
+          </p>
+
+          <div className="bg-surface-raised rounded-sm p-4">
+            <ol className="space-y-2.5 text-sm text-fg-muted">
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">01</span>
+                <span>Open your sportsbook app on your phone</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">02</span>
+                <span>Navigate to My Bets &rarr; Settled</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">03</span>
+                <span>Take a screenshot (or multiple screenshots for more bets)</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">04</span>
+                <span>Go to the <Link href="/upload" className="text-scalpel hover:underline">BetAutopsy Upload page</Link> &rarr; &quot;Screenshot&quot; tab</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">05</span>
+                <span>Upload your screenshot(s) and we&apos;ll extract the bets</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-scalpel font-bold shrink-0">06</span>
+                <span>Review the parsed bets, uncheck any errors, and import</span>
+              </li>
+            </ol>
+
+            <div className="finding-card border-l-scalpel mt-4">
+              <p className="text-xs text-fg-bright font-medium">Works with any sportsbook app.</p>
+              <p className="text-xs text-fg-muted mt-0.5">DraftKings, FanDuel, BetMGM, Caesars, and more. Our AI reads the layout automatically.</p>
+            </div>
+
+            <Link href="/upload" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors mt-4">
+              Go to Upload Page &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* ── METHOD 3: Paste from Sportsbook ── */}
+        <div className="card p-6 md:p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">3</span>
+            <h2 className="font-bold text-2xl">Paste from your sportsbook</h2>
+          </div>
+          <span className="case-header block mb-4">BEST FOR: Adding recent bets from desktop browser</span>
 
           <p className="text-fg-muted text-sm mb-6">
             Copy your settled bet history straight from your sportsbook&apos;s website and paste it into BetAutopsy.
@@ -226,10 +277,10 @@ export default function HowToUploadPage() {
           </div>
         </div>
 
-        {/* ── METHOD 3: Manual CSV / Spreadsheet ── */}
+        {/* ── METHOD 4: Manual CSV / Spreadsheet ── */}
         <div className="card p-6 md:p-8 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">3</span>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-scalpel-muted text-scalpel font-mono font-bold text-lg">4</span>
             <h2 className="font-bold text-2xl">Manual CSV or spreadsheet</h2>
           </div>
           <span className="case-header block mb-4">BEST FOR: People who track in spreadsheets or need full control</span>

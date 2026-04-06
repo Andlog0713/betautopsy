@@ -109,7 +109,7 @@ export default function UploadPage() {
 
   const methods = [
     { id: 'pikkit' as const, icon: '📱', label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
-    { id: 'screenshot' as const, icon: '📸', label: 'Screenshot', desc: 'From mobile app', badge: betCount > 0 ? 'RECOMMENDED' : undefined },
+    { id: 'screenshot' as const, icon: '📸', label: 'Screenshot', desc: 'From mobile app', badge: 'BEST FOR UPDATES' },
     { id: 'paste' as const, icon: '📋', label: 'Paste', desc: 'From desktop browser' },
     { id: 'csv' as const, icon: '📄', label: 'CSV', desc: 'Upload a file' },
   ];
