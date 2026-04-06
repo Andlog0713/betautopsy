@@ -117,13 +117,13 @@ export const StorySlideComparison = forwardRef<HTMLDivElement, StorySlideProps>(
       <Logo dark />
       <div style={{ flex: 1 }} />
       <div>
-        <div style={{ fontSize: 55, color: '#0D1117', opacity: 0.6, marginBottom: 50 }}>
+        <div style={{ fontSize: 55, color: 'rgba(255,255,255,0.6)', marginBottom: 50, fontWeight: 500 }}>
           {comparison.topLabel}
         </div>
         <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8 }}>
           {comparison.topValue}
         </div>
-        <div style={{ fontSize: 55, color: '#0D1117', opacity: 0.6, marginTop: 90, marginBottom: 50 }}>
+        <div style={{ fontSize: 55, color: 'rgba(255,255,255,0.6)', marginTop: 90, marginBottom: 50, fontWeight: 500 }}>
           {comparison.bottomLabel}
         </div>
         <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8 }}>
