@@ -36,13 +36,8 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Get Your Full Report Free
             </Link>
-            <Link href="/quiz" className="btn-secondary text-base !px-6 !py-3">
-              Take the Quiz
-            </Link>
+            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
           </div>
-          <p className="text-fg-muted text-xs mt-3 animate-fade-in-d3">
-            Limited time: first full report free. No credit card. · Or discover your Bet DNA in 2 minutes.
-          </p>
           {/* Social proof counter strip */}
           <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
             <div>
@@ -52,10 +47,6 @@ export default function LandingPage() {
             <div>
               <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={2100} suffix="+" /></span>
               <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
-            </div>
-            <div>
-              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={12} duration={1} /></span>
-              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Biases Detected</span>
             </div>
           </div>
 
