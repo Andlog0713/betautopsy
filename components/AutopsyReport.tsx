@@ -601,7 +601,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             ].map(c => (
               <div key={c.label} className="vitals-cell">
                 <div className="data-label mb-0.5">{c.label}</div>
-                <div className="text-[9px] text-fg-dim leading-tight mb-1">{c.hint}</div>
+                <div className="text-[9px] text-fg-muted leading-tight mb-1">{c.hint}</div>
                 <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
                 <div className="h-1 mt-2 bg-surface-2 overflow-hidden">
                   <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
@@ -615,7 +615,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {(tier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-3">BETIQ: SKILL ASSESSMENT</div>
-          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-dim text-sm">{analysis.betiq.interpretation}</p></div>
+          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-muted text-sm">{analysis.betiq.interpretation}</p></div>
         </div>
       )}
 
@@ -706,7 +706,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   : 'Your bankroll trajectory could use some adjustments. The recommendations below can help stabilize it.'}
               </p>
               {analysis.bankroll_health === 'danger' && (
-                <p className="text-fg-dim text-xs mt-3">
+                <p className="text-fg-muted text-xs mt-3">
                   If you feel your gambling is out of control, call <span className="text-fg-bright">1-800-GAMBLER</span> or visit <span className="text-fg-bright">ncpgambling.org</span> for self-exclusion resources.
                 </p>
               )}
@@ -733,7 +733,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <span className="inline-block w-2 h-2 rounded-full bg-bleed shrink-0" />
                 <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
               </div>
-              <p className="text-[11px] text-fg-dim mt-1">Estimated money left on the table from all detected leaks and biases. Some leaks may overlap.</p>
+              <p className="text-[11px] text-fg-muted mt-1">Estimated money left on the table from all detected leaks and biases. Some leaks may overlap.</p>
             </div>
             <span className="font-mono text-[10px] text-fg-dim">See details →</span>
           </div>
@@ -805,7 +805,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <>
                     <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[12px] text-fg-muted leading-relaxed">{bias.description}</p></div>
                     {bias.fix && (
-                      <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[11px] text-fg-dim"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p></div>
+                      <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[11px] text-fg-muted"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p></div>
                     )}
                     <div className="flex justify-between items-center">
                       <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
@@ -836,7 +836,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
               </div>
               <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm leading-relaxed">{finding.description}</p></div>
-              <p className="text-fg-dim text-xs mb-2 font-mono">{finding.evidence}</p>
+              <p className="text-fg-muted text-xs mb-2 font-mono">{finding.evidence}</p>
               <div className="flex items-center justify-between">
                 {finding.estimated_cost !== null && (
                   <span className="font-mono text-sm font-semibold text-loss">est. cost: ${Math.abs(finding.estimated_cost).toLocaleString()}</span>
@@ -853,7 +853,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && strategic_leaks.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Strategic Leaks</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume. You&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
+          <p className="text-fg-muted text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume. You&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -894,7 +894,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Emotion Score */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
+          <h2 className="font-semibold text-xl">Emotion Score <span className="text-fg-muted text-xs font-normal">(how much emotions drive your bets)</span></h2>
           <span className={`font-mono text-2xl font-bold ${
             emotionScore <= 25 ? 'text-win' :
             emotionScore <= 50 ? 'text-caution' :
@@ -910,7 +910,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           />
         </div>
         <p className="text-fg-muted text-sm mb-2">{emotionLabel(emotionScore)}</p>
-        <p className="text-fg-dim text-xs mb-3 italic">
+        <p className="text-fg-muted text-xs mb-3 italic">
           Measures how much emotions drive your betting decisions: chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
         </p>
         {emotionBreakdown && (
@@ -924,7 +924,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const val = emotionBreakdown![key];
               return (
                 <div key={key}>
-                  <p className="text-fg-dim text-xs mb-1" title={hint}>{label}</p>
+                  <p className="text-fg-muted text-xs mb-1" title={hint}>{label}</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                       <div
@@ -950,7 +950,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex items-center justify-between mb-2">
             <div>
               <div className="case-header">EMOTIONAL TRIGGER BREAKDOWN</div>
-              <p className="text-fg-dim text-xs mt-1">Six signals that reveal when emotions are driving your bets instead of strategy</p>
+              <p className="text-fg-muted text-xs mt-1">Six signals that reveal when emotions are driving your bets instead of strategy</p>
             </div>
             <span className={`font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${
               analysis.enhanced_tilt.risk_level === 'critical' ? 'bg-bleed text-base' :
@@ -980,7 +980,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div key={signal.label} className="bg-surface-2 p-3 border border-border-subtle rounded-sm">
                 <div className="mb-1.5">
                   <span className="text-[11px] text-fg-muted block">{signal.label}</span>
-                  <span className="text-[9px] text-fg-dim block leading-tight mt-0.5">{signal.hint}</span>
+                  <span className="text-[9px] text-fg-muted block leading-tight mt-0.5">{signal.hint}</span>
                 </div>
                 <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
                 <div className="h-1 mt-1.5 bg-base overflow-hidden">
@@ -997,7 +997,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Behavioral Patterns</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting. Some help you, some hurt you.</p>
+          <p className="text-fg-muted text-xs italic -mt-2">Recurring habits we found in your betting. Some help you, some hurt you.</p>
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
               <div key={i} className="card p-5 flex gap-4">
@@ -1040,7 +1040,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
             Profit/Loss Over Time
           </h2>
-          <p className="text-fg-dim text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
+          <p className="text-fg-muted text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
           <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pnlData}>
@@ -1063,7 +1063,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
             Stake Size Timeline
           </h2>
-          <p className="text-fg-dim text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
+          <p className="text-fg-muted text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
           <p className="text-fg-muted text-xs mb-4">
             <span className="inline-block w-2 h-2 rounded-full bg-white/10 border border-white/20 mr-1 align-middle" /> Normal
             <span className="inline-block w-2 h-2 rounded-full bg-[#C4463A] mr-1 ml-3 align-middle" /> Within 1hr of a loss
@@ -1090,7 +1090,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {hasBets && roiData.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">ROI by Category</h2>
-          <p className="text-fg-dim text-xs italic mb-3">See where your edge lives and where it doesn&apos;t.</p>
+          <p className="text-fg-muted text-xs italic mb-3">See where your edge lives and where it doesn&apos;t.</p>
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
@@ -1126,7 +1126,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Timing Patterns</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
+          <p className="text-fg-muted text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
 
           {/* Day of Week Chart */}
           <div className="card p-6">
@@ -1166,7 +1166,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           {analysis.timing_analysis.has_time_data && (
             <div className="card p-6">
               <h3 className="font-medium text-lg mb-1">Time of Day Heatmap</h3>
-              <p className="text-fg-dim text-xs italic mb-4">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
+              <p className="text-fg-muted text-xs italic mb-4">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
               <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1.5">
                 {analysis.timing_analysis.by_hour.map((h, i) => {
                   const hasBets = h.bets > 0;
@@ -1269,7 +1269,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Odds Intelligence</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
+          <p className="text-fg-muted text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
 
           {/* Odds Bucket Table */}
           <div className="card overflow-hidden">
@@ -1311,7 +1311,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </table>
             </div>
             <div className="px-4 py-2.5 border-t border-border-subtle bg-base/30">
-              <p className="text-fg-dim text-xs">
+              <p className="text-fg-muted text-xs">
                 <span className="text-fg-muted">Edge</span> = your actual win rate minus the implied probability from the odds. Positive edge means you&apos;re beating the line at that price point.
               </p>
             </div>
@@ -1385,7 +1385,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </span>
                 </div>
               </div>
-              <p className="text-fg-dim text-[10px] mt-2 italic">
+              <p className="text-fg-muted text-[10px] mt-2 italic">
                 {analysis.odds_analysis.luck_rating > 1
                   ? 'You\'re winning more than the odds predict. Could be skill, could be variance. More bets will tell.'
                   : analysis.odds_analysis.luck_rating < -1
@@ -1401,7 +1401,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="font-bold text-xl text-win">{analysis.odds_analysis.best_bucket.label}</p>
                 <p className="font-mono text-win text-sm">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}pp edge</p>
                 <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.best_bucket.count} bets</p>
-                <p className="text-fg-dim text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
+                <p className="text-fg-muted text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
               </div>
             )}
 
@@ -1412,7 +1412,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="font-bold text-xl text-loss">{analysis.odds_analysis.worst_bucket.label}</p>
                 <p className="font-mono text-loss text-sm">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge</p>
                 <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.worst_bucket.count} bets</p>
-                <p className="text-fg-dim text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
+                <p className="text-fg-muted text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
               </div>
             )}
           </div>
@@ -1426,7 +1426,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <h2 className="font-semibold text-xl">Performance by Pick Count</h2>
             <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">DFS</span>
           </div>
-          <p className="text-fg-dim text-xs italic mb-4">Fewer picks = higher win rate. Where&apos;s your sweet spot?</p>
+          <p className="text-fg-muted text-xs italic mb-4">Fewer picks = higher win rate. Where&apos;s your sweet spot?</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -1462,7 +1462,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.dfs_mode && analysis.dfs_metrics?.powerVsFlex && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">Power Play vs Flex Play</h2>
-          <p className="text-fg-dim text-xs italic mb-4">Power is all-or-nothing. Flex pays partial. Which is actually working?</p>
+          <p className="text-fg-muted text-xs italic mb-4">Power is all-or-nothing. Flex pays partial. Which is actually working?</p>
           <div className="grid grid-cols-2 gap-4">
             <div className={`rounded-sm p-4 ${analysis.dfs_metrics.powerVsFlex.powerROI >= analysis.dfs_metrics.powerVsFlex.flexROI ? 'bg-win/5 border border-win/20' : 'bg-loss/5 border border-loss/20'}`}>
               <p className="text-fg-muted text-xs uppercase tracking-wider mb-2">Power Play</p>
@@ -1488,7 +1488,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.dfs_mode && analysis.dfs_metrics && analysis.dfs_metrics.playerConcentration.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">Player Concentration</h2>
-          <p className="text-fg-dim text-xs italic mb-4">Are you over-exposed to specific players?</p>
+          <p className="text-fg-muted text-xs italic mb-4">Are you over-exposed to specific players?</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -1523,7 +1523,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time, like a single night of betting.</p>
+          <p className="text-fg-muted text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time, like a single night of betting.</p>
           <div className="grid md:grid-cols-2 gap-4">
             {/* Worst session */}
             {analysis.session_analysis.worst_session && (
@@ -1568,7 +1568,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
             </p>
             <p className="text-fg-muted text-sm mt-2">{analysis.session_analysis.insight}</p>
-            <p className="text-fg-dim text-xs mt-2 font-mono">
+            <p className="text-fg-muted text-xs mt-2 font-mono">
               {analysis.session_analysis.total_sessions} sessions analyzed (3+ hour gap = new session)
             </p>
           </div>
@@ -1590,11 +1590,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {!isPartialReport && analysis.edge_profile && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
-          <p className="text-fg-dim text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
+          <p className="text-fg-muted text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
           {/* Sharp Score */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-fg-muted text-sm">Sharp Score <span className="text-fg-dim italic">(how skilled your betting is overall)</span></span>
+              <span className="text-fg-muted text-sm">Sharp Score <span className="text-fg-muted italic">(how skilled your betting is overall)</span></span>
               <span className="font-mono text-2xl font-bold text-cyan-400">
                 {analysis.edge_profile.sharp_score}/100
               </span>
@@ -1685,7 +1685,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
                   </div>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
+                  <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-3">
@@ -1842,7 +1842,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-fg-bright font-medium">{rule.rule}</p>
                 </div>
                 <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
-                <p className="text-fg-dim text-xs">Based on: {rule.based_on}</p>
+                <p className="text-fg-muted text-xs">Based on: {rule.based_on}</p>
               </div>
             ))}
           </div>
@@ -1883,7 +1883,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               { label: 'Strategy', val: analysis.discipline_score.strategy, hint: 'Whether you focus volume on your profitable categories' },
             ]).map(({ label, val, hint }) => (
               <div key={label}>
-                <p className="text-fg-dim text-xs mb-1" title={hint}>{label}</p>
+                <p className="text-fg-muted text-xs mb-1" title={hint}>{label}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${val >= 18 ? 'bg-win' : val >= 12 ? 'bg-caution' : val >= 6 ? 'bg-orange-400' : 'bg-loss'}`} style={{ width: `${(val / 25) * 100}%` }} />
@@ -2028,7 +2028,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
                   </div>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
+                  <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-3">
@@ -2149,7 +2149,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
     <div className="space-y-4">
       <div>
         <div className="case-header mb-1">BET-BY-BET ANALYSIS</div>
-        <p className="text-fg-dim text-xs">Every bet, classified by behavioral intent</p>
+        <p className="text-fg-muted text-xs">Every bet, classified by behavioral intent</p>
       </div>
 
       {/* Distribution bar */}
@@ -2310,7 +2310,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
     <div className="space-y-4">
       <div>
         <div className="case-header mb-1">SESSION ANALYSIS</div>
-        <p className="text-fg-dim text-xs">Every betting session, detected and graded A through F</p>
+        <p className="text-fg-muted text-xs">Every betting session, detected and graded A through F</p>
       </div>
 
       {/* Grade distribution bar */}

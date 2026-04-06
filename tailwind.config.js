@@ -26,10 +26,10 @@ module.exports = {
         },
         // Text hierarchy — 4 levels
         fg: {
-          DEFAULT: '#B0B8C4',
+          DEFAULT: '#B8C0CC',
           bright: '#E8ECF0',
-          muted: '#7A8494',
-          dim: '#4A5260',
+          muted: '#8B95A5',
+          dim: '#5A6474',
         },
         // Brand — unified teal
         scalpel: {
@@ -46,7 +46,7 @@ module.exports = {
         // Semantic
         win: '#00C9A7',
         loss: '#C4463A',
-        caution: '#B8944A',
+        caution: '#C9A04E',
         // Legacy aliases
         ink: {
           900: '#0a0a12',
