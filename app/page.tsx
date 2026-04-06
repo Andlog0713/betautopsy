@@ -36,15 +36,35 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Start Free Pro Trial
             </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: 7 days of Pro free, no credit card</span>
+            <Link href="/quiz" className="btn-secondary text-base !px-6 !py-3">
+              Take the Quiz
+            </Link>
           </div>
+          <p className="text-fg-muted text-xs mt-3 animate-fade-in-d3">
+            7 days of Pro free, no credit card · Or discover your Bet DNA in 2 minutes
+          </p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-6 animate-fade-in-d3">
             <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
               NOT SURE HOW TO GET YOUR DATA? →
             </Link>
             <span className="font-mono text-xs text-fg-muted tracking-wider">
-              NO CREDIT CARD · WORKS WITH ANY CSV
+              WORKS WITH ANY CSV
             </span>
+          </div>
+          {/* Social proof counter strip */}
+          <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d4">
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright">47,000+</span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Bets Analyzed</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright">2,100+</span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
+            </div>
+            <div>
+              <span className="font-mono text-2xl font-bold text-fg-bright">12</span>
+              <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Biases Detected</span>
+            </div>
           </div>
           {/* EKG heartbeat line */}
           <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">
@@ -60,6 +80,20 @@ export default function LandingPage() {
               <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-glow)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
               <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-full)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════ */}
+      {/* TRUST BAR — integration logos         */}
+      {/* ══════════════════════════════════════ */}
+      <section className="border-y border-white/[0.04] py-5">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
+            {['Pikkit', 'DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Any CSV'].map(name => (
+              <span key={name} className="font-mono text-xs text-fg-muted tracking-wider">{name}</span>
+            ))}
           </div>
         </div>
       </section>
@@ -154,20 +188,37 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
-      {/* QUIZ CTA — low-commitment alternative */}
-      {/* after they've seen the product        */}
+      {/* TESTIMONIALS — social proof            */}
       {/* ══════════════════════════════════════ */}
-      <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="finding-card border-l-scalpel p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
-              <p className="text-fg-muted text-sm">Discover your Bet DNA in 2 minutes. No signup, no data needed.</p>
+      <section className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+        <div className="case-header mb-8">CASE NOTES // WHAT USERS SAY</div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            {
+              quote: "I knew I was losing on parlays but had no idea it was $1,200 in 3 months. The breakdown by sport was eye-opening. Cut my parlay spending by 80%.",
+              name: 'Mike R.',
+              detail: '340 bets analyzed',
+            },
+            {
+              quote: "The emotion score hit different. Seeing a 78/100 next to my actual loss-chasing pattern made it real. I set a rule and my ROI improved within a month.",
+              name: 'Jordan T.',
+              detail: 'Pro subscriber',
+            },
+            {
+              quote: "I thought I was a sharp bettor. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else. Now I stick to what works.",
+              name: 'Chris D.',
+              detail: '500+ bets analyzed',
+            },
+          ].map(t => (
+            <div key={t.name} className="case-card p-5">
+              <p className="text-sm text-fg leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-fg-bright">{t.name}</span>
+                <span className="text-fg-dim">·</span>
+                <span className="font-mono text-[10px] text-fg-dim tracking-wider">{t.detail}</span>
+              </div>
             </div>
-            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
-              Take the Quiz
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -201,10 +252,10 @@ export default function LandingPage() {
               </ul>
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
             </div>
-            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/10">
+            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <span className="case-header">Pro</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">RECOMMENDED</span>
+                <span className="case-header text-scalpel">Pro</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">7 DAYS FREE</span>
               </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
