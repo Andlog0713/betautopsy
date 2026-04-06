@@ -2,6 +2,7 @@ import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
+import ProductWalkthrough from '@/components/ProductWalkthrough';
 
 export default function LandingPage() {
   return (
@@ -92,24 +93,12 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
-      {/* HOW IT WORKS — raised bg-surface      */}
+      {/* HOW IT WORKS — interactive walkthrough */}
       {/* ══════════════════════════════════════ */}
       <section className="bg-surface border-y border-white/[0.04] py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-8">PROTOCOL // THREE STEPS</div>
-          <div className="vitals-strip grid-cols-1 md:grid-cols-3">
-            {[
-              { step: '01', title: 'Upload', desc: 'Export from Pikkit, any sportsbook, DFS app, or prediction market. Or upload any CSV.' },
-              { step: '02', title: 'Analyze', desc: 'We scan for cognitive biases, emotional patterns, and sport-specific leaks. Get your Emotion Score, BetIQ, and Discipline Score in 20 seconds.' },
-              { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
-            ].map(item => (
-              <div key={item.step} className="vitals-cell !p-6 md:!p-8">
-                <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
-                <h3 className="text-lg font-semibold text-fg-bright mb-2">{item.title}</h3>
-                <p className="text-sm text-fg leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
+          <div className="case-header mb-8">PROTOCOL // HOW IT WORKS</div>
+          <ProductWalkthrough />
         </div>
       </section>
 
