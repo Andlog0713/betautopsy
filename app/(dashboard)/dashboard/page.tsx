@@ -208,13 +208,69 @@ export default function DashboardPage() {
     return streak;
   })();
 
+  // ── Priority nudge: pick exactly one ──
+  const nudge = (() => {
+    if (!hasBets || !stats) return null;
+    // 1. Bankroll warning
+    if (!bankroll) return {
+      icon: <AlertTriangle size={16} className="text-caution shrink-0" />,
+      message: "Your bankroll isn\u2019t set \u2014 this affects your grade and risk analysis.",
+      action: 'Set Bankroll',
+      href: '/settings',
+    };
+    // 2. Streak at risk
+    if (isPaid && streakCount > 0 && streakLastDate) {
+      const daysSinceStreak = Math.floor((Date.now() - new Date(streakLastDate).getTime()) / 86400000);
+      const daysLeft = 21 - daysSinceStreak;
+      if (daysSinceStreak >= 14 && daysLeft > 0) return {
+        icon: <Flame size={16} className="text-orange-400 shrink-0" />,
+        message: `Your ${streakCount}-week streak is at risk. ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left to keep it alive.`,
+        action: 'Run Autopsy',
+        href: '/reports?run=true',
+      };
+    }
+    // 3. New bets since last report
+    if (daysSinceReport !== null && daysSinceReport >= 7 && newBetsSinceReport > 0) return {
+      icon: <FlaskConical size={16} className="text-fg-muted shrink-0" />,
+      message: `${newBetsSinceReport} new bet${newBetsSinceReport !== 1 ? 's' : ''} since your last autopsy (${daysSinceReport}d ago).`,
+      action: 'Run Autopsy',
+      href: '/reports?run=true',
+    };
+    // 4. First autopsy
+    if (stats.reportCount === 0) return {
+      icon: <FlaskConical size={16} className="text-scalpel shrink-0" />,
+      message: `${stats.totalBets} bets loaded. Run your first behavioral analysis.`,
+      action: 'Run Autopsy',
+      href: '/reports?run=true',
+    };
+    // 5. Streak start
+    if (stats.reportCount > 0 && streakCount === 0) return {
+      icon: <Flame size={16} className="text-orange-400 shrink-0" />,
+      message: 'Start your streak. Weekly check-ins unlock badges and keep you accountable.',
+      action: 'Run Autopsy',
+      href: '/reports?run=true',
+    };
+    // 6. Upload nudge
+    if (stats.reportCount > 0 && daysSinceLastBet !== null && daysSinceLastBet > 14) return {
+      icon: <Upload size={16} className="text-fg-muted shrink-0" />,
+      message: `Last upload was ${daysSinceLastBet} days ago. Add recent bets for a more accurate analysis.`,
+      action: 'Add Bets',
+      href: '/upload',
+    };
+    return null;
+  })();
+
   return (
-    <div className="space-y-8 animate-fade-in">
-      <h1 className="font-bold text-3xl tracking-tight text-fg-bright">Dashboard</h1>
+    <div className="animate-fade-in">
+      {/* ── Page header ── */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Dashboard</h1>
+        <p className="text-sm text-fg-muted mt-1">Overview of your betting behavior</p>
+      </div>
 
       {!hasBets ? (
-        <div className="case-card p-12 text-center">
-          <div className="mb-4"><Target size={40} className="text-fg-muted" /></div>
+        <div className="bg-surface-1 border border-border-subtle rounded-xl p-12 text-center">
+          <div className="mb-4"><Target size={40} className="text-fg-muted mx-auto" /></div>
           <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet</h2>
           <p className="text-fg-muted mb-6 max-w-md mx-auto">
             You&apos;ve got bets to upload and truths to face. Let&apos;s go.
@@ -226,365 +282,275 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* Vitals strip */}
-          <div className="relative">
-            <div className="absolute -top-8 right-0"><EyeToggle /></div>
-            <div className="vitals-strip grid-cols-2 md:grid-cols-5">
-              <VitalCell label="Total Bets" value={mask(stats.totalBets.toLocaleString())} />
-              <VitalCell label="Total Wagered" value={mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} />
-              <VitalCell label="Net P&L" value={mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL).toLocaleString()}`)} color={stats.netPnL >= 0 ? 'text-win' : 'text-loss'} />
-              <VitalCell label="Win Rate" value={mask(`${stats.winRate.toFixed(1)}%`)} color={stats.winRate >= 50 ? 'text-win' : 'text-loss'} />
-              <VitalCell label="Avg Stake" value={mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} />
-            </div>
-          </div>
-
-          {/* Streak start CTA */}
-          {stats.reportCount > 0 && streakCount === 0 && (
-            <div className="finding-card border-l-scalpel flex items-center justify-between gap-4">
-              <div>
-                <p className="text-fg-bright font-medium flex items-center gap-1.5"><Flame size={16} className="text-orange-400" /> Start your streak. Run an autopsy this week</p>
-                <p className="text-fg-muted text-xs mt-0.5 font-mono">Weekly check-ins unlock milestone badges and keep you accountable.</p>
-              </div>
-              <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
-            </div>
-          )}
-
-          {/* First Autopsy CTA */}
-          {stats.reportCount === 0 && (
-            <div className="case-card border-scalpel/20 p-8 text-center space-y-4">
-              <div><FlaskConical size={32} className="text-fg-muted" /></div>
-              <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
-              <p className="text-fg-muted max-w-md mx-auto">
-                You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
-                analysis in about 20 seconds.
-              </p>
-              <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-                Run Your Autopsy Now →
+          {/* ── Priority nudge banner ── */}
+          {nudge && (
+            <div className="flex items-center gap-3 bg-surface-1 border border-border-subtle rounded-lg px-4 py-3 mb-6">
+              {nudge.icon}
+              <p className="text-sm text-fg-muted flex-1">{nudge.message}</p>
+              <Link href={nudge.href} className="ml-auto text-sm text-scalpel hover:text-fg-bright transition-colors whitespace-nowrap font-mono">
+                {nudge.action} →
               </Link>
             </div>
           )}
 
-          {/* Nudge */}
-          {daysSinceReport !== null && daysSinceReport >= 7 && newBetsSinceReport > 0 && (
-            <div className="finding-card border-l-caution flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-fg-bright font-medium">
-                  You&apos;ve placed {newBetsSinceReport} new bet{newBetsSinceReport !== 1 ? 's' : ''} since your last autopsy
-                </p>
-                <p className="text-fg-muted text-sm font-mono">Time for a check-up? ({daysSinceReport} days ago)</p>
-              </div>
-              <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
+          {/* ── Vitals stat strip ── */}
+          <div className="relative mb-8">
+            <div className="absolute -top-8 right-0"><EyeToggle /></div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <StatCard label="Total Bets" value={mask(stats.totalBets.toLocaleString())} />
+              <StatCard label="Total Wagered" value={mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} />
+              <StatCard label="Net P&L" value={mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL).toLocaleString()}`)} color={stats.netPnL >= 0 ? 'text-win' : 'text-loss'} />
+              <StatCard label="Win Rate" value={mask(`${stats.winRate.toFixed(1)}%`)} color={stats.winRate >= 50 ? 'text-win' : 'text-loss'} />
+              <StatCard label="Avg Stake" value={mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} />
             </div>
-          )}
+          </div>
 
-          {/* Upload nudge — haven't added bets in >14 days */}
-          {stats.reportCount > 0 && daysSinceLastBet !== null && daysSinceLastBet > 14 && (
-            <div className="finding-card border-l-caution">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-fg-bright text-sm font-medium">Your last upload was {daysSinceLastBet} days ago</p>
-                  <p className="text-fg-muted text-xs mt-0.5">Add your recent bets for a more accurate analysis.</p>
-                </div>
-                <Link href="/upload" className="btn-primary text-sm shrink-0 font-mono">Add Bets</Link>
-              </div>
-            </div>
-          )}
-
-          {/* Discipline Score + Streak */}
+          {/* ── Progress trend strip (paid) ── */}
           {latest && isPaid && (
-            <div className="case-card p-6">
-              <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-                {/* Score ring */}
-                <div className="relative shrink-0">
-                  <svg width="120" height="120" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="#12141A" strokeWidth="8" />
-                    <circle
-                      cx="60" cy="60" r="52" fill="none"
-                      stroke={
-                        (latest.discipline_score ?? 0) >= 71 ? '#00FFCB' :
-                        (latest.discipline_score ?? 0) >= 51 ? '#D29922' :
-                        (latest.discipline_score ?? 0) >= 31 ? '#E8453C' : '#F85149'
-                      }
-                      strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray={`${((latest.discipline_score ?? 0) / 100) * 327} 327`}
-                      transform="rotate(-90 60 60)"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
+            <div className="mb-8">
+              <span className="case-header block mb-3">Your Progress</span>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <TrendCard label="Emotion Score" current={mask(latest.tilt_score.toString())} prev={prev?.tilt_score} unit="" lowerIsBetter masked={mask('x') !== 'x'} />
+                <TrendCard label="Grade" current={mask(latest.overall_grade)} prev={prev?.overall_grade} isGrade masked={mask('x') !== 'x'} />
+                <TrendCard label="Win Rate" current={mask(`${latest.win_rate.toFixed(1)}%`)} prev={prev?.win_rate} unit="%" masked={mask('x') !== 'x'} />
+                <TrendCard label="ROI" current={mask(`${latest.roi_percent.toFixed(1)}%`)} prev={prev?.roi_percent} unit="%" masked={mask('x') !== 'x'} />
+                <TrendCard label="Parlay %" current={mask(`${latest.parlay_percent.toFixed(0)}%`)} prev={prev?.parlay_percent} unit="%" lowerIsBetter masked={mask('x') !== 'x'} />
+              </div>
+              {!prev && (
+                <p className="font-mono text-xs text-fg-muted tracking-wider mt-3">Run another autopsy next week to start tracking progress.</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Two-column bento grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* ── Left column: primary content ── */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Discipline Score + Streak (paid) */}
+              {latest && isPaid && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-6">
+                  <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+                    <div className="relative shrink-0">
+                      <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="#12141A" strokeWidth="8" />
+                        <circle
+                          cx="60" cy="60" r="52" fill="none"
+                          stroke={
+                            (latest.discipline_score ?? 0) >= 71 ? '#00FFCB' :
+                            (latest.discipline_score ?? 0) >= 51 ? '#D29922' :
+                            (latest.discipline_score ?? 0) >= 31 ? '#E8453C' : '#F85149'
+                          }
+                          strokeWidth="8" strokeLinecap="round"
+                          strokeDasharray={`${((latest.discipline_score ?? 0) / 100) * 327} 327`}
+                          transform="rotate(-90 60 60)"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <h2 className="font-semibold text-xl mb-1 text-fg-bright">Discipline Score</h2>
+                      <p className="text-fg-muted text-xs mb-3">
+                        How consistently you&apos;re building better betting habits.
+                      </p>
+                      {prev && prev.discipline_score !== null && latest.discipline_score !== null && (
+                        <p className={`text-sm font-mono ${
+                          (latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? 'text-win' : 'text-loss'
+                        }`}>
+                          {(latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? '↑' : '↓'}{' '}
+                          {Math.abs((latest.discipline_score ?? 0) - (prev.discipline_score ?? 0))} pts from last report
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {[
+                          { weeks: 4, label: 'Consistent', color: 'bg-caution/10 text-caution border-caution/20' },
+                          { weeks: 12, label: 'Dedicated', color: 'bg-fg-dim/10 text-fg-muted border-fg-dim/20' },
+                          { weeks: 26, label: 'Half-Year Sharp', color: 'bg-caution/15 text-caution border-caution/25' },
+                          { weeks: 52, label: 'Annual Autopsy', color: 'bg-scalpel-muted text-scalpel border-scalpel/20' },
+                        ].map((m) => {
+                          const earned = streakBest >= m.weeks;
+                          return (
+                            <span
+                              key={m.weeks}
+                              className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm border ${
+                                earned ? m.color : 'bg-surface-2 text-fg-dim border-border-subtle'
+                              }`}
+                            >
+                              {!earned && <Lock size={12} className="text-fg-dim mr-0.5" />}
+                              {m.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="font-semibold text-xl mb-1 text-fg-bright">Discipline Score</h2>
-                  <p className="text-fg-muted text-xs mb-3">
-                    How consistently you&apos;re building better betting habits.
+              )}
+
+              {/* Progress Chart (paid, 2+ snapshots) */}
+              {snapshots.length >= 2 && isPaid && (
+                <ProgressChart snapshots={snapshots} />
+              )}
+
+              {/* First Autopsy CTA */}
+              {stats.reportCount === 0 && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-8 text-center space-y-4">
+                  <div><FlaskConical size={32} className="text-fg-muted mx-auto" /></div>
+                  <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
+                  <p className="text-fg-muted max-w-md mx-auto">
+                    You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
+                    analysis in about 20 seconds.
                   </p>
-                  {prev && prev.discipline_score !== null && latest.discipline_score !== null && (
-                    <p className={`text-sm font-mono ${
-                      (latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? 'text-win' : 'text-loss'
-                    }`}>
-                      {(latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? '↑' : '↓'}{' '}
-                      {Math.abs((latest.discipline_score ?? 0) - (prev.discipline_score ?? 0))} pts from last report
-                    </p>
-                  )}
-                  {/* Streak */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className={`text-lg ${streakCount >= 10 ? 'animate-pulse' : ''}`}>
+                  <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+                    Run Your Autopsy Now →
+                  </Link>
+                </div>
+              )}
+
+              {/* Paid user without snapshots */}
+              {isPaid && !latest && stats.reportCount > 0 && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-6 text-center space-y-3">
+                  <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
+                  <p className="text-fg-muted text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
+                  <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
+                </div>
+              )}
+
+              {/* Free tier: blurred progress preview + upgrade */}
+              {!isPaid && stats.reportCount > 0 && (
+                <div className="relative">
+                  <div className="blur-sm pointer-events-none opacity-40">
+                    <div className="bg-surface-1 border border-border-subtle rounded-xl p-6">
+                      <h3 className="font-semibold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
+                      <div className="space-y-2">
+                        {[65, 52, 47, 38].map((h, i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="font-mono text-[10px] text-fg-dim w-16">Week {i + 1}</span>
+                            <div className="flex-1 h-2 bg-surface-2 overflow-hidden rounded-sm">
+                              <div className="h-full bg-scalpel rounded-sm" style={{ width: `${h}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-1"><Lock size={24} className="text-fg-muted" /></div>
+                      <p className="text-fg-muted text-sm font-mono">Track your progress with Pro</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Milestones (paid) */}
+              {isPaid && snapshots.length > 0 && (
+                <div>
+                  <span className="case-header block mb-3">Milestones</span>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {milestones.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`bg-surface-1 border border-border-subtle rounded-xl p-4 ${m.earned ? '' : 'opacity-40'}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          {m.icon}
+                          <span className="font-medium text-sm text-fg-bright">{m.label}</span>
+                        </div>
+                        <p className="text-fg-muted text-xs">{m.criteria}</p>
+                        {m.earned && m.date && (
+                          <p className="font-mono text-xs text-fg-muted mt-1">{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Right column: secondary content ── */}
+            <div className="space-y-4">
+              {/* Streak counter (paid) */}
+              {isPaid && snapshots.length > 0 && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={streakCount >= 10 ? 'animate-pulse' : ''}>
                       {streakCount >= 10 ? <><Flame size={18} className="text-orange-400" /><Flame size={18} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={18} className="text-orange-400" /> : <Calendar size={18} className="text-fg-muted" />}
                     </span>
                     <span className="text-sm text-fg-bright font-medium font-mono">
                       {streakCount > 0 ? `${streakCount}-week streak` : 'No active streak'}
                     </span>
-                    {streakBest > 1 && (
-                      <span className="font-mono text-xs text-fg-muted">Personal best: {streakBest}</span>
+                  </div>
+                  {streakBest > 1 && (
+                    <p className="font-mono text-xs text-fg-muted mb-2">Personal best: {streakBest}</p>
+                  )}
+                  <div className="flex items-center gap-1 text-xs text-fg-muted font-mono" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
+                    <Snowflake size={12} className="text-cyan-400" /> {streakFreezes} freeze{streakFreezes !== 1 ? 's' : ''} available
+                  </div>
+                  <div className="text-fg-muted text-xs mt-3">
+                    {streakWeeks >= 2 ? (
+                      <p className="font-mono">{streakWeeks} consecutive check-ins</p>
+                    ) : daysSinceReport !== null && daysSinceReport > 12 ? (
+                      <p>It&apos;s been {daysSinceReport} days since your last autopsy.</p>
+                    ) : (
+                      <p>{snapshots.length} report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly.</p>
                     )}
                   </div>
-                  {/* Freeze */}
-                  <div className="flex items-center gap-2 mt-2" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
-                    <span className="font-mono text-xs text-fg-muted flex items-center gap-1">
-                      <Snowflake size={14} className="text-cyan-400" /> {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
-                    </span>
-                    <span className="font-mono text-xs text-fg-muted">· miss a week without losing your streak (resets monthly)</span>
-                  </div>
-                  {/* Milestone badges */}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {[
-                      { weeks: 4, label: 'Consistent', color: 'bg-caution/10 text-caution border-caution/20' },
-                      { weeks: 12, label: 'Dedicated', color: 'bg-fg-dim/10 text-fg-muted border-fg-dim/20' },
-                      { weeks: 26, label: 'Half-Year Sharp', color: 'bg-caution/15 text-caution border-caution/25' },
-                      { weeks: 52, label: 'Annual Autopsy', color: 'bg-scalpel-muted text-scalpel border-scalpel/20' },
-                    ].map((m) => {
-                      const earned = streakBest >= m.weeks;
-                      return (
-                        <span
-                          key={m.weeks}
-                          className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm border ${
-                            earned ? m.color : 'bg-surface-2 text-fg-dim border-border-subtle'
-                          }`}
-                        >
-                          {!earned && <Lock size={12} className="text-fg-dim mr-0.5" />}
-                          {m.label}
-                        </span>
-                      );
-                    })}
-                  </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Progress Trend Cards */}
-          {latest && isPaid && (
-            <div className="space-y-4">
-              <span className="case-header block">Your Progress</span>
-              <div className="vitals-strip grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                <TrendCell label="Emotion Score" current={mask(latest.tilt_score.toString())} prev={prev?.tilt_score} unit="" lowerIsBetter masked={mask('x') !== 'x'} />
-                <TrendCell label="Grade" current={mask(latest.overall_grade)} prev={prev?.overall_grade} isGrade masked={mask('x') !== 'x'} />
-                <TrendCell label="Win Rate" current={mask(`${latest.win_rate.toFixed(1)}%`)} prev={prev?.win_rate} unit="%" masked={mask('x') !== 'x'} />
-                <TrendCell label="ROI" current={mask(`${latest.roi_percent.toFixed(1)}%`)} prev={prev?.roi_percent} unit="%" masked={mask('x') !== 'x'} />
-                <TrendCell label="Parlay %" current={mask(`${latest.parlay_percent.toFixed(0)}%`)} prev={prev?.parlay_percent} unit="%" lowerIsBetter masked={mask('x') !== 'x'} />
-              </div>
-              {!prev && (
-                <p className="font-mono text-xs text-fg-muted tracking-wider">Run another autopsy next week to start tracking progress.</p>
               )}
-            </div>
-          )}
 
-          {/* Progress Chart */}
-          {snapshots.length >= 2 && isPaid && (
-            <ProgressChart snapshots={snapshots} />
-          )}
-
-          {/* Paid user without snapshots */}
-          {isPaid && !latest && stats.reportCount > 0 && (
-            <div className="finding-card border-l-scalpel p-5 text-center space-y-3">
-              <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
-              <p className="text-fg-muted text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
-              <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
-            </div>
-          )}
-
-          {/* Free tier upgrade */}
-          {!isPaid && (
-            <div className="finding-card border-l-scalpel p-6 text-center space-y-3">
-              <p className="text-fg-bright mb-2">
-                Right now you&apos;re guessing whether you&apos;re getting better.
-              </p>
-              <p className="text-fg-muted text-sm mb-4">
-                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks, and
-                saw it in the numbers. Your first report was a snapshot. Your fifth report is
-                proof you&apos;re a different bettor.
-              </p>
-              <Link href="/pricing" className="btn-primary inline-block text-sm font-mono">Start Tracking Your Progress</Link>
-            </div>
-          )}
-
-          {!isPaid && stats.reportCount > 0 && (
-            <div className="relative">
-              <div className="blur-sm pointer-events-none opacity-40">
-                <div className="case-card p-6">
-                  <h3 className="font-semibold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
-                  <div className="space-y-2">
-                    {[65, 52, 47, 38].map((h, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className="font-mono text-[10px] text-fg-dim w-16">Week {i + 1}</span>
-                        <div className="flex-1 h-2 bg-surface-2 overflow-hidden rounded-sm">
-                          <div className="h-full bg-scalpel rounded-sm" style={{ width: `${h}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Bankroll (if set) */}
+              {bankroll && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                  <span className="data-label block">Bankroll</span>
+                  <p className="font-mono text-lg text-fg-bright">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                  <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider mt-1 inline-block">Edit</Link>
                 </div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="mb-1"><Lock size={24} className="text-fg-muted" /></div>
-                  <p className="text-fg-muted text-sm font-mono">Track your progress with Pro</p>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Streak warnings */}
-          {isPaid && streakCount > 0 && streakLastDate && (() => {
-            const daysSinceStreak = Math.floor((Date.now() - new Date(streakLastDate).getTime()) / 86400000);
-            const daysLeft = 21 - daysSinceStreak;
-            if (daysSinceStreak >= 14 && daysLeft > 0) {
-              return (
-                <div className="finding-card border-l-caution">
-                  <p className="text-caution text-sm font-mono">
-                    Your {streakCount}-report streak is at risk. Run an autopsy in the next {daysLeft} day{daysLeft !== 1 ? 's' : ''} to keep it alive.
-                    {newBetsSinceReport > 0 && ` You have ${newBetsSinceReport} new bets since your last check-in.`}
-                  </p>
-                  <Link href="/reports?run=true" className="text-sm text-scalpel hover:underline mt-1 inline-block font-mono">
-                    Run Autopsy →
-                  </Link>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
-          {/* Bankroll */}
-          {bankroll ? (
-            <div className="case-card p-5 flex items-center justify-between">
-              <div>
-                <span className="data-label block">Bankroll</span>
-                <p className="font-mono text-lg text-fg-bright">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
-              </div>
-              <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider">Edit in Settings</Link>
-            </div>
-          ) : (
-            <div className="finding-card border-l-caution p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-fg-bright text-sm font-medium flex items-center gap-1.5"><AlertTriangle size={16} className="text-caution" /> Your bankroll isn&apos;t set, and this affects your grade</p>
-                  <p className="text-fg-muted text-xs mt-1">
-                    Your bankroll is the total amount you&apos;ve set aside for betting across all sportsbooks.
-                    Without it, we have to guess, and that guess directly impacts your overall grade, bankroll health rating,
-                    and risk analysis. Even a rough estimate makes your report significantly more accurate.
-                  </p>
-                </div>
-                <Link href="/settings" className="btn-primary text-sm shrink-0 font-mono !px-4 !py-2">Set Bankroll</Link>
-              </div>
-            </div>
-          )}
-
-          {/* Milestones */}
-          {isPaid && snapshots.length > 0 && (
-            <div className="space-y-3">
-              <span className="case-header block">Milestones</span>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {milestones.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`case-card p-4 ${m.earned ? '' : 'opacity-40'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{m.icon}</span>
-                      <span className="font-medium text-sm text-fg-bright">{m.label}</span>
-                    </div>
-                    <p className="text-fg-muted text-xs">{m.criteria}</p>
-                    {m.earned && m.date && (
-                      <p className="font-mono text-xs text-fg-muted mt-1">{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Streak Counter */}
-          {isPaid && snapshots.length > 0 && (
-            <div className="case-card p-5 flex items-center gap-4">
-              {streakWeeks >= 3 ? <Flame size={24} className="text-orange-400" /> : <Calendar size={24} className="text-fg-muted" />}
-              <div>
-                {streakWeeks >= 2 ? (
-                  <p className="text-fg-bright font-medium font-mono">
-                    {streakWeeks} consecutive autopsy check-ins
-                  </p>
-                ) : daysSinceReport !== null && daysSinceReport > 12 ? (
-                  <p className="text-fg-bright">
-                    It&apos;s been {daysSinceReport} days since your last autopsy. Upload your recent bets and check in.
-                  </p>
-                ) : (
-                  <p className="text-fg-bright">
-                    {snapshots.length} autopsy report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly for the best insights.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Journal progress */}
-          {journalCount >= 10 && (
-            <div className="finding-card border-l-scalpel">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-fg-bright text-sm font-medium">{journalCount} journal entries logged</p>
-                  <p className="text-fg-muted text-xs font-mono mt-0.5">
+              {/* Journal progress */}
+              {journalCount >= 10 && (
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                  <p className="text-fg-bright text-sm font-medium mb-1">{journalCount} journal entries</p>
+                  <p className="text-fg-muted text-xs font-mono">
                     {journalCount >= 30
                       ? 'Correlation analysis available on your next autopsy'
-                      : `${30 - journalCount} more entries until correlation insights unlock`
+                      : `${30 - journalCount} more until correlation insights`
                     }
                   </p>
+                  <button onClick={() => setJournalOpen(true)} className="font-mono text-xs text-scalpel hover:underline mt-2 inline-block">Log entry →</button>
                 </div>
-                <button onClick={() => setJournalOpen(true)} className="font-mono text-xs text-scalpel hover:underline">Log entry →</button>
+              )}
+
+              {/* Free tier upgrade CTA */}
+              {!isPaid && (
+                <div className="bg-surface-1 border border-scalpel/20 rounded-xl p-4 space-y-2">
+                  <p className="text-fg-bright text-sm font-medium">Track your progress</p>
+                  <p className="text-fg-muted text-xs">
+                    Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks.
+                    Your first report was a snapshot. Your fifth is proof.
+                  </p>
+                  <Link href="/pricing" className="btn-primary inline-block text-xs font-mono !px-4 !py-2 mt-1">Start Tracking</Link>
+                </div>
+              )}
+
+              {/* Quick actions */}
+              <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                <span className="case-header block mb-3">Quick Actions</span>
+                <div className="space-y-1">
+                  <Link href="/upload" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors">
+                    <Upload size={16} /> Upload More Bets
+                  </Link>
+                  <Link href="/reports" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors">
+                    <FlaskConical size={16} /> Run New Autopsy
+                  </Link>
+                  <button onClick={() => setJournalOpen(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors w-full text-left">
+                    <PenLine size={16} /> Log Check-in {journalCount > 0 && <span className="text-scalpel text-xs ml-auto">({journalCount})</span>}
+                  </button>
+                </div>
               </div>
             </div>
-          )}
-
-          {/* Quick actions */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <Link href="/upload" className="case-card p-6 hover:border-border transition-colors group">
-              <div className="flex items-start gap-4">
-                <Upload size={24} className="text-fg-muted" />
-                <div>
-                  <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Upload More Bets</h3>
-                  <p className="text-fg-muted text-sm mt-1">Import your latest bet history via CSV.</p>
-                </div>
-              </div>
-            </Link>
-            <Link href="/reports" className="case-card p-6 hover:border-border transition-colors group">
-              <div className="flex items-start gap-4">
-                <FlaskConical size={24} className="text-fg-muted" />
-                <div>
-                  <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Run New Autopsy</h3>
-                  <p className="text-fg-muted text-sm mt-1">Full behavioral analysis.</p>
-                </div>
-              </div>
-            </Link>
-            <button onClick={() => setJournalOpen(true)} className="case-card p-6 hover:border-border transition-colors group text-left">
-              <div className="flex items-start gap-4">
-                <PenLine size={24} className="text-fg-muted" />
-                <div>
-                  <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">
-                    Log Check-in {journalCount > 0 && <span className="text-scalpel text-sm">({journalCount})</span>}
-                  </h3>
-                  <p className="text-fg-muted text-sm mt-1">Pre-bet mental state journal.</p>
-                </div>
-              </div>
-            </button>
           </div>
 
           <JournalEntryModal
@@ -598,20 +564,20 @@ export default function DashboardPage() {
   );
 }
 
-// ── Vital Cell ──
+// ── Stat Card (compact vitals) ──
 
-function VitalCell({ label, value, color }: { label: string; value: string; color?: string }) {
+function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="vitals-cell">
-      <span className="data-label block mb-1">{label}</span>
-      <p className={`font-mono text-xl font-bold tabular-nums ${color ?? 'text-fg-bright'}`}>{value}</p>
+    <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+      <p className="text-sm text-fg-muted mb-1">{label}</p>
+      <p className={`text-2xl font-bold font-mono tabular-nums tracking-tight ${color ?? 'text-fg-bright'}`}>{value}</p>
     </div>
   );
 }
 
-// ── Trend Cell ──
+// ── Trend Card (progress metrics) ──
 
-function TrendCell({
+function TrendCard({
   label, current, prev, unit, lowerIsBetter, isGrade, masked,
 }: {
   label: string;
@@ -648,8 +614,8 @@ function TrendCell({
   }
 
   return (
-    <div className="vitals-cell">
-      <span className="data-label block mb-1">{label}</span>
+    <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+      <p className="text-sm text-fg-muted mb-1">{label}</p>
       <p className="font-mono text-xl font-semibold text-fg-bright">{current}</p>
       {changeText && <p className={`font-mono text-xs mt-1 ${changeColor}`}>{changeText}</p>}
     </div>
