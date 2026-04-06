@@ -1,17 +1,23 @@
 <svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Square background matching site bg -->
   <rect width="640" height="640" fill="#0d1117"/>
-
-  <!-- Y-incision mark — centered, large, matching the app icon exactly -->
-  <!-- Arms spread wider, thicker strokes, big red dot -->
-  <g transform="translate(320, 320)">
-    <!-- Left arm -->
-    <path d="M-120,-140 Q-90,-60 0,0" stroke="#00C9A7" stroke-width="28" stroke-linecap="round" fill="none"/>
-    <!-- Right arm -->
-    <path d="M120,-140 Q90,-60 0,0" stroke="#00C9A7" stroke-width="28" stroke-linecap="round" fill="none"/>
-    <!-- Vertical stem -->
-    <line x1="0" y1="0" x2="0" y2="200" stroke="#00C9A7" stroke-width="28" stroke-linecap="round"/>
-    <!-- Red dot at junction -->
-    <circle cx="0" cy="0" r="26" fill="#E8453C"/>
+  <!--
+    Exact proportions from IncisionMark component (logo.tsx)
+    height=380, w=228, armEnd=95, sw=10, dotR=13, epR=6
+    padX=15, padY=15, cx=129, cy=110, viewW=258, viewH=410
+    Centered in 640x640: offset (191, 115)
+  -->
+  <g transform="translate(191, 115)">
+    <!-- Left arm: M padX,padY Q padX+w*0.15,padY+armEnd*0.5 cx,cy -->
+    <path d="M15,15 Q49.2,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <!-- Right arm: M viewW-padX,padY Q viewW-padX-w*0.15,padY+armEnd*0.5 cx,cy -->
+    <path d="M243,15 Q208.8,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <!-- Stem: cx,cy to cx,viewH-padY -->
+    <line x1="129" y1="110" x2="129" y2="395" stroke="#00C9A7" stroke-width="10" stroke-linecap="round"/>
+    <!-- Junction dot -->
+    <circle cx="129" cy="110" r="13" fill="#E8453C"/>
+    <!-- Endpoint dots -->
+    <circle cx="15" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="243" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="129" cy="395" r="6" fill="#00C9A7" opacity="0.45"/>
   </g>
 </svg>

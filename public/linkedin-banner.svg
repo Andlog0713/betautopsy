@@ -1,27 +1,30 @@
 <svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="1584" height="396" fill="#0d1117"/>
-
-  <!-- Horizontal logo lockup, centered -->
-  <g transform="translate(640, 198)">
-    <!-- Y-incision mark -->
-    <g transform="translate(0, 0)">
-      <!-- Left arm -->
-      <path d="M-28,-36 Q-20,-14 0,0" stroke="#00C9A7" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <!-- Right arm -->
-      <path d="M28,-36 Q20,-14 0,0" stroke="#00C9A7" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <!-- Vertical stem -->
-      <line x1="0" y1="0" x2="0" y2="46" stroke="#00C9A7" stroke-width="6" stroke-linecap="round"/>
-      <!-- Red dot -->
-      <circle cx="0" cy="0" r="6" fill="#E8453C"/>
-      <!-- Endpoint dots -->
-      <circle cx="-28" cy="-36" r="2.5" fill="#00C9A7" opacity="0.45"/>
-      <circle cx="28" cy="-36" r="2.5" fill="#00C9A7" opacity="0.45"/>
-      <circle cx="0" cy="46" r="2.5" fill="#00C9A7" opacity="0.45"/>
-    </g>
-
-    <!-- Wordmark: BET (black weight) AUTOPSY (light weight) -->
-    <text x="48" y="8" font-family="Inter, -apple-system, sans-serif" font-size="36" letter-spacing="3" fill="#F0F6FC">
-      <tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan>
-    </text>
+  <!--
+    Exact proportions from IncisionMark component (logo.tsx)
+    height=80, w=48, armEnd=20, sw=3, dotR=3.5, epR=1.5
+    padX=5.5, padY=5.5, cx=29.5, cy=25.5, viewW=59, viewH=91
+    Centered vertically in 396: offsetY=(396-91)/2=152.5
+    Mark positioned left of center, wordmark to the right
+  -->
+  <g transform="translate(660, 152.5)">
+    <!-- Left arm -->
+    <path d="M5.5,5.5 Q12.7,15.5 29.5,25.5" stroke="#00C9A7" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- Right arm -->
+    <path d="M53.5,5.5 Q46.3,15.5 29.5,25.5" stroke="#00C9A7" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- Stem -->
+    <line x1="29.5" y1="25.5" x2="29.5" y2="85.5" stroke="#00C9A7" stroke-width="3" stroke-linecap="round"/>
+    <!-- Junction dot -->
+    <circle cx="29.5" cy="25.5" r="3.5" fill="#E8453C"/>
+    <!-- Endpoint dots -->
+    <circle cx="5.5" cy="5.5" r="1.5" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="53.5" cy="5.5" r="1.5" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="29.5" cy="85.5" r="1.5" fill="#00C9A7" opacity="0.45"/>
   </g>
+
+  <!-- Wordmark: BET (black/900) AUTOPSY (light/300) -->
+  <!-- Vertically centered, positioned to the right of the mark -->
+  <text x="740" y="204" font-family="Inter, -apple-system, sans-serif" font-size="36" letter-spacing="2.5" fill="#F0F6FC">
+    <tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan>
+  </text>
 </svg>
