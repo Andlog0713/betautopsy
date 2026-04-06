@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import {
@@ -31,6 +32,7 @@ export default function ShareModal({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
   const [activeSlide, setActiveSlide] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
   const insight = useMemo(() => deriveBehavioralInsight(data.bets, data.emotion_score), [data.bets, data.emotion_score]);
@@ -38,53 +40,49 @@ export default function ShareModal({
   const roastLine = useMemo(() => getArchetypeRoast(data.archetype?.name ?? 'The Grinder'), [data.archetype]);
 
   const slideProps: StorySlideProps = { data, insight, comparison, roastLine };
+  const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA];
 
-  // Prevent background scroll while keeping modal scrollable
-  useEffect(() => {
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      window.scrollTo(0, scrollY);
-    };
-  }, []);
+  // Portal mount
+  useEffect(() => { setMounted(true); }, []);
 
+  // ESC to close
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
   }, [onClose]);
 
-  async function handleDownload() {
+  // Prevent body scroll — simple overflow hidden approach
+  useEffect(() => {
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = orig; };
+  }, []);
+
+  const handleDownload = useCallback(async () => {
     setDownloading(true);
     try {
       if (format === 'card') {
         if (!cardRef.current) return;
-        const dataUrl = await toPng(cardRef.current, { pixelRatio: 1 });
-        downloadFile(dataUrl, `betautopsy-card-${Date.now()}.png`);
+        const url = await toPng(cardRef.current, { pixelRatio: 1 });
+        dl(url, `betautopsy-card-${Date.now()}.png`);
       } else {
         const ref = slideRefs[activeSlide];
         if (!ref.current) return;
-        const dataUrl = await toPng(ref.current, { pixelRatio: 1 });
-        downloadFile(dataUrl, `betautopsy-${SLIDE_LABELS[activeSlide].toLowerCase()}-${Date.now()}.png`);
+        const url = await toPng(ref.current, { pixelRatio: 1 });
+        dl(url, `betautopsy-${SLIDE_LABELS[activeSlide].toLowerCase()}-${Date.now()}.png`);
       }
     } catch (err) {
       console.error('Download failed:', err);
     }
     setDownloading(false);
-  }
+  }, [format, activeSlide]);
 
-  function downloadFile(dataUrl: string, filename: string) {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = dataUrl;
-    link.click();
+  function dl(dataUrl: string, filename: string) {
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = dataUrl;
+    a.click();
   }
 
   async function getShareUrl(): Promise<string | null> {
@@ -102,9 +100,7 @@ export default function ShareModal({
         setShareUrl(url);
         return url;
       }
-    } catch {
-      console.error('Share link failed');
-    }
+    } catch { /* silent */ }
     return null;
   }
 
@@ -123,45 +119,35 @@ export default function ShareModal({
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   }
 
-  const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA];
+  if (!mounted) return null;
 
-  return (
+  const modal = (
     <>
-      {/* Full-screen backdrop — clicking anywhere closes */}
-      <div
-        className="fixed inset-0 z-50 bg-black/85"
-        onClick={onClose}
-        role="presentation"
-      />
-
-      {/* Modal content — scrollable, on top of backdrop */}
+      {/* Single overlay — handles backdrop click, scrolls internally */}
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Share report"
-        className="fixed inset-0 z-50 overflow-y-auto pointer-events-none"
+        className="fixed inset-0 z-[100] bg-black/85 overflow-y-auto"
+        onClick={onClose}
       >
-        <div className="min-h-full flex items-start justify-center py-8 px-4">
-          <div
-            className="w-full max-w-lg pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <div className="flex justify-end mb-3">
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="text-fg-muted hover:text-fg transition-colors p-1"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <div
+          className="min-h-full flex items-start justify-center p-4 sm:p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="w-full max-w-md bg-base border border-white/[0.06] rounded-sm p-5 my-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Share Report</span>
+              <button onClick={onClose} className="text-fg-muted hover:text-fg p-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
             {/* Format toggle */}
-            <div className="flex gap-1 bg-surface p-1 rounded-sm mb-4 w-fit mx-auto">
+            <div className="flex gap-1 bg-surface p-1 rounded-sm mb-4">
               <button
                 onClick={() => setFormat('stories')}
-                className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
                   format === 'stories' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
                 }`}
               >
@@ -169,7 +155,7 @@ export default function ShareModal({
               </button>
               <button
                 onClick={() => setFormat('card')}
-                className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
                   format === 'card' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
                 }`}
               >
@@ -179,15 +165,15 @@ export default function ShareModal({
 
             {/* Slide picker (stories only) */}
             {format === 'stories' && (
-              <div className="flex gap-2 justify-center mb-4">
+              <div className="grid grid-cols-4 gap-1 mb-4">
                 {SLIDE_LABELS.map((label, i) => (
                   <button
                     key={label}
                     onClick={() => setActiveSlide(i)}
-                    className={`px-3 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                    className={`py-1.5 rounded-sm text-[10px] font-mono text-center transition-colors ${
                       activeSlide === i
                         ? 'bg-scalpel text-base'
-                        : 'bg-surface border border-white/[0.06] text-fg-muted hover:text-fg'
+                        : 'bg-surface text-fg-muted hover:text-fg'
                     }`}
                   >
                     {label}
@@ -197,58 +183,54 @@ export default function ShareModal({
             )}
 
             {/* Preview */}
-            <div className="flex justify-center mb-5 overflow-hidden rounded-sm">
+            <div className="bg-surface rounded-sm overflow-hidden mb-4">
               {format === 'stories' ? (
-                <div style={{ width: 270, height: 480, overflow: 'hidden' }}>
-                  <div style={{ width: 1080, height: 1920, transform: 'scale(0.25)', transformOrigin: 'top left' }}>
-                    {(() => {
-                      const Comp = SlideComponents[activeSlide];
-                      return <Comp {...slideProps} ref={null} />;
-                    })()}
+                <div style={{ aspectRatio: '9/16', overflow: 'hidden' }}>
+                  <div style={{ width: 1080, height: 1920, transform: 'scale(var(--preview-scale))', transformOrigin: 'top left' }}>
+                    <style>{`:root { --preview-scale: 0.25; } @media (min-width: 448px) { :root { --preview-scale: 0.3; } }`}</style>
+                    {(() => { const C = SlideComponents[activeSlide]; return <C {...slideProps} ref={null} />; })()}
                   </div>
                 </div>
               ) : (
-                <div style={{ width: 400, height: 400, overflow: 'hidden' }}>
-                  <div style={{ width: 1080, height: 1080, transform: 'scale(0.37)', transformOrigin: 'top left' }}>
+                <div style={{ aspectRatio: '1/1', overflow: 'hidden' }}>
+                  <div style={{ width: 1080, height: 1080, transform: 'scale(var(--card-preview-scale))', transformOrigin: 'top left' }}>
+                    <style>{`:root { --card-preview-scale: 0.33; } @media (min-width: 448px) { :root { --card-preview-scale: 0.38; } }`}</style>
                     <ShareCard ref={null} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Action buttons */}
-            <div className="space-y-2 pb-4">
-              <button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="btn-primary w-full text-sm"
-              >
-                {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]} Slide` : 'Download Card Image'}
+            {/* Actions */}
+            <div className="space-y-2">
+              <button onClick={handleDownload} disabled={downloading} className="btn-primary w-full">
+                {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]}` : 'Download Card'}
               </button>
               <div className="flex gap-2">
-                <button onClick={handleCopyLink} className="btn-secondary flex-1 text-sm">
-                  {linkCopied ? 'Copied' : 'Copy Report Link'}
+                <button onClick={handleCopyLink} className="btn-secondary flex-1 text-xs">
+                  {linkCopied ? 'Copied' : 'Copy Link'}
                 </button>
-                <button onClick={handleShareTwitter} className="btn-secondary flex-1 text-sm flex items-center justify-center gap-1.5">
-                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                <button onClick={handleShareTwitter} className="btn-secondary flex-1 text-xs flex items-center justify-center gap-1.5">
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                   Share on X
                 </button>
               </div>
-              <p className="text-fg-dim text-[10px] font-mono text-center mt-1">
-                Report link and X share link to your full interactive report
-              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Off-screen renders for toPng capture */}
-      <div style={{ position: 'fixed', left: -9999, top: 0, pointerEvents: 'none' }} aria-hidden="true">
-        {SlideComponents.map((Comp, i) => (
-          <Comp key={i} ref={slideRefs[i]} {...slideProps} />
-        ))}
-        <ShareCard ref={cardRef} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+      {/* Off-screen renders for toPng — must be in DOM but invisible */}
+      <div aria-hidden="true" style={{ position: 'fixed', top: 0, left: 0, width: 0, height: 0, overflow: 'hidden', zIndex: -1 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0 }}>
+          {SlideComponents.map((Comp, i) => (
+            <Comp key={i} ref={slideRefs[i]} {...slideProps} />
+          ))}
+          <ShareCard ref={cardRef} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+        </div>
       </div>
     </>
   );
+
+  return createPortal(modal, document.body);
 }
