@@ -237,7 +237,7 @@ export default function LandingPage() {
               </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
-                <p className="text-fg-muted text-xs mt-1">Pay once. No subscription.</p>
+                <p className="text-scalpel text-xs font-medium mt-1">Pay once. No subscription.</p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {[

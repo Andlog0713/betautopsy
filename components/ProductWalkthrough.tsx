@@ -7,28 +7,28 @@ const STEPS = [
     num: '01',
     title: 'Upload',
     headline: 'Export from any sportsbook or tracking app',
-    description: 'FanDuel, DraftKings, BetMGM, Caesars, bet365, PrizePicks — or any CSV. Pikkit users can export directly. Takes 30 seconds.',
+    description: 'FanDuel, DraftKings, BetMGM, Caesars, bet365, PrizePicks, or any CSV. Pikkit users can export directly. Takes 30 seconds.',
     visual: 'csv',
   },
   {
     num: '02',
     title: 'Analyze',
     headline: '47 behavioral metrics in 60 seconds',
-    description: 'We scan every bet for emotional patterns, tilt sequences, stake escalation, and hidden edges. No judgment — just the data.',
+    description: 'We scan every bet for emotional patterns, loss-chasing sequences, stake escalation, and hidden edges. No judgment, just the data.',
     visual: 'scan',
   },
   {
     num: '03',
     title: 'Report',
     headline: 'A forensic breakdown with dollar amounts',
-    description: 'Five chapters: BetIQ Score, tilt patterns, discipline grade, profitable edges, and a concrete recovery plan.',
+    description: 'Five chapters: BetIQ Score, emotion patterns, discipline grade, profitable edges, and a concrete recovery plan.',
     visual: 'report',
   },
 ] as const;
 
 const SCAN_BARS = [
   { label: 'EMOTION PATTERNS', width: 85 },
-  { label: 'TILT SEQUENCES', width: 60 },
+  { label: 'LOSS-CHASING', width: 60 },
   { label: 'BANKROLL DISCIPLINE', width: 75 },
   { label: 'HIDDEN EDGES', width: 45 },
 ];
@@ -117,8 +117,8 @@ function ReportVisual() {
         </div>
       </div>
       <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10px] text-fg-dim tracking-wider">TILT INDEX</span>
-        <span className="font-mono text-base font-bold" style={{ color: '#D29922' }}>High</span>
+        <span className="font-mono text-[10px] text-fg-dim tracking-wider">EMOTION SCORE</span>
+        <span className="font-mono text-base font-bold" style={{ color: '#D29922' }}>78 / 100</span>
       </div>
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-fg-dim tracking-wider">TOTAL RECOVERABLE</span>
