@@ -39,6 +39,15 @@ function gradeImproved(from: string, to: string): boolean {
   return GRADE_ORDER.indexOf(to) > GRADE_ORDER.indexOf(from);
 }
 
+function gradeColor(grade: string): string {
+  const g = grade.toUpperCase();
+  if (g.startsWith('A')) return 'text-win';
+  if (g.startsWith('B')) return 'text-win/70';
+  if (g.startsWith('C')) return 'text-caution';
+  if (g.startsWith('D')) return 'text-orange-400';
+  return 'text-loss';
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -263,7 +272,7 @@ export default function DashboardPage() {
   return (
     <div className="animate-fade-in">
       {/* ── Page header ── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Dashboard</h1>
         <p className="text-sm text-fg-muted mt-1">Overview of your betting behavior</p>
       </div>
@@ -293,40 +302,64 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── Vitals stat strip ── */}
-          <div className="relative mb-8">
+          {/* ── Hero metric: Net P&L ── */}
+          <div className="mb-10 relative">
             <div className="absolute -top-8 right-0"><EyeToggle /></div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <StatCard label="Total Bets" value={mask(stats.totalBets.toLocaleString())} />
-              <StatCard label="Total Wagered" value={mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} />
-              <StatCard label="Net P&L" value={mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(stats.netPnL).toLocaleString()}`)} color={stats.netPnL >= 0 ? 'text-win' : 'text-loss'} />
-              <StatCard label="Win Rate" value={mask(`${stats.winRate.toFixed(1)}%`)} color={stats.winRate >= 50 ? 'text-win' : 'text-loss'} />
-              <StatCard label="Avg Stake" value={mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} />
-            </div>
+            <p className="text-sm text-fg-muted mb-1">Net P&L</p>
+            <p className={`text-5xl font-bold tracking-tight font-mono tabular-nums ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
+              {mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)}
+            </p>
+            <p className="text-sm text-fg-muted mt-2">
+              across {mask(stats.totalBets.toLocaleString())} bets · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} wagered · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} avg stake
+            </p>
           </div>
 
-          {/* ── Progress trend strip (paid) ── */}
-          {latest && isPaid && (
-            <div className="mb-8">
-              <span className="case-header block mb-3">Your Progress</span>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                <TrendCard label="Emotion Score" current={mask(latest.tilt_score.toString())} prev={prev?.tilt_score} unit="" lowerIsBetter masked={mask('x') !== 'x'} />
-                <TrendCard label="Grade" current={mask(latest.overall_grade)} prev={prev?.overall_grade} isGrade masked={mask('x') !== 'x'} />
-                <TrendCard label="Win Rate" current={mask(`${latest.win_rate.toFixed(1)}%`)} prev={prev?.win_rate} unit="%" masked={mask('x') !== 'x'} />
-                <TrendCard label="ROI" current={mask(`${latest.roi_percent.toFixed(1)}%`)} prev={prev?.roi_percent} unit="%" masked={mask('x') !== 'x'} />
-                <TrendCard label="Parlay %" current={mask(`${latest.parlay_percent.toFixed(0)}%`)} prev={prev?.parlay_percent} unit="%" lowerIsBetter masked={mask('x') !== 'x'} />
+          {/* ── Key metrics strip (borderless dividers + cards mix) ── */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-6 mb-10">
+            {/* Borderless stats with dividers */}
+            <div className="flex items-center divide-x divide-border-subtle">
+              <div className="pr-6">
+                <p className="text-sm text-fg-muted mb-0.5">Win Rate</p>
+                <p className={`text-xl font-semibold font-mono tabular-nums ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
+                  {mask(`${stats.winRate.toFixed(1)}%`)}
+                </p>
               </div>
-              {!prev && (
-                <p className="font-mono text-xs text-fg-muted tracking-wider mt-3">Run another autopsy next week to start tracking progress.</p>
+              <div className="px-6">
+                <p className="text-sm text-fg-muted mb-0.5">ROI</p>
+                <p className={`text-xl font-semibold font-mono tabular-nums ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
+                  {latest ? mask(`${latest.roi_percent.toFixed(1)}%`) : mask(`${(stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1)}%`)}
+                </p>
+              </div>
+              {latest && (
+                <div className="pl-6">
+                  <p className="text-sm text-fg-muted mb-0.5">Emotion</p>
+                  <p className="text-xl font-semibold font-mono tabular-nums text-fg-bright">{mask(latest.tilt_score.toString())}</p>
+                </div>
               )}
             </div>
-          )}
+
+            {/* Bordered card stats */}
+            {latest && (
+              <div className="flex gap-3">
+                <div className="bg-surface-1 border border-border-subtle rounded-xl px-5 py-3">
+                  <p className="text-sm text-fg-muted mb-0.5">Grade</p>
+                  <p className={`text-xl font-bold font-mono ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
+                </div>
+                {latest.discipline_score !== null && (
+                  <div className="bg-surface-1 border border-border-subtle rounded-xl px-5 py-3">
+                    <p className="text-sm text-fg-muted mb-0.5">Discipline</p>
+                    <p className="text-xl font-bold font-mono text-fg-bright">{mask((latest.discipline_score ?? 0).toString())}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* ── Two-column bento grid ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* ── Left column: primary content ── */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Discipline Score + Streak (paid) */}
+              {/* Discipline Score ring (paid) */}
               {latest && isPaid && (
                 <div className="bg-surface-1 border border-border-subtle rounded-xl p-6">
                   <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
@@ -390,7 +423,9 @@ export default function DashboardPage() {
 
               {/* Progress Chart (paid, 2+ snapshots) */}
               {snapshots.length >= 2 && isPaid && (
-                <ProgressChart snapshots={snapshots} />
+                <div className="min-h-[320px]">
+                  <ProgressChart snapshots={snapshots} />
+                </div>
               )}
 
               {/* First Autopsy CTA */}
@@ -417,7 +452,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Free tier: blurred progress preview + upgrade */}
+              {/* Free tier: blurred progress preview */}
               {!isPaid && stats.reportCount > 0 && (
                 <div className="relative">
                   <div className="blur-sm pointer-events-none opacity-40">
@@ -471,31 +506,28 @@ export default function DashboardPage() {
 
             {/* ── Right column: secondary content ── */}
             <div className="space-y-4">
-              {/* Streak counter (paid) */}
+              {/* Streak counter (paid) — compact */}
               {isPaid && snapshots.length > 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-3">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className={streakCount >= 10 ? 'animate-pulse' : ''}>
-                      {streakCount >= 10 ? <><Flame size={18} className="text-orange-400" /><Flame size={18} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={18} className="text-orange-400" /> : <Calendar size={18} className="text-fg-muted" />}
+                      {streakCount >= 10 ? <><Flame size={16} className="text-orange-400" /><Flame size={16} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={16} className="text-orange-400" /> : <Calendar size={16} className="text-fg-muted" />}
                     </span>
                     <span className="text-sm text-fg-bright font-medium font-mono">
-                      {streakCount > 0 ? `${streakCount}-week streak` : 'No active streak'}
+                      {streakCount > 0 ? `${streakCount}-week streak` : 'No streak'}
                     </span>
-                  </div>
-                  {streakBest > 1 && (
-                    <p className="font-mono text-xs text-fg-muted mb-2">Personal best: {streakBest}</p>
-                  )}
-                  <div className="flex items-center gap-1 text-xs text-fg-muted font-mono" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
-                    <Snowflake size={12} className="text-cyan-400" /> {streakFreezes} freeze{streakFreezes !== 1 ? 's' : ''} available
-                  </div>
-                  <div className="text-fg-muted text-xs mt-3">
-                    {streakWeeks >= 2 ? (
-                      <p className="font-mono">{streakWeeks} consecutive check-ins</p>
-                    ) : daysSinceReport !== null && daysSinceReport > 12 ? (
-                      <p>It&apos;s been {daysSinceReport} days since your last autopsy.</p>
-                    ) : (
-                      <p>{snapshots.length} report{snapshots.length !== 1 ? 's' : ''} so far. Keep checking in weekly.</p>
+                    {streakBest > 1 && (
+                      <span className="font-mono text-[10px] text-fg-dim ml-auto">best: {streakBest}</span>
                     )}
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-fg-dim font-mono">
+                    <span className="flex items-center gap-1"><Snowflake size={10} className="text-cyan-400" /> {streakFreezes} freeze{streakFreezes !== 1 ? 's' : ''}</span>
+                    <span>·</span>
+                    <span>
+                      {streakWeeks >= 2
+                        ? `${streakWeeks} consecutive`
+                        : `${snapshots.length} report${snapshots.length !== 1 ? 's' : ''} total`}
+                    </span>
                   </div>
                 </div>
               )}
@@ -535,18 +567,18 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Quick actions */}
-              <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
-                <span className="case-header block mb-3">Quick Actions</span>
-                <div className="space-y-1">
-                  <Link href="/upload" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors">
-                    <Upload size={16} /> Upload More Bets
+              {/* Quick actions — plain text links, no card wrapper */}
+              <div className="pt-2">
+                <p className="text-xs text-fg-dim uppercase tracking-widest mb-3">Quick Actions</p>
+                <div className="space-y-2">
+                  <Link href="/upload" className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors">
+                    <Upload size={14} /> Upload new bets
                   </Link>
-                  <Link href="/reports" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors">
-                    <FlaskConical size={16} /> Run New Autopsy
+                  <Link href="/reports" className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors">
+                    <FlaskConical size={14} /> Run new autopsy
                   </Link>
-                  <button onClick={() => setJournalOpen(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:text-fg-bright hover:bg-white/[0.03] transition-colors w-full text-left">
-                    <PenLine size={16} /> Log Check-in {journalCount > 0 && <span className="text-scalpel text-xs ml-auto">({journalCount})</span>}
+                  <button onClick={() => setJournalOpen(true)} className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors text-left">
+                    <PenLine size={14} /> Log check-in {journalCount > 0 && <span className="text-scalpel text-xs">({journalCount})</span>}
                   </button>
                 </div>
               </div>
@@ -564,60 +596,3 @@ export default function DashboardPage() {
   );
 }
 
-// ── Stat Card (compact vitals) ──
-
-function StatCard({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
-      <p className="text-sm text-fg-muted mb-1">{label}</p>
-      <p className={`text-2xl font-bold font-mono tabular-nums tracking-tight ${color ?? 'text-fg-bright'}`}>{value}</p>
-    </div>
-  );
-}
-
-// ── Trend Card (progress metrics) ──
-
-function TrendCard({
-  label, current, prev, unit, lowerIsBetter, isGrade, masked,
-}: {
-  label: string;
-  current: string;
-  prev?: number | string | null;
-  unit?: string;
-  lowerIsBetter?: boolean;
-  isGrade?: boolean;
-  masked?: boolean;
-}) {
-  let changeText = '';
-  let changeColor = 'text-fg-muted';
-
-  if (!masked && prev !== undefined && prev !== null) {
-    if (isGrade && typeof prev === 'string') {
-      const improved = gradeImproved(prev, current);
-      const same = prev === current;
-      if (!same) {
-        changeText = `${improved ? '↑' : '↓'} from ${prev}`;
-        changeColor = improved ? 'text-win' : 'text-loss';
-      }
-    } else if (typeof prev === 'number') {
-      const currentNum = parseFloat(current);
-      if (!isNaN(currentNum)) {
-        const diff = currentNum - prev;
-        if (Math.abs(diff) >= 0.1) {
-          const positive = lowerIsBetter ? diff < 0 : diff > 0;
-          changeText = `${positive ? '↓' : '↑'}${Math.abs(diff).toFixed(1)}${unit ?? ''} from last`;
-          if (lowerIsBetter) changeText = `${diff < 0 ? '↓' : '↑'}${Math.abs(diff).toFixed(1)}${unit ?? ''} from last`;
-          changeColor = positive ? 'text-win' : 'text-loss';
-        }
-      }
-    }
-  }
-
-  return (
-    <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
-      <p className="text-sm text-fg-muted mb-1">{label}</p>
-      <p className="font-mono text-xl font-semibold text-fg-bright">{current}</p>
-      {changeText && <p className={`font-mono text-xs mt-1 ${changeColor}`}>{changeText}</p>}
-    </div>
-  );
-}
