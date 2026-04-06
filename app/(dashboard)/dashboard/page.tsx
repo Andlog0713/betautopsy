@@ -110,8 +110,7 @@ export default function DashboardPage() {
         setDaysSinceLastBet(Math.floor((Date.now() - mostRecentUpload) / 86400000));
       }
 
-      const skipped = typeof window !== 'undefined' && localStorage.getItem('onboarding_skip');
-      if (totalBets === 0 && !skipped) { router.push('/upload'); return; }
+      // No longer redirect to /upload — dashboard shows empty state instead
 
       setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });
 
