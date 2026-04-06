@@ -50,7 +50,7 @@ export default function DemoReportWrapper() {
         />
 
         {/* The actual report */}
-        <div className="relative z-0">
+        <div className="relative z-0 px-4 md:px-6">
           <AutopsyReport
             analysis={DEMO_ANALYSIS}
             bets={DEMO_BETS}
