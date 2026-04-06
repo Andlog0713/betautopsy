@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import { Camera, Search, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface ParsedBet {
   placed_at: string;
@@ -130,7 +131,7 @@ export default function ScreenshotParser() {
             onChange={(e) => handleFiles(e.target.files)}
             className="hidden"
           />
-          <div className="text-4xl mb-2">📸</div>
+          <div className="mb-2"><Camera size={32} className="text-fg-muted" /></div>
           <p className="text-fg-bright font-medium">Drop screenshots here or click to browse</p>
           <p className="text-fg-muted text-xs mt-1">PNG, JPG, or WEBP, up to 10 at once</p>
         </div>
@@ -178,7 +179,7 @@ export default function ScreenshotParser() {
   if (phase === 'parsing') {
     return (
       <div className="text-center py-12 space-y-4">
-        <div className="text-4xl animate-pulse">🔍</div>
+        <div className="animate-pulse"><Search size={32} className="text-fg-muted" /></div>
         <p className="text-fg-bright font-medium">Reading {files.length} screenshot{files.length !== 1 ? 's' : ''}...</p>
         <p className="text-fg-muted text-sm">Extracting bet data with AI. This takes a few seconds.</p>
       </div>
@@ -193,7 +194,7 @@ export default function ScreenshotParser() {
         {parseNotes.length > 0 && (
           <div className="space-y-1.5">
             {parseNotes.map((note, i) => (
-              <div key={i} className="bg-scalpel-muted text-scalpel p-3 rounded-sm text-sm">ℹ️ {note}</div>
+              <div key={i} className="bg-scalpel-muted text-scalpel p-3 rounded-sm text-sm">{note}</div>
             ))}
           </div>
         )}
@@ -264,7 +265,7 @@ export default function ScreenshotParser() {
   if (phase === 'importing') {
     return (
       <div className="text-center py-12 space-y-4">
-        <div className="text-4xl animate-pulse">⏳</div>
+        <div className="animate-pulse"><Loader2 size={32} className="text-fg-muted animate-spin" /></div>
         <p className="text-fg-bright font-medium">Importing bets...</p>
       </div>
     );
@@ -274,7 +275,7 @@ export default function ScreenshotParser() {
   if (phase === 'success' && importResult) {
     return (
       <div className="text-center py-8 space-y-4">
-        <div className="text-4xl">✅</div>
+        <div><CheckCircle2 size={32} className="text-win" /></div>
         <p className="text-fg-bright font-medium text-lg">
           {importResult.imported} bet{importResult.imported !== 1 ? 's' : ''} imported
           {importResult.skipped > 0 && (

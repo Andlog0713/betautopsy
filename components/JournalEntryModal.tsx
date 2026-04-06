@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Zap, Flame, Snowflake, Dumbbell, Meh, ShieldAlert, Angry, Beer, Clock, TrendingDown } from 'lucide-react';
 import type { JournalEntryInput } from '@/types';
 
 interface Props {
@@ -9,14 +10,14 @@ interface Props {
   onSaved?: () => void;
 }
 
-const EMOTIONAL_STATES = [
-  { value: 'calm', label: 'Calm', icon: '🧊' },
-  { value: 'confident', label: 'Confident', icon: '💪' },
-  { value: 'excited', label: 'Excited', icon: '⚡' },
-  { value: 'bored', label: 'Bored', icon: '😐' },
-  { value: 'anxious', label: 'Anxious', icon: '😰' },
-  { value: 'frustrated', label: 'Frustrated', icon: '😤' },
-] as const;
+const EMOTIONAL_STATES: { value: string; label: string; icon: ReactNode }[] = [
+  { value: 'calm', label: 'Calm', icon: <Snowflake size={16} className="text-scalpel" /> },
+  { value: 'confident', label: 'Confident', icon: <Dumbbell size={16} className="text-win" /> },
+  { value: 'excited', label: 'Excited', icon: <Zap size={16} className="text-caution" /> },
+  { value: 'bored', label: 'Bored', icon: <Meh size={16} className="text-fg-dim" /> },
+  { value: 'anxious', label: 'Anxious', icon: <ShieldAlert size={16} className="text-caution" /> },
+  { value: 'frustrated', label: 'Frustrated', icon: <Angry size={16} className="text-loss" /> },
+];
 
 const RESEARCH_TIMES = [
   { value: 'none', label: 'None' },
@@ -164,9 +165,9 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
             <label className="label">Context flags</label>
             <div className="space-y-2">
               {[
-                { value: hadAlcohol, setter: setHadAlcohol, label: 'Had alcohol', icon: '🍺' },
-                { value: timePressure, setter: setTimePressure, label: 'Feeling time pressure', icon: '⏰' },
-                { value: chasingLosses, setter: setChasingLosses, label: 'Chasing a loss', icon: '🔥' },
+                { value: hadAlcohol, setter: setHadAlcohol, label: 'Had alcohol', icon: <Beer size={16} /> },
+                { value: timePressure, setter: setTimePressure, label: 'Feeling time pressure', icon: <Clock size={16} /> },
+                { value: chasingLosses, setter: setChasingLosses, label: 'Chasing a loss', icon: <Flame size={16} className="text-orange-400" /> },
               ].map(toggle => (
                 <button
                   key={toggle.label}

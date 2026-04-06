@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { Check, Snowflake } from 'lucide-react';
 import type { Profile } from '@/types';
 
 export default function SettingsPage() {
@@ -181,7 +182,7 @@ export default function SettingsPage() {
             disabled={profileSaving}
             className="btn-primary text-sm"
           >
-            {profileSaved ? '✓ Saved' : profileSaving ? 'Saving...' : 'Save Profile'}
+            {profileSaved ? <><Check size={14} className="inline" /> Saved</> : profileSaving ? 'Saving...' : 'Save Profile'}
           </button>
 
           {/* Streak info */}
@@ -198,7 +199,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <span className="text-fg-muted">Freezes: </span>
-                <span className="text-fg-bright font-mono">❄️ {profile?.streak_freezes ?? 1}</span>
+                <span className="text-fg-bright font-mono flex items-center gap-1"><Snowflake size={14} className="text-cyan-400" /> {profile?.streak_freezes ?? 1}</span>
               </div>
             </div>
           </div>
@@ -229,7 +230,7 @@ export default function SettingsPage() {
             disabled={bankrollSaving}
             className="btn-primary text-sm"
           >
-            {bankrollSaved ? '✓ Saved' : bankrollSaving ? '...' : 'Save'}
+            {bankrollSaved ? <><Check size={14} className="inline" /> Saved</> : bankrollSaving ? '...' : 'Save'}
           </button>
         </div>
         <p className="text-fg-muted text-xs">
@@ -401,7 +402,7 @@ export default function SettingsPage() {
         <h2 className="font-semibold text-xl">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
-            {passwordResetSent ? '✓ Reset email sent' : 'Change Password'}
+            {passwordResetSent ? <><Check size={14} className="inline" /> Reset email sent</> : 'Change Password'}
           </button>
           <button onClick={handleSignOut} className="btn-secondary text-sm">
             Sign Out

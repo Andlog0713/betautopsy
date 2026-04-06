@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { Lock, Target } from 'lucide-react';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
 import type { Bet, Profile } from '@/types';
@@ -258,7 +259,7 @@ export default function BetsPage() {
       {tier === 'free' && bets.length > 0 && (
         <div className="card p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔒</span>
+            <Lock size={18} className="text-fg-muted" />
             <div>
               <p className="text-sm text-fg-bright">Want to analyze just your wins? Or filter by sport?</p>
               <p className="text-xs text-fg-muted">Pro users get unlimited filtered reports.</p>
@@ -319,7 +320,7 @@ export default function BetsPage() {
         </div>
       ) : bets.length === 0 ? (
         <div className="card p-12 text-center space-y-4">
-          <div className="text-4xl mb-1">🎯</div>
+          <div className="mb-1"><Target size={32} className="text-fg-muted" /></div>
           <p className="text-fg-muted">No bets yet. Upload a CSV or add bets manually above.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/upload" className="btn-primary text-sm">Upload CSV</Link>

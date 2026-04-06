@@ -12,6 +12,7 @@ import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
+import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, Check } from 'lucide-react';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
@@ -626,7 +627,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-xl mb-1">🔒</p>
+              <div className="mb-1"><Lock size={20} className="text-fg-muted" /></div>
               <p className="text-fg-muted text-sm font-mono">Upgrade to Pro to unlock BetIQ</p>
             </div>
           </div>
@@ -686,7 +687,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           }`}
         >
           <div className="flex items-start gap-3">
-            <span className="text-2xl">{analysis.bankroll_health === 'danger' ? '🚨' : '⚠️'}</span>
+            <AlertTriangle size={20} className={analysis.bankroll_health === 'danger' ? 'text-loss' : 'text-caution'} />
             <div>
               <h3 className={`font-medium ${
                 analysis.bankroll_health === 'danger' ? 'text-loss' : 'text-caution'
@@ -986,8 +987,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
               <div key={i} className="card p-5 flex gap-4">
-                <span className="text-2xl mt-0.5 shrink-0">
-                  {pat.impact === 'positive' ? '✅' : pat.impact === 'negative' ? '❌' : '➖'}
+                <span className="mt-0.5 shrink-0">
+                  {pat.impact === 'positive' ? <CheckCircle2 size={16} className="text-win" /> : pat.impact === 'negative' ? <XCircle size={16} className="text-loss" /> : <Minus size={16} className="text-fg-dim" />}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -1808,7 +1809,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   .join('\n\n');
                 navigator.clipboard.writeText(text);
                 const btn = document.getElementById('copy-rules-btn');
-                if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = 'Copy Rules'; }, 2000); }
+                if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy Rules'; }, 2000); }
               }}
               id="copy-rules-btn"
               className="text-xs text-fg-muted hover:text-scalpel transition-colors"
@@ -2194,7 +2195,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
             </div>
             <p className="text-fg-muted text-sm mb-1">{data.worstAnnotatedBet.primaryReason}</p>
             {data.worstAnnotatedBet.sessionId && (
-              <p className="font-mono text-[10px] text-fg-dim">Part of {data.worstAnnotatedBet.sessionId} (Grade {data.worstAnnotatedBet.sessionGrade}{data.worstAnnotatedBet.isInHeatedSession ? ', heated 🔥' : ''})</p>
+              <p className="font-mono text-[10px] text-fg-dim">Part of {data.worstAnnotatedBet.sessionId} (Grade {data.worstAnnotatedBet.sessionGrade}{data.worstAnnotatedBet.isInHeatedSession ? ', heated' : ''})</p>
             )}
           </div>
         )}
@@ -2230,7 +2231,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${CLASSIFICATION_COLORS[ann.classification]}`}>{ann.classification.slice(0, 4)}</span>
                     <span className="font-mono text-fg-dim w-8 shrink-0">{ann.confidence}%</span>
                     <span className="text-fg-muted truncate flex-1">{ann.primaryReason}</span>
-                    {ann.isInHeatedSession && <span title="Heated session">🔥</span>}
+                    {ann.isInHeatedSession && <span title="Heated session"><Flame size={14} className="text-orange-400" /></span>}
                     <span className="text-fg-dim">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
@@ -2376,7 +2377,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
       {heatedSessions.length > 0 && (
         <div>
           <button onClick={() => setShowHeated(!showHeated)} className="flex items-center gap-2 text-sm text-loss hover:text-loss/80 transition-colors font-mono">
-            🔥 {heatedSessions.length} Heated Session{heatedSessions.length !== 1 ? 's' : ''} <span className="text-fg-dim text-xs">{showHeated ? '▴' : '▾'}</span>
+            <span className="flex items-center gap-1"><Flame size={16} className="text-orange-400" /> {heatedSessions.length} Heated Session{heatedSessions.length !== 1 ? 's' : ''}</span> <span className="text-fg-dim text-xs">{showHeated ? '▴' : '▾'}</span>
           </button>
           {showHeated && (
             <div className="mt-2 space-y-1.5">
@@ -2410,7 +2411,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
                   <span className="text-fg-muted">{s.bets} bets</span>
                   <span className="text-fg-dim">{Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
                   <span className={`font-mono font-medium ml-auto ${s.profit >= 0 ? 'text-win' : 'text-loss'}`}>{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
-                  {s.isHeated && <span className="text-loss" title="Heated session">🔥</span>}
+                  {s.isHeated && <span title="Heated session"><Flame size={14} className="text-loss" /></span>}
                 </div>
               ))}
             </div>

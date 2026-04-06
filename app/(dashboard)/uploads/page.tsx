@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { FolderOpen } from 'lucide-react';
 import type { Upload, Bet, Profile } from '@/types';
 
 interface UploadWithStats extends Upload {
@@ -135,7 +136,7 @@ export default function UploadsPage() {
 
       {uploads.length === 0 && legacyBets.length === 0 ? (
         <div className="card p-12 text-center">
-          <div className="text-4xl mb-3">📁</div>
+          <div className="mb-3"><FolderOpen size={32} className="text-fg-muted" /></div>
           <p className="text-fg-muted mb-4">No uploads yet.</p>
           <Link href="/upload" className="btn-primary">Upload Your First CSV</Link>
         </div>

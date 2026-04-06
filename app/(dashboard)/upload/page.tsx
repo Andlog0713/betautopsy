@@ -9,6 +9,7 @@ import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
 import type { UploadResponse, Profile } from '@/types';
 import { userQualifiesForPromo } from '@/types';
+import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Upload as UploadIcon, Smartphone, ClipboardList, FileText } from 'lucide-react';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 type ActiveMethod = 'pikkit' | 'screenshot' | 'paste' | 'csv';
@@ -108,10 +109,10 @@ export default function UploadPage() {
   const daysSinceLastBet = lastBetDate ? Math.floor((Date.now() - new Date(lastBetDate).getTime()) / 86400000) : null;
 
   const methods = [
-    { id: 'pikkit' as const, icon: '📱', label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
-    { id: 'screenshot' as const, icon: '📸', label: 'Screenshot', desc: 'From mobile app', badge: 'BEST FOR UPDATES' },
-    { id: 'paste' as const, icon: '📋', label: 'Paste', desc: 'From desktop browser' },
-    { id: 'csv' as const, icon: '📄', label: 'CSV', desc: 'Upload a file' },
+    { id: 'pikkit' as const, icon: <Smartphone size={24} className="text-fg-muted" />, label: 'Pikkit', desc: betCount === 0 ? 'Import full history' : 'Sync sportsbooks', badge: betCount === 0 ? 'RECOMMENDED' : undefined },
+    { id: 'screenshot' as const, icon: <Camera size={24} className="text-fg-muted" />, label: 'Screenshot', desc: 'From mobile app', badge: 'BEST FOR UPDATES' },
+    { id: 'paste' as const, icon: <ClipboardList size={24} className="text-fg-muted" />, label: 'Paste', desc: 'From desktop browser' },
+    { id: 'csv' as const, icon: <FileText size={24} className="text-fg-muted" />, label: 'CSV', desc: 'Upload a file' },
   ];
 
   return (
@@ -131,7 +132,7 @@ export default function UploadPage() {
       {/* First-upload celebration + bankroll prompt */}
       {initialBetCount === 0 && uploadSucceeded && (
         <div className="case-card p-8 text-center space-y-5 border-scalpel/20">
-          <div className="text-5xl">🔬</div>
+          <div><FlaskConical size={40} className="text-fg-muted" /></div>
           <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
           {tier === 'pro' ? (
             <p className="text-fg-muted text-sm max-w-md mx-auto">
@@ -245,7 +246,7 @@ export default function UploadPage() {
                     {m.badge}
                   </span>
                 )}
-                <div className="text-2xl mb-1">{m.icon}</div>
+                <div className="mb-1">{m.icon}</div>
                 <div className="text-sm font-medium text-fg-bright">{m.label}</div>
                 <div className="text-xs text-fg-muted mt-0.5">{m.desc}</div>
               </button>
@@ -269,7 +270,7 @@ export default function UploadPage() {
                   <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">
                     Get Pikkit (Free 7-Day Trial)
                   </a>
-                  <span className="text-fg-muted text-xs">💰 Get $3–$100 cash from Pikkit when you sign up and sync 10+ bets</span>
+                  <span className="text-fg-muted text-xs flex items-center gap-1"><DollarSign size={14} className="text-fg-muted inline shrink-0" /> Get $3–$100 cash from Pikkit when you sign up and sync 10+ bets</span>
                 </div>
 
                 <button onClick={() => setShowPikkitSteps(!showPikkitSteps)} className="text-fg-muted text-xs hover:text-fg transition-colors flex items-center gap-1">
@@ -343,12 +344,12 @@ export default function UploadPage() {
         <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
         {state === 'uploading' ? (
           <div className="space-y-3">
-            <div className="text-3xl animate-pulse">⏳</div>
+            <div className="animate-pulse"><Loader2 size={24} className="text-fg-muted animate-spin" /></div>
             <p className="text-fg-muted text-sm">Parsing and importing your bets...</p>
           </div>
         ) : state === 'success' && result ? (
           <div className="space-y-3">
-            <div className="text-3xl">{result.bets_imported > 0 ? '✅' : 'ℹ️'}</div>
+            <div>{result.bets_imported > 0 ? <CheckCircle2 size={24} className="text-win" /> : <CheckCircle2 size={24} className="text-fg-muted" />}</div>
             {result.bets_imported > 0 ? (
               <p className="text-win font-medium">{result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
                 {result.duplicates_skipped > 0 && <span className="text-fg-muted font-normal text-sm block mt-1">{result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped</span>}
@@ -363,13 +364,13 @@ export default function UploadPage() {
           </div>
         ) : state === 'error' ? (
           <div className="space-y-3">
-            <div className="text-3xl">❌</div>
+            <div><XCircle size={24} className="text-loss" /></div>
             <p className="text-loss text-sm">{error}</p>
             <button onClick={(e) => { e.stopPropagation(); setState('idle'); setError(''); }} className="btn-secondary text-sm mt-2">Try Again</button>
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="text-4xl">📤</div>
+            <div><UploadIcon size={32} className="text-fg-muted" /></div>
             <p className="text-fg-bright font-medium">Drag & drop your CSV here</p>
             <p className="text-fg-muted text-sm">or click to browse files</p>
           </div>

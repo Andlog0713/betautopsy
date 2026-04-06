@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -13,6 +13,7 @@ const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import JournalEntryModal from '@/components/JournalEntryModal';
 import type { ProgressSnapshot } from '@/types';
+import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Lock, Snowflake, AlertTriangle } from 'lucide-react';
 
 interface DashboardStats {
   totalBets: number;
@@ -26,7 +27,7 @@ interface DashboardStats {
 interface Milestone {
   id: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
   criteria: string;
   earned: boolean;
   date?: string;
@@ -155,19 +156,19 @@ export default function DashboardPage() {
   // Milestones
   const milestones: Milestone[] = [
     {
-      id: 'first_autopsy', label: 'First Autopsy', icon: '🔬',
+      id: 'first_autopsy', label: 'First Autopsy', icon: <FlaskConical size={20} className="text-fg-muted" />,
       criteria: 'Ran your first report',
       earned: snapshots.length >= 1,
       date: snapshots[0]?.snapshot_date,
     },
     {
-      id: 'self_aware', label: 'Self-Aware', icon: '🧠',
+      id: 'self_aware', label: 'Self-Aware', icon: <Brain size={20} className="text-fg-muted" />,
       criteria: 'Emotion score dropped below 40',
       earned: snapshots.some((s) => s.tilt_score < 40),
       date: snapshots.find((s) => s.tilt_score < 40)?.snapshot_date,
     },
     {
-      id: 'discipline_streak', label: 'Discipline Streak', icon: '🔥',
+      id: 'discipline_streak', label: 'Discipline Streak', icon: <Flame size={20} className="text-orange-400" />,
       criteria: '3 reports in a row with improving emotion score',
       earned: (() => {
         for (let i = 2; i < snapshots.length; i++) {
@@ -177,18 +178,18 @@ export default function DashboardPage() {
       })(),
     },
     {
-      id: 'parlay_recovery', label: 'Parlay Recovery', icon: '🎰',
+      id: 'parlay_recovery', label: 'Parlay Recovery', icon: <Dice5 size={20} className="text-fg-muted" />,
       criteria: 'Reduced parlay % by 50%+ from first report',
       earned: snapshots.length >= 2 && latest !== null && snapshots[0].parlay_percent > 0 && latest.parlay_percent <= snapshots[0].parlay_percent * 0.5,
     },
     {
-      id: 'profitable_month', label: 'Profitable Month', icon: '💰',
+      id: 'profitable_month', label: 'Profitable Month', icon: <DollarSign size={20} className="text-fg-muted" />,
       criteria: 'Positive ROI in any snapshot',
       earned: snapshots.some((s) => s.roi_percent > 0),
       date: snapshots.find((s) => s.roi_percent > 0)?.snapshot_date,
     },
     {
-      id: 'sharp_eye', label: 'Sharp Eye', icon: '👁️',
+      id: 'sharp_eye', label: 'Sharp Eye', icon: <Eye size={20} className="text-fg-muted" />,
       criteria: 'Sharp score above 50',
       earned: false,
     },
@@ -213,7 +214,7 @@ export default function DashboardPage() {
 
       {!hasBets ? (
         <div className="case-card p-12 text-center">
-          <div className="text-5xl mb-4">🎯</div>
+          <div className="mb-4"><Target size={40} className="text-fg-muted" /></div>
           <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet</h2>
           <p className="text-fg-muted mb-6 max-w-md mx-auto">
             You&apos;ve got bets to upload and truths to face. Let&apos;s go.
@@ -241,7 +242,7 @@ export default function DashboardPage() {
           {stats.reportCount > 0 && streakCount === 0 && (
             <div className="finding-card border-l-scalpel flex items-center justify-between gap-4">
               <div>
-                <p className="text-fg-bright font-medium">🔥 Start your streak. Run an autopsy this week</p>
+                <p className="text-fg-bright font-medium flex items-center gap-1.5"><Flame size={16} className="text-orange-400" /> Start your streak. Run an autopsy this week</p>
                 <p className="text-fg-muted text-xs mt-0.5 font-mono">Weekly check-ins unlock milestone badges and keep you accountable.</p>
               </div>
               <Link href="/reports?run=true" className="btn-primary text-sm shrink-0 font-mono">Run Autopsy</Link>
@@ -251,7 +252,7 @@ export default function DashboardPage() {
           {/* First Autopsy CTA */}
           {stats.reportCount === 0 && (
             <div className="case-card border-scalpel/20 p-8 text-center space-y-4">
-              <div className="text-4xl">🔬</div>
+              <div><FlaskConical size={32} className="text-fg-muted" /></div>
               <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
               <p className="text-fg-muted max-w-md mx-auto">
                 You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
@@ -329,7 +330,7 @@ export default function DashboardPage() {
                   {/* Streak */}
                   <div className="flex items-center gap-2 mt-3">
                     <span className={`text-lg ${streakCount >= 10 ? 'animate-pulse' : ''}`}>
-                      {streakCount >= 10 ? '🔥🔥' : streakCount >= 6 ? '🔥' : streakCount >= 3 ? '🔥' : '📅'}
+                      {streakCount >= 10 ? <><Flame size={18} className="text-orange-400" /><Flame size={18} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={18} className="text-orange-400" /> : <Calendar size={18} className="text-fg-muted" />}
                     </span>
                     <span className="text-sm text-fg-bright font-medium font-mono">
                       {streakCount > 0 ? `${streakCount}-week streak` : 'No active streak'}
@@ -340,8 +341,8 @@ export default function DashboardPage() {
                   </div>
                   {/* Freeze */}
                   <div className="flex items-center gap-2 mt-2" title="If you miss a week, a freeze saves your streak instead of resetting it. You get 1 per month.">
-                    <span className="font-mono text-xs text-fg-muted">
-                      ❄️ {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
+                    <span className="font-mono text-xs text-fg-muted flex items-center gap-1">
+                      <Snowflake size={14} className="text-cyan-400" /> {streakFreezes} streak freeze{streakFreezes !== 1 ? 's' : ''}
                     </span>
                     <span className="font-mono text-xs text-fg-muted">· miss a week without losing your streak (resets monthly)</span>
                   </div>
@@ -361,7 +362,7 @@ export default function DashboardPage() {
                             earned ? m.color : 'bg-surface-2 text-fg-dim border-border-subtle'
                           }`}
                         >
-                          {!earned && <span className="mr-0.5">🔒</span>}
+                          {!earned && <Lock size={12} className="text-fg-dim mr-0.5" />}
                           {m.label}
                         </span>
                       );
@@ -437,7 +438,7 @@ export default function DashboardPage() {
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <p className="text-2xl mb-1">🔒</p>
+                  <div className="mb-1"><Lock size={24} className="text-fg-muted" /></div>
                   <p className="text-fg-muted text-sm font-mono">Track your progress with Pro</p>
                 </div>
               </div>
@@ -477,7 +478,7 @@ export default function DashboardPage() {
             <div className="finding-card border-l-caution p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-fg-bright text-sm font-medium">⚠️ Your bankroll isn&apos;t set, and this affects your grade</p>
+                  <p className="text-fg-bright text-sm font-medium flex items-center gap-1.5"><AlertTriangle size={16} className="text-caution" /> Your bankroll isn&apos;t set, and this affects your grade</p>
                   <p className="text-fg-muted text-xs mt-1">
                     Your bankroll is the total amount you&apos;ve set aside for betting across all sportsbooks.
                     Without it, we have to guess, and that guess directly impacts your overall grade, bankroll health rating,
@@ -516,7 +517,7 @@ export default function DashboardPage() {
           {/* Streak Counter */}
           {isPaid && snapshots.length > 0 && (
             <div className="case-card p-5 flex items-center gap-4">
-              <span className="text-3xl">{streakWeeks >= 3 ? '🔥' : '📅'}</span>
+              {streakWeeks >= 3 ? <Flame size={24} className="text-orange-400" /> : <Calendar size={24} className="text-fg-muted" />}
               <div>
                 {streakWeeks >= 2 ? (
                   <p className="text-fg-bright font-medium font-mono">
@@ -557,7 +558,7 @@ export default function DashboardPage() {
           <div className="grid md:grid-cols-3 gap-4">
             <Link href="/upload" className="case-card p-6 hover:border-border transition-colors group">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">📤</span>
+                <Upload size={24} className="text-fg-muted" />
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Upload More Bets</h3>
                   <p className="text-fg-muted text-sm mt-1">Import your latest bet history via CSV.</p>
@@ -566,7 +567,7 @@ export default function DashboardPage() {
             </Link>
             <Link href="/reports" className="case-card p-6 hover:border-border transition-colors group">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">🔬</span>
+                <FlaskConical size={24} className="text-fg-muted" />
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">Run New Autopsy</h3>
                   <p className="text-fg-muted text-sm mt-1">Full behavioral analysis.</p>
@@ -575,7 +576,7 @@ export default function DashboardPage() {
             </Link>
             <button onClick={() => setJournalOpen(true)} className="case-card p-6 hover:border-border transition-colors group text-left">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">📝</span>
+                <PenLine size={24} className="text-fg-muted" />
                 <div>
                   <h3 className="font-medium text-lg text-fg-bright group-hover:text-scalpel transition-colors">
                     Log Check-in {journalCount > 0 && <span className="text-scalpel text-sm">({journalCount})</span>}

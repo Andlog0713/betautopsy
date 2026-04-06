@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { Flame } from 'lucide-react';
 import type { Profile } from '@/types';
 import { Logo } from '@/components/logo';
 
@@ -92,7 +93,7 @@ export default function NavBar() {
             ) : user ? (
               <div className="flex items-center gap-3">
                 {(profile?.streak_count ?? 0) > 0 && (
-                  <span className="font-mono text-[10px] text-scalpel" title={`${profile?.streak_count}-week autopsy streak`}>🔥{profile?.streak_count}</span>
+                  <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
                 )}
                 <Link href="/dashboard" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Dashboard

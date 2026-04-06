@@ -11,6 +11,7 @@ const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
+import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -438,7 +439,7 @@ export default function ReportsPage() {
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="card bg-surface-1/95 p-6 text-center max-w-sm">
-                <p className="text-2xl mb-2">🔒</p>
+                <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
                 <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
                 <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: $9.99</a>
@@ -511,7 +512,7 @@ export default function ReportsPage() {
               disabled={running || betCountForRun === 0}
               className="btn-primary"
             >
-              🔬 Run New Autopsy
+              <span className="flex items-center gap-1.5"><FlaskConical size={16} /> Run New Autopsy</span>
             </button>
           </div>
 
@@ -565,7 +566,7 @@ export default function ReportsPage() {
       {/* No date picker needed — just the button if no bets */}
       {totalBetCount > 0 && !running && false && (
         <button onClick={runAutopsy} disabled={running} className="btn-primary">
-          🔬 Run New Autopsy
+          <span className="flex items-center gap-1.5"><FlaskConical size={16} /> Run New Autopsy</span>
         </button>
       )}
 
@@ -585,7 +586,7 @@ export default function ReportsPage() {
 
       {totalBetCount === 0 && !running && (
         <div className="card p-12 text-center">
-          <div className="text-5xl mb-4">📤</div>
+          <div className="mb-4"><UploadIcon size={40} className="text-fg-muted" /></div>
           <h2 className="font-bold text-2xl mb-2">No bets to analyze</h2>
           <p className="text-fg-muted mb-6">
             Upload your bet history first, then come back to run your autopsy.
@@ -767,7 +768,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
 
   return (
     <div className="card p-8 text-center space-y-4">
-      <div className="text-5xl animate-pulse">🧠</div>
+      <div className="animate-pulse"><Brain size={40} className="text-fg-muted" /></div>
       <h2 className="font-bold text-xl">{LOADING_MESSAGES[msgIndex]}</h2>
       <div className="w-72 mx-auto">
         <div className="flex items-center justify-between text-xs text-fg-muted mb-1">

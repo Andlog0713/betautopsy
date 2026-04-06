@@ -1,5 +1,7 @@
 'use client';
 
+import { Check } from 'lucide-react';
+
 const steps = [
   { num: 1, label: 'Upload your bets' },
   { num: 2, label: 'Run your autopsy' },
@@ -31,7 +33,7 @@ export default function OnboardingSteps({
                     : 'bg-surface-1 text-fg-dim'
                 }`}
               >
-                {isDone ? '✓' : step.num}
+                {isDone ? <Check size={14} /> : step.num}
               </span>
               <span
                 className={`text-xs sm:text-sm transition-colors ${
