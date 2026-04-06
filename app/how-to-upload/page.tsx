@@ -135,7 +135,7 @@ export default function HowToUploadPage() {
             <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
               <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
               <p className="text-sm text-fg-muted">
-                Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, Thrive Fantasy, and Kalshi</span> too.
+                Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, and Kalshi</span> too.
                 Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets. One export covers everything.
               </p>
             </div>
