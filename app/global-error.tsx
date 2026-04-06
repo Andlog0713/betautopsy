@@ -21,7 +21,7 @@ export default function GlobalError({
           <div style={{ textAlign: 'center' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Something went wrong</h2>
             <p style={{ color: '#848D9A', marginBottom: '1.5rem' }}>{error.message}</p>
-            <button onClick={reset} style={{ background: '#f97316', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>
+            <button onClick={reset} style={{ background: '#C4463A', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>
               Try Again
             </button>
           </div>

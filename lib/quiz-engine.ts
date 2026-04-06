@@ -25,9 +25,9 @@ export interface QuizOption {
 
 // Color progression: cool → warm as questions get more revealing
 export const QUESTION_ACCENTS = [
-  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00FFCB',
-  '#a3e635', '#facc15', '#fbbf24', '#fb923c', '#f97316',
-  '#ef4444', '#f43f5e', '#f97316',
+  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00C9A7',
+  '#a3e635', '#facc15', '#B8944A', '#fb923c', '#C4463A',
+  '#ef4444', '#f43f5e', '#C4463A',
 ];
 
 // Questions ordered for emotional escalation: easy → behavioral → revealing → scenario
@@ -305,13 +305,13 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   let archetype: QuizResult['archetype'];
 
   if (avg.discipline >= 7.5 && avg.emotion <= 3.5 && avg.selectivity >= 6) {
-    archetype = { name: 'The Natural', emoji: '🧊', color: '#00FFCB', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
+    archetype = { name: 'The Natural', emoji: '🧊', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
   } else if (avg.discipline >= 6 && avg.variance >= 6 && avg.selectivity >= 5) {
-    archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00FFCB', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
+    archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
   } else if (avg.emotion >= 6 && avg.chase_tendency >= 6 && avg.discipline <= 4) {
-    archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#f97316', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
+    archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#C4463A', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
   } else if (avg.fav_lean >= 7 && avg.discipline >= 4) {
-    archetype = { name: 'Chalk Grinder', emoji: '📋', color: '#fbbf24', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
+    archetype = { name: 'Chalk Grinder', emoji: '📋', color: '#B8944A', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
   } else if (avg.parlay_lean >= 7) {
     archetype = { name: 'Parlay Dreamer', emoji: '🎰', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
   } else if (avg.selectivity >= 7 && avg.volume <= 4) {
@@ -319,7 +319,7 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   } else if (avg.volume >= 7 && avg.variance <= 4) {
     archetype = { name: 'Volume Warrior', emoji: '⚔️', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
   } else if (avg.variance >= 7 && avg.parlay_lean >= 5 && avg.emotion >= 5) {
-    archetype = { name: 'Degen King', emoji: '👑', color: '#f87171', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
+    archetype = { name: 'Degen King', emoji: '👑', color: '#C4463A', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
   } else {
     archetype = { name: 'The Grinder', emoji: '💪', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
   }

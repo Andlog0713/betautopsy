@@ -9,8 +9,8 @@ import { trackQuizComplete } from '@/lib/tiktok-events';
 function gradeColor(g: string): string {
   if (g === 'A') return '#00C853';
   if (g === 'B') return '#2dd4bf';
-  if (g === 'C') return '#fbbf24';
-  if (g === 'D') return '#f97316';
+  if (g === 'C') return '#B8944A';
+  if (g === 'D') return '#C4463A';
   return '#ef4444';
 }
 
@@ -303,7 +303,7 @@ export default function QuizClient() {
   // ══════════════════════════════
   if (phase === 'reveal' && result) {
     const emotionWord = result.emotion_estimate <= 25 ? 'LOW' : result.emotion_estimate <= 50 ? 'MODERATE' : result.emotion_estimate <= 75 ? 'HIGH' : 'CRITICAL';
-    const emotionColor = result.emotion_estimate <= 25 ? '#00FFCB' : result.emotion_estimate <= 50 ? '#fbbf24' : result.emotion_estimate <= 75 ? '#f97316' : '#f87171';
+    const emotionColor = result.emotion_estimate <= 25 ? '#00C9A7' : result.emotion_estimate <= 50 ? '#B8944A' : result.emotion_estimate <= 75 ? '#C4463A' : '#C4463A';
     const biasCount = result.biases.length;
 
     return (

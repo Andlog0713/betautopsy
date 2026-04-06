@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
 <!-- Header -->
 <tr><td style="background-color:#0D1117;padding:24px 32px">
-  <span style="font-size:22px;font-weight:700;color:#ffffff"><span style="font-weight:900">BET</span><span style="font-weight:300;color:#00FFCB">AUTOPSY</span></span>
+  <span style="font-size:22px;font-weight:700;color:#ffffff"><span style="font-weight:900">BET</span><span style="font-weight:300;color:#00C9A7">AUTOPSY</span></span>
 </td></tr>
 
 <!-- Content -->
@@ -63,22 +63,22 @@ export async function GET(request: Request) {
 
   <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:24px"><tbody>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;Unlimited bets &amp; reports
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Unlimited bets &amp; reports
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;Full bias suite &amp; strategic leaks
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Full bias suite &amp; strategic leaks
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;What-If Simulator
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;What-If Simulator
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer — ranked by $ impact
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer — ranked by $ impact
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;Progress tracking &amp; weekly digests
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Progress tracking &amp; weekly digests
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00FFCB;font-weight:600">✓</span>&nbsp;&nbsp;Early access to every new feature
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Early access to every new feature
     </td></tr>
   </tbody></table>
 
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 
   <!-- CTA -->
   <div style="text-align:center;margin:32px 0">
-    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#00FFCB;color:#ffffff;font-size:16px;font-weight:700;padding:14px 40px;border-radius:10px;text-decoration:none">Go to Your Dashboard →</a>
+    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#00C9A7;color:#ffffff;font-size:16px;font-weight:700;padding:14px 40px;border-radius:10px;text-decoration:none">Go to Your Dashboard →</a>
   </div>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 8px">

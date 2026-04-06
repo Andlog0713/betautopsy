@@ -278,7 +278,7 @@ export default function DashboardPage() {
       </div>
 
       {!hasBets ? (
-        <div className="bg-surface-1 border border-border-subtle rounded-xl p-12 text-center">
+        <div className="bg-surface-1 border border-border-subtle rounded-md p-12 text-center">
           <div className="mb-4"><Target size={40} className="text-fg-muted mx-auto" /></div>
           <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet</h2>
           <p className="text-fg-muted mb-6 max-w-md mx-auto">
@@ -349,12 +349,12 @@ export default function DashboardPage() {
             {/* Bordered card stats */}
             {latest && (
               <div className="flex gap-3">
-                <div className="bg-surface-1 border border-border-subtle rounded-xl px-5 py-3">
+                <div className="bg-surface-1 border border-border-subtle rounded-md px-5 py-3">
                   <p className="text-sm text-fg-muted mb-0.5">Grade</p>
                   <p className={`text-xl font-bold font-mono ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
                 </div>
                 {latest.discipline_score !== null && (
-                  <div className="bg-surface-1 border border-border-subtle rounded-xl px-5 py-3">
+                  <div className="bg-surface-1 border border-border-subtle rounded-md px-5 py-3">
                     <p className="text-sm text-fg-muted mb-0.5">Discipline</p>
                     <p className="text-xl font-bold font-mono text-fg-bright">{mask((latest.discipline_score ?? 0).toString())}</p>
                   </div>
@@ -369,7 +369,7 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 space-y-4">
               {/* Discipline Score ring (paid) */}
               {latest && isPaid && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-6">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-6">
                   <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                     <div className="relative shrink-0">
                       <svg width="120" height="120" viewBox="0 0 120 120">
@@ -377,9 +377,9 @@ export default function DashboardPage() {
                         <circle
                           cx="60" cy="60" r="52" fill="none"
                           stroke={
-                            (latest.discipline_score ?? 0) >= 71 ? '#00FFCB' :
-                            (latest.discipline_score ?? 0) >= 51 ? '#D29922' :
-                            (latest.discipline_score ?? 0) >= 31 ? '#E8453C' : '#F85149'
+                            (latest.discipline_score ?? 0) >= 71 ? '#00C9A7' :
+                            (latest.discipline_score ?? 0) >= 51 ? '#B8944A' :
+                            (latest.discipline_score ?? 0) >= 31 ? '#C4463A' : '#C4463A'
                           }
                           strokeWidth="8" strokeLinecap="round"
                           strokeDasharray={`${((latest.discipline_score ?? 0) / 100) * 327} 327`}
@@ -438,7 +438,7 @@ export default function DashboardPage() {
 
               {/* First Autopsy CTA */}
               {stats.reportCount === 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-8 text-center space-y-4">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-8 text-center space-y-4">
                   <div><FlaskConical size={32} className="text-fg-muted mx-auto" /></div>
                   <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
                   <p className="text-fg-muted max-w-md mx-auto">
@@ -453,7 +453,7 @@ export default function DashboardPage() {
 
               {/* Paid user without snapshots */}
               {isPaid && !latest && stats.reportCount > 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-6 text-center space-y-3">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-6 text-center space-y-3">
                   <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
                   <p className="text-fg-muted text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
                   <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
@@ -464,7 +464,7 @@ export default function DashboardPage() {
               {!isPaid && stats.reportCount > 0 && (
                 <div className="relative">
                   <div className="blur-sm pointer-events-none opacity-40">
-                    <div className="bg-surface-1 border border-border-subtle rounded-xl p-6">
+                    <div className="bg-surface-1 border border-border-subtle rounded-md p-6">
                       <h3 className="font-semibold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
                       <div className="space-y-2">
                         {[65, 52, 47, 38].map((h, i) => (
@@ -517,7 +517,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {/* Streak counter (paid) — compact */}
               {isPaid && snapshots.length > 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-3">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={streakCount >= 10 ? 'animate-pulse' : ''}>
                       {streakCount >= 10 ? <><Flame size={16} className="text-orange-400" /><Flame size={16} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={16} className="text-orange-400" /> : <Calendar size={16} className="text-fg-muted" />}
@@ -543,7 +543,7 @@ export default function DashboardPage() {
 
               {/* Bankroll (if set) */}
               {bankroll && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-4">
                   <span className="data-label block">Bankroll</span>
                   <p className="font-mono text-lg text-fg-bright">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
                   <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider mt-1 inline-block">Edit</Link>
@@ -552,7 +552,7 @@ export default function DashboardPage() {
 
               {/* Journal progress */}
               {journalCount >= 10 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-xl p-4">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-4">
                   <p className="text-fg-bright text-sm font-medium mb-1">{journalCount} journal entries</p>
                   <p className="text-fg-muted text-xs font-mono">
                     {journalCount >= 30
@@ -566,7 +566,7 @@ export default function DashboardPage() {
 
               {/* Free tier upgrade CTA */}
               {!isPaid && (
-                <div className="bg-surface-1 border border-scalpel/20 rounded-xl p-4 space-y-2">
+                <div className="bg-surface-1 border border-scalpel/20 rounded-md p-4 space-y-2">
                   <p className="text-fg-bright text-sm font-medium">Track your progress</p>
                   <p className="text-fg-muted text-xs">
                     Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks.

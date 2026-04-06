@@ -6,10 +6,10 @@ export default function UploadLoading() {
       <Skeleton className="h-8 w-48" />
       <div className="flex gap-3">
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-20 w-28 rounded-xl" />
+          <Skeleton key={i} className="h-20 w-28 rounded-md" />
         ))}
       </div>
-      <Skeleton className="h-64 rounded-xl" />
+      <Skeleton className="h-64 rounded-md" />
     </div>
   );
 }

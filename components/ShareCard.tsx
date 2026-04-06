@@ -51,7 +51,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
     >
       {/* Left teal panel */}
       <div style={{
-        width: 475, background: '#00FFCB',
+        width: 475, background: '#00C9A7',
         padding: '80px 48px', display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -89,29 +89,29 @@ const ShareCard = forwardRef<HTMLDivElement, {
         {hasAnnotations ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ marginBottom: 48 }}>
-              <div style={{ fontSize: 22, color: '#00FFCB', marginBottom: 10, fontWeight: 600 }}>{"When you're disciplined"}</div>
+              <div style={{ fontSize: 22, color: '#00C9A7', marginBottom: 10, fontWeight: 600 }}>{"When you're disciplined"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.disciplinedRecord!.bets}</div>
                 <div style={{ fontSize: 28, color: '#848D9A' }}>bets</div>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: '#00FFCB', marginTop: 4 }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: '#00C9A7', marginTop: 4 }}>
                 {data.disciplinedRecord!.roi >= 0 ? '+' : ''}{data.disciplinedRecord!.roi}% ROI
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 22, color: '#E8453C', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
+              <div style={{ fontSize: 22, color: '#C4463A', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.emotionalRecord!.bets}</div>
                 <div style={{ fontSize: 28, color: '#848D9A' }}>bets</div>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: '#C4463A', marginTop: 4 }}>
                 {data.emotionalRecord!.roi >= 0 ? '+' : ''}{data.emotionalRecord!.roi}% ROI
               </div>
             </div>
           </div>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 22, color: '#00FFCB', marginBottom: 12, fontWeight: 600 }}>{insight.contextLabel}</div>
+            <div style={{ fontSize: 22, color: '#00C9A7', marginBottom: 12, fontWeight: 600 }}>{insight.contextLabel}</div>
             <div style={{ fontSize: 100, fontWeight: 900, lineHeight: 0.9, letterSpacing: -3 }}>{insight.heroStat}</div>
             <div style={{ fontSize: 30, color: '#F0F2F5', marginTop: 16, lineHeight: 1.3, fontWeight: 500 }}>{insight.heroLabel}</div>
           </div>
@@ -132,7 +132,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
         {/* CTA */}
         <div>
           <div style={{ fontSize: 32, fontWeight: 700 }}>Get your autopsy</div>
-          <div style={{ fontSize: 24, color: '#00FFCB', marginTop: 6 }}>betautopsy.com</div>
+          <div style={{ fontSize: 24, color: '#00C9A7', marginTop: 6 }}>betautopsy.com</div>
         </div>
       </div>
     </div>

@@ -19,19 +19,19 @@ export default function DashboardLoading() {
           <Skeleton className="h-12 w-24" />
         </div>
         <div className="flex gap-3">
-          <Skeleton className="h-14 w-20 rounded-xl" />
-          <Skeleton className="h-14 w-20 rounded-xl" />
+          <Skeleton className="h-14 w-20 rounded-md" />
+          <Skeleton className="h-14 w-20 rounded-md" />
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
-          <Skeleton className="h-40 rounded-xl" />
-          <Skeleton className="h-80 rounded-xl" />
+          <Skeleton className="h-40 rounded-md" />
+          <Skeleton className="h-80 rounded-md" />
         </div>
         <div className="space-y-4">
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-24 rounded-md" />
+          <Skeleton className="h-20 rounded-md" />
+          <Skeleton className="h-32 rounded-md" />
         </div>
       </div>
     </div>

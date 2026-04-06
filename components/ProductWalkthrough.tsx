@@ -118,11 +118,11 @@ function ReportVisual() {
       </div>
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-fg-dim tracking-wider">EMOTION SCORE</span>
-        <span className="font-mono text-base font-bold" style={{ color: '#D29922' }}>78 / 100</span>
+        <span className="font-mono text-base font-bold" style={{ color: '#B8944A' }}>78 / 100</span>
       </div>
       <div className="flex items-baseline justify-between">
         <span className="font-mono text-[10px] text-fg-dim tracking-wider">TOTAL RECOVERABLE</span>
-        <span className="font-mono text-xl font-bold" style={{ color: '#3FB950' }}>$2,062</span>
+        <span className="font-mono text-xl font-bold" style={{ color: '#00C9A7' }}>$2,062</span>
       </div>
     </div>
   );

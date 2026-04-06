@@ -72,7 +72,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 <tr><td style="background-color:#111318;padding:20px 24px">
   <table cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr>
     <td>
-      <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#00FFCB;letter-spacing:1px">AUTOPSY</span>
+      <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#00C9A7;letter-spacing:1px">AUTOPSY</span>
     </td>
     <td style="text-align:right">
       <span style="font-family:'Courier New',monospace;font-size:9px;color:#888;letter-spacing:3px;text-transform:uppercase">WEEKLY DIGEST</span>

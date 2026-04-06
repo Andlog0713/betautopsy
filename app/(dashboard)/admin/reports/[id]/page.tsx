@@ -100,13 +100,13 @@ export default function AdminReportDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/admin/reports')}
-            className="text-ink-600 hover:text-[#F0F2F5] transition-colors text-sm"
+            className="text-ink-600 hover:text-fg-bright transition-colors text-sm"
           >
             &larr; All Reports
           </button>
           <span className="text-white/[0.1]">|</span>
           <div>
-            <p className="text-[#F0F2F5] font-medium text-sm">
+            <p className="text-fg-bright font-medium text-sm">
               {user?.display_name ?? 'Unknown User'}
             </p>
             <p className="text-ink-600 text-xs">{user?.email ?? report.user_id}</p>

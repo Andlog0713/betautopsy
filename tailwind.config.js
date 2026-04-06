@@ -15,7 +15,6 @@ module.exports = {
           1: '#12121c',
           2: '#1a1a26',
           3: '#222232',
-          // Legacy aliases — KEEP until migration complete
           raised: '#1a1a26',
           elevated: '#222232',
           overlay: '#222232',
@@ -25,38 +24,39 @@ module.exports = {
           DEFAULT: 'rgba(255, 255, 255, 0.08)',
           strong: 'rgba(255, 255, 255, 0.12)',
         },
-        // Text hierarchy — 4 levels (brighter)
+        // Text hierarchy — 4 levels
         fg: {
-          DEFAULT: '#D0D5DD',
-          bright: '#F0F2F5',
-          muted: '#A0A8B4',
-          dim: '#5D6673',
+          DEFAULT: '#B0B8C4',
+          bright: '#E8ECF0',
+          muted: '#7A8494',
+          dim: '#4A5260',
         },
-        // Brand
+        // Brand — unified teal
         scalpel: {
-          DEFAULT: '#00FFCB',
-          dim: '#00B38E',
-          muted: 'rgba(0,255,203,0.12)',
+          DEFAULT: '#00C9A7',
+          dim: '#00A88C',
+          muted: 'rgba(0,201,167,0.12)',
         },
+        // Severity — desaturated, clinical
         bleed: {
-          DEFAULT: '#E8453C',
-          dim: '#991F1F',
-          muted: 'rgba(232,69,60,0.08)',
+          DEFAULT: '#C4463A',
+          dim: '#8B2E25',
+          muted: 'rgba(196,70,58,0.08)',
         },
         // Semantic
-        win: '#3FB950',
-        loss: '#F85149',
-        caution: '#D29922',
-        // Legacy aliases — KEEP until migration complete
+        win: '#00C9A7',
+        loss: '#C4463A',
+        caution: '#B8944A',
+        // Legacy aliases
         ink: {
           900: '#0a0a12',
-          800: '#0f0f17',
-          700: '#5D6673',
-          600: '#A0A8B4',
+          800: '#12121c',
+          700: '#4A5260',
+          600: '#7A8494',
           500: '#B0B8C4',
         },
-        flame: { 500: '#00FFCB', 600: '#00B38E' },
-        mint: { 500: '#3FB950' },
+        flame: { 500: '#00C9A7', 600: '#00A88C' },
+        mint: { 500: '#00C9A7' },
       },
       fontFamily: {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
@@ -64,10 +64,12 @@ module.exports = {
       },
       borderRadius: {
         'none': '0px',
-        'sm': '2px',
-        DEFAULT: '2px',
-        'md': '4px',
-        'lg': '4px',
+        'sm': '4px',
+        DEFAULT: '6px',
+        'md': '6px',
+        'lg': '8px',
+        'xl': '12px',
+        '2xl': '16px',
       },
       keyframes: {
         'fade-in': {

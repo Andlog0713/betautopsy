@@ -7,7 +7,7 @@ export default function SettingsLoading() {
       {[...Array(4)].map((_, i) => (
         <div key={i} className="space-y-3">
           <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-md" />
         </div>
       ))}
     </div>

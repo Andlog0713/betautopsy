@@ -49,7 +49,7 @@ function IncisionMark({
         x1={cx} y1={cy} x2={cx} y2={viewH - padY}
         stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
       />
-      <circle cx={cx} cy={cy} r={dotRadius} fill="#E8453C" />
+      <circle cx={cx} cy={cy} r={dotRadius} fill="#C4463A" />
       <circle cx={padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
       <circle cx={viewW - padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
       <circle cx={cx} cy={viewH - padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
@@ -61,7 +61,7 @@ export function Logo({
   size = 'md', variant = 'horizontal', theme = 'dark', className = '', showTagline = false,
 }: LogoProps) {
   const s = SIZES[size];
-  const strokeColor = theme === 'dark' ? '#00FFCB' : '#0d1117';
+  const strokeColor = theme === 'dark' ? '#00C9A7' : '#0d1117';
   const textColor = theme === 'dark' ? 'text-[#F0F6FC]' : 'text-[#0d1117]';
 
   // For horizontal lockup, mark is ~1.6x the text height (like PrizePicks ratio)

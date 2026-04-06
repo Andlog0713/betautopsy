@@ -36,41 +36,41 @@
 @layer components {
   /* ── Case file card ── */
   .case-card {
-    @apply bg-surface-1 border border-border-subtle rounded-sm;
+    @apply bg-surface-1 border border-border-subtle rounded-md;
   }
 
   /* Legacy card alias */
   .card {
-    @apply bg-surface-1 border border-border-subtle rounded-sm;
+    @apply bg-surface-1 border border-border-subtle rounded-md;
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply bg-scalpel text-base font-semibold px-6 py-2.5 rounded-sm
+    @apply bg-scalpel text-[#0a0a12] font-semibold px-6 py-2.5 rounded-md
            transition-all duration-150
            hover:brightness-110
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-sm
+    @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-md
            hover:bg-white/[0.03] hover:border-border-strong transition-all duration-150
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply text-fg-muted font-medium px-4 py-2.5 rounded-sm
+    @apply text-fg-muted font-medium px-4 py-2.5 rounded-md
            hover:text-fg hover:bg-white/[0.03] transition-all duration-150;
   }
 
   .btn-danger {
-    @apply bg-bleed-muted border border-bleed/20 text-bleed font-medium px-6 py-2.5 rounded-sm
+    @apply bg-bleed-muted border border-bleed/20 text-bleed font-medium px-6 py-2.5 rounded-md
            hover:bg-bleed/20 hover:border-bleed/30 transition-all duration-150;
   }
 
   /* ── Inputs ── */
   .input-field {
-    @apply bg-surface-2 border border-border-subtle rounded-lg px-3 py-2 text-sm text-fg-bright
+    @apply bg-surface-2 border border-border-subtle rounded-md px-3 py-2 text-sm text-fg-bright
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
            transition-colors;
@@ -89,15 +89,15 @@
   /* ── Severity markers ── */
   .severity-high {
     @apply font-mono text-[10px] tracking-wider uppercase
-           bg-bleed text-base px-2 py-0.5 rounded-sm font-bold;
+           bg-bleed text-[#0a0a12] px-2 py-0.5 rounded-sm font-bold;
   }
   .severity-medium {
     @apply font-mono text-[10px] tracking-wider uppercase
-           bg-caution text-base px-2 py-0.5 rounded-sm font-bold;
+           bg-caution text-[#0a0a12] px-2 py-0.5 rounded-sm font-bold;
   }
   .severity-low {
     @apply font-mono text-[10px] tracking-wider uppercase
-           bg-scalpel text-base px-2 py-0.5 rounded-sm font-bold;
+           bg-scalpel text-[#0a0a12] px-2 py-0.5 rounded-sm font-bold;
   }
 
   /* ── Data display ── */
@@ -110,7 +110,7 @@
 
   /* ── Vitals strip ── */
   .vitals-strip {
-    @apply grid gap-px bg-border-subtle border border-border-subtle rounded-sm overflow-hidden;
+    @apply grid gap-px bg-border-subtle border border-border-subtle rounded-md overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
@@ -118,7 +118,7 @@
 
   /* ── Finding card ── */
   .finding-card {
-    @apply bg-surface-1 border border-border-subtle rounded-xl p-5;
+    @apply bg-surface-1 border border-border-subtle rounded-md p-5;
   }
 
   /* ── Case header ── */

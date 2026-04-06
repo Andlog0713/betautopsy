@@ -122,7 +122,7 @@ export default function AdminReportsPage() {
             placeholder="Search by email or name..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="bg-ink-900 border border-border rounded-sm px-3 py-2 text-sm text-[#F0F2F5] placeholder-ink-700 focus:outline-none focus:border-scalpel/40 w-64"
+            className="bg-ink-900 border border-border rounded-sm px-3 py-2 text-sm text-fg-bright placeholder-ink-700 focus:outline-none focus:border-scalpel/40 w-64"
           />
           <button
             type="submit"
@@ -172,7 +172,7 @@ export default function AdminReportsPage() {
                   <tr key={r.id} onClick={() => router.push(`/admin/reports/${r.id}`)} className="border-b border-border-subtle hover:bg-white/[0.02] transition-colors cursor-pointer">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-[#F0F2F5] truncate max-w-[200px]">
+                        <p className="font-medium text-fg-bright truncate max-w-[200px]">
                           {r.user?.display_name ?? 'Unknown'}
                         </p>
                         <p className="text-ink-600 text-xs truncate max-w-[200px]">
@@ -233,14 +233,14 @@ export default function AdminReportsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-fg-bright disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-[#F0F2F5] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-sm bg-ink-800 text-ink-500 hover:text-fg-bright disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>

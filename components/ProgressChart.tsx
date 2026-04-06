@@ -28,7 +28,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
   }, [snapshots, range]);
 
   return (
-    <div className="bg-surface-1 border border-border-subtle rounded-xl p-5">
+    <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
       {/* Header + range selector */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-medium text-fg-bright">Performance Trend</h2>
@@ -59,8 +59,8 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
                 <stop offset="100%" stopColor="#00C9A7" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="roiFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#D29922" stopOpacity={0.08} />
-                <stop offset="100%" stopColor="#D29922" stopOpacity={0} />
+                <stop offset="0%" stopColor="#B8944A" stopOpacity={0.08} />
+                <stop offset="100%" stopColor="#B8944A" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -107,7 +107,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
             <Area yAxisId="emotion" type="monotone" dataKey="emotion" stroke="none" fill="url(#emotionFill)" />
             <Area yAxisId="roi" type="monotone" dataKey="roi" stroke="none" fill="url(#roiFill)" />
             <Line yAxisId="emotion" type="monotone" dataKey="emotion" stroke="#00C9A7" strokeWidth={2} dot={false} />
-            <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#D29922" strokeWidth={2} dot={false} />
+            <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#B8944A" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -115,7 +115,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
       {/* Legend */}
       <div className="flex gap-6 justify-center mt-3 text-xs text-fg-dim">
         <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#00C9A7] inline-block rounded" /> Emotion Score (lower is better)</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#D29922] inline-block rounded" /> ROI %</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#B8944A] inline-block rounded" /> ROI %</span>
       </div>
     </div>
   );

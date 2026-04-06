@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       >
         <div style={{ display: 'flex', fontSize: 36, marginBottom: 40 }}>
           <span style={{ color: '#F0F0F0' }}>Bet</span>
-          <span style={{ color: '#f97316' }}>Autopsy</span>
+          <span style={{ color: '#C4463A' }}>Autopsy</span>
         </div>
         <div
           style={{

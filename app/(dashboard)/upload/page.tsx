@@ -242,7 +242,7 @@ export default function UploadPage() {
           {/* Pikkit method */}
           {activeMethod === 'pikkit' && (
             <div className="space-y-4">
-              <div className="bg-surface-1 border border-border-subtle rounded-xl p-5">
+              <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
                 <p className="text-fg-muted text-sm mb-3">
                   <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app that connects to your sportsbook accounts and pulls your full betting history automatically. We recommend it because it&apos;s the easiest way to export your data as a CSV.
                 </p>

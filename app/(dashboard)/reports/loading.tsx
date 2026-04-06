@@ -7,10 +7,10 @@ export default function ReportsLoading() {
         <Skeleton className="h-8 w-32 mb-2" />
         <Skeleton className="h-4 w-64" />
       </div>
-      <Skeleton className="h-44 rounded-xl" />
+      <Skeleton className="h-44 rounded-md" />
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
+          <Skeleton key={i} className="h-20 rounded-md" />
         ))}
       </div>
     </div>

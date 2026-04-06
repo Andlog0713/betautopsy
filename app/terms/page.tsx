@@ -11,21 +11,21 @@ export default function TermsOfUsePage() {
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">1. Acceptance of terms</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">1. Acceptance of terms</h2>
             <p>
               By accessing or using BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;), including the website at betautopsy.com, you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the service. We may update these terms at any time, and your continued use after changes are posted constitutes acceptance.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">2. Eligibility</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">2. Eligibility</h2>
             <p>
               You must be at least 21 years of age to use BetAutopsy. By creating an account, you represent and warrant that you meet this age requirement. You are also responsible for ensuring your use of BetAutopsy complies with all laws and regulations applicable to your jurisdiction.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">3. Description of service</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">3. Description of service</h2>
             <p className="mb-3">
               BetAutopsy is a behavioral analysis tool for sports bettors. You upload your bet history and receive reports identifying cognitive biases, emotional patterns, strategic leaks, and personalized action plans.
             </p>
@@ -38,7 +38,7 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">4. Account registration</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">4. Account registration</h2>
             <p className="mb-3">
               To use certain features, you must create an account. You agree to provide accurate, current, and complete information during registration. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.
             </p>
@@ -50,29 +50,29 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">5. Payments and billing</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">5. Payments and billing</h2>
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium text-[#F0F2F5] mb-1">Free tier</h3>
+                <h3 className="font-medium text-fg-bright mb-1">Free tier</h3>
                 <p>BetAutopsy offers a free tier with limited features. No payment information is required to use the free tier.</p>
               </div>
               <div>
-                <h3 className="font-medium text-[#F0F2F5] mb-1">One-time purchases</h3>
+                <h3 className="font-medium text-fg-bright mb-1">One-time purchases</h3>
                 <p>Certain features, such as individual full reports, may be purchased as one-time transactions through Stripe. These purchases are non-recurring and grant access to the specific item purchased. All one-time purchases are final and non-refundable.</p>
               </div>
               <div>
-                <h3 className="font-medium text-[#F0F2F5] mb-1">Paid subscriptions</h3>
+                <h3 className="font-medium text-fg-bright mb-1">Paid subscriptions</h3>
                 <p>Paid plans are billed on a recurring monthly or annual basis through Stripe. By subscribing, you authorize us to charge your payment method at the beginning of each billing cycle. Prices are listed on our pricing page and may change with 30 days notice.</p>
               </div>
               <div>
-                <h3 className="font-medium text-[#F0F2F5] mb-1">Cancellation</h3>
+                <h3 className="font-medium text-fg-bright mb-1">Cancellation</h3>
                 <p>You can cancel your subscription at any time from your account settings. Upon cancellation, you retain access to paid features through the end of your current billing period. We do not offer prorated refunds for partial billing periods.</p>
               </div>
             </div>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">6. User content and data</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">6. User content and data</h2>
             <p className="mb-3">
               When you upload bet history data (CSV files or manual entries), you retain full ownership of that data. By uploading, you grant us a limited, non-exclusive license to process your data solely for the purpose of generating your analytics and reports.
             </p>
@@ -86,7 +86,7 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">7. Acceptable use</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">7. Acceptable use</h2>
             <p className="mb-3">You agree not to:</p>
             <ul className="list-disc list-inside space-y-2">
               <li>Use BetAutopsy for any unlawful purpose</li>
@@ -101,21 +101,21 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">8. Intellectual property</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">8. Intellectual property</h2>
             <p>
               All content, features, functionality, design elements, trademarks, and code on BetAutopsy are owned by BetAutopsy and protected by applicable intellectual property laws. You may not copy, modify, distribute, or create derivative works from any part of the service without our prior written permission. Your use of the service does not grant you any ownership rights in our intellectual property.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">9. Third-party services</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">9. Third-party services</h2>
             <p>
               BetAutopsy integrates with third-party services including Supabase (database and authentication), Stripe (payment processing), Vercel (hosting), and Anthropic (analysis engine). Your use of these services is subject to their respective terms. We are not responsible for the practices, content, or availability of any third-party service.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">10. Disclaimers</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">10. Disclaimers</h2>
             <p className="mb-3">
               BetAutopsy is provided on an &quot;as is&quot; and &quot;as available&quot; basis without warranties of any kind, either express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
             </p>
@@ -128,42 +128,42 @@ export default function TermsOfUsePage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">11. Limitation of liability</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">11. Limitation of liability</h2>
             <p>
               To the maximum extent permitted by law, BetAutopsy and its owners, employees, affiliates, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the service, including but not limited to loss of profits, data, or goodwill. Our total liability for any claims related to the service shall not exceed the amount you paid us in the 12 months preceding the claim.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">12. Indemnification</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">12. Indemnification</h2>
             <p>
               You agree to indemnify, defend, and hold harmless BetAutopsy and its owners, employees, and affiliates from any claims, losses, damages, liabilities, and expenses (including reasonable legal fees) arising from your use of the service, your violation of these terms, or your violation of any third-party rights.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">13. Termination</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">13. Termination</h2>
             <p>
               We reserve the right to suspend or terminate your account at our discretion, with or without notice, for conduct that we determine violates these terms or is harmful to the service, other users, or third parties. Upon termination, your right to use the service ceases immediately. Sections on disclaimers, limitation of liability, indemnification, and governing law survive termination.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">14. Governing law</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">14. Governing law</h2>
             <p>
               These terms are governed by and construed in accordance with the laws of the State of New York, without regard to conflict of law principles. Any disputes arising from these terms or your use of the service shall be resolved exclusively in the state or federal courts located in New York.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">15. Changes to these terms</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">15. Changes to these terms</h2>
             <p>
               We may modify these terms at any time. If we make material changes, we will notify you by email or by posting a notice on the site. Your continued use of BetAutopsy after changes are posted constitutes acceptance of the updated terms.
             </p>
           </section>
 
           <section>
-            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">16. Contact</h2>
+            <h2 className="font-semibold text-lg text-fg-bright mb-3">16. Contact</h2>
             <p>
               Questions about these terms? Reach us at{' '}
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">
