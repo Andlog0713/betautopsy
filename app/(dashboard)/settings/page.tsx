@@ -146,15 +146,32 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-2xl">
+    <div className="animate-fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Settings</h1>
         <p className="text-sm text-fg-muted mt-1">Manage your account and preferences</p>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
+        {/* Sidebar nav - hidden on mobile */}
+        <nav className="hidden md:block space-y-1 sticky top-24 self-start">
+          {['Profile', 'Bankroll', 'Subscription', 'Email', 'Data', 'Account', 'Danger Zone'].map((section) => (
+            <a
+              key={section}
+              href={`#settings-${section.toLowerCase().replace(/\s+/g, '-')}`}
+              className="block text-sm text-fg-dim hover:text-fg-bright px-3 py-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+            >
+              {section}
+            </a>
+          ))}
+        </nav>
+
+        {/* Main content */}
+        <div className="space-y-10 max-w-2xl">
+
       {/* ── Profile ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Profile</h2>
+      <div id="settings-profile" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Profile</h2>
         <div className="space-y-4">
           <div>
             <label className="label">Display Name</label>
@@ -205,8 +222,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Bankroll ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Bankroll</h2>
+      <div id="settings-bankroll" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Bankroll</h2>
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-xs">
             <label className="label">Total Bankroll</label>
@@ -264,8 +281,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Subscription ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Subscription</h2>
+      <div id="settings-subscription" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Subscription</h2>
         <div className="flex items-center gap-3">
           <span className={`text-sm font-medium px-3 py-1 rounded-sm capitalize ${tierBadge[tier]}`}>
             {tier}
@@ -307,8 +324,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Email Preferences ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Email Preferences</h2>
+      <div id="settings-email" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Email Preferences</h2>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-fg-bright text-sm font-medium">Weekly Digest</p>
@@ -333,8 +350,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Data ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Data</h2>
+      <div id="settings-data" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Data</h2>
         <div className="flex gap-4 text-sm text-fg-muted">
           <span><span className="font-mono text-fg-bright">{betCount}</span> bets</span>
           <span><span className="font-mono text-fg-bright">{reportCount}</span> reports</span>
@@ -396,8 +413,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Account ── */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-xl">Account</h2>
+      <div id="settings-account" className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
             Change Password
@@ -409,8 +426,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Danger Zone ── */}
-      <div className="card border-bleed/20 p-6 space-y-4">
-        <h2 className="font-bold text-xl text-loss">Danger Zone</h2>
+      <div id="settings-danger-zone" className="card border-loss/20 p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-fg-bright text-loss">Danger Zone</h2>
         {!showDeleteAccount ? (
           <button
             onClick={() => setShowDeleteAccount(true)}
@@ -454,6 +471,9 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+        </div>{/* end main content */}
+      </div>{/* end grid */}
     </div>
   );
 }

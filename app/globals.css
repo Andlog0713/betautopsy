@@ -70,10 +70,10 @@
 
   /* ── Inputs ── */
   .input-field {
-    @apply bg-surface-2 border border-border-subtle text-fg rounded-sm px-4 py-2.5
+    @apply bg-surface-2 border border-border-subtle rounded-lg px-3 py-2 text-sm text-fg-bright
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
-           transition-all duration-150;
+           transition-colors;
   }
 
   .label {

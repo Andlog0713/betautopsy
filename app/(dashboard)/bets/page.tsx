@@ -331,11 +331,11 @@ export default function BetsPage() {
           </div>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="bg-surface-1 border border-border-subtle rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border-subtle">
+                <tr className="border-b border-border-subtle bg-surface-2">
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
@@ -346,7 +346,7 @@ export default function BetsPage() {
                     />
                   </th>
                   <SortTh col="placed_at" label="Date" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-                  <th className="text-left text-fg-muted font-medium px-4 py-3">Description</th>
+                  <th className="text-left text-xs text-fg-dim uppercase tracking-wider font-medium px-4 py-3">Description</th>
                   <SortTh col="sport" label="Sport" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="bet_type" label="Type" align="left" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="hidden md:table-cell" />
                   <SortTh col="odds" label="Odds" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -364,7 +364,7 @@ export default function BetsPage() {
                 {paginated.map((bet) => (
                   <tr
                     key={bet.id}
-                    className={`border-b border-border-subtle hover:bg-white/[0.02] transition-colors ${
+                    className={`border-b border-border-subtle hover:bg-surface-2/50 transition-colors ${
                       selected.has(bet.id) ? 'bg-scalpel-muted' : ''
                     }`}
                   >
@@ -417,12 +417,14 @@ export default function BetsPage() {
                     <td className="px-4 py-3 text-right font-mono">{mask(`$${Number(bet.stake).toFixed(0)}`)}</td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-sm ${
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                           bet.result === 'win'
                             ? 'bg-win/10 text-win'
                             : bet.result === 'loss'
-                            ? 'bg-bleed-muted text-loss'
-                            : 'bg-surface-1 text-fg-muted'
+                            ? 'bg-loss/10 text-loss'
+                            : bet.result === 'push'
+                            ? 'bg-caution/10 text-caution'
+                            : 'bg-surface-2 text-fg-muted'
                         }`}
                       >
                         {bet.result.toUpperCase()}
@@ -817,8 +819,8 @@ function SortTh({
 
   return (
     <th
-      className={`text-${align} font-medium px-4 py-3 cursor-pointer select-none transition-colors ${
-        active ? 'text-fg-bright' : 'text-fg-muted hover:text-fg'
+      className={`text-${align} text-xs uppercase tracking-wider font-medium px-4 py-3 cursor-pointer select-none transition-colors ${
+        active ? 'text-fg-bright' : 'text-fg-dim hover:text-fg'
       } ${className ?? ''}`}
       onClick={() => onSort(col)}
     >
