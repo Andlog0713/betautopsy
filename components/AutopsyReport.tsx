@@ -446,7 +446,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
         </div>
       </div>
-      <p className="text-fg-dim text-[10px] font-mono -mt-5 mb-5">Based on {summary.total_bets} bets, {summary.date_range}</p>
 
       {/* What this report analyzes — collapsible */}
       <details className="border border-white/[0.04] rounded-sm bg-surface/50 mb-5">
