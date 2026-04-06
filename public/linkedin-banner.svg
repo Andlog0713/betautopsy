@@ -1,16 +1,13 @@
 <svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Subtle radial gradient background -->
     <radialGradient id="bg-glow" cx="50%" cy="45%" r="60%" fx="50%" fy="45%">
       <stop offset="0%" stop-color="#141820"/>
       <stop offset="100%" stop-color="#0d1117"/>
     </radialGradient>
-    <!-- Scalpel accent glow behind logo -->
     <radialGradient id="logo-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#00FFCB" stop-opacity="0.06"/>
       <stop offset="100%" stop-color="#00FFCB" stop-opacity="0"/>
     </radialGradient>
-    <!-- Top edge highlight -->
     <linearGradient id="top-edge" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#00FFCB" stop-opacity="0"/>
       <stop offset="30%" stop-color="#00FFCB" stop-opacity="0.15"/>
@@ -19,19 +16,17 @@
     </linearGradient>
   </defs>
 
-  <!-- Background -->
   <rect width="1584" height="396" fill="url(#bg-glow)"/>
-
-  <!-- Subtle top edge line -->
   <rect x="0" y="0" width="1584" height="1" fill="url(#top-edge)"/>
-
-  <!-- Accent glow behind logo area -->
   <ellipse cx="792" cy="185" rx="300" ry="180" fill="url(#logo-glow)"/>
 
-  <!-- Y-incision mark — centered, exact IncisionMark proportions -->
-  <!-- height=100, w=60, armEnd=25, sw=3.5, dotR=4.5, epR=2 -->
-  <!-- padX=6.5, padY=6.5, cx=36.5, cy=31.5, viewW=73, viewH=113 -->
-  <!-- Centered: x=792-36.5=755.5, y=148-31.5=116.5 (shifted up slightly for visual balance with text below) -->
+  <!--
+    Canonical proportions from logo.tsx IncisionMark:
+    height=100, w=60 (h*0.6), armEnd=25 (h*0.25), sw=3.5, dotR=4.5, epR=2
+    padX=6.5, padY=6.5, cx=36.5, cy=31.5, viewW=73, viewH=113
+    Control points: Q(padX+w*0.15, padY+armEnd*0.5) = Q(15.5, 19)
+    Centered at x=792: translate(792-36.5, 116.5)
+  -->
   <g transform="translate(755.5, 116.5)">
     <path d="M6.5,6.5 Q15.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
     <path d="M66.5,6.5 Q57.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
@@ -42,14 +37,10 @@
     <circle cx="36.5" cy="106.5" r="2" fill="#00FFCB" opacity="0.4"/>
   </g>
 
-  <!-- Wordmark below mark -->
   <text x="792" y="270" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC">
     <tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan>
   </text>
-
-  <!-- Tagline -->
   <text x="792" y="298" text-anchor="middle" font-family="monospace" font-size="9" letter-spacing="4" fill="#5D6673">BEHAVIORAL ANALYSIS FOR SPORTS BETTORS</text>
 
-  <!-- Subtle bottom border -->
   <rect x="0" y="395" width="1584" height="1" fill="url(#top-edge)"/>
 </svg>

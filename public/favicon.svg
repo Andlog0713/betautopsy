@@ -1,1 +1,15 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#0d1117"/><path d="M9,5 Q11,8 16,12" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round"/><path d="M23,5 Q21,8 16,12" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round"/><line x1="16" y1="12" x2="16" y2="27" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="12" r="1.8" fill="#E8453C"/></svg>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#0d1117"/>
+  <!--
+    Canonical proportions from logo.tsx IncisionMark:
+    height=20, w=12, armEnd=6 (30% for small), sw=1.8, dotR=1.8, epR=0
+    padX=3.8, padY=3.8, cx=9.8, cy=9.8, viewW=19.6, viewH=27.6
+    Centered in 32x32: translate((32-19.6)/2, (32-27.6)/2) = (6.2, 2.2)
+  -->
+  <g transform="translate(6.2, 2.2)">
+    <path d="M3.8,3.8 Q5.6,6.8 9.8,9.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M15.8,3.8 Q14,6.8 9.8,9.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <line x1="9.8" y1="9.8" x2="9.8" y2="23.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="9.8" cy="9.8" r="1.8" fill="#E8453C"/>
+  </g>
+</svg>
