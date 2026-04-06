@@ -74,7 +74,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="border-y border-white/[0.04] py-5">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 gap-y-3">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
             {['DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'bet365', 'Pikkit', 'Any CSV'].map(name => (
               <span key={name} className="font-mono text-xs text-fg-muted tracking-wider">{name}</span>
@@ -217,7 +217,7 @@ export default function LandingPage() {
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Free snapshots analyze all your bets. Upgrade for the full 5-chapter report with dollar costs, action plan, and more.
           </p>
-          <div className="grid md:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] rounded-sm overflow-hidden">
+          <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-white/[0.06] md:border border-white/[0.06] rounded-sm md:overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free Snapshot</span>
               <div className="mb-4">
@@ -230,9 +230,9 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm">Start Free</Link>
+              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Start Free</Link>
             </div>
-            <div className="bg-base p-6 flex flex-col relative border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
+            <div className="bg-base p-6 flex flex-col relative md:border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">FIRST ONE FREE</span>
@@ -254,7 +254,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm">Get Your Report</Link>
+              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
             </div>
             <div className="bg-base p-6 flex flex-col">
               <div className="flex items-center gap-2 mb-3">
@@ -272,7 +272,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Go Pro</Link>
+              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Go Pro</Link>
             </div>
           </div>
           {/* Trust block */}
