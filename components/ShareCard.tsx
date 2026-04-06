@@ -100,26 +100,18 @@ const ShareCard = forwardRef<HTMLDivElement, {
         {/* Comparison */}
         <div>
           <div style={{ fontSize: 24, color: '#E8453C', marginBottom: 16, fontWeight: 600 }}>
-            Win rate comparison
+            Your behavior changes your results
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 28 }}>
-            <div>
-              <div style={{ fontSize: 88, fontWeight: 900, letterSpacing: -3 }}>
-                {comparison.topValue}
-              </div>
-              <div style={{ fontSize: 22, color: '#A0A8B4', marginTop: 4 }}>
-                {comparison.topLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
-              </div>
-            </div>
-            <div style={{ fontSize: 36, color: '#A0A8B4' }}>vs</div>
-            <div>
-              <div style={{ fontSize: 88, fontWeight: 900, color: '#E8453C', letterSpacing: -3 }}>
-                {comparison.bottomValue}
-              </div>
-              <div style={{ fontSize: 22, color: '#A0A8B4', marginTop: 4 }}>
-                {comparison.bottomLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
-              </div>
-            </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 20, color: '#A0A8B4', marginBottom: 6 }}>{comparison.topLabel}</div>
+            <div style={{ fontSize: 72, fontWeight: 900, letterSpacing: -2 }}>{comparison.topValue}</div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 20, color: '#A0A8B4', marginBottom: 6 }}>{comparison.bottomLabel}</div>
+            <div style={{ fontSize: 72, fontWeight: 900, color: '#E8453C', letterSpacing: -2 }}>{comparison.bottomValue}</div>
+          </div>
+          <div style={{ fontSize: 20, color: '#A0A8B4', marginTop: 8, lineHeight: 1.4 }}>
+            {comparison.punchline}
           </div>
         </div>
 

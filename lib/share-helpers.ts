@@ -134,156 +134,143 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
 // ── Pattern comparison derivation ──
 
 export function derivePatternComparison(bets?: Bet[]): PatternComparison {
-  if (!bets || bets.length === 0) {
-    return {
-      topLabel: 'Your win rate',
-      topValue: '—',
-      bottomLabel: 'Average sports bettor',
-      bottomValue: '48%',
-      punchline: 'Upload your bets to see your patterns.',
-    };
+  const fallback: PatternComparison = {
+    topLabel: 'Bets when you wait 2+ hours',
+    topValue: '—',
+    bottomLabel: 'Bets within 30 min of a loss',
+    bottomValue: '—',
+    punchline: 'Upload more bets to see your behavioral patterns.',
+  };
+
+  if (!bets || bets.length === 0) return fallback;
+
+  const settled = [...bets]
+    .filter((b) => b.result === 'win' || b.result === 'loss')
+    .sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+
+  if (settled.length < 15) return fallback;
+
+  // ── Priority 1: Post-loss reaction record ──
+  // Bets placed within 30 min of a loss vs bets placed 2+ hours after previous bet
+  const quickAfterLoss: Bet[] = [];
+  const patientBets: Bet[] = [];
+
+  for (let i = 1; i < settled.length; i++) {
+    const gapMin = (new Date(settled[i].placed_at).getTime() - new Date(settled[i - 1].placed_at).getTime()) / 60000;
+    if (gapMin > 480) continue; // skip next-day gaps
+
+    if (settled[i - 1].result === 'loss' && gapMin <= 30) {
+      quickAfterLoss.push(settled[i]);
+    } else if (gapMin >= 120) {
+      patientBets.push(settled[i]);
+    }
   }
 
-  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
-  const overallWR = settled.length > 0 ? Math.round((settled.filter((b) => b.result === 'win').length / settled.length) * 100) : 0;
+  if (quickAfterLoss.length >= 5 && patientBets.length >= 5) {
+    const quickWins = quickAfterLoss.filter((b) => b.result === 'win').length;
+    const quickLosses = quickAfterLoss.length - quickWins;
+    const patientWins = patientBets.filter((b) => b.result === 'win').length;
+    const patientLosses = patientBets.length - patientWins;
 
-  // Not enough data for split comparisons — show overall win rate vs average
-  if (settled.length < 20) {
-    return {
-      topLabel: 'Your win rate',
-      topValue: `${overallWR}%`,
-      bottomLabel: 'Average sports bettor',
-      bottomValue: '48%',
-      punchline: overallWR > 48 ? "You're beating the average. Most don't." : "The house always has edge. Knowing yours is step one.",
-    };
+    const quickRecord = `${quickWins}-${quickLosses}`;
+    const patientRecord = `${patientWins}-${patientLosses}`;
+    const quickWR = Math.round((quickWins / quickAfterLoss.length) * 100);
+    const patientWR = Math.round((patientWins / patientBets.length) * 100);
+
+    if (Math.abs(quickWR - patientWR) >= 5) {
+      return {
+        topLabel: 'When you wait 2+ hours',
+        topValue: patientRecord,
+        bottomLabel: 'Within 30 min of a loss',
+        bottomValue: quickRecord,
+        punchline: patientWR > quickWR
+          ? 'Patience is literally your edge.'
+          : "You bet angry and somehow win. That won't last.",
+      };
+    }
   }
 
-  interface Candidate {
-    topLabel: string;
-    topValue: string;
-    topWR: number;
-    bottomLabel: string;
-    bottomValue: string;
-    bottomWR: number;
-    diff: number;
-    punchline: string;
+  // ── Priority 2: Session length behavior ──
+  // Short sessions (1-3 bets) vs long sessions (6+ bets)
+  const sessions: Bet[][] = [];
+  let currentSession: Bet[] = [settled[0]];
+  for (let i = 1; i < settled.length; i++) {
+    const gapMin = (new Date(settled[i].placed_at).getTime() - new Date(settled[i - 1].placed_at).getTime()) / 60000;
+    if (gapMin <= 90) {
+      currentSession.push(settled[i]);
+    } else {
+      sessions.push(currentSession);
+      currentSession = [settled[i]];
+    }
+  }
+  sessions.push(currentSession);
+
+  const shortSessions = sessions.filter((s) => s.length >= 1 && s.length <= 3);
+  const longSessions = sessions.filter((s) => s.length >= 6);
+
+  if (shortSessions.length >= 3 && longSessions.length >= 3) {
+    const shortBets = shortSessions.flat();
+    const longBets = longSessions.flat();
+    const shortWins = shortBets.filter((b) => b.result === 'win').length;
+    const shortLosses = shortBets.length - shortWins;
+    const longWins = longBets.filter((b) => b.result === 'win').length;
+    const longLosses = longBets.length - longWins;
+    const shortWR = Math.round((shortWins / shortBets.length) * 100);
+    const longWR = Math.round((longWins / longBets.length) * 100);
+
+    if (Math.abs(shortWR - longWR) >= 8) {
+      return {
+        topLabel: 'Short sessions (1-3 bets)',
+        topValue: `${shortWins}-${shortLosses}`,
+        bottomLabel: 'Long sessions (6+ bets)',
+        bottomValue: `${longWins}-${longLosses}`,
+        punchline: shortWR > longWR
+          ? "You're sharp when you're selective. You bleed when you grind."
+          : "You need reps to find your rhythm. Your instincts improve mid-session.",
+      };
+    }
   }
 
-  const candidates: Candidate[] = [];
-
-  // 1. Timing: Before 9pm vs After 11pm
-  const before9pm = settled.filter((b) => {
+  // ── Priority 3: Late night behavior ──
+  const lateNight = settled.filter((b) => {
     const h = new Date(b.placed_at).getUTCHours();
-    // Approximate: UTC 0-2 and 13-23 ≈ US evening/daytime
-    return h >= 13 || h <= 2; // roughly before 9pm US
+    return h >= 3 && h <= 9;
   });
-  const after11pm = settled.filter((b) => {
+  const daytime = settled.filter((b) => {
     const h = new Date(b.placed_at).getUTCHours();
-    return h >= 3 && h <= 9; // roughly 10pm-4am US
+    return h >= 13 || h <= 2;
   });
 
-  if (before9pm.length >= 10 && after11pm.length >= 10) {
-    const wr1 = Math.round((before9pm.filter((b) => b.result === 'win').length / before9pm.length) * 100);
-    const wr2 = Math.round((after11pm.filter((b) => b.result === 'win').length / after11pm.length) * 100);
-    const better = wr1 >= wr2;
-    candidates.push({
-      topLabel: 'Your win rate before 9pm',
-      topValue: `${wr1}%`,
-      topWR: wr1,
-      bottomLabel: 'Your win rate after 11pm',
-      bottomValue: `${wr2}%`,
-      bottomWR: wr2,
-      diff: Math.abs(wr1 - wr2),
-      punchline: better
-        ? (wr1 - wr2 >= 15 ? "You stop researching and start guessing. Your phone should lock you out after midnight." : "You're sharper earlier in the day.")
-        : "Night owl with an edge. Most bettors can't say that.",
-    });
+  if (lateNight.length >= 8 && daytime.length >= 8) {
+    const lnWins = lateNight.filter((b) => b.result === 'win').length;
+    const lnLosses = lateNight.length - lnWins;
+    const dayWins = daytime.filter((b) => b.result === 'win').length;
+    const dayLosses = daytime.length - dayWins;
+    const lnWR = Math.round((lnWins / lateNight.length) * 100);
+    const dayWR = Math.round((dayWins / daytime.length) * 100);
+
+    if (Math.abs(lnWR - dayWR) >= 8) {
+      return {
+        topLabel: 'Daytime bets',
+        topValue: `${dayWins}-${dayLosses}`,
+        bottomLabel: 'After midnight bets',
+        bottomValue: `${lnWins}-${lnLosses}`,
+        punchline: dayWR > lnWR
+          ? "Your worst decisions happen when everyone else is asleep."
+          : "Night owl with an edge. You bet better when the world's quiet.",
+      };
+    }
   }
 
-  // 2. Parlays vs straight bets
-  const parlays = settled.filter((b) => b.bet_type === 'parlay' || (b.parlay_legs && b.parlay_legs > 1));
-  const straights = settled.filter((b) => b.bet_type !== 'parlay' && (!b.parlay_legs || b.parlay_legs <= 1));
-
-  if (parlays.length >= 10 && straights.length >= 10) {
-    const wrP = Math.round((parlays.filter((b) => b.result === 'win').length / parlays.length) * 100);
-    const wrS = Math.round((straights.filter((b) => b.result === 'win').length / straights.length) * 100);
-    candidates.push({
-      topLabel: 'Straight bet win rate',
-      topValue: `${wrS}%`,
-      topWR: wrS,
-      bottomLabel: 'Parlay win rate',
-      bottomValue: `${wrP}%`,
-      bottomWR: wrP,
-      diff: Math.abs(wrS - wrP),
-      punchline: wrS > wrP
-        ? "Your straight bets carry you. Your parlays drain you."
-        : "You're actually winning more parlays than straights. That's rare.",
-    });
-  }
-
-  // 3. Top two sports
-  const sportMap = new Map<string, { wins: number; total: number }>();
-  settled.forEach((b) => {
-    const s = sportMap.get(b.sport) ?? { wins: 0, total: 0 };
-    s.total++;
-    if (b.result === 'win') s.wins++;
-    sportMap.set(b.sport, s);
-  });
-  const sports = Array.from(sportMap.entries())
-    .filter(([, v]) => v.total >= 10)
-    .sort((a, b) => b[1].total - a[1].total);
-
-  if (sports.length >= 2) {
-    const [s1Name, s1Data] = sports[0];
-    const [s2Name, s2Data] = sports[1];
-    const wr1 = Math.round((s1Data.wins / s1Data.total) * 100);
-    const wr2 = Math.round((s2Data.wins / s2Data.total) * 100);
-    candidates.push({
-      topLabel: `${s1Name.toUpperCase()} win rate`,
-      topValue: `${wr1}%`,
-      topWR: wr1,
-      bottomLabel: `${s2Name.toUpperCase()} win rate`,
-      bottomValue: `${wr2}%`,
-      bottomWR: wr2,
-      diff: Math.abs(wr1 - wr2),
-      punchline: wr1 > wr2
-        ? `You know ${s1Name}. You're guessing on ${s2Name}.`
-        : `${s2Name} is your game. ${s1Name} is costing you.`,
-    });
-  }
-
-  if (candidates.length === 0) {
-    const overallWR = Math.round((settled.filter((b) => b.result === 'win').length / settled.length) * 100);
-    return {
-      topLabel: 'Your win rate',
-      topValue: `${overallWR}%`,
-      bottomLabel: 'Average sports bettor',
-      bottomValue: '48%',
-      punchline: overallWR > 48 ? "You're beating the average. Most don't." : "The house always has edge. Knowing yours is step one.",
-    };
-  }
-
-  // Pick the comparison with the largest difference
-  candidates.sort((a, b) => b.diff - a.diff);
-  const winner = candidates[0];
-
-  // If top value is worse, swap so the better number is always on top
-  if (winner.topWR < winner.bottomWR) {
-    return {
-      topLabel: winner.bottomLabel,
-      topValue: winner.bottomValue,
-      bottomLabel: winner.topLabel,
-      bottomValue: winner.topValue,
-      punchline: winner.punchline,
-    };
-  }
-
+  // ── Fallback: overall record vs context ──
+  const wins = settled.filter((b) => b.result === 'win').length;
+  const losses = settled.length - wins;
   return {
-    topLabel: winner.topLabel,
-    topValue: winner.topValue,
-    bottomLabel: winner.bottomLabel,
-    bottomValue: winner.bottomValue,
-    punchline: winner.punchline,
+    topLabel: 'Your record',
+    topValue: `${wins}-${losses}`,
+    bottomLabel: 'Across all bets',
+    bottomValue: `${settled.length} bets analyzed`,
+    punchline: wins > losses ? "Winning more than losing. The question is how much you're leaving on the table." : "Knowing your patterns is the first step to changing them.",
   };
 }
 
