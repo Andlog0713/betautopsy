@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="mb-8 flex justify-center">
           <Logo size="md" variant="horizontal" theme="dark" />
         </div>
-        <h1 className="font-bold text-5xl mb-3">404</h1>
+        <h1 className="font-bold text-5xl tracking-tight mb-3">404</h1>
         <p className="text-fg-muted mb-6">This page doesn&apos;t exist or has been moved.</p>
         <div className="flex flex-col gap-3 items-center">
           <Link href="/" className="btn-primary">

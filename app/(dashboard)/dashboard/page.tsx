@@ -209,7 +209,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <h1 className="font-bold text-3xl text-fg-bright">Dashboard</h1>
+      <h1 className="font-bold text-3xl tracking-tight text-fg-bright">Dashboard</h1>
 
       {!hasBets ? (
         <div className="case-card p-12 text-center">
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <h2 className="font-bold text-xl mb-1 text-fg-bright">Discipline Score</h2>
+                  <h2 className="font-semibold text-xl mb-1 text-fg-bright">Discipline Score</h2>
                   <p className="text-fg-muted text-xs mb-3">
                     How consistently you&apos;re building better betting habits.
                   </p>
@@ -422,7 +422,7 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="blur-sm pointer-events-none opacity-40">
                 <div className="case-card p-6">
-                  <h3 className="font-bold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
+                  <h3 className="font-semibold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
                   <div className="space-y-2">
                     {[65, 52, 47, 38].map((h, i) => (
                       <div key={i} className="flex items-center gap-3">

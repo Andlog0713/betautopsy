@@ -143,7 +143,7 @@ export default function LandingPage() {
             <div className="case-header">EXHIBIT A // PRO TIER SAMPLE</div>
             <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
           </div>
-          <h2 className="font-bold text-2xl md:text-3xl text-fg-bright mb-3">
+          <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
             See a real autopsy report
           </h2>
           <p className="text-fg-muted text-sm mb-8 max-w-xl">

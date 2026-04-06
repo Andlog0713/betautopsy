@@ -385,7 +385,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="font-bold text-3xl mb-1">Reports</h1>
+        <h1 className="font-bold text-3xl tracking-tight mb-1">Reports</h1>
         <p className="text-fg-muted text-sm">
           Your betting habits, dissected. No sugarcoating.
         </p>
@@ -419,7 +419,7 @@ export default function ReportsPage() {
           <div className="relative">
             <div className="blur-sm pointer-events-none opacity-50">
               <div className="card p-5">
-                <h3 className="font-bold text-lg mb-2">Behavioral Edge Analysis</h3>
+                <h3 className="font-semibold text-lg mb-2">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
                   <div className="bg-surface-raised rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
@@ -428,7 +428,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <div className="card p-5 mt-3">
-                <h3 className="font-bold text-lg mb-2">Personal Betting Rules</h3>
+                <h3 className="font-semibold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
                   <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
                   <div className="bg-surface-raised rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
@@ -600,7 +600,7 @@ export default function ReportsPage() {
       {reports.length > 0 && !running && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-xl">Past Reports</h2>
+            <h2 className="font-semibold text-xl">Past Reports</h2>
             {reports.length > 1 && (
               <button onClick={deleteAllReports} className="text-xs text-fg-dim hover:text-loss/70 transition-colors">
                 Delete all reports

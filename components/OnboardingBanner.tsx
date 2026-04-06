@@ -24,7 +24,7 @@ export default function OnboardingBanner({ betCount, reportCount }: OnboardingBa
     return (
       <div className="finding-card border-l-scalpel p-5 space-y-4">
         <div>
-          <h2 className="text-fg-bright font-bold text-lg mb-2">
+          <h2 className="text-fg-bright font-semibold text-lg mb-2">
             Import your full betting history
           </h2>
           <p className="text-fg-muted text-sm mb-1">
@@ -75,7 +75,7 @@ export default function OnboardingBanner({ betCount, reportCount }: OnboardingBa
 
   return (
     <div className="finding-card border-l-scalpel p-5">
-      <h2 className="text-fg-bright font-bold text-lg mb-2">
+      <h2 className="text-fg-bright font-semibold text-lg mb-2">
         Your bets are ready
       </h2>
       <p className="text-fg-muted text-sm mb-3">

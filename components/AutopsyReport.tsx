@@ -636,7 +636,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* vs. Last Report */}
       {previousSnapshot && (
         <div className="card p-6">
-          <h2 className="font-bold text-lg mb-3">
+          <h2 className="font-semibold text-lg mb-3">
             vs. Last Report <span className="text-fg-muted text-sm font-normal">({new Date(previousSnapshot.snapshot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -840,7 +840,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
       {!isPartialReport && strategic_leaks.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-bold text-2xl">Strategic Leaks</h2>
+          <h2 className="font-bold text-2xl tracking-tight">Strategic Leaks</h2>
           <p className="text-fg-dim text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume. You&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
@@ -882,7 +882,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Emotion Score */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
+          <h2 className="font-semibold text-xl">Emotion Score <span className="text-fg-dim text-xs font-normal">(how much emotions drive your bets)</span></h2>
           <span className={`font-mono text-2xl font-bold ${
             emotionScore <= 25 ? 'text-win' :
             emotionScore <= 50 ? 'text-caution' :
@@ -981,7 +981,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
       {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-4">
-          <h2 className="font-bold text-2xl">Behavioral Patterns</h2>
+          <h2 className="font-bold text-2xl tracking-tight">Behavioral Patterns</h2>
           <p className="text-fg-dim text-xs italic -mt-2">Recurring habits we found in your betting. Some help you, some hurt you.</p>
           <div className="grid gap-3">
             {behavioral_patterns.map((pat, i) => (
@@ -1021,7 +1021,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* P&L Over Time Chart */}
       {hasBets && pnlData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">
+          <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
             Profit/Loss Over Time
           </h2>
@@ -1044,7 +1044,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Stake Size Timeline */}
       {hasBets && stakeData.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">
+          <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
             Stake Size Timeline
           </h2>
@@ -1074,7 +1074,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ROI by Category Chart */}
       {hasBets && roiData.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">ROI by Category</h2>
+          <h2 className="font-semibold text-xl mb-1">ROI by Category</h2>
           <p className="text-fg-dim text-xs italic mb-3">See where your edge lives and where it doesn&apos;t.</p>
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -1110,7 +1110,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Timing Patterns */}
       {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
-          <h2 className="font-bold text-2xl">Timing Patterns</h2>
+          <h2 className="font-bold text-2xl tracking-tight">Timing Patterns</h2>
           <p className="text-fg-dim text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
 
           {/* Day of Week Chart */}
@@ -1253,7 +1253,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Odds Intelligence */}
       {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
-          <h2 className="font-bold text-2xl">Odds Intelligence</h2>
+          <h2 className="font-bold text-2xl tracking-tight">Odds Intelligence</h2>
           <p className="text-fg-dim text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
 
           {/* Odds Bucket Table */}
@@ -1408,7 +1408,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {analysis.dfs_mode && analysis.dfs_metrics && analysis.dfs_metrics.pickCountDistribution.length > 0 && (
         <div className="card p-6">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="font-bold text-xl">Performance by Pick Count</h2>
+            <h2 className="font-semibold text-xl">Performance by Pick Count</h2>
             <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">DFS</span>
           </div>
           <p className="text-fg-dim text-xs italic mb-4">Fewer picks = higher win rate. Where&apos;s your sweet spot?</p>
@@ -1446,7 +1446,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* DFS Power vs Flex */}
       {analysis.dfs_mode && analysis.dfs_metrics?.powerVsFlex && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">Power Play vs Flex Play</h2>
+          <h2 className="font-semibold text-xl mb-1">Power Play vs Flex Play</h2>
           <p className="text-fg-dim text-xs italic mb-4">Power is all-or-nothing. Flex pays partial. Which is actually working?</p>
           <div className="grid grid-cols-2 gap-4">
             <div className={`rounded-sm p-4 ${analysis.dfs_metrics.powerVsFlex.powerROI >= analysis.dfs_metrics.powerVsFlex.flexROI ? 'bg-win/5 border border-win/20' : 'bg-loss/5 border border-loss/20'}`}>
@@ -1472,7 +1472,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* DFS Player Concentration */}
       {analysis.dfs_mode && analysis.dfs_metrics && analysis.dfs_metrics.playerConcentration.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-bold text-xl mb-1">Player Concentration</h2>
+          <h2 className="font-semibold text-xl mb-1">Player Concentration</h2>
           <p className="text-fg-dim text-xs italic mb-4">Are you over-exposed to specific players?</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

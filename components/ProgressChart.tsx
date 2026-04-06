@@ -14,7 +14,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
 
   return (
     <div className="card p-6">
-      <h2 className="font-bold text-xl mb-4">Progress Over Time</h2>
+      <h2 className="font-semibold text-xl mb-4">Progress Over Time</h2>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>

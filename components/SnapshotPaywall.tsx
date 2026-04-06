@@ -53,7 +53,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h3 className="font-bold text-lg text-fg-bright mb-2">Full Report Locked</h3>
+          <h3 className="font-semibold text-lg text-fg-bright mb-2">Full Report Locked</h3>
           {totalFindings > 0 ? (
             <>
               <p className="text-fg-muted text-sm mb-1">

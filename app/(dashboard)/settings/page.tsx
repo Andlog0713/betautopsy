@@ -151,11 +151,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-2xl">
-      <h1 className="font-bold text-3xl">Settings</h1>
+      <h1 className="font-bold text-3xl tracking-tight">Settings</h1>
 
       {/* ── Profile ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Profile</h2>
+        <h2 className="font-semibold text-xl">Profile</h2>
         <div className="space-y-4">
           <div>
             <label className="label">Display Name</label>
@@ -207,7 +207,7 @@ export default function SettingsPage() {
 
       {/* ── Bankroll ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Bankroll</h2>
+        <h2 className="font-semibold text-xl">Bankroll</h2>
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-xs">
             <label className="label">Total Bankroll</label>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
 
       {/* ── Subscription ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Subscription</h2>
+        <h2 className="font-semibold text-xl">Subscription</h2>
         <div className="flex items-center gap-3">
           <span className={`text-sm font-medium px-3 py-1 rounded-sm capitalize ${tierBadge[tier]}`}>
             {tier}
@@ -309,7 +309,7 @@ export default function SettingsPage() {
 
       {/* ── Email Preferences ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Email Preferences</h2>
+        <h2 className="font-semibold text-xl">Email Preferences</h2>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-fg-bright text-sm font-medium">Weekly Digest</p>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
 
       {/* ── Data ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Data</h2>
+        <h2 className="font-semibold text-xl">Data</h2>
         <div className="flex gap-4 text-sm text-fg-muted">
           <span><span className="font-mono text-fg-bright">{betCount}</span> bets</span>
           <span><span className="font-mono text-fg-bright">{reportCount}</span> reports</span>
@@ -398,7 +398,7 @@ export default function SettingsPage() {
 
       {/* ── Account ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-xl">Account</h2>
+        <h2 className="font-semibold text-xl">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
             {passwordResetSent ? '✓ Reset email sent' : 'Change Password'}

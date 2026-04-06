@@ -319,7 +319,7 @@ export default function QuizClient() {
         {revealSlide === 1 && (
           <div className="text-center animate-fade-in" style={{ color: emotionColor }}>
             <p className="text-fg-muted text-lg mb-4">Your emotional betting level is...</p>
-            <p className="text-4xl md:text-5xl font-bold" style={{ color: emotionColor }}>{emotionWord}</p>
+            <p className="text-4xl md:text-5xl font-bold tracking-tight" style={{ color: emotionColor }}>{emotionWord}</p>
           </div>
         )}
 
@@ -327,7 +327,7 @@ export default function QuizClient() {
         {revealSlide === 2 && (
           <div className="text-center animate-fade-in">
             <p className="text-fg-muted text-base mb-2">We detected</p>
-            <p className="text-6xl md:text-7xl font-bold text-fg-bright reveal-bounce">{biasCount}</p>
+            <p className="text-6xl md:text-7xl font-bold tracking-tight text-fg-bright reveal-bounce">{biasCount}</p>
             <p className="text-fg-muted text-base mt-2">behavioral bias{biasCount !== 1 ? 'es' : ''}</p>
           </div>
         )}
@@ -336,7 +336,7 @@ export default function QuizClient() {
         {revealSlide === 3 && (
           <div className="text-center">
             <div className="text-7xl md:text-8xl reveal-bounce mb-4">{result.archetype.emoji}</div>
-            <h1 className="font-extrabold text-4xl md:text-5xl mb-3 animate-fade-in-d2" style={{ color: result.archetype.color }}>
+            <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-3 animate-fade-in-d2" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm max-w-sm mx-auto animate-fade-in-d3">{result.archetype.description}</p>
@@ -361,7 +361,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="font-mono text-[10px] text-fg-dim tracking-widest mb-2">YOUR BET DNA</p>
-            <h2 className="font-extrabold text-3xl mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
+            <h2 className="font-extrabold text-3xl tracking-tight mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
             <p className="text-fg-muted text-sm mb-4">{result.archetype.description}</p>
             <div className={`inline-block border-2 px-4 py-1 -rotate-3 mb-4`} style={{ borderColor: `${gradeColor(result.grade)}30` }}>
               <span className="font-mono text-4xl font-bold" style={{ color: gradeColor(result.grade) }}>{result.grade}</span>
@@ -440,7 +440,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="text-fg-muted text-xs uppercase tracking-widest mb-2 font-mono">Your Bet DNA</p>
-            <h1 className="font-extrabold text-3xl md:text-4xl mb-3" style={{ color: result.archetype.color }}>
+            <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>

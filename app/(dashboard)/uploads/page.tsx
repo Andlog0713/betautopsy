@@ -116,7 +116,7 @@ export default function UploadsPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-3xl mb-1">Uploads</h1>
+          <h1 className="font-bold text-3xl tracking-tight mb-1">Uploads</h1>
           <p className="text-fg-muted text-sm">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
         </div>
         <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import TikTokPixel from '@/components/TikTokPixel';
+import NextTopLoader from 'nextjs-toploader';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -78,6 +79,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
@@ -92,6 +96,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /></>}
         {children}
       </body>

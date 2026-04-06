@@ -27,7 +27,7 @@ export default function BlogIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div>
-        <h1 className="font-bold text-4xl mb-3">The Post-Mortem</h1>
+        <h1 className="font-bold text-4xl tracking-tight mb-3">The Post-Mortem</h1>
         <p className="text-fg-muted">
           The behavioral side of sports betting. Patterns, biases, and what they cost you.
         </p>
@@ -47,7 +47,7 @@ export default function BlogIndexPage() {
                 </span>
               ))}
             </div>
-            <h2 className="font-bold text-xl group-hover:text-scalpel transition-colors mb-2">
+            <h2 className="font-semibold text-xl group-hover:text-scalpel transition-colors mb-2">
               {post.title}
             </h2>
             <p className="text-fg-muted text-sm mb-3">{post.description}</p>
@@ -62,7 +62,7 @@ export default function BlogIndexPage() {
 
       <div className="finding-card border-l-scalpel p-8 text-center">
         <span className="text-3xl mb-3 block">🧬</span>
-        <h3 className="font-bold text-xl mb-2">Curious about your own biases?</h3>
+        <h3 className="font-semibold text-xl mb-2">Curious about your own biases?</h3>
         <p className="text-fg-muted text-sm mb-4">
           Take the free 2-minute Bet DNA quiz — no signup, no data needed.
         </p>

@@ -142,7 +142,7 @@ export default function ProductWalkthrough() {
               <div className="w-10 h-10 rounded-sm bg-scalpel/[0.12] flex items-center justify-center shrink-0">
                 <span className="font-mono text-sm font-bold text-scalpel">{step.num}</span>
               </div>
-              <h3 className="font-bold text-lg text-fg-bright">{step.title}</h3>
+              <h3 className="font-semibold text-lg text-fg-bright">{step.title}</h3>
               {i < 2 && (
                 <div className="hidden md:block flex-1 h-px bg-white/[0.06] ml-2" />
               )}

@@ -6,12 +6,12 @@ export default function PrivacyPolicyPage() {
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
-        <h1 className="font-bold text-4xl mb-3">Privacy Policy</h1>
+        <h1 className="font-bold text-4xl tracking-tight mb-3">Privacy Policy</h1>
         <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">1. Who we are</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">1. Who we are</h2>
             <p>
               BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;) operates the website{' '}
               <span className="text-[#F0F2F5]">betautopsy.com</span> and provides sports betting
@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">2. Information we collect</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">2. Information we collect</h2>
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-[#F0F2F5] mb-1">Account information</h3>
@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">3. How we use your information</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">3. How we use your information</h2>
             <ul className="list-disc list-inside space-y-2">
               <li>To provide, maintain, and improve our analytics services</li>
               <li>To generate personalized betting reports and behavioral insights</li>
@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">4. How we protect your data</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">4. How we protect your data</h2>
             <ul className="list-disc list-inside space-y-2">
               <li>All data is transmitted over HTTPS (TLS encryption)</li>
               <li>Passwords are hashed using industry-standard algorithms</li>
@@ -79,7 +79,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">5. Data sharing</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">5. Data sharing</h2>
             <p className="mb-3">
               We do <span className="text-[#F0F2F5] font-medium">not</span> sell, rent, or trade
               your personal information. We only share data with:
@@ -98,7 +98,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">6. Shared reports</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">6. Shared reports</h2>
             <p>
               If you choose to share a report, a public link is created that anyone with the URL
               can view. Shared reports display your betting analytics but do not reveal your email,
@@ -107,14 +107,14 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">7. Cookies</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">7. Cookies</h2>
             <p>
               We use essential cookies for authentication session management (via Supabase). Google Analytics may set cookies for anonymized usage tracking. We do not use advertising or third-party tracking cookies. You can disable non-essential cookies in your browser settings.
             </p>
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">8. Your rights</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">8. Your rights</h2>
             <p className="mb-3">You have the right to:</p>
             <ul className="list-disc list-inside space-y-2">
               <li>Access and download your data</li>
@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">9. Data retention</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">9. Data retention</h2>
             <p>
               We retain your data for as long as your account is active. If you delete your
               account, all personal data and betting history is permanently removed within 30 days.
@@ -141,7 +141,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">10. California residents (CCPA)</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">10. California residents (CCPA)</h2>
             <p>
               If you are a California resident, you have the right to know what personal information we collect, request deletion, and opt out of the sale of personal information. We do not sell personal information. To exercise your rights, contact{' '}
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">support@betautopsy.com</a>.
@@ -149,7 +149,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">11. Age requirement</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">11. Age requirement</h2>
             <p>
               BetAutopsy is intended for users who are 21 years of age or older. We do not
               knowingly collect information from anyone under 21. If we learn we have collected data from someone under 21, we will delete it promptly.
@@ -157,7 +157,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">12. Changes to this policy</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">12. Changes to this policy</h2>
             <p>
               We may update this policy from time to time. If we make significant changes, we will
               notify you by email or by posting a notice on the site. Continued use of BetAutopsy
@@ -166,7 +166,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-lg text-[#F0F2F5] mb-3">13. Contact</h2>
+            <h2 className="font-semibold text-lg text-[#F0F2F5] mb-3">13. Contact</h2>
             <p>
               Questions or concerns? Reach us at{' '}
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">

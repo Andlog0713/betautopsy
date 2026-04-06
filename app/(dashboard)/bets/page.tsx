@@ -197,7 +197,7 @@ export default function BetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative">
           <div className="absolute -top-1 right-0"><EyeToggle /></div>
-          <h1 className="font-bold text-3xl mb-1">Bet History</h1>
+          <h1 className="font-bold text-3xl tracking-tight mb-1">Bet History</h1>
           <p className="text-fg-muted text-sm">{bets.length} total bets</p>
         </div>
         <button
@@ -515,7 +515,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
           <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg">Clear All Bets</h3>
+            <h3 className="font-semibold text-lg">Clear All Bets</h3>
             <p className="text-sm text-fg-bright">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of
               your bets and cannot be undone. Your autopsy reports will be kept but
@@ -646,7 +646,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
 
   return (
     <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      <h3 className="font-bold text-lg">Add Bet</h3>
+      <h3 className="font-semibold text-lg">Add Bet</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <label className="label">Date</label>

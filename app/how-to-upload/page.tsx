@@ -67,7 +67,7 @@ export default function HowToUploadPage() {
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
-        <h1 className="font-bold text-4xl mb-3">How to get your betting history</h1>
+        <h1 className="font-bold text-4xl tracking-tight mb-3">How to get your betting history</h1>
         <p className="text-fg-muted text-lg mb-12">
           Four ways to get your data in, from easiest to most involved.
         </p>
@@ -313,7 +313,7 @@ export default function HowToUploadPage() {
 
         {/* Still stuck */}
         <div className="card p-6 text-center space-y-3">
-          <h3 className="font-bold text-lg">Still stuck?</h3>
+          <h3 className="font-semibold text-lg">Still stuck?</h3>
           <p className="text-fg-muted text-sm">
             Can&apos;t figure out how to get your data? We&apos;re happy to help.
           </p>

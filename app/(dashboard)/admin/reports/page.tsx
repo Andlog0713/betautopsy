@@ -111,7 +111,7 @@ export default function AdminReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">All User Reports</h1>
+          <h1 className="text-2xl font-bold tracking-tight">All User Reports</h1>
           <p className="text-ink-600 text-sm mt-1">
             {total} total report{total !== 1 ? 's' : ''} across all users
           </p>

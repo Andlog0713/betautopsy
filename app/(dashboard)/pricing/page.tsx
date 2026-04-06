@@ -85,7 +85,7 @@ export default function PricingPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
-        <h1 className="font-bold text-3xl mb-2">Pricing</h1>
+        <h1 className="font-bold text-3xl tracking-tight mb-2">Pricing</h1>
         <p className="text-fg-muted">
           Free snapshots forever. Pay only when you want the full analysis.
         </p>
