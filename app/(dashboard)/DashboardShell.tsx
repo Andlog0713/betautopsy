@@ -90,22 +90,22 @@ export default function DashboardShell({
       {/* ── Mobile header ── */}
       <header className="md:hidden border-b border-border-subtle bg-base sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={mobileNavOpen}
+              className="text-fg-dim hover:text-fg p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+            >
+              {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
             <Link href="/dashboard">
               <Logo size="xs" variant="horizontal" theme="dark" />
             </Link>
-            {(profile?.streak_count ?? 0) > 0 && (
-              <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5"><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
-            )}
           </div>
-          <button
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
-            aria-expanded={mobileNavOpen}
-            className="text-fg-dim hover:text-fg p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
-          >
-            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {(profile?.streak_count ?? 0) > 0 && (
+            <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5"><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
+          )}
         </div>
       </header>
 
