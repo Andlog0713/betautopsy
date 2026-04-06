@@ -8,16 +8,16 @@
   -->
   <g transform="translate(191, 115)">
     <!-- Left arm: M padX,padY Q padX+w*0.15,padY+armEnd*0.5 cx,cy -->
-    <path d="M15,15 Q49.2,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M15,15 Q49.2,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/>
     <!-- Right arm: M viewW-padX,padY Q viewW-padX-w*0.15,padY+armEnd*0.5 cx,cy -->
-    <path d="M243,15 Q208.8,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M243,15 Q208.8,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/>
     <!-- Stem: cx,cy to cx,viewH-padY -->
-    <line x1="129" y1="110" x2="129" y2="395" stroke="#00C9A7" stroke-width="10" stroke-linecap="round"/>
+    <line x1="129" y1="110" x2="129" y2="395" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
     <!-- Junction dot -->
     <circle cx="129" cy="110" r="13" fill="#E8453C"/>
     <!-- Endpoint dots -->
-    <circle cx="15" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
-    <circle cx="243" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
-    <circle cx="129" cy="395" r="6" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="15" cy="15" r="6" fill="#00FFCB" opacity="0.45"/>
+    <circle cx="243" cy="15" r="6" fill="#00FFCB" opacity="0.45"/>
+    <circle cx="129" cy="395" r="6" fill="#00FFCB" opacity="0.45"/>
   </g>
 </svg>
