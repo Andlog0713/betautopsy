@@ -493,6 +493,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {!readOnly && <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
 
+      {/* Share button at top of report */}
+      {!readOnly && !isPartialReport && reportId && (
+        <div className="flex justify-end mb-2">
+          <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+        </div>
+      )}
+
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
       <ChapterHeader number={1} title="Summary" subtitle="The executive briefing" />

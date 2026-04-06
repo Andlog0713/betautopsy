@@ -3,8 +3,12 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { toPng } from 'html-to-image';
 import ShareCard, { type ShareCardData } from './ShareCard';
-import ShareCardStories from './ShareCardStories';
-import { generateRoastStats } from '@/lib/share-helpers';
+import {
+  StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA,
+  SLIDE_LABELS,
+  type StorySlideProps,
+} from './ShareCardStories';
+import { generateRoastStats, deriveBehavioralInsight, derivePatternComparison, getArchetypeRoast } from '@/lib/share-helpers';
 
 export default function ShareModal({
   data,
@@ -16,36 +20,62 @@ export default function ShareModal({
   onClose: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const storiesRef = useRef<HTMLDivElement>(null);
+  const slideRefs = [
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+  ];
   const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
+  const [activeSlide, setActiveSlide] = useState(0);
 
+  // Derived data
   const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
+  const insight = useMemo(() => deriveBehavioralInsight(data.bets, data.emotion_score), [data.bets, data.emotion_score]);
+  const comparison = useMemo(() => derivePatternComparison(data.bets), [data.bets]);
+  const roastLine = useMemo(() => getArchetypeRoast(data.archetype?.name ?? 'The Grinder'), [data.archetype]);
+
+  const slideProps: StorySlideProps = { data, insight, comparison, roastLine };
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
   async function handleDownload() {
-    const ref = format === 'stories' ? storiesRef : cardRef;
-    if (!ref.current) return;
     setDownloading(true);
     try {
-      const dataUrl = await toPng(ref.current, { pixelRatio: format === 'stories' ? 1 : 2 });
-      const link = document.createElement('a');
-      link.download = `betautopsy-${data.grade.toLowerCase()}-${format}-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      if (format === 'card') {
+        if (!cardRef.current) return;
+        const dataUrl = await toPng(cardRef.current, { pixelRatio: 1 });
+        downloadFile(dataUrl, `betautopsy-card-${Date.now()}.png`);
+      } else {
+        const ref = slideRefs[activeSlide];
+        if (!ref.current) return;
+        const dataUrl = await toPng(ref.current, { pixelRatio: 1 });
+        downloadFile(dataUrl, `betautopsy-${SLIDE_LABELS[activeSlide].toLowerCase()}-${Date.now()}.png`);
+      }
     } catch (err) {
       console.error('Download failed:', err);
     }
     setDownloading(false);
+  }
+
+  function downloadFile(dataUrl: string, filename: string) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    link.click();
   }
 
   async function getShareUrl(): Promise<string | null> {
@@ -78,24 +108,20 @@ export default function ShareModal({
 
   async function handleShareTwitter() {
     const url = await getShareUrl();
-    let text = `My Bet DNA: ${data.archetype?.name ?? data.grade}`;
-    // Add a roast stat to the tweet if available
-    if (roastStats.length > 0) {
-      text += ` | ${roastStats[0].text}`;
-    } else {
-      text += ` | Emotion Score: ${data.emotion_score}/100 | ROI: ${data.roi_percent >= 0 ? '+' : ''}${data.roi_percent.toFixed(1)}%`;
-    }
-    text += ` | What's yours?`;
+    const archName = data.archetype?.name ?? data.grade;
+    const text = `I'm "${archName}" — ${roastLine} | What's your betting personality?`;
     const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url || 'https://betautopsy.com/quiz')}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   }
+
+  const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA];
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Share report"
-      className="fixed inset-0 z-50 bg-black/80"
+      className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center"
       style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
       onClick={onClose}
     >
@@ -103,93 +129,135 @@ export default function ShareModal({
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
         aria-label="Close share modal"
-        className="fixed top-4 right-4 z-[60] text-fg-muted hover:text-fg transition-colors text-2xl"
+        className="fixed top-4 right-4 z-[60] text-fg-muted hover:text-fg transition-colors"
       >
-        ✕
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
 
       <div
-        className="flex flex-col items-center gap-5 px-4 py-6 pb-12"
+        className="w-full max-w-lg px-4 py-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Format toggle */}
-        <div className="flex gap-1 bg-base p-1 rounded-sm">
+        <div className="flex gap-1 bg-surface p-1 rounded-sm mb-4 w-fit mx-auto">
           <button
             onClick={() => setFormat('stories')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              format === 'stories'
-                ? 'bg-surface text-fg-bright shadow-sm'
-                : 'text-fg-muted hover:text-fg-muted'
+            className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+              format === 'stories' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
             }`}
           >
             Stories
           </button>
           <button
             onClick={() => setFormat('card')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              format === 'card'
-                ? 'bg-surface text-fg-bright shadow-sm'
-                : 'text-fg-muted hover:text-fg-muted'
+            className={`px-4 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+              format === 'card' ? 'bg-surface-raised text-fg-bright' : 'text-fg-muted hover:text-fg'
             }`}
           >
             Card
           </button>
         </div>
 
-        {/* Card — scaled to fit screen */}
-        <div style={{
-          transform: format === 'stories' ? 'scale(var(--stories-scale, 0.3))' : 'scale(var(--card-scale, 1))',
-          transformOrigin: 'top center',
-          height: format === 'stories' ? `calc(1920px * var(--stories-scale, 0.3))` : 'auto',
-        }}>
-          <style>{`
-            :root {
-              --card-scale: 0.7;
-              --stories-scale: 0.25;
-            }
-            @media (min-width: 480px) {
-              :root {
-                --card-scale: 0.85;
-                --stories-scale: 0.32;
-              }
-            }
-            @media (min-width: 640px) {
-              :root {
-                --card-scale: 1;
-                --stories-scale: 0.38;
-              }
-            }
-          `}</style>
+        {/* Slide picker thumbnails (stories only) */}
+        {format === 'stories' && (
+          <div className="flex gap-2 justify-center mb-4">
+            {SLIDE_LABELS.map((label, i) => (
+              <button
+                key={label}
+                onClick={() => setActiveSlide(i)}
+                className={`px-3 py-1.5 rounded-sm text-xs font-mono transition-colors ${
+                  activeSlide === i
+                    ? 'bg-scalpel text-base'
+                    : 'bg-surface border border-white/[0.06] text-fg-muted hover:text-fg'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Preview — scaled to fit */}
+        <div className="flex justify-center mb-5">
           {format === 'stories' ? (
-            <ShareCardStories ref={storiesRef} data={data} roastStats={roastStats} />
+            <div style={{
+              width: '100%',
+              maxWidth: 270,
+              aspectRatio: '9/16',
+              overflow: 'hidden',
+              borderRadius: 4,
+            }}>
+              <div style={{
+                width: 1080,
+                height: 1920,
+                transform: 'scale(0.25)',
+                transformOrigin: 'top left',
+              }}>
+                {(() => {
+                  const Comp = SlideComponents[activeSlide];
+                  return <Comp {...slideProps} ref={null} />;
+                })()}
+              </div>
+            </div>
           ) : (
-            <ShareCard ref={cardRef} data={data} roastStats={roastStats} />
+            <div style={{
+              width: '100%',
+              maxWidth: 400,
+              aspectRatio: '1/1',
+              overflow: 'hidden',
+              borderRadius: 4,
+            }}>
+              <div style={{
+                width: 1080,
+                height: 1080,
+                transform: 'scale(0.37)',
+                transformOrigin: 'top left',
+              }}>
+                <ShareCard ref={null} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+              </div>
+            </div>
           )}
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-3 justify-center w-full max-w-sm">
+        <div className="space-y-2">
+          {/* Download image */}
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="btn-primary text-sm"
+            className="btn-primary w-full text-sm"
           >
-            {downloading ? 'Rendering...' : format === 'stories' ? 'Download for Stories' : 'Download Image'}
+            {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]} Slide` : 'Download Card Image'}
           </button>
-          <button
-            onClick={handleCopyLink}
-            className="btn-secondary text-sm"
-          >
-            {linkCopied ? '✓ Copied' : 'Copy Report Link'}
-          </button>
-          <button
-            onClick={handleShareTwitter}
-            className="btn-secondary text-sm flex items-center gap-1.5"
-          >
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            Share on X
-          </button>
+
+          {/* Share report actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopyLink}
+              className="btn-secondary flex-1 text-sm"
+            >
+              {linkCopied ? 'Copied' : 'Copy Report Link'}
+            </button>
+            <button
+              onClick={handleShareTwitter}
+              className="btn-secondary flex-1 text-sm flex items-center justify-center gap-1.5"
+            >
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Share on X
+            </button>
+          </div>
+          <p className="text-fg-dim text-[10px] font-mono text-center mt-1">
+            Report link and X share link to your full interactive report
+          </p>
         </div>
+      </div>
+
+      {/* Off-screen renders for toPng capture */}
+      <div style={{ position: 'absolute', left: -9999, top: 0, opacity: 0, pointerEvents: 'none' }}>
+        {SlideComponents.map((Comp, i) => (
+          <Comp key={i} ref={slideRefs[i]} {...slideProps} />
+        ))}
+        <ShareCard ref={cardRef} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
       </div>
     </div>
   );
