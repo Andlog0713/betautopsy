@@ -24,9 +24,9 @@ module.exports = {
         },
         // Brand
         scalpel: {
-          DEFAULT: '#00C9A7',
-          dim: '#007D66',
-          muted: 'rgba(0,201,167,0.12)',
+          DEFAULT: '#00FFCB',
+          dim: '#00B38E',
+          muted: 'rgba(0,255,203,0.12)',
         },
         bleed: {
           DEFAULT: '#E8453C',
@@ -45,7 +45,7 @@ module.exports = {
           600: '#A0A8B4',
           500: '#B0B8C4',
         },
-        flame: { 500: '#00C9A7', 600: '#007D66' },
+        flame: { 500: '#00FFCB', 600: '#00B38E' },
         mint: { 500: '#3FB950' },
       },
       fontFamily: {
