@@ -5,11 +5,11 @@ import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import {
-  StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA,
+  StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
   SLIDE_LABELS,
   type StorySlideProps,
 } from './ShareCardStories';
-import { generateRoastStats, deriveBehavioralInsight, derivePatternComparison, getArchetypeRoast } from '@/lib/share-helpers';
+import { generateRoastStats, deriveBehavioralInsight, getArchetypeRoast } from '@/lib/share-helpers';
 
 export default function ShareModal({
   data,
@@ -36,11 +36,10 @@ export default function ShareModal({
 
   const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
   const insight = useMemo(() => deriveBehavioralInsight(data.bets, data.emotion_score), [data.bets, data.emotion_score]);
-  const comparison = useMemo(() => derivePatternComparison(data.bets), [data.bets]);
   const roastLine = useMemo(() => getArchetypeRoast(data.archetype?.name ?? 'The Grinder'), [data.archetype]);
 
-  const slideProps: StorySlideProps = { data, insight, comparison, roastLine };
-  const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA];
+  const slideProps: StorySlideProps = { data, insight, roastLine, roastStats };
+  const SlideComponents = [StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA];
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -100,14 +99,12 @@ export default function ShareModal({
     a.click();
   }
 
-  // Synchronous clipboard write — no async fetch, URL already pre-fetched
   function handleCopyLink() {
     const url = shareUrl || `${window.location.origin}/reports`;
     navigator.clipboard.writeText(url).then(() => {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     }).catch(() => {
-      // Fallback for browsers that block clipboard
       const input = document.createElement('input');
       input.value = url;
       document.body.appendChild(input);
@@ -150,7 +147,7 @@ export default function ShareModal({
               </button>
             </div>
 
-            {/* ── Section 1: Share your full report ── */}
+            {/* Section 1: Share full report */}
             <div className="bg-surface rounded-sm p-4 mb-5">
               <p className="text-sm text-fg-bright font-medium mb-1">Share your full interactive report</p>
               <p className="text-xs text-fg-muted mb-3">Anyone with the link can view your complete autopsy report.</p>
@@ -175,11 +172,10 @@ export default function ShareModal({
               </div>
             </div>
 
-            {/* ── Section 2: Download share card image ── */}
+            {/* Section 2: Download share card */}
             <div className="mb-3">
               <p className="text-xs text-fg-muted mb-3">Or download a share card image for social media:</p>
 
-              {/* Format toggle */}
               <div className="flex gap-1 bg-surface p-1 rounded-sm mb-3">
                 <button
                   onClick={() => setFormat('stories')}
@@ -199,7 +195,6 @@ export default function ShareModal({
                 </button>
               </div>
 
-              {/* Slide picker (stories only) */}
               {format === 'stories' && (
                 <div className="grid grid-cols-4 gap-1 mb-3">
                   {SLIDE_LABELS.map((label, i) => (
@@ -218,7 +213,6 @@ export default function ShareModal({
                 </div>
               )}
 
-              {/* Preview */}
               <div className="bg-surface rounded-sm overflow-hidden mb-3">
                 {format === 'stories' ? (
                   <div style={{ aspectRatio: '9/16', overflow: 'hidden' }}>
@@ -231,13 +225,12 @@ export default function ShareModal({
                   <div style={{ aspectRatio: '1/1', overflow: 'hidden' }}>
                     <div style={{ width: 1080, height: 1080, transform: 'scale(var(--card-preview-scale))', transformOrigin: 'top left' }}>
                       <style>{`:root { --card-preview-scale: 0.33; } @media (min-width: 448px) { :root { --card-preview-scale: 0.38; } }`}</style>
-                      <ShareCard ref={null} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+                      <ShareCard ref={null} data={data} insight={insight} roastLine={roastLine} roastStats={roastStats} />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Download */}
               <button onClick={handleDownload} disabled={downloading} className="btn-primary w-full">
                 {downloading ? 'Rendering...' : format === 'stories' ? `Download ${SLIDE_LABELS[activeSlide]}` : 'Download Card'}
               </button>
@@ -252,7 +245,7 @@ export default function ShareModal({
           {SlideComponents.map((Comp, i) => (
             <Comp key={i} ref={slideRefs[i]} {...slideProps} />
           ))}
-          <ShareCard ref={cardRef} data={data} insight={insight} comparison={comparison} roastLine={roastLine} />
+          <ShareCard ref={cardRef} data={data} insight={insight} roastLine={roastLine} roastStats={roastStats} />
         </div>
       </div>
     </>

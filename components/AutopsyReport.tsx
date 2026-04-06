@@ -2447,6 +2447,30 @@ function ShareSection({ analysis, summary, reportId, bets }: { analysis: Autopsy
 
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
 
+  // Build behavioral split from bet annotations
+  const annotations = analysis.bet_annotations?.distribution;
+  let disciplinedRecord: { bets: number; roi: number } | undefined;
+  let emotionalRecord: { bets: number; roi: number } | undefined;
+  if (annotations) {
+    const disc = annotations['disciplined' as keyof typeof annotations] as { count?: number; roi?: number } | undefined;
+    if (disc?.count && disc.count > 0) {
+      disciplinedRecord = { bets: disc.count, roi: Math.round((disc.roi ?? 0) * 10) / 10 };
+    }
+    const emotionalKeys = ['emotional', 'chasing', 'impulsive'] as const;
+    let emoBets = 0, emoStaked = 0, emoProfit = 0;
+    for (const key of emotionalKeys) {
+      const bucket = annotations[key as keyof typeof annotations] as { count?: number; totalStaked?: number; totalProfit?: number } | undefined;
+      if (bucket?.count) {
+        emoBets += bucket.count;
+        emoStaked += bucket.totalStaked ?? 0;
+        emoProfit += bucket.totalProfit ?? 0;
+      }
+    }
+    if (emoBets > 0 && emoStaked > 0) {
+      emotionalRecord = { bets: emoBets, roi: Math.round((emoProfit / emoStaked) * 1000) / 10 };
+    }
+  }
+
   const shareData: ShareCardData = {
     grade: summary.overall_grade,
     emotion_score: emotionScore,
@@ -2462,6 +2486,8 @@ function ShareSection({ analysis, summary, reportId, bets }: { analysis: Autopsy
     discipline_score: analysis.discipline_score?.total ?? null,
     date_range: summary.date_range,
     bets,
+    disciplinedRecord,
+    emotionalRecord,
   };
 
   return (
