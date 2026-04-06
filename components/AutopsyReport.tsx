@@ -485,9 +485,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Subject Classification — Bet DNA (purple left border like mockup) */}
       {analysis.betting_archetype && (
-        <div className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500 mb-5">
+        <div className="bg-surface-1 border border-border-subtle rounded-xl p-5 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
-          <h2 className="font-bold text-xl text-purple-400 mb-1">{analysis.betting_archetype.name}</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+            <h2 className="font-bold text-xl text-purple-400">{analysis.betting_archetype.name}</h2>
+          </div>
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p></div>
         </div>
       )}
@@ -712,7 +715,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {!isPartialReport && totalRecoverable > 0 && (
         <div
-          className="border border-border-subtle p-4 border-l-[3px] border-l-bleed cursor-pointer hover:bg-white/[0.01] transition-colors"
+          className="bg-surface-1 border border-border-subtle rounded-xl p-5 cursor-pointer hover:bg-white/[0.01] transition-colors"
           onClick={() => {
             const el = document.getElementById('chapter-cost');
             if (el) {
@@ -724,7 +727,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex items-center justify-between">
             <div>
               <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">TOTAL RECOVERABLE</p>
-              <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-bleed shrink-0" />
+                <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
+              </div>
               <p className="text-[11px] text-fg-dim mt-1">Estimated money left on the table from all detected leaks and biases. Some leaks may overlap.</p>
             </div>
             <span className="font-mono text-[10px] text-fg-dim">See details →</span>
@@ -779,9 +785,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {biases_detected.map((bias, i) => {
               const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
               return (
-              <div key={i} className={`border border-border-subtle p-[18px] border-l-[3px] ${sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win'}`}>
+              <div key={i} className="bg-surface-1 border border-border-subtle rounded-xl p-5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2.5">
+                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${sevColor === 'bleed' ? 'bg-bleed' : sevColor === 'caution' ? 'bg-caution' : 'bg-win'}`} />
                     <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
                     <span className="text-[14px] font-semibold text-fg-bright">{bias.bias_name}</span>
                   </div>
@@ -817,9 +824,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-3">
           <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
           {analysis.sport_specific_findings.map((finding) => (
-            <div key={finding.id} className={`finding-card ${finding.severity === 'high' ? 'border-l-bleed' : finding.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel'}`}>
+            <div key={finding.id} className="bg-surface-1 border border-border-subtle rounded-xl p-5">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
+                  <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${finding.severity === 'high' ? 'bg-bleed' : finding.severity === 'medium' ? 'bg-caution' : 'bg-scalpel'}`} />
                   <span className={`evidence-tag ${finding.severity === 'high' ? 'text-bleed border-bleed/30' : finding.severity === 'medium' ? 'text-caution border-caution/30' : 'text-scalpel border-scalpel/30'}`}>{finding.id}</span>
                   <span className="font-semibold text-sm text-fg-bright">{finding.name}</span>
                 </div>
@@ -893,7 +901,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {emotionScore}/100
           </span>
         </div>
-        <div className="w-full h-3 bg-base rounded-full overflow-hidden mb-3">
+        <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden mb-3">
           <div
             className={`h-full rounded-full transition-all duration-1000 ease-out ${emotionColor(emotionScore)}`}
             style={{ width: `${emotionScore}%` }}
@@ -916,7 +924,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <div key={key}>
                   <p className="text-fg-dim text-xs mb-1" title={hint}>{label}</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-base rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
                           val <= 5 ? 'bg-win' : val <= 12 ? 'bg-caution' : val <= 18 ? 'bg-orange-400' : 'bg-loss'
@@ -952,8 +960,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               {analysis.enhanced_tilt.risk_level} risk
             </span>
           </div>
-          <div className="finding-card border-l-caution mb-4 !p-3">
-            <p className="text-fg-muted text-sm">{analysis.enhanced_tilt.worst_trigger}</p>
+          <div className="bg-surface-1 border border-border-subtle rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-caution shrink-0" />
+              <p className="text-fg-muted text-sm">{analysis.enhanced_tilt.worst_trigger}</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
@@ -1586,7 +1597,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 {analysis.edge_profile.sharp_score}/100
               </span>
             </div>
-            <div className="w-full h-3 bg-base rounded-full overflow-hidden mb-3">
+            <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden mb-3">
               <div
                 className="h-full rounded-full bg-cyan-400 transition-all duration-1000 ease-out"
                 style={{ width: `${analysis.edge_profile.sharp_score}%` }}
@@ -1665,9 +1676,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="finding-card border-l-scalpel p-5">
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-5">
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                  <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
+                    <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  </div>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
                   <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
@@ -1745,7 +1759,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                                 {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
                               </span>
                             </div>
-                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${actualPct}%` }} />
                             </div>
                           </div>
@@ -1756,7 +1770,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                                 {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
                               </span>
                             </div>
-                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-loss'}`} style={{ width: `${hypoPct}%` }} />
                             </div>
                           </div>
@@ -1783,8 +1797,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-1.5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
           {recommendations.map((rec, i) => (
-            <div key={i} className="border border-border-subtle p-4 border-l-[3px] border-l-scalpel">
+            <div key={i} className="bg-surface-1 border border-border-subtle rounded-xl p-5">
               <div className="flex items-center gap-2.5 mb-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
                 <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i + 1).padStart(2, '0')}</span>
                 <span className="text-[14px] font-semibold text-fg-bright">{rec.title}</span>
               </div>
@@ -1819,8 +1834,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="space-y-3">
             {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
-              <div key={i} className="card border-l-4 border-l-scalpel bg-surface-1/60 p-5">
-                <p className="text-fg-bright font-medium mb-2">{rule.rule}</p>
+              <div key={i} className="bg-surface-1 border border-border-subtle rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
+                  <p className="text-fg-bright font-medium">{rule.rule}</p>
+                </div>
                 <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
                 <p className="text-fg-dim text-xs">Based on: {rule.based_on}</p>
               </div>
@@ -1845,7 +1863,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className="text-fg-muted text-xs">
             Measures how consistently you&apos;re building better betting habits: tracking, sizing, emotional control, and strategic focus.
           </p>
-          <div className="w-full h-3 bg-base rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-1000 ${
                 analysis.discipline_score.total >= 71 ? 'bg-win' :
@@ -1865,7 +1883,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div key={label}>
                 <p className="text-fg-dim text-xs mb-1" title={hint}>{label}</p>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-base rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${val >= 18 ? 'bg-win' : val >= 12 ? 'bg-caution' : val >= 6 ? 'bg-orange-400' : 'bg-loss'}`} style={{ width: `${(val / 25) * 100}%` }} />
                   </div>
                   <span className="font-mono text-xs text-fg-muted">{val}/25</span>
@@ -1969,7 +1987,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                                 {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
                               </span>
                             </div>
-                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${actualPct}%` }} />
                             </div>
                           </div>
@@ -1980,7 +1998,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                                 {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
                               </span>
                             </div>
-                            <div className="h-3 bg-base rounded-full overflow-hidden">
+                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-loss'}`} style={{ width: `${hypoPct}%` }} />
                             </div>
                           </div>
@@ -2001,9 +2019,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="finding-card border-l-scalpel p-5">
+                <div className="bg-surface-1 border border-border-subtle rounded-xl p-5">
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                  <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
+                    <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                  </div>
                   <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
                   <p className="text-fg-dim text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
@@ -2155,11 +2176,14 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 
       {/* Emotional cost callout */}
       {data.emotionalCost > 0 && (
-        <div className="finding-card border-l-scalpel !p-4">
-          <p className="text-fg-muted text-sm">
-            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${data.emotionalCost.toLocaleString()}</span>.
-            Disciplined bets returned <span className="font-mono text-win">{disciplinedROI.toFixed(1)}%</span> ROI.
-          </p>
+        <div className="finding-card">
+          <div className="flex items-start gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0 mt-1.5" />
+            <p className="text-fg-muted text-sm">
+              Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${data.emotionalCost.toLocaleString()}</span>.
+              Disciplined bets returned <span className="font-mono text-win">{disciplinedROI.toFixed(1)}%</span> ROI.
+            </p>
+          </div>
         </div>
       )}
 
@@ -2179,8 +2203,11 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 
       {/* Insight */}
       {data.insight && (
-        <div className="finding-card border-l-caution !p-3">
-          <p className="text-fg-muted text-sm">{data.insight}</p>
+        <div className="finding-card">
+          <div className="flex items-start gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-caution shrink-0 mt-1.5" />
+            <p className="text-fg-muted text-sm">{data.insight}</p>
+          </div>
         </div>
       )}
 
@@ -2338,8 +2365,11 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
 
       {/* Insight */}
       {sessionData.insight && (
-        <div className="finding-card border-l-scalpel !p-3">
-          <p className="text-fg-muted text-sm">{sessionData.insight}</p>
+        <div className="finding-card">
+          <div className="flex items-start gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0 mt-1.5" />
+            <p className="text-fg-muted text-sm">{sessionData.insight}</p>
+          </div>
         </div>
       )}
 

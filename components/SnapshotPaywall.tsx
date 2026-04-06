@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 
 interface SnapshotPaywallProps {
   reportId?: string;
@@ -40,39 +41,40 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
 
   return (
     <div className="relative">
-      {/* Blurred content preview */}
-      <div className="select-none pointer-events-none" style={{ filter: 'blur(6px)', opacity: 0.4 }}>
-        {children}
+      {/* Gradient fade instead of heavy blur */}
+      <div className="select-none pointer-events-none relative">
+        <div style={{ filter: 'blur(4px)', opacity: 0.3 }}>
+          {children}
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-base/60 to-base" />
       </div>
 
-      {/* Paywall overlay */}
+      {/* Paywall card */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-base/95 border border-border rounded-sm p-8 max-w-md text-center shadow-2xl">
-          <div className="w-12 h-12 rounded-full bg-scalpel/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-scalpel" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+        <div className="bg-surface-2 border border-border-subtle rounded-xl p-6 max-w-md text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-xl bg-scalpel/10 flex items-center justify-center mx-auto mb-4">
+            <Lock size={20} className="text-scalpel" />
           </div>
           <h3 className="font-semibold text-lg text-fg-bright mb-2">Full Report Locked</h3>
           {totalFindings > 0 ? (
             <>
               <p className="text-fg-muted text-sm mb-1">
-                We found <span className="text-fg-bright font-medium">{totalFindings} findings</span> in your betting data.
+                We found <span className="text-fg-bright font-medium font-mono">{totalFindings} findings</span> in your betting data.
               </p>
               {counts && (
-                <div className="flex flex-wrap justify-center gap-3 my-3">
+                <div className="flex flex-wrap justify-center gap-2 my-3">
                   {counts.total_biases > 1 && (
-                    <span className="text-xs font-mono bg-loss/10 text-loss px-2 py-1 rounded-sm">
+                    <span className="text-xs font-mono bg-loss/10 text-loss px-2 py-1 rounded-lg">
                       {counts.total_biases} biases
                     </span>
                   )}
                   {counts.leaks > 0 && (
-                    <span className="text-xs font-mono bg-caution/10 text-caution px-2 py-1 rounded-sm">
+                    <span className="text-xs font-mono bg-caution/10 text-caution px-2 py-1 rounded-lg">
                       {counts.leaks} strategic leaks
                     </span>
                   )}
                   {counts.patterns > 0 && (
-                    <span className="text-xs font-mono bg-scalpel/10 text-scalpel px-2 py-1 rounded-sm">
+                    <span className="text-xs font-mono bg-scalpel/10 text-scalpel px-2 py-1 rounded-lg">
                       {counts.patterns} behavioral patterns
                     </span>
                   )}
@@ -92,7 +94,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
             <button
               onClick={handleUnlock}
               disabled={loading || !reportId}
-              className="btn-primary w-full"
+              className="w-full bg-scalpel text-base text-sm font-semibold rounded-lg px-5 py-2.5 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Redirecting...' : isPro ? 'Unlock Report: $4.99' : 'Unlock Report: $9.99'}
             </button>

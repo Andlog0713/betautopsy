@@ -6,15 +6,12 @@ interface ChapterHeaderProps {
 
 export default function ChapterHeader({ number, title, subtitle }: ChapterHeaderProps) {
   return (
-    <div className="flex items-center gap-3 mb-5 pt-2">
-      <span className="font-mono text-[10px] text-fg-dim tracking-[2px] border border-border-subtle px-2 py-0.5">
-        CH.{String(number).padStart(2, '0')}
-      </span>
-      <div>
-        <h2 className="font-mono text-[11px] text-fg-bright tracking-[3px] uppercase">{title}</h2>
-        {subtitle && <p className="text-[11px] text-fg-dim mt-0.5">{subtitle}</p>}
-      </div>
-      <div className="flex-1 border-t border-border-subtle" />
+    <div className="py-8 mb-6 border-b border-border-subtle">
+      <p className="text-sm text-scalpel tracking-widest uppercase font-medium font-mono mb-2">
+        {String(number).padStart(2, '0')}
+      </p>
+      <h2 className="text-2xl font-semibold tracking-tight text-fg-bright">{title}</h2>
+      {subtitle && <p className="text-sm text-fg-muted mt-2">{subtitle}</p>}
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
   }
 
   return (
-    <div className="sticky top-0 z-30 bg-base/95 border-b border-border-subtle -mx-1 px-1 mb-6">
+    <div className="sticky top-0 z-30 bg-base/80 backdrop-blur-xl border-b border-border-subtle -mx-1 px-1 mb-6">
       <nav className="flex items-center gap-0 overflow-x-auto scrollbar-hide py-2">
         {CHAPTERS.map((ch, i) => {
           const isActive = activeChapter === ch.id;
@@ -57,22 +57,21 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
             <button
               key={ch.id}
               onClick={() => scrollTo(ch.id)}
-              className={`relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors ${
-                isActive ? 'text-scalpel' : 'text-fg-muted hover:text-fg'
+              className={`relative flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                isActive ? 'text-fg-bright' : 'text-fg-dim hover:text-fg-muted'
               }`}
             >
-              <span className={`font-mono text-[9px] ${isActive ? 'text-scalpel/60' : 'text-fg-muted/50'}`}>
+              <span className={`font-mono text-[9px] ${isActive ? 'text-scalpel/60' : 'text-fg-dim/50'}`}>
                 {String(i + 1).padStart(2, '0')}
               </span>
               <span className="hidden sm:inline">{ch.label}</span>
               <span className="sm:hidden">{ch.shortLabel}</span>
               {isActive && (
-                <span className="absolute bottom-0 left-3 right-3 h-[1.5px] bg-scalpel" />
+                <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-scalpel rounded-full" />
               )}
             </button>
           );
         })}
-        {/* Tools tab in nav */}
         {isPro && (
           <button
             onClick={() => {
@@ -80,7 +79,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
                 onSharpClick();
               }
             }}
-            className="relative flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] tracking-[2px] whitespace-nowrap transition-colors text-cyan-400/60 hover:text-cyan-400"
+            className="relative flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors text-cyan-400/60 hover:text-cyan-400"
           >
             <span className="font-mono text-[9px] text-fg-dim/40">06</span>
             <span className="hidden sm:inline">TOOLS</span>
