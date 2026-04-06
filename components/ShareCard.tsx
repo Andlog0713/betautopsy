@@ -61,13 +61,13 @@ const ShareCard = forwardRef<HTMLDivElement, {
         </div>
         <div style={{ flex: 1 }} />
         <div>
-          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.5, marginBottom: 28 }}>
+          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.7, marginBottom: 28 }}>
             My betting personality
           </div>
           <div style={{ fontSize: 90, fontWeight: 900, color: '#0D1117', lineHeight: 0.92, letterSpacing: -3, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {archName}
           </div>
-          <div style={{ fontSize: 32, color: '#0D1117', opacity: 0.5, marginTop: 36, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 32, color: '#0D1117', opacity: 0.7, marginTop: 36, lineHeight: 1.5 }}>
             {roastLine}
           </div>
         </div>

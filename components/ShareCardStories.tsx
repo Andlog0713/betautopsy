@@ -56,18 +56,18 @@ export const StorySlidePersonality = forwardRef<HTMLDivElement, StorySlideProps>
       <Logo dark />
       <div style={{ flex: 1 }} />
       <div>
-        <div style={{ fontSize: 50, color: '#0D1117', opacity: 0.5, marginBottom: 60 }}>
+        <div style={{ fontSize: 50, color: '#0D1117', opacity: 0.7, marginBottom: 60 }}>
           Your betting personality is
         </div>
-        <div style={{ fontSize: 220, fontWeight: 900, lineHeight: 0.92, letterSpacing: -6 }}>
+        <div style={{ fontSize: 220, fontWeight: 900, lineHeight: 0.92, letterSpacing: -6, color: '#0D1117' }}>
           {archName}
         </div>
-        <div style={{ fontSize: 60, color: '#0D1117', opacity: 0.6, marginTop: 70, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 60, color: '#0D1117', opacity: 0.75, marginTop: 70, lineHeight: 1.5 }}>
           {roastLine}
         </div>
       </div>
       <div style={{ flex: 0.6 }} />
-      <div style={{ fontSize: 40, color: '#0D1117', opacity: 0.35 }}>betautopsy.com</div>
+      <div style={{ fontSize: 40, color: '#0D1117', opacity: 0.5 }}>betautopsy.com</div>
     </div>
   );
 });
@@ -117,24 +117,24 @@ export const StorySlideComparison = forwardRef<HTMLDivElement, StorySlideProps>(
       <Logo dark />
       <div style={{ flex: 1 }} />
       <div>
-        <div style={{ fontSize: 55, color: 'rgba(255,255,255,0.6)', marginBottom: 50, fontWeight: 500 }}>
+        <div style={{ fontSize: 50, color: '#0D1117', marginBottom: 40, fontWeight: 500 }}>
           {comparison.topLabel}
         </div>
-        <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8 }}>
+        <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8, color: '#fff' }}>
           {comparison.topValue}
         </div>
-        <div style={{ fontSize: 55, color: 'rgba(255,255,255,0.6)', marginTop: 90, marginBottom: 50, fontWeight: 500 }}>
+        <div style={{ fontSize: 50, color: '#0D1117', marginTop: 80, marginBottom: 40, fontWeight: 500 }}>
           {comparison.bottomLabel}
         </div>
-        <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8 }}>
+        <div style={{ fontSize: 280, fontWeight: 900, lineHeight: 0.9, letterSpacing: -8, color: '#fff' }}>
           {comparison.bottomValue}
         </div>
-        <div style={{ fontSize: 60, opacity: 0.8, marginTop: 80, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 55, color: '#fff', marginTop: 70, lineHeight: 1.5, fontWeight: 400, opacity: 0.85 }}>
           {comparison.punchline}
         </div>
       </div>
       <div style={{ flex: 0.8 }} />
-      <div style={{ fontSize: 40, color: '#0D1117', opacity: 0.35 }}>betautopsy.com</div>
+      <div style={{ fontSize: 40, color: 'rgba(255,255,255,0.35)' }}>betautopsy.com</div>
     </div>
   );
 });
