@@ -112,9 +112,12 @@ export default function HowToUploadPage() {
               </li>
             </ol>
 
-            <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors mt-4">
-              Get Pikkit &rarr;
-            </a>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4">
+              <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors">
+                Get Pikkit &rarr;
+              </a>
+              <span className="text-xs text-fg-muted">Get $3&ndash;$100 cash when you sync 10+ bets</span>
+            </div>
 
             <div className="finding-card border-l-scalpel mt-4">
               <p className="text-xs text-fg-muted">
@@ -125,19 +128,14 @@ export default function HowToUploadPage() {
               </p>
             </div>
 
-            <p className="text-xs text-fg-muted mt-3">
-              Get <span className="text-fg-bright">$3&ndash;$100 cash</span> when you sign up through our link and sync a sportsbook with 10+ bets.
-            </p>
-
-            <p className="text-xs text-fg-muted mt-2">
-              Takes less than 5 minutes total. Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365.
-            </p>
-
             <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
               <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
               <p className="text-sm text-fg-muted">
                 Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, and Kalshi</span> too.
                 Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets. One export covers everything.
+              </p>
+              <p className="text-xs text-fg-muted mt-2">
+                Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365. Takes less than 5 minutes.
               </p>
             </div>
           </div>
