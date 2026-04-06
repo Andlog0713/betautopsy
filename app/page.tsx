@@ -138,7 +138,7 @@ export default function LandingPage() {
               { step: '03', title: 'Improve', desc: "Get rules with real numbers: 'stop betting heavy favorites on NFL, it's costing you $40/week.' Track whether you actually change." },
             ].map(item => (
               <div key={item.step} className="vitals-cell !p-6 md:!p-8">
-                <div className="font-mono text-3xl font-bold text-scalpel/20 mb-3">{item.step}</div>
+                <div className="font-mono text-3xl font-bold text-scalpel/50 mb-3">{item.step}</div>
                 <h3 className="text-lg font-semibold text-fg-bright mb-2">{item.title}</h3>
                 <p className="text-sm text-fg leading-relaxed">{item.desc}</p>
               </div>
@@ -213,24 +213,6 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════ */}
-      {/* QUIZ CTA — low-commitment alternative */}
-      {/* after they've seen the product        */}
-      {/* ══════════════════════════════════════ */}
-      <section className="max-w-3xl mx-auto px-6 py-12">
-        <div className="finding-card border-l-scalpel p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-fg-bright mb-1">Not ready to upload? Try the quiz first.</h3>
-              <p className="text-fg-muted text-sm">Discover your Bet DNA in 2 minutes. No signup, no data needed.</p>
-            </div>
-            <Link href="/quiz" className="btn-secondary font-mono text-sm shrink-0">
-              Take the Quiz
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════ */}
       {/* PRICING — surface bg, visually        */}
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
@@ -300,10 +282,6 @@ export default function LandingPage() {
               <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm">Go Pro</Link>
             </div>
           </div>
-          <p className="text-fg-muted text-xs mt-6">
-            Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
-          </p>
-
           {/* Trust block */}
           <div className="mt-10 border border-white/[0.04] rounded px-4 py-3 max-w-3xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -325,6 +303,9 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          <p className="text-fg-muted text-xs mt-6 text-center">
+            Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
+          </p>
         </div>
       </section>
 
