@@ -80,7 +80,7 @@ export default function LandingPage() {
               { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
               { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-5' },
               { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-5' },
-              { src: '/logo/underdog.svg', alt: 'Underdog Fantasy', h: 'h-5' },
+              { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
               { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
             ].map(logo => (
               <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity`} />
