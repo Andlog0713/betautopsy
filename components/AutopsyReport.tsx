@@ -1004,8 +1004,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </div>
                   <p className="text-fg-bright text-sm">{pat.description}</p>
                   <div className="flex gap-4 mt-2 text-xs text-fg-muted">
-                    <span>Frequency: {pat.frequency}</span>
-                    <span>Evidence: {pat.data_points}</span>
+                    <span>Frequency: <span className="font-mono">{pat.frequency}</span></span>
+                    <span>Evidence: <span className="font-mono">{pat.data_points}</span></span>
                   </div>
                 </div>
               </div>
@@ -1216,7 +1216,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-fg-muted text-xs mb-1">Best Window</p>
                 <p className="font-bold text-xl text-win">{analysis.timing_analysis.best_window.label}</p>
                 <p className="font-mono text-win text-sm">+{analysis.timing_analysis.best_window.roi.toFixed(1)}% ROI</p>
-                <p className="text-fg-muted text-xs mt-1">{analysis.timing_analysis.best_window.count} bets</p>
+                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.best_window.count} bets</p>
               </div>
             )}
             {analysis.timing_analysis.worst_window && (
@@ -1224,17 +1224,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-fg-muted text-xs mb-1">Worst Window</p>
                 <p className="font-bold text-xl text-loss">{analysis.timing_analysis.worst_window.label}</p>
                 <p className="font-mono text-loss text-sm">{analysis.timing_analysis.worst_window.roi.toFixed(1)}% ROI</p>
-                <p className="text-fg-muted text-xs mt-1">{analysis.timing_analysis.worst_window.count} bets</p>
+                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.worst_window.count} bets</p>
               </div>
             )}
             {analysis.timing_analysis.late_night_stats && (
               <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-border-subtle'}`}>
                 <p className="text-fg-muted text-xs mb-1">Late Night (11pm–4am)</p>
-                <p className="font-bold text-xl text-fg-bright">{analysis.timing_analysis.late_night_stats.count} bets</p>
+                <p className="font-mono font-bold text-xl text-fg-bright">{analysis.timing_analysis.late_night_stats.count} bets</p>
                 <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-orange-400'}`}>
                   {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI
                 </p>
-                <p className="text-fg-muted text-xs mt-1">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
+                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
               </div>
             )}
           </div>
@@ -1387,7 +1387,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-fg-muted text-xs mb-1">Best Odds Range</p>
                 <p className="font-bold text-xl text-win">{analysis.odds_analysis.best_bucket.label}</p>
                 <p className="font-mono text-win text-sm">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}pp edge</p>
-                <p className="text-fg-muted text-xs mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
+                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.best_bucket.count} bets</p>
                 <p className="text-fg-dim text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
               </div>
             )}
@@ -1398,7 +1398,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-fg-muted text-xs mb-1">Worst Odds Range</p>
                 <p className="font-bold text-xl text-loss">{analysis.odds_analysis.worst_bucket.label}</p>
                 <p className="font-mono text-loss text-sm">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge</p>
-                <p className="text-fg-muted text-xs mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
+                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.worst_bucket.count} bets</p>
                 <p className="text-fg-dim text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
               </div>
             )}
@@ -1522,7 +1522,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="font-mono text-2xl font-bold text-loss mb-2">
                   {analysis.session_analysis.worst_session.net >= 0 ? '+' : ''}${Math.round(analysis.session_analysis.worst_session.net).toLocaleString()}
                 </p>
-                <div className="flex gap-4 text-xs text-fg-muted mb-3">
+                <div className="flex gap-4 text-xs text-fg-muted font-mono mb-3">
                   <span>{analysis.session_analysis.worst_session.bets} bets</span>
                   <span>{analysis.session_analysis.worst_session.duration}</span>
                 </div>
@@ -1539,7 +1539,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="font-mono text-2xl font-bold text-win mb-2">
                   +${Math.round(analysis.session_analysis.best_session.net).toLocaleString()}
                 </p>
-                <div className="flex gap-4 text-xs text-fg-muted mb-3">
+                <div className="flex gap-4 text-xs text-fg-muted font-mono mb-3">
                   <span>{analysis.session_analysis.best_session.bets} bets</span>
                   <span>{analysis.session_analysis.best_session.duration}</span>
                 </div>
@@ -1555,7 +1555,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
             </p>
             <p className="text-fg-muted text-sm mt-2">{analysis.session_analysis.insight}</p>
-            <p className="text-fg-dim text-xs mt-2">
+            <p className="text-fg-dim text-xs mt-2 font-mono">
               {analysis.session_analysis.total_sessions} sessions analyzed (3+ hour gap = new session)
             </p>
           </div>
@@ -2233,7 +2233,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className="font-mono text-fg-dim w-8 shrink-0">{ann.confidence}%</span>
                     <span className="text-fg-muted truncate flex-1">{ann.primaryReason}</span>
                     {ann.isInHeatedSession && <span title="Heated session"><Flame size={14} className="text-orange-400" /></span>}
-                    <span className="text-fg-dim">{ann.stakeVsMedian.toFixed(1)}x</span>
+                    <span className="text-fg-dim font-mono">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
                     <div className="bg-base border border-border-subtle rounded-sm p-3 ml-4 mt-1 space-y-1">
