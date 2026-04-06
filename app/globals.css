@@ -30,9 +30,9 @@
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #111318; }
+  ::-webkit-scrollbar-track { background: #131620; }
   ::-webkit-scrollbar-thumb { background: #515968; border-radius: 0; }
-  * { scrollbar-width: thin; scrollbar-color: #515968 #111318; }
+  * { scrollbar-width: thin; scrollbar-color: #515968 #131620; }
 }
 
 @layer components {

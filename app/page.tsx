@@ -13,7 +13,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="relative grid-paper overflow-hidden">
         {/* Glow behind hero text */}
-        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[600px] md:w-[900px] h-[900px] md:h-[700px] bg-scalpel/[0.03] rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[600px] md:w-[900px] h-[900px] md:h-[700px] bg-scalpel/[0.08] rounded-full blur-[150px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative">
           <div className="case-header mb-8 animate-fade-in">
             CASE FILE // BEHAVIORAL ANALYSIS UNIT
@@ -167,7 +167,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section id="pricing" className="bg-surface border-y border-white/[0.04] py-16 md:py-20 relative overflow-hidden">
         {/* Pricing glow - centered vertically to cover all cards */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.05] rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[1000px] h-[800px] md:h-[600px] bg-scalpel/[0.10] rounded-full blur-[150px] pointer-events-none" />
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">

@@ -7,13 +7,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Base surfaces — 5 elevation levels (lightened)
-        base: '#111318',
+        // Base surfaces — 5 elevation levels (warmer, more visible steps)
+        base: '#131620',
         surface: {
-          DEFAULT: '#161820',
-          raised: '#1C1F28',
-          elevated: '#222530',
-          overlay: '#282C38',
+          DEFAULT: '#1A1D28',
+          raised: '#212530',
+          elevated: '#282D3A',
+          overlay: '#303644',
         },
         // Text hierarchy — 4 levels (brighter)
         fg: {
@@ -26,7 +26,7 @@ module.exports = {
         scalpel: {
           DEFAULT: '#00C9A7',
           dim: '#007D66',
-          muted: 'rgba(0,201,167,0.08)',
+          muted: 'rgba(0,201,167,0.12)',
         },
         bleed: {
           DEFAULT: '#E8453C',
@@ -39,8 +39,8 @@ module.exports = {
         caution: '#D29922',
         // Legacy aliases — KEEP until migration complete
         ink: {
-          900: '#111318',
-          800: '#161820',
+          900: '#131620',
+          800: '#1A1D28',
           700: '#5D6673',
           600: '#A0A8B4',
           500: '#B0B8C4',
