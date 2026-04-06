@@ -165,19 +165,19 @@ export default function DashboardPage() {
   // Milestones
   const milestones: Milestone[] = [
     {
-      id: 'first_autopsy', label: 'First Autopsy', icon: <FlaskConical size={20} className="text-fg-muted" />,
+      id: 'first_autopsy', label: 'First Autopsy', icon: <FlaskConical size={14} className="text-fg-muted" />,
       criteria: 'Ran your first report',
       earned: snapshots.length >= 1,
       date: snapshots[0]?.snapshot_date,
     },
     {
-      id: 'self_aware', label: 'Self-Aware', icon: <Brain size={20} className="text-fg-muted" />,
+      id: 'self_aware', label: 'Self-Aware', icon: <Brain size={14} className="text-fg-muted" />,
       criteria: 'Emotion score dropped below 40',
       earned: snapshots.some((s) => s.tilt_score < 40),
       date: snapshots.find((s) => s.tilt_score < 40)?.snapshot_date,
     },
     {
-      id: 'discipline_streak', label: 'Discipline Streak', icon: <Flame size={20} className="text-orange-400" />,
+      id: 'discipline_streak', label: 'Discipline Streak', icon: <Flame size={14} className="text-orange-400" />,
       criteria: '3 reports in a row with improving emotion score',
       earned: (() => {
         for (let i = 2; i < snapshots.length; i++) {
@@ -187,18 +187,18 @@ export default function DashboardPage() {
       })(),
     },
     {
-      id: 'parlay_recovery', label: 'Parlay Recovery', icon: <Dice5 size={20} className="text-fg-muted" />,
+      id: 'parlay_recovery', label: 'Parlay Recovery', icon: <Dice5 size={14} className="text-fg-muted" />,
       criteria: 'Reduced parlay % by 50%+ from first report',
       earned: snapshots.length >= 2 && latest !== null && snapshots[0].parlay_percent > 0 && latest.parlay_percent <= snapshots[0].parlay_percent * 0.5,
     },
     {
-      id: 'profitable_month', label: 'Profitable Month', icon: <DollarSign size={20} className="text-fg-muted" />,
+      id: 'profitable_month', label: 'Profitable Month', icon: <DollarSign size={14} className="text-fg-muted" />,
       criteria: 'Positive ROI in any snapshot',
       earned: snapshots.some((s) => s.roi_percent > 0),
       date: snapshots.find((s) => s.roi_percent > 0)?.snapshot_date,
     },
     {
-      id: 'sharp_eye', label: 'Sharp Eye', icon: <Eye size={20} className="text-fg-muted" />,
+      id: 'sharp_eye', label: 'Sharp Eye', icon: <Eye size={14} className="text-fg-muted" />,
       criteria: 'Sharp score above 50',
       earned: false,
     },
@@ -481,22 +481,23 @@ export default function DashboardPage() {
 
               {/* Milestones (paid) */}
               {isPaid && snapshots.length > 0 && (
-                <div>
-                  <span className="case-header block mb-3">Milestones</span>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="mt-6">
+                  <p className="text-xs text-fg-dim uppercase tracking-widest mb-4">Milestones</p>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {milestones.map((m) => (
                       <div
                         key={m.id}
-                        className={`bg-surface-1 border border-border-subtle rounded-xl p-4 ${m.earned ? '' : 'opacity-40'}`}
+                        className={`flex items-center gap-2 bg-surface-1 border border-border-subtle rounded-lg px-3 py-2 whitespace-nowrap shrink-0 ${m.earned ? '' : 'opacity-40'}`}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          {m.icon}
-                          <span className="font-medium text-sm text-fg-bright">{m.label}</span>
+                        {m.earned ? m.icon : <Lock size={14} className="text-fg-dim" />}
+                        <div>
+                          <p className={`text-sm font-medium ${m.earned ? 'text-fg-bright' : 'text-fg-muted'}`}>{m.label}</p>
+                          <p className="text-xs text-fg-dim">
+                            {m.earned && m.date
+                              ? new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : m.earned ? 'Earned' : 'Locked'}
+                          </p>
                         </div>
-                        <p className="text-fg-muted text-xs">{m.criteria}</p>
-                        {m.earned && m.date && (
-                          <p className="font-mono text-xs text-fg-muted mt-1">{new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        )}
                       </div>
                     ))}
                   </div>
