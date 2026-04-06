@@ -307,7 +307,7 @@ export default function DashboardPage() {
             <div className="absolute -top-8 right-0"><EyeToggle /></div>
             <p className="text-sm text-fg-muted mb-1">Net P&L</p>
             <p className={`text-5xl font-bold tracking-tight font-mono tabular-nums ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
-              {mask(`${stats.netPnL >= 0 ? '+' : ''}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)}
+              {mask(`${stats.netPnL >= 0 ? '+' : '-'}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)}
             </p>
             <p className="text-sm text-fg-muted mt-2">
               across {mask(stats.totalBets.toLocaleString())} bets · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} wagered · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} avg stake
