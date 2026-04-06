@@ -64,7 +64,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
           <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.5, marginBottom: 28 }}>
             My betting personality
           </div>
-          <div style={{ fontSize: 110, fontWeight: 900, color: '#0D1117', lineHeight: 0.92, letterSpacing: -4 }}>
+          <div style={{ fontSize: 90, fontWeight: 900, color: '#0D1117', lineHeight: 0.92, letterSpacing: -3, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {archName}
           </div>
           <div style={{ fontSize: 32, color: '#0D1117', opacity: 0.5, marginTop: 36, lineHeight: 1.5 }}>
@@ -104,16 +104,16 @@ const ShareCard = forwardRef<HTMLDivElement, {
               <div style={{ fontSize: 100, fontWeight: 900, letterSpacing: -3 }}>
                 {comparison.topValue}
               </div>
-              <div style={{ fontSize: 26, color: '#515968', marginTop: 6 }}>
+              <div style={{ fontSize: 26, color: '#848D9A', marginTop: 6 }}>
                 {comparison.topLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
               </div>
             </div>
-            <div style={{ fontSize: 48, color: '#515968' }}>vs</div>
+            <div style={{ fontSize: 48, color: '#848D9A' }}>vs</div>
             <div>
               <div style={{ fontSize: 100, fontWeight: 900, color: '#E8453C', letterSpacing: -3 }}>
                 {comparison.bottomValue}
               </div>
-              <div style={{ fontSize: 26, color: '#515968', marginTop: 6 }}>
+              <div style={{ fontSize: 26, color: '#848D9A', marginTop: 6 }}>
                 {comparison.bottomLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
               </div>
             </div>
