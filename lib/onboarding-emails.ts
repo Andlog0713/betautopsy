@@ -12,7 +12,7 @@ function emailShell(content: string, unsubscribeUrl?: string): string {
 <tr><td align="center" style="padding:24px 16px">
 <table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;overflow:hidden;border:1px solid #e0e0e0"><tbody>
 <tr><td style="background-color:#111318;padding:20px 24px">
-  <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#00C9A7;letter-spacing:1px">AUTOPSY</span>
+  <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#00FFCB;letter-spacing:1px">AUTOPSY</span>
 </td></tr>
 ${content}
 <tr><td style="padding:24px 24px">

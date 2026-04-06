@@ -39,13 +39,13 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
             />
             <ReferenceLine yAxisId="roi" y={0} stroke="#51596850" />
             <Line yAxisId="emotion" type="monotone" dataKey="emotion" stroke="#fbbf24" strokeWidth={2} dot={{ r: 4, fill: '#fbbf24' }} />
-            <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#00C9A7" strokeWidth={2} dot={{ r: 4, fill: '#00C9A7' }} />
+            <Line yAxisId="roi" type="monotone" dataKey="roi" stroke="#00FFCB" strokeWidth={2} dot={{ r: 4, fill: '#00FFCB' }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
       <div className="flex gap-6 justify-center mt-3 text-xs text-fg-muted">
         <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#fbbf24] inline-block rounded" /> Emotion Score (lower is better)</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#00C9A7] inline-block rounded" /> ROI %</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[#00FFCB] inline-block rounded" /> ROI %</span>
       </div>
     </div>
   );

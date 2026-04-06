@@ -4,14 +4,14 @@ import { forwardRef } from 'react';
 import type { QuizResult } from '@/lib/quiz-engine';
 
 function emotionColor(s: number): string {
-  if (s <= 30) return '#00C9A7';
+  if (s <= 30) return '#00FFCB';
   if (s <= 55) return '#fbbf24';
   if (s <= 75) return '#f97316';
   return '#f87171';
 }
 
 function disciplineColor(s: number): string {
-  if (s >= 75) return '#00C9A7';
+  if (s >= 75) return '#00FFCB';
   if (s >= 50) return '#fbbf24';
   if (s >= 30) return '#f97316';
   return '#f87171';
@@ -44,7 +44,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
   const gc = gradeColor(result.grade);
   const bgPattern = ARCHETYPE_BG[result.archetype.name] ?? 'none';
   const topBias = result.biases[0];
-  const severityColor = topBias?.severity === 'high' ? '#f87171' : topBias?.severity === 'medium' ? '#fbbf24' : '#00C9A7';
+  const severityColor = topBias?.severity === 'high' ? '#f87171' : topBias?.severity === 'medium' ? '#fbbf24' : '#00FFCB';
   const severityBg = topBias?.severity === 'high' ? 'rgba(248,113,113,0.15)' : topBias?.severity === 'medium' ? 'rgba(251,191,36,0.15)' : 'rgba(0,201,167,0.15)';
 
   // Ensure we always have 3 roast lines
@@ -81,14 +81,14 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <svg width="28" height="44" viewBox="0 0 18 28" fill="none">
-            <path d="M2,2 Q3.8,5.2 9,8.5" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round" />
-            <path d="M16,2 Q14.2,5.2 9,8.5" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round" />
-            <line x1="9" y1="8.5" x2="9" y2="26" stroke="#00C9A7" strokeWidth="1.7" strokeLinecap="round" />
+            <path d="M2,2 Q3.8,5.2 9,8.5" stroke="#00FFCB" strokeWidth="1.7" strokeLinecap="round" />
+            <path d="M16,2 Q14.2,5.2 9,8.5" stroke="#00FFCB" strokeWidth="1.7" strokeLinecap="round" />
+            <line x1="9" y1="8.5" x2="9" y2="26" stroke="#00FFCB" strokeWidth="1.7" strokeLinecap="round" />
             <circle cx="9" cy="8.5" r="1.9" fill="#E8453C" />
           </svg>
           <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 1 }}>
             <span style={{ fontWeight: 900 }}>BET</span>
-            <span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
+            <span style={{ fontWeight: 300, color: '#00FFCB' }}>AUTOPSY</span>
           </div>
         </div>
         <div style={{ fontFamily: mono, fontSize: 13, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#515968' }}>BET DNA REPORT</div>
@@ -165,7 +165,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
       <div style={{ textAlign: 'center' as const, padding: '24px 0 0' }}>
         <div style={{ fontSize: 24, fontWeight: 700, color: '#F0F2F5', marginBottom: 6 }}>What&apos;s YOUR Bet DNA?</div>
         <div style={{ fontSize: 12, color: '#515968', marginBottom: 6 }}>👇</div>
-        <div style={{ fontSize: 18, color: '#00C9A7', fontWeight: 600 }}>betautopsy.com/quiz</div>
+        <div style={{ fontSize: 18, color: '#00FFCB', fontWeight: 600 }}>betautopsy.com/quiz</div>
       </div>
     </div>
   );

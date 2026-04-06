@@ -538,7 +538,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             }`}>{emotionScore}</span>
           </div>
           <div className="h-1 bg-surface-raised relative">
-            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #D29922, #E8453C)' }} />
+            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00FFCB, #D29922, #E8453C)' }} />
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
           <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
@@ -555,7 +555,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               }`}>{analysis.discipline_score.total}</span>
             </div>
             <div className="h-1 bg-surface-raised relative">
-              <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #D29922, #00C9A7)' : 'linear-gradient(90deg, #E8453C, #D29922)' }} />
+              <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #D29922, #00FFCB)' : 'linear-gradient(90deg, #E8453C, #D29922)' }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
             <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
@@ -970,7 +970,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
                 <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
                 <div className="h-1 mt-1.5 bg-base overflow-hidden">
-                  <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#F85149' : signal.value / signal.max >= 0.4 ? '#D29922' : '#00C9A7' }} />
+                  <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#F85149' : signal.value / signal.max >= 0.4 ? '#D29922' : '#00FFCB' }} />
                 </div>
               </div>
             ))}
@@ -1099,7 +1099,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <ReferenceLine x={0} stroke="#51596850" />
                 <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                   {roiData.map((entry, i) => (
-                    <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
+                    <Cell key={i} fill={entry.roi >= 0 ? '#00FFCB' : '#f87171'} fillOpacity={0.7} />
                   ))}
                 </Bar>
               </BarChart>
@@ -1140,7 +1140,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <ReferenceLine x={0} stroke="#51596850" />
                   <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                     {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
-                      <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
+                      <Cell key={i} fill={entry.roi >= 0 ? '#00FFCB' : '#f87171'} fillOpacity={0.7} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -1159,8 +1159,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   const intensity = hasBets ? Math.min(1, h.bets / Math.max(...analysis.timing_analysis!.by_hour.map((x) => x.bets || 1))) : 0;
                   const bgColor = !hasBets
                     ? 'bg-base/50'
-                    : h.roi >= 10 ? 'bg-[#00C9A7]'
-                    : h.roi >= 0 ? 'bg-[#00C9A7]'
+                    : h.roi >= 10 ? 'bg-[#00FFCB]'
+                    : h.roi >= 0 ? 'bg-[#00FFCB]'
                     : h.roi >= -10 ? 'bg-[#f87171]'
                     : 'bg-[#f87171]';
                   const opacity = !hasBets ? '' : h.roi >= 10 || h.roi <= -10 ? `opacity-${Math.round(Math.max(0.4, intensity) * 100) >= 70 ? '90' : '60'}` : `opacity-${Math.round(Math.max(0.3, intensity) * 100) >= 50 ? '50' : '30'}`;
@@ -1193,7 +1193,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <div className="flex items-center gap-4 mt-3 text-xs text-fg-muted">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm bg-[#00C9A7] opacity-60" />
+                  <div className="w-3 h-3 rounded-sm bg-[#00FFCB] opacity-60" />
                   <span>Profitable</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1330,7 +1330,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <ReferenceLine x={0} stroke="#51596850" />
                     <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
                       {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
-                        <Cell key={i} fill={entry.edge >= 0 ? '#00C9A7' : '#f87171'} fillOpacity={0.7} />
+                        <Cell key={i} fill={entry.edge >= 0 ? '#00FFCB' : '#f87171'} fillOpacity={0.7} />
                       ))}
                     </Bar>
                   </BarChart>

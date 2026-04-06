@@ -61,7 +61,7 @@ export function Logo({
   size = 'md', variant = 'horizontal', theme = 'dark', className = '', showTagline = false,
 }: LogoProps) {
   const s = SIZES[size];
-  const strokeColor = theme === 'dark' ? '#00C9A7' : '#0d1117';
+  const strokeColor = theme === 'dark' ? '#00FFCB' : '#0d1117';
   const textColor = theme === 'dark' ? 'text-[#F0F6FC]' : 'text-[#0d1117]';
 
   // For horizontal lockup, mark is ~1.6x the text height (like PrizePicks ratio)

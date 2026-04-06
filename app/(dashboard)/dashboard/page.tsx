@@ -300,7 +300,7 @@ export default function DashboardPage() {
                     <circle
                       cx="60" cy="60" r="52" fill="none"
                       stroke={
-                        (latest.discipline_score ?? 0) >= 71 ? '#00C9A7' :
+                        (latest.discipline_score ?? 0) >= 71 ? '#00FFCB' :
                         (latest.discipline_score ?? 0) >= 51 ? '#D29922' :
                         (latest.discipline_score ?? 0) >= 31 ? '#E8453C' : '#F85149'
                       }

@@ -7,7 +7,7 @@ import type { BehavioralInsight, RoastStat } from '@/lib/share-helpers';
 const SANS = "'Inter', -apple-system, sans-serif";
 
 function LogoMark({ dark = false }: { dark?: boolean }) {
-  const strokeColor = dark ? '#0D1117' : '#00C9A7';
+  const strokeColor = dark ? '#0D1117' : '#00FFCB';
   const strokeOp = dark ? 0.6 : 1;
   const dotColor = dark ? '#0D1117' : '#E8453C';
   return (
@@ -22,7 +22,7 @@ function LogoMark({ dark = false }: { dark?: boolean }) {
 
 function Logo({ dark = false }: { dark?: boolean }) {
   const textColor = dark ? '#0D1117' : '#F0F2F5';
-  const accentColor = dark ? '#0D1117' : '#00C9A7';
+  const accentColor = dark ? '#0D1117' : '#00FFCB';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
       <LogoMark dark={dark} />
@@ -49,13 +49,13 @@ function getBehavioralPunchline(discROI: number, emoROI: number): string {
   return "Interesting. Your emotional bets actually outperform.";
 }
 
-// ── Slide 1: Personality (bg: #00C9A7) ──
+// ── Slide 1: Personality (bg: #00FFCB) ──
 
 export const StorySlidePersonality = forwardRef<HTMLDivElement, StorySlideProps>(({ data, roastLine }, ref) => {
   const archName = data.archetype?.name ?? 'The Grinder';
   return (
     <div ref={ref} style={{
-      width: 1080, height: 1920, background: '#00C9A7',
+      width: 1080, height: 1920, background: '#00FFCB',
       fontFamily: SANS, color: '#0D1117',
       display: 'flex', flexDirection: 'column', padding: '120px 90px 100px',
     }}>
@@ -97,7 +97,7 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <Logo />
         <div style={{ flex: 1 }} />
         <div>
-          <div style={{ fontSize: 55, color: '#00C9A7', marginBottom: 50 }}>{insight.contextLabel}</div>
+          <div style={{ fontSize: 55, color: '#00FFCB', marginBottom: 50 }}>{insight.contextLabel}</div>
           <div style={{ fontSize: 320, fontWeight: 900, lineHeight: 0.85, letterSpacing: -10 }}>{insight.heroStat}</div>
           <div style={{ fontSize: 80, fontWeight: 700, marginTop: 50, lineHeight: 1.3 }}>{insight.heroLabel}</div>
           <div style={{ fontSize: 55, color: '#848D9A', marginTop: 70, lineHeight: 1.5 }}>{insight.verdict}</div>
@@ -122,12 +122,12 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
       <div style={{ flex: 1 }} />
       <div>
         {/* Disciplined */}
-        <div style={{ fontSize: 50, color: '#00C9A7', marginBottom: 30 }}>{"When you're disciplined"}</div>
+        <div style={{ fontSize: 50, color: '#00FFCB', marginBottom: 30 }}>{"When you're disciplined"}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 30 }}>
           <div style={{ fontSize: 160, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>{disc.bets}</div>
           <div style={{ fontSize: 60, fontWeight: 400, color: '#848D9A' }}>bets</div>
         </div>
-        <div style={{ fontSize: 80, fontWeight: 700, color: '#00C9A7', marginTop: 10 }}>
+        <div style={{ fontSize: 80, fontWeight: 700, color: '#00FFCB', marginTop: 10 }}>
           {disc.roi >= 0 ? '+' : ''}{disc.roi}% ROI
         </div>
 
@@ -203,15 +203,15 @@ export const StorySlideCTA = forwardRef<HTMLDivElement, StorySlideProps>((_, ref
       textAlign: 'center', padding: '120px 90px',
     }}>
       <svg width="180" height="270" viewBox="0 0 40 60" fill="none" style={{ marginBottom: 140 }}>
-        <path d="M4,4 Q8.6,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
-        <path d="M36,4 Q31.4,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
-        <line x1="20" y1="19" x2="20" y2="56" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
+        <path d="M4,4 Q8.6,11.5 20,19" stroke="#00FFCB" strokeWidth="3.7" strokeLinecap="round"/>
+        <path d="M36,4 Q31.4,11.5 20,19" stroke="#00FFCB" strokeWidth="3.7" strokeLinecap="round"/>
+        <line x1="20" y1="19" x2="20" y2="56" stroke="#00FFCB" strokeWidth="3.7" strokeLinecap="round"/>
         <circle cx="20" cy="19" r="4" fill="#E8453C"/>
       </svg>
       <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 1.15, letterSpacing: -2, marginBottom: 80 }}>
         What does your betting say about you?
       </div>
-      <div style={{ fontSize: 55, color: '#00C9A7', fontWeight: 600 }}>betautopsy.com</div>
+      <div style={{ fontSize: 55, color: '#00FFCB', fontWeight: 600 }}>betautopsy.com</div>
     </div>
   );
 });

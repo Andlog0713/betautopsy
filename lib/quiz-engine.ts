@@ -25,7 +25,7 @@ export interface QuizOption {
 
 // Color progression: cool → warm as questions get more revealing
 export const QUESTION_ACCENTS = [
-  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00C9A7',
+  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00FFCB',
   '#a3e635', '#facc15', '#fbbf24', '#fb923c', '#f97316',
   '#ef4444', '#f43f5e', '#f97316',
 ];
@@ -305,9 +305,9 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   let archetype: QuizResult['archetype'];
 
   if (avg.discipline >= 7.5 && avg.emotion <= 3.5 && avg.selectivity >= 6) {
-    archetype = { name: 'The Natural', emoji: '🧊', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
+    archetype = { name: 'The Natural', emoji: '🧊', color: '#00FFCB', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
   } else if (avg.discipline >= 6 && avg.variance >= 6 && avg.selectivity >= 5) {
-    archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
+    archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00FFCB', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
   } else if (avg.emotion >= 6 && avg.chase_tendency >= 6 && avg.discipline <= 4) {
     archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#f97316', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
   } else if (avg.fav_lean >= 7 && avg.discipline >= 4) {

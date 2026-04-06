@@ -303,7 +303,7 @@ export default function QuizClient() {
   // ══════════════════════════════
   if (phase === 'reveal' && result) {
     const emotionWord = result.emotion_estimate <= 25 ? 'LOW' : result.emotion_estimate <= 50 ? 'MODERATE' : result.emotion_estimate <= 75 ? 'HIGH' : 'CRITICAL';
-    const emotionColor = result.emotion_estimate <= 25 ? '#00C9A7' : result.emotion_estimate <= 50 ? '#fbbf24' : result.emotion_estimate <= 75 ? '#f97316' : '#f87171';
+    const emotionColor = result.emotion_estimate <= 25 ? '#00FFCB' : result.emotion_estimate <= 50 ? '#fbbf24' : result.emotion_estimate <= 75 ? '#f97316' : '#f87171';
     const biasCount = result.biases.length;
 
     return (
