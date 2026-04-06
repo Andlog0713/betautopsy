@@ -79,13 +79,9 @@ export default function HowToUploadPage() {
             <h2 className="font-bold text-2xl">Import full history with Pikkit</h2>
             <span className="text-xs font-medium bg-win/10 text-win px-2 py-0.5 rounded-sm">RECOMMENDED FOR NEW USERS</span>
           </div>
-          <span className="case-header block mb-4">BEST FOR: Getting your complete sportsbook history in one shot</span>
 
-          <p className="text-fg-muted text-sm mb-3">
-            <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app (not affiliated with BetAutopsy) that connects to your sportsbook accounts and pulls your full betting history automatically. No manual logging needed, even if you&apos;ve never used a tracker before.
-          </p>
-          <p className="text-fg-muted text-xs mb-6">
-            You only need Pikkit once to get your history out. After that, keep it updated with screenshots or paste. Their free 7-day Pro trial is enough to export everything.
+          <p className="text-fg-muted text-sm mb-4">
+            <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app that connects to your sportsbook accounts and exports your complete history as a CSV. Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365, PrizePicks, Underdog, Sleeper, and Kalshi. You only need it once — after that, keep your data updated with screenshots or paste.
           </p>
 
           <div className="bg-surface-raised rounded-sm p-4">
@@ -116,27 +112,7 @@ export default function HowToUploadPage() {
               <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium bg-scalpel-muted hover:bg-scalpel/20 text-scalpel px-4 py-2.5 rounded-sm transition-colors">
                 Get Pikkit &rarr;
               </a>
-              <span className="text-xs text-fg-muted">Get $3&ndash;$100 cash when you sync 10+ bets</span>
-            </div>
-
-            <div className="finding-card border-l-scalpel mt-4">
-              <p className="text-xs text-fg-muted">
-                This is a one-time import. Once your history is in BetAutopsy, you won&apos;t need Pikkit anymore.
-              </p>
-              <p className="text-xs text-fg-muted mt-1.5">
-                Pikkit Pro gives you 7 free days to export, plenty of time to get your complete history.
-              </p>
-            </div>
-
-            <div className="bg-win/5 border border-win/20 rounded-sm p-4 mt-4">
-              <p className="text-sm text-fg-bright font-medium mb-1">Play DFS or trade prediction markets?</p>
-              <p className="text-sm text-fg-muted">
-                Pikkit syncs with <span className="text-fg-bright">PrizePicks, Underdog, Sleeper, and Kalshi</span> too.
-                Your pick&apos;em entries and prediction market trades get pulled in alongside your sportsbook bets. One export covers everything.
-              </p>
-              <p className="text-xs text-fg-muted mt-2">
-                Works with DraftKings, FanDuel, BetMGM, Caesars, theScore Bet, bet365. Takes less than 5 minutes.
-              </p>
+              <span className="text-xs text-fg-muted">Get $3&ndash;$100 cash when you sync 10+ bets. Free 7-day Pro trial.</span>
             </div>
           </div>
         </div>
