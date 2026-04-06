@@ -134,18 +134,29 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
 // ── Pattern comparison derivation ──
 
 export function derivePatternComparison(bets?: Bet[]): PatternComparison {
-  const fallback: PatternComparison = {
-    topLabel: 'Your win rate',
-    topValue: '—',
-    bottomLabel: 'Average sports bettor',
-    bottomValue: '48%',
-    punchline: 'Upload more bets to see your patterns.',
-  };
-
-  if (!bets || bets.length < 20) return fallback;
+  if (!bets || bets.length === 0) {
+    return {
+      topLabel: 'Your win rate',
+      topValue: '—',
+      bottomLabel: 'Average sports bettor',
+      bottomValue: '48%',
+      punchline: 'Upload your bets to see your patterns.',
+    };
+  }
 
   const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
-  if (settled.length < 20) return fallback;
+  const overallWR = settled.length > 0 ? Math.round((settled.filter((b) => b.result === 'win').length / settled.length) * 100) : 0;
+
+  // Not enough data for split comparisons — show overall win rate vs average
+  if (settled.length < 20) {
+    return {
+      topLabel: 'Your win rate',
+      topValue: `${overallWR}%`,
+      bottomLabel: 'Average sports bettor',
+      bottomValue: '48%',
+      punchline: overallWR > 48 ? "You're beating the average. Most don't." : "The house always has edge. Knowing yours is step one.",
+    };
+  }
 
   interface Candidate {
     topLabel: string;
