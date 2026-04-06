@@ -495,12 +495,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {!readOnly && <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
-
-      {/* Share button at top of report */}
-      {!readOnly && !isPartialReport && reportId && (
-        <div className="flex justify-end mb-2">
-          <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+      {!readOnly && (
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1">
+            <ChapterNav tier={tier} readOnly={readOnly} onSharpClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+          </div>
+          {!isPartialReport && reportId && (
+            <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
+          )}
         </div>
       )}
 
@@ -1192,7 +1194,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       </div>
                       {/* Hover tooltip */}
                       {hasBets && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-1 border border-border-subtle rounded-sm px-2.5 py-1.5 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-3 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
                           <p className="text-fg-bright font-medium">{h.label}</p>
                           <p className={`font-mono ${h.roi >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{h.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>

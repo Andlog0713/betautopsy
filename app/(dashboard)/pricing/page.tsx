@@ -156,7 +156,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pro */}
-        <div className="card p-6 flex flex-col border-scalpel/30 shadow-lg shadow-scalpel/10">
+        <div className="card p-6 flex flex-col border-scalpel/30">
           <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
             Best Value
           </span>

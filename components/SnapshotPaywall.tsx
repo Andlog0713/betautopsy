@@ -51,7 +51,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts, children }: S
 
       {/* Paywall card */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-surface-2 border border-border-subtle rounded-xl p-6 max-w-md text-center shadow-2xl">
+        <div className="bg-surface-2 border border-border-subtle rounded-xl p-6 max-w-md text-center">
           <div className="w-12 h-12 rounded-xl bg-scalpel/10 flex items-center justify-center mx-auto mb-4">
             <Lock size={20} className="text-scalpel" />
           </div>
