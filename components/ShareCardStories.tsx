@@ -4,8 +4,6 @@ import { forwardRef } from 'react';
 import type { ShareCardData } from './ShareCard';
 import type { BehavioralInsight, PatternComparison } from '@/lib/share-helpers';
 
-// ── Shared constants ──
-
 const MONO = "'JetBrains Mono', monospace";
 const SANS = "'Inter', -apple-system, sans-serif";
 
@@ -23,13 +21,13 @@ function IncisionMark({ color = '#0D1117', size = 40 }: { color?: string; size?:
 }
 
 function Logo({ dark = false, size = 40 }: { dark?: boolean; size?: number }) {
-  const color = dark ? '#0D1117' : '#00C9A7';
+  const markColor = dark ? '#0D1117' : '#00C9A7';
   const textColor = dark ? '#0D1117' : '#F0F2F5';
   const accentColor = dark ? '#0D1117' : '#00C9A7';
   const fontSize = Math.round(size * 0.7);
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: size * 0.3 }}>
-      <IncisionMark color={color} size={size} />
+      <IncisionMark color={markColor} size={size} />
       <div style={{ fontFamily: SANS, fontSize, fontWeight: 700, letterSpacing: 1.5 }}>
         <span style={{ fontWeight: 900, color: textColor }}>BET</span>
         <span style={{ fontWeight: 300, color: accentColor }}>AUTOPSY</span>
@@ -37,8 +35,6 @@ function Logo({ dark = false, size = 40 }: { dark?: boolean; size?: number }) {
     </div>
   );
 }
-
-// ── Slide props ──
 
 export interface StorySlideProps {
   data: ShareCardData;
@@ -61,18 +57,18 @@ export const StorySlidePersonality = forwardRef<HTMLDivElement, StorySlideProps>
       <Logo dark size={48} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontFamily: MONO, fontSize: 20, letterSpacing: 3, textTransform: 'uppercase' as const, opacity: 0.4, marginBottom: 24 }}>
+        <div style={{ fontFamily: MONO, fontSize: 20, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#065F50', marginBottom: 24 }}>
           YOUR BETTING PERSONALITY IS
         </div>
-        <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 0.92, letterSpacing: -1.5, marginBottom: 32 }}>
+        <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 0.92, letterSpacing: -1.5, marginBottom: 32, color: '#0D1117' }}>
           {archName}
         </div>
-        <div style={{ fontSize: 30, fontWeight: 400, opacity: 0.55, lineHeight: 1.4, maxWidth: 800 }}>
+        <div style={{ fontSize: 30, fontWeight: 400, color: '#064E42', lineHeight: 1.4, maxWidth: 800 }}>
           {roastLine}
         </div>
       </div>
 
-      <div style={{ fontFamily: MONO, fontSize: 18, opacity: 0.3 }}>betautopsy.com</div>
+      <div style={{ fontFamily: MONO, fontSize: 18, color: '#065F50' }}>betautopsy.com</div>
     </div>
   );
 });
@@ -93,13 +89,13 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <div style={{ fontFamily: MONO, fontSize: 24, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#00C9A7', marginBottom: 32 }}>
           {insight.contextLabel}
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 180, fontWeight: 700, lineHeight: 0.9, letterSpacing: -3, marginBottom: 24 }}>
+        <div style={{ fontFamily: MONO, fontSize: 180, fontWeight: 700, lineHeight: 0.9, letterSpacing: -3, marginBottom: 24, color: '#F0F2F5' }}>
           {insight.heroStat}
         </div>
-        <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.3, marginBottom: 32, maxWidth: 800 }}>
+        <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.3, marginBottom: 32, maxWidth: 800, color: '#F0F2F5' }}>
           {insight.heroLabel}
         </div>
-        <div style={{ fontSize: 24, fontWeight: 400, color: '#515968', lineHeight: 1.5, maxWidth: 750 }}>
+        <div style={{ fontSize: 24, fontWeight: 400, color: '#848D9A', lineHeight: 1.5, maxWidth: 750 }}>
           {insight.verdict}
         </div>
       </div>
@@ -124,31 +120,31 @@ export const StorySlideComparison = forwardRef<HTMLDivElement, StorySlideProps>(
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {/* Top stat */}
         <div style={{ marginBottom: 48 }}>
-          <div style={{ fontFamily: MONO, fontSize: 18, letterSpacing: 3, textTransform: 'uppercase' as const, opacity: 0.6, marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 18, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#7A1F1A', marginBottom: 12 }}>
             {comparison.topLabel}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 140, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2 }}>
+          <div style={{ fontFamily: MONO, fontSize: 140, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2, color: '#0D1117' }}>
             {comparison.topValue}
           </div>
         </div>
 
         {/* Bottom stat */}
         <div style={{ marginBottom: 64 }}>
-          <div style={{ fontFamily: MONO, fontSize: 18, letterSpacing: 3, textTransform: 'uppercase' as const, opacity: 0.6, marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 18, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#7A1F1A', marginBottom: 12 }}>
             {comparison.bottomLabel}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 140, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2 }}>
+          <div style={{ fontFamily: MONO, fontSize: 140, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2, color: '#0D1117' }}>
             {comparison.bottomValue}
           </div>
         </div>
 
         {/* Punchline */}
-        <div style={{ fontSize: 28, fontWeight: 500, color: 'rgba(245,242,240,0.85)', lineHeight: 1.4, maxWidth: 750 }}>
+        <div style={{ fontSize: 28, fontWeight: 500, color: '#FFFFFF', lineHeight: 1.4, maxWidth: 750 }}>
           {comparison.punchline}
         </div>
       </div>
 
-      <div style={{ fontFamily: MONO, fontSize: 18, opacity: 0.3 }}>betautopsy.com</div>
+      <div style={{ fontFamily: MONO, fontSize: 18, color: '#7A1F1A' }}>betautopsy.com</div>
     </div>
   );
 });
@@ -165,7 +161,7 @@ export const StorySlideCTA = forwardRef<HTMLDivElement, StorySlideProps>((_, ref
       padding: '80px 80px 60px',
     }}>
       <IncisionMark color="#00C9A7" size={100} />
-      <div style={{ fontSize: 52, fontWeight: 900, textAlign: 'center', marginTop: 48, lineHeight: 1.2, maxWidth: 700 }}>
+      <div style={{ fontSize: 52, fontWeight: 900, textAlign: 'center', marginTop: 48, lineHeight: 1.2, maxWidth: 700, color: '#F0F2F5' }}>
         What does your betting say about you?
       </div>
       <div style={{ fontFamily: MONO, fontSize: 36, color: '#00C9A7', marginTop: 32 }}>
@@ -176,9 +172,6 @@ export const StorySlideCTA = forwardRef<HTMLDivElement, StorySlideProps>((_, ref
 });
 StorySlideCTA.displayName = 'StorySlideCTA';
 
-// ── Default export: all slides ──
-
-const SLIDE_COMPONENTS = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA] as const;
 export const SLIDE_LABELS = ['Personality', 'Insight', 'Compare', 'CTA'] as const;
-export { SLIDE_COMPONENTS };
-export default StorySlidePersonality; // default for backwards compat
+export const SLIDE_COMPONENTS = [StorySlidePersonality, StorySlideBehavioral, StorySlideComparison, StorySlideCTA] as const;
+export default StorySlidePersonality;

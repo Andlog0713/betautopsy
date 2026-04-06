@@ -52,7 +52,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
         padding: '56px 48px', display: 'flex', flexDirection: 'column',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="20" height="30" viewBox="0 0 18 28" fill="none">
             <path d="M2,2 Q3.8,5.2 9,8.5" stroke="#0D1117" strokeWidth="1.7" strokeLinecap="round"/>
             <path d="M16,2 Q14.2,5.2 9,8.5" stroke="#0D1117" strokeWidth="1.7" strokeLinecap="round"/>
@@ -66,19 +66,17 @@ const ShareCard = forwardRef<HTMLDivElement, {
         </div>
 
         {/* Archetype */}
-        <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase' as const, opacity: 0.4, marginBottom: 16 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#065F50', marginBottom: 16 }}>
             MY BETTING PERSONALITY
           </div>
-          <div style={{ fontSize: 80, fontWeight: 900, lineHeight: 0.92, letterSpacing: -1, marginBottom: 20 }}>
+          <div style={{ fontSize: 80, fontWeight: 900, lineHeight: 0.92, letterSpacing: -1, marginBottom: 20, color: '#0D1117' }}>
             {archName}
           </div>
-          <div style={{ fontSize: 18, fontWeight: 400, opacity: 0.55, lineHeight: 1.4, maxWidth: 380 }}>
+          <div style={{ fontSize: 18, fontWeight: 400, color: '#064E42', lineHeight: 1.4, maxWidth: 380 }}>
             {roastLine}
           </div>
         </div>
-
-        <div style={{ marginTop: 'auto' }} />
       </div>
 
       {/* Right panel: Insights */}
@@ -87,38 +85,38 @@ const ShareCard = forwardRef<HTMLDivElement, {
         padding: '56px 48px', display: 'flex', flexDirection: 'column',
       }}>
         {/* Top: Behavioral insight */}
-        <div style={{ marginBottom: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#00C9A7', marginBottom: 12 }}>
             {insight.contextLabel}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 72, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2, marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 72, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2, marginBottom: 12, color: '#F0F2F5' }}>
             {insight.heroStat}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, marginBottom: 8 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, marginBottom: 8, color: '#F0F2F5' }}>
             {insight.heroLabel}
           </div>
-          <div style={{ fontSize: 14, color: '#515968', lineHeight: 1.5, maxWidth: 400 }}>
+          <div style={{ fontSize: 14, color: '#848D9A', lineHeight: 1.5, maxWidth: 400 }}>
             {insight.verdict}
           </div>
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '32px 0' }} />
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '24px 0' }} />
 
         {/* Bottom: Pattern comparison */}
-        <div style={{ marginBottom: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 8 }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#515968', marginBottom: 4 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#848D9A', marginBottom: 4 }}>
                 {comparison.topLabel.replace(/^Your /i, '')}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, lineHeight: 1 }}>
+              <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, lineHeight: 1, color: '#F0F2F5' }}>
                 {comparison.topValue}
               </div>
             </div>
             <div style={{ fontFamily: MONO, fontSize: 16, color: '#515968', alignSelf: 'center' }}>vs</div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#515968', marginBottom: 4 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#848D9A', marginBottom: 4 }}>
                 {comparison.bottomLabel.replace(/^Your /i, '')}
               </div>
               <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, color: '#E8453C', lineHeight: 1 }}>
@@ -126,14 +124,14 @@ const ShareCard = forwardRef<HTMLDivElement, {
               </div>
             </div>
           </div>
-          <div style={{ fontSize: 14, color: '#515968', lineHeight: 1.5, maxWidth: 400, marginTop: 12 }}>
+          <div style={{ fontSize: 14, color: '#848D9A', lineHeight: 1.5, maxWidth: 400, marginTop: 12 }}>
             {comparison.punchline}
           </div>
         </div>
 
         {/* CTA */}
-        <div style={{ marginTop: 'auto' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Get your autopsy report</div>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: '#F0F2F5' }}>Get your autopsy report</div>
           <div style={{ fontFamily: MONO, fontSize: 14, color: '#00C9A7' }}>betautopsy.com</div>
         </div>
       </div>
