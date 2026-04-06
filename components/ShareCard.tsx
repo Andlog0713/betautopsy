@@ -22,7 +22,6 @@ export interface ShareCardData {
   bets?: Bet[];
 }
 
-const MONO = "'JetBrains Mono', monospace";
 const SANS = "'Inter', -apple-system, sans-serif";
 
 const ShareCard = forwardRef<HTMLDivElement, {
@@ -40,99 +39,93 @@ const ShareCard = forwardRef<HTMLDivElement, {
         width: 1080,
         height: 1080,
         display: 'flex',
+        flexDirection: 'row',
         fontFamily: SANS,
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 4,
       }}
     >
-      {/* Left panel: Personality */}
+      {/* Left teal panel */}
       <div style={{
-        width: '44%', height: '100%', background: '#00C9A7', color: '#0D1117',
-        padding: '56px 48px', display: 'flex', flexDirection: 'column',
+        width: 475, background: '#00C9A7',
+        padding: '80px 56px', display: 'flex', flexDirection: 'column',
       }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="20" height="30" viewBox="0 0 18 28" fill="none">
-            <path d="M2,2 Q3.8,5.2 9,8.5" stroke="#0D1117" strokeWidth="1.7" strokeLinecap="round"/>
-            <path d="M16,2 Q14.2,5.2 9,8.5" stroke="#0D1117" strokeWidth="1.7" strokeLinecap="round"/>
-            <line x1="9" y1="8.5" x2="9" y2="26" stroke="#0D1117" strokeWidth="1.7" strokeLinecap="round"/>
-            <circle cx="9" cy="8.5" r="1.9" fill="#E8453C"/>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <svg width="36" height="52" viewBox="0 0 40 60" fill="none">
+            <path d="M4,4 Q8.6,11.5 20,19" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <path d="M36,4 Q31.4,11.5 20,19" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <line x1="20" y1="19" x2="20" y2="56" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <circle cx="20" cy="19" r="4.5" fill="#0D1117"/>
           </svg>
-          <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 1 }}>
-            <span style={{ fontWeight: 900 }}>BET</span>
-            <span style={{ fontWeight: 300 }}>AUTOPSY</span>
-          </div>
+          <span style={{ fontSize: 24, letterSpacing: 4, fontWeight: 800, color: '#0D1117' }}>
+            <span>BET</span><span style={{ fontWeight: 400 }}>AUTOPSY</span>
+          </span>
         </div>
-
-        {/* Archetype */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#065F50', marginBottom: 16 }}>
-            MY BETTING PERSONALITY
+        <div style={{ flex: 1 }} />
+        <div>
+          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.5, marginBottom: 28 }}>
+            My betting personality
           </div>
-          <div style={{ fontSize: 80, fontWeight: 900, lineHeight: 0.92, letterSpacing: -1, marginBottom: 20, color: '#0D1117' }}>
+          <div style={{ fontSize: 110, fontWeight: 900, color: '#0D1117', lineHeight: 0.92, letterSpacing: -4 }}>
             {archName}
           </div>
-          <div style={{ fontSize: 18, fontWeight: 400, color: '#064E42', lineHeight: 1.4, maxWidth: 380 }}>
+          <div style={{ fontSize: 32, color: '#0D1117', opacity: 0.5, marginTop: 36, lineHeight: 1.5 }}>
             {roastLine}
           </div>
         </div>
+        <div style={{ flex: 0.4 }} />
       </div>
 
-      {/* Right panel: Insights */}
+      {/* Right dark panel */}
       <div style={{
-        width: '56%', height: '100%', background: '#0D1117', color: '#F0F2F5',
-        padding: '56px 48px', display: 'flex', flexDirection: 'column',
+        flex: 1, background: '#0D1117',
+        padding: '80px 64px', display: 'flex', flexDirection: 'column', color: '#F0F2F5',
       }}>
-        {/* Top: Behavioral insight */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase' as const, color: '#00C9A7', marginBottom: 12 }}>
+        <div style={{ flex: 0.2 }} />
+
+        {/* Insight 1 */}
+        <div style={{ marginBottom: 80 }}>
+          <div style={{ fontSize: 28, color: '#00C9A7', marginBottom: 20 }}>
             {insight.contextLabel}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 72, fontWeight: 700, lineHeight: 0.9, letterSpacing: -2, marginBottom: 12, color: '#F0F2F5' }}>
+          <div style={{ fontSize: 150, fontWeight: 900, lineHeight: 0.9, letterSpacing: -5 }}>
             {insight.heroStat}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, marginBottom: 8, color: '#F0F2F5' }}>
+          <div style={{ fontSize: 38, color: '#848D9A', marginTop: 20, lineHeight: 1.3 }}>
             {insight.heroLabel}
           </div>
-          <div style={{ fontSize: 14, color: '#848D9A', lineHeight: 1.5, maxWidth: 400 }}>
-            {insight.verdict}
-          </div>
         </div>
 
-        {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '24px 0' }} />
-
-        {/* Bottom: Pattern comparison */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 8 }}>
+        {/* Insight 2 */}
+        <div>
+          <div style={{ fontSize: 28, color: '#E8453C', marginBottom: 20 }}>
+            Win rate comparison
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 36 }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#848D9A', marginBottom: 4 }}>
-                {comparison.topLabel.replace(/^Your /i, '')}
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, lineHeight: 1, color: '#F0F2F5' }}>
+              <div style={{ fontSize: 100, fontWeight: 900, letterSpacing: -3 }}>
                 {comparison.topValue}
               </div>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 16, color: '#515968', alignSelf: 'center' }}>vs</div>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' as const, color: '#848D9A', marginBottom: 4 }}>
-                {comparison.bottomLabel.replace(/^Your /i, '')}
+              <div style={{ fontSize: 26, color: '#515968', marginTop: 6 }}>
+                {comparison.topLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, color: '#E8453C', lineHeight: 1 }}>
+            </div>
+            <div style={{ fontSize: 48, color: '#515968' }}>vs</div>
+            <div>
+              <div style={{ fontSize: 100, fontWeight: 900, color: '#E8453C', letterSpacing: -3 }}>
                 {comparison.bottomValue}
               </div>
+              <div style={{ fontSize: 26, color: '#515968', marginTop: 6 }}>
+                {comparison.bottomLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
+              </div>
             </div>
           </div>
-          <div style={{ fontSize: 14, color: '#848D9A', lineHeight: 1.5, maxWidth: 400, marginTop: 12 }}>
-            {comparison.punchline}
-          </div>
         </div>
+
+        <div style={{ flex: 1 }} />
 
         {/* CTA */}
         <div>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: '#F0F2F5' }}>Get your autopsy report</div>
-          <div style={{ fontFamily: MONO, fontSize: 14, color: '#00C9A7' }}>betautopsy.com</div>
+          <div style={{ fontSize: 36, fontWeight: 700 }}>Get your autopsy</div>
+          <div style={{ fontSize: 28, color: '#00C9A7', marginTop: 8 }}>betautopsy.com</div>
         </div>
       </div>
     </div>
