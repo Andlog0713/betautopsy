@@ -24,46 +24,16 @@ export default function LandingPage() {
           <div className="font-light text-4xl md:text-6xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
             Your behavior is.
           </div>
-          <p className="text-fg text-base md:text-lg max-w-2xl mb-4 leading-relaxed animate-fade-in-d2">
+          <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
             Find out exactly which habits are costing you money, and how much. Upload your
             bet history and BetAutopsy breaks down every bias hiding in your data. The patterns
             you can&apos;t see on your own, what each one is actually costing you, and a concrete plan to fix them.
-          </p>
-          <p className="text-fg-muted text-sm max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Every upload sharpens the picture. Your third report catches patterns your first one couldn&apos;t.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Get Your Free Full Report
             </Link>
             <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
-          </div>
-          <div className="mt-6 animate-fade-in-d3">
-            <Link href="/how-to-upload" className="font-mono text-xs text-scalpel hover:text-scalpel/80 transition-colors tracking-wider">
-              NOT SURE HOW TO GET YOUR DATA? →
-            </Link>
-          </div>
-
-          {/* Trust block */}
-          <div className="mt-6 border border-white/[0.04] rounded px-4 py-3 animate-fade-in-d3">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V4.5a3 3 0 0 1 6 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                <span className="font-mono text-xs text-fg-muted">Data never sold or shared</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 7 3-1.5 5.5-3.5 5.5-7V4L8 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
-                <span className="font-mono text-xs text-fg-muted">Not stored by our AI provider</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" strokeWidth="1.5"/><line x1="6" y1="6" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5"/></svg>
-                <span className="font-mono text-xs text-fg-muted">Row-level security on all data</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M4 4l.7 9.1a1.5 1.5 0 0 0 1.5 1.4h3.6a1.5 1.5 0 0 0 1.5-1.4L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                <span className="font-mono text-xs text-fg-muted">Delete your data anytime</span>
-              </div>
-            </div>
           </div>
 
           {/* EKG heartbeat line */}
@@ -264,6 +234,28 @@ export default function LandingPage() {
           <p className="text-fg-muted text-xs mt-6">
             Have questions? <Link href="/faq" className="text-scalpel hover:underline">Check our FAQ</Link>
           </p>
+
+          {/* Trust block */}
+          <div className="mt-10 border border-white/[0.04] rounded px-4 py-3 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V4.5a3 3 0 0 1 6 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <span className="font-mono text-xs text-fg-muted">Data never sold or shared</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L2.5 4v4c0 3.5 2.5 5.5 5.5 7 3-1.5 5.5-3.5 5.5-7V4L8 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+                <span className="font-mono text-xs text-fg-muted">Not stored by our AI provider</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.5"/><line x1="2" y1="10" x2="14" y2="10" stroke="currentColor" strokeWidth="1.5"/><line x1="6" y1="6" x2="6" y2="14" stroke="currentColor" strokeWidth="1.5"/></svg>
+                <span className="font-mono text-xs text-fg-muted">Row-level security on all data</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-scalpel shrink-0" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M4 4l.7 9.1a1.5 1.5 0 0 0 1.5 1.4h3.6a1.5 1.5 0 0 0 1.5-1.4L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <span className="font-mono text-xs text-fg-muted">Delete your data anytime</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
