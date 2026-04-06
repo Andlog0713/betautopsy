@@ -1,7 +1,25 @@
-// Font configuration for BetAutopsy
-// ─────────────────────────────────────────────────
-// Headings + Body: Plus Jakarta Sans (400-800) via Google Fonts <link> in layout.tsx
-// Mono: IBM Plex Mono (400-500) via Google Fonts <link> in layout.tsx
-//
-// Future: Replace with local Clash Display + Satoshi from src/fonts/
-// when font files are added, using next/font/local.
+import localFont from 'next/font/local';
+
+export const jakarta = localFont({
+  src: '../public/fonts/PlusJakartaSans-VariableFont_wght.ttf',
+  variable: '--font-jakarta',
+  display: 'swap',
+  weight: '400 800',
+});
+
+export const ibmPlexMono = localFont({
+  src: [
+    {
+      path: '../public/fonts/IBMPlexMono-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/IBMPlexMono-Medium.ttf',
+      weight: '500',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-mono',
+  display: 'swap',
+});

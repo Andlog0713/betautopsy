@@ -49,8 +49,8 @@ module.exports = {
         mint: { 500: '#3FB950' },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         'none': '0px',
