@@ -12,7 +12,8 @@ import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
-import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, Check } from 'lucide-react';
+import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame } from 'lucide-react';
+import { toast } from 'sonner';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
@@ -1809,7 +1810,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   .join('\n\n');
                 navigator.clipboard.writeText(text);
                 const btn = document.getElementById('copy-rules-btn');
-                if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy Rules'; }, 2000); }
+                toast.success('Rules copied to clipboard');
               }}
               id="copy-rules-btn"
               className="text-xs text-fg-muted hover:text-scalpel transition-colors"

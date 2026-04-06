@@ -128,7 +128,7 @@ export default function UploadsPage() {
         <div className="card p-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-fg-bright">Previous imports</p>
-            <p className="text-xs text-fg-muted">{legacyBets.length} bets uploaded before upload tracking was enabled</p>
+            <p className="text-xs text-fg-muted"><span className="font-mono">{legacyBets.length}</span> bets uploaded before upload tracking was enabled</p>
           </div>
           <Link href="/bets" className="text-xs text-scalpel hover:underline">View in Bet History</Link>
         </div>
@@ -186,7 +186,7 @@ export default function UploadsPage() {
 
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted">
                       <span>{new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      <span>{u.bet_count} bets</span>
+                      <span><span className="font-mono">{u.bet_count}</span> bets</span>
                       <span>{u.sportsbook ?? 'Multiple books'}</span>
                       <span className="font-mono">{u.record}</span>
                       <span className={`font-mono ${u.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
@@ -223,7 +223,7 @@ export default function UploadsPage() {
       {selected.size > 0 && (
         <div className="card px-5 py-3 flex flex-wrap items-center gap-4">
           <span className="text-sm text-fg-bright">
-            <span className="font-mono font-medium">{selected.size}</span> upload{selected.size !== 1 ? 's' : ''} selected ({totalSelectedBets} bets)
+            <span className="font-mono font-medium">{selected.size}</span> upload{selected.size !== 1 ? 's' : ''} selected (<span className="font-mono">{totalSelectedBets}</span> bets)
           </span>
           <button onClick={() => setSelected(new Set())} className="text-sm text-fg-muted hover:text-fg transition-colors">
             Deselect All

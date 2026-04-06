@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
 import ShareCard, { type ShareCardData } from './ShareCard';
@@ -27,7 +28,6 @@ export default function ShareModal({
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
   ];
-  const [linkCopied, setLinkCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
@@ -102,8 +102,7 @@ export default function ShareModal({
   function handleCopyLink() {
     const url = shareUrl || `${window.location.origin}/reports`;
     navigator.clipboard.writeText(url).then(() => {
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+      toast.success('Link copied');
     }).catch(() => {
       const input = document.createElement('input');
       input.value = url;
@@ -111,8 +110,7 @@ export default function ShareModal({
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+      toast.success('Link copied');
     });
   }
 
@@ -154,13 +152,9 @@ export default function ShareModal({
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
-                  className={`flex-1 py-2 rounded-sm text-xs font-mono transition-colors ${
-                    linkCopied
-                      ? 'bg-scalpel text-base'
-                      : 'bg-surface-2 border border-border-subtle text-fg hover:border-border-strong'
-                  }`}
+                  className="flex-1 py-2 rounded-sm text-xs font-mono transition-colors bg-surface-2 border border-border-subtle text-fg hover:border-border-strong"
                 >
-                  {linkCopied ? 'Copied to clipboard' : shareUrl ? 'Copy report link' : 'Generating link...'}
+                  {shareUrl ? 'Copy report link' : 'Generating link...'}
                 </button>
                 <button
                   onClick={handleShareTwitter}

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { Check, Snowflake } from 'lucide-react';
+import { Snowflake } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Profile } from '@/types';
 
 export default function SettingsPage() {
@@ -17,9 +18,7 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
   const [bankroll, setBankroll] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
-  const [profileSaved, setProfileSaved] = useState(false);
   const [bankrollSaving, setBankrollSaving] = useState(false);
-  const [bankrollSaved, setBankrollSaved] = useState(false);
   const [bankrollExpanded, setBankrollExpanded] = useState(false);
 
   // Email preferences
@@ -32,7 +31,6 @@ export default function SettingsPage() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [passwordResetSent, setPasswordResetSent] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -69,8 +67,7 @@ export default function SettingsPage() {
       .update({ display_name: displayName })
       .eq('id', profile.id);
     setProfileSaving(false);
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 2000);
+    toast.success('Profile saved');
   }
 
   async function saveBankroll() {
@@ -83,8 +80,7 @@ export default function SettingsPage() {
       .update({ bankroll: isNaN(value) ? null : value })
       .eq('id', profile.id);
     setBankrollSaving(false);
-    setBankrollSaved(true);
-    setTimeout(() => setBankrollSaved(false), 2000);
+    toast.success('Bankroll saved');
   }
 
   async function handleClearBets() {
@@ -105,8 +101,7 @@ export default function SettingsPage() {
     await supabase.auth.resetPasswordForEmail(profile.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    setPasswordResetSent(true);
-    setTimeout(() => setPasswordResetSent(false), 5000);
+    toast.success('Reset email sent');
   }
 
   async function handleSignOut() {
@@ -182,7 +177,7 @@ export default function SettingsPage() {
             disabled={profileSaving}
             className="btn-primary text-sm"
           >
-            {profileSaved ? <><Check size={14} className="inline" /> Saved</> : profileSaving ? 'Saving...' : 'Save Profile'}
+            {profileSaving ? 'Saving...' : 'Save Profile'}
           </button>
 
           {/* Streak info */}
@@ -230,7 +225,7 @@ export default function SettingsPage() {
             disabled={bankrollSaving}
             className="btn-primary text-sm"
           >
-            {bankrollSaved ? <><Check size={14} className="inline" /> Saved</> : bankrollSaving ? '...' : 'Save'}
+            {bankrollSaving ? '...' : 'Save'}
           </button>
         </div>
         <p className="text-fg-muted text-xs">
@@ -402,7 +397,7 @@ export default function SettingsPage() {
         <h2 className="font-semibold text-xl">Account</h2>
         <div className="flex flex-wrap gap-3">
           <button onClick={handlePasswordReset} className="btn-secondary text-sm">
-            {passwordResetSent ? <><Check size={14} className="inline" /> Reset email sent</> : 'Change Password'}
+            Change Password
           </button>
           <button onClick={handleSignOut} className="btn-secondary text-sm">
             Sign Out

@@ -78,6 +78,9 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out both',
@@ -93,8 +96,9 @@ module.exports = {
         'slide-up-d4': 'slide-up 0.5s ease-out 0.4s both',
         'slide-up-d5': 'slide-up 0.5s ease-out 0.5s both',
         'slide-up-d6': 'slide-up 0.5s ease-out 0.6s both',
+        shimmer: 'shimmer 2s infinite',
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography')],
 };

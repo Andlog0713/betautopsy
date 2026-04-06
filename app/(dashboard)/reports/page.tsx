@@ -431,9 +431,9 @@ export default function ReportsPage() {
               <div className="card p-5 mt-3">
                 <h3 className="font-semibold text-lg mb-2">Personal Betting Rules</h3>
                 <div className="space-y-2">
-                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3 border-l-2 border-scalpel"><p className="text-sm">Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
+                  <div className="bg-surface-1 border border-border-subtle rounded-xl p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
+                  <div className="bg-surface-1 border border-border-subtle rounded-xl p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="bg-surface-1 border border-border-subtle rounded-xl p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
                 </div>
               </div>
             </div>

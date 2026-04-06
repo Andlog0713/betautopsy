@@ -291,6 +291,14 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          {/* Data freshness */}
+          <p className="text-xs text-fg-dim font-mono mb-4">
+            {daysSinceReport !== null
+              ? `Last report: ${daysSinceReport === 0 ? 'today' : `${daysSinceReport}d ago`}`
+              : `${stats.totalBets} bets loaded`}
+            {daysSinceLastBet !== null && ` · Last upload: ${daysSinceLastBet === 0 ? 'today' : `${daysSinceLastBet}d ago`}`}
+          </p>
+
           {/* ── Priority nudge banner ── */}
           {nudge && (
             <div className="flex items-center gap-3 bg-surface-1 border border-border-subtle rounded-lg px-4 py-3 mb-6">
