@@ -32,6 +32,9 @@ const ShareCard = forwardRef<HTMLDivElement, {
 }>(({ data, insight, comparison, roastLine }, ref) => {
   const archName = data.archetype?.name ?? 'The Grinder';
 
+  // Scale archetype font based on name length to prevent overflow
+  const archFontSize = archName.length > 14 ? 72 : archName.length > 10 ? 80 : 90;
+
   return (
     <div
       ref={ref}
@@ -46,7 +49,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
       {/* Left teal panel */}
       <div style={{
         width: 475, background: '#00C9A7',
-        padding: '80px 56px', display: 'flex', flexDirection: 'column',
+        padding: '80px 48px', display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <svg width="36" height="52" viewBox="0 0 40 60" fill="none">
@@ -61,13 +64,13 @@ const ShareCard = forwardRef<HTMLDivElement, {
         </div>
         <div style={{ flex: 1 }} />
         <div>
-          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.7, marginBottom: 28 }}>
+          <div style={{ fontSize: 26, color: '#0D1117', opacity: 0.7, marginBottom: 24 }}>
             My betting personality
           </div>
-          <div style={{ fontSize: 90, fontWeight: 900, color: '#0D1117', lineHeight: 0.92, letterSpacing: -3, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+          <div style={{ fontSize: archFontSize, fontWeight: 900, color: '#0D1117', lineHeight: 0.95, letterSpacing: -2 }}>
             {archName}
           </div>
-          <div style={{ fontSize: 32, color: '#0D1117', opacity: 0.7, marginTop: 36, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.7, marginTop: 32, lineHeight: 1.45 }}>
             {roastLine}
           </div>
         </div>
@@ -77,43 +80,43 @@ const ShareCard = forwardRef<HTMLDivElement, {
       {/* Right dark panel */}
       <div style={{
         flex: 1, background: '#0D1117',
-        padding: '80px 64px', display: 'flex', flexDirection: 'column', color: '#F0F2F5',
+        padding: '80px 56px', display: 'flex', flexDirection: 'column', color: '#F0F2F5',
       }}>
-        <div style={{ flex: 0.2 }} />
+        <div style={{ flex: 0.1 }} />
 
-        {/* Insight 1 */}
-        <div style={{ marginBottom: 80 }}>
-          <div style={{ fontSize: 28, color: '#00C9A7', marginBottom: 20 }}>
+        {/* Insight */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 26, color: '#00C9A7', marginBottom: 16, fontWeight: 600 }}>
             {insight.contextLabel}
           </div>
-          <div style={{ fontSize: 150, fontWeight: 900, lineHeight: 0.9, letterSpacing: -5 }}>
+          <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>
             {insight.heroStat}
           </div>
-          <div style={{ fontSize: 38, color: '#848D9A', marginTop: 20, lineHeight: 1.3 }}>
+          <div style={{ fontSize: 34, color: '#D0D5DD', marginTop: 16, lineHeight: 1.3, fontWeight: 500 }}>
             {insight.heroLabel}
           </div>
         </div>
 
-        {/* Insight 2 */}
+        {/* Comparison */}
         <div>
-          <div style={{ fontSize: 28, color: '#E8453C', marginBottom: 20 }}>
+          <div style={{ fontSize: 24, color: '#E8453C', marginBottom: 16, fontWeight: 600 }}>
             Win rate comparison
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 28 }}>
             <div>
-              <div style={{ fontSize: 100, fontWeight: 900, letterSpacing: -3 }}>
+              <div style={{ fontSize: 88, fontWeight: 900, letterSpacing: -3 }}>
                 {comparison.topValue}
               </div>
-              <div style={{ fontSize: 26, color: '#848D9A', marginTop: 6 }}>
+              <div style={{ fontSize: 22, color: '#A0A8B4', marginTop: 4 }}>
                 {comparison.topLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
               </div>
             </div>
-            <div style={{ fontSize: 48, color: '#848D9A' }}>vs</div>
+            <div style={{ fontSize: 36, color: '#A0A8B4' }}>vs</div>
             <div>
-              <div style={{ fontSize: 100, fontWeight: 900, color: '#E8453C', letterSpacing: -3 }}>
+              <div style={{ fontSize: 88, fontWeight: 900, color: '#E8453C', letterSpacing: -3 }}>
                 {comparison.bottomValue}
               </div>
-              <div style={{ fontSize: 26, color: '#848D9A', marginTop: 6 }}>
+              <div style={{ fontSize: 22, color: '#A0A8B4', marginTop: 4 }}>
                 {comparison.bottomLabel.replace(/^Your /i, '').replace(/^win rate /i, '')}
               </div>
             </div>
@@ -124,8 +127,8 @@ const ShareCard = forwardRef<HTMLDivElement, {
 
         {/* CTA */}
         <div>
-          <div style={{ fontSize: 36, fontWeight: 700 }}>Get your autopsy</div>
-          <div style={{ fontSize: 28, color: '#00C9A7', marginTop: 8 }}>betautopsy.com</div>
+          <div style={{ fontSize: 32, fontWeight: 700 }}>Get your autopsy</div>
+          <div style={{ fontSize: 24, color: '#00C9A7', marginTop: 6 }}>betautopsy.com</div>
         </div>
       </div>
     </div>
