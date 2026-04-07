@@ -3,6 +3,7 @@ import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
 import AnimatedSection from '@/components/AnimatedSection';
+import HeroHeadline from '@/components/HeroHeadline';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import ProductWalkthrough from '@/components/ProductWalkthrough';
 import ResponsibleGambling from '@/components/ResponsibleGambling';
@@ -22,12 +23,7 @@ export default function LandingPage() {
           <div className="case-header mb-8 animate-fade-in">
             CASE FILE // BEHAVIORAL ANALYSIS UNIT
           </div>
-          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
-            Your bets aren&apos;t the problem.
-          </h1>
-          <div className="font-light text-4xl md:text-6xl leading-[1.08] tracking-tight text-scalpel mb-8 animate-fade-in-d1">
-            Your behavior is.
-          </div>
+          <HeroHeadline />
           <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
             Upload your bet history. See exactly which habits are costing you money, how much, and how to fix them.
           </p>
