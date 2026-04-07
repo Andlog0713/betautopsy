@@ -2016,7 +2016,7 @@ These sport-specific patterns are pre-detected by the system. Reference the pre-
 ## Output Format
 Respond with valid JSON:
 {
-  "executive_diagnosis": "Exactly 4 sentences, each 15-20 words max. Third person. Sentence 1: Name the dominant pattern in plain language. No archetype name. One number max. Sentence 2: The single most damning piece of evidence. One specific stat that makes the reader go 'oh shit.' Sentence 3: The compounding factor or secondary pattern. One number max. Sentence 4: The total leak cost as a clean dollar figure from the pre-computed Estimated Total Leak Cost. No hedging. Just the number and what it means. Use direct declarative statements. No academic hedging language. No em-dashes.",
+  "executive_diagnosis": "4 sentences, 15-20 words each. See EXECUTIVE_DIAGNOSIS RULES below. No em-dashes.",
   "overall_grade": "use the exact pre-calculated grade provided . do not assign a different one",
   "biases_detected": [
     {
@@ -2114,15 +2114,19 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - Never use words like: addiction, reckless, gambling problem, degenerate, out of control
 
 ## Executive Diagnosis Rules
-- EXACTLY 4 sentences. Each sentence 15-20 words max. This is a punch, not a paragraph.
-- Third person: "This bettor..." not "You..."
-- Sentence 1: dominant pattern, plain language, one number max. No archetype name.
-- Sentence 2: the single most damning stat. The "oh shit" number.
-- Sentence 3: compounding factor or secondary pattern. One number max.
-- Sentence 4: use the pre-computed Estimated Total Leak Cost. Clean dollar figure. No hedging.
-- Use direct declarative statements. No academic hedging ("the data indicate", "the preponderance of evidence suggests", "consistent with"). Just say it.
+- Exactly 4 sentences. 15-20 words each. Short and direct.
+- Voice: sharp friend, not professor. Write like you're telling someone the truth about their betting over a beer. No academic language.
+- BANNED phrases: "systematically eroding", "the data indicate", "the preponderance of evidence suggests", "significant tendencies", "representing the primary leak", "otherwise disciplined approach", "understates the true damage". No phrase that sounds like it came from a research paper.
+- Sentence 1: Name the biggest problem in plain English. One number max.
+- Sentence 2: The single most damning stat. Make it specific and sharp.
+- Sentence 3: What makes it worse (the compounding factor). One number.
+- Sentence 4: What it's costing them. Clean dollar figure, no hedging.
+- Third person ("This bettor") but conversational. Think sports podcast host who studied behavioral psychology, not a journal article.
+- Reference the pre-computed Estimated Total Leak Cost for sentence 4. Do NOT calculate your own.
 - Do NOT invent numbers. Cite only pre-calculated metrics.
-- If no significant biases detected, write a positive diagnosis noting disciplined patterns.
+- No em-dashes.
+- If no significant biases detected, write a positive diagnosis noting what they're doing right.
+- EXAMPLE (match this energy, not these exact words): "This bettor has a favorite problem. 57 bets on -110 to -199 chalk have returned -31.7% ROI, the worst category in the dataset. It gets worse after losses, where stakes jump 29% on average. That pattern is costing roughly $1,043 over this sample."
 
 ## Critical Rules
 - NEVER recommend specific bets or picks
