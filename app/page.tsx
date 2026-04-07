@@ -7,6 +7,10 @@ import HeroHeadline from '@/components/HeroHeadline';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import ResponsibleGambling from '@/components/ResponsibleGambling';
+import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
+import { NumberTicker } from '@/components/ui/number-ticker';
+import { Marquee } from '@/components/ui/marquee';
+import { BorderBeam } from '@/components/ui/border-beam';
 
 export default function LandingPage() {
   return (
@@ -20,8 +24,10 @@ export default function LandingPage() {
         {/* Glow behind hero text */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00C9A7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative z-10">
-          <div className="case-header mb-8 animate-fade-in">
-            CASE FILE // BEHAVIORAL ANALYSIS UNIT
+          <div className="mb-8 animate-fade-in">
+            <AnimatedShinyText className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase inline-block">
+              CASE FILE // BEHAVIORAL ANALYSIS UNIT
+            </AnimatedShinyText>
           </div>
           <HeroHeadline />
           <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
@@ -36,11 +42,11 @@ export default function LandingPage() {
           {/* Social proof counter strip */}
           <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
             <div>
-              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={47000} suffix="+" /></span>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={47000} />+</span>
               <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Bets Analyzed</span>
             </div>
             <div>
-              <span className="font-mono text-2xl font-bold text-fg-bright"><AnimatedCounter target={2100} suffix="+" /></span>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={2100} />+</span>
               <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
             </div>
           </div>
@@ -68,21 +74,23 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="border-y border-border-subtle py-5">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-4">
-            <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
-            {[
-              { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6' },
-              { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
-              { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5' },
-              { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
-              { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4' },
-              { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4' },
-              { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
-              { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
-            ].map(logo => (
-              <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity`} />
-            ))}
-            <span className="font-mono text-xs text-fg-muted/50 tracking-wider">+ Any CSV</span>
+          <div className="relative">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
+            <Marquee pauseOnHover className="[--duration:30s]">
+              {[
+                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6' },
+                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
+                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5' },
+                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
+                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4' },
+                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4' },
+                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
+                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
+              ].map(logo => (
+                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity mx-6`} />
+              ))}
+            </Marquee>
           </div>
         </div>
       </section>
@@ -224,7 +232,7 @@ export default function LandingPage() {
               </ul>
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Start Free</Link>
             </div>
-            <div className="bg-base p-6 flex flex-col relative md:border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
+            <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">FIRST ONE FREE</span>
@@ -247,6 +255,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
+              <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" />
             </div>
             <div className="bg-base p-6 flex flex-col">
               <div className="flex items-center gap-2 mb-3">

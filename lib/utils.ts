@@ -1,5 +1,7 @@
-export function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
+import { clsx, type ClassValue } from 'clsx';
+
+export function cn(...inputs: ClassValue[]) {
+  return clsx(inputs);
 }
 
 export function sanitizeForPrompt(input: string, maxLength: number = 500): string {

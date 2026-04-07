@@ -87,6 +87,21 @@ module.exports = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        'border-beam': {
+          '100%': { 'offset-distance': '100%' },
+        },
+        'shiny-text': {
+          '0%, 90%, 100%': { 'background-position': 'calc(-100% - var(--shiny-width)) 0' },
+          '30%, 60%': { 'background-position': 'calc(100% + var(--shiny-width)) 0' },
+        },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(calc(-100% - var(--gap)))' },
+        },
+        'marquee-vertical': {
+          from: { transform: 'translateY(0)' },
+          to: { transform: 'translateY(calc(-100% - var(--gap)))' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out both',
@@ -104,6 +119,10 @@ module.exports = {
         'slide-up-d6': 'slide-up 0.5s ease-out 0.6s both',
         shimmer: 'shimmer 2s infinite',
         'slide-in-left': 'slide-in-left 0.2s ease-out',
+        'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
+        'shiny-text': 'shiny-text 8s infinite',
+        marquee: 'marquee var(--duration) infinite linear',
+        'marquee-vertical': 'marquee-vertical var(--duration) infinite linear',
       },
     },
   },

@@ -14,6 +14,8 @@ import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import JournalEntryModal from '@/components/JournalEntryModal';
 import type { ProgressSnapshot } from '@/types';
 import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Lock, Snowflake, AlertTriangle } from 'lucide-react';
+import { NumberTicker } from '@/components/ui/number-ticker';
+import { BorderBeam } from '@/components/ui/border-beam';
 
 interface DashboardStats {
   totalBets: number;
@@ -315,7 +317,10 @@ export default function DashboardPage() {
             <div className="absolute -top-8 right-0"><EyeToggle /></div>
             <p className="text-sm text-fg-muted mb-1">Net P&L</p>
             <p className={`text-5xl font-bold tracking-tight font-mono tabular-nums ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
-              {mask(`${stats.netPnL >= 0 ? '+' : '-'}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)}
+              {mask('x') === 'x'
+                ? <>{stats.netPnL >= 0 ? '+' : '-'}$<NumberTicker value={Math.round(Math.abs(stats.netPnL))} /></>
+                : mask(`${stats.netPnL >= 0 ? '+' : '-'}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)
+              }
             </p>
             <p className="text-sm text-fg-muted mt-2">
               across {mask(stats.totalBets.toLocaleString())} bets · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} wagered · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} avg stake
@@ -329,19 +334,30 @@ export default function DashboardPage() {
               <div className="pr-6">
                 <p className="text-sm text-fg-muted mb-0.5">Win Rate</p>
                 <p className={`text-xl font-semibold font-mono tabular-nums ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
-                  {mask(`${stats.winRate.toFixed(1)}%`)}
+                  {mask('x') === 'x'
+                    ? <><NumberTicker value={parseFloat(stats.winRate.toFixed(1))} />%</>
+                    : mask(`${stats.winRate.toFixed(1)}%`)
+                  }
                 </p>
               </div>
               <div className="px-6">
                 <p className="text-sm text-fg-muted mb-0.5">ROI</p>
                 <p className={`text-xl font-semibold font-mono tabular-nums ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
-                  {latest ? mask(`${latest.roi_percent.toFixed(1)}%`) : mask(`${(stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1)}%`)}
+                  {mask('x') === 'x'
+                    ? <><NumberTicker value={parseFloat(latest ? latest.roi_percent.toFixed(1) : (stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1))} />%</>
+                    : latest ? mask(`${latest.roi_percent.toFixed(1)}%`) : mask(`${(stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1)}%`)
+                  }
                 </p>
               </div>
               {latest && (
                 <div className="pl-6">
                   <p className="text-sm text-fg-muted mb-0.5">Emotion</p>
-                  <p className="text-xl font-semibold font-mono tabular-nums text-fg-bright">{mask(latest.tilt_score.toString())}</p>
+                  <p className="text-xl font-semibold font-mono tabular-nums text-fg-bright">
+                    {mask('x') === 'x'
+                      ? <NumberTicker value={latest.tilt_score} />
+                      : mask(latest.tilt_score.toString())
+                    }
+                  </p>
                 </div>
               )}
             </div>
@@ -369,7 +385,7 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 space-y-4">
               {/* Discipline Score ring (paid) */}
               {latest && isPaid && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-6">
+                <div className="bg-surface-1 border border-border-subtle rounded-md p-6 relative overflow-hidden">
                   <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                     <div className="relative shrink-0">
                       <svg width="120" height="120" viewBox="0 0 120 120">
@@ -426,6 +442,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+                  <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" />
                 </div>
               )}
 
