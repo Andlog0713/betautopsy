@@ -934,45 +934,54 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Strategic Leaks */}
+      {/* Strategic Leaks — collapsible cards */}
       {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
       {!isPartialReport && strategic_leaks.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="font-bold text-2xl tracking-tight">Strategic Leaks</h2>
-          <p className="text-fg-muted text-xs italic -mt-2">Categories where your ROI doesn&apos;t justify your volume. You&apos;re betting here but the numbers say you shouldn&apos;t be.</p>
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border-subtle">
-                    <th className="text-left text-fg-muted font-medium px-4 py-3">Category</th>
-                    <th className="text-left text-fg-muted font-medium px-4 py-3">Issue</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3">ROI</th>
-                    <th className="text-right text-fg-muted font-medium px-4 py-3 hidden sm:table-cell">Sample</th>
-                    <th className="text-left text-fg-muted font-medium px-4 py-3 hidden md:table-cell">Suggestion</th>
-                    <th className="px-4 py-3 w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {strategic_leaks.map((leak, i) => (
-                    <tr key={i} className="border-b border-border-subtle">
-                      <td className="px-4 py-3 font-medium">{formatCategoryLabel(leak.category)}</td>
-                      <td className="px-4 py-3 text-fg-muted">{leak.detail}</td>
-                      <td className={`px-4 py-3 text-right font-mono font-medium ${leak.roi_impact >= 0 ? 'text-win' : 'text-loss'}`}>
-                        {leak.roi_impact >= 0 ? '+' : ''}{leak.roi_impact.toFixed(1)}%
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-fg-muted hidden sm:table-cell">{leak.sample_size}</td>
-                      <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{leak.suggestion}</td>
-                      <td className="px-4 py-3">
-                        <Link href={leakToQuery(leak.category)} className="text-xs text-scalpel hover:underline whitespace-nowrap">
-                          View bets →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="space-y-2">
+          <div className="mb-2.5">
+            <h2 className="font-bold text-2xl tracking-tight">Strategic Leaks</h2>
+            <p className="text-fg-muted text-xs italic mt-1">Categories where your ROI doesn&apos;t justify your volume.</p>
+          </div>
+          <div className="space-y-2">
+            {strategic_leaks.map((leak, i) => {
+              const leakId = `leak-${i}`;
+              const isExpanded = expandedFindings.has(leakId);
+              return (
+              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                <div
+                  onClick={() => toggleFinding(leakId)}
+                  className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="w-2 h-2 rounded-full shrink-0 bg-bleed" />
+                    <span className="text-sm font-medium text-fg-bright truncate">{formatCategoryLabel(leak.category)}</span>
+                    <span className={`text-xs font-mono font-medium shrink-0 ${leak.roi_impact >= 0 ? 'text-win' : 'text-loss'}`}>
+                      {leak.roi_impact >= 0 ? '+' : ''}{leak.roi_impact.toFixed(1)}%
+                    </span>
+                    <span className="text-xs text-fg-dim font-mono shrink-0">{leak.sample_size} bets</span>
+                  </div>
+                  <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 shrink-0 ml-4 ${isExpanded ? 'rotate-180' : ''}`} />
+                </div>
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
+                    <p className="text-sm text-fg leading-relaxed">{leak.detail}</p>
+                    {leak.suggestion && (
+                      <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="w-1 h-1 rounded-full bg-scalpel" />
+                          <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Suggestion</p>
+                        </div>
+                        <p className="text-sm text-fg leading-relaxed">{leak.suggestion}</p>
+                      </div>
+                    )}
+                    <Link href={leakToQuery(leak.category)} className="text-xs text-scalpel hover:underline inline-block">
+                      View bets →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1790,47 +1799,49 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {prioritizedLeaks.map((item, i) => {
                     const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    const leakId = `priority-${i}`;
+                    const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="card p-5">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono text-lg font-bold text-scalpel shrink-0">#{i + 1}</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium">{item.name}</h3>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'bias' ? 'bg-orange-400/10 text-orange-400' : 'bg-loss/10 text-loss'}`}>
-                                  {item.type}
-                                </span>
-                                {item.severity && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.medium}`}>
-                                    {item.severity}
-                                  </span>
-                                )}
-                              </div>
-                              {item.detail && <p className="text-fg-muted text-xs mt-0.5">{item.detail}</p>}
+                      <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                        <div
+                          onClick={() => toggleFinding(leakId)}
+                          className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className="font-mono text-sm font-bold text-scalpel shrink-0 w-6">#{i + 1}</span>
+                            <span className="text-sm font-medium text-fg-bright truncate">{item.name}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${item.type === 'bias' ? 'bg-caution/10 text-caution' : 'bg-loss/10 text-loss'}`}>
+                              {item.type}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0 ml-4">
+                            <span className="text-sm font-mono font-bold text-loss">-${Math.round(item.cost).toLocaleString()}</span>
+                            <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                        </div>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                          <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
+                            {item.detail && <p className="text-sm text-fg leading-relaxed">{item.detail}</p>}
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-fg-muted">Share of total leaks</span>
+                              <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
+                            <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
+                            </div>
+                            {item.fix && (
+                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="w-1 h-1 rounded-full bg-scalpel" />
+                                  <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Fix</p>
+                                </div>
+                                <p className="text-sm text-fg leading-relaxed">{item.fix}</p>
+                              </div>
+                            )}
                           </div>
-                          <span className="font-mono text-lg font-bold text-loss shrink-0">
-                            -${Math.round(item.cost).toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-fg-muted">Share of total leaks</span>
-                            <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
-                          </div>
-                          <div className="h-2 bg-base rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="bg-base/50 rounded-sm p-3">
-                          <p className="text-fg-muted text-xs mb-1">Fix</p>
-                          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-bright text-sm">{item.fix}</p></div>
                         </div>
                       </div>
                     );
@@ -1845,42 +1856,32 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
                 <p className="text-fg-muted text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
-                <div className="grid gap-3">
+                <div className="space-y-3">
                   {whatIfs.map((wi, i) => {
                     const diff = wi.hypothetical - wi.actual;
                     const better = diff > 0;
-                    const maxVal = Math.max(Math.abs(wi.actual), Math.abs(wi.hypothetical));
-                    const actualPct = maxVal > 0 ? (Math.abs(wi.actual) / maxVal) * 100 : 0;
-                    const hypoPct = maxVal > 0 ? (Math.abs(wi.hypothetical) / maxVal) * 100 : 0;
                     return (
-                      <div key={i} className="card p-5">
-                        <p className="text-fg-bright text-sm mb-4">{wi.label}</p>
-                        <div className="space-y-3 mb-4">
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Actual P&L</span>
-                              <span className={`font-mono font-semibold ${wi.actual >= 0 ? 'text-win' : 'text-loss'}`}>
+                      <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-4">
+                        <p className="text-sm font-medium text-fg-bright mb-3">{wi.label}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-[10px] text-fg-dim uppercase tracking-wider mb-0.5">Actual</p>
+                              <p className={`text-base font-mono font-bold ${wi.actual >= 0 ? 'text-win' : 'text-loss'}`}>
                                 {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
-                              </span>
+                              </p>
                             </div>
-                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${actualPct}%` }} />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Hypothetical P&L</span>
-                              <span className={`font-mono font-semibold ${wi.hypothetical >= 0 ? 'text-win' : 'text-loss'}`}>
+                            <span className="text-fg-dim">→</span>
+                            <div className="text-center">
+                              <p className="text-[10px] text-fg-dim uppercase tracking-wider mb-0.5">If fixed</p>
+                              <p className={`text-base font-mono font-bold ${wi.hypothetical >= 0 ? 'text-win' : 'text-loss'}`}>
                                 {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-loss'}`} style={{ width: `${hypoPct}%` }} />
+                              </p>
                             </div>
                           </div>
-                        </div>
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-mono font-semibold ${better ? 'bg-win/10 text-win' : 'bg-loss/10 text-loss'}`}>
-                          {better ? '↑' : '↓'} {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                          <span className={`text-lg font-mono font-bold ${better ? 'text-scalpel' : 'text-loss'}`}>
+                            {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     );
@@ -2075,42 +2076,32 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
                 <p className="text-fg-muted text-sm">Counterfactual scenarios calculated from your actual bet data.</p>
-                <div className="grid gap-3">
+                <div className="space-y-3">
                   {whatIfs.map((wi, i) => {
                     const diff = wi.hypothetical - wi.actual;
                     const better = diff > 0;
-                    const maxVal = Math.max(Math.abs(wi.actual), Math.abs(wi.hypothetical));
-                    const actualPct = maxVal > 0 ? (Math.abs(wi.actual) / maxVal) * 100 : 0;
-                    const hypoPct = maxVal > 0 ? (Math.abs(wi.hypothetical) / maxVal) * 100 : 0;
                     return (
-                      <div key={i} className="card p-5">
-                        <p className="text-fg-bright text-sm mb-4">{wi.label}</p>
-                        <div className="space-y-3 mb-4">
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Actual P&L</span>
-                              <span className={`font-mono font-semibold ${wi.actual >= 0 ? 'text-win' : 'text-loss'}`}>
+                      <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-4">
+                        <p className="text-sm font-medium text-fg-bright mb-3">{wi.label}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-[10px] text-fg-dim uppercase tracking-wider mb-0.5">Actual</p>
+                              <p className={`text-base font-mono font-bold ${wi.actual >= 0 ? 'text-win' : 'text-loss'}`}>
                                 {wi.actual >= 0 ? '+' : ''}${Math.round(wi.actual).toLocaleString()}
-                              </span>
+                              </p>
                             </div>
-                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${wi.actual >= 0 ? 'bg-win' : 'bg-loss'}`} style={{ width: `${actualPct}%` }} />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Hypothetical P&L</span>
-                              <span className={`font-mono font-semibold ${wi.hypothetical >= 0 ? 'text-win' : 'text-loss'}`}>
+                            <span className="text-fg-dim">→</span>
+                            <div className="text-center">
+                              <p className="text-[10px] text-fg-dim uppercase tracking-wider mb-0.5">If fixed</p>
+                              <p className={`text-base font-mono font-bold ${wi.hypothetical >= 0 ? 'text-win' : 'text-loss'}`}>
                                 {wi.hypothetical >= 0 ? '+' : ''}${Math.round(wi.hypothetical).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="h-3 bg-surface-2 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${wi.hypothetical >= 0 ? 'bg-cyan-400' : 'bg-loss'}`} style={{ width: `${hypoPct}%` }} />
+                              </p>
                             </div>
                           </div>
-                        </div>
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-mono font-semibold ${better ? 'bg-win/10 text-win' : 'bg-loss/10 text-loss'}`}>
-                          {better ? '↑' : '↓'} {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                          <span className={`text-lg font-mono font-bold ${better ? 'text-scalpel' : 'text-loss'}`}>
+                            {better ? '+' : ''}${Math.round(diff).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     );
@@ -2135,47 +2126,49 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {prioritizedLeaks.map((item, i) => {
                     const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    const leakId = `priority-${i}`;
+                    const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="card p-5">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono text-lg font-bold text-scalpel shrink-0">#{i + 1}</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium">{item.name}</h3>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'bias' ? 'bg-orange-400/10 text-orange-400' : 'bg-loss/10 text-loss'}`}>
-                                  {item.type}
-                                </span>
-                                {item.severity && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[item.severity] ?? SEVERITY_COLORS.medium}`}>
-                                    {item.severity}
-                                  </span>
-                                )}
-                              </div>
-                              {item.detail && <p className="text-fg-muted text-xs mt-0.5">{item.detail}</p>}
+                      <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                        <div
+                          onClick={() => toggleFinding(leakId)}
+                          className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className="font-mono text-sm font-bold text-scalpel shrink-0 w-6">#{i + 1}</span>
+                            <span className="text-sm font-medium text-fg-bright truncate">{item.name}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${item.type === 'bias' ? 'bg-caution/10 text-caution' : 'bg-loss/10 text-loss'}`}>
+                              {item.type}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0 ml-4">
+                            <span className="text-sm font-mono font-bold text-loss">-${Math.round(item.cost).toLocaleString()}</span>
+                            <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                        </div>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                          <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
+                            {item.detail && <p className="text-sm text-fg leading-relaxed">{item.detail}</p>}
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-fg-muted">Share of total leaks</span>
+                              <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
+                            <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
+                            </div>
+                            {item.fix && (
+                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="w-1 h-1 rounded-full bg-scalpel" />
+                                  <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Fix</p>
+                                </div>
+                                <p className="text-sm text-fg leading-relaxed">{item.fix}</p>
+                              </div>
+                            )}
                           </div>
-                          <span className="font-mono text-lg font-bold text-loss shrink-0">
-                            -${Math.round(item.cost).toLocaleString()}
-                          </span>
-                        </div>
-
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-fg-muted">Share of total leaks</span>
-                            <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
-                          </div>
-                          <div className="h-2 bg-base rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="bg-base/50 rounded-sm p-3">
-                          <p className="text-fg-muted text-xs mb-1">Fix</p>
-                          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-bright text-sm">{item.fix}</p></div>
                         </div>
                       </div>
                     );
