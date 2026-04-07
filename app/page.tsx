@@ -88,8 +88,8 @@ export default function LandingPage() {
                 { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', w: 'w-[24px]' },
                 { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', w: 'w-[70px]' },
               ].map(logo => (
-                <div key={logo.alt} className="flex items-center justify-center h-8 mx-3 sm:mx-5 shrink-0">
-                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity scale-[0.85] sm:scale-100`} />
+                <div key={logo.alt} className="flex items-center justify-center h-8 mx-1.5 sm:mx-5 shrink-0">
+                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity scale-[0.7] sm:scale-100`} />
                 </div>
               ))}
             </Marquee>
@@ -146,10 +146,7 @@ export default function LandingPage() {
       <section className="bg-surface-2 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden" id="sample">
         <div className="absolute -top-10 -left-20 w-[400px] h-[300px] bg-cyan-500/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="case-header">EXHIBIT A // PRO TIER SAMPLE</div>
-            <span className="evidence-tag border-scalpel/30 text-scalpel">DEMO</span>
-          </div>
+          <div className="case-header mb-3">EXHIBIT A // PRO TIER SAMPLE</div>
           <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
             See a real autopsy report
           </h2>
