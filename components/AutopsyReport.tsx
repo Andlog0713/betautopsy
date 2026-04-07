@@ -1078,37 +1078,49 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Behavioral Patterns */}
+      {/* Behavioral Patterns — collapsible */}
       {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
       {!isPartialReport && behavioral_patterns.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="font-bold text-2xl tracking-tight">Behavioral Patterns</h2>
-          <p className="text-fg-muted text-xs italic -mt-2">Recurring habits we found in your betting. Some help you, some hurt you.</p>
-          <div className="grid gap-3">
-            {behavioral_patterns.map((pat, i) => (
-              <div key={i} className="card p-5 flex gap-4">
-                <span className="mt-0.5 shrink-0">
-                  {pat.impact === 'positive' ? <CheckCircle2 size={16} className="text-win" /> : pat.impact === 'negative' ? <XCircle size={16} className="text-loss" /> : <Minus size={16} className="text-fg-dim" />}
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium">{pat.pattern_name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      pat.impact === 'positive' ? 'bg-win/10 text-win'
-                        : pat.impact === 'negative' ? 'bg-loss/10 text-loss'
-                        : 'bg-fg-dim/50 text-fg-muted'
-                    }`}>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between mb-2.5">
+            <div>
+              <h2 className="font-bold text-2xl tracking-tight">Behavioral Patterns</h2>
+              <p className="text-fg-muted text-xs italic mt-1">Recurring habits we found in your betting. Some help you, some hurt you.</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {behavioral_patterns.map((pat, i) => {
+              const patId = `pattern-${i}`;
+              const isExpanded = expandedFindings.has(patId);
+              const dotClass = pat.impact === 'positive' ? 'bg-scalpel' : pat.impact === 'negative' ? 'bg-bleed' : 'bg-fg-dim';
+              const badgeClass = pat.impact === 'positive' ? 'bg-scalpel/10 text-scalpel' : pat.impact === 'negative' ? 'bg-bleed/10 text-bleed' : 'bg-fg-dim/20 text-fg-muted';
+              return (
+              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                <div
+                  onClick={() => toggleFinding(patId)}
+                  className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+                    <span className="text-sm font-medium text-fg-bright truncate">{pat.pattern_name}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
                       {pat.impact}
                     </span>
                   </div>
-                  <p className="text-fg-bright text-sm">{pat.description}</p>
-                  <div className="flex gap-4 mt-2 text-xs text-fg-muted">
-                    <span>Frequency: <span className="font-mono">{pat.frequency}</span></span>
-                    <span>Evidence: <span className="font-mono">{pat.data_points}</span></span>
+                  <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 shrink-0 ml-4 ${isExpanded ? 'rotate-180' : ''}`} />
+                </div>
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="px-4 pb-4 pt-1 space-y-2 border-t border-border-subtle">
+                    <p className="text-sm text-fg leading-relaxed">{pat.description}</p>
+                    <div className="flex gap-4 text-xs text-fg-muted font-mono">
+                      <span>Frequency: {pat.frequency}</span>
+                      <span>Evidence: {pat.data_points}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -2520,24 +2532,28 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
         </div>
       )}
 
-      {/* Full session log */}
+      {/* Full session log — capped at 10 with expand */}
       {sessionData.sessions.length > 4 && (
         <div>
           <button onClick={() => setShowAll(!showAll)} className="text-sm text-fg-muted hover:text-fg transition-colors font-mono">
-            {showAll ? 'Hide' : `View all ${sessionData.totalSessions} sessions`} <span className="text-fg-dim text-xs">{showAll ? '▴' : '▾'}</span>
+            {showAll ? 'Hide sessions' : `View all ${sessionData.totalSessions} sessions`} <span className="text-fg-dim text-xs">{showAll ? '▴' : '▾'}</span>
           </button>
           {showAll && (
-            <div className="mt-2 space-y-1">
-              {sortedSessions.map(s => (
-                <div key={s.id} className="bg-surface-2 rounded-sm p-2 flex items-center gap-2 text-xs">
-                  <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
-                  <span className="font-mono text-fg-dim w-20 shrink-0">{s.date.slice(5)}</span>
-                  <span className="text-fg-muted font-mono">{s.bets} bets</span>
-                  <span className="text-fg-dim font-mono">{Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
-                  <span className={`font-mono font-medium ml-auto ${s.profit >= 0 ? 'text-win' : 'text-loss'}`}>{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
-                  {s.isHeated && <span title="Heated session"><Flame size={14} className="text-loss" /></span>}
+            <div className="mt-2 space-y-1 max-h-[500px] overflow-y-auto">
+              {sortedSessions.map(s => {
+                const gradeTextColor = s.grade === 'A' ? 'text-scalpel' : s.grade === 'B' ? 'text-scalpel/70' : s.grade === 'C' ? 'text-caution' : s.grade === 'D' ? 'text-bleed/70' : 'text-bleed';
+                return (
+                <div key={s.id} className="flex items-center justify-between px-3 py-2 border-b border-border-subtle hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className={`text-lg font-bold font-mono w-8 text-center ${gradeTextColor}`}>{s.grade}</span>
+                    <span className="text-sm text-fg-muted">{s.dayOfWeek}</span>
+                    <span className="text-xs text-fg-dim font-mono">{s.bets} bets · {Math.round(s.durationMinutes / 60)}h{s.durationMinutes % 60 > 0 ? `${s.durationMinutes % 60}m` : ''}</span>
+                    {s.isHeated && <span title="Heated session"><Flame size={14} className="text-bleed" /></span>}
+                  </div>
+                  <span className={`text-sm font-mono font-medium ${s.profit >= 0 ? 'text-scalpel' : 'text-bleed'}`}>{s.profit >= 0 ? '+' : ''}${s.profit.toLocaleString()}</span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
