@@ -88,7 +88,7 @@ export default function LandingPage() {
                 { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5', extra: '' },
                 { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4', extra: '' },
               ].map(logo => (
-                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} ${logo.extra} w-auto opacity-50 hover:opacity-80 transition-opacity mx-3 sm:mx-5 scale-90 sm:scale-100`} />
+                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} ${logo.extra} w-auto opacity-50 hover:opacity-80 transition-opacity mx-2 sm:mx-5 scale-[0.8] sm:scale-100`} />
               ))}
             </Marquee>
           </div>
