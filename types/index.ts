@@ -414,12 +414,10 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
     maxBetsPerReport: 5000,
     reportsPerMonth: 3,
     features: [
-      '3 full reports per month included',
-      'Full bias suite with dollar costs',
-      'Leak Prioritizer + What-If Simulator',
-      'BetIQ + Emotion + Discipline breakdown',
+      '3 full reports per month',
+      'Track progress between reports',
       'Weekly email digest',
-      'Progress tracking over time',
+      'Streak tracking + milestones',
     ],
   },
 };
