@@ -134,7 +134,7 @@ export default function PricingPage() {
               'Every bias with exact dollar cost',
               'Every betting session graded A\u2013F',
               'Emotion + Discipline + BetIQ breakdown',
-              'What-If: "you\'d have saved $X if..."',
+              'What-If Simulator',
               'Personalized rules + action plan',
             ].map((f) => (
               <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
