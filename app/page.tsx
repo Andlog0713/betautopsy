@@ -76,7 +76,7 @@ export default function LandingPage() {
         <div className="relative">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
-          <Marquee pauseOnHover className="[--duration:15s] sm:[--duration:25s] [--gap:0.5rem]">
+          <Marquee pauseOnHover className="[--duration:10s] sm:[--duration:20s] [--gap:0.5rem]">
               {[
                 { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', w: 'w-[80px]' },
                 { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', w: 'w-[90px]' },
