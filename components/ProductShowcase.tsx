@@ -77,7 +77,7 @@ export function ProductShowcase() {
             <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
-                <span className="text-sm text-fg-bright font-medium truncate">Late-Night Tilt</span>
+                <span className="text-sm text-fg-bright font-medium truncate">Late-Night Betting</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$188/qtr</span>
