@@ -1,17 +1,17 @@
 'use client';
 
 const logos = [
-  { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', width: 90 },
-  { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', width: 90 },
-  { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', width: 90 },
-  { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', width: 80 },
-  { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', width: 70 },
-  { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', width: 90 },
-  { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', width: 28 },
-  { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', width: 70 },
-  { src: '/logo/kalshi-logo.svg', alt: 'Kalshi', width: 60 },
-  { src: '/logo/Hard_Rock_Bet.svg', alt: 'Hard Rock Bet', width: 95 },
-  { src: '/logo/caesars-sportsbook-seeklogo-2.svg', alt: 'Caesars Sportsbook', width: 130 },
+  { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', height: 18 },
+  { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', height: 16 },
+  { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', height: 18 },
+  { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', height: 16 },
+  { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', height: 20 },
+  { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', height: 16 },
+  { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', height: 22 },
+  { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', height: 16 },
+  { src: '/logo/kalshi-logo.svg', alt: 'Kalshi', height: 18 },
+  { src: '/logo/Hard_Rock_Bet.svg', alt: 'Hard Rock Bet', height: 22 },
+  { src: '/logo/caesars-sportsbook-seeklogo-2.svg', alt: 'Caesars Sportsbook', height: 20 },
 ];
 
 export default function LogoScroll() {
@@ -49,9 +49,8 @@ export default function LogoScroll() {
             src={logo.src}
             alt={logo.alt}
             style={{
-              width: logo.width,
-              height: 'auto',
-              maxHeight: 24,
+              height: logo.height,
+              width: 'auto',
               objectFit: 'contain',
               opacity: 0.5,
               flexShrink: 0,
