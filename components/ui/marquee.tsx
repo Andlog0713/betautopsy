@@ -10,6 +10,8 @@ interface MarqueeProps extends ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   vertical?: boolean;
   repeat?: number;
+  duration?: string;
+  gap?: string;
 }
 
 export function Marquee({
@@ -19,16 +21,19 @@ export function Marquee({
   children,
   vertical = false,
   repeat = 4,
+  duration = "20s",
+  gap = "1rem",
   ...props
 }: MarqueeProps) {
   return (
     <div
       {...props}
       className={cn(
-        "group flex overflow-hidden [--gap:1rem] [gap:var(--gap)]",
+        "group flex overflow-hidden",
         vertical ? "flex-col" : "flex-row",
         className,
       )}
+      style={{ gap }}
     >
       {Array(repeat)
         .fill(0)
@@ -36,11 +41,15 @@ export function Marquee({
           <div
             key={i}
             className={cn(
-              "flex shrink-0 justify-around [gap:var(--gap)]",
-              vertical ? "animate-marquee-vertical flex-col" : "animate-marquee flex-row",
+              "flex shrink-0 justify-around",
+              vertical ? "flex-col" : "flex-row",
               pauseOnHover && "group-hover:[animation-play-state:paused]",
-              reverse && "[animation-direction:reverse]",
             )}
+            style={{
+              gap,
+              animation: `scroll-x ${duration} linear infinite`,
+              animationDirection: reverse ? 'reverse' : 'normal',
+            }}
           >
             {children}
           </div>
