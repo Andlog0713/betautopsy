@@ -5,7 +5,7 @@ import { Logo } from '@/components/logo';
 import AnimatedSection from '@/components/AnimatedSection';
 import HeroHeadline from '@/components/HeroHeadline';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import ProductWalkthrough from '@/components/ProductWalkthrough';
+import { ProductShowcase } from '@/components/ProductShowcase';
 import ResponsibleGambling from '@/components/ResponsibleGambling';
 
 export default function LandingPage() {
@@ -124,7 +124,7 @@ export default function LandingPage() {
       <section className="bg-surface-1 border-y border-border-subtle py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="case-header mb-8">PROTOCOL // HOW IT WORKS</div>
-          <ProductWalkthrough />
+          <ProductShowcase />
         </div>
       </section>
       </AnimatedSection>
