@@ -87,8 +87,8 @@ export default function LandingPage() {
                 { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', w: 'w-[24px]' },
                 { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', w: 'w-[70px]' },
               ].map(logo => (
-                <div key={logo.alt} className="flex items-center justify-center h-8 mx-1.5 sm:mx-5 shrink-0">
-                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity scale-[0.7] sm:scale-100`} />
+                <div key={logo.alt} className="flex items-center justify-center h-8 mx-2 sm:mx-5 shrink-0">
+                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity`} />
                 </div>
               ))}
           </Marquee>
