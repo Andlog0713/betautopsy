@@ -54,11 +54,8 @@ export async function GET(request: Request) {
   for (const profile of profiles) {
     try {
       const typedProfile = profile as Profile;
-      // In test mode, look back 365 days to guarantee finding bets
-      const sinceDate = testEmail
-        ? new Date(Date.now() - 365 * 86400000).toISOString()
-        : ((typedProfile as Profile & { last_digest_sent_at?: string }).last_digest_sent_at
-          ?? new Date(Date.now() - 7 * 86400000).toISOString());
+      const sinceDate = (typedProfile as Profile & { last_digest_sent_at?: string }).last_digest_sent_at
+        ?? new Date(Date.now() - 7 * 86400000).toISOString();
 
       const bets = await getWeeklyBets(supabase, typedProfile.id, sinceDate);
 
