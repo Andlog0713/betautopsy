@@ -72,12 +72,11 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       {/* TRUST BAR — integration logos         */}
       {/* ══════════════════════════════════════ */}
-      <section className="border-y border-border-subtle py-5">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="relative">
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
-            <Marquee pauseOnHover className="[--duration:30s] [--gap:0.5rem]">
+      <section className="border-y border-border-subtle py-5 overflow-hidden">
+        <div className="relative">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
+          <Marquee pauseOnHover className="[--duration:25s] [--gap:0.5rem]">
               {[
                 { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', w: 'w-[100px]' },
                 { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', w: 'w-[90px]' },
@@ -92,8 +91,7 @@ export default function LandingPage() {
                   <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity scale-[0.7] sm:scale-100`} />
                 </div>
               ))}
-            </Marquee>
-          </div>
+          </Marquee>
         </div>
       </section>
 
