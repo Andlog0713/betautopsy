@@ -526,6 +526,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {comparison && <WhatChangedSection comparison={comparison} />}
 
+      {/* Executive Diagnosis */}
+      {isPartialReport && <SkeletonSection label="Generating behavioral diagnosis..." />}
+      {!isPartialReport && analysis.executive_diagnosis && (
+        <div className="border border-border-subtle p-[18px] border-l-[3px] border-l-scalpel mb-5">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="font-mono text-[9px] text-fg-dim tracking-[3px]">EXECUTIVE DIAGNOSIS</p>
+            {reportId && (
+              <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">CASE #{reportId.slice(0, 8).toUpperCase()}</p>
+            )}
+          </div>
+          <p className="text-[13px] text-fg leading-relaxed">{analysis.executive_diagnosis}</p>
+        </div>
+      )}
+
       {/* ═══ VITALS STRIP — 4-col like mockup ═══ */}
       <div className="vitals-strip grid-cols-2 sm:grid-cols-4 mb-5">
         <div className="vitals-cell">

@@ -186,6 +186,7 @@ export interface AutopsyAnalysis {
   sport_specific_findings?: SportSpecificFinding[];
   session_detection?: SessionDetectionResult;
   bet_annotations?: AnnotationSummary;
+  executive_diagnosis?: string;
   // Snapshot-only: counts for locked sections so paywall UI can show "3 leaks detected" etc.
   _snapshot_counts?: {
     leaks: number;

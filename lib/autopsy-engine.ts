@@ -2016,6 +2016,7 @@ These sport-specific patterns are pre-detected by the system. Reference the pre-
 ## Output Format
 Respond with valid JSON:
 {
+  "executive_diagnosis": "Exactly 4 sentences. A forensic behavioral summary written in third person clinical voice. Sentence 1: the dominant behavioral pattern with its clinical name. Sentence 2: supporting evidence citing EXACT pre-computed numbers (do NOT recalculate). Sentence 3: a secondary pattern or compounding factor. Sentence 4: reference the pre-computed Estimated Total Leak Cost provided in the stats. Use calibrated language: 'consistent with', 'the data indicate', 'the preponderance of evidence suggests'. No em-dashes. Every sentence must cite a specific number from the provided metrics.",
   "overall_grade": "use the exact pre-calculated grade provided . do not assign a different one",
   "biases_detected": [
     {
@@ -2111,6 +2112,13 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - Use encouraging language for strengths: "legit edge", "sharp instinct", "real discipline here"
 - Use direct but non-judgmental language for problems: "this is costing you" not clinical labels
 - Never use words like: addiction, reckless, gambling problem, degenerate, out of control
+
+## Executive Diagnosis Rules
+- Write EXACTLY 4 sentences. Not 3, not 5.
+- Third person: "This bettor exhibits..." not "You have..."
+- Reference the pre-computed Estimated Total Leak Cost for sentence 4. Do NOT calculate your own estimate.
+- Cite specific numbers from the pre-calculated metrics. Do NOT invent numbers.
+- If no significant biases detected, write a positive diagnosis noting disciplined patterns.
 
 ## Critical Rules
 - NEVER recommend specific bets or picks
@@ -2222,7 +2230,13 @@ Distribution: ${(['disciplined', 'emotional', 'chasing', 'impulsive', 'neutral']
 Emotional Cost: $${metrics.annotations.emotionalCost.toFixed(0)} (estimated profit lost to emotional/chasing/impulsive bets)
 Streak Influence: After 3+ win streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterWinStreak3.toFixed(0)} | After 3+ loss streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterLossStreak3.toFixed(0)} | Neutral avg stake $${metrics.annotations.streakInfluence.avgStakeNeutral.toFixed(0)}
 Insight: ${metrics.annotations.insight}
-===` : ''}`;
+===` : ''}
+
+=== EXECUTIVE DIAGNOSIS CONTEXT ===
+Estimated Total Leak Cost: $${Math.abs(metrics.what_ifs.actual_profit - metrics.what_ifs.flat_stake.hypothetical_profit).toFixed(0)}
+Primary Bias: ${metrics.biases_detected[0]?.bias_name ?? 'None'} (${metrics.biases_detected[0]?.severity ?? 'N/A'})
+Session Profile: ${metrics.sessionDetection ? `${metrics.sessionDetection.heatedSessionPercent}% heated sessions, grade distribution: ${metrics.sessionDetection.sessionGradeDistribution.filter(g => g.count > 0).map(g => `${g.grade}:${g.count}`).join('/')}` : 'N/A'}
+===`;
 
   const betTable = formatBetTable(bets);
 
@@ -2340,6 +2354,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     sport_specific_findings: sportFindings.length > 0 ? sportFindings : undefined,
     session_detection: metrics.sessionDetection ?? undefined,
     bet_annotations: metrics.annotations ?? undefined,
+    executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
   };
 
   const markdown = generateMarkdownReport(analysis);
