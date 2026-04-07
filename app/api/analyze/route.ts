@@ -274,6 +274,25 @@ export async function POST(request: Request) {
           console.error('Failed to save report:', insertError);
         }
 
+        // Save discipline score with component breakdown
+        if (disciplineResult && savedReport?.id) {
+          try {
+            await supabase.from('discipline_scores').insert({
+              user_id: user.id,
+              score: disciplineResult.total,
+              components: {
+                tracking: disciplineResult.tracking,
+                sizing: disciplineResult.sizing,
+                control: disciplineResult.control,
+                strategy: disciplineResult.strategy,
+              },
+              report_id: savedReport.id,
+            });
+          } catch (dsErr) {
+            console.error('Failed to save discipline score:', dsErr);
+          }
+        }
+
         // Streak logic
         try {
           const today = new Date().toISOString().split('T')[0];

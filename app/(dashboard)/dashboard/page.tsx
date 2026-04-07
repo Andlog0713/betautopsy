@@ -10,6 +10,7 @@ import { trackPurchase } from '@/lib/tiktok-events';
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
 });
+import DisciplineScoreCard from '@/components/DisciplineScoreCard';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import JournalEntryModal from '@/components/JournalEntryModal';
 import type { ProgressSnapshot } from '@/types';
@@ -384,67 +385,14 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* ── Left column: primary content ── */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Discipline Score ring (paid) */}
+              {/* Discipline Score hero widget */}
               {latest && isPaid && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-6 relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-                    <div className="relative shrink-0">
-                      <svg width="120" height="120" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="#12141A" strokeWidth="8" />
-                        <circle
-                          cx="60" cy="60" r="52" fill="none"
-                          stroke={
-                            (latest.discipline_score ?? 0) >= 71 ? '#00C9A7' :
-                            (latest.discipline_score ?? 0) >= 51 ? '#B8944A' :
-                            (latest.discipline_score ?? 0) >= 31 ? '#C4463A' : '#C4463A'
-                          }
-                          strokeWidth="8" strokeLinecap="round"
-                          strokeDasharray={`${((latest.discipline_score ?? 0) / 100) * 327} 327`}
-                          transform="rotate(-90 60 60)"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="font-mono text-3xl font-bold text-fg-bright">{latest.discipline_score ?? '-'}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 text-center sm:text-left">
-                      <h2 className="font-semibold text-xl mb-1 text-fg-bright">Discipline Score</h2>
-                      <p className="text-fg-muted text-xs mb-3">
-                        How consistently you&apos;re building better betting habits.
-                      </p>
-                      {prev && prev.discipline_score !== null && latest.discipline_score !== null && (
-                        <p className={`text-sm font-mono ${
-                          (latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? 'text-win' : 'text-loss'
-                        }`}>
-                          {(latest.discipline_score ?? 0) > (prev.discipline_score ?? 0) ? '↑' : '↓'}{' '}
-                          {Math.abs((latest.discipline_score ?? 0) - (prev.discipline_score ?? 0))} pts from last report
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {[
-                          { weeks: 4, label: 'Consistent', color: 'bg-caution/10 text-caution border-caution/20' },
-                          { weeks: 12, label: 'Dedicated', color: 'bg-fg-dim/10 text-fg-muted border-fg-dim/20' },
-                          { weeks: 26, label: 'Half-Year Sharp', color: 'bg-caution/15 text-caution border-caution/25' },
-                          { weeks: 52, label: 'Annual Autopsy', color: 'bg-scalpel-muted text-scalpel border-scalpel/20' },
-                        ].map((m) => {
-                          const earned = streakBest >= m.weeks;
-                          return (
-                            <span
-                              key={m.weeks}
-                              className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm border ${
-                                earned ? m.color : 'bg-surface-2 text-fg-dim border-border-subtle'
-                              }`}
-                            >
-                              {!earned && <Lock size={12} className="text-fg-dim mr-0.5" />}
-                              {m.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" className="hidden md:block" />
-                </div>
+                <DisciplineScoreCard
+                  currentScore={latest.discipline_score ?? null}
+                  previousScore={prev?.discipline_score ?? null}
+                  reportCount={stats?.reportCount ?? 1}
+                  mask={mask}
+                />
               )}
 
               {/* Progress Chart (paid, 2+ snapshots) */}
