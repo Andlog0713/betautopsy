@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 
 interface SnapshotPaywallProps {
   reportId?: string;
@@ -18,6 +19,8 @@ interface SnapshotPaywallProps {
 
 export default function SnapshotPaywall({ reportId, isPro, counts, children }: SnapshotPaywallProps) {
   const [loading, setLoading] = useState(false);
+
+  if (!PRICING_ENABLED) return <>{children}</>;
 
   const totalFindings = (counts?.leaks ?? 0) + (counts?.patterns ?? 0) + (counts?.total_biases ?? 0);
 

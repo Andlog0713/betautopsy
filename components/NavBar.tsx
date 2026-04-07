@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 import { Flame } from 'lucide-react';
 import type { Profile } from '@/types';
 import { Logo } from '@/components/logo';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -58,7 +59,7 @@ export default function NavBar() {
   const navLinks = [
     { href: '/blog', label: 'Blog' },
     { href: '/faq', label: 'FAQ' },
-    { href: '/#pricing', label: 'Pricing' },
+    ...(PRICING_ENABLED ? [{ href: '/#pricing', label: 'Pricing' }] : []),
   ];
 
   return (

@@ -11,6 +11,7 @@ const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
+import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
 function daysAgo(n: number): string {
@@ -164,7 +165,7 @@ export default function ReportsPage() {
     setActiveReport(null);
 
     try {
-      const body: Record<string, string | string[]> = { report_type: tier === 'pro' ? 'full' : 'snapshot' };
+      const body: Record<string, string | string[]> = { report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot' };
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
       if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
@@ -232,7 +233,7 @@ export default function ReportsPage() {
                 const tempReport: AutopsyReportType = {
                   id: 'loading',
                   user_id: '',
-                  report_type: tier === 'pro' ? 'full' : 'snapshot',
+                  report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot',
                   bet_count_analyzed: d.partial_analysis.summary.total_bets,
                   date_range_start: null,
                   date_range_end: null,
@@ -337,7 +338,7 @@ export default function ReportsPage() {
         >
           ← Back to Reports
         </button>
-        {tierLimited && (
+        {PRICING_ENABLED && tierLimited && (
           <div className="card border-scalpel/20 bg-scalpel-muted p-5">
             <p className="text-fg-bright text-sm">
               This is a snapshot. The full report unlocks all 5 chapters
@@ -381,7 +382,7 @@ export default function ReportsPage() {
     return filteredCount ?? totalBetCount;
   })();
   const betCountForRun = scopedCount;
-  const freeExhausted = tier === 'free' && reports.length >= 1;
+  const freeExhausted = PRICING_ENABLED && tier === 'free' && reports.length >= 1;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -448,7 +449,7 @@ export default function ReportsPage() {
       )}
 
       {/* Free tier note */}
-      {tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
+      {PRICING_ENABLED && tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
         <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $9.99.</p>
       )}
 

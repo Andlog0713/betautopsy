@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 
 interface FAQItem {
   q: string;
@@ -197,7 +198,7 @@ export default function FAQPage() {
       {/* Quick links */}
       <div className="flex flex-wrap gap-4 justify-center text-sm text-fg-muted pb-4">
         <Link href="/quiz" className="hover:text-scalpel transition-colors">Take the Quiz</Link>
-        <Link href="/pricing" className="hover:text-scalpel transition-colors">Pricing</Link>
+        {PRICING_ENABLED && <Link href="/pricing" className="hover:text-scalpel transition-colors">Pricing</Link>}
         <Link href="/blog" className="hover:text-scalpel transition-colors">Blog</Link>
       </div>
     </div>

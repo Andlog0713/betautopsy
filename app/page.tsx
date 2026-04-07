@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
@@ -190,6 +191,7 @@ export default function LandingPage() {
       {/* PRICING — surface bg, visually        */}
       {/* separated as the "decision" section   */}
       {/* ══════════════════════════════════════ */}
+      {PRICING_ENABLED && (
       <AnimatedSection delay={0.05}>
       <section id="pricing" className="bg-surface-1 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden">
         {/* Pricing glow */}
@@ -282,6 +284,7 @@ export default function LandingPage() {
         </div>
       </section>
       </AnimatedSection>
+      )}
 
       {/* ══════════════════════════════════════ */}
       {/* BLOG — pass PageRank to content       */}
@@ -334,7 +337,7 @@ export default function LandingPage() {
             <Logo size="xs" variant="horizontal" theme="dark" />
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {[
-                { label: 'Pricing', href: '/#pricing' },
+                ...(PRICING_ENABLED ? [{ label: 'Pricing', href: '/#pricing' }] : []),
                 { label: 'Blog', href: '/blog' },
                 { label: 'FAQ', href: '/faq' },
                 { label: 'Privacy', href: '/privacy' },

@@ -16,6 +16,7 @@ import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown }
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
+import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 
 // ── Helpers ──
 
@@ -237,7 +238,8 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
-  const snapshotLocked = isSnapshot && !readOnly;
+  const effectiveTier = getEffectiveTier(tier);
+  const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
@@ -254,7 +256,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const roiData = useMemo(() => buildROIData(bets), [bets]);
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
-  const isSharp = tier === 'pro'; // Sharp features now included in Pro
+  const isSharp = effectiveTier === 'pro'; // Sharp features now included in Pro
 
   // Detect mixed sportsbook + DFS data
   const mixedDataInfo = useMemo(() => {
@@ -591,7 +593,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ── BetIQ Score — Pro only ── */}
-      {(tier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
+      {(effectiveTier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ: SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
@@ -622,7 +624,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {(tier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
+      {(effectiveTier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-3">BETIQ: SKILL ASSESSMENT</div>
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-muted text-sm">{analysis.betiq.interpretation}</p></div>
@@ -630,7 +632,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* BetIQ — free tier teaser */}
-      {tier === 'free' && analysis.betiq && (
+      {effectiveTier === 'free' && analysis.betiq && (
         <div className="case-card p-6 relative overflow-hidden">
           <div className="case-header mb-2">BETIQ: SKILL ASSESSMENT</div>
           <div className="blur-sm pointer-events-none">
@@ -756,7 +758,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ═══ SNAPSHOT PAYWALL: wraps Chapters 2-5 for free snapshot reports ═══ */}
       {snapshotLocked ? (
-        <SnapshotPaywall reportId={reportId} isPro={tier === 'pro'} counts={analysis._snapshot_counts}>
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts}>
           <div className="space-y-8">
             <section id="chapter-findings">
               <ChapterHeader number={2} title="Findings" subtitle="What we found in your betting data" />
@@ -881,7 +883,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* ── Sport-Specific Findings — Pro only, collapsible ── */}
-      {(tier === 'pro') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
+      {(effectiveTier === 'pro') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
         <div className="space-y-2 mt-6">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">SPORT-SPECIFIC FINDINGS</p>
           {analysis.sport_specific_findings.map((finding) => {
@@ -1041,7 +1043,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ── Emotional Triggers — Pro only ── */}
-      {(tier === 'pro') && analysis.enhanced_tilt && (
+      {(effectiveTier === 'pro') && analysis.enhanced_tilt && (
         <div className="case-card p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -2196,7 +2198,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <h2 className="font-bold text-2xl">Analysis Tools</h2>
               <p className="text-fg-muted text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first and simulate how much you&apos;d save.</p>
-              <a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>
+              {PRICING_ENABLED && (<a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>)}
             </div>
 
             {!readOnly && <ReportFeedback reportId={reportId} />}

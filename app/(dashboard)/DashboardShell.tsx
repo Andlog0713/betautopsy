@@ -7,6 +7,7 @@ import { Logo } from '@/components/logo';
 import { createClient } from '@/lib/supabase';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
 import FeedbackButton from '@/components/FeedbackButton';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Profile } from '@/types';
 import {
   LayoutDashboard, Upload, Clock, FolderOpen, FileText,
@@ -80,6 +81,7 @@ export default function DashboardShell({
   }
 
   const tier = profile?.subscription_tier ?? 'free';
+  const effectiveTier = PRICING_ENABLED ? tier : 'pro';
 
   const isActive = (href: string) => pathname === href;
   const isAdminActive = pathname.startsWith('/admin');
@@ -150,6 +152,7 @@ export default function DashboardShell({
 
               <div className="my-2 border-t border-border-subtle" />
 
+              {PRICING_ENABLED && (
               <Link
                 href="/pricing"
                 onClick={() => setMobileNavOpen(false)}
@@ -162,6 +165,7 @@ export default function DashboardShell({
                 <Gem size={18} />
                 Pricing
               </Link>
+              )}
 
               {profile?.is_admin && (
                 <Link
@@ -276,7 +280,7 @@ export default function DashboardShell({
         </nav>
 
         <div className="p-2 group-hover/sidebar:p-4 border-t border-border-subtle space-y-3 transition-all duration-200">
-          {tier === 'free' && (
+          {effectiveTier === 'free' && (
             <Link
               href="/pricing"
               title="Upgrade to Pro"

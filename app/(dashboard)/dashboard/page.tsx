@@ -16,6 +16,7 @@ import type { ProgressSnapshot } from '@/types';
 import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Lock, Snowflake, AlertTriangle } from 'lucide-react';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { BorderBeam } from '@/components/ui/border-beam';
+import { getEffectiveTier } from '@/lib/feature-flags';
 
 interface DashboardStats {
   totalBets: number;
@@ -160,7 +161,7 @@ export default function DashboardPage() {
     );
   }
   const hasBets = stats && stats.totalBets > 0;
-  const isPaid = tier === 'pro';
+  const isPaid = getEffectiveTier(tier) === 'pro';
   const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const prev = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
 

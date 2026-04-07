@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { calculateMetrics } from '@/lib/autopsy-engine';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Bet, Upload } from '@/types';
 
 interface UploadAnalysis {
@@ -99,7 +100,7 @@ export default function ComparePage() {
     load();
   }, [searchParams]);
 
-  if (!loading && tier === 'free') {
+  if (PRICING_ENABLED && !loading && tier === 'free') {
     return (
       <div className="space-y-6 animate-fade-in">
         <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">← Back to Uploads</Link>

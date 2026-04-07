@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
+import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import type { Profile } from '@/types';
 
 export default function SettingsPage() {
@@ -137,7 +138,7 @@ export default function SettingsPage() {
   }
 
   const tier = profile?.subscription_tier ?? 'free';
-  const isPaid = tier === 'pro';
+  const isPaid = getEffectiveTier(tier) === 'pro';
 
   const tierBadge: Record<string, string> = {
     free: 'bg-surface-1 text-fg-muted border border-border-subtle',
@@ -281,6 +282,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Subscription ── */}
+      {PRICING_ENABLED && (
       <div id="settings-subscription" className="card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-fg-bright">Subscription</h2>
         <div className="flex items-center gap-3">
@@ -322,6 +324,7 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* ── Email Preferences ── */}
       <div id="settings-email" className="card p-6 space-y-4">

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 import { Lock, Target } from 'lucide-react';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
+import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import type { Bet, Profile } from '@/types';
 
 export default function BetsPage() {
@@ -259,7 +260,7 @@ export default function BetsPage() {
       )}
 
       {/* Free tier upsell — filtered analysis */}
-      {tier === 'free' && bets.length > 0 && (
+      {PRICING_ENABLED && tier === 'free' && bets.length > 0 && (
         <div className="card p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lock size={18} className="text-fg-muted" />
@@ -353,7 +354,7 @@ export default function BetsPage() {
                   <SortTh col="result" label="Result" align="center" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="profit" label="P&L" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <th className="px-4 py-3 w-10">
-                    {(tier === 'pro') && (
+                    {(getEffectiveTier(tier) === 'pro') && (
                       <ClearAllBets betCount={bets.length} onCleared={loadBets} />
                     )}
                   </th>

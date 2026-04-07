@@ -9,6 +9,7 @@ import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
 import type { UploadResponse, Profile } from '@/types';
 import { userQualifiesForPromo } from '@/types';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Upload as UploadIcon, Smartphone, ClipboardList, FileText } from 'lucide-react';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
@@ -46,7 +47,7 @@ export default function UploadPage() {
         setInitialBetCount(bc);
         setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
         // Check promo eligibility
-        if (p.subscription_tier === 'free' && userQualifiesForPromo(p.created_at)) {
+        if (PRICING_ENABLED && p.subscription_tier === 'free' && userQualifiesForPromo(p.created_at)) {
           const { count: fullCount } = await supabase
             .from('autopsy_reports')
             .select('id', { count: 'exact', head: true })
@@ -203,7 +204,7 @@ export default function UploadPage() {
       </div>
 
       {/* Tier info */}
-      {tier === 'free' && !uploadSucceeded && (
+      {PRICING_ENABLED && tier === 'free' && !uploadSucceeded && (
         <div className="card p-3">
           <p className="text-fg-muted text-xs">
             <span className="font-medium text-fg-bright">Free tier:</span> Upload all your bets. Get unlimited free snapshot reports analyzing your full history.
