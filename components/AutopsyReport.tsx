@@ -12,7 +12,7 @@ import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
-import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame } from 'lucide-react';
+import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
@@ -384,6 +384,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const hasBets = bets.length > 0;
 
   const [activeTab, setActiveTab] = useState<'report' | 'tools'>('report');
+  const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
+  const toggleFinding = (id: string) => {
+    setExpandedFindings(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const hasToolsContent = whatIfs.length > 0 || prioritizedLeaks.length > 0;
 
   // Comparison data
@@ -742,6 +751,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       </section>
 
+      <div className="border-t border-border-subtle my-6" />
+
       {/* ═══ SNAPSHOT PAYWALL: wraps Chapters 2-5 for free snapshot reports ═══ */}
       {snapshotLocked ? (
         <SnapshotPaywall reportId={reportId} isPro={tier === 'pro'} counts={analysis._snapshot_counts}>
@@ -779,41 +790,88 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <section id="chapter-findings">
       <ChapterHeader number={2} title="Findings" subtitle="Behavioral analysis and pattern detection" />
 
-      {/* FINDINGS — matching mockup exactly */}
+      {/* FINDINGS — collapsible progressive disclosure */}
       {biases_detected.length > 0 && (
         <div className="space-y-2">
-          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">FINDINGS</p>
-          <div className="grid gap-2">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="font-mono text-[9px] text-fg-dim tracking-[3px]">FINDINGS</p>
+            <button
+              onClick={() => {
+                if (expandedFindings.size > 0) {
+                  setExpandedFindings(new Set());
+                } else {
+                  const allIds = new Set<string>();
+                  biases_detected.forEach((b, i) => allIds.add(`bias-${i}`));
+                  analysis.sport_specific_findings?.forEach(f => allIds.add(`sport-${f.id}`));
+                  setExpandedFindings(allIds);
+                }
+              }}
+              className="text-xs text-fg-dim hover:text-fg-muted transition-colors font-mono tracking-wide"
+            >
+              {expandedFindings.size > 0 ? '− Collapse all' : '+ Expand all'}
+            </button>
+          </div>
+          <div className="space-y-2">
             {biases_detected.map((bias, i) => {
+              const findingId = `bias-${i}`;
+              const isExpanded = expandedFindings.has(findingId);
               const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
+              const dotClass = sevColor === 'bleed' ? 'bg-bleed' : sevColor === 'caution' ? 'bg-caution' : 'bg-win';
+              const badgeClass = sevColor === 'bleed' ? 'bg-bleed/10 text-bleed' : sevColor === 'caution' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
               return (
-              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${sevColor === 'bleed' ? 'bg-bleed' : sevColor === 'caution' ? 'bg-caution' : 'bg-win'}`} />
-                    <span className={`font-mono text-[10px] tracking-[1px] px-2 py-0.5 border ${sevColor === 'bleed' ? 'text-bleed border-bleed/30' : sevColor === 'caution' ? 'text-caution border-caution/30' : 'text-win border-win/30'}`}>FINDING-{String(i + 1).padStart(2, '0')}</span>
-                    <span className="text-[14px] font-semibold text-fg-bright">{bias.bias_name}</span>
+              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                {/* Collapsed header — always visible */}
+                <div
+                  onClick={() => toggleFinding(findingId)}
+                  className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+                    <span className="text-sm font-medium text-fg-bright truncate">{bias.bias_name}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
+                      {bias.severity.toUpperCase()}
+                    </span>
                   </div>
-                  <span className={`font-mono text-[9px] tracking-[1px] font-bold px-2 py-0.5 ${sevColor === 'bleed' ? 'bg-bleed text-base' : sevColor === 'caution' ? 'bg-caution text-base' : 'bg-win text-base'}`}>{bias.severity.toUpperCase()}</span>
-                </div>
-                {!bias.description ? (
-                  <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
-                    <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
-                    Generating analysis for this bias...
-                  </div>
-                ) : (
-                  <>
-                    <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[12px] text-fg-muted leading-relaxed">{bias.description}</p></div>
-                    {bias.fix && (
-                      <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2.5"><p className="text-[11px] text-fg-muted"><span className="text-scalpel font-mono">RX:</span> {bias.fix}</p></div>
+                  <div className="flex items-center gap-4 shrink-0 ml-4">
+                    {bias.estimated_cost > 0 && (
+                      <span className="text-sm font-mono text-bleed">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
                     )}
-                    <div className="flex justify-between items-center">
-                      <span className={`font-mono text-[12px] font-semibold ${sevColor === 'bleed' ? 'text-bleed' : sevColor === 'caution' ? 'text-caution' : 'text-win'}`}>
-                        est. cost: -${Math.abs(bias.estimated_cost).toLocaleString()}/qtr
-                      </span>
-                    </div>
-                  </>
-                )}
+                    <ChevronDown
+                      size={14}
+                      className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Expanded content */}
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
+                    {!bias.description ? (
+                      <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
+                        <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
+                        Generating analysis...
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-fg leading-relaxed">{bias.description}</p>
+                        {bias.fix && (
+                          <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="w-1 h-1 rounded-full bg-scalpel" />
+                              <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
+                            </div>
+                            <p className="text-sm text-fg leading-relaxed">{bias.fix}</p>
+                          </div>
+                        )}
+                        {bias.estimated_cost > 0 && (
+                          <p className="text-xs text-fg-dim font-mono">
+                            est. cost: <span className="text-bleed font-medium">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               );
             })}
@@ -821,30 +879,58 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* ── Sport-Specific Findings — Pro only ── */}
+      {/* ── Sport-Specific Findings — Pro only, collapsible ── */}
       {(tier === 'pro') && analysis.sport_specific_findings && analysis.sport_specific_findings.length > 0 && (
-        <div className="space-y-3">
-          <div className="case-header mb-2">SPORT-SPECIFIC FINDINGS</div>
-          {analysis.sport_specific_findings.map((finding) => (
-            <div key={finding.id} className="bg-surface-1 border border-border-subtle rounded-md p-5">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${finding.severity === 'high' ? 'bg-bleed' : finding.severity === 'medium' ? 'bg-caution' : 'bg-scalpel'}`} />
-                  <span className={`evidence-tag ${finding.severity === 'high' ? 'text-bleed border-bleed/30' : finding.severity === 'medium' ? 'text-caution border-caution/30' : 'text-scalpel border-scalpel/30'}`}>{finding.id}</span>
-                  <span className="font-semibold text-sm text-fg-bright">{finding.name}</span>
+        <div className="space-y-2 mt-6">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">SPORT-SPECIFIC FINDINGS</p>
+          {analysis.sport_specific_findings.map((finding) => {
+            const findingId = `sport-${finding.id}`;
+            const isExpanded = expandedFindings.has(findingId);
+            const dotClass = finding.severity === 'high' ? 'bg-bleed' : finding.severity === 'medium' ? 'bg-caution' : 'bg-scalpel';
+            const badgeClass = finding.severity === 'high' ? 'bg-bleed/10 text-bleed' : finding.severity === 'medium' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
+            return (
+            <div key={finding.id} className="border border-border-subtle rounded-md overflow-hidden">
+              <div
+                onClick={() => toggleFinding(findingId)}
+                className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+                  <span className="text-sm font-medium text-fg-bright truncate">{finding.name}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
+                    {finding.severity.toUpperCase()}
+                  </span>
                 </div>
-                <span className={`font-mono text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${finding.severity === 'high' ? 'bg-bleed text-base' : finding.severity === 'medium' ? 'bg-caution text-base' : 'bg-scalpel text-base'}`}>{finding.severity}</span>
+                <div className="flex items-center gap-4 shrink-0 ml-4">
+                  {finding.estimated_cost !== null && finding.estimated_cost > 0 && (
+                    <span className="text-sm font-mono text-bleed">-${Math.abs(finding.estimated_cost).toLocaleString()}</span>
+                  )}
+                  <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                </div>
               </div>
-              <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm leading-relaxed">{finding.description}</p></div>
-              <p className="text-fg-muted text-xs mb-2 font-mono">{finding.evidence}</p>
-              <div className="flex items-center justify-between">
-                {finding.estimated_cost !== null && (
-                  <span className="font-mono text-sm font-semibold text-loss">est. cost: ${Math.abs(finding.estimated_cost).toLocaleString()}</span>
-                )}
-                <span className="text-scalpel text-xs font-mono ml-auto">{finding.recommendation}</span>
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
+                  <p className="text-sm text-fg leading-relaxed">{finding.description}</p>
+                  <p className="text-xs text-fg-muted font-mono">{finding.evidence}</p>
+                  {finding.recommendation && (
+                    <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-1 h-1 rounded-full bg-scalpel" />
+                        <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
+                      </div>
+                      <p className="text-sm text-fg leading-relaxed">{finding.recommendation}</p>
+                    </div>
+                  )}
+                  {finding.estimated_cost !== null && finding.estimated_cost > 0 && (
+                    <p className="text-xs text-fg-dim font-mono">
+                      est. cost: <span className="text-bleed font-medium">-${Math.abs(finding.estimated_cost).toLocaleString()}</span>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1028,6 +1114,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       </section>
+
+      <div className="border-t border-border-subtle my-6" />
 
       {/* ═══ CHAPTER 3: YOUR DATA ═══ */}
       <section id="chapter-data">
@@ -1668,6 +1756,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       </section>
 
+      <div className="border-t border-border-subtle my-6" />
+
       {/* ═══ CHAPTER 4: WHAT IT COSTS ═══ */}
       <section id="chapter-cost">
       <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
@@ -1788,6 +1878,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
 
       </section>
+
+      <div className="border-t border-border-subtle my-6" />
 
       {/* ═══ CHAPTER 5: PROTOCOL ═══ */}
       <section id="chapter-protocol">
