@@ -2016,7 +2016,7 @@ These sport-specific patterns are pre-detected by the system. Reference the pre-
 ## Output Format
 Respond with valid JSON:
 {
-  "executive_diagnosis": "Exactly 4 sentences. A forensic behavioral summary written in third person clinical voice. Sentence 1: the dominant behavioral pattern with its clinical name. Sentence 2: supporting evidence citing EXACT pre-computed numbers (do NOT recalculate). Sentence 3: a secondary pattern or compounding factor. Sentence 4: reference the pre-computed Estimated Total Leak Cost provided in the stats. Use calibrated language: 'consistent with', 'the data indicate', 'the preponderance of evidence suggests'. No em-dashes. Every sentence must cite a specific number from the provided metrics.",
+  "executive_diagnosis": "Exactly 4 sentences, each 15-20 words max. Third person. Sentence 1: Name the dominant pattern in plain language. No archetype name. One number max. Sentence 2: The single most damning piece of evidence. One specific stat that makes the reader go 'oh shit.' Sentence 3: The compounding factor or secondary pattern. One number max. Sentence 4: The total leak cost as a clean dollar figure from the pre-computed Estimated Total Leak Cost. No hedging. Just the number and what it means. Use direct declarative statements. No academic hedging language. No em-dashes.",
   "overall_grade": "use the exact pre-calculated grade provided . do not assign a different one",
   "biases_detected": [
     {
@@ -2114,10 +2114,14 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - Never use words like: addiction, reckless, gambling problem, degenerate, out of control
 
 ## Executive Diagnosis Rules
-- Write EXACTLY 4 sentences. Not 3, not 5.
-- Third person: "This bettor exhibits..." not "You have..."
-- Reference the pre-computed Estimated Total Leak Cost for sentence 4. Do NOT calculate your own estimate.
-- Cite specific numbers from the pre-calculated metrics. Do NOT invent numbers.
+- EXACTLY 4 sentences. Each sentence 15-20 words max. This is a punch, not a paragraph.
+- Third person: "This bettor..." not "You..."
+- Sentence 1: dominant pattern, plain language, one number max. No archetype name.
+- Sentence 2: the single most damning stat. The "oh shit" number.
+- Sentence 3: compounding factor or secondary pattern. One number max.
+- Sentence 4: use the pre-computed Estimated Total Leak Cost. Clean dollar figure. No hedging.
+- Use direct declarative statements. No academic hedging ("the data indicate", "the preponderance of evidence suggests", "consistent with"). Just say it.
+- Do NOT invent numbers. Cite only pre-calculated metrics.
 - If no significant biases detected, write a positive diagnosis noting disciplined patterns.
 
 ## Critical Rules
