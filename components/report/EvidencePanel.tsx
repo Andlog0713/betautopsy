@@ -70,9 +70,11 @@ export default function EvidencePanel({ bets, evidenceBetIds, biasName }: Eviden
               );
             })}
           </div>
-          <div className="relative h-0 -mt-[14px]">
+          {/* Median reference line at 1x position (33.3% from bottom = 66.7% from top) */}
+          <div className="relative h-0" style={{ marginTop: '-27px' }}>
             <div className="absolute w-full border-t border-dashed border-fg-dim/30" />
           </div>
+          <div className="h-[13px]" />
         </div>
       </div>
     </div>
