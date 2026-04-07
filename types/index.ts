@@ -194,6 +194,12 @@ export interface AutopsyAnalysis {
     sport_findings: number;
     total_biases: number;
   };
+  _snapshot_teaser?: {
+    biasNames: { name: string; severity: string }[];
+    leakCategories: string[];
+    sessionGrades: Record<string, number>;
+    heatedSessionCount: number;
+  };
 }
 
 export interface PersonalRule {

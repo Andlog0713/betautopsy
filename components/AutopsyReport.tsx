@@ -12,6 +12,7 @@ import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
+import RedactedValue from './RedactedValue';
 import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
@@ -756,37 +757,12 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       <div className="border-t border-border-subtle my-6" />
 
-      {/* ═══ SNAPSHOT PAYWALL: wraps Chapters 2-5 for free snapshot reports ═══ */}
-      {snapshotLocked ? (
-        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts}>
-          <div className="space-y-8">
-            <section id="chapter-findings">
-              <ChapterHeader number={2} title="Findings" subtitle="What we found in your betting data" />
-              <div className="card p-6 space-y-4">
-                <p className="text-fg-muted text-sm">Detailed bias analysis with dollar costs, strategic leak detection, and behavioral pattern mapping.</p>
-              </div>
-            </section>
-            <section id="chapter-data">
-              <ChapterHeader number={3} title="Your Data" subtitle="Charts and evidence supporting the diagnosis" />
-              <div className="card p-6 space-y-4">
-                <p className="text-fg-muted text-sm">P&L curves, stake distribution, timing patterns, odds intelligence, and category breakdowns.</p>
-              </div>
-            </section>
-            <section id="chapter-cost">
-              <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
-              <div className="card p-6 space-y-4">
-                <p className="text-fg-muted text-sm">Leak Prioritizer ranked by dollar impact and What-If Simulator showing recoverable profit.</p>
-              </div>
-            </section>
-            <section id="chapter-protocol">
-              <ChapterHeader number={5} title="Protocol" subtitle="Your personalized action plan" />
-              <div className="card p-6 space-y-4">
-                <p className="text-fg-muted text-sm">Prescribed protocols, personal rules, and session-by-session grading.</p>
-              </div>
-            </section>
-          </div>
-        </SnapshotPaywall>
-      ) : (
+      {/* ═══ SNAPSHOT CTA: shown between chapters for free snapshots ═══ */}
+      {snapshotLocked && (
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} />
+      )}
+
+      {/* Chapters 2-5: always rendered, with field-level redaction for snapshots */}
       <>
 
       {/* ═══ CHAPTER 2: FINDINGS ═══ */}
@@ -836,8 +812,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     </span>
                   </div>
                   <div className="flex items-center gap-4 shrink-0 ml-4">
-                    {bias.estimated_cost > 0 && (
-                      <span className="text-sm font-mono text-bleed">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                    {(bias.estimated_cost > 0 || snapshotLocked) && (
+                      snapshotLocked
+                        ? <RedactedValue type="dollar" seed={reportId} index={i} />
+                        : <span className="text-sm font-mono text-bleed">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
                     )}
                     <ChevronDown
                       size={14}
@@ -854,21 +832,42 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
                         Generating analysis...
                       </div>
+                    ) : snapshotLocked && i > 0 ? (
+                      <>
+                        <RedactedValue type="text" preview={0}>
+                          {`This bias was detected with ${bias.severity} severity based on your betting patterns. The full analysis includes specific evidence, dollar cost estimates, and a recommended fix.`}
+                        </RedactedValue>
+                      </>
                     ) : (
                       <>
                         <p className="text-sm text-fg leading-relaxed">{bias.description}</p>
                         {bias.fix && (
-                          <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <span className="w-1 h-1 rounded-full bg-scalpel" />
-                              <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
+                          snapshotLocked ? (
+                            <RedactedValue type="section">
+                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="w-1 h-1 rounded-full bg-scalpel" />
+                                  <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
+                                </div>
+                                <p className="text-sm text-fg leading-relaxed">{bias.fix}</p>
+                              </div>
+                            </RedactedValue>
+                          ) : (
+                            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="w-1 h-1 rounded-full bg-scalpel" />
+                                <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
+                              </div>
+                              <p className="text-sm text-fg leading-relaxed">{bias.fix}</p>
                             </div>
-                            <p className="text-sm text-fg leading-relaxed">{bias.fix}</p>
-                          </div>
+                          )
                         )}
-                        {bias.estimated_cost > 0 && (
+                        {(bias.estimated_cost > 0 || snapshotLocked) && (
                           <p className="text-xs text-fg-dim font-mono">
-                            est. cost: <span className="text-bleed font-medium">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                            est. cost: {snapshotLocked
+                              ? <RedactedValue type="dollar" seed={reportId} index={i + 100} />
+                              : <span className="text-bleed font-medium">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                            }
                           </p>
                         )}
                       </>
@@ -1786,6 +1785,28 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <section id="chapter-cost">
       <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
 
+      {snapshotLocked ? (
+        <RedactedValue type="section">
+          <div className="space-y-4">
+            <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
+            <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+              <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
+              <p className="font-mono text-3xl font-bold text-scalpel">$2,847</p>
+              <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+            </div>
+            {analysis.strategic_leaks.map((leak, i) => (
+              <div key={i} className="border border-border-subtle rounded-md px-4 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-bold text-scalpel">#{i + 1}</span>
+                  <span className="text-sm font-medium text-fg-bright">{leak.category}</span>
+                </div>
+                <span className="text-sm font-mono text-loss">-${Math.abs(Math.round(leak.roi_impact * 10)).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </RedactedValue>
+      ) : (
+      <>
             {/* Leak Prioritizer */}
             {isPartialReport && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
             {!isPartialReport && prioritizedLeaks.length > 0 && (
@@ -1893,6 +1914,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
             )}
 
+      </>
+      )}
       </section>
 
       <div className="border-t border-border-subtle my-6" />
@@ -1901,6 +1924,24 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <section id="chapter-protocol">
       <ChapterHeader number={5} title="Protocol" subtitle="Your personalized action plan" />
 
+      {snapshotLocked ? (
+        <RedactedValue type="section">
+          <div className="space-y-1.5">
+            <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
+                  <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i).padStart(2, '0')}</span>
+                  <span className="text-[14px] font-semibold text-fg-bright">Personalized rule based on your data</span>
+                </div>
+                <p className="text-[12px] text-fg-muted leading-relaxed ml-[50px]">This rule is generated from your specific betting patterns and will help you recover estimated losses.</p>
+              </div>
+            ))}
+          </div>
+        </RedactedValue>
+      ) : (
+      <>
       {/* Action Plan */}
       {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
@@ -2059,10 +2100,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
       </div>
 
-      </section>
-
       </>
       )}
+      </section>
+
+      {/* Second CTA banner at the end of chapters for snapshots */}
+      {snapshotLocked && (
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} />
+      )}
+      </>
 
       {/* Feedback */}
       {!readOnly && <ReportFeedback reportId={reportId} />}

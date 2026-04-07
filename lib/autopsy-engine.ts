@@ -2412,7 +2412,7 @@ Return ONLY the JSON object, nothing else.`;
     tokensUsed = (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0);
   }
 
-  // Build snapshot analysis — most sections empty/locked
+  // Build snapshot analysis — real data visible, dollar costs and fixes locked
   const snapshotCounts = {
     leaks: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
     patterns: Math.min(metrics.biases_detected.length, 5),
@@ -2420,6 +2420,48 @@ Return ONLY the JSON object, nothing else.`;
     sport_findings: detectSportSpecificPatterns(metrics, bets).length,
     total_biases: metrics.biases_detected.length,
   };
+
+  const snapshotTeaser = {
+    biasNames: metrics.biases_detected.map(b => ({ name: b.bias_name, severity: b.severity })),
+    leakCategories: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).map(c => c.category),
+    sessionGrades: Object.fromEntries(
+      (metrics.sessionDetection?.sessionGradeDistribution ?? []).map(g => [g.grade, g.count])
+    ),
+    heatedSessionCount: metrics.sessionDetection?.heatedSessionCount ?? 0,
+  };
+
+  // All biases visible by name+severity; only top 1 has Claude-generated description/fix
+  const allBiases: AutopsyAnalysis['biases_detected'] = metrics.biases_detected.map((b, i) => {
+    if (i === 0 && topBias) {
+      return {
+        bias_name: topBias.bias_name,
+        severity: topBias.severity as 'low' | 'medium' | 'high' | 'critical',
+        description: (claudeData.description as string) ?? `${topBias.bias_name} detected with ${topBias.severity} severity.`,
+        evidence: (claudeData.evidence as string) ?? topBias.data,
+        estimated_cost: (claudeData.estimated_cost as number) ?? 0,
+        fix: (claudeData.fix as string) ?? '',
+      };
+    }
+    return {
+      bias_name: b.bias_name,
+      severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
+      description: '',
+      evidence: b.data,
+      estimated_cost: 0,
+      fix: '',
+    };
+  });
+
+  // Strategic leaks from category_roi — category names and ROI visible, suggestions locked
+  const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = metrics.category_roi
+    .filter(c => c.roi < -5 && c.count >= 3)
+    .map(c => ({
+      category: c.category,
+      detail: '',
+      roi_impact: c.roi,
+      sample_size: c.count,
+      suggestion: '',
+    }));
 
   const analysis: AutopsyAnalysis = {
     summary: {
@@ -2431,18 +2473,10 @@ Return ONLY the JSON object, nothing else.`;
       date_range: metrics.summary.date_range,
       overall_grade: metrics.summary.overall_grade,
     },
-    // Only the top bias is fully explained; rest are stubs
-    biases_detected: topBias ? [{
-      bias_name: topBias.bias_name,
-      severity: topBias.severity as 'low' | 'medium' | 'high' | 'critical',
-      description: (claudeData.description as string) ?? `${topBias.bias_name} detected with ${topBias.severity} severity.`,
-      evidence: (claudeData.evidence as string) ?? topBias.data,
-      estimated_cost: (claudeData.estimated_cost as number) ?? 0,
-      fix: (claudeData.fix as string) ?? 'Upgrade to see the fix.',
-    }] : [],
-    strategic_leaks: [], // locked
-    behavioral_patterns: [], // locked
-    recommendations: [], // locked
+    biases_detected: allBiases,
+    strategic_leaks: snapshotLeaks,
+    behavioral_patterns: [], // needs Claude interpretation
+    recommendations: [], // needs Claude interpretation
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score,
     emotion_breakdown: metrics.emotion_breakdown,
@@ -2459,6 +2493,7 @@ Return ONLY the JSON object, nothing else.`;
     session_detection: metrics.sessionDetection ?? undefined,
     bet_annotations: metrics.annotations ?? undefined,
     _snapshot_counts: snapshotCounts,
+    _snapshot_teaser: snapshotTeaser,
   };
 
   const markdown = generateMarkdownReport(analysis);
