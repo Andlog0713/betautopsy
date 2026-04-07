@@ -71,8 +71,8 @@ export default function LandingPage() {
       {/* TRUST BAR — integration logos         */}
       {/* ══════════════════════════════════════ */}
       <section className="border-y border-border-subtle py-5">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 sm:gap-x-10 gap-y-4">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-4">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
             {[
               { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-5' },
