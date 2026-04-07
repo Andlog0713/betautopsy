@@ -71,12 +71,12 @@ export default function LandingPage() {
           <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-4">
             <span className="font-mono text-[10px] text-fg-dim tracking-widest uppercase">Works with</span>
             {[
-              { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-5' },
+              { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6' },
               { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
               { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5' },
               { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
-              { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-5' },
-              { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-5' },
+              { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4' },
+              { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4' },
               { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
               { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
             ].map(logo => (
