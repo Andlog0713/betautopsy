@@ -9,7 +9,7 @@ import { ProductShowcase } from '@/components/ProductShowcase';
 import ResponsibleGambling from '@/components/ResponsibleGambling';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import { NumberTicker } from '@/components/ui/number-ticker';
-import { Marquee } from '@/components/ui/marquee';
+import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
 
 export default function LandingPage() {
@@ -76,22 +76,7 @@ export default function LandingPage() {
         <div className="relative">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
-          <Marquee pauseOnHover duration="20s" gap="0.5rem">
-              {[
-                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', w: 'w-[80px]' },
-                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', w: 'w-[90px]' },
-                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', w: 'w-[90px]' },
-                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', w: 'w-[80px]' },
-                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', w: 'w-[70px]' },
-                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', w: 'w-[90px]' },
-                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', w: 'w-[24px]' },
-                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', w: 'w-[70px]' },
-              ].map(logo => (
-                <div key={logo.alt} className="flex items-center justify-center h-8 mx-2 sm:mx-5 shrink-0">
-                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity`} />
-                </div>
-              ))}
-          </Marquee>
+          <LogoScroll />
         </div>
       </section>
 
