@@ -79,7 +79,7 @@ export default function LandingPage() {
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
             <Marquee pauseOnHover className="[--duration:30s] [--gap:0.5rem]">
               {[
-                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6', extra: '-translate-y-0.5' },
+                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6', extra: '-translate-y-1.5' },
                 { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4', extra: '' },
                 { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5', extra: '' },
                 { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4', extra: '' },
