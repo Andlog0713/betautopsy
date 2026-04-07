@@ -14,6 +14,7 @@ import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
 import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
 
 // ── Helpers ──
@@ -43,7 +44,7 @@ function leakToQuery(category: string): string {
 const SEVERITY_COLORS: Record<string, string> = {
   low: 'bg-win/10 text-win border-win/20',
   medium: 'bg-caution/10 text-caution border-caution/20',
-  high: 'bg-orange-400/10 text-orange-400 border-orange-400/20',
+  high: 'bg-caution/10 text-caution border-caution/20',
   critical: 'bg-loss/10 text-loss border-loss/20',
 };
 
@@ -56,7 +57,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 function emotionColor(score: number): string {
   if (score <= 25) return 'bg-win';
   if (score <= 50) return 'bg-caution';
-  if (score <= 75) return 'bg-orange-400';
+  if (score <= 75) return 'bg-caution';
   return 'bg-loss';
 }
 
@@ -97,7 +98,7 @@ function gradeColor(grade: string): string {
   if (g.startsWith('A')) return 'text-win';
   if (g.startsWith('B')) return 'text-win/70';
   if (g.startsWith('C')) return 'text-caution';
-  if (g.startsWith('D')) return 'text-orange-400';
+  if (g.startsWith('D')) return 'text-caution';
   return 'text-loss';
 }
 
@@ -423,8 +424,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             onClick={() => setActiveTab('tools')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'tools'
-                ? 'bg-cyan-400/10 text-cyan-400 border border-cyan-400/20'
-                : 'text-cyan-400/60 hover:text-cyan-400'
+                ? 'bg-scalpel/10 text-scalpel border border-scalpel/20'
+                : 'text-scalpel/60 hover:text-scalpel'
             }`}
           >
             Tools
@@ -549,7 +550,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex justify-between items-baseline mb-2.5">
             <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
             <span className={`font-mono text-[22px] font-bold ${
-              emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-orange-400' : 'text-loss'
+              emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
             }`}>{emotionScore}</span>
           </div>
           <div className="h-1 bg-surface-2 relative">
@@ -566,7 +567,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <div className="flex justify-between items-baseline mb-2.5">
               <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE</span>
               <span className={`font-mono text-[22px] font-bold ${
-                analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
+                analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-caution' : 'text-loss'
               }`}>{analysis.discipline_score.total}</span>
             </div>
             <div className="h-1 bg-surface-2 relative">
@@ -594,7 +595,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ: SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
-            <span className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}</span>
+            <span className="font-mono text-4xl font-bold text-fg-bright"><NumberTicker value={analysis.betiq.score} /></span>
             <span className="font-mono text-sm text-fg-dim">/100</span>
             <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
           </div>
@@ -633,7 +634,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="case-card p-6 relative overflow-hidden">
           <div className="case-header mb-2">BETIQ: SKILL ASSESSMENT</div>
           <div className="blur-sm pointer-events-none">
-            <div className="font-mono text-4xl font-bold text-fg-bright">{analysis.betiq.score}/100</div>
+            <div className="font-mono text-4xl font-bold text-fg-bright"><NumberTicker value={analysis.betiq.score} />/100</div>
             <div className="vitals-strip grid-cols-3 mt-4">
               <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
               <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
@@ -993,9 +994,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <span className={`font-mono text-2xl font-bold ${
             emotionScore <= 25 ? 'text-win' :
             emotionScore <= 50 ? 'text-caution' :
-            emotionScore <= 75 ? 'text-orange-400' : 'text-loss'
+            emotionScore <= 75 ? 'text-caution' : 'text-loss'
           }`}>
-            {emotionScore}/100
+            <NumberTicker value={emotionScore} />/100
           </span>
         </div>
         <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden mb-3">
@@ -1024,7 +1025,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
-                          val <= 5 ? 'bg-win' : val <= 12 ? 'bg-caution' : val <= 18 ? 'bg-orange-400' : 'bg-loss'
+                          val <= 5 ? 'bg-win' : val <= 12 ? 'bg-caution' : val <= 18 ? 'bg-caution' : 'bg-loss'
                         }`}
                         style={{ width: `${(val / 25) * 100}%` }}
                       />
@@ -1350,10 +1351,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
             )}
             {analysis.timing_analysis.late_night_stats && (
-              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-orange-400/20 bg-orange-400/5' : 'border-border-subtle'}`}>
+              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-caution/20 bg-caution/5' : 'border-border-subtle'}`}>
                 <p className="text-fg-muted text-xs mb-1">Late Night (11pm–4am)</p>
                 <p className="font-mono font-bold text-xl text-fg-bright">{analysis.timing_analysis.late_night_stats.count} bets</p>
-                <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-orange-400'}`}>
+                <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-caution'}`}>
                   {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI
                 </p>
                 <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
@@ -1467,13 +1468,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {/* Luck vs Skill */}
             <div className={`card p-5 ${
               analysis.odds_analysis.luck_rating > 1 ? 'border-caution/20 bg-caution/5' :
-              analysis.odds_analysis.luck_rating < -1 ? 'border-cyan-400/20 bg-cyan-400/5' :
+              analysis.odds_analysis.luck_rating < -1 ? 'border-scalpel/20 bg-scalpel/5' :
               'border-border-subtle'
             }`}>
               <p className="text-fg-muted text-xs mb-1">Luck vs Skill</p>
               <p className={`font-bold text-xl ${
                 analysis.odds_analysis.luck_rating > 1 ? 'text-caution' :
-                analysis.odds_analysis.luck_rating < -1 ? 'text-cyan-400' :
+                analysis.odds_analysis.luck_rating < -1 ? 'text-scalpel' :
                 'text-fg-bright'
               }`}>
                 {analysis.odds_analysis.luck_label}
@@ -1489,7 +1490,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </div>
                 <div className="flex justify-between text-xs border-t border-border-subtle pt-1">
                   <span className="text-fg-muted">Difference</span>
-                  <span className={`font-mono font-semibold ${analysis.odds_analysis.luck_rating >= 0 ? 'text-caution' : 'text-cyan-400'}`}>
+                  <span className={`font-mono font-semibold ${analysis.odds_analysis.luck_rating >= 0 ? 'text-caution' : 'text-scalpel'}`}>
                     {analysis.odds_analysis.luck_rating >= 0 ? '+' : ''}{analysis.odds_analysis.luck_rating.toFixed(1)} wins
                   </span>
                 </div>
@@ -1704,13 +1705,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-fg-muted text-sm">Sharp Score <span className="text-fg-muted italic">(how skilled your betting is overall)</span></span>
-              <span className="font-mono text-2xl font-bold text-cyan-400">
+              <span className="font-mono text-2xl font-bold text-scalpel">
                 {analysis.edge_profile.sharp_score}/100
               </span>
             </div>
             <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden mb-3">
               <div
-                className="h-full rounded-full bg-cyan-400 transition-all duration-1000 ease-out"
+                className="h-full rounded-full bg-scalpel transition-all duration-1000 ease-out"
                 style={{ width: `${analysis.edge_profile.sharp_score}%` }}
               />
             </div>
@@ -1962,9 +1963,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className={`font-mono text-3xl font-bold ${
               analysis.discipline_score.total >= 71 ? 'text-win' :
               analysis.discipline_score.total >= 51 ? 'text-caution' :
-              analysis.discipline_score.total >= 31 ? 'text-orange-400' : 'text-loss'
+              analysis.discipline_score.total >= 31 ? 'text-caution' : 'text-loss'
             }`}>
-              {analysis.discipline_score.total}/100
+              <NumberTicker value={analysis.discipline_score.total} />/100
             </span>
           </div>
           <p className="text-fg-muted text-xs">
@@ -1975,7 +1976,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               className={`h-full rounded-full transition-all duration-1000 ${
                 analysis.discipline_score.total >= 71 ? 'bg-win' :
                 analysis.discipline_score.total >= 51 ? 'bg-caution' :
-                analysis.discipline_score.total >= 31 ? 'bg-orange-400' : 'bg-loss'
+                analysis.discipline_score.total >= 31 ? 'bg-caution' : 'bg-loss'
               }`}
               style={{ width: `${analysis.discipline_score.total}%` }}
             />
@@ -1991,7 +1992,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <p className="text-fg-muted text-xs mb-1" title={hint}>{label}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${val >= 18 ? 'bg-win' : val >= 12 ? 'bg-caution' : val >= 6 ? 'bg-orange-400' : 'bg-loss'}`} style={{ width: `${(val / 25) * 100}%` }} />
+                    <div className={`h-full rounded-full ${val >= 18 ? 'bg-win' : val >= 12 ? 'bg-caution' : val >= 6 ? 'bg-caution' : 'bg-loss'}`} style={{ width: `${(val / 25) * 100}%` }} />
                   </div>
                   <span className="font-mono text-xs text-fg-muted">{val}/25</span>
                 </div>
@@ -2025,21 +2026,21 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {hasToolsContent && !readOnly && isSharp && (
         <button
           onClick={() => { setActiveTab('tools'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          className="w-full card p-5 text-left hover:border-cyan-400/20 transition-colors group"
+          className="w-full card p-5 text-left hover:border-scalpel/20 transition-colors group"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-sm bg-cyan-400/10 flex items-center justify-center shrink-0">
-                <svg className="w-4.5 h-4.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-9 h-9 rounded-sm bg-scalpel/10 flex items-center justify-center shrink-0">
+                <svg className="w-4.5 h-4.5 text-scalpel" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-sm text-fg-bright group-hover:text-cyan-400 transition-colors">View Analysis Tools</p>
+                <p className="font-medium text-sm text-fg-bright group-hover:text-scalpel transition-colors">View Analysis Tools</p>
                 <p className="text-fg-muted text-xs mt-0.5">Your leaks are ranked and ready. See what to fix first.</p>
               </div>
             </div>
-            <span className="text-fg-dim group-hover:text-cyan-400 transition-colors text-sm shrink-0 ml-3">Tools &rarr;</span>
+            <span className="text-fg-dim group-hover:text-scalpel transition-colors text-sm shrink-0 ml-3">Tools &rarr;</span>
           </div>
         </button>
       )}
@@ -2188,8 +2189,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           /* Locked tools tab for non-Pro users */
           <div className="space-y-6 py-4">
             <div className="text-center max-w-md mx-auto space-y-4">
-              <div className="w-16 h-16 rounded-sm bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center mx-auto">
-                <svg className="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-16 h-16 rounded-sm bg-scalpel/10 border border-scalpel/20 flex items-center justify-center mx-auto">
+                <svg className="w-8 h-8 text-scalpel" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -2221,7 +2222,7 @@ const CLASSIFICATION_COLORS: Record<string, string> = {
   disciplined: 'bg-win/20 text-win',
   neutral: 'bg-fg-dim/20 text-fg-muted',
   emotional: 'bg-caution/20 text-caution',
-  chasing: 'bg-orange-400/20 text-orange-400',
+  chasing: 'bg-caution/20 text-caution',
   impulsive: 'bg-loss/20 text-loss',
 };
 
@@ -2357,7 +2358,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shrink-0 ${CLASSIFICATION_COLORS[ann.classification]}`}>{ann.classification.slice(0, 4)}</span>
                     <span className="font-mono text-fg-dim w-8 shrink-0">{ann.confidence}%</span>
                     <span className="text-fg-muted truncate flex-1">{ann.primaryReason}</span>
-                    {ann.isInHeatedSession && <span title="Heated session"><Flame size={14} className="text-orange-400" /></span>}
+                    {ann.isInHeatedSession && <span title="Heated session"><Flame size={14} className="text-caution" /></span>}
                     <span className="text-fg-dim font-mono">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
@@ -2391,7 +2392,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
     A: 'bg-win/20 text-win',
     B: 'bg-win/10 text-win/70',
     C: 'bg-caution/20 text-caution',
-    D: 'bg-orange-400/20 text-orange-400',
+    D: 'bg-caution/20 text-caution',
     F: 'bg-loss/20 text-loss',
   };
 
@@ -2506,7 +2507,7 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
       {heatedSessions.length > 0 && (
         <div>
           <button onClick={() => setShowHeated(!showHeated)} className="flex items-center gap-2 text-sm text-loss hover:text-loss/80 transition-colors font-mono">
-            <span className="flex items-center gap-1"><Flame size={16} className="text-orange-400" /> {heatedSessions.length} Heated Session{heatedSessions.length !== 1 ? 's' : ''}</span> <span className="text-fg-dim text-xs">{showHeated ? '▴' : '▾'}</span>
+            <span className="flex items-center gap-1"><Flame size={16} className="text-caution" /> {heatedSessions.length} Heated Session{heatedSessions.length !== 1 ? 's' : ''}</span> <span className="text-fg-dim text-xs">{showHeated ? '▴' : '▾'}</span>
           </button>
           {showHeated && (
             <div className="mt-2 space-y-1.5">
