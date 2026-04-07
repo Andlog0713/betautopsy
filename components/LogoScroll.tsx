@@ -24,12 +24,12 @@ export default function LogoScroll() {
         }
         .logo-track {
           display: flex;
-          animation: logo-scroll 40s linear infinite;
+          animation: logo-scroll 80s linear infinite;
           width: max-content;
         }
         @media (max-width: 640px) {
           .logo-track {
-            animation-duration: 15s;
+            animation-duration: 20s;
           }
         }
         .logo-track:hover {
