@@ -16,8 +16,9 @@ import RedactedValue from './RedactedValue';
 import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
-import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket } from '@/types';
+import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
+import WhatChangedSection from './WhatChangedSection';
 
 // ── Helpers ──
 
@@ -237,7 +238,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
@@ -522,6 +523,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
       <ChapterHeader number={1} title="Summary" subtitle="The executive briefing" />
+
+      {comparison && <WhatChangedSection comparison={comparison} />}
 
       {/* ═══ VITALS STRIP — 4-col like mockup ═══ */}
       <div className="vitals-strip grid-cols-2 sm:grid-cols-4 mb-5">

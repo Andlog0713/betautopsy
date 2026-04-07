@@ -347,6 +347,33 @@ export interface AutopsySummary {
   overall_grade: string; // A through F
 }
 
+export type DeltaDirection = 'up' | 'down' | 'flat';
+
+export interface ScoreDelta {
+  current: number;
+  previous: number;
+  delta: number;
+  direction: DeltaDirection;
+}
+
+export interface BiasChange {
+  name: string;
+  previousSeverity: string | null;
+  currentSeverity: string | null;
+  direction: 'improved' | 'worsened' | 'new' | 'resolved';
+}
+
+export interface ReportComparison {
+  disciplineScore: ScoreDelta | null;
+  emotionScore: ScoreDelta;
+  betiqScore: ScoreDelta | null;
+  biasChanges: BiasChange[];
+  sessionGradeShift: { previousAvg: number; currentAvg: number; direction: DeltaDirection } | null;
+  heatedSessionChange: { previous: number; current: number; delta: number; direction: DeltaDirection } | null;
+  topImprovement: string | null;
+  topRegression: string | null;
+}
+
 export interface BiasDetected {
   bias_name: string;
   severity: 'low' | 'medium' | 'high' | 'critical';

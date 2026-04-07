@@ -10,7 +10,8 @@ import OnboardingSteps from '@/components/OnboardingSteps';
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
-import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload } from '@/types';
+import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload, ReportComparison } from '@/types';
+import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
@@ -326,6 +327,20 @@ export default function ReportsPage() {
         ? JSON.parse(activeReport.report_json)
         : activeReport.report_json;
 
+    // Compare with previous report if one exists
+    let reportComparison: ReportComparison | null = null;
+    const activeIdx = reports.findIndex(r => r.id === activeReport.id);
+    const previousReport = activeIdx >= 0 && activeIdx < reports.length - 1 ? reports[activeIdx + 1] : null;
+    if (previousReport) {
+      try {
+        const prevAnalysis: AutopsyAnalysis =
+          typeof previousReport.report_json === 'string'
+            ? JSON.parse(previousReport.report_json)
+            : previousReport.report_json;
+        reportComparison = compareReports(analysis, prevAnalysis);
+      } catch { /* skip comparison if previous report can't be parsed */ }
+    }
+
     return (
       <div className="space-y-6 animate-fade-in">
         {/* Onboarding step 3 */}
@@ -351,7 +366,7 @@ export default function ReportsPage() {
         )}
         {/* Compact progress bar while Claude is still analyzing */}
         {running && <AnalyzingProgress />}
-        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} />
+        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
           <div className="card p-5 text-center space-y-2">
