@@ -8,28 +8,33 @@ export const TextGenerateEffect = ({
   className,
   filter = true,
   duration = 0.5,
+  startDelay = 0,
 }: {
   words: string;
   className?: string;
   filter?: boolean;
   duration?: number;
+  startDelay?: number;
 }) => {
   const [scope, animate] = useAnimate();
   const wordsArray = words.split(" ");
 
   useEffect(() => {
-    animate(
-      "span",
-      {
-        opacity: 1,
-        filter: filter ? "blur(0px)" : "none",
-      },
-      {
-        duration: duration,
-        delay: stagger(0.08),
-      }
-    );
-  }, [scope, animate, filter, duration]);
+    const timeout = setTimeout(() => {
+      animate(
+        "span",
+        {
+          opacity: 1,
+          filter: filter ? "blur(0px)" : "none",
+        },
+        {
+          duration: duration,
+          delay: stagger(0.08),
+        }
+      );
+    }, startDelay * 1000);
+    return () => clearTimeout(timeout);
+  }, [scope, animate, filter, duration, startDelay]);
 
   return (
     <div className={cn("font-bold", className)} ref={scope}>

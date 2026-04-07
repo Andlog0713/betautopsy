@@ -15,6 +15,7 @@ export default function HeroHeadline() {
         className="text-4xl md:text-6xl text-scalpel font-light leading-[1.08] mb-8"
         duration={0.4}
         filter={false}
+        startDelay={0.9}
       />
     </>
   );
