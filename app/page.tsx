@@ -42,11 +42,11 @@ export default function LandingPage() {
           {/* Social proof counter strip */}
           <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
             <div>
-              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={47000} />+</span>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={47000} delay={0.3} />+</span>
               <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Bets Analyzed</span>
             </div>
             <div>
-              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={2100} />+</span>
+              <span className="font-mono text-2xl font-bold text-fg-bright"><NumberTicker value={2100} delay={0.5} />+</span>
               <span className="block font-mono text-[10px] text-fg-dim tracking-widest uppercase mt-1">Reports Generated</span>
             </div>
           </div>
@@ -79,16 +79,18 @@ export default function LandingPage() {
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
             <Marquee pauseOnHover className="[--duration:30s] [--gap:0.5rem]">
               {[
-                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6', extra: '-translate-y-1.5' },
-                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4', extra: '' },
-                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5', extra: '' },
-                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4', extra: '' },
-                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4', extra: '' },
-                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4', extra: '' },
-                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5', extra: '' },
-                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4', extra: '' },
+                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', w: 'w-[100px]' },
+                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', w: 'w-[90px]' },
+                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', w: 'w-[90px]' },
+                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', w: 'w-[80px]' },
+                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', w: 'w-[70px]' },
+                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', w: 'w-[90px]' },
+                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', w: 'w-[24px]' },
+                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', w: 'w-[70px]' },
               ].map(logo => (
-                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} ${logo.extra} w-auto opacity-50 hover:opacity-80 transition-opacity mx-2 sm:mx-5 scale-[0.8] sm:scale-100`} />
+                <div key={logo.alt} className="flex items-center justify-center h-8 mx-3 sm:mx-5 shrink-0">
+                  <img src={logo.src} alt={logo.alt} className={`${logo.w} h-auto max-h-[24px] object-contain opacity-50 hover:opacity-80 transition-opacity scale-[0.85] sm:scale-100`} />
+                </div>
               ))}
             </Marquee>
           </div>
@@ -255,7 +257,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
-              <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" />
+              <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" className="hidden md:block" />
             </div>
             <div className="bg-base p-6 flex flex-col">
               <div className="flex items-center gap-2 mb-3">

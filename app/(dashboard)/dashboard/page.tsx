@@ -442,7 +442,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" />
+                  <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" className="hidden md:block" />
                 </div>
               )}
 

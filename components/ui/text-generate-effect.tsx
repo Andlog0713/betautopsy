@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, stagger, useAnimate } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,13 @@ export const TextGenerateEffect = ({
 }) => {
   const [scope, animate] = useAnimate();
   const wordsArray = words.split(" ");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+
+  const useBlur = filter && !isMobile;
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -25,7 +32,7 @@ export const TextGenerateEffect = ({
         "span",
         {
           opacity: 1,
-          filter: filter ? "blur(0px)" : "none",
+          filter: useBlur ? "blur(0px)" : "none",
         },
         {
           duration: duration,
@@ -34,7 +41,7 @@ export const TextGenerateEffect = ({
       );
     }, startDelay * 1000);
     return () => clearTimeout(timeout);
-  }, [scope, animate, filter, duration, startDelay]);
+  }, [scope, animate, useBlur, duration, startDelay]);
 
   return (
     <div className={cn("font-bold", className)} ref={scope}>
@@ -44,7 +51,7 @@ export const TextGenerateEffect = ({
             key={word + idx}
             className="opacity-0 inline-block mr-[0.25em]"
             style={{
-              filter: filter ? "blur(10px)" : "none",
+              filter: useBlur ? "blur(10px)" : "none",
             }}
           >
             {word}
