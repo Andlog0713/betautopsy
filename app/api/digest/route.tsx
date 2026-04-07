@@ -71,6 +71,17 @@ export async function GET(request: Request) {
       const insight = generateInsight(stats);
       const positiveLead = generatePositiveLead(stats);
 
+      // Fetch latest two discipline scores for trend
+      const { data: dsRows } = await supabase
+        .from('discipline_scores')
+        .select('score')
+        .eq('user_id', typedProfile.id)
+        .order('created_at', { ascending: false })
+        .limit(2);
+      const latestDS = dsRows?.[0]?.score as number | undefined;
+      const prevDS = dsRows?.[1]?.score as number | undefined;
+      const dsDelta = latestDS !== undefined && prevDS !== undefined ? latestDS - prevDS : null;
+
       // Build record string
       const record = stats.pushes > 0
         ? `${stats.wins}-${stats.losses}-${stats.pushes}`
@@ -101,7 +112,12 @@ export async function GET(request: Request) {
       }
 
       const pnlStr = `${stats.netPnL >= 0 ? '+' : '-'}$${Math.abs(Math.round(stats.netPnL))}`;
-      const subject = `Your week: ${record}, ${pnlStr} | BetAutopsy`;
+      let subject = `Your week: ${record}, ${pnlStr} | BetAutopsy`;
+      if (dsDelta !== null && dsDelta < 0) {
+        subject = `Your Discipline Score dropped ${Math.abs(dsDelta)} points | BetAutopsy`;
+      } else if (dsDelta !== null && dsDelta > 0) {
+        subject = `Discipline Score up ${dsDelta} pts. Your week: ${record} | BetAutopsy`;
+      }
 
       const emailHtml = renderDigestEmail({
         displayName: typedProfile.display_name || 'there',
@@ -119,6 +135,8 @@ export async function GET(request: Request) {
         unsubscribeUrl: `${appUrl}/api/unsubscribe?token=${tokenId}`,
         autopsyUrl: `${appUrl}/reports?run=true`,
         quizUrl: `${appUrl}/quiz`,
+        disciplineScore: latestDS ?? null,
+        disciplineDelta: dsDelta,
       });
 
       await resend.emails.send({

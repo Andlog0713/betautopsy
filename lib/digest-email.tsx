@@ -14,6 +14,8 @@ interface DigestEmailProps {
   unsubscribeUrl: string;
   autopsyUrl: string;
   quizUrl: string;
+  disciplineScore: number | null;
+  disciplineDelta: number | null;
 }
 
 function esc(s: string): string {
@@ -23,7 +25,8 @@ function esc(s: string): string {
 export function renderDigestEmail(props: DigestEmailProps): string {
   const { displayName, positiveLead, totalBets, record, netPnL, roi, streakCount,
     insightEmoji, insightHeadline, insightDetail,
-    biggestWin, biggestLoss, unsubscribeUrl, autopsyUrl, quizUrl } = props;
+    biggestWin, biggestLoss, unsubscribeUrl, autopsyUrl, quizUrl,
+    disciplineScore, disciplineDelta } = props;
 
   const pnlColor = netPnL >= 0 ? '#16a34a' : '#dc2626';
   const roiColor = roi >= 0 ? '#16a34a' : '#dc2626';
@@ -121,6 +124,20 @@ export function renderDigestEmail(props: DigestEmailProps): string {
     ${streakHtml}
   </tr></tbody></table>
 </td></tr>
+
+${disciplineScore !== null ? `
+<!-- Discipline Score -->
+<tr><td style="padding:20px 24px 0">
+  <div style="background:#f8fafc;border:1px solid #e5e5e5;padding:18px;text-align:center">
+    <div style="font-family:'Courier New',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px">DISCIPLINE SCORE</div>
+    <div style="font-family:'Courier New',monospace;font-size:36px;font-weight:700;color:${disciplineScore >= 70 ? '#0d9488' : disciplineScore >= 40 ? '#d97706' : '#dc2626'}">${disciplineScore}</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;margin-top:2px">/100</div>
+    ${disciplineDelta !== null && disciplineDelta !== 0 ? `
+    <div style="font-family:'Courier New',monospace;font-size:12px;font-weight:600;color:${disciplineDelta > 0 ? '#0d9488' : '#dc2626'};margin-top:8px">
+      ${disciplineDelta > 0 ? '&#9650;' : '&#9660;'} ${disciplineDelta > 0 ? '+' : ''}${disciplineDelta} pts from last report
+    </div>` : ''}
+  </div>
+</td></tr>` : ''}
 
 <!-- Divider -->
 <tr><td style="padding:20px 24px 0"><div style="border-top:1px solid #e5e5e5"></div></td></tr>
