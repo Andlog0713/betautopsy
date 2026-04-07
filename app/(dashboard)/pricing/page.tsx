@@ -129,26 +129,19 @@ export default function PricingPage() {
             <p className="text-fg-muted text-xs mt-1">Pay once. Keep the report forever.</p>
           </div>
           <ul className="space-y-2 flex-1 mb-6">
-            <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="text-win mt-0.5">&#10003;</span>
-              Analyzes {REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets deep
-            </li>
-            <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="text-win mt-0.5">&#10003;</span>
-              Complete 5-chapter forensic report
-            </li>
-            <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="text-win mt-0.5">&#10003;</span>
-              All biases with dollar costs
-            </li>
-            <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="text-win mt-0.5">&#10003;</span>
-              Full action plan + personal rules
-            </li>
-            <li className="text-sm text-fg-muted flex items-start gap-2">
-              <span className="text-win mt-0.5">&#10003;</span>
-              BetIQ + Emotion + Discipline breakdown
-            </li>
+            {[
+              `Analyzes up to ${REPORT_PURCHASE_LIMITS.maxBetsPerReport.toLocaleString()} bets`,
+              'Every bias with exact dollar cost',
+              'Every betting session graded A\u2013F',
+              'Emotion + Discipline + BetIQ breakdown',
+              'What-If: "you\'d have saved $X if..."',
+              'Personalized rules + action plan',
+            ].map((f) => (
+              <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
+                <span className="text-win mt-0.5">&#10003;</span>
+                {f}
+              </li>
+            ))}
           </ul>
           <div className="text-center text-sm text-fg-muted py-2">
             Pay per report, no subscription
