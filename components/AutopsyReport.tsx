@@ -19,6 +19,7 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import WhatChangedSection from './WhatChangedSection';
+import EvidencePanel from './report/EvidencePanel';
 
 // ── Helpers ──
 
@@ -886,6 +887,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               : <span className="text-bleed font-medium">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
                             }
                           </p>
+                        )}
+                        {!snapshotLocked && bias.evidence_bet_ids && bias.evidence_bet_ids.length > 0 && bets.length > 0 && (
+                          <EvidencePanel bets={bets} evidenceBetIds={bias.evidence_bet_ids} biasName={bias.bias_name} />
                         )}
                       </>
                     )}

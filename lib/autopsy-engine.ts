@@ -39,7 +39,7 @@ export interface CalculatedMetrics {
   loss_chase_ratio: number;
   stake_cv: number;
   category_roi: { category: string; roi: number; count: number; profit: number; staked: number }[];
-  biases_detected: { bias_name: string; severity: string; data: string }[];
+  biases_detected: { bias_name: string; severity: string; data: string; evidence_bet_ids?: string[] }[];
   bankroll_used: number | null;
   what_ifs: {
     flat_stake: { median_stake: number; hypothetical_profit: number };
@@ -625,7 +625,15 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // Loss chasing
   if (lossChaseRatio >= 1.1) {
     const sev = lossChaseRatio >= 2.0 ? 'critical' : lossChaseRatio >= 1.5 ? 'high' : lossChaseRatio >= 1.3 ? 'medium' : 'low';
-    biases.push({ bias_name: 'Post-Loss Escalation', severity: sev, data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake after loss: $${avgAfterLoss.toFixed(0)} vs after win: $${avgAfterWin.toFixed(0)})` });
+    // Capture bets where stake increased after a loss
+    const chaseEvidence: { id: string; ratio: number }[] = [];
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i - 1].result === 'loss' && Number(sorted[i].stake) > Number(sorted[i - 1].stake) * 1.15) {
+        chaseEvidence.push({ id: sorted[i].id, ratio: Number(sorted[i].stake) / Number(sorted[i - 1].stake) });
+      }
+    }
+    chaseEvidence.sort((a, b) => b.ratio - a.ratio);
+    biases.push({ bias_name: 'Post-Loss Escalation', severity: sev, data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake after loss: $${avgAfterLoss.toFixed(0)} vs after win: $${avgAfterWin.toFixed(0)})`, evidence_bet_ids: chaseEvidence.slice(0, 8).map(e => e.id) });
   }
 
   // Parlay addiction
@@ -637,14 +645,25 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     else if (parlayPercent >= 40 && roiDiff > 10) sev = 'medium';
     else if (roiDiff > 5) sev = 'low';
     if (sev) {
-      biases.push({ bias_name: 'Heavy Parlay Tendency', severity: sev, data: `${parlayPercent.toFixed(0)}% parlays, parlay ROI: ${parlayRoi.toFixed(1)}% vs straight: ${straightRoi.toFixed(1)}%` });
+      // Capture losing parlays with highest stakes
+      const losingParlays = parlays.filter(b => b.result === 'loss')
+        .sort((a, b) => Number(b.stake) - Number(a.stake))
+        .slice(0, 8)
+        .map(b => b.id);
+      biases.push({ bias_name: 'Heavy Parlay Tendency', severity: sev, data: `${parlayPercent.toFixed(0)}% parlays, parlay ROI: ${parlayRoi.toFixed(1)}% vs straight: ${straightRoi.toFixed(1)}%`, evidence_bet_ids: losingParlays });
     }
   }
 
   // Stake size chaos
   if (stakeCv >= 0.5) {
     const sev = stakeCv >= 1.8 ? 'critical' : stakeCv >= 1.2 ? 'high' : stakeCv >= 0.8 ? 'medium' : 'low';
-    biases.push({ bias_name: 'Stake Volatility', severity: sev, data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}) . ${stakeCv >= 1.0 ? 'wildly' : 'noticeably'} inconsistent sizing` });
+    // Capture bets with most extreme stake deviations from median
+    const stakeOutliers = [...sorted]
+      .map(b => ({ id: b.id, dev: Math.abs(Number(b.stake) - medianStake) }))
+      .sort((a, b) => b.dev - a.dev)
+      .slice(0, 8)
+      .map(b => b.id);
+    biases.push({ bias_name: 'Stake Volatility', severity: sev, data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}) . ${stakeCv >= 1.0 ? 'wildly' : 'noticeably'} inconsistent sizing`, evidence_bet_ids: stakeOutliers });
   }
 
   // Favorite bias
@@ -660,7 +679,12 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
 
   if (favPct >= 65 && favRoi < 0) {
     const sev = favPct >= 85 ? 'high' : favPct >= 75 && dogRoi > favRoi ? 'medium' : 'low';
-    biases.push({ bias_name: 'Favorite-Heavy Lean', severity: sev, data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%` });
+    // Capture highest-stake favorites that lost
+    const losingFavs = favBets.filter(b => b.result === 'loss')
+      .sort((a, b) => Number(b.stake) - Number(a.stake))
+      .slice(0, 8)
+      .map(b => b.id);
+    biases.push({ bias_name: 'Favorite-Heavy Lean', severity: sev, data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%`, evidence_bet_ids: losingFavs });
   }
 
   // Overall grade (deterministic)
@@ -1952,6 +1976,7 @@ export function calculateMetricsOnly(
       evidence: b.data,
       estimated_cost: 0,
       fix: '',
+      evidence_bet_ids: b.evidence_bet_ids,
     })),
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score,
@@ -2327,6 +2352,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
         evidence: (claudeBias?.evidence as string) ?? jsBias.data,
         estimated_cost: (claudeBias?.estimated_cost as number) ?? 0,
         fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
+        evidence_bet_ids: jsBias.evidence_bet_ids,
       };
     }),
     strategic_leaks: (Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {

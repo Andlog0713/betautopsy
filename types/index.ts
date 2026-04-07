@@ -382,6 +382,7 @@ export interface BiasDetected {
   evidence: string;
   estimated_cost: number;
   fix: string;
+  evidence_bet_ids?: string[];
 }
 
 export interface StrategicLeak {
