@@ -236,3 +236,105 @@ export function generatePositiveLead(stats: DigestStats): PositiveLead {
   }
   return { emoji: '📊', text: `${stats.totalBets} bets placed this week. Let's see how they went` };
 }
+
+// ── Weekend-specific helpers ──
+
+export async function getWeekendBets(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Bet[]> {
+  // Last Friday 5pm UTC through last Sunday 11:59pm UTC
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon, ...
+  // Calculate days back to last Friday
+  const daysToFriday = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+  const friday = new Date(now);
+  friday.setUTCDate(friday.getUTCDate() - daysToFriday);
+  friday.setUTCHours(17, 0, 0, 0); // Friday 5pm UTC
+
+  const sunday = new Date(friday);
+  sunday.setUTCDate(sunday.getUTCDate() + 2);
+  sunday.setUTCHours(23, 59, 59, 999); // Sunday 11:59pm UTC
+
+  const { data } = await supabase
+    .from('bets')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('placed_at', friday.toISOString())
+    .lte('placed_at', sunday.toISOString())
+    .order('placed_at', { ascending: true });
+  return (data ?? []) as Bet[];
+}
+
+export interface WeekendSession {
+  day: string;       // "Friday", "Saturday", "Sunday"
+  startTime: string; // "8:30 PM"
+  bets: number;
+  profit: number;
+  isHeated: boolean;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+}
+
+export function detectWeekendSessions(bets: Bet[]): WeekendSession[] {
+  if (bets.length === 0) return [];
+
+  const sorted = [...bets].sort((a, b) =>
+    new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime()
+  );
+
+  const sessions: Bet[][] = [[sorted[0]]];
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = (new Date(sorted[i].placed_at).getTime() - new Date(sorted[i - 1].placed_at).getTime()) / 60000;
+    if (gap > 90) {
+      sessions.push([sorted[i]]);
+    } else {
+      sessions[sessions.length - 1].push(sorted[i]);
+    }
+  }
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  return sessions.map(sessionBets => {
+    const first = new Date(sessionBets[0].placed_at);
+    const day = days[first.getUTCDay()];
+    const hours = first.getUTCHours();
+    const mins = first.getUTCMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const h12 = hours % 12 || 12;
+    const startTime = `${h12}:${String(mins).padStart(2, '0')} ${ampm}`;
+
+    const profit = sessionBets.reduce((s, b) => s + Number(b.profit), 0);
+    const betsCount = sessionBets.length;
+
+    // Heated detection: 3+ consecutive losses or stake escalation > 1.5x
+    let isHeated = false;
+    let consecutiveLosses = 0;
+    for (const b of sessionBets) {
+      if (b.result === 'loss') {
+        consecutiveLosses++;
+        if (consecutiveLosses >= 3) { isHeated = true; break; }
+      } else {
+        consecutiveLosses = 0;
+      }
+    }
+    if (!isHeated && sessionBets.length >= 2) {
+      const firstStake = Number(sessionBets[0].stake);
+      const maxStake = Math.max(...sessionBets.map(b => Number(b.stake)));
+      if (firstStake > 0 && maxStake / firstStake > 1.5) {
+        isHeated = true;
+      }
+    }
+
+    // Grade: A (profitable, not heated), B (profitable, heated), C (breakeven), D (unprofitable), F (unprofitable + heated)
+    const isProfitable = profit > 0;
+    const isBreakeven = Math.abs(profit) < Number(sessionBets[0].stake) * 0.1;
+    let grade: WeekendSession['grade'];
+    if (isProfitable && !isHeated) grade = 'A';
+    else if (isProfitable && isHeated) grade = 'B';
+    else if (isBreakeven) grade = 'C';
+    else if (!isProfitable && !isHeated) grade = 'D';
+    else grade = 'F';
+
+    return { day, startTime, bets: betsCount, profit: Math.round(profit), isHeated, grade };
+  });
+}
