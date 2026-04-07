@@ -309,7 +309,6 @@ export default function UploadPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm">
         <a href="/api/template" className="text-scalpel hover:underline text-xs">↓ Download CSV template</a>
         <Link href="/bets" className="text-fg-muted hover:text-fg transition-colors text-xs">Or enter bets manually</Link>
-        <Link href="/how-to-upload" className="text-fg-muted hover:text-fg transition-colors text-xs">Detailed upload guide</Link>
       </div>
     </div>
   );

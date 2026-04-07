@@ -81,7 +81,7 @@ export default function DemoReportWrapper() {
                   href="/signup"
                   className="btn-primary text-lg !px-10 !py-3.5 inline-block"
                 >
-                  Upload Your Bets
+                  Get Your Full Report Free
                 </Link>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function DemoReportWrapper() {
             href="/signup"
             className="btn-primary text-lg !px-10 !py-3.5 inline-block"
           >
-            Upload Your Bets
+            Get Your Full Report Free
           </Link>
         </div>
       )}

@@ -319,7 +319,7 @@ export default function LandingPage() {
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
         <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
-          Upload Your Bets
+          Get Your Full Report Free
         </Link>
       </section>
       </AnimatedSection>
@@ -337,7 +337,6 @@ export default function LandingPage() {
                 { label: 'Blog', href: '/blog' },
                 { label: 'FAQ', href: '/faq' },
                 { label: 'Quiz', href: '/quiz' },
-                { label: 'How to Upload', href: '/how-to-upload' },
                 { label: 'Privacy', href: '/privacy' },
                 { label: 'Terms', href: '/terms' },
                 { label: 'Log in', href: '/login' },

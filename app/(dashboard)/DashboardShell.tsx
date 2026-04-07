@@ -17,7 +17,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/upload', label: 'Upload Bets', Icon: Upload },
   { href: '/bets', label: 'Bet History', Icon: Clock },
-  { href: '/uploads', label: 'Uploads', Icon: FolderOpen },
+  { href: '/uploads', label: 'Upload History', Icon: FolderOpen },
   { href: '/reports', label: 'Reports', Icon: FileText },
 ];
 

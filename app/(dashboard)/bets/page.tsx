@@ -327,7 +327,6 @@ export default function BetsPage() {
           <p className="text-fg-muted">No bets yet. Upload a CSV or add bets manually above.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/upload" className="btn-primary text-sm">Upload CSV</Link>
-            <Link href="/how-to-upload" className="btn-secondary text-sm">How to Get Your Data</Link>
           </div>
         </div>
       ) : (
