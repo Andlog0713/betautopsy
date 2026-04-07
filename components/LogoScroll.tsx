@@ -9,6 +9,9 @@ const logos = [
   { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', width: 90 },
   { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', width: 24 },
   { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', width: 70 },
+  { src: '/logo/kalshi-logo.svg', alt: 'Kalshi', width: 70 },
+  { src: '/logo/Hard_Rock_Bet.svg', alt: 'Hard Rock Bet', width: 80 },
+  { src: '/logo/caesars-sportsbook-seeklogo-2.svg', alt: 'Caesars Sportsbook', width: 90 },
 ];
 
 export default function LogoScroll() {
