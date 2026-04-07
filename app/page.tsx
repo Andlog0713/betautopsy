@@ -336,7 +336,6 @@ export default function LandingPage() {
                 { label: 'Pricing', href: '/#pricing' },
                 { label: 'Blog', href: '/blog' },
                 { label: 'FAQ', href: '/faq' },
-                { label: 'Quiz', href: '/quiz' },
                 { label: 'Privacy', href: '/privacy' },
                 { label: 'Terms', href: '/terms' },
                 { label: 'Log in', href: '/login' },

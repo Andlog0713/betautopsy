@@ -120,7 +120,7 @@ export default function NavBar() {
               <>
                 <Link href="/login" className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors hidden sm:block">Log in</Link>
                 <Link href="/signup" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
-                  Upload bets
+                  Get Started
                 </Link>
               </>
             )}
@@ -157,7 +157,7 @@ export default function NavBar() {
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>
               ) : (
                 <div className="space-y-3">
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Upload bets, free</Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Get Started</Link>
                   <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="btn-secondary text-center block font-mono text-sm">Log in</Link>
                 </div>
               )}
