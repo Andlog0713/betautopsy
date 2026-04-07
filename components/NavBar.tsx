@@ -153,7 +153,6 @@ export default function NavBar() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/faq" onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-fg-muted hover:text-fg transition-colors">FAQ</Link>
             <div className="pt-6 border-t border-border-subtle">
               {user ? (
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="btn-primary text-center block font-mono text-sm">Dashboard</Link>
