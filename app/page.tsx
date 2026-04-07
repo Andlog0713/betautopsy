@@ -77,7 +77,7 @@ export default function LandingPage() {
           <div className="relative">
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
-            <Marquee pauseOnHover className="[--duration:30s]">
+            <Marquee pauseOnHover className="[--duration:30s] [--gap:0.5rem]">
               {[
                 { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6' },
                 { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
@@ -88,7 +88,7 @@ export default function LandingPage() {
                 { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
                 { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
               ].map(logo => (
-                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity mx-6`} />
+                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity mx-3 sm:mx-5 scale-90 sm:scale-100`} />
               ))}
             </Marquee>
           </div>
