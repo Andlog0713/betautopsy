@@ -79,16 +79,16 @@ export default function LandingPage() {
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
             <Marquee pauseOnHover className="[--duration:30s] [--gap:0.5rem]">
               {[
-                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6' },
-                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4' },
-                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5' },
-                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4' },
-                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4' },
-                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4' },
-                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5' },
-                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4' },
+                { src: '/logo/DraftKings_id2MME-tA5_0.svg', alt: 'DraftKings', h: 'h-6', extra: '-translate-y-0.5' },
+                { src: '/logo/FanDuel_idG0G3cidS_0.svg', alt: 'FanDuel', h: 'h-4', extra: '' },
+                { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', h: 'h-5', extra: '' },
+                { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', h: 'h-4', extra: '' },
+                { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', h: 'h-4', extra: '' },
+                { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', h: 'h-4', extra: '' },
+                { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', h: 'h-5', extra: '' },
+                { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', h: 'h-4', extra: '' },
               ].map(logo => (
-                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} w-auto opacity-50 hover:opacity-80 transition-opacity mx-3 sm:mx-5 scale-90 sm:scale-100`} />
+                <img key={logo.alt} src={logo.src} alt={logo.alt} className={`${logo.h} ${logo.extra} w-auto opacity-50 hover:opacity-80 transition-opacity mx-3 sm:mx-5 scale-90 sm:scale-100`} />
               ))}
             </Marquee>
           </div>
@@ -232,7 +232,7 @@ export default function LandingPage() {
               </ul>
               <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Start Free</Link>
             </div>
-            <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 ring-1 ring-scalpel/10" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
+            <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 rounded-md" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">FIRST ONE FREE</span>
