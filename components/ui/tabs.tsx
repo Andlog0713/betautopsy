@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -16,25 +16,44 @@ export const Tabs = ({
   activeTabClassName,
   tabClassName,
   contentClassName,
+  autoAdvance = 0,
 }: {
   tabs: Tab[];
   containerClassName?: string;
   activeTabClassName?: string;
   tabClassName?: string;
   contentClassName?: string;
+  autoAdvance?: number;
 }) => {
   const [active, setActive] = useState<Tab>(propTabs[0]);
   const [tabs, setTabs] = useState<Tab[]>(propTabs);
+  const [hovering, setHovering] = useState(false);
+  const paused = useRef(false);
 
-  const moveSelectedTabToTop = (idx: number) => {
+  const moveSelectedTabToTop = useCallback((idx: number) => {
     const newTabs = [...propTabs];
     const selectedTab = newTabs.splice(idx, 1);
     newTabs.unshift(selectedTab[0]);
     setTabs(newTabs);
     setActive(newTabs[0]);
-  };
+  }, [propTabs]);
 
-  const [hovering, setHovering] = useState(false);
+  // Auto-advance through tabs
+  useEffect(() => {
+    if (!autoAdvance || paused.current) return;
+    const timer = setInterval(() => {
+      if (paused.current) return;
+      const currentIdx = propTabs.findIndex(t => t.value === active.value);
+      const nextIdx = (currentIdx + 1) % propTabs.length;
+      moveSelectedTabToTop(nextIdx);
+    }, autoAdvance);
+    return () => clearInterval(timer);
+  }, [autoAdvance, active.value, propTabs, moveSelectedTabToTop]);
+
+  function handleClick(idx: number) {
+    paused.current = true;
+    moveSelectedTabToTop(idx);
+  }
 
   return (
     <>
@@ -47,9 +66,7 @@ export const Tabs = ({
         {propTabs.map((tab, idx) => (
           <button
             key={tab.title}
-            onClick={() => {
-              moveSelectedTabToTop(idx);
-            }}
+            onClick={() => handleClick(idx)}
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
             className={cn("relative px-4 py-2 rounded-full", tabClassName)}

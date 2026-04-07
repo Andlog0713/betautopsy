@@ -4,88 +4,122 @@ import { Tabs } from "./ui/tabs";
 export function ProductShowcase() {
   const tabs = [
     {
-      title: "Upload",
+      title: "1. Upload",
       value: "upload",
       content: (
         <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
-          <p className="text-lg md:text-2xl font-semibold text-fg-bright mb-2 tracking-tight">
-            Drop your CSV and let the autopsy begin
-          </p>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">1</span>
+            <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
+              Import your betting history
+            </p>
+          </div>
           <p className="text-sm text-fg-muted mb-6">
-            FanDuel, DraftKings, BetMGM, PrizePicks via Pikkit, and more. Takes 30 seconds.
+            CSV from FanDuel, DraftKings, BetMGM, PrizePicks via Pikkit, screenshot, or paste. Takes 30 seconds.
           </p>
-          <div className="border-2 border-dashed border-border-subtle rounded-md p-8 md:p-12 text-center hover:border-scalpel/20 transition-colors">
-            <svg className="mx-auto mb-3 text-fg-dim" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <p className="text-sm text-fg-muted">Drag & drop your CSV here</p>
-            <p className="text-xs text-fg-dim mt-1">or click to browse</p>
+          <div className="bg-surface-2 rounded-md p-4 space-y-2.5">
+            <div className="flex items-center gap-3 p-2.5 bg-base rounded border border-border-subtle">
+              <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
+                <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-fg-bright truncate">draftkings_history_2024.csv</p>
+                <p className="text-xs text-fg-dim font-mono">847 bets · 14 months</p>
+              </div>
+              <span className="text-xs text-scalpel font-mono">Imported</span>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 bg-base rounded border border-border-subtle">
+              <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
+                <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-fg-bright truncate">fanduel_export.csv</p>
+                <p className="text-xs text-fg-dim font-mono">312 bets · 6 months</p>
+              </div>
+              <span className="text-xs text-scalpel font-mono">Imported</span>
+            </div>
           </div>
         </div>
       ),
     },
     {
-      title: "Analyze",
+      title: "2. Analyze",
       value: "analyze",
       content: (
         <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
-          <p className="text-lg md:text-2xl font-semibold text-fg-bright mb-2 tracking-tight">
-            47 behavioral metrics. Zero judgment.
-          </p>
-          <p className="text-sm text-fg-muted mb-6">
-            Emotional patterns, loss-chasing, stake escalation, hidden edges. About 60 seconds.
-          </p>
-          <div className="space-y-3">
-            {[
-              { label: "Emotion Patterns", width: "85%" },
-              { label: "Loss Chasing", width: "60%" },
-              { label: "Bankroll Discipline", width: "75%" },
-              { label: "Hidden Edges", width: "45%" },
-            ].map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between text-xs text-fg-muted mb-1.5">
-                  <span className="font-mono">{item.label}</span>
-                </div>
-                <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-scalpel rounded-full transition-all duration-1000"
-                    style={{ width: item.width }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">2</span>
+            <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
+              We found 3 biases costing you $1,920/year
+            </p>
           </div>
+          <p className="text-sm text-fg-muted mb-5">
+            Your bets were scanned for 47 behavioral signals. Here&apos;s what surfaced:
+          </p>
+          {/* Realistic finding previews */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-bleed shrink-0" />
+                <span className="text-sm text-fg-bright font-medium truncate">Loss Chasing</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-bleed/10 text-bleed font-medium shrink-0">HIGH</span>
+              </div>
+              <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$480/qtr</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
+                <span className="text-sm text-fg-bright font-medium truncate">Parlay Overexposure</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
+              </div>
+              <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$312/qtr</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
+                <span className="text-sm text-fg-bright font-medium truncate">Late-Night Tilt</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
+              </div>
+              <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$188/qtr</span>
+            </div>
+          </div>
+          <p className="text-xs text-fg-dim mt-3 font-mono">From a real user&apos;s report with 280 bets</p>
         </div>
       ),
     },
     {
-      title: "Report",
+      title: "3. Report",
       value: "report",
       content: (
         <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
-          <p className="text-lg md:text-2xl font-semibold text-fg-bright mb-2 tracking-tight">
-            A forensic breakdown of your betting DNA
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">3</span>
+            <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
+              Your personalized action plan
+            </p>
+          </div>
+          <p className="text-sm text-fg-muted mb-5">
+            Not just what&apos;s wrong. Exactly how to fix it, ranked by dollar impact.
           </p>
-          <p className="text-sm text-fg-muted mb-6">
-            Five chapters. BetIQ Score, tilt patterns, discipline grade, edges, dollar-amount recovery plan.
-          </p>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-fg-muted">BetIQ Score</span>
-              <span className="text-xl font-bold font-mono text-fg-bright">72 <span className="text-sm text-fg-dim font-normal">/ 100</span></span>
+          {/* Mini report preview */}
+          <div className="space-y-3">
+            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-1 h-1 rounded-full bg-scalpel" />
+                <span className="text-[10px] text-scalpel font-mono uppercase tracking-widest">Rule #1</span>
+              </div>
+              <p className="text-sm text-fg-bright">Never bet more than $75 after a loss. Your post-loss stakes average 2.4x your normal size and lose at 63%.</p>
             </div>
-            <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
-              <div className="h-full bg-scalpel rounded-full" style={{ width: "72%" }} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-fg-muted">Tilt Index</span>
-              <span className="text-sm font-medium font-mono text-caution">High</span>
+            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-1 h-1 rounded-full bg-scalpel" />
+                <span className="text-[10px] text-scalpel font-mono uppercase tracking-widest">Rule #2</span>
+              </div>
+              <p className="text-sm text-fg-bright">Cap parlays at 15% of weekly volume. You&apos;re at 41%. Your 4+ leg parlays are 2-for-31.</p>
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
-              <span className="text-sm text-fg-muted">Total Recoverable</span>
-              <span className="text-xl font-bold font-mono text-scalpel">$2,062</span>
+              <span className="text-sm text-fg-muted">If you follow these rules:</span>
+              <span className="text-lg font-bold font-mono text-scalpel">+$1,920/year</span>
             </div>
           </div>
         </div>
@@ -94,8 +128,8 @@ export function ProductShowcase() {
   ];
 
   return (
-    <div className="h-[22rem] md:h-[30rem] [perspective:1000px] relative flex flex-col max-w-4xl mx-auto w-full items-start justify-start">
-      <Tabs tabs={tabs} />
+    <div className="h-[26rem] md:h-[32rem] [perspective:1000px] relative flex flex-col max-w-4xl mx-auto w-full items-start justify-start">
+      <Tabs tabs={tabs} autoAdvance={5000} />
     </div>
   );
 }
