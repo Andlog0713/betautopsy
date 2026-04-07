@@ -9,7 +9,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex">
       {/* Left — brand panel with grid-paper */}
-      <div className="hidden lg:flex flex-1 grid-paper border-r border-border-subtle p-12 flex-col justify-center">
+      <div className="hidden lg:flex flex-1 grid-paper border-r border-border-subtle p-12 pt-24 flex-col justify-start">
         <div className="max-w-md">
           <Link href="/"><Logo size="md" variant="horizontal" theme="dark" /></Link>
           <div className="mt-10 mb-2">

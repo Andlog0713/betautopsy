@@ -57,7 +57,6 @@ export default function NavBar() {
 
   const navLinks = [
     { href: '/blog', label: 'Blog' },
-    { href: '/quiz', label: 'Quiz' },
     { href: '/#pricing', label: 'Pricing' },
   ];
 
