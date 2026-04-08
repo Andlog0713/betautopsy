@@ -743,10 +743,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Bankroll Health Warning */}
       {analysis.bankroll_health !== 'healthy' && (
         <div
-          className={`rounded-sm p-5 border ${
+          className={`pl-5 py-4 border-l ${
             analysis.bankroll_health === 'danger'
-              ? 'bg-loss/5 border-loss/30'
-              : 'bg-caution/5 border-caution/30'
+              ? 'border-l-loss'
+              : 'border-l-caution'
           }`}
         >
           <div className="flex items-start gap-3">
@@ -1001,13 +1001,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {filteredContradictions.map((c, i) => (
               <div key={i} className="card-tier-1 p-[18px] border-l-[3px] border-l-purple-500">
                 <p className="font-semibold text-sm text-fg-bright mb-3">{c.title}</p>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-loss/5 border border-loss/20 p-3">
-                    <p className="font-mono text-[9px] text-loss tracking-[2px] mb-1">{c.volumeLabel}</p>
+                <div className="grid grid-cols-2 gap-x-6 mb-3">
+                  <div className="pl-3 border-l border-l-loss/60">
+                    <p className="data-label-sm text-loss/80 mb-1">{c.volumeLabel}</p>
                     <p className="text-[11px] text-fg-muted">{c.volumeData}</p>
                   </div>
-                  <div className="bg-win/5 border border-win/20 p-3">
-                    <p className="font-mono text-[9px] text-win tracking-[2px] mb-1">{c.edgeLabel}</p>
+                  <div className="pl-3 border-l border-l-win/60">
+                    <p className="data-label-sm text-win/80 mb-1">{c.edgeLabel}</p>
                     <p className="text-[11px] text-fg-muted">{c.edgeData}</p>
                   </div>
                 </div>
@@ -1398,41 +1398,41 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
           )}
 
-          {/* Best / Worst / Late Night callouts */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Best / Worst / Late Night — left-rule columns, no boxes */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
             {analysis.timing_analysis.best_window && (
-              <div className="card border-win/20 bg-win/5 p-5">
-                <p className="text-fg-muted text-xs mb-1">Best Window</p>
-                <p className="font-bold text-xl text-win">{analysis.timing_analysis.best_window.label}</p>
-                <p className="font-mono text-win text-sm">+{analysis.timing_analysis.best_window.roi.toFixed(1)}% ROI</p>
-                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.best_window.count} bets</p>
+              <div className="pl-4 border-l border-l-win/60">
+                <p className="data-label-sm mb-2">Best Window</p>
+                <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.best_window.label}</p>
+                <p className="data-number text-xl text-win leading-none">+{analysis.timing_analysis.best_window.roi.toFixed(1)}<span className="text-xs text-win/60">%</span></p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.best_window.count} bets</p>
               </div>
             )}
             {analysis.timing_analysis.worst_window && (
-              <div className="card border-loss/20 bg-loss/5 p-5">
-                <p className="text-fg-muted text-xs mb-1">Worst Window</p>
-                <p className="font-bold text-xl text-loss">{analysis.timing_analysis.worst_window.label}</p>
-                <p className="font-mono text-loss text-sm">{analysis.timing_analysis.worst_window.roi.toFixed(1)}% ROI</p>
-                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.worst_window.count} bets</p>
+              <div className="pl-4 border-l border-l-loss/60">
+                <p className="data-label-sm mb-2">Worst Window</p>
+                <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.worst_window.label}</p>
+                <p className="data-number text-xl text-loss leading-none">{analysis.timing_analysis.worst_window.roi.toFixed(1)}<span className="text-xs text-loss/60">%</span></p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.worst_window.count} bets</p>
               </div>
             )}
             {analysis.timing_analysis.late_night_stats && (
-              <div className={`card p-5 ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-caution/20 bg-caution/5' : 'border-border-subtle'}`}>
-                <p className="text-fg-muted text-xs mb-1">Late Night (11pm–4am)</p>
-                <p className="font-mono font-bold text-xl text-fg-bright">{analysis.timing_analysis.late_night_stats.count} bets</p>
-                <p className={`font-mono text-sm ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-caution'}`}>
-                  {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI
+              <div className={`pl-4 border-l ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-l-caution/60' : 'border-l-white/[0.06]'}`}>
+                <p className="data-label-sm mb-2">Late Night · 11p–4a</p>
+                <p className="text-fg-bright text-base mb-1 data-number">{analysis.timing_analysis.late_night_stats.count} bets</p>
+                <p className={`data-number text-xl leading-none ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-caution'}`}>
+                  {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}<span className="text-xs opacity-60">%</span>
                 </p>
-                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of all bets</p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of total</p>
               </div>
             )}
           </div>
 
           {/* No time data notice */}
           {!analysis.timing_analysis.has_time_data && (
-            <div className="card p-4 border-caution/20 bg-caution/5">
-              <p className="text-caution text-sm font-medium mb-1">Limited time data</p>
-              <p className="text-fg-muted text-xs">
+            <div className="pl-4 border-l border-l-caution/60">
+              <p className="data-label-sm text-caution mb-2">Limited time data</p>
+              <p className="text-fg-muted text-xs leading-relaxed">
                 Your CSV only included dates, not timestamps. Day-of-week analysis is available above, but hour-of-day patterns require time data.
                 For full timing insights, use a tracker like Pikkit that exports <span className="text-fg-bright">time_placed_iso</span> with each bet.
               </p>
@@ -1539,13 +1539,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           {/* Luck vs Skill + Best/Worst Callouts */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Luck vs Skill */}
-            <div className={`card p-5 ${
-              analysis.odds_analysis.luck_rating > 1 ? 'border-caution/20 bg-caution/5' :
-              analysis.odds_analysis.luck_rating < -1 ? 'border-scalpel/20 bg-scalpel/5' :
-              'border-border-subtle'
+            <div className={`pl-4 border-l ${
+              analysis.odds_analysis.luck_rating > 1 ? 'border-l-caution/60' :
+              analysis.odds_analysis.luck_rating < -1 ? 'border-l-scalpel/60' :
+              'border-l-white/[0.06]'
             }`}>
-              <p className="text-fg-muted text-xs mb-1">Luck vs Skill</p>
-              <p className={`font-bold text-xl ${
+              <p className="data-label-sm mb-2">Luck vs Skill</p>
+              <p className={`text-xl ${
                 analysis.odds_analysis.luck_rating > 1 ? 'text-caution' :
                 analysis.odds_analysis.luck_rating < -1 ? 'text-scalpel' :
                 'text-fg-bright'
@@ -1579,23 +1579,23 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
             {/* Best Bucket */}
             {analysis.odds_analysis.best_bucket && (
-              <div className="card border-win/20 bg-win/5 p-5">
-                <p className="text-fg-muted text-xs mb-1">Best Odds Range</p>
-                <p className="font-bold text-xl text-win">{analysis.odds_analysis.best_bucket.label}</p>
-                <p className="font-mono text-win text-sm">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}pp edge</p>
-                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.best_bucket.count} bets</p>
-                <p className="text-fg-muted text-[10px] mt-2 italic">You consistently beat the implied odds here.</p>
+              <div className="pl-4 border-l border-l-win/60">
+                <p className="data-label-sm mb-2">Best Odds Range</p>
+                <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.best_bucket.label}</p>
+                <p className="data-number text-xl text-win leading-none">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}<span className="text-xs text-win/60">pp</span></p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
+                <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">You consistently beat the implied odds here.</p>
               </div>
             )}
 
             {/* Worst Bucket */}
             {analysis.odds_analysis.worst_bucket && (
-              <div className="card border-loss/20 bg-loss/5 p-5">
-                <p className="text-fg-muted text-xs mb-1">Worst Odds Range</p>
-                <p className="font-bold text-xl text-loss">{analysis.odds_analysis.worst_bucket.label}</p>
-                <p className="font-mono text-loss text-sm">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}pp edge</p>
-                <p className="text-fg-muted text-xs mt-1 font-mono">{analysis.odds_analysis.worst_bucket.count} bets</p>
-                <p className="text-fg-muted text-[10px] mt-2 italic">The odds are beating you at this price point.</p>
+              <div className="pl-4 border-l border-l-loss/60">
+                <p className="data-label-sm mb-2">Worst Odds Range</p>
+                <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.worst_bucket.label}</p>
+                <p className="data-number text-xl text-loss leading-none">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}<span className="text-xs text-loss/60">pp</span></p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
+                <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">The odds are beating you at this price point.</p>
               </div>
             )}
           </div>
@@ -1646,21 +1646,21 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">Power Play vs Flex Play</h2>
           <p className="text-fg-muted text-xs italic mb-4">Power is all-or-nothing. Flex pays partial. Which is actually working?</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`rounded-sm p-4 ${analysis.dfs_metrics.powerVsFlex.powerROI >= analysis.dfs_metrics.powerVsFlex.flexROI ? 'bg-win/5 border border-win/20' : 'bg-loss/5 border border-loss/20'}`}>
-              <p className="text-fg-muted text-xs uppercase tracking-wider mb-2">Power Play</p>
-              <p className="font-mono text-2xl font-bold">{analysis.dfs_metrics.powerVsFlex.powerCount}</p>
-              <p className="text-fg-muted text-xs">entries</p>
-              <p className={`font-mono text-lg font-medium mt-2 ${analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? 'text-win' : 'text-loss'}`}>
-                {analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.powerROI}% ROI
+          <div className="grid grid-cols-2 gap-x-8">
+            <div className={`pl-4 border-l ${analysis.dfs_metrics.powerVsFlex.powerROI >= analysis.dfs_metrics.powerVsFlex.flexROI ? 'border-l-win/60' : 'border-l-loss/60'}`}>
+              <p className="data-label-sm mb-2">Power Play</p>
+              <p className="data-number text-2xl text-fg-bright leading-none">{analysis.dfs_metrics.powerVsFlex.powerCount}</p>
+              <p className="data-number text-[11px] text-fg-dim mt-1">entries</p>
+              <p className={`data-number text-lg mt-3 leading-none ${analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? 'text-win' : 'text-loss'}`}>
+                {analysis.dfs_metrics.powerVsFlex.powerROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.powerROI}<span className="text-xs opacity-60">%</span>
               </p>
             </div>
-            <div className={`rounded-sm p-4 ${analysis.dfs_metrics.powerVsFlex.flexROI >= analysis.dfs_metrics.powerVsFlex.powerROI ? 'bg-win/5 border border-win/20' : 'bg-loss/5 border border-loss/20'}`}>
-              <p className="text-fg-muted text-xs uppercase tracking-wider mb-2">Flex Play</p>
-              <p className="font-mono text-2xl font-bold">{analysis.dfs_metrics.powerVsFlex.flexCount}</p>
-              <p className="text-fg-muted text-xs">entries</p>
-              <p className={`font-mono text-lg font-medium mt-2 ${analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? 'text-win' : 'text-loss'}`}>
-                {analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.flexROI}% ROI
+            <div className={`pl-4 border-l ${analysis.dfs_metrics.powerVsFlex.flexROI >= analysis.dfs_metrics.powerVsFlex.powerROI ? 'border-l-win/60' : 'border-l-loss/60'}`}>
+              <p className="data-label-sm mb-2">Flex Play</p>
+              <p className="data-number text-2xl text-fg-bright leading-none">{analysis.dfs_metrics.powerVsFlex.flexCount}</p>
+              <p className="data-number text-[11px] text-fg-dim mt-1">entries</p>
+              <p className={`data-number text-lg mt-3 leading-none ${analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? 'text-win' : 'text-loss'}`}>
+                {analysis.dfs_metrics.powerVsFlex.flexROI >= 0 ? '+' : ''}{analysis.dfs_metrics.powerVsFlex.flexROI}<span className="text-xs opacity-60">%</span>
               </p>
             </div>
           </div>
@@ -1707,39 +1707,41 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
           <p className="text-fg-muted text-xs italic -mt-2">A &quot;session&quot; is a group of bets placed close together in time, like a single night of betting.</p>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
             {/* Worst session */}
             {analysis.session_analysis.worst_session && (
-              <div className="card border-loss/20 bg-loss/5 p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-loss">Worst Session</h3>
-                  <span className="text-xs text-fg-muted">{analysis.session_analysis.worst_session.date}</span>
+              <div className="pl-5 border-l border-l-loss/60">
+                <div className="flex items-baseline justify-between mb-2">
+                  <p className="data-label-sm">Worst Session</p>
+                  <span className="data-number text-[11px] text-fg-dim">{analysis.session_analysis.worst_session.date}</span>
                 </div>
-                <p className="font-mono text-2xl font-bold text-loss mb-2">
-                  {analysis.session_analysis.worst_session.net >= 0 ? '+' : ''}${Math.round(analysis.session_analysis.worst_session.net).toLocaleString()}
+                <p className="data-number text-3xl text-loss mb-2 leading-none">
+                  {analysis.session_analysis.worst_session.net >= 0 ? '+' : '−'}${Math.round(Math.abs(analysis.session_analysis.worst_session.net)).toLocaleString()}
                 </p>
-                <div className="flex gap-4 text-xs text-fg-muted font-mono mb-3">
+                <div className="flex gap-3 text-[11px] text-fg-dim data-number mb-3">
                   <span>{analysis.session_analysis.worst_session.bets} bets</span>
+                  <span>·</span>
                   <span>{analysis.session_analysis.worst_session.duration}</span>
                 </div>
-                <p className="text-sm text-fg-bright">{analysis.session_analysis.worst_session.description}</p>
+                <p className="text-sm text-fg-bright leading-relaxed">{analysis.session_analysis.worst_session.description}</p>
               </div>
             )}
             {/* Best session */}
             {analysis.session_analysis.best_session && (
-              <div className="card border-win/20 bg-win/5 p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-win">Best Session</h3>
-                  <span className="text-xs text-fg-muted">{analysis.session_analysis.best_session.date}</span>
+              <div className="pl-5 border-l border-l-win/60">
+                <div className="flex items-baseline justify-between mb-2">
+                  <p className="data-label-sm">Best Session</p>
+                  <span className="data-number text-[11px] text-fg-dim">{analysis.session_analysis.best_session.date}</span>
                 </div>
-                <p className="font-mono text-2xl font-bold text-win mb-2">
+                <p className="data-number text-3xl text-win mb-2 leading-none">
                   +${Math.round(analysis.session_analysis.best_session.net).toLocaleString()}
                 </p>
-                <div className="flex gap-4 text-xs text-fg-muted font-mono mb-3">
+                <div className="flex gap-3 text-[11px] text-fg-dim data-number mb-3">
                   <span>{analysis.session_analysis.best_session.bets} bets</span>
+                  <span>·</span>
                   <span>{analysis.session_analysis.best_session.duration}</span>
                 </div>
-                <p className="text-sm text-fg-bright">{analysis.session_analysis.best_session.description}</p>
+                <p className="text-sm text-fg-bright leading-relaxed">{analysis.session_analysis.best_session.description}</p>
               </div>
             )}
           </div>
@@ -1801,52 +1803,68 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </p>
             <p className="text-fg-muted text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
           </div>
-          {/* Profitable / Unprofitable areas */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-win">Profitable Areas</h3>
+          {/* Profitable / Unprofitable areas — typographic ledger, no boxes */}
+          <div className="grid md:grid-cols-2 gap-x-10 gap-y-8">
+            <div>
+              <p className="data-label-sm mb-4">Profitable Areas</p>
               {(() => { const areas = (analysis.edge_profile.profitable_areas ?? []).filter(a => !isPlatformCategory(a.category)); return areas.length === 0 ? (
-                <p className="text-fg-muted text-sm card p-4">No profitable areas with sufficient sample size.</p>
+                <p className="text-fg-dim text-sm italic">No profitable areas with sufficient sample size.</p>
               ) : (
-                areas.map((area, i) => (
-                  <div key={i} className="card border-win/20 bg-win/5 p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
-                      <span
-                        title={area.confidence === 'high' ? '75+ bets, statistically reliable' : area.confidence === 'medium' ? '30-75 bets, likely real but needs more data' : 'Under 30 bets, could be noise'}
-                        className={`text-xs px-2 py-0.5 rounded-sm font-mono cursor-help ${
-                        area.confidence === 'high' ? 'bg-win/10 text-win' :
-                        area.confidence === 'medium' ? 'bg-caution/10 text-caution' :
-                        'bg-fg-dim/50 text-fg-muted'
-                      }`}>{area.confidence} conf.</span>
-                    </div>
-                    <p className="font-mono text-win font-semibold">+{area.roi.toFixed(1)}% ROI</p>
-                    <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
-                  </div>
-                ))
+                <ul className="space-y-0">
+                  {areas.map((area, i) => (
+                    <li
+                      key={i}
+                      className="flex items-baseline gap-4 py-3 pl-3 border-l border-l-win/60 border-b border-b-white/[0.04]"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-fg-bright text-sm truncate">{formatCategoryLabel(area.category)}</span>
+                          <span
+                            title={area.confidence === 'high' ? '75+ bets, statistically reliable' : area.confidence === 'medium' ? '30-75 bets, likely real but needs more data' : 'Under 30 bets, could be noise'}
+                            className="text-[10px] data-number text-fg-dim uppercase tracking-wider cursor-help"
+                          >· {area.confidence}</span>
+                        </div>
+                        <p className="data-number text-[11px] text-fg-dim mt-0.5">{area.sample_size} bets</p>
+                      </div>
+                      <p className="data-number text-win text-xl shrink-0 leading-none">
+                        +{area.roi.toFixed(1)}<span className="text-xs text-win/60">%</span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               ); })()}
             </div>
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-loss">Unprofitable Areas</h3>
+            <div>
+              <p className="data-label-sm mb-4">Unprofitable Areas</p>
               {(() => { const areas = (analysis.edge_profile.unprofitable_areas ?? []).filter(a => !isPlatformCategory(a.category)); return areas.length === 0 ? (
-                <p className="text-fg-muted text-sm card p-4">No major unprofitable areas detected.</p>
+                <p className="text-fg-dim text-sm italic">No major unprofitable areas detected.</p>
               ) : (
-                areas.map((area, i) => (
-                  <div key={i} className="card border-loss/20 bg-loss/5 p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
-                      <span className="text-xs text-loss font-mono">-${Math.abs(area.estimated_loss).toLocaleString()}</span>
-                    </div>
-                    <p className="font-mono text-loss font-semibold">{area.roi.toFixed(1)}% ROI</p>
-                    <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
-                  </div>
-                ))
+                <ul className="space-y-0">
+                  {areas.map((area, i) => (
+                    <li
+                      key={i}
+                      className="flex items-baseline gap-4 py-3 pl-3 border-l border-l-loss/60 border-b border-b-white/[0.04]"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-fg-bright text-sm truncate">{formatCategoryLabel(area.category)}</span>
+                          <span className="text-[10px] data-number text-loss/80">· −${Math.abs(area.estimated_loss).toLocaleString()}</span>
+                        </div>
+                        <p className="data-number text-[11px] text-fg-dim mt-0.5">{area.sample_size} bets</p>
+                      </div>
+                      <p className="data-number text-loss text-xl shrink-0 leading-none">
+                        {area.roi.toFixed(1)}<span className="text-xs text-loss/60">%</span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               ); })()}
             </div>
           </div>
           {/* Reallocation advice */}
           {analysis.edge_profile.reallocation_advice && (
-            <div className="card border-scalpel/20 bg-scalpel-muted p-5">
+            <div className="card-tier-1 border-l border-l-scalpel pl-5 pr-5 py-5">
+              <p className="data-label-sm mb-2">Reallocation</p>
               <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-sm text-fg-bright">{analysis.edge_profile.reallocation_advice}</p></div>
             </div>
           )}
@@ -2506,31 +2524,31 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
         </div>
       )}
 
-      {/* Worst / Best spotlight */}
-      <div className="grid md:grid-cols-2 gap-3">
+      {/* Worst / Best spotlight — left rule, no boxes */}
+      <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
         {data.worstAnnotatedBet && (
-          <div className="case-card border-loss/20 p-4">
-            <span className="font-mono text-[9px] text-loss tracking-widest block mb-2">WORST BEHAVIORAL BET</span>
+          <div className="pl-4 border-l border-l-loss/60">
+            <p className="data-label-sm text-loss/80 mb-2">Worst Behavioral Bet</p>
             <div className="flex items-center gap-2 mb-2">
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${CLASSIFICATION_COLORS[data.worstAnnotatedBet.classification]}`}>{data.worstAnnotatedBet.classification}</span>
-              <span className="font-mono text-[10px] text-fg-dim">{data.worstAnnotatedBet.confidence}% conf.</span>
+              <span className="data-number text-[10px] text-fg-dim">{data.worstAnnotatedBet.confidence}% conf</span>
             </div>
-            <p className="text-fg-muted text-sm mb-1">{data.worstAnnotatedBet.primaryReason}</p>
+            <p className="text-fg-bright text-sm mb-1 leading-relaxed">{data.worstAnnotatedBet.primaryReason}</p>
             {data.worstAnnotatedBet.sessionId && (
-              <p className="font-mono text-[10px] text-fg-dim">Part of {data.worstAnnotatedBet.sessionId} (Grade {data.worstAnnotatedBet.sessionGrade}{data.worstAnnotatedBet.isInHeatedSession ? ', heated' : ''})</p>
+              <p className="data-number text-[10px] text-fg-dim">{data.worstAnnotatedBet.sessionId} · Grade {data.worstAnnotatedBet.sessionGrade}{data.worstAnnotatedBet.isInHeatedSession ? ' · heated' : ''}</p>
             )}
           </div>
         )}
         {data.bestAnnotatedBet && (
-          <div className="case-card border-win/20 p-4">
-            <span className="font-mono text-[9px] text-win tracking-widest block mb-2">MOST DISCIPLINED BET</span>
+          <div className="pl-4 border-l border-l-win/60">
+            <p className="data-label-sm text-win/80 mb-2">Most Disciplined Bet</p>
             <div className="flex items-center gap-2 mb-2">
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${CLASSIFICATION_COLORS[data.bestAnnotatedBet.classification]}`}>{data.bestAnnotatedBet.classification}</span>
-              <span className="font-mono text-[10px] text-fg-dim">{data.bestAnnotatedBet.confidence}% conf.</span>
+              <span className="data-number text-[10px] text-fg-dim">{data.bestAnnotatedBet.confidence}% conf</span>
             </div>
-            <p className="text-fg-muted text-sm mb-1">{data.bestAnnotatedBet.primaryReason}</p>
+            <p className="text-fg-bright text-sm mb-1 leading-relaxed">{data.bestAnnotatedBet.primaryReason}</p>
             {data.bestAnnotatedBet.sessionId && (
-              <p className="font-mono text-[10px] text-fg-dim">Part of {data.bestAnnotatedBet.sessionId} (Grade {data.bestAnnotatedBet.sessionGrade})</p>
+              <p className="data-number text-[10px] text-fg-dim">{data.bestAnnotatedBet.sessionId} · Grade {data.bestAnnotatedBet.sessionGrade}</p>
             )}
           </div>
         )}
@@ -2737,16 +2755,16 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
         </div>
       )}
 
-      {/* Best / Worst session cards */}
-      <div className="grid md:grid-cols-2 gap-3">
+      {/* Best / Worst session — left rule, no boxes */}
+      <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
         {sessionData.bestSession && (
-          <div className="case-card border-win/20 p-4">
+          <div className="pl-4 border-l border-l-win/60">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-fg-dim text-xs font-mono">{sessionData.bestSession.id}</span>
+              <span className="data-number text-[11px] text-fg-dim">{sessionData.bestSession.id}</span>
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.bestSession.grade]}`}>{sessionData.bestSession.grade}</span>
             </div>
-            <p className="text-win font-mono text-xl font-bold">+${sessionData.bestSession.profit.toLocaleString()}</p>
-            <p className="text-fg-dim text-xs font-mono mt-1">{sessionData.bestSession.dayOfWeek} · {sessionData.bestSession.bets} bets · {sessionData.bestSession.startTime}–{sessionData.bestSession.endTime}</p>
+            <p className="data-number text-2xl text-win leading-none">+${sessionData.bestSession.profit.toLocaleString()}</p>
+            <p className="data-number text-[11px] text-fg-dim mt-2">{sessionData.bestSession.dayOfWeek} · {sessionData.bestSession.bets} bets · {sessionData.bestSession.startTime}–{sessionData.bestSession.endTime}</p>
             {sessionData.bestSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
             ))}
@@ -2756,15 +2774,15 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
           </div>
         )}
         {sessionData.worstSession && (
-          <div className="case-card border-loss/20 p-4">
+          <div className="pl-4 border-l border-l-loss/60">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-fg-dim text-xs font-mono">{sessionData.worstSession.id}</span>
+              <span className="data-number text-[11px] text-fg-dim">{sessionData.worstSession.id}</span>
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.worstSession.grade]}`}>{sessionData.worstSession.grade}</span>
             </div>
-            <p className="text-loss font-mono text-xl font-bold">-${Math.abs(sessionData.worstSession.profit).toLocaleString()}</p>
-            <p className="text-fg-dim text-xs font-mono mt-1">{sessionData.worstSession.dayOfWeek} · {sessionData.worstSession.bets} bets · {sessionData.worstSession.startTime}–{sessionData.worstSession.endTime}</p>
+            <p className="data-number text-2xl text-loss leading-none">−${Math.abs(sessionData.worstSession.profit).toLocaleString()}</p>
+            <p className="data-number text-[11px] text-fg-dim mt-2">{sessionData.worstSession.dayOfWeek} · {sessionData.worstSession.bets} bets · {sessionData.worstSession.startTime}–{sessionData.worstSession.endTime}</p>
             {sessionData.worstSession.gradeReasons.map((r, i) => (
-              <p key={i} className="text-fg-muted text-xs mt-1 text-loss/70">- {r}</p>
+              <p key={i} className="text-loss/70 text-xs mt-1">− {r}</p>
             ))}
             {(sessionData.worstSession.betIndices.length >= 2 && bets.length > 0 || (sessionData.worstSession.betSnapshots?.length ?? 0) >= 2) && (
               <SessionBetTimeline session={sessionData.worstSession} bets={bets} show={showWorstBets} setShow={setShowWorstBets} />
