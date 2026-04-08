@@ -236,7 +236,7 @@ function buildWhatIfs(bets: Bet[]) {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-surface-3 border border-border-subtle rounded-lg p-3 text-xs">
+    <div className="bg-tier-3 rounded-lg p-3 text-xs">
       <p className="text-fg-dim mb-1">{label}</p>
       <p className={`font-mono text-fg-bright ${payload[0].value >= 0 ? 'text-win' : 'text-loss'}`}>
         ${payload[0].value.toLocaleString()}
@@ -485,7 +485,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* What this report analyzes — collapsible */}
-      <details className="border border-border-subtle rounded-sm bg-surface-1/50 mb-5">
+      <details className="card-tier-2 rounded-sm mb-5">
         <summary className="px-4 py-3 text-sm text-fg-muted cursor-pointer hover:text-fg flex items-center gap-2 font-mono text-[11px] tracking-wider">
           <span className="text-fg-dim">▸</span> ABOUT THIS REPORT
         </summary>
@@ -520,7 +520,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Subject Classification — Bet DNA (purple left border like mockup) */}
       {!readOnly && analysis.betting_archetype && (
-        <div className="bg-surface-1 border border-border-subtle rounded-md p-5 mb-5">
+        <div className="card-tier-1 p-5 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block w-2 h-2 rounded-full bg-purple-500 shrink-0" />
@@ -550,7 +550,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Executive Diagnosis */}
       {isPartialReport && <SkeletonSection label="Generating behavioral diagnosis..." />}
       {!isPartialReport && analysis.executive_diagnosis && (
-        <div className="border border-border-subtle p-[18px] border-l-[3px] border-l-scalpel mb-5">
+        <div className="card-tier-1 p-[18px] border-l-[3px] border-l-scalpel mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <p className="font-mono text-[9px] text-fg-dim tracking-[3px]">EXECUTIVE DIAGNOSIS</p>
             {reportId && (
@@ -586,7 +586,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </div>
 
       {/* ═══ SCORES — side-by-side with gradient bars + needle ═══ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] border border-border-subtle mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] mb-6 rounded-md overflow-hidden">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
             <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
@@ -774,7 +774,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {!isPartialReport && totalRecoverable > 0 && (
         <div
-          className="bg-surface-1 border border-border-subtle rounded-md p-5 cursor-pointer hover:bg-white/[0.01] transition-colors"
+          className="card-tier-1 p-5 cursor-pointer"
           onClick={() => {
             const el = document.getElementById('chapter-cost');
             if (el) {
@@ -842,7 +842,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const dotClass = sevColor === 'bleed' ? 'bg-bleed' : sevColor === 'caution' ? 'bg-caution' : 'bg-win';
               const badgeClass = sevColor === 'bleed' ? 'bg-bleed/10 text-bleed' : sevColor === 'caution' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
               return (
-              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
                 {/* Collapsed header — always visible */}
                 <div
                   onClick={() => toggleFinding(findingId)}
@@ -938,7 +938,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             const dotClass = finding.severity === 'high' ? 'bg-bleed' : finding.severity === 'medium' ? 'bg-caution' : 'bg-scalpel';
             const badgeClass = finding.severity === 'high' ? 'bg-bleed/10 text-bleed' : finding.severity === 'medium' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
             return (
-            <div key={finding.id} className="border border-border-subtle rounded-md overflow-hidden">
+            <div key={finding.id} className="card-tier-2 rounded-md overflow-hidden">
               <div
                 onClick={() => toggleFinding(findingId)}
                 className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -999,7 +999,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">BEHAVIORAL CONTRADICTIONS</p>
           <div className="grid gap-2">
             {filteredContradictions.map((c, i) => (
-              <div key={i} className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500">
+              <div key={i} className="card-tier-1 p-[18px] border-l-[3px] border-l-purple-500">
                 <p className="font-semibold text-sm text-fg-bright mb-3">{c.title}</p>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="bg-loss/5 border border-loss/20 p-3">
@@ -1035,7 +1035,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const leakId = `leak-${i}`;
               const isExpanded = expandedFindings.has(leakId);
               return (
-              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
                 <div
                   onClick={() => toggleFinding(leakId)}
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1092,7 +1092,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               {analysis.enhanced_tilt.risk_level} risk
             </span>
           </div>
-          <div className="bg-surface-1 border border-border-subtle rounded-md p-4 mt-3">
+          <div className="card-tier-1 p-4 mt-3">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-caution shrink-0" />
               <p className="text-fg-muted text-sm">{analysis.enhanced_tilt.worst_trigger}</p>
@@ -1111,7 +1111,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
                 { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
               ].map(signal => (
-                <div key={signal.label} className="bg-surface-2 p-3 border border-border-subtle rounded-sm">
+                <div key={signal.label} className="bg-tier-2 p-3 rounded-sm">
                   <div className="mb-1.5">
                     <span className="text-[11px] text-fg-muted block">{signal.label}</span>
                     <span className="text-[9px] text-fg-muted block leading-tight mt-0.5">{signal.hint}</span>
@@ -1144,7 +1144,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const dotClass = pat.impact === 'positive' ? 'bg-scalpel' : pat.impact === 'negative' ? 'bg-bleed' : 'bg-fg-dim';
               const badgeClass = pat.impact === 'positive' ? 'bg-scalpel/10 text-scalpel' : pat.impact === 'negative' ? 'bg-bleed/10 text-bleed' : 'bg-fg-dim/20 text-fg-muted';
               return (
-              <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
                 <div
                   onClick={() => toggleFinding(patId)}
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1180,7 +1180,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">CLEAN FINDINGS</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {analysis.pertinent_negatives.map((neg, i) => (
-              <div key={i} className="border border-border-subtle p-3 border-l-[3px] border-l-win">
+              <div key={i} className="card-tier-1 p-3 border-l-[3px] border-l-win">
                 <p className="font-mono text-[10px] text-win tracking-[1.5px] mb-1">{neg.pattern.toUpperCase()}</p>
                 <p className="text-[11px] text-fg-bright font-medium mb-1">{neg.finding}</p>
                 <p className="text-[11px] text-fg-muted leading-relaxed">{neg.detail}</p>
@@ -1268,7 +1268,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     if (!active || !payload?.length) return null;
                     const d = payload[0].payload as { category: string; roi: number; count: number };
                     return (
-                      <div className="bg-surface-3 border border-border-subtle rounded-lg p-3 text-xs">
+                      <div className="bg-tier-3 rounded-lg p-3 text-xs">
                         <p className="text-fg-bright font-medium">{d.category}</p>
                         <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi}% ROI</p>
                         <p className="text-fg-muted">{d.count} bets</p>
@@ -1308,7 +1308,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload as TimingBucket;
                       return (
-                        <div className="bg-surface-3 border border-border-subtle rounded-lg p-3 text-xs">
+                        <div className="bg-tier-3 rounded-lg p-3 text-xs">
                           <p className="text-fg-bright font-medium">{d.label}</p>
                           <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
@@ -1369,7 +1369,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       </div>
                       {/* Hover tooltip */}
                       {hasBets && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface-3 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-tier-3 rounded-lg px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
                           <p className="text-fg-bright font-medium">{h.label}</p>
                           <p className={`font-mono ${h.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{h.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
@@ -1514,7 +1514,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload as OddsBucket;
                         return (
-                          <div className="bg-surface-3 border border-border-subtle rounded-lg p-3 text-xs">
+                          <div className="bg-tier-3 rounded-lg p-3 text-xs">
                             <p className="text-fg-bright font-medium">{d.label}</p>
                             <p className={`font-mono ${d.edge >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
                             <p className="text-fg-muted">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
@@ -1865,13 +1865,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <RedactedValue type="section">
           <div className="space-y-4">
             <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
-            <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+            <div className="card-tier-1 p-5">
               <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
               <p className="font-mono text-3xl font-bold text-scalpel">$2,847</p>
               <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
             </div>
             {filteredLeaks.map((leak, i) => (
-              <div key={i} className="border border-border-subtle rounded-md px-4 py-3.5 flex items-center justify-between">
+              <div key={i} className="card-tier-2 px-4 py-3.5 rounded-md flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-scalpel">#{i + 1}</span>
                   <span className="text-sm font-medium text-fg-bright">{leak.category}</span>
@@ -1889,7 +1889,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+                <div className="card-tier-1 p-5">
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
                   <div className="flex items-center gap-2">
                     <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
@@ -1905,7 +1905,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                      <div key={i} className="card-tier-2 rounded-md overflow-hidden">
                         <div
                           onClick={() => toggleFinding(leakId)}
                           className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1961,7 +1961,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const diff = wi.hypothetical - wi.actual;
                     const better = diff > 0;
                     return (
-                      <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-4">
+                      <div key={i} className="card-tier-1 p-4">
                         <p className="text-sm font-medium text-fg-bright mb-3">{wi.label}</p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -2005,7 +2005,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="space-y-1.5">
             <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
+              <div key={i} className="card-tier-1 p-5">
                 <div className="flex items-center gap-2.5 mb-1.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
                   <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i).padStart(2, '0')}</span>
@@ -2024,7 +2024,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-1.5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
           {recommendations.map((rec, i) => (
-            <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
+            <div key={i} className="card-tier-1 p-5">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
                 <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i + 1).padStart(2, '0')}</span>
@@ -2126,7 +2126,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <div className="space-y-3">
             {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
-              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
+              <div key={i} className="card-tier-1 p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
                   <p className="text-fg-bright font-medium">{rule.rule}</p>
@@ -2220,7 +2220,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         const colorMap = { loss: 'border-l-loss text-loss', win: 'border-l-win text-win', scalpel: 'border-l-scalpel text-scalpel' };
 
         return (
-          <div className="border border-border-subtle p-[18px] mt-6 mb-6">
+          <div className="card-tier-1 p-[18px] mt-6 mb-6">
             <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-4">YOUR 3 MOVES</p>
             <div className={`grid grid-cols-1 sm:grid-cols-${columns.length} gap-3`}>
               {columns.map(col => (
@@ -2273,7 +2273,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const diff = wi.hypothetical - wi.actual;
                     const better = diff > 0;
                     return (
-                      <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-4">
+                      <div key={i} className="card-tier-1 p-4">
                         <p className="text-sm font-medium text-fg-bright mb-3">{wi.label}</p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -2308,7 +2308,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+                <div className="card-tier-1 p-5">
                   <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
                   <div className="flex items-center gap-2">
                     <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
@@ -2324,7 +2324,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="border border-border-subtle rounded-md overflow-hidden">
+                      <div key={i} className="card-tier-2 rounded-md overflow-hidden">
                         <div
                           onClick={() => toggleFinding(leakId)}
                           className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -2443,7 +2443,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 
       {/* Distribution bar */}
       <div>
-        <div className="flex h-6 rounded-sm overflow-hidden border border-border-subtle">
+        <div className="flex h-6 rounded-sm overflow-hidden">
           {(['disciplined', 'neutral', 'emotional', 'chasing', 'impulsive'] as const).filter(c => data.distribution[c].count > 0).map(c => (
             <div
               key={c}
@@ -2557,7 +2557,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className="text-fg-dim font-mono">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
-                    <div className="bg-base border border-border-subtle rounded-sm p-3 ml-4 mt-1 space-y-1">
+                    <div className="bg-tier-2 rounded-sm p-3 ml-4 mt-1 space-y-1">
                       {ann.signals.map((sig, j) => (
                         <div key={j} className="flex items-center gap-2 text-xs">
                           <span className={`font-mono w-6 text-right shrink-0 ${sig.weight > 0 ? 'text-loss' : 'text-win'}`}>{sig.weight > 0 ? '+' : ''}{sig.weight}</span>
@@ -2677,7 +2677,7 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
 
       {/* Grade distribution bar */}
       <div>
-        <div className="flex h-6 rounded-sm overflow-hidden border border-border-subtle">
+        <div className="flex h-6 rounded-sm overflow-hidden">
           {sessionData.sessionGradeDistribution.filter(g => g.count > 0).map(g => (
             <div
               key={g.grade}

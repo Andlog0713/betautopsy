@@ -49,14 +49,22 @@
 }
 
 @layer components {
-  /* ── Case file card ── */
+  /* ── Case file card ── tier-based, no uniform border */
   .case-card {
-    @apply bg-surface-1 border border-border-subtle rounded-md;
+    background-color: #131920;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    border-radius: 6px;
+    transition: background-color 180ms ease;
+  }
+  .case-card:hover {
+    background-color: #1A2029;
   }
 
-  /* Legacy card alias */
+  /* Legacy card alias — same tier-1 surface */
   .card {
-    @apply bg-surface-1 border border-border-subtle rounded-md;
+    background-color: #131920;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    border-radius: 6px;
   }
 
   /* ── Buttons ── */
@@ -131,9 +139,13 @@
     @apply bg-base p-3;
   }
 
-  /* ── Finding card ── */
+  /* ── Finding card ── tier 1 surface w/ left teal accent */
   .finding-card {
-    @apply bg-surface-1 border border-border-subtle rounded-md p-5;
+    background-color: #131920;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    border-left: 1px solid rgba(0, 201, 167, 0.5);
+    border-radius: 0 6px 6px 0;
+    padding: 1.25rem;
   }
 
   /* ── Case header ── */

@@ -150,7 +150,7 @@ export default function UploadPage() {
 
           {/* Bankroll prompt — only if not already set */}
           {!profile?.bankroll && !bankrollSaved && (
-            <div className="bg-surface-1 border border-border-subtle rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
+            <div className="card-tier-1 rounded-sm p-5 max-w-sm mx-auto text-left space-y-3">
               <p className="text-fg-bright text-sm font-medium">Set your bankroll for a more accurate grade</p>
               <p className="text-fg-muted text-xs">
                 How much money do you have set aside for betting? This is the total amount you&apos;d be comfortable having in action, whether it&apos;s sitting in your sportsbook accounts, ready to deposit, or both. A rough estimate is fine.
@@ -243,7 +243,7 @@ export default function UploadPage() {
           {/* Pikkit method */}
           {activeMethod === 'pikkit' && (
             <div className="space-y-4">
-              <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+              <div className="card-tier-1 p-5">
                 <p className="text-fg-muted text-sm mb-3">
                   <a href="https://links.pikkit.com/invite/surf40498" target="_blank" rel="noopener noreferrer" className="text-scalpel hover:underline">Pikkit</a> is a third-party bet tracking app that connects to your sportsbook accounts and pulls your full betting history automatically. We recommend it because it&apos;s the easiest way to export your data as a CSV.
                 </p>
@@ -297,7 +297,7 @@ export default function UploadPage() {
                 <p className="text-fg-muted text-xs">We auto-detect columns from Pikkit, DraftKings, FanDuel, and generic CSV exports.</p>
                 <div className="flex flex-wrap gap-1.5">
                   {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit'].map(col => (
-                    <span key={col} className="font-mono text-[10px] bg-base border border-border-subtle rounded-sm px-1.5 py-0.5">{col}</span>
+                    <span key={col} className="font-mono text-[10px] bg-base bg-tier-2 rounded-sm px-1.5 py-0.5">{col}</span>
                   ))}
                 </div>
               </div>

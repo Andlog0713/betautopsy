@@ -336,7 +336,7 @@ export default function BetsPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-surface-1 border border-border-subtle rounded-md overflow-hidden">
+        <div className="card-tier-1 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
