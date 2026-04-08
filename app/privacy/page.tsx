@@ -7,13 +7,13 @@ export default function PrivacyPolicyPage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Privacy Policy</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2026</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: April 8, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">1. Who we are</h2>
             <p>
-              BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;) operates the website{' '}
+              Diagnostic Sports, LLC, doing business as BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;), operates the website{' '}
               <span className="text-fg-bright">betautopsy.com</span> and provides sports betting
               behavioral analysis tools. This policy explains how we collect, use, and protect your personal information.
             </p>
@@ -172,6 +172,11 @@ export default function PrivacyPolicyPage() {
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">
                 support@betautopsy.com
               </a>.
+            </p>
+            <p className="mt-4">
+              Diagnostic Sports, LLC d/b/a BetAutopsy<br />
+              418 Broadway STE R<br />
+              Albany, NY 12207
             </p>
           </section>
         </div>

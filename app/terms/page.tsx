@@ -7,13 +7,13 @@ export default function TermsOfUsePage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Terms of Use</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: April 4, 2026</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: April 8, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">1. Acceptance of terms</h2>
             <p>
-              By accessing or using BetAutopsy (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;), including the website at betautopsy.com, you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the service. We may update these terms at any time, and your continued use after changes are posted constitutes acceptance.
+              By accessing or using BetAutopsy, a product of Diagnostic Sports, LLC (&quot;we,&quot; &quot;us,&quot; &quot;our&quot;), including the website at betautopsy.com, you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the service. We may update these terms at any time, and your continued use after changes are posted constitutes acceptance.
             </p>
           </section>
 
@@ -103,7 +103,7 @@ export default function TermsOfUsePage() {
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">8. Intellectual property</h2>
             <p>
-              All content, features, functionality, design elements, trademarks, and code on BetAutopsy are owned by BetAutopsy and protected by applicable intellectual property laws. You may not copy, modify, distribute, or create derivative works from any part of the service without our prior written permission. Your use of the service does not grant you any ownership rights in our intellectual property.
+              All content, features, functionality, design elements, trademarks, and code on BetAutopsy are owned by Diagnostic Sports, LLC and protected by applicable intellectual property laws. You may not copy, modify, distribute, or create derivative works from any part of the service without our prior written permission. Your use of the service does not grant you any ownership rights in our intellectual property.
             </p>
           </section>
 
@@ -130,14 +130,14 @@ export default function TermsOfUsePage() {
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">11. Limitation of liability</h2>
             <p>
-              To the maximum extent permitted by law, BetAutopsy and its owners, employees, affiliates, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the service, including but not limited to loss of profits, data, or goodwill. Our total liability for any claims related to the service shall not exceed the amount you paid us in the 12 months preceding the claim.
+              To the maximum extent permitted by law, Diagnostic Sports, LLC d/b/a BetAutopsy, and its owners, employees, affiliates, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the service, including but not limited to loss of profits, data, or goodwill. Our total liability for any claims related to the service shall not exceed the amount you paid us in the 12 months preceding the claim.
             </p>
           </section>
 
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">12. Indemnification</h2>
             <p>
-              You agree to indemnify, defend, and hold harmless BetAutopsy and its owners, employees, and affiliates from any claims, losses, damages, liabilities, and expenses (including reasonable legal fees) arising from your use of the service, your violation of these terms, or your violation of any third-party rights.
+              You agree to indemnify, defend, and hold harmless Diagnostic Sports, LLC d/b/a BetAutopsy, and its owners, employees, and affiliates from any claims, losses, damages, liabilities, and expenses (including reasonable legal fees) arising from your use of the service, your violation of these terms, or your violation of any third-party rights.
             </p>
           </section>
 
@@ -169,6 +169,11 @@ export default function TermsOfUsePage() {
               <a href="mailto:support@betautopsy.com" className="text-scalpel hover:underline">
                 support@betautopsy.com
               </a>.
+            </p>
+            <p className="mt-4">
+              Diagnostic Sports, LLC d/b/a BetAutopsy<br />
+              418 Broadway STE R<br />
+              Albany, NY 12207
             </p>
           </section>
         </div>

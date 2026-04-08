@@ -27,6 +27,9 @@ export default function FAQLayout({ children }: { children: React.ReactNode }) {
             For entertainment and educational purposes only. Not gambling advice. 21+.
             If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>
+          <p className="text-fg-dim text-[10px] text-center mt-2">
+            © 2026 Diagnostic Sports, LLC d/b/a BetAutopsy
+          </p>
         </div>
       </footer>
     </main>
