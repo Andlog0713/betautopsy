@@ -1812,6 +1812,20 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     worstSession = sessions.reduce((worst, s) => s.profit < worst.profit ? s : worst, sessions[0]);
   }
 
+  // Embed lightweight bet snapshots for best/worst sessions (for share page rendering)
+  if (bestSession && bestSession.betIndices.length >= 2) {
+    bestSession = { ...bestSession, betSnapshots: bestSession.betIndices.map(idx => {
+      const b = sorted[idx];
+      return b ? { placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result } : null;
+    }).filter(Boolean) as DetectedSession['betSnapshots'] };
+  }
+  if (worstSession && worstSession.betIndices.length >= 2) {
+    worstSession = { ...worstSession, betSnapshots: worstSession.betIndices.map(idx => {
+      const b = sorted[idx];
+      return b ? { placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result } : null;
+    }).filter(Boolean) as DetectedSession['betSnapshots'] };
+  }
+
   // Insight
   let insight: string;
   if (heatedSessionCount === 0) {
@@ -2334,7 +2348,8 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - Frame problems as opportunities with dollar amounts
 - Use encouraging language for strengths: "legit edge", "sharp instinct", "real discipline here"
 - Use direct but non-judgmental language for problems: "this is costing you" not clinical labels
-- Never use words like: addiction, reckless, gambling problem, degenerate, out of control
+- Never use words like: addiction, reckless, gambling problem, degenerate, out of control, terrible, awful, horrible
+- Never insult the user. Be direct and honest, but frame weaknesses as opportunities to reallocate, not personal failures. "This isn't where your edge is" not "You're terrible at this."
 
 ## Executive Diagnosis Rules
 - Exactly 4 sentences. 15-20 words each. Short and direct.

@@ -2040,7 +2040,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               analysis.discipline_score.total >= 51 ? 'text-caution' :
               analysis.discipline_score.total >= 31 ? 'text-caution' : 'text-loss'
             }`}>
-              <NumberTicker value={analysis.discipline_score.total} />/100
+              {readOnly ? analysis.discipline_score.total : <NumberTicker value={analysis.discipline_score.total} />}/100
             </span>
           </div>
           <p className="text-fg-muted text-xs">
@@ -2177,12 +2177,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         const profitableAreas = analysis.edge_profile?.profitable_areas?.slice(0, 2) ?? [];
         profitableAreas.forEach(a => startItems.push(`More ${a.category}`));
         const positivePatterns = (analysis.behavioral_patterns ?? []).filter(p => p.impact === 'positive').slice(0, 1);
-        positivePatterns.forEach(p => startItems.push(p.pattern_name));
+        positivePatterns.forEach(p => {
+          // Clean pattern names: strip "Success", "Discipline", "Disaster" suffixes
+          const cleaned = p.pattern_name.replace(/\s*(Success|Discipline|Disaster|Pattern|Tendency)\s*$/i, '').trim();
+          startItems.push(cleaned || p.pattern_name);
+        });
 
-        // CONTINUE: pertinent negatives + discipline
+        // CONTINUE: pertinent negatives + discipline (deduplicated)
         const topNegatives = (analysis.pertinent_negatives ?? []).slice(0, 2);
+        const hasEmotionalNegative = topNegatives.some(n => n.pattern.toLowerCase().includes('emotional'));
         topNegatives.forEach(n => continueItems.push(`No ${n.pattern.toLowerCase()}`));
-        if ((analysis.emotion_score ?? 100) < 40 && continueItems.length < 3) continueItems.push('Emotional discipline');
+        if ((analysis.emotion_score ?? 100) < 40 && continueItems.length < 3 && !hasEmotionalNegative) continueItems.push('Emotional discipline');
 
         const hasContent = stopItems.length > 0 || startItems.length > 0 || continueItems.length > 0;
         if (!hasContent) return null;
@@ -2202,11 +2207,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               {columns.map(col => (
                 <div key={col.label} className={`border-l-[3px] ${colorMap[col.color].split(' ')[0]} pl-3`}>
                   <p className={`font-mono text-[10px] ${colorMap[col.color].split(' ')[1]} tracking-[2px] mb-1.5`}>{col.label}</p>
-                  <ul className="space-y-1">
+                  <div className="space-y-1">
                     {col.items.map((item, i) => (
-                      <li key={i} className="text-[12px] text-fg-muted">&bull; {item}</li>
+                      <p key={i} className="text-[12px] text-fg-muted">&bull; {item}</p>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2556,7 +2561,10 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 // ── Session Bet Timeline ──
 
 function SessionBetTimeline({ session, bets, show, setShow }: { session: import('@/types').DetectedSession; bets: Bet[]; show: boolean; setShow: (v: boolean) => void }) {
-  const sessionBets = session.betIndices.map(idx => bets[idx]).filter(Boolean);
+  // Use bets from prop if available, fall back to embedded snapshots
+  const sessionBets: { placed_at: string; description: string; stake: number; profit: number; result: string }[] = bets.length > 0
+    ? session.betIndices.map(idx => bets[idx]).filter(Boolean).map(b => ({ placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result }))
+    : (session.betSnapshots ?? []);
   if (sessionBets.length < 2) return null;
 
   return (
@@ -2593,7 +2601,7 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
             }
 
             return (
-              <div key={bet.id || i}>
+              <div key={i}>
                 {timeGap && <p className="py-0.5 pl-8 text-[9px] text-fg-dim italic">{timeGap}</p>}
                 <div className="py-1.5 flex items-center gap-3 font-mono text-[11px]">
                   <span className="text-fg-dim w-[56px] shrink-0">{timeStr}</span>
@@ -2723,7 +2731,7 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
             {sessionData.bestSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
             ))}
-            {sessionData.bestSession.betIndices.length >= 2 && bets.length > 0 && (
+            {(sessionData.bestSession.betIndices.length >= 2 && bets.length > 0 || (sessionData.bestSession.betSnapshots?.length ?? 0) >= 2) && (
               <SessionBetTimeline session={sessionData.bestSession} bets={bets} show={showBestBets} setShow={setShowBestBets} />
             )}
           </div>
@@ -2739,7 +2747,7 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
             {sessionData.worstSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1 text-loss/70">- {r}</p>
             ))}
-            {sessionData.worstSession.betIndices.length >= 2 && bets.length > 0 && (
+            {(sessionData.worstSession.betIndices.length >= 2 && bets.length > 0 || (sessionData.worstSession.betSnapshots?.length ?? 0) >= 2) && (
               <SessionBetTimeline session={sessionData.worstSession} bets={bets} show={showWorstBets} setShow={setShowWorstBets} />
             )}
           </div>

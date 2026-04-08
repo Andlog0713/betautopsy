@@ -263,6 +263,7 @@ export interface DetectedSession {
   isHeated: boolean;
   heatSignals: string[];
   betIndices: number[];
+  betSnapshots?: { placed_at: string; description: string; stake: number; profit: number; result: string }[];
 }
 
 export interface SessionDetectionResult {
