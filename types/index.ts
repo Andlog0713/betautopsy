@@ -188,6 +188,7 @@ export interface AutopsyAnalysis {
   bet_annotations?: AnnotationSummary;
   executive_diagnosis?: string;
   pertinent_negatives?: PertinentNegative[];
+  contradictions?: Contradiction[];
   // Snapshot-only: counts for locked sections so paywall UI can show "3 leaks detected" etc.
   _snapshot_counts?: {
     leaks: number;
@@ -384,6 +385,16 @@ export interface BiasDetected {
   estimated_cost: number;
   fix: string;
   evidence_bet_ids?: string[];
+}
+
+export interface Contradiction {
+  title: string;
+  insight: string;
+  volumeLabel: string;
+  volumeData: string;
+  edgeLabel: string;
+  edgeData: string;
+  annualCost?: number;
 }
 
 export interface PertinentNegative {

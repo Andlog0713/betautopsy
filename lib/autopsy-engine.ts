@@ -1255,6 +1255,96 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
   };
 }
 
+// ── Behavioral Contradictions ──
+
+function daysBetweenFirstAndLastBet(bets: Bet[]): number {
+  if (bets.length < 2) return 1;
+  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  return Math.max(1, (new Date(sorted[sorted.length - 1].placed_at).getTime() - new Date(sorted[0].placed_at).getTime()) / 86400000);
+}
+
+export function detectContradictions(
+  metrics: CalculatedMetrics,
+  bets: Bet[]
+): import('@/types').Contradiction[] {
+  const contradictions: import('@/types').Contradiction[] = [];
+  const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+  if (settled.length < 30) return [];
+
+  // 1. Identity sport mismatch: most-bet sport has negative ROI, a lower-volume sport is profitable
+  const sportCategories = metrics.category_roi.filter(c =>
+    !c.category.includes(' ') && c.count >= 10
+  );
+
+  if (sportCategories.length >= 2) {
+    const byVolume = [...sportCategories].sort((a, b) => b.count - a.count);
+    const byROI = [...sportCategories].sort((a, b) => b.roi - a.roi);
+    const topVolume = byVolume[0];
+    const topEdge = byROI[0];
+
+    if (
+      topVolume.category !== topEdge.category &&
+      topVolume.roi < 0 &&
+      topEdge.roi > 2 &&
+      topEdge.count >= 10
+    ) {
+      const volumePct = ((topVolume.count / settled.length) * 100).toFixed(0);
+      const annualCost = Math.abs(topVolume.profit) * (365 / Math.max(1, daysBetweenFirstAndLastBet(bets)));
+      contradictions.push({
+        title: 'Your Identity Sport Is Your Worst Sport',
+        insight: `${volumePct}% of your bets go to ${topVolume.category} (${topVolume.roi.toFixed(1)}% ROI), while your actual edge is in ${topEdge.category} (${topEdge.roi.toFixed(1)}% ROI, ${topEdge.count} bets). Reallocating volume toward your proven edge could recover an estimated $${Math.round(annualCost).toLocaleString()}/year.`,
+        volumeLabel: 'YOUR VOLUME',
+        volumeData: `${topVolume.category}: ${topVolume.count} bets, ${topVolume.roi.toFixed(1)}% ROI`,
+        edgeLabel: 'YOUR EDGE',
+        edgeData: `${topEdge.category}: ${topEdge.count} bets, +${topEdge.roi.toFixed(1)}% ROI`,
+        annualCost: Math.round(annualCost),
+      });
+    }
+  }
+
+  // 2. Conviction-accuracy inversion: big bets lose, small bets win
+  const stakes = settled.map(b => Math.abs(Number(b.stake))).sort((a, b) => a - b);
+  const q25 = stakes[Math.floor(stakes.length * 0.25)];
+  const q75 = stakes[Math.floor(stakes.length * 0.75)];
+
+  if (q25 && q75 && q75 > q25) {
+    const smallBets = settled.filter(b => Math.abs(Number(b.stake)) <= q25);
+    const bigBets = settled.filter(b => Math.abs(Number(b.stake)) >= q75);
+
+    if (smallBets.length >= 10 && bigBets.length >= 10) {
+      const smallStaked = smallBets.reduce((s, b) => s + Math.abs(Number(b.stake)), 0);
+      const bigStaked = bigBets.reduce((s, b) => s + Math.abs(Number(b.stake)), 0);
+      const smallROI = smallStaked > 0 ? (smallBets.reduce((s, b) => s + Number(b.profit), 0) / smallStaked) * 100 : 0;
+      const bigROI = bigStaked > 0 ? (bigBets.reduce((s, b) => s + Number(b.profit), 0) / bigStaked) * 100 : 0;
+
+      if (smallROI > bigROI + 5) {
+        contradictions.push({
+          title: 'Your Conviction and Accuracy Are Inversely Correlated',
+          insight: `Your smallest bets (under $${q25.toFixed(0)}) return ${smallROI.toFixed(1)}% ROI across ${smallBets.length} bets. Your largest bets (over $${q75.toFixed(0)}) return ${bigROI.toFixed(1)}% ROI across ${bigBets.length} bets. The more confident you are, the worse you perform.`,
+          volumeLabel: 'YOUR BIG BETS',
+          volumeData: `$${q75.toFixed(0)}+ stakes: ${bigBets.length} bets, ${bigROI.toFixed(1)}% ROI`,
+          edgeLabel: 'YOUR SMALL BETS',
+          edgeData: `Under $${q25.toFixed(0)} stakes: ${smallBets.length} bets, ${smallROI > 0 ? '+' : ''}${smallROI.toFixed(1)}% ROI`,
+        });
+      }
+    }
+  }
+
+  // 3. Bet type mismatch: straights profitable, parlays deeply negative, parlays >20% volume
+  if (metrics.parlay_stats.straight_roi > 0 && metrics.parlay_stats.parlay_roi < -10 && metrics.parlay_stats.parlay_percent > 20) {
+    contradictions.push({
+      title: 'Your Straight Bets Are Profitable. Your Parlays Erase It.',
+      insight: `Straight bets ROI: +${metrics.parlay_stats.straight_roi.toFixed(1)}%. Parlay ROI: ${metrics.parlay_stats.parlay_roi.toFixed(1)}%. Parlays represent ${metrics.parlay_stats.parlay_percent.toFixed(0)}% of your volume. If you eliminated parlays entirely, your overall ROI would improve significantly.`,
+      volumeLabel: 'YOUR PARLAYS',
+      volumeData: `${metrics.parlay_stats.parlay_percent.toFixed(0)}% of bets, ${metrics.parlay_stats.parlay_roi.toFixed(1)}% ROI`,
+      edgeLabel: 'YOUR STRAIGHT BETS',
+      edgeData: `${(100 - metrics.parlay_stats.parlay_percent).toFixed(0)}% of bets, +${metrics.parlay_stats.straight_roi.toFixed(1)}% ROI`,
+    });
+  }
+
+  return contradictions.slice(0, 3);
+}
+
 // ── Pertinent Negatives ──
 
 const ALL_BIAS_CHECKS: { name: string; matchNames: string[]; populationPercent: number; cleanDetail: string }[] = [
@@ -2040,6 +2130,7 @@ export function calculateMetricsOnly(
     session_analysis: undefined,
     edge_profile: undefined,
     pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
+    contradictions: detectContradictions(metrics, bets),
   };
 
   return { partialAnalysis, metrics };
@@ -2428,6 +2519,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     bet_annotations: metrics.annotations ?? undefined,
     executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
     pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
+    contradictions: detectContradictions(metrics, bets),
   };
 
   const markdown = generateMarkdownReport(analysis);

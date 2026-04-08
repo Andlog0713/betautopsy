@@ -957,6 +957,34 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Behavioral Contradictions */}
+      {analysis.contradictions && analysis.contradictions.length > 0 && !isPartialReport && (
+        <div className="mt-4 mb-4">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">BEHAVIORAL CONTRADICTIONS</p>
+          <div className="grid gap-2">
+            {analysis.contradictions.map((c, i) => (
+              <div key={i} className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500">
+                <p className="font-semibold text-sm text-fg-bright mb-3">{c.title}</p>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-loss/5 border border-loss/20 p-3">
+                    <p className="font-mono text-[9px] text-loss tracking-[2px] mb-1">{c.volumeLabel}</p>
+                    <p className="text-[11px] text-fg-muted">{c.volumeData}</p>
+                  </div>
+                  <div className="bg-win/5 border border-win/20 p-3">
+                    <p className="font-mono text-[9px] text-win tracking-[2px] mb-1">{c.edgeLabel}</p>
+                    <p className="text-[11px] text-fg-muted">{c.edgeData}</p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-fg-muted leading-relaxed">{c.insight}</p>
+                {c.annualCost && (
+                  <p className="font-mono text-sm font-semibold text-loss mt-2">est. annual cost: ${c.annualCost.toLocaleString()}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Strategic Leaks — collapsible cards */}
       {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
       {!isPartialReport && strategic_leaks.length > 0 && (
