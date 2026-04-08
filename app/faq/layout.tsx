@@ -24,7 +24,7 @@ export default function FAQLayout({ children }: { children: React.ReactNode }) {
             <a href="/terms" className="font-mono text-xs text-fg-dim hover:text-fg transition-colors">Terms of Use</a>
           </div>
           <p className="text-fg-dim text-xs text-center">
-            For entertainment and educational purposes only. Not gambling advice. 21+.
+            For entertainment and educational purposes only. Not gambling advice. 18+.
             If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>
           <p className="text-fg-dim text-[10px] text-center mt-2">

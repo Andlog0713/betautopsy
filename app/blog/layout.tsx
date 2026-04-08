@@ -18,7 +18,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           <p className="text-fg-dim text-xs text-center">
             BetAutopsy provides behavioral analysis and educational insights, not
             gambling or financial advice. Past results don&apos;t guarantee future outcomes.
-            21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+            18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>
           <p className="text-fg-dim text-[10px] text-center mt-2">
             © 2026 Diagnostic Sports, LLC

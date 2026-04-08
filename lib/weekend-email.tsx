@@ -164,7 +164,7 @@ ${disciplineHtml}
 <tr><td style="padding:24px 24px">
   <div style="border-top:1px solid #e5e5e5;padding-top:16px">
     <div style="font-family:'Courier New',monospace;font-size:10px;color:#999;line-height:1.7;text-align:center;letter-spacing:0.5px">
-      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. Past results don't guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. Past results don't guarantee future outcomes. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
     </div>
     <div style="text-align:center;margin-top:10px">
       <a href="${esc(unsubscribeUrl)}" style="font-family:'Courier New',monospace;font-size:10px;color:#999;text-decoration:underline;letter-spacing:0.5px">Unsubscribe from emails</a>

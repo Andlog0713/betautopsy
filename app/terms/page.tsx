@@ -180,7 +180,7 @@ export default function TermsOfUsePage() {
 
         <p className="text-ink-700 text-xs text-center mt-16">
           BetAutopsy provides behavioral analysis and educational insights, not gambling or
-          financial advice. Past results don&apos;t guarantee future outcomes. 21+. If you or
+          financial advice. Past results don&apos;t guarantee future outcomes. 18+. If you or
           someone you know has a gambling problem, call 1-800-GAMBLER.
         </p>
       </div>

@@ -2896,6 +2896,6 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     for (const r of a.recommendations) { lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`); lines.push(`${r.description}\n`); }
   }
   lines.push('---');
-  lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
+  lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
   return lines.join('\n');
 }

@@ -18,7 +18,7 @@ ${content}
 <tr><td style="padding:24px 24px">
   <div style="border-top:1px solid #e5e5e5;padding-top:16px">
     <div style="font-family:'Courier New',monospace;font-size:10px;color:#999;line-height:1.7;text-align:center">
-      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 21+.
+      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+.
     </div>
     ${unsubscribeUrl ? `<div style="text-align:center;margin-top:10px"><a href="${esc(unsubscribeUrl)}" style="font-size:10px;color:#999;text-decoration:underline">Unsubscribe</a></div>` : ''}
   </div>

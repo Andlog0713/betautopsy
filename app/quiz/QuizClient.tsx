@@ -151,7 +151,7 @@ export default function QuizClient() {
 
   const gamblingFooter = (
     <p className="text-fg-muted text-xs text-center mt-12">
-      For entertainment and educational purposes only. Not gambling advice. 21+.
+      For entertainment and educational purposes only. Not gambling advice. 18+.
       If you or someone you know has a gambling problem, call 1-800-GAMBLER.
     </p>
   );

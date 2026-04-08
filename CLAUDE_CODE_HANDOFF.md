@@ -359,7 +359,7 @@ The CSV parser must handle exports from multiple trackers. It should:
 
 At the bottom of every page, in small text:
 
-"For entertainment and educational purposes only. Not gambling advice. 21+. If you or someone you know has a gambling problem, call 1-800-GAMBLER."
+"For entertainment and educational purposes only. Not gambling advice. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER."
 
 The autopsy report should also include:
 - Bankroll health warnings when patterns suggest problem gambling
