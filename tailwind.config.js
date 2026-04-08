@@ -71,16 +71,16 @@ module.exports = {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
-      // Forensic case-file aesthetic: max 4px radius anywhere, most elements 2px.
-      // Brand guide explicitly rejects rounded cards.
+      // Card style allows rounded surfaces (16px); inputs/buttons stay sharp.
       borderRadius: {
         'none': '0px',
         'sm': '2px',
-        DEFAULT: '2px',
-        'md': '2px',
-        'lg': '4px',
-        'xl': '4px',
-        '2xl': '4px',
+        DEFAULT: '4px',
+        'md': '6px',
+        'lg': '10px',
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '20px',
       },
       keyframes: {
         'fade-in': {

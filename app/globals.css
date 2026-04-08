@@ -62,20 +62,25 @@
 }
 
 @layer components {
-  /* ── Case file card ── Base surface, sharp 2px corners, no border */
-  .case-card {
-    background-color: #111318;
-    border-radius: 2px;
+  /* ──────────────────────────────────────────────────────────
+     The translucent box style.
+     One unified surface across the entire site:
+     - background: rgba(255,255,255,0.04)
+     - border-radius: 16px
+     - no border
+     - 1px inset highlight on the top edge (frosted depth, NOT a border)
+     - hover: lift to rgba(255,255,255,0.06)
+     ────────────────────────────────────────────────────────── */
+  .case-card,
+  .card {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
   }
   .case-card:hover {
-    background-color: #161820;
-  }
-
-  /* Legacy card alias — same Base surface */
-  .card {
-    background-color: #111318;
-    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 
   /* ── Buttons ── */
@@ -150,11 +155,12 @@
     @apply bg-base p-3;
   }
 
-  /* ── Finding card ── Base surface w/ left teal accent, sharp corners */
+  /* ── Finding card ── translucent surface w/ left teal accent ── */
   .finding-card {
-    background-color: #111318;
+    background-color: rgba(255, 255, 255, 0.04);
     border-left: 2px solid rgba(0, 201, 167, 0.6);
-    border-radius: 0;
+    border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     padding: 1.25rem;
   }
 
@@ -197,34 +203,29 @@
   }
 
   /* ─────────────────────────────────────────────────────────
-     Dashboard redesign — tier-based surface system
-     Replaces uniform cards with background contrast,
-     selective accent borders, and texture overlays.
+     Translucent box system.
+     All card-tier-* utilities resolve to the same one-style
+     translucent surface. The "tier" naming is preserved so
+     existing class references keep working, but the visual
+     hierarchy now comes from spacing/typography, not bg color.
      ───────────────────────────────────────────────────────── */
 
-  /* Page background — Midnight (Tier 0) */
+  /* Page background — Midnight */
   .dash-page-bg {
     background-color: #0D1117;
   }
 
-  /* Tier 1 — Base surface, sharp 2px, no border, no per-card noise */
-  .card-tier-1 {
-    background-color: #111318;
-    border-radius: 2px;
-    transition: background-color 180ms ease;
-  }
-  .card-tier-1:hover {
-    background-color: #161820;
-  }
-
-  /* Tier 2 — Surface, sharp 2px */
+  .card-tier-1,
   .card-tier-2 {
-    background-color: #161820;
-    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
   }
+  .card-tier-1:hover,
   .card-tier-2:hover {
-    background-color: #1C1F28;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 
   /* Accent card — 2px left scalpel border (forensic active accent) */
@@ -244,15 +245,13 @@
     background-size: 24px 24px;
   }
 
-  /* Hero "examination surface" — Base + grid paper + left scalpel rule */
+  /* Hero card — translucent surface w/ left scalpel rule for emphasis */
   .card-hero {
-    background-color: #111318;
-    background-image:
-      linear-gradient(rgba(0, 201, 167, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 201, 167, 0.025) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    border: none;
     border-left: 2px solid #00C9A7;
-    border-radius: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Forensic case-header label — JetBrains-style mono, 3px tracking */
