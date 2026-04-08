@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from "@sentry/nextjs";
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -358,6 +359,10 @@ export async function POST(request: Request) {
           filter: filterLabel || null,
         });
       } catch (err) {
+        Sentry.captureException(err, {
+          tags: { route: 'analyze', report_type: reportType },
+          extra: { bet_count: betsToAnalyze.length, tier },
+        });
         logErrorServer(err, { path: '/api/analyze' });
         sendEvent('error', {
           error: err instanceof Error ? err.message : 'Analysis failed',
