@@ -52,7 +52,7 @@ export default function HeroABTest() {
       {v === 'A' ? (
         <>
           <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
-            See what your betting data is trying to tell you.
+            See what your <span className="text-scalpel">betting data</span> is trying to tell you.
           </h1>
           <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mb-8 animate-fade-in-d1">
             47 behavioral metrics. 60 seconds. One forensic report.
