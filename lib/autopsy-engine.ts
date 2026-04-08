@@ -1571,7 +1571,7 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       findings.push({
         id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation after loss', sport: 'DFS',
         severity: ratio > 1.4 ? 'high' : 'medium',
-        description: 'After losses, you increase your pick count . going for bigger multipliers to recover.',
+        description: 'After losses, you increase your pick count. Going for bigger multipliers to recover.',
         evidence: `Avg picks after loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
         estimated_cost: null,
         recommendation: 'Set a rule: your pick count should never change based on your last result.',
