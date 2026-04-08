@@ -196,6 +196,11 @@ export default function BetsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {searchParams.get('from') === 'report' && (
+        <Link href="/reports" className="text-sm text-fg-muted hover:text-fg transition-colors">
+          ← Back to Report
+        </Link>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="relative">
           <div className="absolute -top-1 right-0"><EyeToggle /></div>

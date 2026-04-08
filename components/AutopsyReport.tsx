@@ -27,24 +27,30 @@ import PercentileGauge from './report/PercentileGauge';
 
 function leakToQuery(category: string): string {
   const lower = category.toLowerCase().trim();
+  // Strip leading "all " (e.g. "All Parlays" → "parlays")
+  const normalized = lower.replace(/^all\s+/i, '');
   const params = new URLSearchParams();
   const sportMap: Record<string, string> = {
     nba: 'NBA', nfl: 'NFL', mlb: 'MLB', nhl: 'NHL', ncaab: 'NCAAB', ncaaf: 'NCAAF',
-    soccer: 'Soccer', tennis: 'Tennis', mma: 'MMA',
+    soccer: 'Soccer', tennis: 'Tennis', mma: 'MMA', golf: 'Golf', boxing: 'Boxing',
+    ufc: 'UFC', wnba: 'WNBA',
   };
   const typeMap: Record<string, string> = {
-    spread: 'spread', spreads: 'spread', moneyline: 'moneyline', ml: 'moneyline',
-    total: 'total', totals: 'total', prop: 'prop', props: 'prop',
-    parlay: 'parlay', parlays: 'parlay', futures: 'futures', live: 'live',
+    spread: 'spread', spreads: 'spread', moneyline: 'moneyline', moneylines: 'moneyline',
+    ml: 'moneyline', total: 'total', totals: 'total', 'over/under': 'total',
+    prop: 'prop', props: 'prop', 'player prop': 'prop', 'player props': 'prop',
+    parlay: 'parlay', parlays: 'parlay', futures: 'futures', future: 'futures',
+    live: 'live', 'in-game': 'live',
   };
   for (const [key, val] of Object.entries(sportMap)) {
-    if (lower.includes(key)) { params.set('sport', val); break; }
+    if (normalized.includes(key)) { params.set('sport', val); break; }
   }
   for (const [key, val] of Object.entries(typeMap)) {
-    if (lower.includes(key)) { params.set('bet_type', val); break; }
+    if (normalized.includes(key)) { params.set('bet_type', val); break; }
   }
+  params.set('from', 'report');
   const qs = params.toString();
-  return qs ? `/bets?${qs}` : '/bets';
+  return `/bets?${qs}`;
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
