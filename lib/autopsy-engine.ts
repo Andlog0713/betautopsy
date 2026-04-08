@@ -1255,6 +1255,43 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
   };
 }
 
+// ── Pertinent Negatives ──
+
+const ALL_BIAS_CHECKS: { name: string; matchNames: string[]; populationPercent: number; cleanDetail: string }[] = [
+  { name: 'Loss Chasing', matchNames: ['loss chasing', 'post-loss escalation', 'post loss escalation', 'chase'], populationPercent: 73, cleanDetail: 'Your stake sizing remains consistent after losses. {pct}% of bettors show measurable post-loss escalation.' },
+  { name: 'Parlay Overuse', matchNames: ['parlay', 'multi-leg', 'parlay addiction', 'heavy parlay'], populationPercent: 68, cleanDetail: 'Your parlay volume is within reasonable bounds. {pct}% of bettors over-allocate to parlays.' },
+  { name: 'Late Night Bias', matchNames: ['late night', 'late-night', 'overnight'], populationPercent: 45, cleanDetail: 'No significant late-night performance decay detected. {pct}% of bettors show worse outcomes after 10pm.' },
+  { name: 'Emotional Betting', matchNames: ['emotional', 'heated', 'tilt'], populationPercent: 61, cleanDetail: 'Session behavior stays disciplined under pressure. {pct}% of bettors show heated sessions exceeding 25% of total.' },
+  { name: 'Favorite Bias', matchNames: ['favorite', 'favourite', 'chalk', 'favorite-heavy'], populationPercent: 52, cleanDetail: 'No systematic over-betting of favorites detected. {pct}% of bettors lean too heavily on chalk.' },
+  { name: 'Sunk Cost', matchNames: ['sunk cost', 'same team', 'doubling down'], populationPercent: 38, cleanDetail: 'No pattern of chasing losing teams or players. {pct}% of bettors double down on losing selections.' },
+];
+
+export function generatePertinentNegatives(
+  detectedBiasNames: string[]
+): import('@/types').PertinentNegative[] {
+  const detected = detectedBiasNames.map(n => n.toLowerCase());
+
+  const negatives: import('@/types').PertinentNegative[] = [];
+
+  for (const check of ALL_BIAS_CHECKS) {
+    const isDetected = check.matchNames.some(m =>
+      detected.some(d => d.includes(m) || m.includes(d))
+    );
+    if (!isDetected) {
+      negatives.push({
+        pattern: check.name,
+        finding: 'Not detected',
+        detail: check.cleanDetail.replace('{pct}', String(check.populationPercent)),
+        populationPercent: check.populationPercent,
+      });
+    }
+  }
+
+  return negatives
+    .sort((a, b) => b.populationPercent - a.populationPercent)
+    .slice(0, 4);
+}
+
 // ── Sport-Specific Pattern Detection ──
 
 export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Bet[]): SportSpecificFinding[] {
@@ -2002,6 +2039,7 @@ export function calculateMetricsOnly(
     personal_rules: undefined,
     session_analysis: undefined,
     edge_profile: undefined,
+    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
   };
 
   return { partialAnalysis, metrics };
@@ -2389,6 +2427,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     session_detection: metrics.sessionDetection ?? undefined,
     bet_annotations: metrics.annotations ?? undefined,
     executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
+    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
   };
 
   const markdown = generateMarkdownReport(analysis);

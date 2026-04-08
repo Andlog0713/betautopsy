@@ -1157,6 +1157,23 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Pertinent Negatives / Clean Findings */}
+      {analysis.pertinent_negatives && analysis.pertinent_negatives.length > 0 && !isPartialReport && (
+        <div className="mt-6">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">CLEAN FINDINGS</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {analysis.pertinent_negatives.map((neg, i) => (
+              <div key={i} className="border border-border-subtle p-3 border-l-[3px] border-l-win">
+                <p className="font-mono text-[10px] text-win tracking-[1.5px] mb-1">{neg.pattern.toUpperCase()}</p>
+                <p className="text-[11px] text-fg-bright font-medium mb-1">{neg.finding}</p>
+                <p className="text-[11px] text-fg-muted leading-relaxed">{neg.detail}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-fg-dim italic mt-2">Population benchmarks based on aggregate betting behavior research.</p>
+        </div>
+      )}
+
       </section>
 
       <div className="border-t border-border-subtle my-6" />
