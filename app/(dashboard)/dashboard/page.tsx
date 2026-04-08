@@ -368,20 +368,66 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* ── SECTION: DIAGNOSIS ── Discipline ring + progress chart ── */}
+          {/* ── SECTION: DIAGNOSIS ── Discipline readout + markers column ── */}
           {(latest && isPaid) || (snapshots.length >= 2 && isPaid) || stats.reportCount === 0 || (isPaid && !latest && stats.reportCount > 0) ? (
             <section className="border-t border-white/[0.04] pt-10 mb-12">
               <p className="case-header mb-6">DIAGNOSIS // BEHAVIORAL DRIFT</p>
 
-              {/* Discipline Score hero */}
+              {/* Discipline Score + Markers side-by-side */}
               {latest && isPaid && (
-                <div className="mb-10">
-                  <DisciplineScoreCard
-                    currentScore={latest.discipline_score ?? null}
-                    previousScore={prev?.discipline_score ?? null}
-                    reportCount={stats?.reportCount ?? 1}
-                    mask={mask}
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-10 mb-10">
+                  {/* Left: discipline readout takes 7/12 */}
+                  <div className="lg:col-span-7">
+                    <DisciplineScoreCard
+                      currentScore={latest.discipline_score ?? null}
+                      previousScore={prev?.discipline_score ?? null}
+                      reportCount={stats?.reportCount ?? 1}
+                      mask={mask}
+                    />
+                  </div>
+
+                  {/* Right: markers stack — fills the blank space */}
+                  {((isPaid && snapshots.length > 0) || bankroll || journalCount >= 10) && (
+                    <div className="lg:col-span-5 lg:border-l lg:border-white/[0.04] lg:pl-12 space-y-6">
+                      <p className="case-header">CURRENT STATE</p>
+
+                      {isPaid && snapshots.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
+                            {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
+                            {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
+                          </div>
+                          <p className="text-2xl data-number text-fg-bright leading-none">
+                            {streakCount > 0 ? `${streakCount}w` : '—'}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
+                            <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
+                            {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
+                            {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
+                          </div>
+                        </div>
+                      )}
+
+                      {bankroll && (
+                        <div>
+                          <p className="case-header mb-2">BANKROLL</p>
+                          <p className="text-2xl data-number text-fg-bright leading-none">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                          <Link href="/settings" className="case-header link-underline mt-2 inline-block">EDIT →</Link>
+                        </div>
+                      )}
+
+                      {journalCount >= 10 && (
+                        <div>
+                          <p className="case-header mb-2">JOURNAL</p>
+                          <p className="text-2xl data-number text-fg-bright leading-none">{journalCount}</p>
+                          <button onClick={() => setJournalOpen(true)} className="case-header case-header-teal link-underline mt-2 inline-block">
+                            LOG ENTRY →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -447,37 +493,18 @@ export default function DashboardPage() {
             </section>
           )}
 
-          {/* ── SECTION: STREAK ── Streak + bankroll + journal ── */}
-          {((isPaid && snapshots.length > 0) || bankroll || journalCount >= 10) && (
+          {/* MARKERS // CURRENT STATE — fallback for free users w/ bankroll only */}
+          {!isPaid && !latest && (bankroll || journalCount >= 10) && (
             <section className="border-t border-white/[0.04] pt-10 mb-12">
               <p className="case-header mb-6">MARKERS // CURRENT STATE</p>
               <div className="flex flex-wrap items-end divide-x divide-white/[0.04]">
-                {isPaid && snapshots.length > 0 && (
-                  <div className="pr-10 py-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
-                      {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
-                      {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
-                    </div>
-                    <p className="text-2xl data-number text-fg-bright leading-none">
-                      {streakCount > 0 ? `${streakCount}w` : '—'}
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
-                      <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
-                      {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
-                      {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
-                    </div>
-                  </div>
-                )}
-
                 {bankroll && (
-                  <div className="px-10 py-1">
+                  <div className="pr-10 py-1">
                     <p className="case-header mb-2">BANKROLL</p>
                     <p className="text-2xl data-number text-fg-bright leading-none">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
                     <Link href="/settings" className="case-header link-underline mt-2 inline-block">EDIT →</Link>
                   </div>
                 )}
-
                 {journalCount >= 10 && (
                   <div className="pl-10 py-1">
                     <p className="case-header mb-2">JOURNAL</p>

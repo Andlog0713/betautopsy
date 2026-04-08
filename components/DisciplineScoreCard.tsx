@@ -98,7 +98,7 @@ export default function DisciplineScoreCard({ currentScore, previousScore, repor
   const delta = previousScore !== null ? score - previousScore : null;
 
   return (
-    <div className="max-w-2xl">
+    <div>
       {/* Top meta row */}
       <div className="flex items-baseline justify-between mb-5">
         <p className="case-header case-header-teal">DISCIPLINE SCORE</p>
