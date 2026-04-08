@@ -305,16 +305,23 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       [['underdog'], ['underdog']],
     ];
 
+    const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+    const avgStake = settled.length > 0 ? settled.reduce((s, b) => s + Math.abs(Number(b.stake)), 0) / settled.length : 0;
+
     const biasItems: typeof items = [];
     biases_detected.forEach((b) => {
-      if (b.estimated_cost > 0) {
-        biasItems.push({ name: b.bias_name, type: 'bias', cost: Math.abs(b.estimated_cost), severity: b.severity, fix: b.fix });
+      // Use Claude's estimated_cost if available, otherwise estimate from severity
+      let cost = Math.abs(b.estimated_cost || 0);
+      if (cost === 0 && avgStake > 0) {
+        const severityMultiplier = b.severity === 'critical' ? 8 : b.severity === 'high' ? 5 : b.severity === 'medium' ? 3 : 1;
+        cost = avgStake * severityMultiplier;
+      }
+      if (cost > 0) {
+        biasItems.push({ name: b.bias_name, type: 'bias', cost, severity: b.severity, fix: b.fix });
       }
     });
 
     // Estimate $ cost for strategic leaks from bets data
-    const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
-    const avgStake = settled.length > 0 ? settled.reduce((s, b) => s + Math.abs(Number(b.stake)), 0) / settled.length : 0;
 
     const leakItems: typeof items = [];
     strategic_leaks.forEach((leak) => {
@@ -391,6 +398,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const hasBets = bets.length > 0;
 
   const [activeTab, setActiveTab] = useState<'report' | 'tools'>('report');
+  const [showEmotionalTriggers, setShowEmotionalTriggers] = useState(false);
+  const [showBetIQBreakdown, setShowBetIQBreakdown] = useState(false);
+  const [showFullHeatmap, setShowFullHeatmap] = useState(false);
+  const [showEdgeChart, setShowEdgeChart] = useState(false);
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
   const toggleFinding = (id: string) => {
     setExpandedFindings(prev => {
@@ -500,7 +511,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Subject Classification — Bet DNA (purple left border like mockup) */}
-      {analysis.betting_archetype && (
+      {!readOnly && analysis.betting_archetype && (
         <div className="bg-surface-1 border border-border-subtle rounded-md p-5 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
           <div className="flex items-center gap-2 mb-1">
@@ -617,30 +628,35 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ: SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
-            <span className="font-mono text-4xl font-bold text-fg-bright"><NumberTicker value={analysis.betiq.score} /></span>
+            <span className="font-mono text-4xl font-bold text-fg-bright">{readOnly ? analysis.betiq.score : <NumberTicker value={analysis.betiq.score} />}</span>
             <span className="font-mono text-sm text-fg-dim">/100</span>
             <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
           </div>
           <PercentileGauge percentile={analysis.betiq.percentile} label={`Better than ${analysis.betiq.percentile}% of bettors`} />
-          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-6"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
-          <div className="vitals-strip grid-cols-2 md:grid-cols-3">
-            {[
-              { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
-              { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
-              { label: 'Sophistication', hint: 'Straight bets vs parlays. Higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
-              { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
-              { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
-              { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
-            ].map(c => (
-              <div key={c.label} className="vitals-cell">
-                <div className="data-label mb-0.5">{c.label}</div>
-                <div className="text-[9px] text-fg-muted leading-tight mb-1">{c.hint}</div>
-                <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
-                <div className="h-1 mt-2 bg-surface-2 overflow-hidden">
-                  <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
+          <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-4"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
+          <button onClick={() => setShowBetIQBreakdown(!showBetIQBreakdown)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors">
+            {showBetIQBreakdown ? 'HIDE' : 'VIEW'} SKILL BREAKDOWN
+          </button>
+          <div style={{ maxHeight: showBetIQBreakdown ? '400px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+            <div className="vitals-strip grid-cols-2 md:grid-cols-3 mt-3">
+              {[
+                { label: 'Line value', hint: 'Are you getting good odds and avoiding heavy juice?', val: analysis.betiq.components.line_value, max: 25 },
+                { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
+                { label: 'Sophistication', hint: 'Straight bets vs parlays. Higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
+                { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
+                { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
+                { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
+              ].map(c => (
+                <div key={c.label} className="vitals-cell">
+                  <div className="data-label mb-0.5">{c.label}</div>
+                  <div className="text-[9px] text-fg-muted leading-tight mb-1">{c.hint}</div>
+                  <div className="font-mono text-lg font-bold text-fg-bright">{c.val}<span className="text-fg-dim text-xs">/{c.max}</span></div>
+                  <div className="h-1 mt-2 bg-surface-2 overflow-hidden">
+                    <div className="h-full bg-scalpel/40" style={{ width: `${(c.val / c.max) * 100}%` }} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -960,11 +976,21 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Behavioral Contradictions */}
-      {analysis.contradictions && analysis.contradictions.length > 0 && !isPartialReport && (
+      {(() => {
+        const filteredContradictions = (analysis.contradictions ?? []).filter(c => {
+          if (c.title.toLowerCase().includes('parlay')) {
+            const parlayPattern = (analysis.behavioral_patterns ?? []).find(
+              p => p.pattern_name.toLowerCase().includes('parlay') && p.impact === 'positive'
+            );
+            if (parlayPattern) return false;
+          }
+          return true;
+        });
+        return filteredContradictions.length > 0 && !isPartialReport && (
         <div className="mt-4 mb-4">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5">BEHAVIORAL CONTRADICTIONS</p>
           <div className="grid gap-2">
-            {analysis.contradictions.map((c, i) => (
+            {filteredContradictions.map((c, i) => (
               <div key={i} className="border border-border-subtle p-[18px] border-l-[3px] border-l-purple-500">
                 <p className="font-semibold text-sm text-fg-bright mb-3">{c.title}</p>
                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -985,7 +1011,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Strategic Leaks — collapsible cards */}
       {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
@@ -1039,66 +1066,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Emotion Score */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-xl">Emotion Score <span className="text-fg-muted text-xs font-normal">(how much emotions drive your bets)</span></h2>
-          <span className={`font-mono text-2xl font-bold ${
-            emotionScore <= 25 ? 'text-win' :
-            emotionScore <= 50 ? 'text-caution' :
-            emotionScore <= 75 ? 'text-caution' : 'text-loss'
-          }`}>
-            <NumberTicker value={emotionScore} />/100
-          </span>
-        </div>
-        <div className="w-full h-3 bg-surface-2 rounded-full overflow-hidden mb-3">
-          <div
-            className={`h-full rounded-full transition-all duration-1000 ease-out ${emotionColor(emotionScore)}`}
-            style={{ width: `${emotionScore}%` }}
-          />
-        </div>
-        <p className="text-fg-muted text-sm mb-2">{emotionLabel(emotionScore)}</p>
-        <p className="text-fg-muted text-xs mb-3 italic">
-          Measures how much emotions drive your betting decisions: chasing losses, erratic bet sizing, and heated betting. Lower is better. Calculated from four behavioral signals in your bet history, adjusted for odds and timing.
-        </p>
-        {emotionBreakdown && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-border-subtle">
-            {([
-              { label: 'Bet Sizing Consistency', key: 'stake_volatility' as const, hint: 'How much your bet sizes vary after accounting for odds differences' },
-              { label: 'Reaction to Losses', key: 'loss_chasing' as const, hint: 'Whether your stakes increase after losing bets compared to after wins' },
-              { label: 'During Losing Streaks', key: 'streak_behavior' as const, hint: 'How your betting speed and sizing change during consecutive losses' },
-              { label: 'Knowing When to Stop', key: 'session_discipline' as const, hint: 'Whether you tend to over-bet in long sessions or chase back losses late at night' },
-            ]).map(({ label, key, hint }) => {
-              const val = emotionBreakdown![key];
-              return (
-                <div key={key}>
-                  <p className="text-fg-muted text-xs mb-1" title={hint}>{label}</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          val <= 5 ? 'bg-win' : val <= 12 ? 'bg-caution' : val <= 18 ? 'bg-caution' : 'bg-loss'
-                        }`}
-                        style={{ width: `${(val / 25) * 100}%` }}
-                      />
-                    </div>
-                    <span className="font-mono text-xs text-fg-muted">{val}/25</span>
-                  </div>
-                  <p className="text-fg-muted text-[10px] mt-0.5 leading-tight">{hint}</p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Emotional Triggers — Pro only ── */}
+      {/* ── Emotional Triggers — Pro only, collapsed by default ── */}
       {(effectiveTier === 'pro') && analysis.enhanced_tilt && (
         <div className="case-card p-6">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <div>
               <div className="case-header">EMOTIONAL TRIGGER BREAKDOWN</div>
-              <p className="text-fg-muted text-xs mt-1">Six signals that reveal when emotions are driving your bets instead of strategy</p>
+              <p className="text-fg-muted text-xs mt-1">Six signals that reveal when emotions are driving your bets</p>
             </div>
             <span className={`font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-sm font-bold ${
               analysis.enhanced_tilt.risk_level === 'critical' ? 'bg-bleed text-base' :
@@ -1110,32 +1084,37 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               {analysis.enhanced_tilt.risk_level} risk
             </span>
           </div>
-          <div className="bg-surface-1 border border-border-subtle rounded-md p-4 mb-4">
+          <div className="bg-surface-1 border border-border-subtle rounded-md p-4 mt-3">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-caution shrink-0" />
               <p className="text-fg-muted text-sm">{analysis.enhanced_tilt.worst_trigger}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {[
-              { label: 'Bet size swings', hint: 'How much your stakes vary. Higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
-              { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
-              { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
-              { label: 'Knowing when to stop', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
-              { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
-              { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
-            ].map(signal => (
-              <div key={signal.label} className="bg-surface-2 p-3 border border-border-subtle rounded-sm">
-                <div className="mb-1.5">
-                  <span className="text-[11px] text-fg-muted block">{signal.label}</span>
-                  <span className="text-[9px] text-fg-muted block leading-tight mt-0.5">{signal.hint}</span>
+          <button onClick={() => setShowEmotionalTriggers(!showEmotionalTriggers)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors mt-3">
+            {showEmotionalTriggers ? 'HIDE' : 'VIEW'} EMOTIONAL TRIGGERS
+          </button>
+          <div style={{ maxHeight: showEmotionalTriggers ? '600px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+              {[
+                { label: 'Bet size swings', hint: 'How much your stakes vary. Higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
+                { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
+                { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
+                { label: 'Knowing when to stop', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
+                { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
+                { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
+              ].map(signal => (
+                <div key={signal.label} className="bg-surface-2 p-3 border border-border-subtle rounded-sm">
+                  <div className="mb-1.5">
+                    <span className="text-[11px] text-fg-muted block">{signal.label}</span>
+                    <span className="text-[9px] text-fg-muted block leading-tight mt-0.5">{signal.hint}</span>
+                  </div>
+                  <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
+                  <div className="h-1 mt-1.5 bg-base overflow-hidden">
+                    <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#C4463A' : signal.value / signal.max >= 0.4 ? '#B8944A' : '#00C9A7' }} />
+                  </div>
                 </div>
-                <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
-                <div className="h-1 mt-1.5 bg-base overflow-hidden">
-                  <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#C4463A' : signal.value / signal.max >= 0.4 ? '#B8944A' : '#00C9A7' }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1341,11 +1320,20 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
           </div>
 
-          {/* Hour of Day Heatmap — only if we have real time data */}
+          {/* Hour of Day Heatmap — collapsed by default */}
           {analysis.timing_analysis.has_time_data && (
             <div className="card p-6">
-              <h3 className="font-medium text-lg mb-1">Time of Day Heatmap</h3>
-              <p className="text-fg-muted text-xs italic mb-4">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-lg mb-1">Time of Day Heatmap</h3>
+                  <p className="text-fg-muted text-xs italic">Color intensity shows ROI. Size shows bet volume. Grey = no bets in that window.</p>
+                </div>
+                <button onClick={() => setShowFullHeatmap(!showFullHeatmap)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors shrink-0 ml-4">
+                  {showFullHeatmap ? 'HIDE' : 'VIEW FULL'} HEATMAP
+                </button>
+              </div>
+              <div style={{ maxHeight: showFullHeatmap ? '500px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+              <div className="mt-4"></div>
               <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1.5">
                 {analysis.timing_analysis.by_hour.map((h, i) => {
                   const hasBets = h.bets > 0;
@@ -1397,6 +1385,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <div className="w-3 h-3 rounded-sm bg-base/50 opacity-50" />
                   <span>No bets</span>
                 </div>
+              </div>
               </div>
             </div>
           )}
@@ -1496,11 +1485,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
           </div>
 
-          {/* Edge by Bucket Visual */}
+          {/* Edge by Bucket Visual — collapsed by default */}
           {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length > 0 && (
             <div className="card p-6">
-              <h3 className="font-medium text-lg mb-4">Edge by Odds Range</h3>
-              <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42) }}>
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-lg">Edge by Odds Range</h3>
+                <button onClick={() => setShowEdgeChart(!showEdgeChart)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors">
+                  {showEdgeChart ? 'HIDE' : 'VIEW'} EDGE CHART
+                </button>
+              </div>
+              <div style={{ maxHeight: showEdgeChart ? '500px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+              <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42), marginTop: '16px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={analysis.odds_analysis.buckets.filter((b) => b.bets >= 3)} layout="vertical" margin={{ left: 90 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
@@ -1528,6 +1523,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
               </div>
             </div>
           )}
@@ -2030,42 +2026,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {/* Personal Rules */}
-      {isPartialReport && <SkeletonSection label="Writing personal betting rules from your data..." />}
-      {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-2xl">Your Rules</h2>
-            <button
-              onClick={() => {
-                const text = (analysis.personal_rules ?? [])
-                  .map((r: PersonalRule, i: number) => `${i + 1}. ${r.rule}\n   Why: ${r.reason}`)
-                  .join('\n\n');
-                navigator.clipboard.writeText(text);
-                const btn = document.getElementById('copy-rules-btn');
-                toast.success('Rules copied to clipboard');
-              }}
-              id="copy-rules-btn"
-              className="text-xs text-fg-muted hover:text-scalpel transition-colors"
-            >
-              Copy Rules
-            </button>
-          </div>
-          <div className="space-y-3">
-            {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
-              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
-                  <p className="text-fg-bright font-medium">{rule.rule}</p>
-                </div>
-                <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
-                <p className="text-fg-muted text-xs">Based on: {rule.based_on}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Discipline Score */}
       {analysis.discipline_score && (
         <div className="card p-6 space-y-4">
@@ -2130,6 +2090,40 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </p>
             );
           })()}
+        </div>
+      )}
+
+      {/* Personal Rules */}
+      {isPartialReport && <SkeletonSection label="Writing personal betting rules from your data..." />}
+      {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-2xl">Your Rules</h2>
+            <button
+              onClick={() => {
+                const text = (analysis.personal_rules ?? [])
+                  .map((r: PersonalRule, i: number) => `${i + 1}. ${r.rule}\n   Why: ${r.reason}`)
+                  .join('\n\n');
+                navigator.clipboard.writeText(text);
+                toast.success('Rules copied to clipboard');
+              }}
+              className="text-xs text-fg-muted hover:text-scalpel transition-colors"
+            >
+              Copy Rules
+            </button>
+          </div>
+          <div className="space-y-3">
+            {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
+              <div key={i} className="bg-surface-1 border border-border-subtle rounded-md p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-scalpel shrink-0" />
+                  <p className="text-fg-bright font-medium">{rule.rule}</p>
+                </div>
+                <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
+                <p className="text-fg-muted text-xs">Based on: {rule.based_on}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

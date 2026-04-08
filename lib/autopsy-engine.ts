@@ -845,18 +845,18 @@ function determineArchetype(
   }
   // Sniper — selective bettor
   if (totalBets < 50 && sportCount <= 2) {
-    return { name: 'Sniper', description: "Selective and focused. You pick your spots . now it's about sharpening the edge." };
+    return { name: 'Sniper', description: "Selective and focused. You pick your spots. Now it's about sharpening the edge." };
   }
   // Volume Warrior — lots of bets, flat stakes
   if (totalBets >= 150 && stakeCv < 0.8) {
-    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach . now find the leaks in the volume." };
+    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach. Now find the leaks in the volume." };
   }
   // Degen King — high variance, mixed, emotional
   if (stakeCv >= 1.0 && parlayPct >= 20 && emotionScore > 40) {
     return { name: 'Degen King', description: "You're here for the ride. Embrace it , but know which parts of the ride are costing you." };
   }
   // Default
-  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation . the analysis shows where to build on it." };
+  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation. The analysis shows where to build on it." };
 }
 
 function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: number): { name: string; description: string } {
@@ -879,7 +879,7 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   // Loyalty Bettor — player concentration + emotional
   const topPlayer = dm.playerConcentration[0];
   if (topPlayer && topPlayer.percent >= 25 && emotionScore > 45) {
-    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy . it's a relationship.` };
+    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy. It's a relationship.` };
   }
   // Fall through to standard archetypes based on discipline/emotion
   if (emotionScore <= 30 && stakeCv < 0.8) {
@@ -891,7 +891,7 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   if (highPickPct > 60) {
     return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
   }
-  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation . the analysis shows where to build on it." };
+  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation. The analysis shows where to build on it." };
 }
 
 // ── Discipline Score Calculator ──
@@ -1361,7 +1361,8 @@ const ALL_BIAS_CHECKS: { name: string; matchNames: string[]; populationPercent: 
 export function generatePertinentNegatives(
   detectedBiasNames: string[],
   behavioralPatterns?: { pattern_name: string; impact: string }[],
-  strategicLeaks?: { category: string }[]
+  strategicLeaks?: { category: string }[],
+  oddsAnalysis?: { worst_bucket?: { label: string } | null } | null
 ): import('@/types').PertinentNegative[] {
   const detected = detectedBiasNames.map(n => n.toLowerCase());
 
@@ -1375,6 +1376,11 @@ export function generatePertinentNegatives(
     .map(l => l.category.toLowerCase());
 
   const allProblems = [...detected, ...negativePatterns, ...leakCategories];
+
+  // Suppress "Favorite Bias" clean finding if odds analysis shows chalk is worst bucket
+  if (oddsAnalysis?.worst_bucket?.label?.toLowerCase().includes('favorite')) {
+    allProblems.push('favorite');
+  }
 
   const negatives: import('@/types').PertinentNegative[] = [];
 
@@ -2144,7 +2150,7 @@ export function calculateMetricsOnly(
     personal_rules: undefined,
     session_analysis: undefined,
     edge_profile: undefined,
-    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name), [], []),
+    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name), [], [], metrics.odds),
     contradictions: detectContradictions(metrics, bets),
   };
 
@@ -2536,7 +2542,8 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     pertinent_negatives: generatePertinentNegatives(
       metrics.biases_detected.map(b => b.bias_name),
       Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns as { pattern_name: string; impact: string }[] : [],
-      Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks as { category: string }[] : []
+      Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks as { category: string }[] : [],
+      metrics.odds
     ),
     contradictions: detectContradictions(metrics, bets),
   };
