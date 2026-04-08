@@ -74,6 +74,7 @@ export default function HeroABTest() {
             words="See what your betting data is trying to tell you."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
+            highlight="betting data"
           />
           <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d2">
             47 behavioral metrics. 60 seconds. One forensic report.
@@ -85,6 +86,7 @@ export default function HeroABTest() {
             words="47 behavioral metrics. 60 seconds. One upload."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
+            highlight="47"
           />
           <p className="text-fg text-base md:text-lg max-w-2xl mt-4 mb-8 leading-relaxed animate-fade-in-d2">
             Find the patterns costing you money and get a plan to fix them.
