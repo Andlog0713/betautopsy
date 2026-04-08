@@ -20,6 +20,7 @@ import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
+import PercentileGauge from './report/PercentileGauge';
 
 // ── Helpers ──
 
@@ -580,7 +581,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
           <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
           {analysis.emotion_percentile && (
-            <p className="font-mono text-[10px] text-scalpel mt-1">Lower than {analysis.emotion_percentile}% of bettors</p>
+            <PercentileGauge percentile={analysis.emotion_percentile} invertedScale label={`More controlled than ${analysis.emotion_percentile}% of bettors`} />
           )}
         </div>
         {analysis.discipline_score ? (
@@ -597,7 +598,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
             <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
             {analysis.discipline_score.percentile && (
-              <p className="font-mono text-[10px] text-scalpel mt-1">Better than {analysis.discipline_score.percentile}% of bettors</p>
+              <PercentileGauge percentile={analysis.discipline_score.percentile} label={`Better than ${analysis.discipline_score.percentile}% of bettors`} />
             )}
           </div>
         ) : (
@@ -620,6 +621,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="font-mono text-sm text-fg-dim">/100</span>
             <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
           </div>
+          <PercentileGauge percentile={analysis.betiq.percentile} label={`Better than ${analysis.betiq.percentile}% of bettors`} />
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-6"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
           <div className="vitals-strip grid-cols-2 md:grid-cols-3">
             {[
