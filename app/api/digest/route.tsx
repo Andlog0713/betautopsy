@@ -8,13 +8,9 @@ import type { Profile } from '@/types';
 export const maxDuration = 300; // 5 min for processing all users
 
 export async function GET(request: Request) {
-  // Verify cron secret if set
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   if (!isResendConfigured()) {
