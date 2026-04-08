@@ -28,7 +28,7 @@ export default function ProgressChart({ snapshots }: { snapshots: ProgressSnapsh
   }, [snapshots, range]);
 
   return (
-    <div className="bg-surface-1 border border-border-subtle rounded-md p-5">
+    <div className="card p-5">
       {/* Header + range selector */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-medium text-fg-bright">Performance Trend</h2>

@@ -550,7 +550,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* Executive Diagnosis */}
       {isPartialReport && <SkeletonSection label="Generating behavioral diagnosis..." />}
       {!isPartialReport && analysis.executive_diagnosis && (
-        <div className="card-tier-1 p-[18px] border-l-[3px] border-l-scalpel mb-5">
+        <div className="card-tier-1 card-flare-teal p-[18px] mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <p className="font-mono text-[9px] text-fg-dim tracking-[3px]">EXECUTIVE DIAGNOSIS</p>
             {reportId && (

@@ -7,7 +7,7 @@ export function ProductShowcase() {
       title: "1. Upload",
       value: "upload",
       content: (
-        <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
+        <div className="w-full overflow-hidden relative h-full card p-6 md:p-10">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">1</span>
             <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
@@ -17,8 +17,8 @@ export function ProductShowcase() {
           <p className="text-sm text-fg-muted mb-6">
             CSV from FanDuel, DraftKings, BetMGM, PrizePicks via Pikkit, screenshot, or paste. Takes 30 seconds.
           </p>
-          <div className="bg-surface-2 rounded-md p-4 space-y-2.5">
-            <div className="flex items-center gap-3 p-2.5 bg-base rounded border border-border-subtle">
+          <div className="card-tier-2 p-4 space-y-2.5">
+            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-lg">
               <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
                 <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
@@ -28,7 +28,7 @@ export function ProductShowcase() {
               </div>
               <span className="text-xs text-scalpel font-mono">Imported</span>
             </div>
-            <div className="flex items-center gap-3 p-2.5 bg-base rounded border border-border-subtle">
+            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-lg">
               <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
                 <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
@@ -46,7 +46,7 @@ export function ProductShowcase() {
       title: "2. Analyze",
       value: "analyze",
       content: (
-        <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
+        <div className="w-full overflow-hidden relative h-full card p-6 md:p-10">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">2</span>
             <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
@@ -58,7 +58,7 @@ export function ProductShowcase() {
           </p>
           {/* Realistic finding previews */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-bleed shrink-0" />
                 <span className="text-sm text-fg-bright font-medium truncate">Loss Chasing</span>
@@ -66,7 +66,7 @@ export function ProductShowcase() {
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$480/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
                 <span className="text-sm text-fg-bright font-medium truncate">Parlay Overexposure</span>
@@ -74,7 +74,7 @@ export function ProductShowcase() {
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$312/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-base rounded border border-border-subtle">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
                 <span className="text-sm text-fg-bright font-medium truncate">Late-Night Betting</span>
@@ -91,7 +91,7 @@ export function ProductShowcase() {
       title: "3. Report",
       value: "report",
       content: (
-        <div className="w-full overflow-hidden relative h-full rounded-md border border-border-subtle bg-surface-1 p-6 md:p-10">
+        <div className="w-full overflow-hidden relative h-full card p-6 md:p-10">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">3</span>
             <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">

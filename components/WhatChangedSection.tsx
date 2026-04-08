@@ -16,7 +16,7 @@ function ScoreCard({ label, delta, inverted }: { label: string; delta: ScoreDelt
   const colorClass = delta.direction === 'flat' ? 'text-fg-dim' : isGood ? 'text-win' : 'text-loss';
 
   return (
-    <div className="bg-surface-1 border border-border-subtle p-3 text-center">
+    <div className="vitals-cell text-center">
       <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">{label}</span>
       <div className="flex items-center justify-center gap-1.5">
         <DeltaArrow direction={delta.direction} inverted={inverted} />
@@ -75,7 +75,7 @@ export default function WhatChangedSection({ comparison }: { comparison: ReportC
 
       {/* Score deltas */}
       {hasScores && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/[0.04] border border-border-subtle mb-3">
+        <div className="vitals-strip grid-cols-2 sm:grid-cols-3 mb-3">
           {comparison.emotionScore && (
             <ScoreCard label="EMOTION" delta={comparison.emotionScore} inverted />
           )}
