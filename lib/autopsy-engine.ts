@@ -1272,8 +1272,10 @@ export function detectContradictions(
   if (settled.length < 30) return [];
 
   // 1. Identity sport mismatch: most-bet sport has negative ROI, a lower-volume sport is profitable
+  const KNOWN_SPORTS = ['nfl', 'nba', 'mlb', 'nhl', 'ncaab', 'ncaaf', 'soccer', 'tennis', 'golf', 'mma', 'ufc', 'boxing', 'cricket', 'f1', 'nascar', 'wnba', 'xfl', 'usfl', 'cfl', 'epl', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'mls', 'champions league'];
+
   const sportCategories = metrics.category_roi.filter(c =>
-    !c.category.includes(' ') && c.count >= 10
+    KNOWN_SPORTS.includes(c.category.toLowerCase()) && c.count >= 10
   );
 
   if (sportCategories.length >= 2) {
@@ -1350,22 +1352,35 @@ export function detectContradictions(
 const ALL_BIAS_CHECKS: { name: string; matchNames: string[]; populationPercent: number; cleanDetail: string }[] = [
   { name: 'Loss Chasing', matchNames: ['loss chasing', 'post-loss escalation', 'post loss escalation', 'chase'], populationPercent: 73, cleanDetail: 'Your stake sizing remains consistent after losses. {pct}% of bettors show measurable post-loss escalation.' },
   { name: 'Parlay Overuse', matchNames: ['parlay', 'multi-leg', 'parlay addiction', 'heavy parlay'], populationPercent: 68, cleanDetail: 'Your parlay volume is within reasonable bounds. {pct}% of bettors over-allocate to parlays.' },
-  { name: 'Late Night Bias', matchNames: ['late night', 'late-night', 'overnight'], populationPercent: 45, cleanDetail: 'No significant late-night performance decay detected. {pct}% of bettors show worse outcomes after 10pm.' },
+  { name: 'Late Night Bias', matchNames: ['late night', 'late-night', 'overnight', 'midnight', 'disaster'], populationPercent: 45, cleanDetail: 'No significant late-night performance decay detected. {pct}% of bettors show worse outcomes after 10pm.' },
   { name: 'Emotional Betting', matchNames: ['emotional', 'heated', 'tilt'], populationPercent: 61, cleanDetail: 'Session behavior stays disciplined under pressure. {pct}% of bettors show heated sessions exceeding 25% of total.' },
   { name: 'Favorite Bias', matchNames: ['favorite', 'favourite', 'chalk', 'favorite-heavy'], populationPercent: 52, cleanDetail: 'No systematic over-betting of favorites detected. {pct}% of bettors lean too heavily on chalk.' },
   { name: 'Sunk Cost', matchNames: ['sunk cost', 'same team', 'doubling down'], populationPercent: 38, cleanDetail: 'No pattern of chasing losing teams or players. {pct}% of bettors double down on losing selections.' },
 ];
 
 export function generatePertinentNegatives(
-  detectedBiasNames: string[]
+  detectedBiasNames: string[],
+  behavioralPatterns?: { pattern_name: string; impact: string }[],
+  strategicLeaks?: { category: string }[]
 ): import('@/types').PertinentNegative[] {
   const detected = detectedBiasNames.map(n => n.toLowerCase());
+
+  // Also flag patterns with negative impact
+  const negativePatterns = (behavioralPatterns ?? [])
+    .filter(p => p.impact === 'negative')
+    .map(p => p.pattern_name.toLowerCase());
+
+  // Also flag strategic leak categories
+  const leakCategories = (strategicLeaks ?? [])
+    .map(l => l.category.toLowerCase());
+
+  const allProblems = [...detected, ...negativePatterns, ...leakCategories];
 
   const negatives: import('@/types').PertinentNegative[] = [];
 
   for (const check of ALL_BIAS_CHECKS) {
     const isDetected = check.matchNames.some(m =>
-      detected.some(d => d.includes(m) || m.includes(d))
+      allProblems.some(d => d.includes(m) || m.includes(d))
     );
     if (!isDetected) {
       negatives.push({
@@ -2129,7 +2144,7 @@ export function calculateMetricsOnly(
     personal_rules: undefined,
     session_analysis: undefined,
     edge_profile: undefined,
-    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
+    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name), [], []),
     contradictions: detectContradictions(metrics, bets),
   };
 
@@ -2518,7 +2533,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     session_detection: metrics.sessionDetection ?? undefined,
     bet_annotations: metrics.annotations ?? undefined,
     executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
-    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name)),
+    pertinent_negatives: generatePertinentNegatives(
+      metrics.biases_detected.map(b => b.bias_name),
+      Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns as { pattern_name: string; impact: string }[] : [],
+      Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks as { category: string }[] : []
+    ),
     contradictions: detectContradictions(metrics, bets),
   };
 
