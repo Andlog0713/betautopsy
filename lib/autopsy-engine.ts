@@ -56,20 +56,7 @@ export interface CalculatedMetrics {
   annotations: AnnotationSummary | null;
 }
 
-// ── Platform / Sportsbook Names (for filtering from behavioral analysis) ──
-
-const PLATFORM_NAMES = [
-  'draftkings', 'fanduel', 'betmgm', 'caesars', 'pointsbet', 'hard rock',
-  'espn bet', 'bet365', 'barstool', 'wynn', 'betrivers', 'unibet', 'bally',
-  'superbook', 'circa', 'pinnacle', 'bovada', 'betonline', 'mybookie',
-  'prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper',
-  'dabble', 'kalshi', 'polymarket', 'predictit', 'thrive', 'betr picks',
-  'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'fanatics',
-];
-
-export function isPlatformCategory(category: string): boolean {
-  return PLATFORM_NAMES.some(p => category.toLowerCase().includes(p));
-}
+import { isPlatformCategory } from '@/lib/platform-filter';
 
 // ── DFS Detection + Metrics ──
 

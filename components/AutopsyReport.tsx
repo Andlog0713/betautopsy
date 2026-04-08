@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
-import { isPlatformCategory } from '@/lib/autopsy-engine';
+import { isPlatformCategory } from '@/lib/platform-filter';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
 import PercentileGauge from './report/PercentileGauge';
