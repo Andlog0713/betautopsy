@@ -2188,7 +2188,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         // CONTINUE: pertinent negatives + discipline (deduplicated)
         const topNegatives = (analysis.pertinent_negatives ?? []).slice(0, 2);
         const hasEmotionalNegative = topNegatives.some(n => n.pattern.toLowerCase().includes('emotional'));
-        topNegatives.forEach(n => continueItems.push(`No ${n.pattern.toLowerCase()}`));
+        const negativeToPositive: Record<string, string> = {
+          'loss chasing': 'Flat staking after losses',
+          'parlay overuse': 'Parlay discipline',
+          'late night bias': 'Time discipline',
+          'emotional betting': 'Session control',
+          'favorite bias': 'Balanced odds selection',
+          'sunk cost': 'Clean player rotation',
+        };
+        topNegatives.forEach(n => {
+          const positive = negativeToPositive[n.pattern.toLowerCase()] ?? `${n.pattern} discipline`;
+          continueItems.push(positive);
+        });
         if ((analysis.emotion_score ?? 100) < 40 && continueItems.length < 3 && !hasEmotionalNegative) continueItems.push('Emotional discipline');
 
         const hasContent = stopItems.length > 0 || startItems.length > 0 || continueItems.length > 0;
