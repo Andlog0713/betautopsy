@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
+import { isPlatformCategory } from '@/lib/autopsy-engine';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
 import PercentileGauge from './report/PercentileGauge';
@@ -242,6 +243,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
+  const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
 
@@ -324,7 +326,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     // Estimate $ cost for strategic leaks from bets data
 
     const leakItems: typeof items = [];
-    strategic_leaks.forEach((leak) => {
+    filteredLeaks.forEach((leak) => {
       if (leak.roi_impact < 0) {
         const lower = leak.category.toLowerCase().trim();
         // Strip leading "all " (e.g. "All Parlays" → "parlays")
@@ -391,7 +393,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
     items.sort((a, b) => b.cost - a.cost);
     return items;
-  }, [biases_detected, strategic_leaks, bets]);
+  }, [biases_detected, filteredLeaks, bets]);
 
   const totalRecoverable = prioritizedLeaks.reduce((s, l) => s + l.cost, 0);
 
@@ -1016,14 +1018,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Strategic Leaks — collapsible cards */}
       {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
-      {!isPartialReport && strategic_leaks.length > 0 && (
+      {!isPartialReport && filteredLeaks.length > 0 && (
         <div className="space-y-2">
           <div className="mb-2.5">
             <h2 className="font-bold text-2xl tracking-tight">Strategic Leaks</h2>
             <p className="text-fg-muted text-xs italic mt-1">Categories where your ROI doesn&apos;t justify your volume.</p>
           </div>
           <div className="space-y-2">
-            {strategic_leaks.map((leak, i) => {
+            {filteredLeaks.map((leak, i) => {
               const leakId = `leak-${i}`;
               const isExpanded = expandedFindings.has(leakId);
               return (
@@ -1797,10 +1799,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-win">Profitable Areas</h3>
-              {(analysis.edge_profile.profitable_areas ?? []).length === 0 ? (
+              {(() => { const areas = (analysis.edge_profile.profitable_areas ?? []).filter(a => !isPlatformCategory(a.category)); return areas.length === 0 ? (
                 <p className="text-fg-muted text-sm card p-4">No profitable areas with sufficient sample size.</p>
               ) : (
-                analysis.edge_profile.profitable_areas.map((area, i) => (
+                areas.map((area, i) => (
                   <div key={i} className="card border-win/20 bg-win/5 p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
@@ -1816,14 +1818,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
                   </div>
                 ))
-              )}
+              ); })()}
             </div>
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-loss">Unprofitable Areas</h3>
-              {(analysis.edge_profile.unprofitable_areas ?? []).length === 0 ? (
+              {(() => { const areas = (analysis.edge_profile.unprofitable_areas ?? []).filter(a => !isPlatformCategory(a.category)); return areas.length === 0 ? (
                 <p className="text-fg-muted text-sm card p-4">No major unprofitable areas detected.</p>
               ) : (
-                analysis.edge_profile.unprofitable_areas.map((area, i) => (
+                areas.map((area, i) => (
                   <div key={i} className="card border-loss/20 bg-loss/5 p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{formatCategoryLabel(area.category)}</span>
@@ -1833,7 +1835,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <p className="text-fg-muted text-xs font-mono">{area.sample_size} bets</p>
                   </div>
                 ))
-              )}
+              ); })()}
             </div>
           </div>
           {/* Reallocation advice */}
@@ -1862,7 +1864,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <p className="font-mono text-3xl font-bold text-scalpel">$2,847</p>
               <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
             </div>
-            {analysis.strategic_leaks.map((leak, i) => (
+            {filteredLeaks.map((leak, i) => (
               <div key={i} className="border border-border-subtle rounded-md px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-scalpel">#{i + 1}</span>
@@ -2168,13 +2170,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         const continueItems: string[] = [];
 
         // STOP: worst strategic leaks
-        const worstLeaks = [...(analysis.strategic_leaks ?? [])].sort((a, b) => a.roi_impact - b.roi_impact).slice(0, 2);
+        const worstLeaks = [...filteredLeaks].sort((a, b) => a.roi_impact - b.roi_impact).slice(0, 2);
         worstLeaks.forEach(l => stopItems.push(l.category));
         const lateNightPattern = (analysis.behavioral_patterns ?? []).find(p => p.pattern_name.toLowerCase().includes('late night') && p.impact === 'negative');
         if (lateNightPattern && stopItems.length < 3) stopItems.push('Late-night betting');
 
         // START: profitable areas + positive patterns
-        const profitableAreas = analysis.edge_profile?.profitable_areas?.slice(0, 2) ?? [];
+        const profitableAreas = (analysis.edge_profile?.profitable_areas ?? []).filter(a => !isPlatformCategory(a.category)).slice(0, 2);
         profitableAreas.forEach(a => startItems.push(`More ${a.category}`));
         const positivePatterns = (analysis.behavioral_patterns ?? []).filter(p => p.impact === 'positive').slice(0, 1);
         positivePatterns.forEach(p => {

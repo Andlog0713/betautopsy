@@ -56,6 +56,21 @@ export interface CalculatedMetrics {
   annotations: AnnotationSummary | null;
 }
 
+// ── Platform / Sportsbook Names (for filtering from behavioral analysis) ──
+
+const PLATFORM_NAMES = [
+  'draftkings', 'fanduel', 'betmgm', 'caesars', 'pointsbet', 'hard rock',
+  'espn bet', 'bet365', 'barstool', 'wynn', 'betrivers', 'unibet', 'bally',
+  'superbook', 'circa', 'pinnacle', 'bovada', 'betonline', 'mybookie',
+  'prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper',
+  'dabble', 'kalshi', 'polymarket', 'predictit', 'thrive', 'betr picks',
+  'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'fanatics',
+];
+
+export function isPlatformCategory(category: string): boolean {
+  return PLATFORM_NAMES.some(p => category.toLowerCase().includes(p));
+}
+
 // ── DFS Detection + Metrics ──
 
 const DFS_PLATFORMS = ['prizepicks', 'prize picks', 'underdog', 'underdog fantasy', 'sleeper', 'dabble', 'thrive', 'vivid picks', 'boom fantasy', 'parlayplay', 'pick6', 'betr picks'];
@@ -2366,6 +2381,8 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - If no significant biases detected, write a positive diagnosis noting what they're doing right.
 - EXAMPLE (match this energy, not these exact words): "This bettor has a favorite problem. 57 bets on -110 to -199 chalk have returned -31.7% ROI, the worst category in the dataset. It gets worse after losses, where stakes jump 29% on average. That pattern is costing roughly $1,043 over this sample."
 
+SPORTSBOOK RULE: Never reference specific sportsbook names (DraftKings, FanDuel, Caesars, BetMGM, etc.) in strategic_leaks, recommendations, or edge_profile. Sportsbook-level ROI differences are variance, not actionable insight. Only analyze by sport, bet type, odds range, timing, and behavioral pattern. Never recommend switching sportsbooks or increasing/decreasing volume on a specific sportsbook. Sportsbook choice is not a behavioral pattern.
+
 ## Critical Rules
 - NEVER recommend specific bets or picks
 - NEVER promise profitability
@@ -2726,7 +2743,7 @@ Return ONLY the JSON object, nothing else.`;
 
   // Strategic leaks from category_roi — category names and ROI visible, suggestions locked
   const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = metrics.category_roi
-    .filter(c => c.roi < -5 && c.count >= 3)
+    .filter(c => c.roi < -5 && c.count >= 3 && !isPlatformCategory(c.category))
     .map(c => ({
       category: c.category,
       detail: '',
