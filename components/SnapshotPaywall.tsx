@@ -43,10 +43,10 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
   }
 
   return (
-    <div data-paywall-cta className="my-6 border border-scalpel/20 bg-scalpel/[0.04] rounded-md p-5">
+    <div data-paywall-cta className="my-6 card-tier-1 border-l border-l-scalpel pl-5 pr-5 py-5">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-md bg-scalpel/10 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-9 h-9 flex items-center justify-center shrink-0 mt-0.5">
             <Lock size={16} className="text-scalpel" />
           </div>
           <div>

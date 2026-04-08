@@ -99,7 +99,7 @@ export default function WhatChangedSection({ comparison }: { comparison: ReportC
 
       {/* Summary line */}
       {allImproved ? (
-        <div className="bg-win/5 border border-win/20 px-3 py-2 flex items-center gap-2">
+        <div className="pl-3 py-1 border-l border-l-win flex items-center gap-2">
           <CheckCircle2 className="w-3.5 h-3.5 text-win flex-shrink-0" />
           <span className="font-mono text-xs text-win">Every tracked metric improved since your last report</span>
         </div>

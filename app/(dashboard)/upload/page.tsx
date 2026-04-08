@@ -135,7 +135,7 @@ export default function UploadPage() {
             </p>
           ) : promoEligible ? (
             <>
-              <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm px-4 py-2 inline-block">
+              <div className="pl-3 border-l border-l-scalpel inline-block text-left">
                 <p className="text-scalpel text-sm font-medium">Your first full report is free.</p>
               </div>
               <p className="text-fg-muted text-sm max-w-md mx-auto">

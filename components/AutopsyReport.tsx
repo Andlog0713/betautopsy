@@ -888,7 +888,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         {bias.fix && (
                           snapshotLocked ? (
                             <RedactedValue type="section">
-                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                              <div className="pl-4 border-l border-l-scalpel/60 py-2">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <span className="w-1 h-1 rounded-full bg-scalpel" />
                                   <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
@@ -897,7 +897,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               </div>
                             </RedactedValue>
                           ) : (
-                            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                            <div className="pl-4 border-l border-l-scalpel/60 py-2">
                               <div className="flex items-center gap-2 mb-1.5">
                                 <span className="w-1 h-1 rounded-full bg-scalpel" />
                                 <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
@@ -962,7 +962,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <p className="text-sm text-fg leading-relaxed">{finding.description}</p>
                   <p className="text-xs text-fg-muted font-mono">{finding.evidence}</p>
                   {finding.recommendation && (
-                    <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                    <div className="pl-4 border-l border-l-scalpel/60 py-2">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="w-1 h-1 rounded-full bg-scalpel" />
                         <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Recommended Action</p>
@@ -1054,7 +1054,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
                     <p className="text-sm text-fg leading-relaxed">{leak.detail}</p>
                     {leak.suggestion && (
-                      <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                      <div className="pl-4 border-l border-l-scalpel/60 py-2">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className="w-1 h-1 rounded-full bg-scalpel" />
                           <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Suggestion</p>
@@ -1951,7 +1951,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
                             </div>
                             {item.fix && (
-                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                              <div className="pl-4 border-l border-l-scalpel/60 py-2">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <span className="w-1 h-1 rounded-full bg-scalpel" />
                                   <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Fix</p>
@@ -2370,7 +2370,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
                             </div>
                             {item.fix && (
-                              <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+                              <div className="pl-4 border-l border-l-scalpel/60 py-2">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <span className="w-1 h-1 rounded-full bg-scalpel" />
                                   <p className="text-xs text-scalpel font-medium font-mono uppercase tracking-widest">Fix</p>
@@ -2398,8 +2398,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           /* Locked tools tab for non-Pro users */
           <div className="space-y-6 py-4">
             <div className="text-center max-w-md mx-auto space-y-4">
-              <div className="w-16 h-16 rounded-sm bg-scalpel/10 border border-scalpel/20 flex items-center justify-center mx-auto">
-                <svg className="w-8 h-8 text-scalpel" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 flex items-center justify-center mx-auto">
+                <svg className="w-10 h-10 text-scalpel" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -2800,7 +2800,7 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
           {showHeated && (
             <div className="mt-2 space-y-1.5">
               {heatedSessions.map(s => (
-                <div key={s.id} className="bg-surface-2 border border-loss/10 rounded-sm p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                <div key={s.id} className="card-tier-2 border-l border-l-loss/60 pl-3 pr-3 py-3 flex flex-col sm:flex-row sm:items-center gap-2 rounded-r-sm">
                   <span className="font-mono text-[10px] text-fg-dim w-24 shrink-0">{s.id}</span>
                   <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold shrink-0 ${gradeColors[s.grade]}`}>{s.grade}</span>
                   <span className="text-fg-muted text-xs">{s.dayOfWeek} {s.date.slice(5)}</span>

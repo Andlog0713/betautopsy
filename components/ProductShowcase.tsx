@@ -103,14 +103,14 @@ export function ProductShowcase() {
           </p>
           {/* Mini report preview */}
           <div className="space-y-3">
-            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+            <div className="pl-4 border-l border-l-scalpel/60 py-2">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-1 h-1 rounded-full bg-scalpel" />
                 <span className="text-[10px] text-scalpel font-mono uppercase tracking-widest">Rule #1</span>
               </div>
               <p className="text-sm text-fg-bright">Never bet more than $75 after a loss. Your post-loss stakes average 2.4x your normal size and lose at 63%.</p>
             </div>
-            <div className="bg-scalpel/[0.04] border border-scalpel/10 rounded-md px-4 py-3">
+            <div className="pl-4 border-l border-l-scalpel/60 py-2">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-1 h-1 rounded-full bg-scalpel" />
                 <span className="text-[10px] text-scalpel font-mono uppercase tracking-widest">Rule #2</span>

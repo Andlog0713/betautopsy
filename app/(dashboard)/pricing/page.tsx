@@ -92,9 +92,10 @@ export default function PricingPage() {
       </div>
 
       {isLaunchPromoActive() && (
-        <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-4 text-center max-w-lg mx-auto">
+        <div className="pl-4 border-l border-l-scalpel max-w-lg mx-auto">
+          <p className="data-label-sm text-scalpel/80 mb-1">Launch offer</p>
           <p className="text-scalpel text-sm font-medium">
-            Launch offer: your first full report is free. Sign up and run your autopsy.
+            Your first full report is free. Sign up and run your autopsy.
           </p>
         </div>
       )}
