@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { TextGenerateEffect } from '@/components/ui/text-generate-effect';
 
 type Variant = 'A' | 'B';
 
@@ -38,32 +39,54 @@ export default function HeroABTest() {
     }
   }, []);
 
-  // Render Variant A during SSR to prevent layout shift
-  const v = variant ?? 'A';
-
   const trackClick = () => {
-    if (window.gtag) {
-      window.gtag('event', 'hero_ab_cta_click', { variant: v });
+    if (variant && window.gtag) {
+      window.gtag('event', 'hero_ab_cta_click', { variant });
     }
   };
 
+  // During SSR and pre-hydration, render an invisible placeholder with
+  // the same approximate dimensions to reserve space and prevent a flash
+  // of one variant before swapping to the other.
+  if (variant === null) {
+    return (
+      <>
+        <div className="invisible" aria-hidden="true">
+          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2">
+            See what your betting data is trying to tell you.
+          </h1>
+          <p className="font-mono text-base md:text-lg tracking-wide mt-4 mb-8">
+            47 behavioral metrics. 60 seconds. One forensic report.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <span className="btn-primary text-base !px-8 !py-3">Get Your Free Report</span>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      {v === 'A' ? (
+      {variant === 'A' ? (
         <>
-          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
-            See what your <span className="text-scalpel">betting data</span> is trying to tell you.
-          </h1>
-          <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d1">
+          <TextGenerateEffect
+            words="See what your betting data is trying to tell you."
+            className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
+            duration={0.4}
+          />
+          <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d2">
             47 behavioral metrics. 60 seconds. One forensic report.
           </p>
         </>
       ) : (
         <>
-          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight text-fg-bright mb-2 animate-fade-in">
-            <span className="text-scalpel">47</span> behavioral metrics. 60 seconds. One upload.
-          </h1>
-          <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d1">
+          <TextGenerateEffect
+            words="47 behavioral metrics. 60 seconds. One upload."
+            className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
+            duration={0.4}
+          />
+          <p className="text-fg text-base md:text-lg max-w-2xl mt-4 mb-8 leading-relaxed animate-fade-in-d2">
             Find the patterns costing you money and get a plan to fix them.
           </p>
         </>
