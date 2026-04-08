@@ -143,37 +143,41 @@ export default function LandingPage() {
 
       {/* ══════════════════════════════════════ */}
       {/* TESTIMONIALS — social proof            */}
+      {/* Elevated bg when pricing is disabled,  */}
+      {/* otherwise pricing handles the break.   */}
       {/* ══════════════════════════════════════ */}
       <AnimatedSection>
-      <section className="max-w-5xl mx-auto px-6 py-12 md:py-16">
-        <div className="case-header mb-8">CASE NOTES // WHAT USERS SAY</div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {[
-            {
-              quote: "Had no idea parlays were costing me $1,200 in 3 months. Cut my parlay spending by 80%.",
-              name: 'Mike R.',
-              detail: '340 bets analyzed',
-            },
-            {
-              quote: "Seeing a 78/100 emotion score next to my loss-chasing pattern made it real. ROI improved within a month.",
-              name: 'Jordan T.',
-              detail: 'Full Report user',
-            },
-            {
-              quote: "Thought I was sharp. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else.",
-              name: 'Chris D.',
-              detail: '500+ bets analyzed',
-            },
-          ].map(t => (
-            <div key={t.name} className="case-card p-5">
-              <p className="text-sm text-fg leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-fg-bright">{t.name}</span>
-                <span className="text-fg-dim">&middot;</span>
-                <span className="font-mono text-[10px] text-fg-dim tracking-wider">{t.detail}</span>
+      <section className={!PRICING_ENABLED ? "bg-surface-1 border-y border-border-subtle py-12 md:py-16" : "py-12 md:py-16"}>
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="case-header mb-8">CASE NOTES // WHAT USERS SAY</div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {[
+              {
+                quote: "Had no idea parlays were costing me $1,200 in 3 months. Cut my parlay spending by 80%.",
+                name: 'Mike R.',
+                detail: '340 bets analyzed',
+              },
+              {
+                quote: "Seeing a 78/100 emotion score next to my loss-chasing pattern made it real. ROI improved within a month.",
+                name: 'Jordan T.',
+                detail: 'Full Report user',
+              },
+              {
+                quote: "Thought I was sharp. BetAutopsy showed me I was profitable on NFL spreads but bleeding on everything else.",
+                name: 'Chris D.',
+                detail: '500+ bets analyzed',
+              },
+            ].map(t => (
+              <div key={t.name} className="case-card p-5">
+                <p className="text-sm text-fg leading-relaxed mb-4">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-fg-bright">{t.name}</span>
+                  <span className="text-fg-dim">&middot;</span>
+                  <span className="font-mono text-[10px] text-fg-dim tracking-wider">{t.detail}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
       </AnimatedSection>
