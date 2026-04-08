@@ -23,7 +23,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git config:*)",
-      "mcp__fe7307ab-7f46-4dca-88c4-6f6505b16d3a__deploy_to_vercel"
+      "mcp__fe7307ab-7f46-4dca-88c4-6f6505b16d3a__deploy_to_vercel",
+      "mcp__d27adcb9-0eee-4460-80fb-1fbf3d35269f__execute_sql"
     ]
   }
 }
