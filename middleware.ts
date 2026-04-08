@@ -52,6 +52,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Defense-in-depth: block protected routes for users who haven't verified their email.
+  // OAuth users (Google) are auto-verified, so email_confirmed_at is set at signup.
+  if (isProtected && user && !user.email_confirmed_at) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/signup';
+    url.searchParams.set('verify', 'true');
+    return NextResponse.redirect(url);
+  }
+
   // Admin route protection — require is_admin flag
   if (pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase

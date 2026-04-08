@@ -11,6 +11,7 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
+  const showVerifyNotice = searchParams.get('verify') === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -76,7 +77,15 @@ function SignupForm() {
   }
 
   return (
-    <div className="case-card p-8 animate-fade-in">
+    <>
+      {showVerifyNotice && (
+        <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-4 mb-6">
+          <p className="text-scalpel text-sm font-medium text-center">
+            Check your inbox — you need to verify your email before accessing your dashboard. Didn&apos;t get it? Check your spam folder or sign up again below.
+          </p>
+        </div>
+      )}
+      <div className="case-card p-8 animate-fade-in">
       <div className="pl-3 border-l border-l-scalpel mb-4">
         <p className="text-scalpel text-sm font-medium">Limited time: your first full report is free. No credit card.</p>
       </div>
@@ -195,7 +204,8 @@ function SignupForm() {
           Sign in
         </Link>
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 
