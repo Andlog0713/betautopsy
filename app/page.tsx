@@ -4,7 +4,7 @@ import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
 import AnimatedSection from '@/components/AnimatedSection';
-import HeroHeadline from '@/components/HeroHeadline';
+import HeroABTest from '@/components/HeroABTest';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import ResponsibleGambling from '@/components/ResponsibleGambling';
@@ -30,16 +30,7 @@ export default function LandingPage() {
               CASE FILE // BEHAVIORAL ANALYSIS UNIT
             </AnimatedShinyText>
           </div>
-          <HeroHeadline />
-          <p className="text-fg text-base md:text-lg max-w-2xl mb-8 leading-relaxed animate-fade-in-d2">
-            Upload your bet history. See exactly which habits are costing you money, how much, and how to fix them.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
-            <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-              Get Your Full Report Free
-            </Link>
-            <span className="text-fg-muted text-xs mt-3 sm:mt-4">Limited time: first full report free. No credit card.</span>
-          </div>
+          <HeroABTest />
           {/* Social proof counter strip */}
           <div className="flex flex-wrap gap-8 mt-8 animate-fade-in-d3">
             <div>
