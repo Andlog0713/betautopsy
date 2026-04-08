@@ -20,12 +20,13 @@ module.exports = {
           overlay: '#222232',
         },
         // Dashboard redesign tier system — background contrast instead of borders
+        // Brand-compliant 5-elevation surface stack
         tier: {
-          0: '#0D1117', // page background
-          1: '#131920', // primary cards
-          2: '#1A2029', // secondary / nested
-          3: '#222A35', // hover
-          4: '#2A3340', // active / pressed
+          0: '#0D1117', // Midnight — page background
+          1: '#111318', // Base — primary cards
+          2: '#161820', // Surface — secondary / nav
+          3: '#1C1F28', // Raised — hover
+          4: '#222530', // Elevated — overlay / pressed
         },
         border: {
           subtle: 'rgba(255, 255, 255, 0.06)',
@@ -70,14 +71,16 @@ module.exports = {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
+      // Forensic case-file aesthetic: max 4px radius anywhere, most elements 2px.
+      // Brand guide explicitly rejects rounded cards.
       borderRadius: {
         'none': '0px',
-        'sm': '4px',
-        DEFAULT: '6px',
-        'md': '6px',
-        'lg': '8px',
-        'xl': '12px',
-        '2xl': '16px',
+        'sm': '2px',
+        DEFAULT: '2px',
+        'md': '2px',
+        'lg': '4px',
+        'xl': '4px',
+        '2xl': '4px',
       },
       keyframes: {
         'fade-in': {

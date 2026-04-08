@@ -275,37 +275,31 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-in">
-      {/* ── Page header ── */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-fg-bright">Dashboard</h1>
-        <p className="text-sm text-fg-muted mt-1">Overview of your betting behavior</p>
+      {/* ── Forensic case header ── */}
+      <div className="mb-10">
+        <p className="case-header case-header-teal mb-2">CASE FILE // SUBJECT INTAKE</p>
+        <h1 className="text-3xl font-bold tracking-tight text-fg-bright leading-tight">
+          Your behavior, on record.
+        </h1>
       </div>
 
       {!hasBets ? (
-        <div className="card-tier-1 p-12 text-center">
-          <div className="mb-4"><Target size={40} className="text-fg-muted mx-auto" /></div>
-          <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet</h2>
-          <p className="data-body mb-6 max-w-md mx-auto">
-            You&apos;ve got bets to upload and truths to face. Let&apos;s go.
+        <div className="border-t border-white/[0.04] pt-10">
+          <p className="case-header mb-3">STATUS // EMPTY SPECIMEN</p>
+          <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet.</h2>
+          <p className="data-body mb-6 max-w-md">
+            Upload your history. We&apos;ll find the patterns your brain hides from you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/upload" className="btn-primary font-mono">Upload CSV</Link>
             <Link href="/bets" className="btn-secondary font-mono">Add Bets Manually</Link>
           </div>
         </div>
       ) : (
         <>
-          {/* Data freshness */}
-          <p className="text-xs text-fg-dim font-mono mb-4">
-            {daysSinceReport !== null
-              ? `Last report: ${daysSinceReport === 0 ? 'today' : `${daysSinceReport}d ago`}`
-              : `${stats.totalBets} bets loaded`}
-            {daysSinceLastBet !== null && ` · Last upload: ${daysSinceLastBet === 0 ? 'today' : `${daysSinceLastBet}d ago`}`}
-          </p>
-
-          {/* ── Priority nudge banner ── */}
+          {/* ── Priority nudge banner — left scalpel rule, no card box ── */}
           {nudge && (
-            <div className="flex items-center gap-3 card-tier-2 card-accent-teal pl-4 pr-4 py-3 mb-6 rounded-r-md">
+            <div className="flex items-center gap-3 border-l-2 border-l-scalpel pl-4 py-2 mb-10">
               {nudge.icon}
               <p className="data-body flex-1">{nudge.message}</p>
               <Link href={nudge.href} className="ml-auto text-sm text-scalpel link-underline whitespace-nowrap font-mono">
@@ -314,37 +308,34 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── Hero metric: Net P&L ── */}
-          <div className="mb-10 relative">
-            <div className="absolute -top-8 right-0"><EyeToggle /></div>
-            <p className="data-label-sm mb-2">Net P&amp;L</p>
-            <p className={`text-5xl data-number ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
+          {/* ── SECTION: VITALS ── Net P&L hero, then numbers strip ── */}
+          <section className="mb-12 relative">
+            <div className="absolute -top-1 right-0"><EyeToggle /></div>
+            <p className="case-header mb-3">VITALS // NET P&amp;L</p>
+            <p className={`text-6xl data-number leading-none ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
               {mask('x') === 'x'
                 ? <>{stats.netPnL >= 0 ? '+' : '-'}$<NumberTicker value={Math.round(Math.abs(stats.netPnL))} /></>
                 : mask(`${stats.netPnL >= 0 ? '+' : '-'}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)
               }
             </p>
-            <p className="data-body mt-2">
-              across {mask(stats.totalBets.toLocaleString())} bets · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} wagered · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} avg stake
+            <p className="data-body mt-3 font-mono text-xs text-fg-dim tracking-wider">
+              {mask(stats.totalBets.toLocaleString())} BETS · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} WAGERED · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} AVG STAKE
             </p>
-          </div>
 
-          {/* ── Key metrics strip (borderless dividers + cards mix) ── */}
-          <div className="flex flex-col sm:flex-row sm:items-stretch gap-6 mb-10">
-            {/* Borderless stats with dividers */}
-            <div className="flex items-center divide-x divide-white/[0.04]">
-              <div className="pr-6">
-                <p className="data-label-sm mb-1">Win Rate</p>
-                <p className={`text-xl data-number ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
+            {/* Numbers strip — pure dividers, no boxes */}
+            <div className="mt-8 flex flex-wrap items-end divide-x divide-white/[0.04]">
+              <div className="pr-8 py-1">
+                <p className="case-header mb-2">WIN RATE</p>
+                <p className={`text-2xl data-number leading-none ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
                   {mask('x') === 'x'
                     ? <><NumberTicker value={parseFloat(stats.winRate.toFixed(1))} />%</>
                     : mask(`${stats.winRate.toFixed(1)}%`)
                   }
                 </p>
               </div>
-              <div className="px-6">
-                <p className="data-label-sm mb-1">ROI</p>
-                <p className={`text-xl data-number ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
+              <div className="px-8 py-1">
+                <p className="case-header mb-2">ROI</p>
+                <p className={`text-2xl data-number leading-none ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
                   {mask('x') === 'x'
                     ? <><NumberTicker value={parseFloat(latest ? latest.roi_percent.toFixed(1) : (stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1))} />%</>
                     : latest ? mask(`${latest.roi_percent.toFixed(1)}%`) : mask(`${(stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1)}%`)
@@ -352,9 +343,9 @@ export default function DashboardPage() {
                 </p>
               </div>
               {latest && (
-                <div className="pl-6">
-                  <p className="data-label-sm mb-1">Emotion</p>
-                  <p className="text-xl data-number text-fg-bright">
+                <div className="px-8 py-1">
+                  <p className="case-header mb-2">EMOTION</p>
+                  <p className="text-2xl data-number text-fg-bright leading-none">
                     {mask('x') === 'x'
                       ? <NumberTicker value={latest.tilt_score} />
                       : mask(latest.tilt_score.toString())
@@ -362,208 +353,196 @@ export default function DashboardPage() {
                   </p>
                 </div>
               )}
-            </div>
-
-            {/* Tier 2 mini cards — no border, compact padding */}
-            {latest && (
-              <div className="flex gap-2">
-                <div className="card-tier-2 px-5 py-4">
-                  <p className="data-label-sm mb-1">Grade</p>
-                  <p className={`text-xl data-number ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
+              {latest && (
+                <div className="px-8 py-1">
+                  <p className="case-header mb-2">GRADE</p>
+                  <p className={`text-2xl data-number leading-none ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
                 </div>
-                {latest.discipline_score !== null && (
-                  <div className="card-tier-2 px-5 py-4">
-                    <p className="data-label-sm mb-1">Discipline</p>
-                    <p className="text-xl data-number text-fg-bright">{mask((latest.discipline_score ?? 0).toString())}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+              {latest?.discipline_score !== null && latest?.discipline_score !== undefined && (
+                <div className="pl-8 py-1">
+                  <p className="case-header mb-2">DISCIPLINE</p>
+                  <p className="text-2xl data-number text-fg-bright leading-none">{mask((latest.discipline_score ?? 0).toString())}</p>
+                </div>
+              )}
+            </div>
+          </section>
 
-          {/* ── Two-column bento grid: hero (wide) + secondary stack (narrow) ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* ── Left column: primary content (8 / 12 — visually dominant) ── */}
-            <div className="lg:col-span-8 space-y-4">
-              {/* Discipline Score hero widget */}
+          {/* ── SECTION: DIAGNOSIS ── Discipline ring + progress chart ── */}
+          {(latest && isPaid) || (snapshots.length >= 2 && isPaid) || stats.reportCount === 0 || (isPaid && !latest && stats.reportCount > 0) ? (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header mb-6">DIAGNOSIS // BEHAVIORAL DRIFT</p>
+
+              {/* Discipline Score hero */}
               {latest && isPaid && (
-                <DisciplineScoreCard
-                  currentScore={latest.discipline_score ?? null}
-                  previousScore={prev?.discipline_score ?? null}
-                  reportCount={stats?.reportCount ?? 1}
-                  mask={mask}
-                />
+                <div className="mb-10">
+                  <DisciplineScoreCard
+                    currentScore={latest.discipline_score ?? null}
+                    previousScore={prev?.discipline_score ?? null}
+                    reportCount={stats?.reportCount ?? 1}
+                    mask={mask}
+                  />
+                </div>
               )}
 
-              {/* Progress Chart (paid, 2+ snapshots) */}
+              {/* Progress chart */}
               {snapshots.length >= 2 && isPaid && (
                 <div className="min-h-[320px]">
                   <ProgressChart snapshots={snapshots} />
                 </div>
               )}
 
-              {/* First Autopsy CTA */}
+              {/* First autopsy CTA — uses examination surface */}
               {stats.reportCount === 0 && (
-                <div className="card-hero py-10 px-8 text-center space-y-4">
-                  <div><FlaskConical size={32} className="text-scalpel mx-auto" /></div>
-                  <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
-                  <p className="data-body max-w-md mx-auto">
-                    You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
-                    analysis in about 20 seconds.
+                <div className="card-hero py-12 px-8">
+                  <p className="case-header case-header-teal mb-4">PROTOCOL // FIRST PASS</p>
+                  <h2 className="font-bold text-3xl text-fg-bright tracking-tight mb-3">
+                    {stats.totalBets} bets loaded. Run the autopsy.
+                  </h2>
+                  <p className="data-body mb-6 max-w-xl">
+                    A full behavioral analysis takes about 20 seconds. You&apos;ll get every leak, every bias, every dollar amount.
                   </p>
-                  <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-                    Run Your Autopsy Now →
+                  <Link href="/reports?run=true" className="btn-primary inline-block text-base !px-6 !py-3 font-mono">
+                    Run Your Autopsy →
                   </Link>
                 </div>
               )}
 
               {/* Paid user without snapshots */}
               {isPaid && !latest && stats.reportCount > 0 && (
-                <div className="card-tier-1 card-accent-teal p-6 text-center space-y-3">
-                  <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
-                  <p className="data-body text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
+                <div className="border-l-2 border-l-scalpel pl-5 py-2">
+                  <p className="case-header mb-2">PROTOCOL // STALE</p>
+                  <p className="text-fg-bright text-base mb-2">Run a fresh autopsy to start tracking progress.</p>
+                  <p className="data-body text-sm mb-4">Each report adds a snapshot: emotion score, ROI, discipline trends.</p>
                   <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
                 </div>
               )}
+            </section>
+          ) : null}
 
-              {/* Free tier: blurred progress preview */}
-              {!isPaid && stats.reportCount > 0 && (
-                <div className="relative">
-                  <div className="blur-sm pointer-events-none opacity-40">
-                    <div className="card-tier-1 p-6">
-                      <p className="data-label-sm mb-3">Progress Over Time</p>
-                      <div className="space-y-2">
-                        {[65, 52, 47, 38].map((h, i) => (
-                          <div key={i} className="flex items-center gap-3">
-                            <span className="font-mono text-[10px] text-fg-dim w-16">Week {i + 1}</span>
-                            <div className="flex-1 h-2 bg-surface-2 overflow-hidden rounded-sm">
-                              <div className="h-full bg-scalpel rounded-sm" style={{ width: `${h}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="mb-1"><Lock size={24} className="text-fg-muted" /></div>
-                      <p className="text-fg-muted text-sm font-mono">Track your progress with Pro</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Milestones (paid) */}
-              {isPaid && snapshots.length > 0 && (
-                <div className="mt-6">
-                  <p className="data-label-sm mb-4">Milestones</p>
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {milestones.map((m) => (
-                      <div
-                        key={m.id}
-                        className={`flex items-center gap-2 card-tier-2 px-3 py-2 whitespace-nowrap shrink-0 ${m.earned ? '' : 'opacity-40'}`}
-                      >
-                        {m.earned ? m.icon : <Lock size={14} className="text-fg-dim" />}
-                        <div>
-                          <p className={`text-sm ${m.earned ? 'text-fg-bright' : 'text-fg-muted'}`}>{m.label}</p>
-                          <p className="text-[11px] text-fg-dim data-number">
-                            {m.earned && m.date
-                              ? new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                              : m.earned ? 'Earned' : 'Locked'}
-                          </p>
+          {/* ── SECTION: LONGITUDINAL ── Free tier preview ── */}
+          {!isPaid && stats.reportCount > 0 && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header mb-6">LONGITUDINAL // LOCKED</p>
+              <div className="relative">
+                <div className="blur-sm pointer-events-none opacity-40">
+                  <div className="space-y-3 max-w-2xl">
+                    {[65, 52, 47, 38].map((h, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <span className="case-header w-16">WK {i + 1}</span>
+                        <div className="flex-1 h-1 bg-tier-2">
+                          <div className="h-full bg-scalpel" style={{ width: `${h}%` }} />
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* ── Right column: narrower secondary stack (4 / 12) ── */}
-            <div className="lg:col-span-4 space-y-3">
-              {/* Streak counter (paid) — Tier 2, accent left border, compact */}
-              {isPaid && snapshots.length > 0 && (
-                <div className="card-tier-2 card-accent-teal py-4 px-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={streakCount >= 10 ? 'animate-pulse' : ''}>
-                      {streakCount >= 10 ? <><Flame size={14} className="text-orange-400" /><Flame size={14} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={14} className="text-orange-400" /> : <Calendar size={14} className="text-fg-muted" />}
-                    </span>
-                    <span className="data-label-sm">
-                      {streakCount > 0 ? 'Streak' : 'No streak'}
-                    </span>
-                    {streakBest > 1 && (
-                      <span className="data-number text-[10px] text-fg-dim ml-auto">best {streakBest}</span>
-                    )}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <Lock size={20} className="text-fg-muted mx-auto mb-2" />
+                    <p className="case-header case-header-teal">PRO ONLY</p>
                   </div>
-                  <p className="data-number text-lg text-fg-bright leading-none mb-2">
-                    {streakCount > 0 ? `${streakCount}w` : '—'}
-                  </p>
-                  <div className="flex items-center gap-2 text-[11px] text-fg-dim data-number">
-                    <span className="flex items-center gap-1"><Snowflake size={10} className="text-cyan-400" /> {streakFreezes}</span>
-                    <span>·</span>
-                    <span>
-                      {streakWeeks >= 2
-                        ? `${streakWeeks} consec`
-                        : `${snapshots.length} total`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Bankroll (if set) — Tier 2, no border, compact */}
-              {bankroll && (
-                <div className="card-tier-2 py-4 px-5">
-                  <p className="data-label-sm mb-1">Bankroll</p>
-                  <p className="data-number text-lg text-fg-bright leading-none">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
-                  <Link href="/settings" className="data-number text-[11px] text-fg-muted link-underline mt-2 inline-block">Edit</Link>
-                </div>
-              )}
-
-              {/* Journal progress — Tier 2, no border */}
-              {journalCount >= 10 && (
-                <div className="card-tier-2 py-4 px-5">
-                  <p className="data-label-sm mb-1">Journal</p>
-                  <p className="data-number text-lg text-fg-bright leading-none">{journalCount}</p>
-                  <p className="text-fg-muted text-[11px] data-number mt-2">
-                    {journalCount >= 30
-                      ? 'Correlation ready'
-                      : `${30 - journalCount} until insights`
-                    }
-                  </p>
-                  <button onClick={() => setJournalOpen(true)} className="data-number text-[11px] text-scalpel link-underline mt-2 inline-block">Log entry →</button>
-                </div>
-              )}
-
-              {/* Free tier upgrade CTA — accent teal left border, Tier 1 */}
-              {!isPaid && (
-                <div className="card-tier-1 card-accent-teal py-5 px-5 space-y-2">
-                  <p className="data-label-sm">Pro</p>
-                  <p className="text-fg-bright text-sm font-medium">Track your progress</p>
-                  <p className="text-fg-muted text-xs leading-relaxed">
-                    Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks.
-                    Your first report was a snapshot. Your fifth is proof.
-                  </p>
-                  <Link href="/pricing" className="btn-primary inline-block text-xs font-mono !px-4 !py-2 mt-1">Start Tracking</Link>
-                </div>
-              )}
-
-              {/* Quick actions — plain text links, no card wrapper, bottom-border interactives */}
-              <div className="pt-4">
-                <p className="data-label-sm mb-3">Quick Actions</p>
-                <div>
-                  <Link href="/upload" className="interactive-row flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright py-2.5">
-                    <Upload size={14} /> Upload new bets
-                  </Link>
-                  <Link href="/reports" className="interactive-row flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright py-2.5">
-                    <FlaskConical size={14} /> Run new autopsy
-                  </Link>
-                  <button onClick={() => setJournalOpen(true)} className="interactive-row w-full flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright text-left py-2.5">
-                    <PenLine size={14} /> Log check-in {journalCount > 0 && <span className="text-scalpel text-xs data-number">({journalCount})</span>}
-                  </button>
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* ── SECTION: STREAK ── Streak + bankroll + journal ── */}
+          {((isPaid && snapshots.length > 0) || bankroll || journalCount >= 10) && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header mb-6">MARKERS // CURRENT STATE</p>
+              <div className="flex flex-wrap items-end divide-x divide-white/[0.04]">
+                {isPaid && snapshots.length > 0 && (
+                  <div className="pr-10 py-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
+                      {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
+                      {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
+                    </div>
+                    <p className="text-2xl data-number text-fg-bright leading-none">
+                      {streakCount > 0 ? `${streakCount}w` : '—'}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
+                      <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
+                      {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
+                      {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
+                    </div>
+                  </div>
+                )}
+
+                {bankroll && (
+                  <div className="px-10 py-1">
+                    <p className="case-header mb-2">BANKROLL</p>
+                    <p className="text-2xl data-number text-fg-bright leading-none">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                    <Link href="/settings" className="case-header link-underline mt-2 inline-block">EDIT →</Link>
+                  </div>
+                )}
+
+                {journalCount >= 10 && (
+                  <div className="pl-10 py-1">
+                    <p className="case-header mb-2">JOURNAL</p>
+                    <p className="text-2xl data-number text-fg-bright leading-none">{journalCount}</p>
+                    <button onClick={() => setJournalOpen(true)} className="case-header case-header-teal link-underline mt-2 inline-block">
+                      LOG ENTRY →
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* ── SECTION: MILESTONES ── */}
+          {isPaid && snapshots.length > 0 && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header mb-6">MARKERS // MILESTONES</p>
+              <div className="flex flex-wrap gap-x-10 gap-y-6">
+                {milestones.map((m) => (
+                  <div key={m.id} className={`flex items-center gap-3 ${m.earned ? '' : 'opacity-30'}`}>
+                    <div className="shrink-0">
+                      {m.earned ? m.icon : <Lock size={14} className="text-fg-dim" />}
+                    </div>
+                    <div>
+                      <p className={`text-sm ${m.earned ? 'text-fg-bright' : 'text-fg-muted'}`}>{m.label}</p>
+                      <p className="case-header mt-1">
+                        {m.earned && m.date
+                          ? new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+                          : m.earned ? 'EARNED' : 'LOCKED'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── SECTION: PROTOCOL ── Free tier upgrade ── */}
+          {!isPaid && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header case-header-teal mb-3">PROTOCOL // PRO UPGRADE</p>
+              <h3 className="font-bold text-xl text-fg-bright mb-2 tracking-tight">Track if you&apos;re actually changing.</h3>
+              <p className="data-body max-w-xl mb-5">
+                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks. Your first report was a snapshot. Your fifth is proof.
+              </p>
+              <Link href="/pricing" className="btn-primary inline-block text-sm font-mono">Start Tracking</Link>
+            </section>
+          )}
+
+          {/* ── SECTION: ACTIONS ── ── */}
+          <section className="border-t border-white/[0.04] pt-10">
+            <p className="case-header mb-6">PROTOCOL // QUICK ACTIONS</p>
+            <div className="max-w-md">
+              <Link href="/upload" className="interactive-row flex items-center gap-3 text-sm text-fg-muted hover:text-fg-bright py-3">
+                <Upload size={14} /> <span>Upload new bets</span>
+              </Link>
+              <Link href="/reports" className="interactive-row flex items-center gap-3 text-sm text-fg-muted hover:text-fg-bright py-3">
+                <FlaskConical size={14} /> <span>Run new autopsy</span>
+              </Link>
+              <button onClick={() => setJournalOpen(true)} className="interactive-row w-full flex items-center gap-3 text-sm text-fg-muted hover:text-fg-bright text-left py-3">
+                <PenLine size={14} /> <span>Log check-in</span>
+                {journalCount > 0 && <span className="text-scalpel text-xs data-number ml-auto">({journalCount})</span>}
+              </button>
             </div>
-          </div>
+          </section>
 
           <JournalEntryModal
             isOpen={journalOpen}

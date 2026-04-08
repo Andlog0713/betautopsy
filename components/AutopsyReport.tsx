@@ -236,7 +236,7 @@ function buildWhatIfs(bets: Bet[]) {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-tier-3 rounded-lg p-3 text-xs">
+    <div className="bg-tier-3 p-3 text-xs">
       <p className="text-fg-dim mb-1">{label}</p>
       <p className={`font-mono text-fg-bright ${payload[0].value >= 0 ? 'text-win' : 'text-loss'}`}>
         ${payload[0].value.toLocaleString()}
@@ -842,7 +842,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const dotClass = sevColor === 'bleed' ? 'bg-bleed' : sevColor === 'caution' ? 'bg-caution' : 'bg-win';
               const badgeClass = sevColor === 'bleed' ? 'bg-bleed/10 text-bleed' : sevColor === 'caution' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
               return (
-              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 overflow-hidden">
                 {/* Collapsed header — always visible */}
                 <div
                   onClick={() => toggleFinding(findingId)}
@@ -938,7 +938,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             const dotClass = finding.severity === 'high' ? 'bg-bleed' : finding.severity === 'medium' ? 'bg-caution' : 'bg-scalpel';
             const badgeClass = finding.severity === 'high' ? 'bg-bleed/10 text-bleed' : finding.severity === 'medium' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
             return (
-            <div key={finding.id} className="card-tier-2 rounded-md overflow-hidden">
+            <div key={finding.id} className="card-tier-2 overflow-hidden">
               <div
                 onClick={() => toggleFinding(findingId)}
                 className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1035,7 +1035,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const leakId = `leak-${i}`;
               const isExpanded = expandedFindings.has(leakId);
               return (
-              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 overflow-hidden">
                 <div
                   onClick={() => toggleFinding(leakId)}
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1144,7 +1144,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const dotClass = pat.impact === 'positive' ? 'bg-scalpel' : pat.impact === 'negative' ? 'bg-bleed' : 'bg-fg-dim';
               const badgeClass = pat.impact === 'positive' ? 'bg-scalpel/10 text-scalpel' : pat.impact === 'negative' ? 'bg-bleed/10 text-bleed' : 'bg-fg-dim/20 text-fg-muted';
               return (
-              <div key={i} className="card-tier-2 rounded-md overflow-hidden">
+              <div key={i} className="card-tier-2 overflow-hidden">
                 <div
                   onClick={() => toggleFinding(patId)}
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -1268,7 +1268,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     if (!active || !payload?.length) return null;
                     const d = payload[0].payload as { category: string; roi: number; count: number };
                     return (
-                      <div className="bg-tier-3 rounded-lg p-3 text-xs">
+                      <div className="bg-tier-3 p-3 text-xs">
                         <p className="text-fg-bright font-medium">{d.category}</p>
                         <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi}% ROI</p>
                         <p className="text-fg-muted">{d.count} bets</p>
@@ -1308,7 +1308,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload as TimingBucket;
                       return (
-                        <div className="bg-tier-3 rounded-lg p-3 text-xs">
+                        <div className="bg-tier-3 p-3 text-xs">
                           <p className="text-fg-bright font-medium">{d.label}</p>
                           <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
@@ -1369,7 +1369,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       </div>
                       {/* Hover tooltip */}
                       {hasBets && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-tier-3 rounded-lg px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-tier-3 px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
                           <p className="text-fg-bright font-medium">{h.label}</p>
                           <p className={`font-mono ${h.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{h.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
@@ -1514,7 +1514,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload as OddsBucket;
                         return (
-                          <div className="bg-tier-3 rounded-lg p-3 text-xs">
+                          <div className="bg-tier-3 p-3 text-xs">
                             <p className="text-fg-bright font-medium">{d.label}</p>
                             <p className={`font-mono ${d.edge >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
                             <p className="text-fg-muted">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
@@ -1923,7 +1923,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="card-tier-2 rounded-md overflow-hidden">
+                      <div key={i} className="card-tier-2 overflow-hidden">
                         <div
                           onClick={() => toggleFinding(leakId)}
                           className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -2342,7 +2342,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
-                      <div key={i} className="card-tier-2 rounded-md overflow-hidden">
+                      <div key={i} className="card-tier-2 overflow-hidden">
                         <div
                           onClick={() => toggleFinding(leakId)}
                           className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
@@ -2575,7 +2575,7 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
                     <span className="text-fg-dim font-mono">{ann.stakeVsMedian.toFixed(1)}x</span>
                   </button>
                   {expandedBet === i && (
-                    <div className="bg-tier-2 rounded-sm p-3 ml-4 mt-1 space-y-1">
+                    <div className="bg-tier-2 p-3 ml-4 mt-1 space-y-1">
                       {ann.signals.map((sig, j) => (
                         <div key={j} className="flex items-center gap-2 text-xs">
                           <span className={`font-mono w-6 text-right shrink-0 ${sig.weight > 0 ? 'text-loss' : 'text-win'}`}>{sig.weight > 0 ? '+' : ''}{sig.weight}</span>

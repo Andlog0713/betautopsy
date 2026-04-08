@@ -19,13 +19,26 @@
 
 @layer base {
   html {
-    background-color: #0a0a12;
+    background-color: #0D1117;
     color-scheme: dark;
   }
 
   body {
     @apply bg-base text-fg font-sans antialiased;
+    position: relative;
   }
+
+  /* Global noise overlay — 2% fractalNoise across the entire page,
+     applied once via body::before so cards don't carry their own texture. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  }
+  body > * { position: relative; z-index: 1; }
 
   ::selection {
     background-color: rgba(0, 201, 167, 0.3);
@@ -49,22 +62,20 @@
 }
 
 @layer components {
-  /* ── Case file card ── tier-based, no uniform border */
+  /* ── Case file card ── Base surface, sharp 2px corners, no border */
   .case-card {
-    background-color: #131920;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    border-radius: 6px;
+    background-color: #111318;
+    border-radius: 2px;
     transition: background-color 180ms ease;
   }
   .case-card:hover {
-    background-color: #1A2029;
+    background-color: #161820;
   }
 
-  /* Legacy card alias — same tier-1 surface */
+  /* Legacy card alias — same Base surface */
   .card {
-    background-color: #131920;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    border-radius: 6px;
+    background-color: #111318;
+    border-radius: 2px;
   }
 
   /* ── Buttons ── */
@@ -139,12 +150,11 @@
     @apply bg-base p-3;
   }
 
-  /* ── Finding card ── tier 1 surface w/ left teal accent */
+  /* ── Finding card ── Base surface w/ left teal accent, sharp corners */
   .finding-card {
-    background-color: #131920;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    border-left: 1px solid rgba(0, 201, 167, 0.5);
-    border-radius: 0 6px 6px 0;
+    background-color: #111318;
+    border-left: 2px solid rgba(0, 201, 167, 0.6);
+    border-radius: 0;
     padding: 1.25rem;
   }
 
@@ -192,57 +202,77 @@
      selective accent borders, and texture overlays.
      ───────────────────────────────────────────────────────── */
 
-  /* Page background — Tier 0 */
+  /* Page background — Midnight (Tier 0) */
   .dash-page-bg {
     background-color: #0D1117;
   }
 
-  /* Tier 1 — primary card surface w/ noise */
+  /* Tier 1 — Base surface, sharp 2px, no border, no per-card noise */
   .card-tier-1 {
-    background-color: #131920;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    border-radius: 6px;
+    background-color: #111318;
+    border-radius: 2px;
     transition: background-color 180ms ease;
   }
   .card-tier-1:hover {
-    background-color: #1A2029;
+    background-color: #161820;
   }
 
-  /* Tier 2 — secondary / nested surface w/ noise */
+  /* Tier 2 — Surface, sharp 2px */
   .card-tier-2 {
-    background-color: #1A2029;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    border-radius: 6px;
+    background-color: #161820;
+    border-radius: 2px;
     transition: background-color 180ms ease;
   }
   .card-tier-2:hover {
-    background-color: #222A35;
+    background-color: #1C1F28;
   }
 
-  /* Accent card — left teal border only (Discipline Score, streak) */
+  /* Accent card — 2px left scalpel border (forensic active accent) */
   .card-accent-teal {
-    border-left: 1px solid #00C9A7;
+    border-left: 2px solid rgba(0, 201, 167, 0.5);
     transition: border-left-color 180ms ease;
   }
-
-  /* Grid-paper overlay — sparingly applied (Discipline Score hero) */
-  .grid-paper-bg {
-    background-image:
-      linear-gradient(rgba(0, 201, 167, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 201, 167, 0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
+  .card-accent-teal:hover {
+    border-left-color: #00C9A7;
   }
 
-  /* Compose Tier 1 + grid paper for hero card */
-  .card-hero {
-    background-color: #131920;
+  /* Grid-paper overlay — 24px grid, teal at 2.5% — only on hero/auth panels */
+  .grid-paper-bg {
     background-image:
-      linear-gradient(rgba(0, 201, 167, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 201, 167, 0.03) 1px, transparent 1px),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    background-size: 20px 20px, 20px 20px, auto;
-    border-radius: 6px;
-    border-left: 1px solid #00C9A7;
+      linear-gradient(rgba(0, 201, 167, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 201, 167, 0.025) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Hero "examination surface" — Base + grid paper + left scalpel rule */
+  .card-hero {
+    background-color: #111318;
+    background-image:
+      linear-gradient(rgba(0, 201, 167, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 201, 167, 0.025) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border-left: 2px solid #00C9A7;
+    border-radius: 0;
+  }
+
+  /* Forensic case-header label — JetBrains-style mono, 3px tracking */
+  .case-header {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-weight: 400;
+    font-size: 9px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #515968;
+    display: block;
+  }
+  .case-header-teal {
+    color: #00C9A7;
+  }
+
+  /* Section divider — the canonical break between forensic sections */
+  .section-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
   }
 
   /* Interactive surfaces — bottom border only */
@@ -276,26 +306,29 @@
   }
 
   /* Typography — dashboard hierarchy */
+  /* All numerical displays use mono per brand rule */
   .data-number {
     font-family: var(--font-mono), ui-monospace, monospace;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
+  /* Forensic case-header style: mono, 3px tracking, dim */
   .data-label-sm {
-    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-family: var(--font-mono), ui-monospace, monospace;
     font-weight: 400;
-    font-size: 11px;
-    line-height: 1.2;
+    font-size: 9px;
+    line-height: 1.4;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: #6B7280;
+    letter-spacing: 3px;
+    color: #515968;
   }
   .data-body {
-    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-family: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
     font-weight: 400;
     font-size: 14px;
-    color: #8B95A5;
+    line-height: 1.55;
+    color: #848D9A;
   }
 
   /* Discipline ring glow */

@@ -103,48 +103,47 @@ export default function DisciplineScoreCard({ currentScore, previousScore, repor
   const dashLength = (score / 100) * circumference;
 
   return (
-    <div className="card-hero py-8 px-6 sm:px-8">
-      <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
+    <div className="border-l-2 border-l-scalpel pl-6 py-4">
+      <p className="case-header case-header-teal mb-3">DISCIPLINE SCORE // /100</p>
+      <div className="flex flex-col sm:flex-row gap-10 items-start">
         {/* Ring */}
-        <div className="relative shrink-0 ring-glow">
-          <svg width="128" height="128" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#1A2029" strokeWidth="8" />
+        <div className="relative shrink-0">
+          <svg width="140" height="140" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#161820" strokeWidth="6" />
             <circle
               cx="60" cy="60" r="52" fill="none"
               stroke={strokeColor(score)}
-              strokeWidth="8" strokeLinecap="round"
+              strokeWidth="6" strokeLinecap="square"
               strokeDasharray={`${dashLength} ${circumference}`}
               transform="rotate(-90 60 60)"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="data-number text-4xl text-fg-bright leading-none">{mask(score.toString())}</span>
-            <span className="data-number text-[10px] text-fg-dim mt-1">/100</span>
+            <span className="data-number text-5xl text-fg-bright leading-none">{mask(score.toString())}</span>
           </div>
         </div>
 
         {/* Info */}
-        <div className="flex-1 text-center sm:text-left">
-          <p className="data-label-sm mb-2">Discipline Score</p>
-          <p className={`text-xs ${scoreColor(score)}`}>{scoreLabel(score)}</p>
+        <div className="flex-1">
+          <p className={`text-sm font-medium ${scoreColor(score)} tracking-tight`}>{scoreLabel(score)}</p>
 
           {/* Delta + sparkline row */}
-          <div className="flex items-center gap-4 mt-4 justify-center sm:justify-start">
+          <div className="flex items-center gap-6 mt-4">
             {delta !== null && delta !== 0 && (
-              <span className={`text-sm ${delta > 0 ? 'change-up' : 'change-down'}`}>
+              <span className={`text-base ${delta > 0 ? 'change-up' : 'change-down'}`}>
                 {delta > 0 ? '↑' : '↓'} {delta > 0 ? '+' : ''}{delta} pts
               </span>
             )}
             {delta === 0 && (
-              <span className="text-sm data-number text-fg-muted">— No change</span>
+              <span className="text-sm data-number text-fg-muted">— no change</span>
             )}
             {history.length >= 2 && <Sparkline data={history} />}
           </div>
 
           {/* Subtitle */}
-          <p className="data-body text-xs mt-3 text-fg-dim">
-            Based on {reportCount} report{reportCount !== 1 ? 's' : ''}
-            {reportCount === 1 && '. Run another to see your trend.'}
+          <p className="case-header mt-5">
+            BASED ON {reportCount} REPORT{reportCount !== 1 ? 'S' : ''}
+            {reportCount === 1 && ' // RUN ANOTHER TO SEE TREND'}
           </p>
         </div>
       </div>

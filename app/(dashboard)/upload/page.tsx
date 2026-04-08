@@ -297,7 +297,7 @@ export default function UploadPage() {
                 <p className="text-fg-muted text-xs">We auto-detect columns from Pikkit, DraftKings, FanDuel, and generic CSV exports.</p>
                 <div className="flex flex-wrap gap-1.5">
                   {['date', 'sport', 'bet_type', 'description', 'odds', 'stake', 'result', 'profit'].map(col => (
-                    <span key={col} className="font-mono text-[10px] bg-base bg-tier-2 rounded-sm px-1.5 py-0.5">{col}</span>
+                    <span key={col} className="font-mono text-[10px] bg-base bg-tier-2 px-1.5 py-0.5">{col}</span>
                   ))}
                 </div>
               </div>
