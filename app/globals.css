@@ -174,6 +174,139 @@
     display: none;
   }
 
+  /* ─────────────────────────────────────────────────────────
+     Dashboard redesign — tier-based surface system
+     Replaces uniform cards with background contrast,
+     selective accent borders, and texture overlays.
+     ───────────────────────────────────────────────────────── */
+
+  /* Page background — Tier 0 */
+  .dash-page-bg {
+    background-color: #0D1117;
+  }
+
+  /* Tier 1 — primary card surface w/ noise */
+  .card-tier-1 {
+    background-color: #131920;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    border-radius: 6px;
+    transition: background-color 180ms ease;
+  }
+  .card-tier-1:hover {
+    background-color: #1A2029;
+  }
+
+  /* Tier 2 — secondary / nested surface w/ noise */
+  .card-tier-2 {
+    background-color: #1A2029;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    border-radius: 6px;
+    transition: background-color 180ms ease;
+  }
+  .card-tier-2:hover {
+    background-color: #222A35;
+  }
+
+  /* Accent card — left teal border only (Discipline Score, streak) */
+  .card-accent-teal {
+    border-left: 1px solid #00C9A7;
+    transition: border-left-color 180ms ease;
+  }
+
+  /* Grid-paper overlay — sparingly applied (Discipline Score hero) */
+  .grid-paper-bg {
+    background-image:
+      linear-gradient(rgba(0, 201, 167, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 201, 167, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Compose Tier 1 + grid paper for hero card */
+  .card-hero {
+    background-color: #131920;
+    background-image:
+      linear-gradient(rgba(0, 201, 167, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 201, 167, 0.03) 1px, transparent 1px),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 20px 20px, 20px 20px, auto;
+    border-radius: 6px;
+    border-left: 1px solid #00C9A7;
+  }
+
+  /* Interactive surfaces — bottom border only */
+  .interactive-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: border-bottom-color 180ms ease, background-color 180ms ease;
+  }
+  .interactive-row:hover {
+    border-bottom-color: #00C9A7;
+  }
+
+  /* Button — translate hover, no opacity */
+  .btn-shift {
+    transition: transform 150ms ease, background-color 150ms ease;
+  }
+  .btn-shift:hover {
+    transform: translateY(-1px);
+    background-color: #222A35;
+  }
+
+  /* Animated underline link */
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 2px;
+    transition: text-underline-offset 180ms ease, text-decoration-color 180ms ease;
+  }
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+    text-underline-offset: 4px;
+  }
+
+  /* Typography — dashboard hierarchy */
+  .data-number {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .data-label-sm {
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #6B7280;
+  }
+  .data-body {
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    color: #8B95A5;
+  }
+
+  /* Discipline ring glow */
+  .ring-glow {
+    filter: drop-shadow(0 0 8px rgba(0, 201, 167, 0.15));
+  }
+
+  /* Change indicator — teal mono */
+  .change-up {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-weight: 500;
+    color: #00C9A7;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .change-down {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-weight: 500;
+    color: #C4463A;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
   /* ── Quiz animations ── */
   .quiz-enter { animation: quizSlideIn 300ms ease-out; }
   .quiz-exit { animation: quizSlideOut 200ms ease-in forwards; }

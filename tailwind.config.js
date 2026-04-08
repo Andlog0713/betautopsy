@@ -19,6 +19,14 @@ module.exports = {
           elevated: '#222232',
           overlay: '#222232',
         },
+        // Dashboard redesign tier system — background contrast instead of borders
+        tier: {
+          0: '#0D1117', // page background
+          1: '#131920', // primary cards
+          2: '#1A2029', // secondary / nested
+          3: '#222A35', // hover
+          4: '#2A3340', // active / pressed
+        },
         border: {
           subtle: 'rgba(255, 255, 255, 0.06)',
           DEFAULT: 'rgba(255, 255, 255, 0.08)',

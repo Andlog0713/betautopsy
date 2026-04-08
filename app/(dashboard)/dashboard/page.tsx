@@ -282,10 +282,10 @@ export default function DashboardPage() {
       </div>
 
       {!hasBets ? (
-        <div className="bg-surface-1 border border-border-subtle rounded-md p-12 text-center">
+        <div className="card-tier-1 p-12 text-center">
           <div className="mb-4"><Target size={40} className="text-fg-muted mx-auto" /></div>
           <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet</h2>
-          <p className="text-fg-muted mb-6 max-w-md mx-auto">
+          <p className="data-body mb-6 max-w-md mx-auto">
             You&apos;ve got bets to upload and truths to face. Let&apos;s go.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -305,10 +305,10 @@ export default function DashboardPage() {
 
           {/* ── Priority nudge banner ── */}
           {nudge && (
-            <div className="flex items-center gap-3 bg-surface-1 border border-border-subtle rounded-lg px-4 py-3 mb-6">
+            <div className="flex items-center gap-3 card-tier-2 card-accent-teal pl-4 pr-4 py-3 mb-6 rounded-r-md">
               {nudge.icon}
-              <p className="text-sm text-fg-muted flex-1">{nudge.message}</p>
-              <Link href={nudge.href} className="ml-auto text-sm text-scalpel hover:text-fg-bright transition-colors whitespace-nowrap font-mono">
+              <p className="data-body flex-1">{nudge.message}</p>
+              <Link href={nudge.href} className="ml-auto text-sm text-scalpel link-underline whitespace-nowrap font-mono">
                 {nudge.action} →
               </Link>
             </div>
@@ -317,25 +317,25 @@ export default function DashboardPage() {
           {/* ── Hero metric: Net P&L ── */}
           <div className="mb-10 relative">
             <div className="absolute -top-8 right-0"><EyeToggle /></div>
-            <p className="text-sm text-fg-muted mb-1">Net P&L</p>
-            <p className={`text-5xl font-bold tracking-tight font-mono tabular-nums ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
+            <p className="data-label-sm mb-2">Net P&amp;L</p>
+            <p className={`text-5xl data-number ${stats.netPnL >= 0 ? 'text-win' : 'text-loss'}`}>
               {mask('x') === 'x'
                 ? <>{stats.netPnL >= 0 ? '+' : '-'}$<NumberTicker value={Math.round(Math.abs(stats.netPnL))} /></>
                 : mask(`${stats.netPnL >= 0 ? '+' : '-'}$${Math.round(Math.abs(stats.netPnL)).toLocaleString()}`)
               }
             </p>
-            <p className="text-sm text-fg-muted mt-2">
+            <p className="data-body mt-2">
               across {mask(stats.totalBets.toLocaleString())} bets · {mask(`$${Math.round(stats.totalWagered).toLocaleString()}`)} wagered · {mask(`$${Math.round(stats.avgStake).toLocaleString()}`)} avg stake
             </p>
           </div>
 
           {/* ── Key metrics strip (borderless dividers + cards mix) ── */}
-          <div className="flex flex-col sm:flex-row sm:items-start gap-6 mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-stretch gap-6 mb-10">
             {/* Borderless stats with dividers */}
-            <div className="flex items-center divide-x divide-border-subtle">
+            <div className="flex items-center divide-x divide-white/[0.04]">
               <div className="pr-6">
-                <p className="text-sm text-fg-muted mb-0.5">Win Rate</p>
-                <p className={`text-xl font-semibold font-mono tabular-nums ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
+                <p className="data-label-sm mb-1">Win Rate</p>
+                <p className={`text-xl data-number ${stats.winRate >= 50 ? 'text-win' : 'text-loss'}`}>
                   {mask('x') === 'x'
                     ? <><NumberTicker value={parseFloat(stats.winRate.toFixed(1))} />%</>
                     : mask(`${stats.winRate.toFixed(1)}%`)
@@ -343,8 +343,8 @@ export default function DashboardPage() {
                 </p>
               </div>
               <div className="px-6">
-                <p className="text-sm text-fg-muted mb-0.5">ROI</p>
-                <p className={`text-xl font-semibold font-mono tabular-nums ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
+                <p className="data-label-sm mb-1">ROI</p>
+                <p className={`text-xl data-number ${(latest?.roi_percent ?? stats.netPnL / Math.max(stats.totalWagered, 1) * 100) >= 0 ? 'text-win' : 'text-loss'}`}>
                   {mask('x') === 'x'
                     ? <><NumberTicker value={parseFloat(latest ? latest.roi_percent.toFixed(1) : (stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1))} />%</>
                     : latest ? mask(`${latest.roi_percent.toFixed(1)}%`) : mask(`${(stats.netPnL / Math.max(stats.totalWagered, 1) * 100).toFixed(1)}%`)
@@ -353,8 +353,8 @@ export default function DashboardPage() {
               </div>
               {latest && (
                 <div className="pl-6">
-                  <p className="text-sm text-fg-muted mb-0.5">Emotion</p>
-                  <p className="text-xl font-semibold font-mono tabular-nums text-fg-bright">
+                  <p className="data-label-sm mb-1">Emotion</p>
+                  <p className="text-xl data-number text-fg-bright">
                     {mask('x') === 'x'
                       ? <NumberTicker value={latest.tilt_score} />
                       : mask(latest.tilt_score.toString())
@@ -364,27 +364,27 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Bordered card stats */}
+            {/* Tier 2 mini cards — no border, compact padding */}
             {latest && (
-              <div className="flex gap-3">
-                <div className="bg-surface-1 border border-border-subtle rounded-md px-5 py-3">
-                  <p className="text-sm text-fg-muted mb-0.5">Grade</p>
-                  <p className={`text-xl font-bold font-mono ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
+              <div className="flex gap-2">
+                <div className="card-tier-2 px-5 py-4">
+                  <p className="data-label-sm mb-1">Grade</p>
+                  <p className={`text-xl data-number ${gradeColor(latest.overall_grade)}`}>{mask(latest.overall_grade)}</p>
                 </div>
                 {latest.discipline_score !== null && (
-                  <div className="bg-surface-1 border border-border-subtle rounded-md px-5 py-3">
-                    <p className="text-sm text-fg-muted mb-0.5">Discipline</p>
-                    <p className="text-xl font-bold font-mono text-fg-bright">{mask((latest.discipline_score ?? 0).toString())}</p>
+                  <div className="card-tier-2 px-5 py-4">
+                    <p className="data-label-sm mb-1">Discipline</p>
+                    <p className="text-xl data-number text-fg-bright">{mask((latest.discipline_score ?? 0).toString())}</p>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* ── Two-column bento grid ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* ── Left column: primary content ── */}
-            <div className="lg:col-span-2 space-y-4">
+          {/* ── Two-column bento grid: hero (wide) + secondary stack (narrow) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* ── Left column: primary content (8 / 12 — visually dominant) ── */}
+            <div className="lg:col-span-8 space-y-4">
               {/* Discipline Score hero widget */}
               {latest && isPaid && (
                 <DisciplineScoreCard
@@ -404,10 +404,10 @@ export default function DashboardPage() {
 
               {/* First Autopsy CTA */}
               {stats.reportCount === 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-8 text-center space-y-4">
-                  <div><FlaskConical size={32} className="text-fg-muted mx-auto" /></div>
+                <div className="card-hero py-10 px-8 text-center space-y-4">
+                  <div><FlaskConical size={32} className="text-scalpel mx-auto" /></div>
                   <h2 className="font-bold text-2xl text-fg-bright">Run Your First Autopsy</h2>
-                  <p className="text-fg-muted max-w-md mx-auto">
+                  <p className="data-body max-w-md mx-auto">
                     You&apos;ve got {stats.totalBets} bets loaded. Get a full behavioral
                     analysis in about 20 seconds.
                   </p>
@@ -419,9 +419,9 @@ export default function DashboardPage() {
 
               {/* Paid user without snapshots */}
               {isPaid && !latest && stats.reportCount > 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-6 text-center space-y-3">
+                <div className="card-tier-1 card-accent-teal p-6 text-center space-y-3">
                   <p className="text-fg-bright font-medium">Run a fresh autopsy to start tracking your progress</p>
-                  <p className="text-fg-muted text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
+                  <p className="data-body text-sm">Your reports will generate progress snapshots: emotion score, ROI, and discipline trends over time.</p>
                   <Link href="/reports?run=true" className="btn-primary inline-block text-sm font-mono">Run Autopsy</Link>
                 </div>
               )}
@@ -430,8 +430,8 @@ export default function DashboardPage() {
               {!isPaid && stats.reportCount > 0 && (
                 <div className="relative">
                   <div className="blur-sm pointer-events-none opacity-40">
-                    <div className="bg-surface-1 border border-border-subtle rounded-md p-6">
-                      <h3 className="font-semibold text-lg mb-3 text-fg-bright">Progress Over Time</h3>
+                    <div className="card-tier-1 p-6">
+                      <p className="data-label-sm mb-3">Progress Over Time</p>
                       <div className="space-y-2">
                         {[65, 52, 47, 38].map((h, i) => (
                           <div key={i} className="flex items-center gap-3">
@@ -456,17 +456,17 @@ export default function DashboardPage() {
               {/* Milestones (paid) */}
               {isPaid && snapshots.length > 0 && (
                 <div className="mt-6">
-                  <p className="text-xs text-fg-dim uppercase tracking-widest mb-4">Milestones</p>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <p className="data-label-sm mb-4">Milestones</p>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {milestones.map((m) => (
                       <div
                         key={m.id}
-                        className={`flex items-center gap-2 bg-surface-1 border border-border-subtle rounded-lg px-3 py-2 whitespace-nowrap shrink-0 ${m.earned ? '' : 'opacity-40'}`}
+                        className={`flex items-center gap-2 card-tier-2 px-3 py-2 whitespace-nowrap shrink-0 ${m.earned ? '' : 'opacity-40'}`}
                       >
                         {m.earned ? m.icon : <Lock size={14} className="text-fg-dim" />}
                         <div>
-                          <p className={`text-sm font-medium ${m.earned ? 'text-fg-bright' : 'text-fg-muted'}`}>{m.label}</p>
-                          <p className="text-xs text-fg-dim">
+                          <p className={`text-sm ${m.earned ? 'text-fg-bright' : 'text-fg-muted'}`}>{m.label}</p>
+                          <p className="text-[11px] text-fg-dim data-number">
                             {m.earned && m.date
                               ? new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                               : m.earned ? 'Earned' : 'Locked'}
@@ -479,62 +479,67 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ── Right column: secondary content ── */}
-            <div className="space-y-4">
-              {/* Streak counter (paid) — compact */}
+            {/* ── Right column: narrower secondary stack (4 / 12) ── */}
+            <div className="lg:col-span-4 space-y-3">
+              {/* Streak counter (paid) — Tier 2, accent left border, compact */}
               {isPaid && snapshots.length > 0 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-3">
+                <div className="card-tier-2 card-accent-teal py-4 px-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={streakCount >= 10 ? 'animate-pulse' : ''}>
-                      {streakCount >= 10 ? <><Flame size={16} className="text-orange-400" /><Flame size={16} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={16} className="text-orange-400" /> : <Calendar size={16} className="text-fg-muted" />}
+                      {streakCount >= 10 ? <><Flame size={14} className="text-orange-400" /><Flame size={14} className="text-orange-400" /></> : streakCount >= 3 ? <Flame size={14} className="text-orange-400" /> : <Calendar size={14} className="text-fg-muted" />}
                     </span>
-                    <span className="text-sm text-fg-bright font-medium font-mono">
-                      {streakCount > 0 ? `${streakCount}-week streak` : 'No streak'}
+                    <span className="data-label-sm">
+                      {streakCount > 0 ? 'Streak' : 'No streak'}
                     </span>
                     {streakBest > 1 && (
-                      <span className="font-mono text-[10px] text-fg-dim ml-auto">best: {streakBest}</span>
+                      <span className="data-number text-[10px] text-fg-dim ml-auto">best {streakBest}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-fg-dim font-mono">
-                    <span className="flex items-center gap-1"><Snowflake size={10} className="text-cyan-400" /> {streakFreezes} freeze{streakFreezes !== 1 ? 's' : ''}</span>
+                  <p className="data-number text-lg text-fg-bright leading-none mb-2">
+                    {streakCount > 0 ? `${streakCount}w` : '—'}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] text-fg-dim data-number">
+                    <span className="flex items-center gap-1"><Snowflake size={10} className="text-cyan-400" /> {streakFreezes}</span>
                     <span>·</span>
                     <span>
                       {streakWeeks >= 2
-                        ? `${streakWeeks} consecutive`
-                        : `${snapshots.length} report${snapshots.length !== 1 ? 's' : ''} total`}
+                        ? `${streakWeeks} consec`
+                        : `${snapshots.length} total`}
                     </span>
                   </div>
                 </div>
               )}
 
-              {/* Bankroll (if set) */}
+              {/* Bankroll (if set) — Tier 2, no border, compact */}
               {bankroll && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-4">
-                  <span className="data-label block">Bankroll</span>
-                  <p className="font-mono text-lg text-fg-bright">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
-                  <Link href="/settings" className="font-mono text-xs text-fg-muted hover:text-scalpel transition-colors tracking-wider mt-1 inline-block">Edit</Link>
+                <div className="card-tier-2 py-4 px-5">
+                  <p className="data-label-sm mb-1">Bankroll</p>
+                  <p className="data-number text-lg text-fg-bright leading-none">{mask(`$${Number(bankroll).toLocaleString()}`)}</p>
+                  <Link href="/settings" className="data-number text-[11px] text-fg-muted link-underline mt-2 inline-block">Edit</Link>
                 </div>
               )}
 
-              {/* Journal progress */}
+              {/* Journal progress — Tier 2, no border */}
               {journalCount >= 10 && (
-                <div className="bg-surface-1 border border-border-subtle rounded-md p-4">
-                  <p className="text-fg-bright text-sm font-medium mb-1">{journalCount} journal entries</p>
-                  <p className="text-fg-muted text-xs font-mono">
+                <div className="card-tier-2 py-4 px-5">
+                  <p className="data-label-sm mb-1">Journal</p>
+                  <p className="data-number text-lg text-fg-bright leading-none">{journalCount}</p>
+                  <p className="text-fg-muted text-[11px] data-number mt-2">
                     {journalCount >= 30
-                      ? 'Correlation analysis available on your next autopsy'
-                      : `${30 - journalCount} more until correlation insights`
+                      ? 'Correlation ready'
+                      : `${30 - journalCount} until insights`
                     }
                   </p>
-                  <button onClick={() => setJournalOpen(true)} className="font-mono text-xs text-scalpel hover:underline mt-2 inline-block">Log entry →</button>
+                  <button onClick={() => setJournalOpen(true)} className="data-number text-[11px] text-scalpel link-underline mt-2 inline-block">Log entry →</button>
                 </div>
               )}
 
-              {/* Free tier upgrade CTA */}
+              {/* Free tier upgrade CTA — accent teal left border, Tier 1 */}
               {!isPaid && (
-                <div className="bg-surface-1 border border-scalpel/20 rounded-md p-4 space-y-2">
+                <div className="card-tier-1 card-accent-teal py-5 px-5 space-y-2">
+                  <p className="data-label-sm">Pro</p>
                   <p className="text-fg-bright text-sm font-medium">Track your progress</p>
-                  <p className="text-fg-muted text-xs">
+                  <p className="text-fg-muted text-xs leading-relaxed">
                     Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks.
                     Your first report was a snapshot. Your fifth is proof.
                   </p>
@@ -542,18 +547,18 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Quick actions — plain text links, no card wrapper */}
-              <div className="pt-2">
-                <p className="text-xs text-fg-dim uppercase tracking-widest mb-3">Quick Actions</p>
-                <div className="space-y-2">
-                  <Link href="/upload" className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors">
+              {/* Quick actions — plain text links, no card wrapper, bottom-border interactives */}
+              <div className="pt-4">
+                <p className="data-label-sm mb-3">Quick Actions</p>
+                <div>
+                  <Link href="/upload" className="interactive-row flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright py-2.5">
                     <Upload size={14} /> Upload new bets
                   </Link>
-                  <Link href="/reports" className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors">
+                  <Link href="/reports" className="interactive-row flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright py-2.5">
                     <FlaskConical size={14} /> Run new autopsy
                   </Link>
-                  <button onClick={() => setJournalOpen(true)} className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright transition-colors text-left">
-                    <PenLine size={14} /> Log check-in {journalCount > 0 && <span className="text-scalpel text-xs">({journalCount})</span>}
+                  <button onClick={() => setJournalOpen(true)} className="interactive-row w-full flex items-center gap-2 text-sm text-fg-muted hover:text-fg-bright text-left py-2.5">
+                    <PenLine size={14} /> Log check-in {journalCount > 0 && <span className="text-scalpel text-xs data-number">({journalCount})</span>}
                   </button>
                 </div>
               </div>
