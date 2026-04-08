@@ -1099,7 +1099,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 { label: 'Bet size swings', hint: 'How much your stakes vary. Higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
                 { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
                 { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
-                { label: 'Knowing when to stop', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
+                { label: 'Session overstaying', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
                 { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
                 { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
               ].map(signal => (
@@ -1752,7 +1752,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ── Session Analysis ── */}
       {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
-        <SessionAnalysisSection sessionData={analysis.session_detection} />
+        <SessionAnalysisSection sessionData={analysis.session_detection} bets={bets} />
       )}
 
       {/* ── Bet-by-Bet Annotations ── */}
@@ -1781,11 +1781,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               />
             </div>
             <p className="text-fg-muted text-xs">
-              {analysis.edge_profile.sharp_score >= 60
-                ? 'You have genuine edges in some areas. Focus your volume there.'
+              {analysis.edge_profile.sharp_score >= 75
+                ? 'Elite-level betting skill. You consistently find value.'
+                : analysis.edge_profile.sharp_score >= 60
+                ? 'Above average. You have real edges in specific areas.'
+                : analysis.edge_profile.sharp_score >= 45
+                ? 'Moderate skill. Some promising spots, but also betting without clear edge.'
                 : analysis.edge_profile.sharp_score >= 30
-                ? 'Some promising spots, but more data needed to confirm real edges.'
-                : 'No strong edges detected yet. Focus on reducing leaks first.'}
+                ? 'Below average. Focus volume on your 1-2 profitable areas.'
+                : 'Significant room for improvement in bet selection.'}
             </p>
             <p className="text-fg-muted text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
           </div>
@@ -2157,6 +2161,59 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* TL;DR — Your 3 Moves */}
+      {!isPartialReport && (() => {
+        const stopItems: string[] = [];
+        const startItems: string[] = [];
+        const continueItems: string[] = [];
+
+        // STOP: worst strategic leaks
+        const worstLeaks = [...(analysis.strategic_leaks ?? [])].sort((a, b) => a.roi_impact - b.roi_impact).slice(0, 2);
+        worstLeaks.forEach(l => stopItems.push(l.category));
+        const lateNightPattern = (analysis.behavioral_patterns ?? []).find(p => p.pattern_name.toLowerCase().includes('late night') && p.impact === 'negative');
+        if (lateNightPattern && stopItems.length < 3) stopItems.push('Late-night betting');
+
+        // START: profitable areas + positive patterns
+        const profitableAreas = analysis.edge_profile?.profitable_areas?.slice(0, 2) ?? [];
+        profitableAreas.forEach(a => startItems.push(`More ${a.category}`));
+        const positivePatterns = (analysis.behavioral_patterns ?? []).filter(p => p.impact === 'positive').slice(0, 1);
+        positivePatterns.forEach(p => startItems.push(p.pattern_name));
+
+        // CONTINUE: pertinent negatives + discipline
+        const topNegatives = (analysis.pertinent_negatives ?? []).slice(0, 2);
+        topNegatives.forEach(n => continueItems.push(`No ${n.pattern.toLowerCase()}`));
+        if ((analysis.emotion_score ?? 100) < 40 && continueItems.length < 3) continueItems.push('Emotional discipline');
+
+        const hasContent = stopItems.length > 0 || startItems.length > 0 || continueItems.length > 0;
+        if (!hasContent) return null;
+
+        const columns = [
+          stopItems.length > 0 ? { label: 'STOP', items: stopItems.slice(0, 3), color: 'loss' as const } : null,
+          startItems.length > 0 ? { label: 'START', items: startItems.slice(0, 3), color: 'win' as const } : null,
+          continueItems.length > 0 ? { label: 'CONTINUE', items: continueItems.slice(0, 3), color: 'scalpel' as const } : null,
+        ].filter(Boolean) as { label: string; items: string[]; color: 'loss' | 'win' | 'scalpel' }[];
+
+        const colorMap = { loss: 'border-l-loss text-loss', win: 'border-l-win text-win', scalpel: 'border-l-scalpel text-scalpel' };
+
+        return (
+          <div className="border border-border-subtle p-[18px] mt-6 mb-6">
+            <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-4">YOUR 3 MOVES</p>
+            <div className={`grid grid-cols-1 sm:grid-cols-${columns.length} gap-3`}>
+              {columns.map(col => (
+                <div key={col.label} className={`border-l-[3px] ${colorMap[col.color].split(' ')[0]} pl-3`}>
+                  <p className={`font-mono text-[10px] ${colorMap[col.color].split(' ')[1]} tracking-[2px] mb-1.5`}>{col.label}</p>
+                  <ul className="space-y-1">
+                    {col.items.map((item, i) => (
+                      <li key={i} className="text-[12px] text-fg-muted">&bull; {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="case-card p-5 text-center space-y-3 mt-4">
         <p className="text-fg-bright font-medium">What happens next?</p>
         <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
@@ -2405,7 +2462,11 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
             <div key={c} className="vitals-cell text-center">
               <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold mb-1 inline-block ${CLASSIFICATION_COLORS[c]}`}>{c}</span>
               <div className="font-mono text-sm text-fg-bright">{d.count} bets</div>
-              <div className={`font-mono text-xs font-medium ${d.roi >= 0 ? 'text-win' : 'text-loss'}`}>{d.roi >= 0 ? '+' : ''}{d.roi.toFixed(1)}% ROI</div>
+              {d.count >= 15 ? (
+                <div className={`font-mono text-xs font-medium ${d.roi >= 0 ? 'text-win' : 'text-loss'}`}>{d.roi >= 0 ? '+' : ''}{d.roi.toFixed(1)}% ROI</div>
+              ) : (
+                <div className="font-mono text-[10px] text-fg-dim">too few for ROI</div>
+              )}
             </div>
           );
         })}
@@ -2492,11 +2553,77 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
   );
 }
 
+// ── Session Bet Timeline ──
+
+function SessionBetTimeline({ session, bets, show, setShow }: { session: import('@/types').DetectedSession; bets: Bet[]; show: boolean; setShow: (v: boolean) => void }) {
+  const sessionBets = session.betIndices.map(idx => bets[idx]).filter(Boolean);
+  if (sessionBets.length < 2) return null;
+
+  return (
+    <div className="mt-3 border-t border-border-subtle pt-3">
+      <button onClick={() => setShow(!show)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors">
+        {show ? 'HIDE' : 'VIEW'} SESSION BETS ({sessionBets.length})
+      </button>
+      <div style={{ maxHeight: show ? '800px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+        <div className="mt-2">
+          {sessionBets.map((bet, i) => {
+            const stake = Math.abs(Number(bet.stake));
+            const profit = Number(bet.profit);
+            const isLoss = bet.result === 'loss';
+            const time = new Date(bet.placed_at);
+            const timeStr = `${time.getUTCHours() % 12 || 12}:${String(time.getUTCMinutes()).padStart(2, '0')} ${time.getUTCHours() >= 12 ? 'PM' : 'AM'}`;
+
+            // Stake escalation annotation
+            let stakeAnnotation: string | null = null;
+            if (i > 0) {
+              const prevStake = Math.abs(Number(sessionBets[i - 1].stake));
+              if (prevStake > 0 && stake > prevStake * 1.5) {
+                stakeAnnotation = `↑ ${(stake / prevStake).toFixed(1)}x`;
+              } else if (prevStake > 0 && stake < prevStake * 0.6) {
+                stakeAnnotation = `↓ ${(stake / prevStake).toFixed(1)}x`;
+              }
+            }
+
+            // Time gap from previous bet
+            let timeGap: string | null = null;
+            if (i > 0) {
+              const prevTime = new Date(sessionBets[i - 1].placed_at).getTime();
+              const gap = Math.round((time.getTime() - prevTime) / 60000);
+              if (gap > 0) timeGap = gap >= 60 ? `${Math.floor(gap / 60)}h ${gap % 60}m later` : `${gap}m later`;
+            }
+
+            return (
+              <div key={bet.id || i}>
+                {timeGap && <p className="py-0.5 pl-8 text-[9px] text-fg-dim italic">{timeGap}</p>}
+                <div className="py-1.5 flex items-center gap-3 font-mono text-[11px]">
+                  <span className="text-fg-dim w-[56px] shrink-0">{timeStr}</span>
+                  <span className="text-fg truncate flex-1 min-w-0">{bet.description}</span>
+                  <span className="text-fg-bright w-[48px] text-right shrink-0">
+                    ${stake.toFixed(0)}
+                    {stakeAnnotation && (
+                      <span className={`ml-1 text-[9px] font-semibold ${stakeAnnotation.startsWith('↑') ? 'text-loss' : 'text-win'}`}>{stakeAnnotation}</span>
+                    )}
+                  </span>
+                  <span className={`w-[52px] text-right shrink-0 font-semibold ${isLoss ? 'text-loss' : 'text-win'}`}>
+                    {profit >= 0 ? '+' : '-'}${Math.abs(profit).toFixed(0)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Session Analysis Section ──
 
-function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types').SessionDetectionResult }) {
+function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/types').SessionDetectionResult; bets: Bet[] }) {
   const [showAll, setShowAll] = useState(false);
   const [showHeated, setShowHeated] = useState(false);
+  const [showBestBets, setShowBestBets] = useState(false);
+  const [showWorstBets, setShowWorstBets] = useState(false);
 
   const gradeColors: Record<string, string> = {
     A: 'bg-win/20 text-win',
@@ -2596,6 +2723,9 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
             {sessionData.bestSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
             ))}
+            {sessionData.bestSession.betIndices.length >= 2 && bets.length > 0 && (
+              <SessionBetTimeline session={sessionData.bestSession} bets={bets} show={showBestBets} setShow={setShowBestBets} />
+            )}
           </div>
         )}
         {sessionData.worstSession && (
@@ -2609,6 +2739,9 @@ function SessionAnalysisSection({ sessionData }: { sessionData: import('@/types'
             {sessionData.worstSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1 text-loss/70">- {r}</p>
             ))}
+            {sessionData.worstSession.betIndices.length >= 2 && bets.length > 0 && (
+              <SessionBetTimeline session={sessionData.worstSession} bets={bets} show={showWorstBets} setShow={setShowWorstBets} />
+            )}
           </div>
         )}
       </div>

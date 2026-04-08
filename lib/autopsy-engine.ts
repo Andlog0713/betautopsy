@@ -1009,6 +1009,50 @@ export function estimatePercentile(
   }
 }
 
+function calculateSharpScore(metrics: CalculatedMetrics, bets: Bet[]): number {
+  const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+  if (settled.length < 20) return 0;
+
+  let score = 0;
+
+  // ROI contribution (0-30)
+  const roi = metrics.summary.roi_percent;
+  if (roi >= 5) score += 30;
+  else if (roi >= 2) score += 25;
+  else if (roi >= 0) score += 18;
+  else if (roi >= -5) score += 12;
+  else if (roi >= -10) score += 6;
+  else score += 2;
+
+  // Edge consistency (0-25): profitable categories with 10+ bets
+  const profitableCategories = metrics.category_roi.filter(c => c.roi > 0 && c.count >= 10);
+  score += Math.min(25, profitableCategories.length * 8);
+
+  // Odds calibration (0-20)
+  if (metrics.odds.total_settled > 0) {
+    const luckRatio = metrics.odds.actual_wins / Math.max(1, metrics.odds.expected_wins);
+    if (luckRatio >= 0.95) score += 20;
+    else if (luckRatio >= 0.90) score += 15;
+    else if (luckRatio >= 0.85) score += 10;
+    else score += 5;
+  }
+
+  // Discipline bonus (0-15)
+  if (metrics.emotion_score <= 30) score += 8;
+  else if (metrics.emotion_score <= 50) score += 5;
+  else score += 2;
+  if (metrics.parlay_stats.parlay_percent < 25) score += 7;
+  else if (metrics.parlay_stats.parlay_percent < 40) score += 4;
+
+  // Sample size (0-10)
+  if (settled.length >= 500) score += 10;
+  else if (settled.length >= 200) score += 7;
+  else if (settled.length >= 100) score += 5;
+  else score += 2;
+
+  return Math.min(100, score);
+}
+
 export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQResult {
   const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
 
@@ -2529,7 +2573,10 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
     session_analysis: claudeData.session_analysis as AutopsyAnalysis['session_analysis'],
-    edge_profile: claudeData.edge_profile as AutopsyAnalysis['edge_profile'],
+    edge_profile: claudeData.edge_profile ? {
+      ...(claudeData.edge_profile as Record<string, unknown>),
+      sharp_score: calculateSharpScore(metrics, bets),
+    } as AutopsyAnalysis['edge_profile'] : undefined,
     betting_archetype: metrics.betting_archetype,
     timing_analysis: metrics.timing,
     odds_analysis: metrics.odds,
