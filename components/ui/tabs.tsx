@@ -27,7 +27,6 @@ export const Tabs = ({
 }) => {
   const [active, setActive] = useState<Tab>(propTabs[0]);
   const [tabs, setTabs] = useState<Tab[]>(propTabs);
-  const [hovering, setHovering] = useState(false);
   const paused = useRef(false);
 
   const moveSelectedTabToTop = useCallback((idx: number) => {
@@ -67,8 +66,6 @@ export const Tabs = ({
           <button
             key={tab.title}
             onClick={() => handleClick(idx)}
-            onMouseEnter={() => setHovering(true)}
-            onMouseLeave={() => setHovering(false)}
             className={cn("relative px-4 py-2 rounded-full", tabClassName)}
             style={{
               transformStyle: "preserve-3d",
@@ -98,7 +95,6 @@ export const Tabs = ({
         tabs={tabs}
         active={active}
         key={active.value}
-        hovering={hovering}
         className={cn("mt-8", contentClassName)}
       />
     </>
@@ -108,7 +104,6 @@ export const Tabs = ({
 export const FadeInDiv = ({
   className,
   tabs,
-  hovering,
 }: {
   className?: string;
   key?: string;
@@ -116,29 +111,19 @@ export const FadeInDiv = ({
   active: Tab;
   hovering?: boolean;
 }) => {
-  const isActive = (tab: Tab) => {
-    return tab.value === tabs[0].value;
-  };
+  const activeTab = tabs[0];
   return (
     <div className="relative w-full h-full">
-      {tabs.map((tab, idx) => (
-        <motion.div
-          key={tab.value}
-          layoutId={tab.value}
-          style={{
-            scale: 1 - idx * 0.1,
-            top: hovering ? idx * -50 : 0,
-            zIndex: -idx,
-            opacity: idx < 3 ? 1 - idx * 0.1 : 0,
-          }}
-          animate={{
-            y: isActive(tab) ? [0, 40, 0] : 0,
-          }}
-          className={cn("w-full h-full absolute top-0 left-0", className)}
-        >
-          {tab.content}
-        </motion.div>
-      ))}
+      <motion.div
+        key={activeTab.value}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className={cn("w-full h-full absolute top-0 left-0", className)}
+      >
+        {activeTab.content}
+      </motion.div>
     </div>
   );
 };
