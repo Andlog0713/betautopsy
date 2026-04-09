@@ -45,22 +45,23 @@ export default function HeroABTest() {
     }
   };
 
-  // During SSR and pre-hydration, render an invisible placeholder with
-  // the same approximate dimensions to reserve space and prevent a flash
-  // of one variant before swapping to the other.
+  // During SSR and pre-hydration, render variant A as visible, crawlable
+  // content so Googlebot always sees a real H1 and body text. Once hydrated,
+  // the client-side variant takes over seamlessly.
   if (variant === null) {
     return (
       <>
-        <div className="invisible" aria-hidden="true">
-          <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2">
-            See what your betting data is trying to tell you.
-          </h1>
-          <p className="font-mono text-base md:text-lg tracking-wide mt-4 mb-8">
-            47 behavioral metrics. 60 seconds. One forensic report.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <span className="btn-primary text-base !px-8 !py-3">Get Your Free Report</span>
-          </div>
+        <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2 text-fg-bright">
+          See what your betting data is trying to tell you.
+        </h1>
+        <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8">
+          Upload your sports betting history and get a full behavioral analysis — cognitive biases, emotional patterns, and a personalized action plan to stop the leaks.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
+          <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Free Report</Link>
+          <span className="text-fg-muted text-xs mt-3 sm:mt-4">
+            No credit card required.
+          </span>
         </div>
       </>
     );

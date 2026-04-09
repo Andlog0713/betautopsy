@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
@@ -11,9 +12,67 @@ import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
 
+export const metadata: Metadata = {
+  title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
+  description:
+    'Upload your sports betting history from DraftKings, FanDuel, PrizePicks, or any sportsbook. BetAutopsy scans for 47 behavioral signals — cognitive biases, loss chasing, parlay overuse, and emotional patterns — then gives you a personalized action plan to fix the leaks.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
+    description:
+      'Upload your betting history. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
+    url: 'https://www.betautopsy.com',
+  },
+};
+
 export default function LandingPage() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://www.betautopsy.com/#organization',
+        name: 'BetAutopsy',
+        legalName: 'Diagnostic Sports, LLC',
+        url: 'https://www.betautopsy.com',
+        logo: 'https://www.betautopsy.com/icon.svg',
+        description:
+          'BetAutopsy provides behavioral analysis tools for sports bettors. Upload your betting history and get a forensic report on cognitive biases, emotional patterns, and strategic leaks.',
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://www.betautopsy.com/#website',
+        url: 'https://www.betautopsy.com',
+        name: 'BetAutopsy',
+        publisher: { '@id': 'https://www.betautopsy.com/#organization' },
+      },
+      {
+        '@type': 'WebApplication',
+        '@id': 'https://www.betautopsy.com/#app',
+        name: 'BetAutopsy',
+        url: 'https://www.betautopsy.com',
+        applicationCategory: 'UtilityApplication',
+        operatingSystem: 'All',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          description: 'Free behavioral snapshot. Full reports from $9.99.',
+        },
+        description:
+          'Upload your sports betting history and get a full behavioral analysis. Identifies cognitive biases, emotional patterns, loss chasing, and parlay overuse across 47 behavioral metrics.',
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <NavBar />
 
       {/* ══════════════════════════════════════ */}
