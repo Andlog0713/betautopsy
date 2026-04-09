@@ -241,6 +241,9 @@ export async function POST(request: Request) {
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
 
+        // Stamp the current saved-report schema version so future readers can branch on shape.
+        analysis.schema_version = 1;
+
         // For Pro users running full reports, track usage
         if (!isSnapshot && tier === 'pro') {
           await supabase
@@ -364,9 +367,21 @@ export async function POST(request: Request) {
           extra: { bet_count: betsToAnalyze.length, tier },
         });
         logErrorServer(err, { path: '/api/analyze' });
-        sendEvent('error', {
-          error: err instanceof Error ? err.message : 'Analysis failed',
-        });
+        const rawMessage = err instanceof Error ? err.message : String(err);
+        const lower = rawMessage.toLowerCase();
+        let userMessage: string;
+        if (lower.includes('overloaded') || lower.includes('529')) {
+          userMessage = 'Analysis engine is under heavy load. Please try again in a minute.';
+        } else if (
+          lower.includes('timeout') ||
+          lower.includes('timed out') ||
+          lower.includes('etimedout')
+        ) {
+          userMessage = 'Analysis is taking longer than expected. Please try again.';
+        } else {
+          userMessage = rawMessage || 'Analysis failed';
+        }
+        sendEvent('error', { error: userMessage });
       } finally {
         controller.close();
       }

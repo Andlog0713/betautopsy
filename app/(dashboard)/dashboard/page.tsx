@@ -69,9 +69,12 @@ export default function DashboardPage() {
   const [journalOpen, setJournalOpen] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
   const [daysSinceLastBet, setDaysSinceLastBet] = useState<number | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     async function load() {
+      try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -137,17 +140,21 @@ export default function DashboardPage() {
         }
       } catch { /* silent */ }
 
-      setLoading(false);
-
       // Track TikTok purchase event on post-checkout redirect
       if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
         const price = profileTier === 'pro' ? 19.99 : 0;
         if (price > 0) trackPurchase(profileTier ?? 'pro', price);
         window.history.replaceState({}, '', '/dashboard');
       }
+      } catch (err) {
+        console.error('Dashboard load failed:', err);
+        setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      } finally {
+        setLoading(false);
+      }
     }
     load();
-  }, [router]);
+  }, [router, reloadToken]);
 
   const { mask } = usePrivacy();
 
@@ -161,6 +168,29 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <div className="case-card p-8 space-y-4">
+          <div className="case-header">STATUS // LOAD FAILURE</div>
+          <h2 className="font-bold text-2xl text-fg-bright">Something went wrong loading your dashboard</h2>
+          <p className="data-body text-fg-muted">{loadError}</p>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              setLoadError(null);
+              setLoading(true);
+              setReloadToken((n) => n + 1);
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const hasBets = stats && stats.totalBets > 0;
   const isPaid = getEffectiveTier(tier) === 'pro';
   const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;

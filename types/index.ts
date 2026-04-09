@@ -141,6 +141,8 @@ export interface OddsAnalysis {
 }
 
 export interface AutopsyAnalysis {
+  /** Bumped when the saved report shape changes in a breaking way. */
+  schema_version?: number;
   summary: AutopsySummary;
   biases_detected: BiasDetected[];
   strategic_leaks: StrategicLeak[];

@@ -41,6 +41,22 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient();
 
+  // Idempotency: Stripe retries on timeout/5xx, so we short-circuit if we've
+  // already processed this event.id. A unique_violation (23505) on insert means
+  // another delivery already claimed it.
+  const { error: dedupeErr } = await supabase
+    .from('stripe_events')
+    .insert({ id: event.id });
+
+  if (dedupeErr) {
+    if (dedupeErr.code === '23505') {
+      return NextResponse.json({ received: true });
+    }
+    console.error('Failed to record stripe_events row:', dedupeErr);
+    logErrorServer(dedupeErr, { path: '/api/webhook', metadata: { event_id: event.id } });
+    return NextResponse.json({ error: 'Idempotency check failed' }, { status: 500 });
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {

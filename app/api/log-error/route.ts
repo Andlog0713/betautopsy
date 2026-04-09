@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request: Request) {
@@ -9,18 +10,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'message required' }, { status: 400 });
     }
 
-    const supabase = await createServerSupabaseClient();
-
-    // Try to get user ID, but don't fail if not authenticated
+    // Use the session client only to resolve the caller's user id.
     let userId: string | null = null;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const sessionSupabase = await createServerSupabaseClient();
+      const { data: { user } } = await sessionSupabase.auth.getUser();
       userId = user?.id ?? null;
     } catch {
-      // Not authenticated — that's fine
+      // Not authenticated — that's fine, row will be user_id null.
     }
 
-    await supabase.from('error_logs').insert({
+    // Service-role client for the actual insert so we bypass the strict
+    // `auth.uid() = user_id` RLS policy (which would otherwise reject
+    // anonymous rows where both sides are null).
+    const serviceSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { getAll: () => [], setAll: () => {} } }
+    );
+
+    await serviceSupabase.from('error_logs').insert({
       user_id: userId,
       source: source || 'client',
       message: String(message).slice(0, 2000),
