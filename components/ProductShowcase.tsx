@@ -58,25 +58,22 @@ export function ProductShowcase() {
           </p>
           {/* Realistic finding previews */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-bleed shrink-0" />
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-bleed">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Loss Chasing</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-bleed/10 text-bleed font-medium shrink-0">HIGH</span>
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$480/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-caution">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Parlay Overexposure</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$312/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-caution shrink-0" />
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-caution">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Late-Night Betting</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
               </div>
