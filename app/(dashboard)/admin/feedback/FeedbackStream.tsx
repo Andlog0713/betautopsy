@@ -49,7 +49,7 @@ function relativeTime(iso: string): string {
 }
 
 function Separator() {
-  return <span className="text-fg-dim mx-1.5">//</span>;
+  return <span className="text-fg-dim mx-1.5">{'//'}</span>;
 }
 
 export default function FeedbackStream() {
