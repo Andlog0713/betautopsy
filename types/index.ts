@@ -663,3 +663,37 @@ export interface APIError {
   error: string;
   code?: string;
 }
+
+// ── Feedback ──
+
+export type FeedbackType = 'report_reaction' | 'bug' | 'feature_request' | 'general';
+export type FeedbackRating = 'positive' | 'neutral' | 'negative';
+
+export interface Feedback {
+  id: string;
+  user_id: string | null;
+  type: FeedbackType;
+  rating: FeedbackRating | null;
+  message: string | null;
+  report_id: string | null;
+  page: string | null;
+  metadata: { tier?: string; bet_count?: number; timestamp?: string } | null;
+  created_at: string;
+}
+
+export interface FeedbackWithUser extends Feedback {
+  user: {
+    id: string;
+    email: string;
+    display_name: string | null;
+    subscription_tier: string;
+  } | null;
+}
+
+export interface FeedbackCounts {
+  total: number;
+  report_reaction: number;
+  bug: number;
+  feature_request: number;
+  general: number;
+}

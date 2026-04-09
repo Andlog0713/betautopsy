@@ -11,7 +11,7 @@ import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Profile } from '@/types';
 import {
   LayoutDashboard, Upload, Clock, FolderOpen, FileText,
-  Settings, Gem, LogOut, Menu, X, ArrowUpRight, Shield, Flame,
+  Settings, Gem, LogOut, Menu, X, ArrowUpRight, Shield, Flame, MessageSquare,
 } from 'lucide-react';
 
 const navItems = [
@@ -84,7 +84,6 @@ export default function DashboardShell({
   const effectiveTier = PRICING_ENABLED ? tier : 'pro';
 
   const isActive = (href: string) => pathname === href;
-  const isAdminActive = pathname.startsWith('/admin');
 
   return (
     <PrivacyProvider>
@@ -168,18 +167,32 @@ export default function DashboardShell({
               )}
 
               {profile?.is_admin && (
-                <Link
-                  href="/admin/reports"
-                  onClick={() => setMobileNavOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isAdminActive
-                      ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
-                      : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
-                  }`}
-                >
-                  <Shield size={18} />
-                  Admin
-                </Link>
+                <>
+                  <Link
+                    href="/admin/reports"
+                    onClick={() => setMobileNavOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
+                        ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                        : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                    }`}
+                  >
+                    <Shield size={18} />
+                    Admin
+                  </Link>
+                  <Link
+                    href="/admin/feedback"
+                    onClick={() => setMobileNavOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      pathname === '/admin/feedback'
+                        ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                        : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                    }`}
+                  >
+                    <MessageSquare size={18} />
+                    Feedback
+                  </Link>
+                </>
               )}
 
               <div className="my-2 border-t border-border-subtle" />
@@ -249,18 +262,32 @@ export default function DashboardShell({
           <div className="my-2 border-t border-border-subtle" />
 
           {profile?.is_admin && (
-            <Link
-              href="/admin/reports"
-              title="Admin"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isAdminActive
-                  ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
-                  : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
-              }`}
-            >
-              <span className="shrink-0"><Shield size={18} /></span>
-              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Admin</span>
-            </Link>
+            <>
+              <Link
+                href="/admin/reports"
+                title="Admin"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
+                    ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                    : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                }`}
+              >
+                <span className="shrink-0"><Shield size={18} /></span>
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Admin</span>
+              </Link>
+              <Link
+                href="/admin/feedback"
+                title="Feedback"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === '/admin/feedback'
+                    ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
+                    : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
+                }`}
+              >
+                <span className="shrink-0"><MessageSquare size={18} /></span>
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">Feedback</span>
+              </Link>
+            </>
           )}
           {bottomNavItems.map((item) => (
             <Link
