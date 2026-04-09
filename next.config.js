@@ -36,6 +36,21 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Force apex domain → www with a permanent (308) redirect so Google
+      // consolidates ranking signals onto the canonical www host. Vercel's
+      // default apex-to-www redirect uses 307 (temporary), which causes
+      // Google to keep both URLs independently indexed and prevents the
+      // homepage from ranking under the canonical www.betautopsy.com.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'betautopsy.com' }],
+        destination: 'https://www.betautopsy.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = withSentryConfig(nextConfig, {
