@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, Area,
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
+import ReportFeedbackNudge from './ReportFeedbackNudge';
 import type { ShareCardData } from './ShareCard';
 import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
@@ -245,6 +246,41 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
+// ── Inline feedback submission watcher ──
+// Wraps an inline ReportFeedback so we can detect when the user submits it
+// (by observing the "Thanks" confirmation message appearing), without touching
+// ReportFeedback itself.
+
+function InlineFeedbackSlot({
+  onReacted,
+  children,
+}: {
+  onReacted: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const THANKS = 'Thanks, this helps us get sharper';
+    if ((node.textContent ?? '').includes(THANKS)) {
+      onReacted();
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if ((node.textContent ?? '').includes(THANKS)) {
+        onReacted();
+        observer.disconnect();
+      }
+    });
+    observer.observe(node, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [onReacted]);
+
+  return <div ref={ref}>{children}</div>;
+}
+
 // ── Main Component ──
 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null }) {
@@ -269,6 +305,75 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
   const isSharp = effectiveTier === 'pro'; // Sharp features now included in Pro
+
+  // ── Scroll-triggered feedback nudge ──
+  const lastChapterRef = useRef<HTMLDivElement>(null);
+  const [showNudge, setShowNudge] = useState(false);
+  const [inlineReacted, setInlineReacted] = useState(false);
+
+  // Track inline submission via ref so the observer effect doesn't have to re-run.
+  const inlineReactedRef = useRef(false);
+  useEffect(() => {
+    inlineReactedRef.current = inlineReacted;
+    if (inlineReacted && reportId && typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(`bap_feedback_nudge_${reportId}`, 'inline');
+      } catch {}
+      setShowNudge(false);
+    }
+  }, [inlineReacted, reportId]);
+
+  useEffect(() => {
+    if (readOnly || !reportId || typeof window === 'undefined') return;
+    const storageKey = `bap_feedback_nudge_${reportId}`;
+    try {
+      if (window.localStorage.getItem(storageKey)) return;
+    } catch {
+      return;
+    }
+    const sentinel = lastChapterRef.current;
+    if (!sentinel) return;
+
+    let timerId: number | undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            if (timerId === undefined) {
+              timerId = window.setTimeout(() => {
+                timerId = undefined;
+                if (inlineReactedRef.current) return;
+                try {
+                  if (window.localStorage.getItem(storageKey)) return;
+                } catch {}
+                setShowNudge(true);
+              }, 4000);
+            }
+          } else if (timerId !== undefined) {
+            window.clearTimeout(timerId);
+            timerId = undefined;
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => {
+      observer.disconnect();
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
+  }, [readOnly, reportId]);
+
+  const handleNudgeClose = (reason: 'submitted' | 'dismissed') => {
+    if (reportId && typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(`bap_feedback_nudge_${reportId}`, reason);
+      } catch {}
+    }
+    setShowNudge(false);
+  };
+
+  const handleInlineReacted = () => setInlineReacted(true);
 
   // Detect mixed sportsbook + DFS data
   const mixedDataInfo = useMemo(() => {
@@ -2271,8 +2376,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
       </>
 
+      {/* Sentinel for scroll-triggered feedback nudge */}
+      <div ref={lastChapterRef} aria-hidden="true" />
+
       {/* Feedback */}
-      {!readOnly && <ReportFeedback reportId={reportId} />}
+      {!readOnly && (
+        <InlineFeedbackSlot onReacted={handleInlineReacted}>
+          <ReportFeedback reportId={reportId} />
+        </InlineFeedbackSlot>
+      )}
       </>}
 
 
@@ -2392,7 +2504,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <ShareSection analysis={analysis} summary={summary} reportId={reportId} bets={bets} />
               </div>
             )}
-            {!readOnly && <ReportFeedback reportId={reportId} />}
+            {!readOnly && (
+              <InlineFeedbackSlot onReacted={handleInlineReacted}>
+                <ReportFeedback reportId={reportId} />
+              </InlineFeedbackSlot>
+            )}
           </div>
         ) : (
           /* Locked tools tab for non-Pro users */
@@ -2408,9 +2524,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               {PRICING_ENABLED && (<a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>)}
             </div>
 
-            {!readOnly && <ReportFeedback reportId={reportId} />}
+            {!readOnly && (
+              <InlineFeedbackSlot onReacted={handleInlineReacted}>
+                <ReportFeedback reportId={reportId} />
+              </InlineFeedbackSlot>
+            )}
           </div>
         )
+      )}
+
+      {showNudge && reportId && !readOnly && (
+        <ReportFeedbackNudge reportId={reportId} onClose={handleNudgeClose} />
       )}
     </div>
   );
