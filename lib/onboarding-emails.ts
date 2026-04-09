@@ -1,3 +1,12 @@
+// ── BetAutopsy onboarding email templates ──
+// Seven-email drip sequence. Email 1 fires immediately from the auth callback
+// the first time a user authenticates; Emails 2-7 fire from the daily cron at
+// app/api/onboarding-emails/route.ts.
+//
+// Voice: forensic case file, clinical, data-driven. Keep monospace accents and
+// the scalpel teal (#00C9A7). No emojis. No hype. Every factual claim must be
+// backed by something in lib/autopsy-engine.ts or the product copy.
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -18,7 +27,8 @@ ${content}
 <tr><td style="padding:24px 24px">
   <div style="border-top:1px solid #e5e5e5;padding-top:16px">
     <div style="font-family:'Courier New',monospace;font-size:10px;color:#999;line-height:1.7;text-align:center">
-      BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+.
+      BetAutopsy // Behavioral Analysis for Sports Bettors<br/>
+      Behavioral analysis and educational insights, not gambling or financial advice. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
     </div>
     ${unsubscribeUrl ? `<div style="text-align:center;margin-top:10px"><a href="${esc(unsubscribeUrl)}" style="font-size:10px;color:#999;text-decoration:underline">Unsubscribe</a></div>` : ''}
   </div>
@@ -28,122 +38,289 @@ ${content}
 </body></html>`;
 }
 
-// ── Email 1: Welcome (Day 1, only if no bets and no reports) ──
+interface EmailProps {
+  displayName: string;
+  appUrl: string;
+  unsubscribeUrl?: string;
+}
 
-export function renderWelcomeEmail(props: { displayName: string; appUrl: string; unsubscribeUrl?: string }): { subject: string; html: string } {
+// ── Email 1: Welcome (fires immediately from auth callback on first auth) ──
+
+export function renderWelcomeEmail(props: EmailProps): { subject: string; html: string } {
   const { displayName, appUrl, unsubscribeUrl } = props;
   return {
-    subject: '3 ways to get your bets into BetAutopsy',
+    subject: 'Your case file is open',
     html: emailShell(`
 <tr><td style="padding:24px 24px 0">
-  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Welcome, ${esc(displayName)}.</div>
+  <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Welcome, ${esc(displayName)}.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    Getting your betting history in takes 2–5 minutes. Pick whichever method is easiest for you:
+    You just took a step most bettors never take: deciding to look at your own patterns instead of chasing the next pick.
   </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">Here's what happens next:</div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #0d9488">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Screenshot (fastest from your phone)</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">Open your sportsbook app → My Bets → Settled → take a screenshot → upload it to BetAutopsy. Our AI reads it automatically.</div>
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">1. Upload your betting history</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Screenshot your settled bets from your sportsbook app, paste them from desktop, or export a CSV. Or sync automatically with <a href="https://links.pikkit.com/invite/surf40498" style="color:#0d9488;text-decoration:none">Pikkit</a>.</div>
   </div>
   <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #888">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Paste (fastest from desktop)</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">Log into your sportsbook on desktop → My Bets → Settled → select all → copy → paste into BetAutopsy.</div>
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">2. We analyze 47 behavioral signals</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Session patterns, loss chasing, stake volatility, parlay habits, timing, emotional triggers. Every bet gets classified.</div>
   </div>
   <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">CSV upload (for full history)</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">Use <a href="https://links.pikkit.com/invite/surf40498" style="color:#0d9488;text-decoration:none">Pikkit</a> (a free third-party app) to export your complete sportsbook history as a CSV, then upload it.</div>
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">3. You get a forensic report</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Five chapters. Your biases named. Dollar costs attached. A personalized action plan to fix the leaks.</div>
   </div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#0d9488;color:#ffffff;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <div style="font-size:12px;color:#888;margin-top:8px">Your first full report is free. No credit card.</div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
-    Your first full report is free. No credit card needed.<br/>
-    <a href="${esc(appUrl)}/how-to-upload" style="color:#0d9488;text-decoration:none">Detailed upload guide →</a>
-  </div>
+  <div style="font-size:12px;color:#888;text-align:center">// Andrew, BetAutopsy</div>
 </td></tr>`, unsubscribeUrl),
   };
 }
 
-// ── Email 2: Nudge (Day 3, only if still no bets and no reports) ──
+// ── Email 2: First Nudge (Day 1, skip if user uploaded bets) ──
 
-export function renderNudgeEmail(props: { displayName: string; appUrl: string; unsubscribeUrl?: string }): { subject: string; html: string } {
+export function renderFirstNudgeEmail(props: EmailProps): { subject: string; html: string } {
   const { displayName, appUrl, unsubscribeUrl } = props;
   return {
-    subject: 'Still want to see what your bets say about you?',
+    subject: '3 minutes to upload. Seriously.',
     html: emailShell(`
 <tr><td style="padding:24px 24px 0">
-  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, your autopsy is waiting.</div>
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, getting bets in is easier than you think.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    You signed up for BetAutopsy but haven't imported your bets yet. Here's what you'll get when you do:
+    Most people think uploading their betting history is going to be a pain. It takes about 3 minutes.
   </div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #d97706">
-    <div style="font-size:13px;color:#555;line-height:1.7">
-      <strong style="color:#1a1a1a">Every cognitive bias</strong> identified with dollar costs attached<br/>
-      <strong style="color:#1a1a1a">Emotion Score</strong> measuring how much tilt affects your decisions<br/>
-      <strong style="color:#1a1a1a">Sport-by-sport breakdown</strong> showing where you win and where you bleed<br/>
-      <strong style="color:#1a1a1a">Personalized action plan</strong> with rules based on your actual data
-    </div>
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Option A: Screenshot (fastest from phone)</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Open your sportsbook app → My Bets → Settled → screenshot. Upload to BetAutopsy. Our AI reads it automatically.</div>
+  </div>
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Option B: Paste (fastest from desktop)</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Log into your sportsbook on desktop → My Bets → Settled → select all → copy → paste into BetAutopsy. We'll figure out the format.</div>
+  </div>
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Option C: CSV export</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Most sportsbooks have Activity/History → Export as CSV. Drop the file into BetAutopsy. Done.</div>
+  </div>
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Option D: Pikkit sync</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Connect your sportsbook through <a href="https://links.pikkit.com/invite/surf40498" style="color:#0d9488;text-decoration:none">Pikkit</a> and your bets import automatically.</div>
   </div>
 </td></tr>
 
-<tr><td style="padding:0 24px 8px">
-  <div style="font-size:14px;color:#555;line-height:1.6">
-    <strong style="color:#1a1a1a">Quickest way in:</strong> Screenshot your settled bets from your sportsbook app → upload → done in 2 minutes.
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:13px;color:#555;line-height:1.6">
+    Once your bets are in, you'll see behavioral patterns you didn't know existed. Most of them are costing real money.
   </div>
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#0d9488;color:#ffffff;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
-  <div style="font-size:12px;color:#888;margin-top:8px">Your first full report is free.</div>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Now →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
 
-// ── Email 3: Post-Report (1 day after first report) ──
+// ── Email 3: Feature Highlight (Day 3, skip if user ran analysis) ──
 
-export function renderPostReportEmail(props: { displayName: string; appUrl: string; unsubscribeUrl?: string }): { subject: string; html: string } {
+export function renderFeatureHighlightEmail(props: EmailProps): { subject: string; html: string } {
   const { displayName, appUrl, unsubscribeUrl } = props;
   return {
-    subject: 'How to read your autopsy report',
+    subject: 'What an emotion score of 72 actually means',
     html: emailShell(`
 <tr><td style="padding:24px 24px 0">
-  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Nice work, ${esc(displayName)}. Your first autopsy is in.</div>
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, meet your Emotion Score.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    Here's a quick guide to getting the most out of your report:
+    Every BetAutopsy report includes an Emotion Score from 0 to 100. It measures how much your betting behavior is driven by emotional reactions vs. disciplined strategy.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">We look at four signals in your data:</div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#555;line-height:1.8">
+      <strong style="color:#1a1a1a">Stake volatility</strong> — are your bet sizes all over the place, or steady?<br/>
+      <strong style="color:#1a1a1a">Loss chasing</strong> — does your next bet get bigger after a loss?<br/>
+      <strong style="color:#1a1a1a">Streak behavior</strong> — do you speed up or slow down on losing streaks?<br/>
+      <strong style="color:#1a1a1a">Session discipline</strong> — do you quit while ahead, or chase until you're down?
+    </div>
   </div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #0d9488">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Your scores</div>
-    <div style="font-size:13px;color:#555;line-height:1.5"><strong style="color:#1a1a1a">BetIQ</strong> measures how sharp your decisions are. <strong style="color:#1a1a1a">Emotion Score</strong> measures how much tilt and chasing affects you (lower is better). <strong style="color:#1a1a1a">Discipline Score</strong> tracks how well you follow smart betting habits.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6">
+    A score of 30 means your betting is mostly rational. A score of 72 means emotions are running the show on more than half your bets.
   </div>
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #d97706">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Your action plan</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">Scroll to the Prescription section. These are personalized rules based on your actual data — not generic advice. Each one tells you exactly what to change and how much it could save you.</div>
-  </div>
-  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Your next report will be sharper</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">The more data you feed in, the more patterns we catch. Your third report finds things your first one couldn't. Keep adding your recent bets as you place them.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-top:12px">
+    The number isn't the point. The point is seeing which specific triggers drive YOUR score. That's what the report breaks down.
   </div>
 </td></tr>
 
-<tr><td style="padding:0 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#0d9488;color:#ffffff;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Add Your Latest Bets →</a>
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">See Your Emotion Score →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Email 4: Social Proof (Day 5, always sends) ──
+
+export function renderSocialProofEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: 'The pattern that costs most bettors the most money',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, there's one pattern we see in almost every report.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    It's called post-loss escalation. The sequence looks like this:
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #C4463A">
+    <div style="font-size:13px;color:#555;line-height:1.7">
+      You lose a $50 bet. Your next bet is $75. You lose that too. Now you put $120 on a parlay to "get it all back." That loses. You're down $245 instead of $50.
+    </div>
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:14px;color:#555;line-height:1.6">
+    Sound familiar? You're not alone — it shows up in the majority of reports we run. It's also one of the most expensive behavioral leaks in sports betting because it compounds inside a single session.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-top:12px">
+    The fix is specific and measurable: a hard ceiling on post-loss stakes (say, 1.5x your average) and a mandatory stop after three consecutive losses. Generic advice without the data doesn't work, which is why your report tells you exactly how much this pattern is costing YOU and whether the fix applies to your specific numbers.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Get Your Report →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Email 5: Urgency (Day 7, skip if user ran analysis) ──
+
+export function renderUrgencyEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: 'Your bets are sitting there, waiting',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, it's been a week.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Your sportsbook has a record of every bet you've placed. Every late-night parlay. Every chase bet. Every time you doubled down after a bad beat.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    That data tells a story about <em>how</em> you bet. Not what you bet on. How.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">
+    BetAutopsy reads that story and translates it into specifics:
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#555;line-height:1.8">
+      Which sessions cost you the most (and what time they happened)<br/>
+      Whether your stake sizing is disciplined or emotional<br/>
+      Which sport/bet type combinations are actually profitable for you<br/>
+      How much money your behavioral patterns are leaving on the table
+    </div>
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:14px;color:#555;line-height:1.6">
+    Your first full report is still free. The data is already there. You just haven't looked at it yet.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Email 6: Launch promo ending (48h before LAUNCH_PROMO_DEADLINE) ──
+
+export function renderTrialEndingEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: 'Your launch-window access ends in 48 hours',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, quick heads up.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    BetAutopsy's launch-window access ends in about 48 hours.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    After that, you'll still be able to run free snapshot reports — but they show only your grade and top bias. The dollar costs, session breakdowns, and detailed recommendations get locked behind the paywall.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">
+    If you've been meaning to try BetAutopsy, now's the time to either:
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Run your first full report while it's still free</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Takes 2 minutes once your bets are uploaded. No credit card.</div>
+  </div>
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Or upgrade to keep full access</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Plans start at $9.99 for a single report, or $19.99/month for Pro (3 reports/month + weekly digest + progress tracking).</div>
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:14px;color:#555;line-height:1.6">
+    No pressure either way. The free snapshot tier is always there.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Free Report →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Email 7: Re-engagement (Day 21, skip if active in last 14 days) ──
+
+export function renderReengagementEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: 'Still betting? Still guessing.',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, you signed up three weeks ago.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Since then, you've probably placed a few dozen bets. Maybe more. Every one of those bets carried your behavioral patterns with it. The same biases. The same emotional triggers. The same leaks.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    <strong style="color:#1a1a1a">Nothing changes until you see the data.</strong>
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Upload takes 3 minutes. The analysis runs in under a minute. Your first full report is free.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
   <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
-    Want a weekly summary of your betting stats? Enable the <a href="${esc(appUrl)}/settings" style="color:#0d9488;text-decoration:none">weekly digest</a> in your settings.
+    If BetAutopsy isn't for you, no hard feelings. You can unsubscribe below and we won't email again.
   </div>
 </td></tr>`, unsubscribeUrl),
   };
