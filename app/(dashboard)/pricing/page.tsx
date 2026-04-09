@@ -46,7 +46,9 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (data.url) {
-        trackCheckout('pro', interval === 'annual' ? 149.99 : 19.99);
+        const value = interval === 'annual' ? 149.99 : 19.99;
+        trackCheckout('pro', value);
+        window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
         window.location.href = data.url;
       }
     } catch {

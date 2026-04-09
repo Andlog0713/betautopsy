@@ -140,10 +140,11 @@ export default function DashboardPage() {
         }
       } catch { /* silent */ }
 
-      // Track TikTok purchase event on post-checkout redirect
+      // Track TikTok + GA4 purchase event on post-checkout redirect (subscription flow)
       if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
         const price = profileTier === 'pro' ? 19.99 : 0;
         if (price > 0) trackPurchase(profileTier ?? 'pro', price);
+        window.gtag?.('event', 'purchase', { value: price, currency: 'USD' });
         window.history.replaceState({}, '', '/dashboard');
       }
       } catch (err) {

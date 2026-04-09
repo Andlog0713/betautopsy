@@ -80,6 +80,7 @@ export default function UploadPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Upload failed'); setState('error'); return; }
       setResult(data as UploadResponse);
+      window.gtag?.('event', 'csv_upload', { bet_count: (data as UploadResponse).bets_imported });
       trackUpload();
       setState('success');
     } catch {

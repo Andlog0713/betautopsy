@@ -32,7 +32,12 @@ export default function OAuthButtons({ next }: { next?: string | null }) {
     if (oauthError) {
       setError(oauthError.message);
       setLoading(null);
+      return;
     }
+
+    // OAuth redirect has been initiated — fire GA4 event before the browser
+    // leaves the page (gtag uses sendBeacon so it survives the unload).
+    window.gtag?.('event', 'sign_up', { method: provider });
   }
 
   return (

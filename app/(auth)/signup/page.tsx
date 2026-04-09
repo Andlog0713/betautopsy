@@ -46,6 +46,7 @@ function SignupForm() {
 
     if (data.user && (!data.user.identities || data.user.identities.length === 0 || !data.session)) {
       setEmailSent(true);
+      window.gtag?.('event', 'sign_up', { method: 'email' });
       setLoading(false);
       return;
     }

@@ -55,6 +55,15 @@ export default function ReportsPage() {
     if (qUploadId) setAnalyzeScope(`upload:${qUploadId}`);
     else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
     else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
+
+    // Post-checkout redirect for one-time report unlock → fire GA4 purchase event
+    // and clean the query param so reloads don't double-fire.
+    if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
+      window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('unlocked');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-trigger analysis when ?run=true or ?upload_id=xxx
@@ -164,6 +173,7 @@ export default function ReportsPage() {
     setRunning(true);
     setError('');
     setActiveReport(null);
+    window.gtag?.('event', 'analysis_started');
 
     try {
       const body: Record<string, string | string[]> = { report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot' };
@@ -263,6 +273,9 @@ export default function ReportsPage() {
               setReports((prev) => [report, ...prev]);
               setRunning(false);
               streamComplete = true;
+              window.gtag?.('event', 'analysis_completed', {
+                bet_count: (d.analyzed_bets as Bet[] | undefined)?.length,
+              });
             }
 
             if (event.type === 'error') {
