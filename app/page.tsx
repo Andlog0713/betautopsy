@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { Logo } from '@/components/logo';
@@ -11,6 +12,10 @@ import ResponsibleGambling from '@/components/ResponsibleGambling';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
+
+// Platform metric counters in the hero refresh hourly so they stay fresh
+// without hitting Supabase on every public page view.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'BetAutopsy (Bet Autopsy) — Sports Betting Behavioral Analysis Tool',
@@ -27,7 +32,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LandingPage() {
+async function loadPlatformMetrics(): Promise<{ bets: number; reports: number } | null> {
+  try {
+    const supabase = createServiceRoleClient();
+    const [betsRes, reportsRes] = await Promise.all([
+      supabase.from('bets').select('id', { count: 'exact', head: true }),
+      supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }),
+    ]);
+    if (betsRes.error || reportsRes.error) return null;
+    const bets = betsRes.count ?? 0;
+    const reports = reportsRes.count ?? 0;
+    if (bets <= 0 || reports <= 0) return null;
+    return { bets, reports };
+  } catch {
+    return null;
+  }
+}
+
+export default async function LandingPage() {
+  const platformMetrics = await loadPlatformMetrics();
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -91,6 +114,27 @@ export default function LandingPage() {
             </AnimatedShinyText>
           </div>
           <HeroABTest />
+
+          {platformMetrics && (
+            <div className="mt-6 flex gap-10 animate-fade-in-d3">
+              <div>
+                <div className="font-mono text-2xl font-bold text-fg-bright">
+                  {platformMetrics.bets.toLocaleString()}
+                </div>
+                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">
+                  Bets Analyzed
+                </div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl font-bold text-fg-bright">
+                  {platformMetrics.reports.toLocaleString()}
+                </div>
+                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">
+                  Reports Generated
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* EKG heartbeat line */}
           <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">

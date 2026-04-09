@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Zap, Flame, Snowflake, Dumbbell, Meh, ShieldAlert, Angry, Beer, Clock, TrendingDown } from 'lucide-react';
 import type { JournalEntryInput } from '@/types';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface Props {
   isOpen: boolean;
@@ -37,6 +38,9 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(modalRef, isOpen);
 
   if (!isOpen) return null;
 
@@ -85,7 +89,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-base/80" onClick={onClose} />
 
-      <div className="relative bg-surface-1 border border-border-subtle rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="relative bg-surface-1 border border-border-subtle rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
           <div>
             <div className="case-header">PRE-BET CHECK-IN</div>

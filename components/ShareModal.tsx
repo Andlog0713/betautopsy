@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import {
   StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
@@ -22,6 +23,7 @@ export default function ShareModal({
   onClose: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const slideRefs = [
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
@@ -33,6 +35,8 @@ export default function ShareModal({
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
   const [activeSlide, setActiveSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
+
+  useFocusTrap(modalRef, mounted);
 
   const roastStats = useMemo(() => generateRoastStats(data.bets), [data.bets]);
   const insight = useMemo(() => deriveBehavioralInsight(data.bets, data.emotion_score), [data.bets, data.emotion_score]);
@@ -136,7 +140,7 @@ export default function ShareModal({
           className="min-h-full flex items-start justify-center p-4 sm:p-8"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="w-full max-w-md bg-base border border-border-subtle rounded-sm p-5 my-4">
+          <div ref={modalRef} className="w-full max-w-md bg-base border border-border-subtle rounded-sm p-5 my-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <span className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Share Report</span>
