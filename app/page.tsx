@@ -13,16 +13,16 @@ import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
 
 export const metadata: Metadata = {
-  title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
+  title: 'BetAutopsy (Bet Autopsy) — Sports Betting Behavioral Analysis Tool',
   description:
-    'Upload your sports betting history from DraftKings, FanDuel, PrizePicks, or any sportsbook. BetAutopsy scans for 47 behavioral signals — cognitive biases, loss chasing, parlay overuse, and emotional patterns — then gives you a personalized action plan to fix the leaks.',
+    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals — cognitive biases, loss chasing, parlay overuse, and emotional patterns — then give you a personalized action plan to fix the leaks.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
     description:
-      'Upload your betting history. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
+      'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
     url: 'https://www.betautopsy.com',
   },
 };
@@ -35,6 +35,7 @@ export default function LandingPage() {
         '@type': 'Organization',
         '@id': 'https://www.betautopsy.com/#organization',
         name: 'BetAutopsy',
+        alternateName: ['Bet Autopsy', 'betautopsy', 'bet autopsy'],
         legalName: 'Diagnostic Sports, LLC',
         url: 'https://www.betautopsy.com',
         logo: 'https://www.betautopsy.com/icon.svg',
@@ -46,12 +47,14 @@ export default function LandingPage() {
         '@id': 'https://www.betautopsy.com/#website',
         url: 'https://www.betautopsy.com',
         name: 'BetAutopsy',
+        alternateName: 'Bet Autopsy',
         publisher: { '@id': 'https://www.betautopsy.com/#organization' },
       },
       {
         '@type': 'WebApplication',
         '@id': 'https://www.betautopsy.com/#app',
         name: 'BetAutopsy',
+        alternateName: 'Bet Autopsy',
         url: 'https://www.betautopsy.com',
         applicationCategory: 'UtilityApplication',
         operatingSystem: 'All',
