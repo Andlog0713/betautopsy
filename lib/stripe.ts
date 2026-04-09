@@ -62,6 +62,7 @@ export async function createSubscriptionCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     success_url: `${appUrl}/dashboard?upgraded=true`,
     cancel_url: `${appUrl}/pricing`,
     metadata: { supabase_user_id: userId, tier: 'pro' },
@@ -89,6 +90,7 @@ export async function createReportCheckoutSession(
     customer: customerId,
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
     cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
     metadata: {
