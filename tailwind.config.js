@@ -38,7 +38,7 @@ module.exports = {
           DEFAULT: '#B8C0CC',
           bright: '#E8ECF0',
           muted: '#8B95A5',
-          dim: '#5A6474',
+          dim: '#7A8494',
         },
         // Brand — unified teal
         scalpel: {

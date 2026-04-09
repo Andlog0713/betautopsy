@@ -97,6 +97,9 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-scalpel focus:text-base focus:px-4 focus:py-2 focus:rounded-sm focus:text-sm focus:font-medium">
+          Skip to content
+        </a>
         <ScrollToTop />
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
