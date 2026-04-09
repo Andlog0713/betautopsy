@@ -6,6 +6,7 @@ const logos = [
   { src: '/logo/BetMGM (1).svg', alt: 'BetMGM', height: 18 },
   { src: '/logo/Fanatics_idtnXwyo0R_0.svg', alt: 'Fanatics', height: 16 },
   { src: '/logo/Bet365_Logo_0.svg', alt: 'bet365', height: 16 },
+  { src: '/logo/thescore.svg', alt: 'theScore', height: 16 },
   { src: '/logo/PrizePicks.svg', alt: 'PrizePicks', height: 16 },
   { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', height: 22 },
   { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', height: 16 },
