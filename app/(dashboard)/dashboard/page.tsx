@@ -71,6 +71,17 @@ export default function DashboardPage() {
   const [daysSinceLastBet, setDaysSinceLastBet] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const [welcomePulse, setWelcomePulse] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.search.includes('welcome=true')) {
+      setWelcomePulse(true);
+      window.history.replaceState({}, '', '/dashboard');
+      const timeout = window.setTimeout(() => setWelcomePulse(false), 3500);
+      return () => window.clearTimeout(timeout);
+    }
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -315,16 +326,61 @@ export default function DashboardPage() {
       </div>
 
       {!hasBets ? (
-        <div className="border-t border-white/[0.04] pt-10">
+        <div
+          id="upload-empty-state"
+          className={`border-t border-white/[0.04] pt-10 transition-all duration-500 ${
+            welcomePulse ? 'ring-2 ring-scalpel ring-offset-4 ring-offset-base rounded-sm animate-pulse' : ''
+          }`}
+        >
           <p className="case-header mb-3">STATUS // EMPTY SPECIMEN</p>
-          <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets yet.</h2>
+          <h2 className="font-bold text-2xl mb-2 text-fg-bright">Upload your first betting history</h2>
           <p className="data-body mb-6 max-w-md">
-            Upload your history. We&apos;ll find the patterns your brain hides from you.
+            Pick whichever method is easiest — we&apos;ll find the patterns your brain hides from you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/upload" className="btn-primary font-mono">Upload CSV</Link>
-            <Link href="/bets" className="btn-secondary font-mono">Add Bets Manually</Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+            <Link
+              href="/upload?method=screenshot"
+              className="case-card p-4 hover:border-scalpel/40 transition-colors group"
+            >
+              <div className="case-header mb-1 group-hover:text-scalpel transition-colors">OPTION A</div>
+              <div className="font-bold text-fg-bright mb-1">Screenshot</div>
+              <div className="text-xs text-fg-muted">Fastest from your phone — snap your sportsbook &ldquo;My Bets&rdquo; screen.</div>
+            </Link>
+            <Link
+              href="/upload?method=paste"
+              className="case-card p-4 hover:border-scalpel/40 transition-colors group"
+            >
+              <div className="case-header mb-1 group-hover:text-scalpel transition-colors">OPTION B</div>
+              <div className="font-bold text-fg-bright mb-1">Paste your bets</div>
+              <div className="text-xs text-fg-muted">Copy-paste from desktop. We&apos;ll figure out the format.</div>
+            </Link>
+            <Link
+              href="/upload?method=csv"
+              className="case-card p-4 hover:border-scalpel/40 transition-colors group"
+            >
+              <div className="case-header mb-1 group-hover:text-scalpel transition-colors">OPTION C</div>
+              <div className="font-bold text-fg-bright mb-1">Upload CSV</div>
+              <div className="text-xs text-fg-muted">Export from your sportsbook&apos;s Activity / History tab.</div>
+            </Link>
+            <a
+              href="https://links.pikkit.com/invite/surf40498"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="case-card p-4 hover:border-scalpel/40 transition-colors group"
+            >
+              <div className="case-header mb-1 group-hover:text-scalpel transition-colors">OPTION D</div>
+              <div className="font-bold text-fg-bright mb-1">Import via Pikkit</div>
+              <div className="text-xs text-fg-muted">Connect your sportsbook and sync automatically.</div>
+            </a>
           </div>
+          <p className="text-xs text-fg-muted font-mono mt-6">
+            Need a sample?{' '}
+            {/* TODO: generate /example-bets.csv with realistic rows */}
+            <a href="/example-bets.csv" className="text-scalpel hover:underline" download>
+              Download an example CSV
+            </a>{' '}
+            to see how it works.
+          </p>
         </div>
       ) : (
         <>

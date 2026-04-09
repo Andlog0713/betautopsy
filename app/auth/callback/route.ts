@@ -8,16 +8,17 @@ import { renderWelcomeEmail } from '@/lib/onboarding-emails';
 const FROM = 'BetAutopsy <noreply@betautopsy.com>';
 
 /**
- * Fire the welcome email on the first successful authentication. Idempotent
- * via profiles.onboarding_emails_sent.welcome — marked before the Resend call
- * so a cron retry can't double-send. Email delivery failure is swallowed:
- * never block the signup redirect.
+ * Fires the welcome email on the first successful authentication and returns
+ * whether this auth was the user's first login. Idempotent via
+ * profiles.onboarding_emails_sent.welcome — marked before the Resend call so a
+ * cron retry can't double-send. Email delivery failure is swallowed inside
+ * this function so the first-login redirect still fires.
+ *
+ * Returns true when the user had not been welcomed yet (first-login),
+ * false otherwise (returning login or profile not yet created).
  */
-async function maybeFireWelcomeEmail(userId: string, appUrl: string): Promise<void> {
-  if (!isResendConfigured()) return;
-
-  // Use a service-role client so we can read/write profiles without the
-  // cookie-bound session client hitting RLS edge cases mid-auth-exchange.
+async function maybeFireWelcomeEmail(userId: string, appUrl: string): Promise<boolean> {
+  // Service-role client so we bypass RLS edge cases mid-auth-exchange.
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -31,12 +32,11 @@ async function maybeFireWelcomeEmail(userId: string, appUrl: string): Promise<vo
     .maybeSingle();
 
   // Profile may not exist yet if the create-profile trigger hasn't fired.
-  // Cron will pick it up on the next day as a fallback.
-  if (!profile?.email) return;
-  if (profile.email_digest_enabled === false) return;
+  // Not a first-login signal we can act on — cron fallback will handle it.
+  if (!profile) return false;
 
   const emailsSent = (profile.onboarding_emails_sent as Record<string, boolean>) ?? {};
-  if (emailsSent.welcome) return;
+  if (emailsSent.welcome) return false; // Returning user
 
   // Mark-first so a concurrent cron run or a retry can't re-fire.
   await admin
@@ -44,39 +44,44 @@ async function maybeFireWelcomeEmail(userId: string, appUrl: string): Promise<vo
     .update({ onboarding_emails_sent: { ...emailsSent, welcome: true } })
     .eq('id', userId);
 
-  // Get/create unsubscribe token.
-  let unsubscribeUrl: string | undefined;
-  try {
-    const { data: existing } = await admin
-      .from('email_unsubscribe_tokens')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle();
-    let tokenId = existing?.id as string | undefined;
-    if (!tokenId) {
-      const { data: created } = await admin
+  // Try to actually send the email. If anything fails, we still treat this as
+  // a first-login so the redirect fires correctly.
+  if (isResendConfigured() && profile.email && profile.email_digest_enabled !== false) {
+    try {
+      let unsubscribeUrl: string | undefined;
+      const { data: existing } = await admin
         .from('email_unsubscribe_tokens')
-        .insert({ user_id: userId })
         .select('id')
-        .single();
-      tokenId = created?.id as string | undefined;
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+      let tokenId = existing?.id as string | undefined;
+      if (!tokenId) {
+        const { data: created } = await admin
+          .from('email_unsubscribe_tokens')
+          .insert({ user_id: userId })
+          .select('id')
+          .single();
+        tokenId = created?.id as string | undefined;
+      }
+      if (tokenId) unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${tokenId}`;
+
+      const displayName = (profile.display_name as string | null) || 'there';
+      const email = renderWelcomeEmail({ displayName, appUrl, unsubscribeUrl });
+
+      const resend = getResend();
+      await resend.emails.send({
+        from: FROM,
+        to: profile.email as string,
+        subject: email.subject,
+        html: email.html,
+      });
+    } catch (err) {
+      console.error('Welcome email delivery failed:', err);
     }
-    if (tokenId) unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${tokenId}`;
-  } catch {
-    // If token generation fails, still send the email without the link.
   }
 
-  const displayName = (profile.display_name as string | null) || 'there';
-  const email = renderWelcomeEmail({ displayName, appUrl, unsubscribeUrl });
-
-  const resend = getResend();
-  await resend.emails.send({
-    from: FROM,
-    to: profile.email as string,
-    subject: email.subject,
-    html: email.html,
-  });
+  return true;
 }
 
 export async function GET(request: NextRequest) {
@@ -110,18 +115,21 @@ export async function GET(request: NextRequest) {
       // Increment login count for returning-user redirect
       await supabase.rpc('increment_login_count');
 
-      // Welcome email on first successful auth. Email failure must NEVER
-      // block the redirect — swallow everything.
+      // Fire welcome email + get first-login signal. Never allow this to
+      // block the redirect — swallow any unexpected error.
+      let wasFirstLogin = false;
       if (data.session?.user) {
         try {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
-          await maybeFireWelcomeEmail(data.session.user.id, appUrl);
+          wasFirstLogin = await maybeFireWelcomeEmail(data.session.user.id, appUrl);
         } catch (emailErr) {
           console.error('Welcome email dispatch failed:', emailErr);
         }
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      // First-login users land on the dashboard with a welcome cue.
+      const target = wasFirstLogin ? '/dashboard?welcome=true' : next;
+      return NextResponse.redirect(`${origin}${target}`);
     }
   }
 

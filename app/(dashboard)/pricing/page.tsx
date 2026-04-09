@@ -176,16 +176,29 @@ export default function PricingPage() {
             )}
           </div>
 
-          {/* Billing toggle */}
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => setInterval('monthly')}
-              className={`text-xs px-2 py-1 rounded-sm ${interval === 'monthly' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
-            >Monthly</button>
-            <button
-              onClick={() => setInterval('annual')}
-              className={`text-xs px-2 py-1 rounded-sm ${interval === 'annual' ? 'bg-scalpel-muted text-scalpel' : 'text-fg-muted'}`}
-            >Annual</button>
+          {/* Billing toggle — pill pattern matches ShareModal format toggle */}
+          <div className="mb-4">
+            <div className="flex gap-1 bg-surface-1 p-1 rounded-sm max-w-[260px]">
+              <button
+                onClick={() => setInterval('monthly')}
+                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
+                  interval === 'monthly' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setInterval('annual')}
+                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors inline-flex items-center justify-center gap-2 ${
+                  interval === 'annual' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
+                }`}
+              >
+                Annual
+                <span className="font-mono text-[9px] tracking-wider text-scalpel bg-scalpel/10 border border-scalpel/30 rounded-sm px-1.5 py-0.5">
+                  SAVE 37%
+                </span>
+              </button>
+            </div>
           </div>
 
           <ul className="space-y-2 flex-1 mb-6">

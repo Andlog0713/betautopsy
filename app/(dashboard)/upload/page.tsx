@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { trackUpload } from '@/lib/tiktok-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
@@ -15,7 +16,16 @@ import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Uploa
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 type ActiveMethod = 'pikkit' | 'screenshot' | 'paste' | 'csv';
 
+const VALID_METHODS: ActiveMethod[] = ['pikkit', 'screenshot', 'paste', 'csv'];
+
 export default function UploadPage() {
+  const searchParams = useSearchParams();
+  const methodParam = searchParams.get('method');
+  const initialMethod: ActiveMethod | null =
+    methodParam && (VALID_METHODS as string[]).includes(methodParam)
+      ? (methodParam as ActiveMethod)
+      : null;
+
   const [state, setState] = useState<UploadState>('idle');
   const [dragOver, setDragOver] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
@@ -23,7 +33,7 @@ export default function UploadPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reportCount, setReportCount] = useState<number | null>(null);
   const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
-  const [activeMethod, setActiveMethod] = useState<ActiveMethod>('pikkit');
+  const [activeMethod, setActiveMethod] = useState<ActiveMethod>(initialMethod ?? 'pikkit');
   const [showPikkitSteps, setShowPikkitSteps] = useState(false);
   const [bankrollInput, setBankrollInput] = useState('');
   const [bankrollSaving, setBankrollSaving] = useState(false);
@@ -45,7 +55,10 @@ export default function UploadPage() {
         setProfile(p);
         const bc = p.bet_count;
         setInitialBetCount(bc);
-        setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
+        // Query param takes precedence; otherwise default by bet count.
+        if (!initialMethod) {
+          setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
+        }
         // Check promo eligibility
         if (PRICING_ENABLED && p.subscription_tier === 'free' && userQualifiesForPromo(p.created_at)) {
           const { count: fullCount } = await supabase

@@ -297,6 +297,10 @@ export default async function LandingPage() {
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
+                <p className="text-fg-muted text-xs mt-1 font-mono">
+                  or <span className="text-fg-bright">$149.99/yr</span>
+                  <span className="text-scalpel"> — save 37%</span>
+                </p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
                 {['3 full reports per month', 'Track progress between reports', 'Weekly email digest', 'Streak tracking + milestones'].map((f) => (

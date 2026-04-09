@@ -9,9 +9,10 @@ import {
   renderUrgencyEmail,
   renderTrialEndingEmail,
   renderReengagementEmail,
+  renderPostReportEmail,
 } from '@/lib/onboarding-emails';
 import { LAUNCH_PROMO_DEADLINE, userQualifiesForPromo } from '@/types';
-import type { Profile } from '@/types';
+import type { Profile, AutopsyAnalysis } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const maxDuration = 120;
@@ -170,6 +171,48 @@ export async function GET(request: Request) {
       ) {
         await send(renderTrialEndingEmail, 'trial_ending');
         continue;
+      }
+
+      // ── Post-Report Summary (Day +1 after FIRST report only) ──
+      if (reports === 1 && !emailsSent['post_report']) {
+        const { data: firstReport } = await supabase
+          .from('autopsy_reports')
+          .select('id, created_at, report_json')
+          .eq('user_id', p.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (firstReport?.created_at) {
+          const daysSinceFirstReport = Math.floor(
+            (now.getTime() - new Date(firstReport.created_at as string).getTime()) / 86400000
+          );
+          if (daysSinceFirstReport >= 1) {
+            const analysis = firstReport.report_json as AutopsyAnalysis | null;
+            if (analysis?.summary) {
+              const email = renderPostReportEmail({
+                displayName,
+                appUrl,
+                unsubscribeUrl,
+                grade: analysis.summary.overall_grade ?? 'N/A',
+                emotionScore: Math.round(analysis.emotion_score ?? 0),
+                biasCount: analysis.biases_detected?.length ?? 0,
+                reportUrl: `${appUrl}/reports?id=${firstReport.id}`,
+              });
+              await resend.emails.send({
+                from: FROM,
+                to: p.email,
+                subject: email.subject,
+                html: email.html,
+              });
+              await supabase
+                .from('profiles')
+                .update({ onboarding_emails_sent: { ...emailsSent, post_report: true } })
+                .eq('id', p.id);
+              sent++;
+              continue;
+            }
+          }
+        }
       }
 
       // ── Email 7: Reengagement (Day 21+, skip if active in last 14 days) ──

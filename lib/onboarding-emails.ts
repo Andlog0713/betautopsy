@@ -11,7 +11,7 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function emailShell(content: string, unsubscribeUrl?: string): string {
+export function emailShell(content: string, unsubscribeUrl?: string): string {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
@@ -290,6 +290,58 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
   <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Free Report →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Post-Report Summary (fires Day +1 after the user's FIRST autopsy) ──
+
+interface PostReportProps extends EmailProps {
+  grade: string;
+  emotionScore: number;
+  biasCount: number;
+  reportUrl: string;
+}
+
+export function renderPostReportEmail(props: PostReportProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl, grade, emotionScore, biasCount, reportUrl } = props;
+  const emotionTone = emotionScore >= 50 ? 'emotions are doing a lot of the driving' : 'you\'re mostly in control';
+  return {
+    subject: `Your autopsy report is in — Grade ${esc(grade)}`,
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, your first autopsy is filed.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Here's the short version of what the forensic analysis found:
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="background:#f8f9fa;padding:16px;border-left:3px solid #00C9A7">
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;letter-spacing:1.5px;margin-bottom:4px">OVERALL GRADE</div>
+    <div style="font-family:'Courier New',monospace;font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:12px">${esc(grade)}</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;letter-spacing:1.5px;margin-bottom:4px">EMOTION SCORE</div>
+    <div style="font-family:'Courier New',monospace;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:4px">${emotionScore} / 100</div>
+    <div style="font-size:12px;color:#555;margin-bottom:12px">At this level, ${esc(emotionTone)}.</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;letter-spacing:1.5px;margin-bottom:4px">COGNITIVE BIASES DETECTED</div>
+    <div style="font-family:'Courier New',monospace;font-size:20px;font-weight:700;color:#1a1a1a">${biasCount}</div>
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:14px;color:#555;line-height:1.6">
+    The full report includes dollar costs for every bias, session-level grading, and a personalized action plan based on your actual patterns.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(reportUrl)}" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Full Report →</a>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
+    Your next report will be sharper. Keep uploading bets as you place them — the more data, the more patterns we catch.
+  </div>
 </td></tr>`, unsubscribeUrl),
   };
 }
