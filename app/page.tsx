@@ -266,7 +266,7 @@ export default async function LandingPage() {
             <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 rounded-md" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">FIRST ONE FREE</span>
+                <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">MOST POPULAR</span>
               </div>
               <div className="mb-4">
                 <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
@@ -374,7 +374,7 @@ export default async function LandingPage() {
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
         <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
-          Get Your Full Report Free
+          Get Your Autopsy Report
         </Link>
       </section>
       </AnimatedSection>

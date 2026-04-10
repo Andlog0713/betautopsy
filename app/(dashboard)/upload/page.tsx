@@ -206,7 +206,7 @@ export default function UploadPage() {
           )}
 
           <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            {tier === 'pro' ? 'Run Your Autopsy →' : promoEligible ? 'Run Your Free Full Report →' : 'Run Your Free Snapshot →'}
+            {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Snapshot →'}
           </Link>
         </div>
       )}

@@ -185,7 +185,7 @@ export default function SunkCostFallacySportsBetting() {
       </p>
 
       <p>
-        The first full report is free. It takes about 3 minutes to upload your data.{' '}
+        It takes about 3 minutes to upload your data.{' '}
         <Link href="/signup">Get your autopsy report</Link>.
       </p>
 

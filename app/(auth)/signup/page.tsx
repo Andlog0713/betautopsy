@@ -88,7 +88,7 @@ function SignupForm() {
       )}
       <div className="case-card p-8 animate-fade-in">
       <div className="pl-3 border-l border-l-scalpel mb-4">
-        <p className="text-scalpel text-sm font-medium">Limited time: your first full report is free. No credit card.</p>
+        <p className="text-scalpel text-sm font-medium">Free snapshot report. Full behavioral analysis from $9.99.</p>
       </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 

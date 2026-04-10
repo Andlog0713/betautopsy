@@ -156,7 +156,7 @@ export default function CompleteGuideBettingPsychology() {
       <p>
         <strong>
           <Link href="/signup">Upload your betting history</Link> and see your Emotion Score.
-          Your first report is free.
+          Free snapshot included.
         </strong>
       </p>
 

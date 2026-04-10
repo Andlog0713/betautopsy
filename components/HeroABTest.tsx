@@ -58,9 +58,9 @@ export default function HeroABTest() {
           Upload your sports betting history and get a full behavioral analysis — cognitive biases, emotional patterns, and a personalized action plan to stop the leaks.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Free Report</Link>
+          <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</Link>
           <span className="text-fg-muted text-xs mt-3 sm:mt-4">
-            No credit card required.
+            Free snapshot. Full reports from $9.99.
           </span>
         </div>
       </>
@@ -97,7 +97,7 @@ export default function HeroABTest() {
 
       <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
         <Link href="/signup" className="btn-primary text-base !px-8 !py-3" onClick={trackClick}>
-          Get Your Free Report
+          Get Your Autopsy Report
         </Link>
         <span className="text-fg-muted text-xs mt-3 sm:mt-4">
           No credit card required.

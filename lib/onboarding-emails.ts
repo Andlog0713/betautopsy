@@ -76,7 +76,7 @@ export function renderWelcomeEmail(props: EmailProps): { subject: string; html: 
 
 <tr><td style="padding:0 24px 16px;text-align:center">
   <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
-  <div style="font-size:12px;color:#888;margin-top:8px">Your first full report is free. No credit card.</div>
+  <div style="font-size:12px;color:#888;margin-top:8px">Free snapshot report. Full analysis from $9.99.</div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -241,7 +241,7 @@ export function renderUrgencyEmail(props: EmailProps): { subject: string; html: 
 
 <tr><td style="padding:0 24px 16px">
   <div style="font-size:14px;color:#555;line-height:1.6">
-    Your first full report is still free. The data is already there. You just haven't looked at it yet.
+    Your free snapshot is waiting. The data is already there. You just haven't looked at it yet.
   </div>
 </td></tr>
 
@@ -273,7 +273,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
 
 <tr><td style="padding:0 24px 16px">
   <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
-    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Run your first full report while it's still free</div>
+    <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Run your free snapshot report</div>
     <div style="font-size:13px;color:#555;line-height:1.5">Takes 2 minutes once your bets are uploaded. No credit card.</div>
   </div>
   <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
@@ -289,7 +289,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Free Report →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Snapshot →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -362,7 +362,7 @@ export function renderReengagementEmail(props: EmailProps): { subject: string; h
     <strong style="color:#1a1a1a">Nothing changes until you see the data.</strong>
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    Upload takes 3 minutes. The analysis runs in under a minute. Your first full report is free.
+    Upload takes 3 minutes. The analysis runs in under a minute. Free snapshot included.
   </div>
 </td></tr>
 
@@ -391,7 +391,7 @@ export function renderMissYouEmail(props: EmailProps): { subject: string; html: 
     Your betting patterns haven't changed since you signed up — because patterns don't fix themselves. They need data.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    BetAutopsy is still here, and your first full report is still free. Upload takes about 3 minutes.
+    BetAutopsy is still here. Free snapshot reports are always available. Upload takes about 3 minutes.
   </div>
 </td></tr>
 
@@ -420,7 +420,7 @@ export function renderLastChanceEmail(props: EmailProps): { subject: string; htm
     It's been two months since you signed up. We haven't seen any activity on your account, so we're going to stop emailing.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    If you ever want to look at your betting patterns, your account is still here. Upload takes 3 minutes, and your first full report is free.
+    If you ever want to look at your betting patterns, your account is still here. Upload takes 3 minutes, and free snapshots are always available.
   </div>
 </td></tr>
 

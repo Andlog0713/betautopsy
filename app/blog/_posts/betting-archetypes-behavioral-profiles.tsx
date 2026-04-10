@@ -233,7 +233,7 @@ export default function BettingArchetypesBehavioralProfiles() {
       <p>
         <strong>The real thing:</strong>{' '}
         <Link href="/signup">Upload your betting history</Link> and get your data-driven archetype
-        as part of a full behavioral analysis. Your first report is free. It takes about 3 minutes
+        as part of a full behavioral analysis. Free snapshot included. It takes about 3 minutes
         to import your bets from any sportsbook.
       </p>
 
