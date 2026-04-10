@@ -110,7 +110,7 @@ export default function ComparePage() {
             Compare how you perform across different sportsbooks, time periods, or bet sources.
             Available with Pro subscription.
           </p>
-          <Link href="/pricing" className="btn-primary inline-block text-sm">Go Pro — $19.99/mo</Link>
+          <Link href="/pricing" className="btn-primary inline-block text-sm">Go Pro: $19.99/mo</Link>
         </div>
       </div>
     );

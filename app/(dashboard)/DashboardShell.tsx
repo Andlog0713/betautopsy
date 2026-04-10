@@ -96,7 +96,7 @@ export default function DashboardShell({
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
               aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={mobileNavOpen}
-              className="text-fg-dim hover:text-fg p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+              className="text-fg-dim hover:text-fg p-1.5 rounded-sm hover:bg-surface-1 transition-colors"
             >
               {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -126,7 +126,7 @@ export default function DashboardShell({
               </Link>
               <button
                 onClick={() => setMobileNavOpen(false)}
-                className="text-fg-dim hover:text-fg p-1 rounded-lg hover:bg-surface-1 transition-colors"
+                className="text-fg-dim hover:text-fg p-1 rounded-sm hover:bg-surface-1 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -138,7 +138,7 @@ export default function DashboardShell({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileNavOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                       : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -155,7 +155,7 @@ export default function DashboardShell({
               <Link
                 href="/pricing"
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-200 ${
                   isActive('/pricing')
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -171,7 +171,7 @@ export default function DashboardShell({
                   <Link
                     href="/admin/reports"
                     onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-200 ${
                       pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
                         ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                         : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -183,7 +183,7 @@ export default function DashboardShell({
                   <Link
                     href="/admin/feedback"
                     onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-200 ${
                       pathname === '/admin/feedback'
                         ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                         : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -202,7 +202,7 @@ export default function DashboardShell({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileNavOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                       : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -222,7 +222,7 @@ export default function DashboardShell({
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="text-fg-dim hover:text-loss p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+                  className="text-fg-dim hover:text-loss p-1.5 rounded-sm hover:bg-surface-1 transition-colors"
                   aria-label="Sign out"
                 >
                   <LogOut size={16} />
@@ -248,7 +248,7 @@ export default function DashboardShell({
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                   : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -266,7 +266,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/reports"
                 title="Admin"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all duration-200 ${
                   pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -278,7 +278,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/feedback"
                 title="Feedback"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all duration-200 ${
                   pathname === '/admin/feedback'
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -294,7 +294,7 @@ export default function DashboardShell({
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                   : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -311,14 +311,14 @@ export default function DashboardShell({
             <Link
               href="/pricing"
               title="Upgrade to Pro"
-              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-lg px-2 py-2 transition-colors border border-scalpel/20"
+              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-sm px-2 py-2 transition-colors border border-scalpel/20"
             >
               <ArrowUpRight size={14} />
               <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Upgrade to Pro</span>
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
+            <div className="w-7 h-7 rounded-sm bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
@@ -334,7 +334,7 @@ export default function DashboardShell({
               <EyeToggle />
               <button
                 onClick={handleSignOut}
-                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-lg hover:bg-surface-1"
+                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-sm hover:bg-surface-1"
                 title="Sign out"
               >
                 <LogOut size={16} />

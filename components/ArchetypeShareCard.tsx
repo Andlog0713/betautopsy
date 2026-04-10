@@ -3,7 +3,7 @@ import { getArchetypeByName } from '@/lib/archetypes';
 import type { ShareCardData } from './ShareCard';
 
 const FONT_HEADING = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const FONT_MONO = "'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace";
+const FONT_MONO = "'JetBrains Mono', 'Courier New', monospace";
 
 /**
  * 1080×1080 archetype-specific share card for social media.
@@ -20,7 +20,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
     if (!arch) return null;
 
     // Determine if archetype color is light enough to need dark text
-    const needsDarkText = arch.color === '#C9A04E' || arch.color === '#00C9A7';
+    const needsDarkText = arch.color === '#D29922' || arch.color === '#00C9A7';
     const leftText = needsDarkText ? '#0D1117' : '#F0F2F5';
     const leftTextMuted = needsDarkText ? 'rgba(13,17,23,0.7)' : 'rgba(240,242,245,0.7)';
 
@@ -147,7 +147,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                     fontFamily: FONT_MONO,
                     fontSize: 56,
                     fontWeight: 700,
-                    color: data.emotion_score <= 30 ? '#00C9A7' : data.emotion_score <= 55 ? '#C9A04E' : '#C4463A',
+                    color: data.emotion_score <= 30 ? '#00C9A7' : data.emotion_score <= 55 ? '#D29922' : '#E8453C',
                     lineHeight: 1,
                   }}
                 >
@@ -185,7 +185,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                       fontFamily: FONT_MONO,
                       fontSize: 56,
                       fontWeight: 700,
-                      color: data.discipline_score >= 60 ? '#00C9A7' : data.discipline_score >= 40 ? '#C9A04E' : '#C4463A',
+                      color: data.discipline_score >= 60 ? '#00C9A7' : data.discipline_score >= 40 ? '#D29922' : '#E8453C',
                       lineHeight: 1,
                     }}
                   >

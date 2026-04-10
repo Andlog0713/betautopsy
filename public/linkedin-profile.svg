@@ -1,19 +1,12 @@
 <svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="640" height="640" fill="#0d1117"/>
-  <!--
-    Canonical proportions from logo.tsx IncisionMark:
-    height=380, w=228 (h*0.6), armEnd=95 (h*0.25), sw=10, dotR=13, epR=6
-    padX=15, padY=15, cx=129, cy=110, viewW=258, viewH=410
-    Control points: Q(padX+w*0.15, padY+armEnd*0.5) = Q(49.2, 62.5)
-    Centered in 640x640: translate((640-258)/2, (640-410)/2) = (191, 115)
-  -->
   <g transform="translate(191, 115)">
-    <path d="M15,15 Q49.2,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/>
-    <path d="M243,15 Q208.8,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/>
-    <line x1="129" y1="110" x2="129" y2="395" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
+    <path d="M15,15 Q49.2,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M243,15 Q208.8,62.5 129,110" stroke="#00C9A7" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <line x1="129" y1="110" x2="129" y2="395" stroke="#00C9A7" stroke-width="10" stroke-linecap="round"/>
     <circle cx="129" cy="110" r="13" fill="#E8453C"/>
-    <circle cx="15" cy="15" r="6" fill="#00FFCB" opacity="0.45"/>
-    <circle cx="243" cy="15" r="6" fill="#00FFCB" opacity="0.45"/>
-    <circle cx="129" cy="395" r="6" fill="#00FFCB" opacity="0.45"/>
+    <circle cx="15" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="243" cy="15" r="6" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="129" cy="395" r="6" fill="#00C9A7" opacity="0.45"/>
   </g>
 </svg>

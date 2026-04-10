@@ -160,7 +160,7 @@ export default function SettingsPage() {
             <a
               key={section}
               href={`#settings-${section.toLowerCase().replace(/\s+/g, '-')}`}
-              className="block text-sm text-fg-dim hover:text-fg-bright px-3 py-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+              className="block text-sm text-fg-dim hover:text-fg-bright px-3 py-1.5 rounded-sm hover:bg-surface-1 transition-colors"
             >
               {section}
             </a>

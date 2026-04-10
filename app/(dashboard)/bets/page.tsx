@@ -761,7 +761,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
             value={form.parlay_legs}
             onChange={(e) => update('parlay_legs', e.target.value)}
             className="input-field w-full font-mono"
-            placeholder="—"
+            placeholder="-"
           />
         </div>
         <div className="flex items-end pb-1">

@@ -49,7 +49,7 @@ function IncisionMark({
         x1={cx} y1={cy} x2={cx} y2={viewH - padY}
         stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
       />
-      <circle cx={cx} cy={cy} r={dotRadius} fill="#C4463A" />
+      <circle cx={cx} cy={cy} r={dotRadius} fill="#E8453C" />
       <circle cx={padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
       <circle cx={viewW - padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
       <circle cx={cx} cy={viewH - padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />

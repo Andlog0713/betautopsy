@@ -1,46 +1,30 @@
 <svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg-glow" cx="50%" cy="45%" r="60%" fx="50%" fy="45%">
-      <stop offset="0%" stop-color="#141820"/>
-      <stop offset="100%" stop-color="#0d1117"/>
-    </radialGradient>
-    <radialGradient id="logo-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00FFCB" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#00FFCB" stop-opacity="0"/>
-    </radialGradient>
     <linearGradient id="top-edge" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#00FFCB" stop-opacity="0"/>
-      <stop offset="30%" stop-color="#00FFCB" stop-opacity="0.15"/>
-      <stop offset="70%" stop-color="#00FFCB" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#00FFCB" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00C9A7" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#00C9A7" stop-opacity="0.15"/>
+      <stop offset="70%" stop-color="#00C9A7" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#00C9A7" stop-opacity="0"/>
     </linearGradient>
   </defs>
 
-  <rect width="1584" height="396" fill="url(#bg-glow)"/>
+  <rect width="1584" height="396" fill="#0d1117"/>
   <rect x="0" y="0" width="1584" height="1" fill="url(#top-edge)"/>
-  <ellipse cx="792" cy="185" rx="300" ry="180" fill="url(#logo-glow)"/>
 
-  <!--
-    Canonical proportions from logo.tsx IncisionMark:
-    height=100, w=60 (h*0.6), armEnd=25 (h*0.25), sw=3.5, dotR=4.5, epR=2
-    padX=6.5, padY=6.5, cx=36.5, cy=31.5, viewW=73, viewH=113
-    Control points: Q(padX+w*0.15, padY+armEnd*0.5) = Q(15.5, 19)
-    Centered at x=792: translate(792-36.5, 116.5)
-  -->
   <g transform="translate(755.5, 116.5)">
-    <path d="M6.5,6.5 Q15.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <path d="M66.5,6.5 Q57.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <line x1="36.5" y1="31.5" x2="36.5" y2="106.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M6.5,6.5 Q15.5,19 36.5,31.5" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <path d="M66.5,6.5 Q57.5,19 36.5,31.5" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    <line x1="36.5" y1="31.5" x2="36.5" y2="106.5" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
     <circle cx="36.5" cy="31.5" r="4.5" fill="#E8453C"/>
-    <circle cx="6.5" cy="6.5" r="2" fill="#00FFCB" opacity="0.4"/>
-    <circle cx="66.5" cy="6.5" r="2" fill="#00FFCB" opacity="0.4"/>
-    <circle cx="36.5" cy="106.5" r="2" fill="#00FFCB" opacity="0.4"/>
+    <circle cx="6.5" cy="6.5" r="2" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="66.5" cy="6.5" r="2" fill="#00C9A7" opacity="0.45"/>
+    <circle cx="36.5" cy="106.5" r="2" fill="#00C9A7" opacity="0.45"/>
   </g>
 
-  <text x="792" y="270" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC">
+  <text x="792" y="270" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" letter-spacing="3" fill="#F0F2F5">
     <tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan>
   </text>
-  <text x="792" y="298" text-anchor="middle" font-family="monospace" font-size="9" letter-spacing="4" fill="#5D6673">BEHAVIORAL ANALYSIS FOR SPORTS BETTORS</text>
+  <text x="792" y="298" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" letter-spacing="4" fill="#515968">BEHAVIORAL ANALYSIS FOR SPORTS BETTORS</text>
 
   <rect x="0" y="395" width="1584" height="1" fill="url(#top-edge)"/>
 </svg>

@@ -5,8 +5,8 @@ export default function BetsLoading() {
     <div className="space-y-6 animate-fade-in">
       <Skeleton className="h-8 w-40" />
       <div className="flex gap-3">
-        <Skeleton className="h-9 w-28 rounded-lg" />
-        <Skeleton className="h-9 w-28 rounded-lg" />
+        <Skeleton className="h-9 w-28 rounded-sm" />
+        <Skeleton className="h-9 w-28 rounded-sm" />
       </div>
       <div className="space-y-0">
         <Skeleton className="h-10 rounded-t-lg" />

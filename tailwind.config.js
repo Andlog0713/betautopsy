@@ -7,19 +7,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Base surfaces — 4-level dark system
-        base: '#0a0a12',
+        // Base surfaces — legacy aliases kept for compat, mapped to brand tier values
+        base: '#0D1117',
         surface: {
-          DEFAULT: '#12121c',
-          base: '#0a0a12',
-          1: '#12121c',
-          2: '#1a1a26',
-          3: '#222232',
-          raised: '#1a1a26',
-          elevated: '#222232',
-          overlay: '#222232',
+          DEFAULT: '#111318',
+          base: '#0D1117',
+          1: '#111318',
+          2: '#161820',
+          3: '#1C1F28',
+          raised: '#161820',
+          elevated: '#1C1F28',
+          overlay: '#222530',
         },
-        // Dashboard redesign tier system — background contrast instead of borders
         // Brand-compliant 5-elevation surface stack
         tier: {
           0: '#0D1117', // Midnight — page background
@@ -29,16 +28,16 @@ module.exports = {
           4: '#222530', // Elevated — overlay / pressed
         },
         border: {
-          subtle: 'rgba(255, 255, 255, 0.06)',
+          subtle: 'rgba(255, 255, 255, 0.04)',
           DEFAULT: 'rgba(255, 255, 255, 0.08)',
           strong: 'rgba(255, 255, 255, 0.12)',
         },
-        // Text hierarchy — 4 levels
+        // Text hierarchy — brand guide values
         fg: {
-          DEFAULT: '#B8C0CC',
-          bright: '#E8ECF0',
-          muted: '#8B95A5',
-          dim: '#7A8494',
+          DEFAULT: '#D0D5DD',
+          bright: '#F0F2F5',
+          muted: '#848D9A',
+          dim: '#515968',
         },
         // Brand — unified teal
         scalpel: {
@@ -46,41 +45,41 @@ module.exports = {
           dim: '#00A88C',
           muted: 'rgba(0,201,167,0.12)',
         },
-        // Severity — desaturated, clinical
+        // Severity — brand guide Bleed Red
         bleed: {
-          DEFAULT: '#C4463A',
-          dim: '#8B2E25',
-          muted: 'rgba(196,70,58,0.08)',
+          DEFAULT: '#E8453C',
+          dim: '#A32F28',
+          muted: 'rgba(232,69,60,0.08)',
         },
-        // Semantic
-        win: '#00C9A7',
-        loss: '#C4463A',
-        caution: '#C9A04E',
-        // Legacy aliases
+        // Semantic — brand guide values
+        win: '#3FB950',
+        loss: '#F85149',
+        caution: '#D29922',
+        // Legacy aliases — mapped to new brand values
         ink: {
-          900: '#0a0a12',
-          800: '#12121c',
-          700: '#4A5260',
-          600: '#7A8494',
-          500: '#B0B8C4',
+          900: '#0D1117',
+          800: '#111318',
+          700: '#515968',
+          600: '#848D9A',
+          500: '#D0D5DD',
         },
         flame: { 500: '#00C9A7', 600: '#00A88C' },
         mint: { 500: '#00C9A7' },
       },
       fontFamily: {
-        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
-      // Card style allows rounded surfaces (16px); inputs/buttons stay sharp.
+      // Brand guide: max 4px on cards/containers/buttons. Most elements 2px.
       borderRadius: {
         'none': '0px',
         'sm': '2px',
         DEFAULT: '4px',
-        'md': '6px',
-        'lg': '10px',
-        'xl': '12px',
-        '2xl': '16px',
-        '3xl': '20px',
+        'md': '4px',
+        'lg': '4px',
+        'xl': '4px',
+        '2xl': '4px',
+        '3xl': '4px',
       },
       keyframes: {
         'fade-in': {

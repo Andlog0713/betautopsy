@@ -82,7 +82,7 @@ function SignupForm() {
       {showVerifyNotice && (
         <div className="bg-scalpel-muted border border-scalpel/20 rounded-sm p-4 mb-6">
           <p className="text-scalpel text-sm font-medium text-center">
-            Check your inbox — you need to verify your email before accessing your dashboard. Didn&apos;t get it? Check your spam folder or sign up again below.
+            Check your inbox. You need to verify your email before accessing your dashboard. Didn&apos;t get it? Check your spam folder or sign up again below.
           </p>
         </div>
       )}

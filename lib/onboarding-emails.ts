@@ -148,10 +148,10 @@ export function renderFeatureHighlightEmail(props: EmailProps): { subject: strin
 <tr><td style="padding:0 24px 16px">
   <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
     <div style="font-size:13px;color:#555;line-height:1.8">
-      <strong style="color:#1a1a1a">Stake volatility</strong> — are your bet sizes all over the place, or steady?<br/>
-      <strong style="color:#1a1a1a">Loss chasing</strong> — does your next bet get bigger after a loss?<br/>
-      <strong style="color:#1a1a1a">Streak behavior</strong> — do you speed up or slow down on losing streaks?<br/>
-      <strong style="color:#1a1a1a">Session discipline</strong> — do you quit while ahead, or chase until you're down?
+      <strong style="color:#1a1a1a">Stake volatility:</strong> are your bet sizes all over the place, or steady?<br/>
+      <strong style="color:#1a1a1a">Loss chasing:</strong> does your next bet get bigger after a loss?<br/>
+      <strong style="color:#1a1a1a">Streak behavior:</strong> do you speed up or slow down on losing streaks?<br/>
+      <strong style="color:#1a1a1a">Session discipline:</strong> do you quit while ahead, or chase until you're down?
     </div>
   </div>
 </td></tr>
@@ -195,7 +195,7 @@ export function renderSocialProofEmail(props: EmailProps): { subject: string; ht
 
 <tr><td style="padding:0 24px 16px">
   <div style="font-size:14px;color:#555;line-height:1.6">
-    Sound familiar? You're not alone — it shows up in the majority of reports we run. It's also one of the most expensive behavioral leaks in sports betting because it compounds inside a single session.
+    Sound familiar? You're not alone. It shows up in the majority of reports we run. It's also one of the most expensive behavioral leaks in sports betting because it compounds inside a single session.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-top:12px">
     The fix is specific and measurable: a hard ceiling on post-loss stakes (say, 1.5x your average) and a mandatory stop after three consecutive losses. Generic advice without the data doesn't work, which is why your report tells you exactly how much this pattern is costing YOU and whether the fix applies to your specific numbers.
@@ -264,7 +264,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
     BetAutopsy's launch-window access ends in about 48 hours.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    After that, you'll still be able to run free snapshot reports — but they show only your grade and top bias. The dollar costs, session breakdowns, and detailed recommendations get locked behind the paywall.
+    After that, you'll still be able to run free snapshot reports, but they show only your grade and top bias. The dollar costs, session breakdowns, and detailed recommendations get locked behind the paywall.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">
     If you've been meaning to try BetAutopsy, now's the time to either:
@@ -307,7 +307,7 @@ export function renderPostReportEmail(props: PostReportProps): { subject: string
   const { displayName, appUrl, unsubscribeUrl, grade, emotionScore, biasCount, reportUrl } = props;
   const emotionTone = emotionScore >= 50 ? 'emotions are doing a lot of the driving' : 'you\'re mostly in control';
   return {
-    subject: `Your autopsy report is in — Grade ${esc(grade)}`,
+    subject: `Your autopsy report is in: Grade ${esc(grade)}`,
     html: emailShell(`
 <tr><td style="padding:24px 24px 0">
   <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, your first autopsy is filed.</div>
@@ -340,7 +340,7 @@ export function renderPostReportEmail(props: PostReportProps): { subject: string
 
 <tr><td style="padding:0 24px 16px">
   <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
-    Your next report will be sharper. Keep uploading bets as you place them — the more data, the more patterns we catch.
+    Your next report will be sharper. Keep uploading bets as you place them. The more data, the more patterns we catch.
   </div>
 </td></tr>`, unsubscribeUrl),
   };
@@ -388,7 +388,7 @@ export function renderMissYouEmail(props: EmailProps): { subject: string; html: 
 <tr><td style="padding:24px 24px 0">
   <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, it's been a month.</div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    Your betting patterns haven't changed since you signed up — because patterns don't fix themselves. They need data.
+    Your betting patterns haven't changed since you signed up, because patterns don't fix themselves. They need data.
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
     BetAutopsy is still here, and your first full report is still free. Upload takes about 3 minutes.
@@ -457,7 +457,7 @@ export function renderStreakEmail(props: StreakEmailProps): { subject: string; h
     ${esc(milestone)}
   </div>
   <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
-    Consistency is the strongest signal of discipline we track. Every week you keep your streak going, your Discipline Score captures it. Keep uploading your bets — each data point sharpens your next autopsy.
+    Consistency is the strongest signal of discipline we track. Every week you keep your streak going, your Discipline Score captures it. Keep uploading your bets. Each data point sharpens your next autopsy.
   </div>
 </td></tr>
 

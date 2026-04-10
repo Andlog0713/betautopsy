@@ -21,12 +21,12 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body style={{ backgroundColor: '#0f0e0c', color: '#F0F2F5', fontFamily: 'sans-serif' }}>
+      <body style={{ backgroundColor: '#0D1117', color: '#F0F2F5', fontFamily: 'Inter, sans-serif' }}>
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Something went wrong</h2>
             <p style={{ color: '#848D9A', marginBottom: '1.5rem' }}>{error.message}</p>
-            <button onClick={reset} style={{ background: '#C4463A', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>
+            <button onClick={reset} style={{ background: '#E8453C', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '2px', border: 'none', cursor: 'pointer' }}>
               Try Again
             </button>
           </div>

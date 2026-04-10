@@ -66,7 +66,7 @@
      The translucent box style.
      One unified surface across the entire site:
      - background: rgba(255,255,255,0.04)
-     - border-radius: 16px
+     - border-radius: 4px (brand guide: max 4px, forensic sharp aesthetic)
      - no border
      - 1px inset highlight on the top edge (frosted depth, NOT a border)
      - hover: lift to rgba(255,255,255,0.06)
@@ -74,7 +74,7 @@
   .case-card,
   .card {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 4px;
     border: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
@@ -85,31 +85,31 @@
 
   /* ── Buttons ── */
   .btn-primary {
-    @apply bg-scalpel text-[#0a0a12] font-semibold px-6 py-2.5 rounded-md
+    @apply bg-scalpel text-[#111318] font-semibold px-6 py-2.5 rounded-sm
            transition-all duration-150
            hover:brightness-110
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-md
+    @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-sm
            hover:bg-white/[0.03] hover:border-border-strong transition-all duration-150
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply text-fg-muted font-medium px-4 py-2.5 rounded-md
+    @apply text-fg-muted font-medium px-4 py-2.5 rounded-sm
            hover:text-fg hover:bg-white/[0.03] transition-all duration-150;
   }
 
   .btn-danger {
-    @apply bg-bleed-muted border border-bleed/20 text-bleed font-medium px-6 py-2.5 rounded-md
+    @apply bg-bleed-muted border border-bleed/20 text-bleed font-medium px-6 py-2.5 rounded-sm
            hover:bg-bleed/20 hover:border-bleed/30 transition-all duration-150;
   }
 
   /* ── Inputs ── */
   .input-field {
-    @apply bg-surface-2 border border-border-subtle rounded-md px-3 py-2 text-sm text-fg-bright
+    @apply bg-surface-2 border border-border-subtle rounded-sm px-3 py-2 text-sm text-fg-bright
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
            transition-colors;
@@ -149,7 +149,7 @@
 
   /* ── Vitals strip ── keeps 1px gap lines between cells but no outer stroke */
   .vitals-strip {
-    @apply grid gap-px bg-border-subtle rounded-2xl overflow-hidden;
+    @apply grid gap-px bg-border-subtle rounded overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
@@ -159,7 +159,7 @@
   .finding-card {
     background-color: rgba(255, 255, 255, 0.04);
     border-left: 2px solid rgba(0, 201, 167, 0.6);
-    border-radius: 16px;
+    border-radius: 4px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     padding: 1.25rem;
   }
@@ -218,7 +218,7 @@
   .card-tier-1,
   .card-tier-2 {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 4px;
     border: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
@@ -260,7 +260,7 @@
   /* Hero card — translucent surface w/ left scalpel rule for emphasis */
   .card-hero {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 4px;
     border: none;
     border-left: 2px solid #00C9A7;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -335,11 +335,11 @@
     color: #515968;
   }
   .data-body {
-    font-family: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 1.55;
-    color: #848D9A;
+    color: #848D9A;  /* fg-muted per brand guide */
   }
 
   /* Discipline ring glow */
@@ -358,7 +358,7 @@
   .change-down {
     font-family: var(--font-mono), ui-monospace, monospace;
     font-weight: 500;
-    color: #C4463A;
+    color: #E8453C;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }

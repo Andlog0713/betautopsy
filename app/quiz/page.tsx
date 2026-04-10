@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 const quizJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Quiz',
-  name: 'What\'s Your Bet DNA? — Sports Betting Personality Quiz',
+  name: 'What\'s Your Bet DNA? Sports Betting Personality Quiz',
   description: 'Discover your betting personality type and hidden cognitive biases in 2 minutes. Free, no signup required.',
   url: 'https://www.betautopsy.com/quiz',
   provider: { '@type': 'Organization', name: 'BetAutopsy' },

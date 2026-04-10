@@ -335,7 +335,7 @@ export default function DashboardPage() {
           <p className="case-header mb-3">STATUS // EMPTY SPECIMEN</p>
           <h2 className="font-bold text-2xl mb-2 text-fg-bright">Upload your first betting history</h2>
           <p className="data-body mb-6 max-w-md">
-            Pick whichever method is easiest — we&apos;ll find the patterns your brain hides from you.
+            Pick whichever method is easiest. We&apos;ll find the patterns your brain hides from you.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
             <Link
@@ -344,7 +344,7 @@ export default function DashboardPage() {
             >
               <div className="case-header mb-1 group-hover:text-scalpel transition-colors">OPTION A</div>
               <div className="font-bold text-fg-bright mb-1">Screenshot</div>
-              <div className="text-xs text-fg-muted">Fastest from your phone — snap your sportsbook &ldquo;My Bets&rdquo; screen.</div>
+              <div className="text-xs text-fg-muted">Fastest from your phone. Snap your sportsbook &ldquo;My Bets&rdquo; screen.</div>
             </Link>
             <Link
               href="/upload?method=paste"
@@ -501,7 +501,7 @@ export default function DashboardPage() {
                             {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
                           </div>
                           <p className="text-2xl data-number text-fg-bright leading-none">
-                            {streakCount > 0 ? `${streakCount}w` : '—'}
+                            {streakCount > 0 ? `${streakCount}w` : '-'}
                           </p>
                           <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
                             <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>

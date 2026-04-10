@@ -99,12 +99,12 @@ const ShareCard = forwardRef<HTMLDivElement, {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 22, color: '#C4463A', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
+              <div style={{ fontSize: 22, color: '#E8453C', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.emotionalRecord!.bets}</div>
                 <div style={{ fontSize: 28, color: '#848D9A' }}>bets</div>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: '#C4463A', marginTop: 4 }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: '#E8453C', marginTop: 4 }}>
                 {data.emotionalRecord!.roi >= 0 ? '+' : ''}{data.emotionalRecord!.roi}% ROI
               </div>
             </div>

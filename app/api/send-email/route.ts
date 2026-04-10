@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a">
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f5f5f5;width:100%">
 <tr><td align="center" style="padding:24px 16px">
-<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5"><tbody>
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;border-radius:4px;overflow:hidden;border:1px solid #e5e5e5"><tbody>
 
 <!-- Header -->
 <tr><td style="background-color:#0D1117;padding:24px 32px">
@@ -47,14 +47,14 @@ export async function GET(request: Request) {
 
 <!-- Content -->
 <tr><td style="padding:32px">
-  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Pro — for life.</h1>
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Pro. For life.</h1>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
     Hey ${name},
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
-    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Pro subscription</strong> — our top tier.
+    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Pro subscription</strong>, our top tier.
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px">
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;What-If Simulator
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer — ranked by $ impact
+      <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer, ranked by $ impact
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
       <span style="color:#00C9A7;font-weight:600">✓</span>&nbsp;&nbsp;Progress tracking &amp; weekly digests
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 
   <!-- CTA -->
   <div style="text-align:center;margin:32px 0">
-    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#00C9A7;color:#ffffff;font-size:16px;font-weight:700;padding:14px 40px;border-radius:10px;text-decoration:none">Go to Your Dashboard →</a>
+    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#00C9A7;color:#ffffff;font-size:16px;font-weight:700;padding:14px 40px;border-radius:2px;text-decoration:none">Go to Your Dashboard →</a>
   </div>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 8px">
