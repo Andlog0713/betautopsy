@@ -71,7 +71,7 @@ export function Logo({
         />
         <div className={`${s.text} tracking-wider mt-2 ${textColor}`}>
           <span className="font-black">BET</span>
-          <span className="font-light">AUTOPSY</span>
+          <span className="font-light" style={{ color: strokeColor }}>AUTOPSY</span>
         </div>
         {showTagline && (
           <div className="text-[#8B949E] text-[6.5px] tracking-[3px] font-medium uppercase mt-1">
@@ -88,7 +88,7 @@ export function Logo({
       <div>
         <div className={`${s.text} tracking-wider ${textColor} leading-none`}>
           <span className="font-black">BET</span>
-          <span className="font-light">AUTOPSY</span>
+          <span className="font-light" style={{ color: strokeColor }}>AUTOPSY</span>
         </div>
         {showTagline && (
           <div className="text-[#8B949E] text-[7.5px] tracking-[3.5px] font-medium uppercase">
