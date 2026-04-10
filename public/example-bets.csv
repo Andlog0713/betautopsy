@@ -1,0 +1,42 @@
+placed_at,sport,bet_type,description,odds,stake,result,payout,profit,sportsbook
+2026-01-05T14:30:00,NFL,spread,Chiefs -3.5,-110,25,win,47.73,22.73,DraftKings
+2026-01-05T14:45:00,NFL,moneyline,Bills ML,+140,30,loss,0,-30,DraftKings
+2026-01-05T19:00:00,NFL,total,Packers/Eagles Over 47.5,-115,25,win,46.74,21.74,FanDuel
+2026-01-06T20:15:00,NBA,spread,Celtics -6.5,-110,25,win,47.73,22.73,DraftKings
+2026-01-08T21:00:00,NBA,moneyline,Lakers ML,+160,20,loss,0,-20,BetMGM
+2026-01-10T19:30:00,NHL,moneyline,Rangers ML,-130,25,loss,0,-25,FanDuel
+2026-01-11T13:00:00,NFL,spread,Lions +2.5,-110,30,win,57.27,27.27,DraftKings
+2026-01-11T16:30:00,NFL,parlay,Ravens ML + Under 44.5,+260,25,loss,0,-25,DraftKings
+2026-01-13T20:00:00,NBA,spread,Nuggets -4,-110,25,win,47.73,22.73,FanDuel
+2026-01-15T19:00:00,NBA,prop,Jokic Over 25.5 Points,-120,20,win,36.67,16.67,DraftKings
+2026-01-18T14:00:00,NFL,spread,49ers -1.5,-110,30,loss,0,-30,BetMGM
+2026-01-18T17:00:00,NFL,parlay,Chiefs ML + Packers ML + Over 45,+450,20,loss,0,-20,DraftKings
+2026-01-20T20:30:00,NBA,moneyline,Suns ML,+180,25,win,70,45,FanDuel
+2026-01-22T19:00:00,NHL,spread,Bruins -1.5,+150,25,loss,0,-25,BetMGM
+2026-01-25T19:30:00,NBA,spread,Bucks -3.5,-110,25,loss,0,-25,DraftKings
+2026-01-27T20:00:00,NBA,total,Knicks/Celtics Over 218.5,-110,30,win,57.27,27.27,FanDuel
+2026-01-30T21:00:00,NBA,prop,Tatum Over 27.5 Points,-115,20,loss,0,-20,DraftKings
+2026-02-01T15:00:00,NFL,spread,Eagles -3 (Super Bowl),-110,35,loss,0,-35,DraftKings
+2026-02-01T15:00:00,NFL,total,Super Bowl Over 49.5,-110,25,push,25,0,FanDuel
+2026-02-03T20:00:00,NBA,moneyline,Thunder ML,-150,25,win,41.67,16.67,BetMGM
+2026-02-05T19:30:00,NBA,spread,76ers +5.5,-110,25,loss,0,-25,DraftKings
+2026-02-06T20:00:00,NHL,moneyline,Avalanche ML,-140,30,loss,0,-30,FanDuel
+2026-02-06T20:30:00,NBA,spread,Mavericks -2,-110,30,loss,0,-30,DraftKings
+2026-02-06T22:15:00,NBA,moneyline,Warriors ML,+130,50,loss,0,-50,DraftKings
+2026-02-06T22:45:00,NBA,parlay,Suns ML + Lakers ML,+310,65,loss,0,-65,DraftKings
+2026-02-07T12:00:00,NBA,spread,Celtics -5,-110,75,win,143.18,68.18,FanDuel
+2026-02-07T19:00:00,NBA,moneyline,Nuggets ML,-160,50,loss,0,-50,BetMGM
+2026-02-09T20:00:00,NBA,spread,Thunder -3.5,-110,30,win,57.27,27.27,DraftKings
+2026-02-12T19:30:00,NBA,prop,Edwards Over 24.5 Points,-110,25,win,47.73,22.73,FanDuel
+2026-02-14T22:00:00,NBA,parlay,Celtics -4.5 + Nuggets ML,+275,30,loss,0,-30,DraftKings
+2026-02-14T22:30:00,NBA,moneyline,Knicks ML,+145,35,win,85.75,50.75,DraftKings
+2026-02-17T20:00:00,NHL,spread,Panthers -1.5,+160,25,win,65,40,BetMGM
+2026-02-20T19:00:00,NBA,total,Bucks/Celtics Under 221.5,-110,25,loss,0,-25,FanDuel
+2026-02-23T14:00:00,NBA,spread,Lakers +7,-110,25,push,25,0,DraftKings
+2026-02-25T20:30:00,NBA,parlay,Thunder ML + Knicks ML + Celtics ML,+520,20,loss,0,-20,BetMGM
+2026-02-28T19:00:00,NBA,moneyline,Timberwolves ML,-135,25,win,43.52,18.52,DraftKings
+2026-03-02T13:00:00,MLB,moneyline,Yankees ML (Spring Training),+120,20,win,44,24,FanDuel
+2026-03-05T19:30:00,NBA,spread,Suns -2.5,-110,30,win,57.27,27.27,DraftKings
+2026-03-08T20:00:00,NBA,moneyline,Celtics ML,-180,35,win,54.44,19.44,BetMGM
+2026-03-10T19:00:00,NBA,spread,Nuggets -3,-110,25,pending,0,0,DraftKings
+2026-03-10T21:00:00,NHL,moneyline,Rangers ML,-125,25,pending,0,0,FanDuel
