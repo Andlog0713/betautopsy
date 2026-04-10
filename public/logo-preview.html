@@ -2,103 +2,111 @@
 <html>
 <head>
 <style>
-  body { background: #0d1117; margin: 40px; font-family: monospace; color: #8B95A5; }
-  .row { display: flex; gap: 48px; align-items: flex-start; margin-bottom: 60px; flex-wrap: wrap; }
-  .card { text-align: center; }
-  .label { font-size: 11px; letter-spacing: 2px; margin-bottom: 12px; color: #5A6474; }
-  .sublabel { font-size: 10px; color: #3A4454; margin-top: 8px; line-height: 1.6; }
-  h2 { color: #E8ECF0; font-size: 14px; letter-spacing: 3px; margin-bottom: 30px; }
-  .divider { border-top: 1px solid rgba(255,255,255,0.06); margin: 40px 0; }
+body{background:#0d1117;margin:40px;font-family:monospace;color:#8B95A5}
+.comparison{display:flex;gap:80px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap}
+.side{text-align:center}
+.tag{font-size:9px;letter-spacing:2px;color:#C4463A;margin-bottom:8px}
+.tag.after{color:#00C9A7}
+.note{font-size:10px;color:#3A4454;margin-top:8px;line-height:1.6}
+h2{color:#E8ECF0;font-size:13px;letter-spacing:3px;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:12px}
+.divider{border-top:1px solid rgba(255,255,255,0.06);margin:50px 0}
 </style>
 </head>
 <body>
-
-<h2>SOURCE OF TRUTH: YOUR ICON (file.svg)</h2>
-<div class="row">
-  <div class="card">
-    <div class="label">file.svg (ACTUAL VECTOR)</div>
-    <svg width="200" height="200" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="90" fill="#0D1117"/>
-      <path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/>
-      <path fill="#00FDC9" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/>
-      <path fill="#00FDC9" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/>
-      <path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/>
-    </svg>
-    <div class="sublabel">centerline w/h=0.54 · fork=31%<br/>stroke ~8% of height · thick filled arms</div>
-  </div>
+<h2>1. FAVICON.SVG (32x32)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE (stroked lines)</div>
+<svg width="128" height="128" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="7" fill="#0d1117"/><g transform="translate(6.2,2.2)"><path d="M3.8,3.8 Q5.6,6.8 9.8,9.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15.8,3.8 Q14,6.8 9.8,9.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round" fill="none"/><line x1="9.8" y1="9.8" x2="9.8" y2="23.8" stroke="#00FFCB" stroke-width="1.8" stroke-linecap="round"/><circle cx="9.8" cy="9.8" r="1.8" fill="#E8453C"/></g></svg>
+<div class="note">thin wires, tight V</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER (icon filled paths)</div>
+<svg width="128" height="128" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="90" fill="#0d1117"/><path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00FDC9" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00FDC9" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></svg>
+<div class="note">exact icon paths, pixel-perfect</div>
+</div>
 </div>
 
 <div class="divider"></div>
-
-<h2>CURRENT — THIN STROKES (WHAT YOU HAVE NOW)</h2>
-<div class="row">
-  <div class="card">
-    <div class="label">FAVICON (stroke 9%)</div>
-    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
-      <path d="M12,10 Q18,35 50,56" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
-      <path d="M88,10 Q82,35 50,56" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="50" y1="56" x2="50" y2="170" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="50" cy="56" r="5" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">stroke-width: 3.5 (2%)<br/>arms look like wires</div>
-  </div>
-
-  <div class="card">
-    <div class="label">LINKEDIN BANNER (stroke 3.5%)</div>
-    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
-      <path d="M12,10 Q18,30 50,45" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
-      <path d="M88,10 Q82,30 50,45" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
-      <line x1="50" y1="45" x2="50" y2="170" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="50" cy="45" r="5" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">stroke-width: 3.5 (2%)<br/>fork too high (25%)</div>
-  </div>
+<h2>2. LOGO.TSX NAV BAR (horizontal lockup)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE</div>
+<div style="display:flex;align-items:center;gap:8px;background:#0d1117;padding:16px;border:1px solid rgba(255,255,255,0.06);border-radius:4px">
+<svg width="22" height="35" viewBox="0 0 19.6 27.6" fill="none"><path d="M3.8,3.8 Q5.6,6.8 9.8,9.8" stroke="#00C9A7" stroke-width="1.6" stroke-linecap="round"/><path d="M15.8,3.8 Q14,6.8 9.8,9.8" stroke="#00C9A7" stroke-width="1.6" stroke-linecap="round"/><line x1="9.8" y1="9.8" x2="9.8" y2="23.8" stroke="#00C9A7" stroke-width="1.6" stroke-linecap="round"/><circle cx="9.8" cy="9.8" r="1.6" fill="#C4463A"/><circle cx="3.8" cy="3.8" r="1" fill="#00C9A7" opacity="0.45"/><circle cx="15.8" cy="3.8" r="1" fill="#00C9A7" opacity="0.45"/><circle cx="9.8" cy="23.8" r="1" fill="#00C9A7" opacity="0.45"/></svg>
+<span style="font-family:Inter,-apple-system,sans-serif;font-size:14px;letter-spacing:1px"><span style="font-weight:900;color:#F0F6FC">BET</span><span style="font-weight:300;color:#00C9A7">AUTOPSY</span></span>
+</div>
+<div class="note">thin stroked lines + endpoint dots</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER</div>
+<div style="display:flex;align-items:center;gap:8px;background:#0d1117;padding:16px;border:1px solid rgba(255,255,255,0.06);border-radius:4px">
+<svg width="22" height="35" viewBox="80 60 350 400" fill="none"><path fill="#00C9A7" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00C9A7" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00C9A7" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#C4463A" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></svg>
+<span style="font-family:Inter,-apple-system,sans-serif;font-size:14px;letter-spacing:1px"><span style="font-weight:900;color:#F0F6FC">BET</span><span style="font-weight:300;color:#00C9A7">AUTOPSY</span></span>
+</div>
+<div class="note">filled paths, bold mark</div>
+</div>
 </div>
 
 <div class="divider"></div>
-
-<h2>PROPOSED — HEAVY STROKES MATCHING ICON (w/h=0.54, fork=31%, stroke=8%)</h2>
-<div class="row">
-  <div class="card">
-    <div class="label">SMALL (32px favicon)</div>
-    <svg width="80" height="130" viewBox="0 0 80 130" fill="none">
-      <path d="M8,8 Q20,36 40,42" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <path d="M72,8 Q60,36 40,42" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <line x1="40" y1="42" x2="40" y2="122" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <circle cx="40" cy="42" r="10" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">straighter arms, subtle curve<br/>only near the fork point</div>
-  </div>
-
-  <div class="card">
-    <div class="label">MEDIUM (nav bar / share cards)</div>
-    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
-      <path d="M10,10 Q26,48 50,56" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
-      <path d="M90,10 Q74,48 50,56" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
-      <line x1="50" y1="56" x2="50" y2="170" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
-      <circle cx="50" cy="56" r="13" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">straighter arms, subtle curve<br/>only near the fork point</div>
-  </div>
-
-  <div class="card">
-    <div class="label">LARGE (LinkedIn / hero)</div>
-    <svg width="130" height="230" viewBox="0 0 130 230" fill="none">
-      <path d="M13,13 Q33,62 65,73" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
-      <path d="M117,13 Q97,62 65,73" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
-      <line x1="65" y1="73" x2="65" y2="218" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
-      <circle cx="65" cy="73" r="16" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">straighter arms, subtle curve<br/>only near the fork point</div>
-  </div>
+<h2>3. LINKEDIN BANNER (1584x396)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE</div>
+<svg width="400" height="100" viewBox="0 0 1584 396" fill="none"><rect width="1584" height="396" fill="#0d1117"/><g transform="translate(755.5,116.5)"><path d="M6.5,6.5 Q15.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/><path d="M66.5,6.5 Q57.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/><line x1="36.5" y1="31.5" x2="36.5" y2="106.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/><circle cx="36.5" cy="31.5" r="4.5" fill="#E8453C"/></g><text x="792" y="270" text-anchor="middle" font-family="Inter,sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC"><tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan></text></svg>
+<div class="note">thin stroked lines, narrow arms</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER</div>
+<svg width="400" height="100" viewBox="0 0 1584 396" fill="none"><rect width="1584" height="396" fill="#0d1117"/><g transform="translate(666,55) scale(0.55)"><path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00FFCB" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00FFCB" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></g><text x="792" y="305" text-anchor="middle" font-family="Inter,sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC"><tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan></text></svg>
+<div class="note">icon filled paths, bold surgical feel</div>
+</div>
 </div>
 
 <div class="divider"></div>
-<h2 style="color:#5A6474; font-size:11px; line-height:1.8;">
-  KEY INSIGHT: The centerline shape was already close. The real problem was stroke weight.<br/>
-  Current strokes are 2-3.5% of height. Icon uses ~8%. Doubling the stroke weight makes<br/>
-  every instance match the bold, surgical feel of the app icon.
-</h2>
+<h2>4. LINKEDIN PROFILE (640x640)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE</div>
+<svg width="160" height="160" viewBox="0 0 640 640" fill="none"><rect width="640" height="640" fill="#0d1117"/><g transform="translate(191,115)"><path d="M15,15 Q49.2,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/><path d="M243,15 Q208.8,62.5 129,110" stroke="#00FFCB" stroke-width="10" stroke-linecap="round" fill="none"/><line x1="129" y1="110" x2="129" y2="395" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/><circle cx="129" cy="110" r="13" fill="#E8453C"/></g></svg>
+<div class="note">stroked lines, different proportions</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER</div>
+<svg width="160" height="160" viewBox="0 0 640 640" fill="none"><rect width="640" height="640" fill="#0d1117"/><g transform="translate(145,80) scale(0.82)"><path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00FFCB" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00FFCB" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></g></svg>
+<div class="note">icon filled paths, matches app icon exactly</div>
+</div>
+</div>
+
+<div class="divider"></div>
+<h2>5. SHARE CARD STORIES (CTA SLIDE FOOTER)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE</div>
+<svg width="80" height="80" viewBox="0 0 40 60" fill="none"><path d="M4,4 Q8.6,11.5 20,19" stroke="#00C9A7" stroke-width="3.7" stroke-linecap="round"/><path d="M36,4 Q31.4,11.5 20,19" stroke="#00C9A7" stroke-width="3.7" stroke-linecap="round"/><line x1="20" y1="19" x2="20" y2="56" stroke="#00C9A7" stroke-width="3.7" stroke-linecap="round"/><circle cx="20" cy="19" r="3.7" fill="#C4463A"/></svg>
+<div class="note">hand-coded strokes</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER</div>
+<svg width="80" height="80" viewBox="80 60 350 400" fill="none"><path fill="#00C9A7" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00C9A7" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00C9A7" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#C4463A" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></svg>
+<div class="note">icon filled paths, identical everywhere</div>
+</div>
+</div>
+
+<div class="divider"></div>
+<h2>6. QUIZ RESULT CARD (SMALL MARK)</h2>
+<div class="comparison">
+<div class="side">
+<div class="tag">BEFORE</div>
+<svg width="60" height="60" viewBox="0 0 18 28" fill="none"><path d="M2,2 Q3.8,5.2 9,8.5" stroke="#00C9A7" stroke-width="1.7" stroke-linecap="round"/><path d="M16,2 Q14.2,5.2 9,8.5" stroke="#00C9A7" stroke-width="1.7" stroke-linecap="round"/><line x1="9" y1="8.5" x2="9" y2="26" stroke="#00C9A7" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="8.5" r="1.7" fill="#C4463A"/></svg>
+<div class="note">hand-coded, narrow</div>
+</div>
+<div class="side">
+<div class="tag after">AFTER</div>
+<svg width="60" height="60" viewBox="80 60 350 400" fill="none"><path fill="#00C9A7" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/><path fill="#00C9A7" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/><path fill="#00C9A7" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/><path fill="#C4463A" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/></svg>
+<div class="note">icon filled paths</div>
+</div>
+</div>
 
 </body>
 </html>
