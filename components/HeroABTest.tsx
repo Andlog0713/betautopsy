@@ -100,7 +100,7 @@ export default function HeroABTest() {
           Get Your Autopsy Report
         </Link>
         <span className="text-fg-muted text-xs mt-3 sm:mt-4">
-          No credit card required.
+          Free snapshot. Full reports from $9.99.
         </span>
       </div>
     </>
