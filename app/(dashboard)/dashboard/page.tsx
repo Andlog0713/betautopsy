@@ -452,8 +452,8 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* ── SECTION: DISCIPLINE — ungated standalone card ── */}
-          {latest?.discipline_score != null && (
+          {/* ── SECTION: DISCIPLINE — ungated standalone (only if DIAGNOSIS section won't show it) ── */}
+          {latest?.discipline_score != null && !isPaid && (
             <section className="border-t border-white/[0.04] pt-10 mb-12">
               <p className="case-header mb-6">DISCIPLINE // CURRENT SCORE</p>
               <div className="max-w-xl">
