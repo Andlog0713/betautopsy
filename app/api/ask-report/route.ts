@@ -3,15 +3,14 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logErrorServer } from '@/lib/log-error-server';
-import type { AutopsyAnalysis } from '@/types';
+import type { AutopsyAnalysis, Bet } from '@/types';
 
-const SYSTEM_PROMPT = `You are BetAutopsy's report analyst. You answer questions about this specific user's betting behavioral analysis report. Be specific and reference their actual numbers from the report data. Keep answers under 200 words. Never give betting picks, tout services, or financial advice. Never recommend specific bets. If asked something outside the scope of this report, say so. Always defer to the grades, scores, and classifications already in this report. Do not re-evaluate or contradict them.`;
+const SYSTEM_PROMPT = `You are BetAutopsy's report analyst. You answer questions about this specific user's betting behavioral analysis report and their underlying bet data. Be specific and reference their actual numbers. Keep answers under 200 words. Never give betting picks, tout services, or financial advice. Never recommend specific bets. If asked something outside the scope of this report, say so. Always defer to the grades, scores, and classifications already in this report. Do not re-evaluate or contradict them.`;
 
-/** Strip internal fields and large arrays, keep only what Claude needs. */
+/** Strip internal fields, keep curated analysis fields. */
 function trimReportContext(analysis: AutopsyAnalysis): Record<string, unknown> {
   const trimmed: Record<string, unknown> = {};
 
-  // Curated subset of fields
   if (analysis.summary) trimmed.summary = analysis.summary;
   if (analysis.biases_detected) trimmed.biases_detected = analysis.biases_detected;
   if (analysis.strategic_leaks) trimmed.strategic_leaks = analysis.strategic_leaks;
@@ -29,12 +28,87 @@ function trimReportContext(analysis: AutopsyAnalysis): Record<string, unknown> {
     trimmed.session_grade_distribution = analysis.session_detection.sessionGradeDistribution;
   }
 
-  // Strip any remaining underscore-prefixed fields
   for (const key of Object.keys(trimmed)) {
     if (key.startsWith('_')) delete trimmed[key];
   }
 
   return trimmed;
+}
+
+/**
+ * Aggregate raw bets into a compact stats summary (~2K tokens regardless
+ * of bet count). Gives Claude sport/type/day/sportsbook breakdowns without
+ * sending every individual row.
+ */
+function aggregateBets(bets: Bet[]): string {
+  if (bets.length === 0) return '';
+
+  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+  const totalStake = bets.reduce((s, b) => s + b.stake, 0);
+  const totalProfit = bets.reduce((s, b) => s + b.profit, 0);
+  const wins = settled.filter((b) => b.result === 'win').length;
+  const stakes = bets.map((b) => b.stake);
+  const minStake = Math.min(...stakes);
+  const maxStake = Math.max(...stakes);
+  const avgStake = totalStake / bets.length;
+  const stddev = Math.sqrt(
+    stakes.reduce((sum, s) => sum + (s - avgStake) ** 2, 0) / stakes.length
+  );
+
+  // Group by dimension
+  function groupROI(key: (b: Bet) => string) {
+    const groups: Record<string, { count: number; wins: number; profit: number; stake: number }> = {};
+    for (const b of bets) {
+      const k = key(b) || 'Unknown';
+      if (!groups[k]) groups[k] = { count: 0, wins: 0, profit: 0, stake: 0 };
+      groups[k].count++;
+      groups[k].stake += b.stake;
+      groups[k].profit += b.profit;
+      if (b.result === 'win') groups[k].wins++;
+    }
+    return Object.entries(groups)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([name, g]) => {
+        const winRate = g.count > 0 ? ((g.wins / g.count) * 100).toFixed(1) : '0';
+        const roi = g.stake > 0 ? ((g.profit / g.stake) * 100).toFixed(1) : '0';
+        return `  ${name}: ${g.count} bets, ${winRate}% win, ${roi}% ROI, $${Math.round(g.profit)} profit`;
+      })
+      .join('\n');
+  }
+
+  // Day of week
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayBreakdown = groupROI((b) => dayNames[new Date(b.placed_at).getUTCDay()]);
+
+  // Last 10 bets for recency context
+  const recentBets = [...bets]
+    .sort((a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime())
+    .slice(0, 10)
+    .map((b) => `  ${b.placed_at.slice(0, 10)} | ${b.sport} | ${b.bet_type} | ${b.description} | ${b.odds > 0 ? '+' : ''}${b.odds} | $${b.stake} | ${b.result} | $${b.profit}`)
+    .join('\n');
+
+  return `
+=== BET DATA SUMMARY (${bets.length} bets) ===
+
+Overview: ${bets.length} total, ${settled.length} settled, ${wins}W-${settled.length - wins}L, $${Math.round(totalProfit)} net profit
+Win rate: ${settled.length > 0 ? ((wins / settled.length) * 100).toFixed(1) : 0}%
+ROI: ${totalStake > 0 ? ((totalProfit / totalStake) * 100).toFixed(1) : 0}%
+Stake range: $${Math.round(minStake)} - $${Math.round(maxStake)}, avg $${Math.round(avgStake)}, stddev $${Math.round(stddev)}
+
+By Sport:
+${groupROI((b) => b.sport)}
+
+By Bet Type:
+${groupROI((b) => b.bet_type)}
+
+By Sportsbook:
+${groupROI((b) => b.sportsbook ?? 'Unknown')}
+
+By Day of Week:
+${dayBreakdown}
+
+Last 10 Bets:
+${recentBets}`;
 }
 
 export async function POST(request: Request) {
@@ -57,7 +131,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'report_id is required.' }, { status: 400 });
     }
 
-    // Rate limit: 5 questions per hour per user
     if (!(await checkRateLimit(`ask-report:${user.id}`, 5, 60 * 60 * 1000))) {
       return NextResponse.json(
         { error: 'You can ask 5 questions per hour. Try again later.' },
@@ -65,10 +138,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Load report (ownership enforced via user_id match)
     const { data: report, error: reportError } = await supabase
       .from('autopsy_reports')
-      .select('id, report_json, is_paid')
+      .select('id, report_json, is_paid, date_range_start, date_range_end')
       .eq('id', report_id)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -86,6 +158,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Report data is missing.' }, { status: 404 });
     }
 
+    // Fetch the actual bets that made up this report and aggregate them
+    let betSummary = '';
+    if (report.date_range_start && report.date_range_end) {
+      const { data: bets } = await supabase
+        .from('bets')
+        .select('placed_at, sport, league, bet_type, description, odds, stake, result, profit, sportsbook, is_bonus_bet, parlay_legs')
+        .eq('user_id', user.id)
+        .gte('placed_at', report.date_range_start)
+        .lte('placed_at', report.date_range_end)
+        .order('placed_at', { ascending: true });
+
+      if (bets && bets.length > 0) {
+        betSummary = aggregateBets(bets as Bet[]);
+      }
+    }
+
     const trimmedContext = trimReportContext(analysis);
 
     const anthropic = new Anthropic();
@@ -93,11 +181,11 @@ export async function POST(request: Request) {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
       temperature: 0.3,
-      system: SYSTEM_PROMPT,
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [
         {
           role: 'user',
-          content: `Here is my BetAutopsy report:\n\n${JSON.stringify(trimmedContext, null, 2)}\n\nMy question: ${question}`,
+          content: `Here is my BetAutopsy report:\n\n${JSON.stringify(trimmedContext, null, 2)}${betSummary}\n\nMy question: ${question}`,
         },
       ],
     });
