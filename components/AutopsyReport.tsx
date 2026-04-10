@@ -282,6 +282,120 @@ function InlineFeedbackSlot({
   return <div ref={ref}>{children}</div>;
 }
 
+// ── Ask Your Autopsy ──
+
+function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: AutopsyAnalysis }) {
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Generate 3 suggested questions based on report data
+  const suggestions: string[] = [];
+  const topBias = analysis.biases_detected?.[0];
+  if (topBias?.bias_name) {
+    suggestions.push(`How much is ${topBias.bias_name} costing me?`);
+  }
+  if (analysis.betting_archetype?.name) {
+    suggestions.push(`What should a ${analysis.betting_archetype.name} focus on improving?`);
+  }
+  if (suggestions.length < 3) {
+    suggestions.push('Which sport should I stop betting on?');
+  }
+  if (suggestions.length < 3) {
+    suggestions.push('How do I improve my discipline score?');
+  }
+
+  async function handleAsk() {
+    if (!question.trim() || loading) return;
+    setLoading(true);
+    setAnswer('');
+    setError('');
+
+    try {
+      const res = await fetch('/api/ask-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question.trim(), report_id: reportId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong.');
+      } else {
+        setAnswer(data.answer);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="border-t border-white/[0.04] pt-10 mt-10">
+      <div className="case-header mb-2">ASK YOUR AUTOPSY</div>
+      <p className="text-fg-muted text-sm mb-4">
+        Ask a question about your report and get a specific answer based on your data.
+      </p>
+
+      {/* Suggested questions */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {suggestions.map((s) => (
+          <button
+            key={s}
+            onClick={() => { setQuestion(s); setAnswer(''); setError(''); }}
+            className="font-mono text-xs text-fg-dim hover:text-scalpel transition-colors border border-border-subtle rounded-sm px-3 py-1.5 hover:border-scalpel/30"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {/* Input + submit */}
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+          placeholder="e.g. Which sport should I stop betting on?"
+          maxLength={500}
+          className="flex-1 font-mono text-sm bg-surface-2 border border-border-subtle rounded-sm p-3 text-fg placeholder:text-fg-dim focus:border-scalpel/40 focus:outline-none"
+        />
+        <button
+          onClick={handleAsk}
+          disabled={loading || !question.trim()}
+          className="btn-primary font-mono text-sm px-6 disabled:opacity-50"
+        >
+          {loading ? 'Analyzing...' : 'Ask'}
+        </button>
+      </div>
+
+      {/* Error */}
+      {error && <p className="text-loss text-xs font-mono mb-4">{error}</p>}
+
+      {/* Loading */}
+      {loading && (
+        <div className="case-card p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-scalpel animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-scalpel animate-pulse" style={{ animationDelay: '0.2s' }} />
+            <div className="w-1.5 h-1.5 rounded-full bg-scalpel animate-pulse" style={{ animationDelay: '0.4s' }} />
+            <span className="text-fg-muted text-xs font-mono ml-1">Analyzing your report...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Answer */}
+      {answer && !loading && (
+        <div className="case-card p-5 border-l-2 border-l-scalpel">
+          <p className="text-fg text-sm leading-relaxed whitespace-pre-wrap">{answer}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ── Main Component ──
 
 export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null }) {
@@ -2572,6 +2686,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {showNudge && reportId && !readOnly && (
         <ReportFeedbackNudge reportId={reportId} onClose={handleNudgeClose} />
+      )}
+
+      {/* Ask Your Autopsy — Q&A on paid reports */}
+      {reportId && !readOnly && !snapshotLocked && (
+        <AskYourAutopsy reportId={reportId} analysis={analysis} />
       )}
     </div>
   );
