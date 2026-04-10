@@ -115,6 +115,11 @@ export default async function LandingPage() {
           </div>
           <HeroABTest />
 
+          {/* DEBUG: Remove after confirming pricing shows. If you see this text on the live site, the env var is working. */}
+          {!PRICING_ENABLED && (
+            <p className="text-loss text-xs font-mono mt-4">DEBUG: PRICING_ENABLED is FALSE. Set NEXT_PUBLIC_PRICING_ENABLED=true in Vercel env vars and redeploy.</p>
+          )}
+
           {platformMetrics && (
             <div className="mt-6 flex gap-10 animate-fade-in-d3">
               <div>
