@@ -3,88 +3,102 @@
 <head>
 <style>
   body { background: #0d1117; margin: 40px; font-family: monospace; color: #8B95A5; }
-  .row { display: flex; gap: 60px; align-items: flex-start; margin-bottom: 60px; }
+  .row { display: flex; gap: 48px; align-items: flex-start; margin-bottom: 60px; flex-wrap: wrap; }
   .card { text-align: center; }
   .label { font-size: 11px; letter-spacing: 2px; margin-bottom: 12px; color: #5A6474; }
-  .sublabel { font-size: 10px; color: #3A4454; margin-top: 8px; }
+  .sublabel { font-size: 10px; color: #3A4454; margin-top: 8px; line-height: 1.6; }
   h2 { color: #E8ECF0; font-size: 14px; letter-spacing: 3px; margin-bottom: 30px; }
+  .divider { border-top: 1px solid rgba(255,255,255,0.06); margin: 40px 0; }
 </style>
 </head>
 <body>
 
-<h2>CURRENT (INCONSISTENT)</h2>
+<h2>SOURCE OF TRUTH: YOUR ICON (file.svg)</h2>
 <div class="row">
   <div class="card">
-    <div class="label">FAVICON.SVG</div>
-    <svg width="120" height="200" viewBox="0 0 120 200" fill="none">
-      <path d="M10,10 Q22,34 60,60" stroke="#00C9A7" stroke-width="8" stroke-linecap="round"/>
-      <path d="M110,10 Q98,34 60,60" stroke="#00C9A7" stroke-width="8" stroke-linecap="round"/>
-      <line x1="60" y1="60" x2="60" y2="190" stroke="#00C9A7" stroke-width="8" stroke-linecap="round"/>
-      <circle cx="60" cy="60" r="10" fill="#E8453C"/>
+    <div class="label">file.svg (ACTUAL VECTOR)</div>
+    <svg width="200" height="200" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" rx="90" fill="#0D1117"/>
+      <path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/>
+      <path fill="#00FDC9" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/>
+      <path fill="#00FDC9" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/>
+      <path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/>
     </svg>
-    <div class="sublabel">w/h=0.60 · fork=30% · stem=70%</div>
-  </div>
-
-  <div class="card">
-    <div class="label">LINKEDIN BANNER</div>
-    <svg width="120" height="200" viewBox="0 0 120 200" fill="none">
-      <path d="M10,10 Q19,28 60,50" stroke="#00FFCB" stroke-width="8" stroke-linecap="round"/>
-      <path d="M110,10 Q101,28 60,50" stroke="#00FFCB" stroke-width="8" stroke-linecap="round"/>
-      <line x1="60" y1="50" x2="60" y2="190" stroke="#00FFCB" stroke-width="8" stroke-linecap="round"/>
-      <circle cx="60" cy="50" r="10" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">w/h=0.60 · fork=25% · stem=75%</div>
-  </div>
-
-  <div class="card">
-    <div class="label">ICON-512.PNG (YOUR FAVORITE)</div>
-    <svg width="160" height="200" viewBox="0 0 160 200" fill="none">
-      <path d="M8,8 Q20,45 80,80" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <path d="M152,8 Q140,45 80,80" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <line x1="80" y1="80" x2="80" y2="192" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <circle cx="80" cy="80" r="13" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">w/h=0.80 · fork=40% · stem=60%</div>
+    <div class="sublabel">centerline w/h=0.54 · fork=31%<br/>stroke ~8% of height · thick filled arms</div>
   </div>
 </div>
 
-<h2>PROPOSED (UNIFIED — MATCHING ICON-512.PNG)</h2>
+<div class="divider"></div>
+
+<h2>CURRENT — THIN STROKES (WHAT YOU HAVE NOW)</h2>
 <div class="row">
   <div class="card">
-    <div class="label">SMALL (FAVICON 32px)</div>
-    <svg width="80" height="100" viewBox="0 0 80 100" fill="none">
-      <path d="M4,4 Q10,22 40,40" stroke="#00FFCB" stroke-width="5" stroke-linecap="round"/>
-      <path d="M76,4 Q70,22 40,40" stroke="#00FFCB" stroke-width="5" stroke-linecap="round"/>
-      <line x1="40" y1="40" x2="40" y2="96" stroke="#00FFCB" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="40" cy="40" r="6.5" fill="#E8453C"/>
+    <div class="label">FAVICON (stroke 9%)</div>
+    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
+      <path d="M12,10 Q18,35 50,56" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M88,10 Q82,35 50,56" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="50" y1="56" x2="50" y2="170" stroke="#00C9A7" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="50" cy="56" r="5" fill="#E8453C"/>
     </svg>
-    <div class="sublabel">w/h=0.80 · fork=40%</div>
+    <div class="sublabel">stroke-width: 3.5 (2%)<br/>arms look like wires</div>
   </div>
 
   <div class="card">
-    <div class="label">MEDIUM (NAV / SHARE CARDS)</div>
-    <svg width="120" height="150" viewBox="0 0 120 150" fill="none">
-      <path d="M6,6 Q15,33 60,60" stroke="#00FFCB" stroke-width="7" stroke-linecap="round"/>
-      <path d="M114,6 Q105,33 60,60" stroke="#00FFCB" stroke-width="7" stroke-linecap="round"/>
-      <line x1="60" y1="60" x2="60" y2="144" stroke="#00FFCB" stroke-width="7" stroke-linecap="round"/>
-      <circle cx="60" cy="60" r="9" fill="#E8453C"/>
+    <div class="label">LINKEDIN BANNER (stroke 3.5%)</div>
+    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
+      <path d="M12,10 Q18,30 50,45" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M88,10 Q82,30 50,45" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="50" y1="45" x2="50" y2="170" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="50" cy="45" r="5" fill="#E8453C"/>
     </svg>
-    <div class="sublabel">w/h=0.80 · fork=40%</div>
-  </div>
-
-  <div class="card">
-    <div class="label">LARGE (LINKEDIN / HERO)</div>
-    <svg width="160" height="200" viewBox="0 0 160 200" fill="none">
-      <path d="M8,8 Q20,45 80,80" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <path d="M152,8 Q140,45 80,80" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <line x1="80" y1="80" x2="80" y2="192" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
-      <circle cx="80" cy="80" r="13" fill="#E8453C"/>
-    </svg>
-    <div class="sublabel">w/h=0.80 · fork=40%</div>
+    <div class="sublabel">stroke-width: 3.5 (2%)<br/>fork too high (25%)</div>
   </div>
 </div>
 
-<h2 style="color:#5A6474; font-size:11px;">KEY CHANGE: arms spread wider, fork sits lower, same proportions at every size. No more small/large split.</h2>
+<div class="divider"></div>
+
+<h2>PROPOSED — HEAVY STROKES MATCHING ICON (w/h=0.54, fork=31%, stroke=8%)</h2>
+<div class="row">
+  <div class="card">
+    <div class="label">SMALL (32px favicon)</div>
+    <svg width="80" height="130" viewBox="0 0 80 130" fill="none">
+      <path d="M8,8 Q14,28 40,42" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
+      <path d="M72,8 Q66,28 40,42" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
+      <line x1="40" y1="42" x2="40" y2="122" stroke="#00FFCB" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="40" cy="42" r="10" fill="#E8453C"/>
+    </svg>
+    <div class="sublabel">stroke=8% · fork=31%<br/>matches icon weight</div>
+  </div>
+
+  <div class="card">
+    <div class="label">MEDIUM (nav bar / share cards)</div>
+    <svg width="100" height="180" viewBox="0 0 100 180" fill="none">
+      <path d="M10,10 Q18,38 50,56" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
+      <path d="M90,10 Q82,38 50,56" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
+      <line x1="50" y1="56" x2="50" y2="170" stroke="#00FFCB" stroke-width="13" stroke-linecap="round"/>
+      <circle cx="50" cy="56" r="13" fill="#E8453C"/>
+    </svg>
+    <div class="sublabel">stroke=8% · fork=31%<br/>matches icon weight</div>
+  </div>
+
+  <div class="card">
+    <div class="label">LARGE (LinkedIn / hero)</div>
+    <svg width="130" height="230" viewBox="0 0 130 230" fill="none">
+      <path d="M13,13 Q23,50 65,73" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
+      <path d="M117,13 Q107,50 65,73" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
+      <line x1="65" y1="73" x2="65" y2="218" stroke="#00FFCB" stroke-width="16" stroke-linecap="round"/>
+      <circle cx="65" cy="73" r="16" fill="#E8453C"/>
+    </svg>
+    <div class="sublabel">stroke=8% · fork=31%<br/>matches icon weight</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<h2 style="color:#5A6474; font-size:11px; line-height:1.8;">
+  KEY INSIGHT: The centerline shape was already close. The real problem was stroke weight.<br/>
+  Current strokes are 2-3.5% of height. Icon uses ~8%. Doubling the stroke weight makes<br/>
+  every instance match the bold, surgical feel of the app icon.
+</h2>
 
 </body>
 </html>
