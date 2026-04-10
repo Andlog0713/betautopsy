@@ -818,6 +818,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Ask Your Autopsy — Q&A after grade/archetype, before chapters */}
+      {reportId && !readOnly && !snapshotLocked && (
+        <AskYourAutopsy reportId={reportId} analysis={analysis} />
+      )}
+
       {/* ═══ CHAPTER 1: SUMMARY ═══ */}
       <section id="chapter-summary">
       <ChapterHeader number={1} title="Summary" subtitle="The executive briefing" />
@@ -2514,11 +2519,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </div>
         );
       })()}
-
-      {/* Ask Your Autopsy — Q&A on paid reports, after chapter content */}
-      {reportId && !readOnly && !snapshotLocked && (
-        <AskYourAutopsy reportId={reportId} analysis={analysis} />
-      )}
 
       <div className="case-card p-5 text-center space-y-3 mt-4">
         <p className="text-fg-bright font-medium">What happens next?</p>
