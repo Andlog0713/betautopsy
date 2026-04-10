@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom';
 import { toPng } from 'html-to-image';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import ShareCard, { type ShareCardData } from './ShareCard';
+import ArchetypeShareCard from './ArchetypeShareCard';
+import { getArchetypeByName } from '@/lib/archetypes';
 import {
   StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
   SLIDE_LABELS,
@@ -23,7 +25,9 @@ export default function ShareModal({
   onClose: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const archetypeCardRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const hasArchetypeCard = !!data.archetype?.name && !!getArchetypeByName(data.archetype.name);
   const slideRefs = [
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
@@ -81,8 +85,9 @@ export default function ShareModal({
     setDownloading(true);
     try {
       if (format === 'card') {
-        if (!cardRef.current) return;
-        const url = await toPng(cardRef.current, { pixelRatio: 1 });
+        const targetRef = hasArchetypeCard ? archetypeCardRef : cardRef;
+        if (!targetRef.current) return;
+        const url = await toPng(targetRef.current, { pixelRatio: 1 });
         dl(url, `betautopsy-card-${Date.now()}.png`);
       } else {
         const ref = slideRefs[activeSlide];
@@ -223,7 +228,10 @@ export default function ShareModal({
                   <div style={{ aspectRatio: '1/1', overflow: 'hidden' }}>
                     <div style={{ width: 1080, height: 1080, transform: 'scale(var(--card-preview-scale))', transformOrigin: 'top left' }}>
                       <style>{`:root { --card-preview-scale: 0.33; } @media (min-width: 448px) { :root { --card-preview-scale: 0.38; } }`}</style>
-                      <ShareCard ref={null} data={data} insight={insight} roastLine={roastLine} roastStats={roastStats} />
+                      {hasArchetypeCard
+                        ? <ArchetypeShareCard ref={null} data={data} />
+                        : <ShareCard ref={null} data={data} insight={insight} roastLine={roastLine} roastStats={roastStats} />
+                      }
                     </div>
                   </div>
                 )}
@@ -244,6 +252,7 @@ export default function ShareModal({
             <Comp key={i} ref={slideRefs[i]} {...slideProps} />
           ))}
           <ShareCard ref={cardRef} data={data} insight={insight} roastLine={roastLine} roastStats={roastStats} />
+          {hasArchetypeCard && <ArchetypeShareCard ref={archetypeCardRef} data={data} />}
         </div>
       </div>
     </>

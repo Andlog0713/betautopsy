@@ -27,6 +27,11 @@ const ARCHETYPE_ROASTS: Record<string, string> = {
   'Multiplier Chaser': "You see a 10-legger and think 'why not.' That's why not.",
   'All-or-Nothing Player': "Go big or go home, and you go big a lot.",
   'Loyalty Bettor': "Your favorite team loves your support. Your bankroll doesn't.",
+  // Data-driven report archetypes (lib/archetypes.ts)
+  'The Surgeon': "Profitable and disciplined. The sportsbook's least favorite customer.",
+  'The Heat Chaser': "Emotions placing the bets. Wallet paying the price.",
+  'The Parlay Dreamer': "Still chasing that one big hit. Math said no.",
+  'The Gut Bettor': "No system. No edge. Just vibes.",
 };
 
 export function getArchetypeRoast(name: string): string {
