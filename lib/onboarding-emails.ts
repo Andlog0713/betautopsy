@@ -435,3 +435,34 @@ export function renderLastChanceEmail(props: EmailProps): { subject: string; htm
 </td></tr>`, unsubscribeUrl),
   };
 }
+
+// ── Streak Milestone Email (7, 14, 30 day streaks) ──
+
+interface StreakEmailProps extends EmailProps {
+  streakCount: number;
+}
+
+export function renderStreakEmail(props: StreakEmailProps): { subject: string; html: string } {
+  const { displayName, streakCount, appUrl, unsubscribeUrl } = props;
+  const milestone =
+    streakCount >= 30 ? '30 days. That\'s exceptional.' :
+    streakCount >= 14 ? '14 days straight. That takes real commitment.' :
+    '7 days in a row. Your discipline is building.';
+  return {
+    subject: `${streakCount}-day streak \u{1F525} Your discipline is showing.`,
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, you hit a ${streakCount}-day streak.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    ${esc(milestone)}
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Consistency is the strongest signal of discipline we track. Every week you keep your streak going, your Discipline Score captures it. Keep uploading your bets — each data point sharpens your next autopsy.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/dashboard" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Your Streak →</a>
+</td></tr>`, unsubscribeUrl),
+  };
+}

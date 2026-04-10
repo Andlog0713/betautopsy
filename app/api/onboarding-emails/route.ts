@@ -12,6 +12,7 @@ import {
   renderPostReportEmail,
   renderMissYouEmail,
   renderLastChanceEmail,
+  renderStreakEmail,
 } from '@/lib/onboarding-emails';
 import { LAUNCH_PROMO_DEADLINE, userQualifiesForPromo } from '@/types';
 import type { Profile, AutopsyAnalysis } from '@/types';
@@ -279,6 +280,28 @@ export async function GET(request: Request) {
         if ((recentBets60 ?? 0) === 0 && (recentReports60 ?? 0) === 0) {
           await send(renderLastChanceEmail, 'last_chance');
           continue;
+        }
+      }
+
+      // ── Streak milestones (7, 14, 30 days) ──
+      const streakCount = (profile.streak_count as number) ?? 0;
+      const STREAK_MILESTONES = [7, 14, 30] as const;
+      for (const milestone of STREAK_MILESTONES) {
+        const key = `streak_${milestone}`;
+        if (streakCount >= milestone && !emailsSent[key]) {
+          const streakEmail = renderStreakEmail({ displayName, streakCount: milestone, appUrl, unsubscribeUrl });
+          await resend.emails.send({
+            from: FROM,
+            to: p.email,
+            subject: streakEmail.subject,
+            html: streakEmail.html,
+          });
+          await supabase
+            .from('profiles')
+            .update({ onboarding_emails_sent: { ...emailsSent, [key]: true } })
+            .eq('id', p.id);
+          sent++;
+          break; // One email per user per cron run
         }
       }
 

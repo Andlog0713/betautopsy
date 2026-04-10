@@ -288,6 +288,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
@@ -587,6 +588,36 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className={`font-mono text-[30px] font-bold leading-none ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
           <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
         </div>
+      </div>
+
+      {/* Quick share strip */}
+      <div className="flex gap-2 mb-5">
+        <button
+          onClick={() => {
+            const arch = analysis.betting_archetype?.name;
+            const text = `Just got my BetAutopsy report. ${summary.overall_grade} overall, ${Math.round(emotionScore)} emotion score.${arch ? ` ${arch}.` : ''} See what your betting patterns say →`;
+            window.open(
+              `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://betautopsy.com')}`,
+              '_blank',
+              'noopener,noreferrer,width=600,height=400'
+            );
+          }}
+          className="btn-secondary font-mono text-xs flex items-center gap-1.5"
+        >
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Share on X
+        </button>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2000);
+            });
+          }}
+          className="btn-secondary font-mono text-xs"
+        >
+          {linkCopied ? 'Copied!' : 'Copy Link'}
+        </button>
       </div>
 
       {/* What this report analyzes — collapsible */}

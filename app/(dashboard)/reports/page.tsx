@@ -34,6 +34,7 @@ export default function ReportsPage() {
   const [totalBetsAll, setTotalBetsAll] = useState(0);
   const [totalBetCount, setTotalBetCount] = useState(0);
   const [tier, setTier] = useState('free');
+  const [firstInsight, setFirstInsight] = useState<{ biasName: string; cost: number } | null>(null);
   const autoRunTriggered = useRef(false);
 
   // Filter state
@@ -269,6 +270,18 @@ export default function ReportsPage() {
               setTierLimited(d.tier_limited ?? false);
               setTotalBetsAll(d.total_bets ?? 0);
               setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
+
+              // First-report celebration: surface the top bias before showing results.
+              const isFirstReport = reports.length === 0;
+              const analysis = report.report_json as AutopsyAnalysis | null;
+              const topBias = analysis?.biases_detected?.[0];
+              if (isFirstReport && topBias?.bias_name && topBias.estimated_cost > 0) {
+                setFirstInsight({
+                  biasName: topBias.bias_name,
+                  cost: Math.round(topBias.estimated_cost),
+                });
+              }
+
               setActiveReport(report);
               setReports((prev) => [report, ...prev]);
               setRunning(false);
@@ -379,6 +392,23 @@ export default function ReportsPage() {
         )}
         {/* Compact progress bar while Claude is still analyzing */}
         {running && <AnalyzingProgress />}
+
+        {/* First-insight celebration — surfaces top bias before the full report */}
+        {firstInsight && (
+          <button
+            onClick={() => setFirstInsight(null)}
+            className="w-full text-left mb-6 animate-fade-in"
+          >
+            <div className="border-2 border-scalpel/40 bg-scalpel/[0.06] rounded-sm p-6 space-y-2">
+              <div className="font-mono text-[10px] text-scalpel tracking-[3px] uppercase">YOUR FIRST AUTOPSY FOUND</div>
+              <p className="font-bold text-xl text-fg-bright">
+                {firstInsight.biasName} is costing you ~${firstInsight.cost.toLocaleString()}/quarter.
+              </p>
+              <p className="text-fg-muted text-sm">Tap to see the full report.</p>
+            </div>
+          </button>
+        )}
+
         <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} />
         {/* Post-first-report prompt */}
         {isFirstReport && (
