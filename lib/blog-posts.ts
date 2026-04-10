@@ -89,6 +89,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     readTime: '8 min read',
     tags: ['betting archetype', 'behavioral profile', 'betting personality', 'sports betting psychology'],
   },
+  {
+    slug: 'complete-guide-betting-psychology',
+    title: 'The Complete Guide to Betting Psychology: How Your Mind Costs You Money',
+    description: 'A comprehensive guide to the psychology behind sports betting. Cognitive biases, emotional patterns, and how to fix the behavioral leaks draining your bankroll.',
+    publishedAt: '2026-04-11',
+    readTime: '15 min read',
+    tags: ['betting psychology', 'cognitive biases', 'behavioral analysis', 'sports betting guide'],
+  },
 ];
 
 // ── Future DFS/Pick'em Posts (to be written) ──
