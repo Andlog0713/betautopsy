@@ -117,7 +117,7 @@ export default function ReportsPage() {
     if (!user) return;
 
     const [reportsRes, betsRes, profileRes, snapshotsRes, uploadsRes, sportsbooksRes] = await Promise.all([
-      supabase.from('autopsy_reports').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('autopsy_reports').select('id, user_id, report_type, bet_count_analyzed, date_range_start, date_range_end, report_json, model_used, tokens_used, cost_cents, is_paid, stripe_payment_intent_id, upgraded_from_snapshot_id, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('bets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
       supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: false }).limit(2),

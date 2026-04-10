@@ -90,24 +90,38 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [betsRes, profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
-        supabase.from('bets').select('result, profit, stake, placed_at, created_at').eq('user_id', user.id),
+      // Fetch last report date first so we can pass it to the stats RPC
+      const [profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
         supabase.from('profiles').select('bankroll, subscription_tier, subscription_status, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
         supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
         supabase.from('autopsy_reports').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
       ]);
 
-      const bets = betsRes.data ?? [];
       const reportCount = reportsRes.count ?? 0;
+      const lastReport = lastReportRes.data?.[0];
+      const lastReportDate = lastReport ? new Date(lastReport.created_at) : null;
 
-      const totalBets = bets.length;
-      const totalWagered = bets.reduce((s, b) => s + Number(b.stake), 0);
-      const netPnL = bets.reduce((s, b) => s + Number(b.profit), 0);
-      const wins = bets.filter((b) => b.result === 'win').length;
-      const settled = bets.filter((b) => ['win', 'loss', 'push'].includes(b.result)).length;
-      const winRate = settled > 0 ? (wins / settled) * 100 : 0;
-      const avgStake = totalBets > 0 ? totalWagered / totalBets : 0;
+      // Single RPC replaces fetching every bet row — returns aggregates in ~50ms
+      const [statsRpc, journalRes] = await Promise.all([
+        supabase.rpc('dashboard_stats', {
+          p_user_id: user.id,
+          p_since: lastReportDate?.toISOString() ?? null,
+        }),
+        fetch('/api/journal?count=true').then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
+
+      const ds = (statsRpc.data ?? {}) as {
+        total_bets: number; total_wagered: number; net_pnl: number;
+        wins: number; settled: number; avg_stake: number;
+        newest_created_at: string | null; bets_since: number;
+      };
+
+      const totalBets = ds.total_bets ?? 0;
+      const totalWagered = ds.total_wagered ?? 0;
+      const netPnL = ds.net_pnl ?? 0;
+      const winRate = ds.settled > 0 ? (ds.wins / ds.settled) * 100 : 0;
+      const avgStake = ds.avg_stake ?? 0;
 
       if (profileRes.data?.bankroll) setBankroll(profileRes.data.bankroll.toString());
       if (profileRes.data?.streak_count) setStreakCount(profileRes.data.streak_count);
@@ -121,35 +135,18 @@ export default function DashboardPage() {
       if (profileRes.error) console.error('Profile query error:', profileRes.error);
       if (snapshotsRes.data) setSnapshots(snapshotsRes.data as ProgressSnapshot[]);
 
-      const lastReport = lastReportRes.data?.[0];
-      if (lastReport) {
-        const lastDate = new Date(lastReport.created_at);
-        const newBets = bets.filter((b) => new Date(b.placed_at) > lastDate);
-        setNewBetsSinceReport(newBets.length);
-        setDaysSinceReport(Math.floor((Date.now() - lastDate.getTime()) / 86400000));
+      if (lastReportDate) {
+        setNewBetsSinceReport(ds.bets_since ?? 0);
+        setDaysSinceReport(Math.floor((Date.now() - lastReportDate.getTime()) / 86400000));
       }
 
-      // Compute days since most recent UPLOAD (created_at), not when bet was placed
-      if (bets.length > 0) {
-        const mostRecentUpload = bets.reduce((latest, b) => {
-          const d = new Date(b.created_at ?? b.placed_at).getTime();
-          return d > latest ? d : latest;
-        }, 0);
-        setDaysSinceLastBet(Math.floor((Date.now() - mostRecentUpload) / 86400000));
+      if (ds.newest_created_at) {
+        setDaysSinceLastBet(Math.floor((Date.now() - new Date(ds.newest_created_at).getTime()) / 86400000));
       }
-
-      // No longer redirect to /upload — dashboard shows empty state instead
 
       setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });
 
-      // Journal count
-      try {
-        const journalRes = await fetch('/api/journal?count=true');
-        if (journalRes.ok) {
-          const jData = await journalRes.json();
-          setJournalCount(jData.count ?? 0);
-        }
-      } catch { /* silent */ }
+      if (journalRes?.count) setJournalCount(journalRes.count);
 
       // Track TikTok + GA4 purchase event on post-checkout redirect (subscription flow)
       if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
