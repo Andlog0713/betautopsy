@@ -377,3 +377,61 @@ export function renderReengagementEmail(props: EmailProps): { subject: string; h
 </td></tr>`, unsubscribeUrl),
   };
 }
+
+// ── Email: Miss You (Day 30, no activity in 14 days) ──
+
+export function renderMissYouEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: "Your patterns haven't changed",
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, it's been a month.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Your betting patterns haven't changed since you signed up — because patterns don't fix themselves. They need data.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    BetAutopsy is still here, and your first full report is still free. Upload takes about 3 minutes.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
+    No pressure. The tool is here when you're ready.
+  </div>
+</td></tr>`, unsubscribeUrl),
+  };
+}
+
+// ── Email: Last Chance (Day 60, no activity in 30 days) ──
+
+export function renderLastChanceEmail(props: EmailProps): { subject: string; html: string } {
+  const { displayName, appUrl, unsubscribeUrl } = props;
+  return {
+    subject: 'Final check-in from BetAutopsy',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(displayName)}, this is our last automated email.</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    It's been two months since you signed up. We haven't seen any activity on your account, so we're going to stop emailing.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    If you ever want to look at your betting patterns, your account is still here. Upload takes 3 minutes, and your first full report is free.
+  </div>
+</td></tr>
+
+<tr><td style="padding:8px 24px 16px;text-align:center">
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:12px;color:#888;text-align:center;line-height:1.6">
+    No more emails from us after this. If you'd like to unsubscribe from future manual emails too, use the link below.
+  </div>
+</td></tr>`, unsubscribeUrl),
+  };
+}

@@ -10,6 +10,8 @@ import {
   renderTrialEndingEmail,
   renderReengagementEmail,
   renderPostReportEmail,
+  renderMissYouEmail,
+  renderLastChanceEmail,
 } from '@/lib/onboarding-emails';
 import { LAUNCH_PROMO_DEADLINE, userQualifiesForPromo } from '@/types';
 import type { Profile, AutopsyAnalysis } from '@/types';
@@ -59,15 +61,15 @@ export async function GET(request: Request) {
   let skipped = 0;
   const errors: string[] = [];
 
-  // Need to look back 22 days so the Day 21 reengagement email can still find
-  // the user on the cron run after their 21st day.
-  const twentyTwoDaysAgo = new Date(now);
-  twentyTwoDaysAgo.setDate(twentyTwoDaysAgo.getDate() - 22);
+  // Need to look back 62 days so the Day 60 last-chance email can still fire.
+  const lookbackDays = 62;
+  const lookbackDate = new Date(now);
+  lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
 
   const { data: profiles } = await supabase
     .from('profiles')
     .select('*')
-    .gte('created_at', twentyTwoDaysAgo.toISOString())
+    .gte('created_at', lookbackDate.toISOString())
     .not('email', 'is', null);
 
   if (!profiles || profiles.length === 0) {
@@ -233,6 +235,49 @@ export async function GET(request: Request) {
         const activeRecently = (recentBets ?? 0) > 0 || (recentReports ?? 0) > 0;
         if (!activeRecently) {
           await send(renderReengagementEmail, 'reengagement');
+          continue;
+        }
+      }
+
+      // ── Day 30: Miss You (no activity in 14 days) ──
+      if (daysSinceSignup >= 30 && !emailsSent['miss_you']) {
+        const [{ count: recentBets30 }, { count: recentReports30 }] = await Promise.all([
+          supabase
+            .from('bets')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', p.id)
+            .gte('created_at', fourteenDaysAgoIso),
+          supabase
+            .from('autopsy_reports')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', p.id)
+            .gte('created_at', fourteenDaysAgoIso),
+        ]);
+        if ((recentBets30 ?? 0) === 0 && (recentReports30 ?? 0) === 0) {
+          await send(renderMissYouEmail, 'miss_you');
+          continue;
+        }
+      }
+
+      // ── Day 60: Last Chance (no activity in 30 days) ──
+      if (daysSinceSignup >= 60 && !emailsSent['last_chance']) {
+        const thirtyDaysAgo = new Date(now);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgoIso = thirtyDaysAgo.toISOString();
+        const [{ count: recentBets60 }, { count: recentReports60 }] = await Promise.all([
+          supabase
+            .from('bets')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', p.id)
+            .gte('created_at', thirtyDaysAgoIso),
+          supabase
+            .from('autopsy_reports')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', p.id)
+            .gte('created_at', thirtyDaysAgoIso),
+        ]);
+        if ((recentBets60 ?? 0) === 0 && (recentReports60 ?? 0) === 0) {
+          await send(renderLastChanceEmail, 'last_chance');
           continue;
         }
       }

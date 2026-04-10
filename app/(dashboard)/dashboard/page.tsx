@@ -455,6 +455,21 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* ── SECTION: DISCIPLINE — ungated standalone card ── */}
+          {latest?.discipline_score != null && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header mb-6">DISCIPLINE // CURRENT SCORE</p>
+              <div className="max-w-xl">
+                <DisciplineScoreCard
+                  currentScore={latest.discipline_score}
+                  previousScore={prev?.discipline_score ?? null}
+                  reportCount={stats?.reportCount ?? 1}
+                  mask={mask}
+                />
+              </div>
+            </section>
+          )}
+
           {/* ── SECTION: DIAGNOSIS ── Discipline readout + markers column ── */}
           {(latest && isPaid) || (snapshots.length >= 2 && isPaid) || stats.reportCount === 0 || (isPaid && !latest && stats.reportCount > 0) ? (
             <section className="border-t border-white/[0.04] pt-10 mb-12">

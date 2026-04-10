@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
 import { trackQuizComplete } from '@/lib/tiktok-events';
@@ -36,9 +37,19 @@ export default function QuizClient() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const [email, setEmail] = useState('');
   const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [revealSlide, setRevealSlide] = useState(0);
   const [sliderValue, setSliderValue] = useState<string | null>(null);
   const resultCardRef = useRef<HTMLDivElement>(null);
+
+  // Auth bypass: if user is logged in, skip the email gate entirely.
+  useEffect(() => {
+    if (phase !== 'result_preview') return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setPhase('full_result');
+    }).catch(() => { /* not logged in */ });
+  }, [phase]);
 
   const accent = QUESTION_ACCENTS[Math.min(currentQ, QUESTION_ACCENTS.length - 1)];
   const progress = phase === 'questions' ? (5 + ((currentQ + 1) / QUIZ_QUESTIONS.length) * 95) : 0;
@@ -100,7 +111,9 @@ export default function QuizClient() {
       });
     } catch { /* silent */ }
     setEmailSubmitting(false);
-    setPhase('full_result');
+    setEmailSubmitted(true);
+    // Brief "Check your inbox" moment before showing full results.
+    setTimeout(() => setPhase('full_result'), 1500);
   };
 
   const roasts = result ? generateQuizRoasts(answers) : [];
@@ -392,31 +405,41 @@ export default function QuizClient() {
 
           {/* Email gate */}
           <div className="case-card p-6 text-center space-y-4 border-scalpel/20">
-            <p className="text-fg-bright font-bold text-lg">Your full Bet DNA breakdown is ready.</p>
-            <p className="text-fg-muted text-sm max-w-sm mx-auto">
-              Your Emotion Score, detected biases, strengths, and what to watch out for. Where should we send them?
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="you@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleEmailSubmit()}
-                className="input-field flex-1 text-sm"
-              />
-              <button
-                onClick={handleEmailSubmit}
-                disabled={emailSubmitting || !email.includes('@')}
-                className="btn-primary text-sm !px-5 whitespace-nowrap disabled:opacity-50"
-              >
-                {emailSubmitting ? '...' : 'Send My Results'}
-              </button>
-            </div>
-            <p className="text-fg-muted text-xs font-mono">No spam. Just your results.</p>
-            <button onClick={() => setPhase('full_result')} className="text-xs text-fg-muted hover:text-fg transition-colors">
-              Skip, show me now
-            </button>
+            {emailSubmitted ? (
+              <div className="animate-fade-in py-4">
+                <span className="text-2xl block mb-2">✓</span>
+                <p className="text-fg-bright font-bold text-lg">Check your inbox.</p>
+                <p className="text-fg-muted text-sm">Loading your full breakdown...</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-fg-bright font-bold text-lg">Get your full behavioral profile</p>
+                <p className="text-fg-muted text-sm max-w-sm mx-auto">
+                  Your Emotion Score, detected biases, strengths, and what to watch out for. Enter your email to unlock.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleEmailSubmit()}
+                    className="input-field flex-1 text-sm"
+                  />
+                  <button
+                    onClick={handleEmailSubmit}
+                    disabled={emailSubmitting || !email.includes('@')}
+                    className="btn-primary text-sm !px-5 whitespace-nowrap disabled:opacity-50"
+                  >
+                    {emailSubmitting ? '...' : 'Unlock Results'}
+                  </button>
+                </div>
+                <p className="text-fg-muted text-xs font-mono">No spam. Just your results.</p>
+                <button onClick={() => setPhase('full_result')} className="text-xs text-fg-muted hover:text-fg transition-colors">
+                  Skip, show me now
+                </button>
+              </>
+            )}
           </div>
 
           {gamblingFooter}

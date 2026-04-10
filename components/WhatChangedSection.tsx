@@ -71,7 +71,7 @@ export default function WhatChangedSection({ comparison }: { comparison: ReportC
 
   return (
     <div className="mb-6">
-      <div className="font-mono text-[9px] text-fg-dim tracking-[3px] uppercase mb-3">What Changed Since Last Time</div>
+      <div className="font-mono text-[9px] text-fg-dim tracking-[3px] uppercase mb-3">SINCE YOUR LAST REPORT</div>
 
       {/* Score deltas */}
       {hasScores && (
