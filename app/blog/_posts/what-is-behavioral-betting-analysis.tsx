@@ -5,14 +5,14 @@ export default function WhatIsBehavioralBettingAnalysis() {
     <>
       <p>
         There are thousands of tools that tell you what to bet. Almost none that tell you{' '}
-        <em>why you lose</em>. That gap is what behavioral betting analysis exists to fill, and
+        <em>why you lose</em>. That gap is what behavioral betting analysis exists to fill — and
         it&apos;s the most important concept in sports betting that nobody talks about.
       </p>
 
       <p>
         If you&apos;ve ever wondered why your bankroll keeps shrinking despite decent picks, why you
         always seem to give back your profits, or why your betting &quot;system&quot; works for a
-        while and then falls apart, the answer almost certainly lives in your behavior, not your
+        while and then falls apart — the answer almost certainly lives in your behavior, not your
         selection process. Behavioral betting analysis is the systematic study of{' '}
         <strong>how you bet</strong>, as distinct from <strong>what you bet on</strong>.
       </p>
@@ -28,13 +28,13 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         <strong>Behavioral betting analysis</strong> is the process of examining a bettor&apos;s
         historical wagering data to identify patterns in decision-making, emotional response, risk
-        management, and discipline, rather than evaluating the quality of their picks.
+        management, and discipline — rather than evaluating the quality of their picks.
       </p>
 
       <p>
         Think of it this way. Traditional bet tracking asks: &quot;Did you win or lose?&quot;
         Picks services ask: &quot;What should you bet?&quot; Behavioral analysis asks:{' '}
-        <strong>&quot;What patterns in your behavior are costing you money, and how do we fix
+        <strong>&quot;What patterns in your behavior are costing you money — and how do we fix
         them?&quot;</strong>
       </p>
 
@@ -53,13 +53,13 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <ul>
         <li>
-          <strong>It is not bet tracking.</strong> Bet trackers record outcomes: wins, losses, profit,
+          <strong>It is not bet tracking.</strong> Bet trackers record outcomes — wins, losses, profit,
           ROI. They&apos;re spreadsheets with formatting. They tell you <em>that</em> you&apos;re
           losing but not <em>why</em>. Behavioral analysis goes deeper: it examines the patterns
           within your decisions, not just the results.
         </li>
         <li>
-          <strong>It is not a picks service.</strong> Picks services give you selections, like &quot;take
+          <strong>It is not a picks service.</strong> Picks services give you selections — &quot;take
           the Chiefs -3.5.&quot; They address the input (which bets to place) but ignore the
           execution layer entirely. A bettor who gets great picks and loss-chases their way through
           them will still lose money. Behavioral analysis addresses execution.
@@ -76,14 +76,14 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <p>
         Behavioral betting analysis draws directly from behavioral economics and cognitive
-        psychology, specifically the work of Daniel Kahneman, Amos Tversky, Richard Thaler, and
+        psychology — specifically the work of Daniel Kahneman, Amos Tversky, Richard Thaler, and
         decades of research into human decision-making under uncertainty.
       </p>
 
       <p>
         The foundational insight is this:{' '}
         <strong>humans are systematically irrational when making decisions involving money,
-        probability, and emotional stakes</strong>. Not randomly irrational. Systematically. We
+        probability, and emotional stakes</strong>. Not randomly irrational — systematically. We
         make the same mistakes in the same ways for the same reasons, over and over. These patterns
         are predictable, measurable, and fixable.
       </p>
@@ -99,15 +99,15 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <p>
         In practical terms, loss aversion is why you chase losses. After losing $200, your brain
-        treats the deficit as a wound that needs to be healed immediately. The rational response,
-        accept the loss and move on, feels intolerable because the pain signal is disproportionately
+        treats the deficit as a wound that needs to be healed immediately. The rational response —
+        accept the loss and move on — feels intolerable because the pain signal is disproportionately
         strong. So you place a larger bet to make the pain stop faster. Sometimes it works, which
         reinforces the behavior. Most of the time, it digs the hole deeper.
       </p>
 
       <p>
         Loss aversion also explains why bettors hold onto losing strategies long past the point of
-        evidence. Admitting that your approach doesn&apos;t work means crystallizing the loss,
+        evidence. Admitting that your approach doesn&apos;t work means crystallizing the loss —
         making it real. As long as you keep going, the loss is &quot;temporary.&quot;
       </p>
 
@@ -122,7 +122,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         In betting data, the gambler&apos;s fallacy shows up as{' '}
         <strong>increased confidence and stake size after losing streaks</strong>. Bettors don&apos;t
-        just chase losses. They chase them with growing conviction that the next one <em>has</em> to
+        just chase losses — they chase them with growing conviction that the next one <em>has</em> to
         hit. The data tells a different story: losing streaks in sports betting are perfectly
         consistent with normal variance, and your probability of winning the next bet is completely
         independent of your last five results.
@@ -140,7 +140,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         Confirmation bias also affects how bettors evaluate information. You&apos;ll notice the
         stats that support your lean and gloss over the ones that contradict it. Your brain isn&apos;t
-        looking for truth. It&apos;s looking for permission to place the bet you already want to
+        looking for truth — it&apos;s looking for permission to place the bet you already want to
         place.
       </p>
 
@@ -180,7 +180,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         A low emotion score means your betting is consistent and systematic. A high emotion score
         means your decisions are heavily influenced by how you feel at the moment of placement.
-        Most recreational bettors score surprisingly high, in the range of{' '}
+        Most recreational bettors score surprisingly high — in the range of{' '}
         <strong>65-85 out of 100</strong>, meaning the majority of their betting is emotionally
         driven.
       </p>
@@ -192,7 +192,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <ul>
         <li><strong>0-25 (Disciplined):</strong> Flat staking, consistent bet types, no time-of-day skew. Rare among recreational bettors.</li>
         <li><strong>25-50 (Moderate):</strong> Some stake variation, occasional loss chasing, generally controlled. About 15% of recreational bettors.</li>
-        <li><strong>50-75 (Reactive):</strong> Significant stake swings post-loss, weekend escalation, mixed bet types. The plurality, about 45% of bettors.</li>
+        <li><strong>50-75 (Reactive):</strong> Significant stake swings post-loss, weekend escalation, mixed bet types. The plurality — about 45% of bettors.</li>
         <li><strong>75-100 (Impulsive):</strong> Extreme stake variance, rapid bet clustering after losses, heavy parlay usage, late-night spikes. About 35% of bettors.</li>
       </ul>
 
@@ -234,7 +234,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       </p>
 
       <ul>
-        <li>A bettor is disciplined and profitable on NFL bets but reckless on NBA bets because the daily NBA slate creates a &quot;volume trap&quot;: too many games, too many opportunities to chase</li>
+        <li>A bettor is disciplined and profitable on NFL bets but reckless on NBA bets because the daily NBA slate creates a &quot;volume trap&quot; — too many games, too many opportunities to chase</li>
         <li>A bettor performs well on sides and totals but bleeds money on player props because props feel like &quot;fun bets&quot; and get less research</li>
         <li>A bettor is solid in regular season but hemorrhages during playoffs because emotional attachment to outcomes increases bet sizing</li>
       </ul>
@@ -276,7 +276,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       </p>
 
       <p>
-        The behavioral signals that matter most are relational. They exist in the patterns{' '}
+        The behavioral signals that matter most are relational — they exist in the patterns{' '}
         <em>between</em> bets, not in the bets themselves. What happened before this bet? What
         happened after? How does this cluster of bets relate to the cluster from yesterday?
         Spreadsheets are structurally incapable of surfacing these relationships without
@@ -288,7 +288,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         Even bettors who try to analyze their own behavior face a fundamental obstacle: you
         cannot objectively evaluate your own cognitive biases. This is, ironically, a cognitive bias
-        itself, the bias blind spot. You can see loss chasing in other bettors&apos; behavior
+        itself — the bias blind spot. You can see loss chasing in other bettors&apos; behavior
         immediately but rationalize your own post-loss stake increase as &quot;I just felt really
         good about that game.&quot;
       </p>
@@ -311,7 +311,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <h2>How BetAutopsy Approaches Behavioral Analysis</h2>
 
       <p>
-        We built BetAutopsy specifically to solve the problems outlined above, to make{' '}
+        We built BetAutopsy specifically to solve the problems outlined above — to make{' '}
         <strong>sports betting behavioral analysis</strong> accessible, automatic, and actionable
         for any bettor.
       </p>
@@ -322,10 +322,10 @@ export default function WhatIsBehavioralBettingAnalysis() {
         Upload your bet history and the system identifies behavioral patterns automatically. No
         spreadsheet formulas, no manual tagging, no guesswork. The analysis covers loss chasing,
         emotional sizing, time-of-day effects, bet type allocation, sport-specific performance,
-        and dozens of other behavioral signals, all in about 20 seconds.
+        and dozens of other behavioral signals — all in about 20 seconds.
       </p>
 
-      <h3>Behavioral Scoring</h3>
+      <h3>Proprietary Scoring</h3>
 
       <p>
         Rather than dumping raw numbers on you, BetAutopsy translates behavioral data into
@@ -342,14 +342,14 @@ export default function WhatIsBehavioralBettingAnalysis() {
         showing whether your patterns are improving, holding steady, or regressing. This creates a
         feedback loop: identify a leak, implement a change, measure the impact, repeat. It&apos;s the
         same iterative improvement cycle that professional bettors and poker players have used for
-        decades, now automated.
+        decades — now automated.
       </p>
 
       <h3>Personalized Action Plans</h3>
 
       <p>
         Every analysis generates specific, prioritized recommendations based on your data. Not
-        generic tips. Specific behavioral changes ranked by dollar impact. &quot;Eliminate bets
+        generic tips — specific behavioral changes ranked by dollar impact. &quot;Eliminate bets
         placed after 11pm (estimated monthly savings: $380)&quot; is infinitely more actionable than
         &quot;be more disciplined.&quot;
       </p>
@@ -365,9 +365,9 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <p>
         This is the largest group and the one with the most to gain. Recreational bettors typically
-        don&apos;t think of themselves as having a &quot;system.&quot; They bet on games they watch,
+        don&apos;t think of themselves as having a &quot;system&quot; — they bet on games they watch,
         teams they follow, and parlays that look fun. Behavioral analysis shows them exactly how
-        much their fun is costing and, critically, which specific habits are the most expensive.
+        much their fun is costing and — critically — which specific habits are the most expensive.
       </p>
 
       <p>
@@ -387,7 +387,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <p>
         For this group, behavioral analysis is the missing piece. Their selection process may be
-        sound, but their behavior is what&apos;s leaking the edge. Understanding the mechanics of why
+        sound — their behavior is what&apos;s leaking the edge. Understanding the mechanics of why
         this happens is critical:{' '}
         <Link href="/blog/why-am-i-losing-at-sports-betting">Why Am I Losing at Sports Betting?</Link>{' '}
         breaks down the five patterns that silently drain even competent bettors.
@@ -396,7 +396,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <h3>The Aspiring Professional</h3>
 
       <p>
-        Professional bettors already understand behavioral discipline. It&apos;s what separates them
+        Professional bettors already understand behavioral discipline — it&apos;s what separates them
         from the field. But even professionals benefit from systematic behavioral tracking because
         it catches drift. A pro who slowly increases their live bet frequency over three months might
         not notice the creep until it shows up in the numbers. Regular behavioral audits catch these
@@ -414,7 +414,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
 
       <p>
         For this group, behavioral analysis provides clarity without judgment. The data doesn&apos;t
-        moralize. It just shows you what you&apos;re doing. And that clarity is often the first
+        moralize — it just shows you what you&apos;re doing. And that clarity is often the first
         step toward meaningful change. The loss chasing spiral is one of the most common triggers:{' '}
         <Link href="/blog/psychology-of-loss-chasing">The Psychology of Loss Chasing</Link>{' '}
         explains the neurological mechanism and how to interrupt it.
@@ -426,7 +426,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
         The sports betting industry is less than a decade into legal expansion in the United States,
         and the tools available to bettors have barely evolved past basic tracking and picks.
         Meanwhile, the sportsbooks themselves are running sophisticated behavioral models on every
-        user. They know your chase patterns, your emotional triggers, your pricing sensitivity.
+        user — they know your chase patterns, your emotional triggers, your pricing sensitivity.
         Every boost and promo is targeted based on behavioral data. The bettor is the only one in
         the equation who doesn&apos;t have access to their own behavioral profile.
       </p>
@@ -434,7 +434,7 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <p>
         That asymmetry is unsustainable. As the market matures, behavioral analysis will become as
         fundamental to sports betting as hand history analysis is to poker. The bettors who adopt
-        it early will have a structural advantage, not because they&apos;ll pick more winners, but
+        it early will have a structural advantage — not because they&apos;ll pick more winners, but
         because they&apos;ll <strong>stop doing the things that turn winners into losers</strong>.
       </p>
 
@@ -457,12 +457,12 @@ export default function WhatIsBehavioralBettingAnalysis() {
       <ul>
         <li>
           <strong>What you bet on matters less than how you bet.</strong> Selection is 20% of the
-          equation. Execution, including staking, timing, discipline, and emotional control, is the other 80%.
+          equation. Execution — staking, timing, discipline, emotional control — is the other 80%.
         </li>
         <li>
           <strong>The biases are universal and predictable.</strong> Loss aversion, gambler&apos;s
           fallacy, confirmation bias, and anchoring affect every bettor. The question isn&apos;t
-          whether you have them. It&apos;s how much they&apos;re costing you.
+          whether you have them — it&apos;s how much they&apos;re costing you.
         </li>
         <li>
           <strong>Traditional tracking tools miss the behavioral layer.</strong> Win/loss records

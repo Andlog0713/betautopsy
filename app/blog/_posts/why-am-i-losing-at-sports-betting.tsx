@@ -127,8 +127,8 @@ export default function WhyAmILosingAtSportsBetting() {
       <p>
         This is emotional sizing, one of the{' '}
         <Link href="/blog/cognitive-biases-destroying-your-bankroll" className="text-scalpel hover:underline">cognitive biases that silently destroy your bankroll</Link>{' '}
-        , and it systematically wrecks results. Your largest bets
-        aren&apos;t correlated with your best edges. They&apos;re correlated with your highest
+        — and it systematically wrecks results. Your largest bets
+        aren&apos;t correlated with your best edges — they&apos;re correlated with your highest
         emotional arousal. Primetime. Playoffs. Rivalry games. Your team. These are exactly the
         spots where public lines are sharpest and value is thinnest, yet they&apos;re where you
         concentrate your risk.
@@ -196,7 +196,7 @@ export default function WhyAmILosingAtSportsBetting() {
       </p>
 
       <p>
-        <strong>Tracking is the single most impactful behavior change a bettor can make.</strong>{' '}
+        <strong>Tracking is the single highest-leverage behavior change a bettor can make.</strong>{' '}
         Not better picks. Not a new model. Just writing down what you bet, how much, and what
         happened.
       </p>

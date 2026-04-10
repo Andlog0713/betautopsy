@@ -15,9 +15,9 @@ interface ShareData {
 
 function gradeColor(g: string): string {
   if (g.startsWith('A')) return '#00C9A7';
-  if (g.startsWith('B')) return '#D29922';
-  if (g.startsWith('C')) return '#E8453C';
-  return '#E8453C';
+  if (g.startsWith('B')) return '#B8944A';
+  if (g.startsWith('C')) return '#C4463A';
+  return '#C4463A';
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -51,52 +51,43 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const archName = d.archetype?.name ?? '';
   const archDesc = d.archetype?.description ?? '';
   const roiStr = `${d.roi_percent >= 0 ? '+' : ''}${d.roi_percent.toFixed(1)}%`;
-  const roiColor = d.roi_percent >= 0 ? '#00C9A7' : '#E8453C';
+  const roiColor = d.roi_percent >= 0 ? '#00C9A7' : '#C4463A';
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', background: '#0D1117', display: 'flex', flexDirection: 'row', padding: 60, color: '#F0F2F5' }}>
+      <div style={{ width: '100%', height: '100%', background: '#0f0e0c', display: 'flex', flexDirection: 'row', padding: 60, color: '#F0F0F0' }}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, paddingRight: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 24 }}>
-            {/* Incision Mark */}
-            <svg width="24" height="36" viewBox="0 0 40 60" fill="none">
-              <path d="M4,4 Q8.6,11.5 20,19" stroke="#00C9A7" strokeWidth="3.5" strokeLinecap="round"/>
-              <path d="M36,4 Q31.4,11.5 20,19" stroke="#00C9A7" strokeWidth="3.5" strokeLinecap="round"/>
-              <line x1="20" y1="19" x2="20" y2="56" stroke="#00C9A7" strokeWidth="3.5" strokeLinecap="round"/>
-              <circle cx="20" cy="19" r="4" fill="#E8453C"/>
-            </svg>
-            <span style={{ letterSpacing: 2 }}>
-              <span style={{ fontWeight: 900, color: '#F0F2F5' }}>BET</span>
-              <span style={{ fontWeight: 300, color: '#F0F2F5' }}>AUTOPSY</span>
-            </span>
+          <div style={{ display: 'flex', fontSize: 28 }}>
+            <span style={{ color: '#F0F0F0' }}>Bet</span>
+            <span style={{ color: '#C4463A' }}>Autopsy</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 14, color: '#848D9A', letterSpacing: 3 }}>BET DNA</div>
-            <div style={{ fontSize: 44, color: gc, marginTop: 8 }}>{archName}</div>
-            <div style={{ fontSize: 16, color: '#848D9A', marginTop: 8 }}>{archDesc}</div>
+            <div style={{ fontSize: 14, color: '#A0A3B1', letterSpacing: 3 }}>BET DNA</div>
+            <div style={{ fontSize: 44, color: '#C4463A', marginTop: 8 }}>{archName}</div>
+            <div style={{ fontSize: 16, color: '#A0A3B1', marginTop: 8 }}>{archDesc}</div>
           </div>
           <div style={{ display: 'flex', gap: 32 }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#848D9A' }}>Record</span>
-              <span style={{ fontSize: 18, color: '#F0F2F5', marginTop: 2 }}>{d.record}</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Record</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.record}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#848D9A' }}>Emotion</span>
-              <span style={{ fontSize: 18, color: '#F0F2F5', marginTop: 2 }}>{d.emotion_score}/100</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Emotion</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.emotion_score}/100</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 13, color: '#848D9A' }}>Bets</span>
-              <span style={{ fontSize: 18, color: '#F0F2F5', marginTop: 2 }}>{d.total_bets}</span>
+              <span style={{ fontSize: 13, color: '#A0A3B1' }}>Bets</span>
+              <span style={{ fontSize: 18, color: '#F0F0F0', marginTop: 2 }}>{d.total_bets}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 13, color: '#515968' }}>betautopsy.com</span>
+              <span style={{ fontSize: 13, color: '#5A5C6F' }}>betautopsy.com</span>
             </div>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 260 }}>
-          <div style={{ fontSize: 13, color: '#848D9A', letterSpacing: 3, marginBottom: 8 }}>GRADE</div>
+          <div style={{ fontSize: 13, color: '#A0A3B1', letterSpacing: 3, marginBottom: 8 }}>GRADE</div>
           <div style={{ fontSize: 130, fontWeight: 700, color: gc, lineHeight: 1 }}>{d.grade}</div>
-          <div style={{ fontSize: 13, color: '#848D9A', marginTop: 20 }}>ROI</div>
+          <div style={{ fontSize: 13, color: '#A0A3B1', marginTop: 20 }}>ROI</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: roiColor, marginTop: 4 }}>{roiStr}</div>
         </div>
       </div>

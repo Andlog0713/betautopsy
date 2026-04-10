@@ -5,7 +5,7 @@ import TikTokPixel from '@/components/TikTokPixel';
 import CookieConsent from '@/components/CookieConsent';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
-import { inter, jetbrainsMono } from './fonts';
+import { jakarta, ibmPlexMono } from './fonts';
 import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
 
@@ -81,7 +81,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${jakarta.variable} ${ibmPlexMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="alternate" type="application/rss+xml" title="BetAutopsy Blog" href="/blog/feed.xml" />
@@ -105,7 +105,7 @@ export default function RootLayout({
         <ScrollToTop />
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
-        <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#111318', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-inter)' } }} />
+        <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
         {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><CookieConsent /></>}
         {children}
       </body>

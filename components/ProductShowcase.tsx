@@ -18,7 +18,7 @@ export function ProductShowcase() {
             CSV from FanDuel, DraftKings, BetMGM, PrizePicks via Pikkit, screenshot, or paste. Takes 30 seconds.
           </p>
           <div className="card-tier-2 p-4 space-y-2.5">
-            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-sm">
+            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-lg">
               <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
                 <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
@@ -28,7 +28,7 @@ export function ProductShowcase() {
               </div>
               <span className="text-xs text-scalpel font-mono">Imported</span>
             </div>
-            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-sm">
+            <div className="flex items-center gap-3 p-2.5 bg-white/[0.03] rounded-lg">
               <div className="w-8 h-8 rounded bg-scalpel/10 flex items-center justify-center">
                 <svg className="text-scalpel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
@@ -58,21 +58,21 @@ export function ProductShowcase() {
           </p>
           {/* Realistic finding previews */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-sm border-l-2 border-l-bleed">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-bleed">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Loss Chasing</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-bleed/10 text-bleed font-medium shrink-0">HIGH</span>
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$480/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-sm border-l-2 border-l-caution">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-caution">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Parlay Overexposure</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>
               </div>
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$312/qtr</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-sm border-l-2 border-l-caution">
+            <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg border-l-2 border-l-caution">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-fg-bright font-medium truncate">Late-Night Betting</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-caution/10 text-caution font-medium shrink-0">MEDIUM</span>

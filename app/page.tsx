@@ -18,14 +18,14 @@ import { BorderBeam } from '@/components/ui/border-beam';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'BetAutopsy (Bet Autopsy): Sports Betting Behavioral Analysis Tool',
+  title: 'BetAutopsy (Bet Autopsy) — Sports Betting Behavioral Analysis Tool',
   description:
-    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals: cognitive biases, loss chasing, parlay overuse, and emotional patterns. You get a personalized action plan to fix the leaks.',
+    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals — cognitive biases, loss chasing, parlay overuse, and emotional patterns — then give you a personalized action plan to fix the leaks.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'BetAutopsy: Sports Betting Behavioral Analysis Tool',
+    title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
     description:
       'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
     url: 'https://www.betautopsy.com',
@@ -299,7 +299,7 @@ export default async function LandingPage() {
                 <span className="text-fg-muted text-sm font-mono">/mo</span>
                 <p className="text-fg-muted text-xs mt-1 font-mono">
                   or <span className="text-fg-bright">$149.99/yr</span>
-                  <span className="text-scalpel"> (save 37%)</span>
+                  <span className="text-scalpel"> — save 37%</span>
                 </p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">

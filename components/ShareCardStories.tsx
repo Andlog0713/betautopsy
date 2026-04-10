@@ -9,7 +9,7 @@ const SANS = "'Inter', -apple-system, sans-serif";
 function LogoMark({ dark = false }: { dark?: boolean }) {
   const strokeColor = dark ? '#0D1117' : '#00C9A7';
   const strokeOp = dark ? 0.6 : 1;
-  const dotColor = dark ? '#0D1117' : '#E8453C';
+  const dotColor = dark ? '#0D1117' : '#C4463A';
   return (
     <svg width="50" height="75" viewBox="0 0 40 60" fill="none">
       <path d="M4,4 Q8.6,11.5 20,19" stroke={strokeColor} strokeWidth="4" strokeLinecap="round" strokeOpacity={strokeOp}/>
@@ -134,12 +134,12 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <div style={{ flex: 0, height: 80 }} />
 
         {/* Emotional */}
-        <div style={{ fontSize: 50, color: '#E8453C', marginTop: 80, marginBottom: 30 }}>{"When you're emotional"}</div>
+        <div style={{ fontSize: 50, color: '#C4463A', marginTop: 80, marginBottom: 30 }}>{"When you're emotional"}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 30 }}>
           <div style={{ fontSize: 160, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>{emo.bets}</div>
           <div style={{ fontSize: 60, fontWeight: 400, color: '#848D9A' }}>bets</div>
         </div>
-        <div style={{ fontSize: 80, fontWeight: 700, color: '#E8453C', marginTop: 10 }}>
+        <div style={{ fontSize: 80, fontWeight: 700, color: '#C4463A', marginTop: 10 }}>
           {emo.roi >= 0 ? '+' : ''}{emo.roi}% ROI
         </div>
 
@@ -155,7 +155,7 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
 });
 StorySlideBehavioral.displayName = 'StorySlideBehavioral';
 
-// ── Slide 3: The Receipt (bg: #E8453C) ──
+// ── Slide 3: The Receipt (bg: #C4463A) ──
 // Shows ONE specific, funny, relatable roast stat
 
 export const StorySlideReceipt = forwardRef<HTMLDivElement, StorySlideProps>(({ roastStats }, ref) => {
@@ -164,7 +164,7 @@ export const StorySlideReceipt = forwardRef<HTMLDivElement, StorySlideProps>(({ 
 
   return (
     <div ref={ref} style={{
-      width: 1080, height: 1920, background: '#E8453C',
+      width: 1080, height: 1920, background: '#C4463A',
       fontFamily: SANS, color: '#fff',
       display: 'flex', flexDirection: 'column', padding: '120px 90px 100px',
     }}>
@@ -206,7 +206,7 @@ export const StorySlideCTA = forwardRef<HTMLDivElement, StorySlideProps>((_, ref
         <path d="M4,4 Q8.6,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
         <path d="M36,4 Q31.4,11.5 20,19" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
         <line x1="20" y1="19" x2="20" y2="56" stroke="#00C9A7" strokeWidth="3.7" strokeLinecap="round"/>
-        <circle cx="20" cy="19" r="4" fill="#E8453C"/>
+        <circle cx="20" cy="19" r="4" fill="#C4463A"/>
       </svg>
       <div style={{ fontSize: 130, fontWeight: 900, lineHeight: 1.15, letterSpacing: -2, marginBottom: 80 }}>
         What does your betting say about you?

@@ -55,7 +55,7 @@ export default function HeroABTest() {
           See what your betting data is trying to tell you.
         </h1>
         <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8">
-          Upload your sports betting history. Get a full behavioral analysis: cognitive biases, emotional patterns, and a personalized action plan to stop the leaks.
+          Upload your sports betting history and get a full behavioral analysis — cognitive biases, emotional patterns, and a personalized action plan to stop the leaks.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Free Report</Link>

@@ -106,7 +106,7 @@ export default function NavBar() {
                     {initial}
                   </button>
                   {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-surface-2 border border-border-subtle rounded-sm p-1 animate-fade-in z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-surface-2 border border-border-subtle rounded-lg p-1 animate-fade-in z-50">
                       <div className="px-3 py-2 border-b border-border-subtle mb-1">
                         <p className="font-mono text-xs text-fg-muted truncate">{user.email}</p>
                         <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>

@@ -126,7 +126,7 @@ export default function ShareModal({
   function handleShareTwitter() {
     const url = shareUrl || 'https://betautopsy.com/quiz';
     const archName = data.archetype?.name ?? data.grade;
-    const text = `I'm "${archName}": ${roastLine} | What's your betting personality?`;
+    const text = `I'm "${archName}" — ${roastLine} | What's your betting personality?`;
     const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   }

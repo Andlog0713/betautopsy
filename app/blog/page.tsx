@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 
 export const metadata: Metadata = {
-  title: 'The Post-Mortem: Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
+  title: 'The Post-Mortem — Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
   description: 'Deep dives into sports betting psychology, cognitive biases, parlay math, loss chasing, and the behavioral patterns that cost bettors money.',
   alternates: {
     canonical: '/blog',
@@ -74,7 +74,7 @@ export default function BlogIndexPage() {
         <span className="text-3xl mb-3 block">🧬</span>
         <h3 className="font-semibold text-xl mb-2">Curious about your own biases?</h3>
         <p className="text-fg-muted text-sm mb-4">
-          Take the free 2-minute Bet DNA quiz. No signup, no data needed.
+          Take the free 2-minute Bet DNA quiz — no signup, no data needed.
         </p>
         <Link href="/quiz" className="btn-primary inline-block">
           Take the Quiz
