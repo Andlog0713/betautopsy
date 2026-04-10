@@ -171,7 +171,7 @@
 
   /* ── Blog prose ── */
   .prose-betautopsy {
-    @apply text-fg-muted text-[15px] leading-relaxed;
+    @apply text-fg text-[15px] leading-relaxed;
   }
   .prose-betautopsy h2 {
     @apply font-semibold text-xl tracking-tight text-fg-bright mt-10 mb-4;
