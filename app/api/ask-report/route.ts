@@ -20,9 +20,11 @@ function trimReportContext(analysis: AutopsyAnalysis): Record<string, unknown> {
   if (analysis.emotion_score != null) trimmed.emotion_score = analysis.emotion_score;
   if (analysis.discipline_score) trimmed.discipline_score = analysis.discipline_score;
   if (analysis.betting_archetype) trimmed.betting_archetype = analysis.betting_archetype;
-  if (analysis.session_analysis) {
-    trimmed.session_analysis = analysis.session_analysis;
-  }
+  if (analysis.edge_profile) trimmed.edge_profile = analysis.edge_profile;
+  if (analysis.sport_specific_findings) trimmed.sport_specific_findings = analysis.sport_specific_findings;
+  if (analysis.odds_analysis) trimmed.odds_analysis = analysis.odds_analysis;
+  if (analysis.timing_analysis) trimmed.timing_analysis = analysis.timing_analysis;
+  if (analysis.session_analysis) trimmed.session_analysis = analysis.session_analysis;
   if (analysis.session_detection?.sessionGradeDistribution) {
     trimmed.session_grade_distribution = analysis.session_detection.sessionGradeDistribution;
   }
