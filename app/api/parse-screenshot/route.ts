@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 16000, // Higher limit for multiple screenshots with many bets
-      system: PARSE_SYSTEM_PROMPT,
+      system: [{ type: 'text', text: PARSE_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{
         role: 'user',
         content: [

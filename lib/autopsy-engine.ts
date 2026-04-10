@@ -2534,7 +2534,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     model,
     max_tokens: 8192,
     temperature: 0,
-    system: SYSTEM_PROMPT,
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: userMessage }],
   });
 
@@ -2677,7 +2677,7 @@ Return ONLY the JSON object, nothing else.`;
       model,
       max_tokens: 512,
       temperature: 0,
-      system: SNAPSHOT_SYSTEM_PROMPT,
+      system: [{ type: 'text', text: SNAPSHOT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
 

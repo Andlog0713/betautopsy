@@ -2515,6 +2515,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         );
       })()}
 
+      {/* Ask Your Autopsy — Q&A on paid reports, after chapter content */}
+      {reportId && !readOnly && !snapshotLocked && (
+        <AskYourAutopsy reportId={reportId} analysis={analysis} />
+      )}
+
       <div className="case-card p-5 text-center space-y-3 mt-4">
         <p className="text-fg-bright font-medium">What happens next?</p>
         <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
@@ -2686,11 +2691,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {showNudge && reportId && !readOnly && (
         <ReportFeedbackNudge reportId={reportId} onClose={handleNudgeClose} />
-      )}
-
-      {/* Ask Your Autopsy — Q&A on paid reports */}
-      {reportId && !readOnly && !snapshotLocked && (
-        <AskYourAutopsy reportId={reportId} analysis={analysis} />
       )}
     </div>
   );
