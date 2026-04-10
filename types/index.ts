@@ -169,6 +169,8 @@ export interface AutopsyAnalysis {
   session_analysis?: SessionAnalysis;
   edge_profile?: EdgeProfile;
   betting_archetype?: { name: string; description: string };
+  /** Quiz-estimated archetype name (from quiz_leads table, if the user took the quiz). */
+  quiz_archetype?: string;
   timing_analysis?: TimingAnalysis;
   odds_analysis?: OddsAnalysis;
   dfs_mode?: boolean;

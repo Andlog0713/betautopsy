@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
+import { getArchetypeByName } from '@/lib/archetypes';
 import ReportFeedbackNudge from './ReportFeedbackNudge';
 import type { ShareCardData } from './ShareCard';
 import ShareModal from './ShareModal';
@@ -619,6 +620,32 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           {linkCopied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
+
+      {/* Archetype badge */}
+      {analysis.betting_archetype?.name && (() => {
+        const arch = getArchetypeByName(analysis.betting_archetype!.name);
+        if (!arch) return null;
+        return (
+          <div className="mb-5">
+            <div
+              className="case-card p-4 flex items-start gap-3"
+              style={{ borderLeftWidth: '3px', borderLeftColor: arch.color }}
+            >
+              <span className="text-2xl leading-none mt-0.5">{arch.emoji}</span>
+              <div>
+                <p className="font-bold text-lg text-fg-bright">{arch.name}</p>
+                <p className="text-fg-muted text-sm">{arch.description}</p>
+                {analysis.quiz_archetype &&
+                 analysis.quiz_archetype !== analysis.betting_archetype!.name && (
+                  <p className="text-fg-dim text-xs font-mono mt-2">
+                    Your Bet DNA quiz estimated you were {analysis.quiz_archetype}. Your actual betting data tells a different story.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* What this report analyzes — collapsible */}
       <details className="card-tier-2 rounded-sm mb-5">

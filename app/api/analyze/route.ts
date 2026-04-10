@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { classifyArchetype } from '@/lib/archetypes';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
@@ -240,6 +241,38 @@ export async function POST(request: Request) {
         analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
+
+        // Data-driven archetype classifier (overrides engine's heuristic archetype)
+        const settledBets = betsToAnalyze.filter(
+          (b) => b.result === 'win' || b.result === 'loss'
+        ).length;
+        const dataArchetype = classifyArchetype({
+          emotionScore: analysis.emotion_score ?? 0,
+          disciplineScore: disciplineResult?.total ?? null,
+          roiPercent: metricsForDiscipline.summary.roi_percent,
+          lossChaseRatio: metricsForDiscipline.loss_chase_ratio,
+          parlayPercent: metricsForDiscipline.parlay_stats.parlay_percent,
+          parlayRoi: metricsForDiscipline.parlay_stats.parlay_roi,
+          settledBets,
+        });
+        if (dataArchetype) {
+          analysis.betting_archetype = {
+            name: dataArchetype.name,
+            description: dataArchetype.description,
+          };
+        }
+
+        // Check if user took the quiz — store quiz archetype for comparison
+        try {
+          const { data: quizLead } = await supabase
+            .from('quiz_leads')
+            .select('archetype')
+            .eq('email', user.email ?? '')
+            .maybeSingle();
+          if (quizLead?.archetype) {
+            analysis.quiz_archetype = quizLead.archetype as string;
+          }
+        } catch { /* quiz lookup is best-effort */ }
 
         // Stamp the current saved-report schema version so future readers can branch on shape.
         analysis.schema_version = 1;
