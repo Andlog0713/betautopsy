@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
 import { getArchetypeByName } from '@/lib/archetypes';
+import { findExplainer } from '@/lib/bias-explainers';
 import ReportFeedbackNudge from './ReportFeedbackNudge';
 import type { ShareCardData } from './ShareCard';
 import ShareModal from './ShareModal';
@@ -632,6 +633,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const [showFullHeatmap, setShowFullHeatmap] = useState(false);
   const [showEdgeChart, setShowEdgeChart] = useState(false);
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
+  const [expandedExplainers, setExpandedExplainers] = useState<Set<string>>(new Set());
   const toggleFinding = (id: string) => {
     setExpandedFindings(prev => {
       const next = new Set(prev);
@@ -1128,7 +1130,22 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="text-sm font-medium text-fg-bright truncate">{bias.bias_name}</span>
+                    {(() => {
+                      const explainer = findExplainer(bias.bias_name);
+                      const explKey = `explain-bias-${i}`;
+                      const isExplaining = expandedExplainers.has(explKey);
+                      return explainer ? (
+                        <span
+                          className="text-sm font-medium text-fg-bright truncate cursor-pointer hover:text-scalpel transition-colors"
+                          onClick={(e) => { e.stopPropagation(); setExpandedExplainers(prev => { const next = new Set(prev); next.has(explKey) ? next.delete(explKey) : next.add(explKey); return next; }); }}
+                          title="Click to learn about this pattern"
+                        >
+                          {bias.bias_name}
+                        </span>
+                      ) : (
+                        <span className="text-sm font-medium text-fg-bright truncate">{bias.bias_name}</span>
+                      );
+                    })()}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
                       {bias.severity.toUpperCase()}
                     </span>
@@ -1145,6 +1162,30 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     />
                   </div>
                 </div>
+
+                {/* Explainer card (toggled by clicking bias name) */}
+                {(() => {
+                  const explainer = findExplainer(bias.bias_name);
+                  const explKey = `explain-bias-${i}`;
+                  const isExplaining = expandedExplainers.has(explKey);
+                  if (!explainer || !isExplaining) return null;
+                  return (
+                    <div className="bg-surface-2 border-l-2 border-l-scalpel/30 p-4 mx-4 mt-1 rounded-sm text-sm text-fg-muted leading-relaxed space-y-2 animate-fade-in">
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">WHAT IT IS</span>
+                        <p>{explainer.what}</p>
+                      </div>
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">WHY IT MATTERS</span>
+                        <p>{explainer.why}</p>
+                      </div>
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">THE FIX</span>
+                        <p>{explainer.fix}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Expanded content */}
                 <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -1423,13 +1464,52 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="text-sm font-medium text-fg-bright truncate">{pat.pattern_name}</span>
+                    {(() => {
+                      const explainer = findExplainer(pat.pattern_name);
+                      const explKey = `explain-pat-${i}`;
+                      return explainer ? (
+                        <span
+                          className="text-sm font-medium text-fg-bright truncate cursor-pointer hover:text-scalpel transition-colors"
+                          onClick={(e) => { e.stopPropagation(); setExpandedExplainers(prev => { const next = new Set(prev); next.has(explKey) ? next.delete(explKey) : next.add(explKey); return next; }); }}
+                          title="Click to learn about this pattern"
+                        >
+                          {pat.pattern_name}
+                        </span>
+                      ) : (
+                        <span className="text-sm font-medium text-fg-bright truncate">{pat.pattern_name}</span>
+                      );
+                    })()}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badgeClass}`}>
                       {pat.impact}
                     </span>
                   </div>
                   <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 shrink-0 ml-4 ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
+
+                {/* Explainer card (toggled by clicking pattern name) */}
+                {(() => {
+                  const explainer = findExplainer(pat.pattern_name);
+                  const explKey = `explain-pat-${i}`;
+                  const isExplaining = expandedExplainers.has(explKey);
+                  if (!explainer || !isExplaining) return null;
+                  return (
+                    <div className="bg-surface-2 border-l-2 border-l-scalpel/30 p-4 mx-4 mt-1 rounded-sm text-sm text-fg-muted leading-relaxed space-y-2 animate-fade-in">
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">WHAT IT IS</span>
+                        <p>{explainer.what}</p>
+                      </div>
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">WHY IT MATTERS</span>
+                        <p>{explainer.why}</p>
+                      </div>
+                      <div>
+                        <span className="font-mono text-[9px] text-fg-dim tracking-[2px] block mb-1">THE FIX</span>
+                        <p>{explainer.fix}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="px-4 pb-4 pt-1 space-y-2 border-t border-border-subtle">
                     <p className="text-sm text-fg leading-relaxed">{pat.description}</p>
