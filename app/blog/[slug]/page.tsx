@@ -11,6 +11,8 @@ import AmIBad from '../_posts/am-i-a-bad-sports-bettor';
 import HowToAnalyze from '../_posts/how-to-analyze-your-betting-history';
 import BehavioralAnalysis from '../_posts/what-is-behavioral-betting-analysis';
 import LosingOnPrizePicks from '../_posts/why-am-i-losing-on-prizepicks';
+import SunkCostFallacy from '../_posts/sunk-cost-fallacy-sports-betting';
+import BettingArchetypes from '../_posts/betting-archetypes-behavioral-profiles';
 
 const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'why-am-i-losing-at-sports-betting': WhyAmILosing,
@@ -21,6 +23,8 @@ const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'how-to-analyze-your-betting-history': HowToAnalyze,
   'what-is-behavioral-betting-analysis': BehavioralAnalysis,
   'why-am-i-losing-on-prizepicks': LosingOnPrizePicks,
+  'sunk-cost-fallacy-sports-betting': SunkCostFallacy,
+  'betting-archetypes-behavioral-profiles': BettingArchetypes,
 };
 
 export function generateStaticParams() {

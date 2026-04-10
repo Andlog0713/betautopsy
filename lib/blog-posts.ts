@@ -73,6 +73,22 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     readTime: '8 min read',
     tags: ['prizepicks', 'DFS', 'behavioral analysis', 'pick\'em'],
   },
+  {
+    slug: 'sunk-cost-fallacy-sports-betting',
+    title: 'The Sunk Cost Fallacy in Sports Betting: Why You Can\'t Walk Away',
+    description: 'You\'re down $200 and feel like you have to keep betting to "get it back." That\'s the sunk cost fallacy, and it\'s one of the most expensive patterns in sports betting.',
+    publishedAt: '2026-04-10',
+    readTime: '7 min read',
+    tags: ['sunk cost fallacy', 'betting psychology', 'behavioral analysis', 'loss chasing'],
+  },
+  {
+    slug: 'betting-archetypes-behavioral-profiles',
+    title: 'What\'s Your Betting Archetype? 5 Behavioral Profiles Every Bettor Falls Into',
+    description: 'Every bettor has a behavioral profile shaped by their emotions, discipline, and habits. Here are the 5 archetypes we see in the data, and what each one means for your bankroll.',
+    publishedAt: '2026-04-14',
+    readTime: '8 min read',
+    tags: ['betting archetype', 'behavioral profile', 'betting personality', 'sports betting psychology'],
+  },
 ];
 
 // ── Future DFS/Pick'em Posts (to be written) ──
