@@ -27,7 +27,17 @@ export default function BlogIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <div>
-        <h1 className="font-bold text-4xl tracking-tight mb-3">The Post-Mortem</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-bold text-4xl tracking-tight mb-3">The Post-Mortem</h1>
+          <a
+            href="/blog/feed.xml"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-xs text-fg-dim hover:text-scalpel transition-colors"
+          >
+            RSS
+          </a>
+        </div>
         <p className="text-fg-muted">
           The behavioral side of sports betting. Patterns, biases, and what they cost you.
         </p>

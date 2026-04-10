@@ -84,6 +84,7 @@ export default function RootLayout({
     <html lang="en" className={`${jakarta.variable} ${ibmPlexMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="alternate" type="application/rss+xml" title="BetAutopsy Blog" href="/blog/feed.xml" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
