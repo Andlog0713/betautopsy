@@ -490,15 +490,15 @@ export const REPORT_PURCHASE_LIMITS = {
 // Extra report price for Pro users who exceed their monthly allocation
 export const EXTRA_REPORT_PRICE = 4.99;
 
-// Launch promo: first full report free for signups before this date
-export const LAUNCH_PROMO_DEADLINE = '2026-05-04T23:59:59Z';
+// Launch promo: disabled. No free full reports for free-tier users.
+export const LAUNCH_PROMO_DEADLINE = '2000-01-01T00:00:00Z';
 
 export function isLaunchPromoActive(): boolean {
-  return new Date() < new Date(LAUNCH_PROMO_DEADLINE);
+  return false;
 }
 
-export function userQualifiesForPromo(userCreatedAt: string): boolean {
-  return new Date(userCreatedAt) < new Date(LAUNCH_PROMO_DEADLINE);
+export function userQualifiesForPromo(_userCreatedAt: string): boolean {
+  return false;
 }
 
 // ── DFS Detection ──
