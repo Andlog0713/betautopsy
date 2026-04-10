@@ -27,20 +27,17 @@
     Control points: Q(padX+w*0.15, padY+armEnd*0.5) = Q(15.5, 19)
     Centered at x=792: translate(792-36.5, 116.5)
   -->
-  <g transform="translate(755.5, 116.5)">
-    <path d="M6.5,6.5 Q15.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <path d="M66.5,6.5 Q57.5,19 36.5,31.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <line x1="36.5" y1="31.5" x2="36.5" y2="106.5" stroke="#00FFCB" stroke-width="3.5" stroke-linecap="round"/>
-    <circle cx="36.5" cy="31.5" r="4.5" fill="#E8453C"/>
-    <circle cx="6.5" cy="6.5" r="2" fill="#00FFCB" opacity="0.4"/>
-    <circle cx="66.5" cy="6.5" r="2" fill="#00FFCB" opacity="0.4"/>
-    <circle cx="36.5" cy="106.5" r="2" fill="#00FFCB" opacity="0.4"/>
+  <g transform="translate(666, 52) scale(0.55)">
+    <path fill="#00FFCB" d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/>
+    <path fill="#00FFCB" d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/>
+    <path fill="#00FFCB" d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/>
+    <path fill="#E6463C" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/>
   </g>
 
-  <text x="792" y="270" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC">
+  <text x="792" y="305" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" letter-spacing="3" fill="#F0F6FC">
     <tspan font-weight="900">BET</tspan><tspan font-weight="300">AUTOPSY</tspan>
   </text>
-  <text x="792" y="298" text-anchor="middle" font-family="monospace" font-size="9" letter-spacing="4" fill="#5D6673">BEHAVIORAL ANALYSIS FOR SPORTS BETTORS</text>
+  <text x="792" y="333" text-anchor="middle" font-family="monospace" font-size="9" letter-spacing="4" fill="#5D6673">BEHAVIORAL ANALYSIS FOR SPORTS BETTORS</text>
 
   <rect x="0" y="395" width="1584" height="1" fill="url(#top-edge)"/>
 </svg>

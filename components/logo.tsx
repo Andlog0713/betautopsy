@@ -17,42 +17,27 @@ const SIZES = {
   xl:  { h: 120, sw: 3,  r: 4,   ep: 2,    text: 'text-4xl',   textPx: 36, gap: 'gap-4' },
 };
 
+/**
+ * Canonical Y-incision mark using the exact filled paths from the app icon
+ * (public/file.svg). Scales via viewBox — identical proportions at every size.
+ */
 function IncisionMark({
-  height, strokeWidth, dotRadius, endpointRadius, strokeColor, matchHeight,
+  height, strokeColor, matchHeight,
 }: {
-  height: number; strokeWidth: number; dotRadius: number; endpointRadius: number; strokeColor: string; matchHeight?: number;
+  height: number; strokeWidth?: number; dotRadius?: number; endpointRadius?: number; strokeColor: string; matchHeight?: number;
 }) {
-  const w = height * 0.6;
-  const armEnd = height <= 30 ? height * 0.30 : height * 0.25;
-  const padX = dotRadius + 2;
-  const padY = dotRadius + 2;
-  const cx = w / 2 + padX;
-  const cy = armEnd + padY;
-  const viewW = w + padX * 2;
-  const viewH = height + padY * 2;
-
-  // If matchHeight is provided, scale the SVG to that pixel height
-  const displayH = matchHeight ?? viewH;
-  const displayW = (viewW / viewH) * displayH;
+  // The icon paths live in a 512x512 viewBox but the mark itself spans
+  // roughly x:135..375, y:80..435. Crop to that bounding box.
+  const vx = 120; const vy = 70; const vw = 270; const vh = 375;
+  const displayH = matchHeight ?? height;
+  const displayW = (vw / vh) * displayH;
 
   return (
-    <svg width={displayW} height={displayH} viewBox={`0 0 ${viewW} ${viewH}`} fill="none">
-      <path
-        d={`M${padX},${padY} Q${padX + w * 0.15},${padY + armEnd * 0.5} ${cx},${cy}`}
-        stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
-      />
-      <path
-        d={`M${viewW - padX},${padY} Q${viewW - padX - w * 0.15},${padY + armEnd * 0.5} ${cx},${cy}`}
-        stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
-      />
-      <line
-        x1={cx} y1={cy} x2={cx} y2={viewH - padY}
-        stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round"
-      />
-      <circle cx={cx} cy={cy} r={dotRadius} fill="#C4463A" />
-      <circle cx={padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
-      <circle cx={viewW - padX} cy={padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
-      <circle cx={cx} cy={viewH - padY} r={endpointRadius} fill={strokeColor} opacity="0.45" />
+    <svg width={displayW} height={displayH} viewBox={`${vx} ${vy} ${vw} ${vh}`} fill="none">
+      <path fill={strokeColor} d="M271.233,218.224 C271.264,284.173 271.323,350.121 271.293,416.07 C271.289,425.227 265.389,431.29 257.017,431.3 C248.47,431.309 242.7,425.148 242.695,415.605 C242.665,350.155 242.697,284.706 243.137,218.863 C252.83,223.202 262.049,222.684 271.233,218.224z"/>
+      <path fill={strokeColor} d="M228.125,189.213 C197.602,165.427 170.038,138.858 149.443,105.712 C145.955,100.099 145.474,94.404 149.217,88.852 C152.61,83.819 157.789,81.471 163.53,83.13 C167.066,84.151 171.15,86.534 173.028,89.533 C191.956,119.77 217.254,143.912 244.919,166.36 C235.464,171.356 230.404,179.239 228.125,189.213z"/>
+      <path fill={strokeColor} d="M268.529,166.358 C296.365,144.336 321.842,120.12 340.711,89.634 C345.241,82.317 353.859,80.54 360.721,84.907 C367.5,89.22 369.371,97.697 364.9,105.085 C350.366,129.095 331.677,149.602 310.912,168.278 C302.995,175.4 294.638,182.032 285.961,188.736 C283.701,178.21 277.62,171.139 268.529,166.358z"/>
+      <path fill="#C4463A" d="M268.163,166.272 C277.62,171.139 283.701,178.21 285.652,188.902 C286.443,201.394 282.047,211.109 271.464,218.052 C262.049,222.684 252.83,223.202 243.169,218.347 C232.609,211.588 227.576,202.297 228.161,189.645 C230.404,179.239 235.464,171.356 245.221,166.573 C252.901,163.762 260.337,163.342 268.163,166.272z"/>
     </svg>
   );
 }
