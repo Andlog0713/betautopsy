@@ -179,13 +179,9 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <button
-            onClick={handleBuyReport}
-            disabled={loadingAction === 'report'}
-            className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center disabled:opacity-50 mt-auto"
-          >
-            {loadingAction === 'report' ? 'Loading...' : 'Get Your Report'}
-          </button>
+          <Link href="/reports" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center mt-auto">
+            Get Your Report
+          </Link>
         </div>
 
         {/* Pro */}
