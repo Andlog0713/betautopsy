@@ -191,6 +191,7 @@ export default function UploadPage() {
                     placeholder="e.g. 500"
                     value={bankrollInput}
                     onChange={(e) => setBankrollInput(e.target.value)}
+                    min="0"
                     className="w-full bg-base border border-border rounded-sm px-3 py-2 pl-7 text-sm font-mono text-fg-bright placeholder:text-fg-dim focus:outline-none focus:border-scalpel/40"
                   />
                 </div>

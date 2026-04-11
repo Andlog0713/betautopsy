@@ -288,12 +288,19 @@ export default function DashboardPage() {
       action: 'Run Autopsy',
       href: '/reports?run=true',
     };
-    // 4. First autopsy
-    if (stats.reportCount === 0) return {
+    // 4. First autopsy (only if they have bets to analyze)
+    if (stats.reportCount === 0 && stats.totalBets > 0) return {
       icon: <FlaskConical size={16} className="text-scalpel shrink-0" />,
       message: `${stats.totalBets} bets loaded. Run your first behavioral analysis.`,
       action: 'Run Autopsy',
       href: '/reports?run=true',
+    };
+    // 4b. No bets yet — nudge to upload
+    if (stats.reportCount === 0 && stats.totalBets === 0) return {
+      icon: <Upload size={16} className="text-scalpel shrink-0" />,
+      message: 'Upload your betting history to get started.',
+      action: 'Upload Bets',
+      href: '/upload',
     };
     // 5. Streak start
     if (stats.reportCount > 0 && streakCount === 0) return {

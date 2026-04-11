@@ -122,9 +122,17 @@ export default function SettingsPage() {
   }
 
   async function handleManageSubscription() {
-    const res = await fetch('/api/billing', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    try {
+      const res = await fetch('/api/billing', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || 'Could not open billing portal. Please try again.');
+      }
+    } catch {
+      toast.error('Could not connect to billing. Please try again.');
+    }
   }
 
   if (loading) {

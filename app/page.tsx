@@ -417,7 +417,7 @@ export default async function LandingPage() {
             </div>
           </div>
           <p className="font-mono text-[10px] text-fg-muted tracking-wider mt-4">
-            © 2026 Diagnostic Sports, LLC. All rights reserved.
+            © {new Date().getFullYear()} Diagnostic Sports, LLC. All rights reserved.
           </p>
         </div>
         <ResponsibleGambling />

@@ -21,7 +21,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
           </p>
           <p className="text-fg-dim text-[10px] text-center mt-2">
-            © 2026 Diagnostic Sports, LLC
+            © {new Date().getFullYear()} Diagnostic Sports, LLC
           </p>
         </div>
       </footer>

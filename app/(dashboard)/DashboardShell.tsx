@@ -365,7 +365,7 @@ export default function DashboardShell({
             18+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
           </p>
           <p className="font-mono text-[9px] text-fg-dim tracking-wider mt-1">
-            © 2026 DIAGNOSTIC SPORTS, LLC D/B/A BETAUTOPSY
+            © {new Date().getFullYear()} DIAGNOSTIC SPORTS, LLC D/B/A BETAUTOPSY
           </p>
         </footer>
       </main>
