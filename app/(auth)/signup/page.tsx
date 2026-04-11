@@ -53,7 +53,7 @@ function SignupForm() {
 
     trackSignup();
     // Welcome email sent via daily onboarding cron (1hr+ delay so it doesn't compete with the UI)
-    router.push(next || '/');
+    router.push(next || '/dashboard?welcome=true');
     router.refresh();
   }
 
