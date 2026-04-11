@@ -2102,9 +2102,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <span className="font-mono font-medium text-win">{analysis.session_analysis.avg_bets_per_winning_session}</span> bets.
               Your losing sessions average{' '}
               <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
+              {' '}{analysis.session_analysis.insight && !analysis.session_analysis.insight.toLowerCase().includes('winning sessions average')
+                ? analysis.session_analysis.insight
+                : 'More bets per session = more losses. You\'re at your best when you\'re selective.'}
             </p>
-            <p className="text-fg-muted text-sm mt-2">{analysis.session_analysis.insight}</p>
-            <p className="text-fg-muted text-xs mt-2 font-mono">
+            <p className="text-fg-dim text-xs mt-2 font-mono font-light">
               {analysis.session_analysis.total_sessions} sessions analyzed (3+ hour gap = new session)
             </p>
           </div>
