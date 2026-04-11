@@ -693,7 +693,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ═══ CASE FILE HEADER — matching mockup ═══ */}
       <div className="flex justify-between items-start mb-7">
         <div>
-          <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1.5 case-header-reveal">
+          <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1.5 animate-header-reveal">
             AUTOPSY REPORT #{reportId ? `BA-${reportId.slice(0, 4).toUpperCase()}` : 'BA-LIVE'}
             {analysis.dfs_mode && <span className="ml-2 text-purple-400">· {analysis.dfs_platform ?? 'DFS'}</span>}
           </p>
@@ -892,7 +892,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             }`}>{readOnly ? Math.round(emotionScore) : <NumberTicker value={Math.round(emotionScore)} />}</span>
           </div>
           <div className="h-1 bg-surface-2 relative">
-            <div className="h-full animate-bar-fill" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #B8944A, #C4463A)' }} />
+            <div className="h-full animate-bar-fill origin-left" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #B8944A, #C4463A)' }} />
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright animate-needle" style={{ left: `${emotionScore}%` }} />
           </div>
           <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
@@ -909,7 +909,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               }`}>{readOnly ? analysis.discipline_score.total : <NumberTicker value={analysis.discipline_score.total} />}</span>
             </div>
             <div className="h-1 bg-surface-2 relative">
-              <div className="h-full animate-bar-fill" style={{ width: `${analysis.discipline_score.total}%`, animationDelay: '0.15s', background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #B8944A, #00C9A7)' : 'linear-gradient(90deg, #C4463A, #B8944A)' }} />
+              <div className="h-full animate-bar-fill origin-left" style={{ width: `${analysis.discipline_score.total}%`, animationDelay: '0.15s', background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #B8944A, #00C9A7)' : 'linear-gradient(90deg, #C4463A, #B8944A)' }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright animate-needle" style={{ left: `${analysis.discipline_score.total}%`, animationDelay: '1.05s' }} />
             </div>
             <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
