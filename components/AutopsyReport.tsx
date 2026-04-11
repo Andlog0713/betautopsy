@@ -831,7 +831,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {comparison && <WhatChangedSection comparison={comparison} />}
 
       {/* Executive Diagnosis */}
-      {isPartialReport && <SkeletonSection label="Generating behavioral diagnosis..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Generating behavioral diagnosis..." />}
       {!isPartialReport && analysis.executive_diagnosis && (
         <div className="card-tier-1 card-flare-teal p-[18px] mb-5">
           <div className="flex items-center justify-between mb-2.5">
@@ -1340,7 +1340,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       })()}
 
       {/* Strategic Leaks — collapsible cards */}
-      {isPartialReport && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Mapping strategic leaks by dollar impact..." />}
       {!isPartialReport && filteredLeaks.length > 0 && (
         <div className="space-y-2">
           <div className="mb-2.5">
@@ -1449,7 +1449,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Behavioral Patterns — collapsible */}
-      {isPartialReport && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Scanning for cognitive biases and emotional patterns..." />}
       {!isPartialReport && behavioral_patterns.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-2.5">
@@ -2072,7 +2072,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Session Analysis */}
-      {isPartialReport && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
       {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
@@ -2162,7 +2162,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Edge Profile */}
-      {isPartialReport && <SkeletonSection label="Ranking your edges and leaks by dollar impact..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Ranking your edges and leaks by dollar impact..." />}
       {!isPartialReport && analysis.edge_profile && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
@@ -2293,7 +2293,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       ) : (
       <>
             {/* Leak Prioritizer */}
-            {isPartialReport && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
+            {isPartialReport && !snapshotLocked && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
             {!isPartialReport && prioritizedLeaks.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
@@ -2364,7 +2364,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
 
             {/* What If Simulator */}
-            {isPartialReport && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
+            {isPartialReport && !snapshotLocked && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
             {!isPartialReport && whatIfs.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
@@ -2431,7 +2431,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       ) : (
       <>
       {/* Action Plan */}
-      {isPartialReport && <SkeletonSection label="Generating your personalized action plan..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
         <div className="space-y-1.5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
@@ -2517,7 +2517,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Personal Rules */}
-      {isPartialReport && <SkeletonSection label="Writing personal betting rules from your data..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Writing personal betting rules from your data..." />}
       {!isPartialReport && (analysis.personal_rules ?? []).length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -2696,7 +2696,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         isSharp ? (
           <div className="space-y-8">
             {/* What If Simulator */}
-            {isPartialReport && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
+            {isPartialReport && !snapshotLocked && <SkeletonSection label="Simulating behavioral what-if scenarios..." />}
             {!isPartialReport && whatIfs.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">What-If Simulator</h2>
@@ -2736,7 +2736,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
 
             {/* Leak Prioritizer */}
-            {isPartialReport && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
+            {isPartialReport && !snapshotLocked && <SkeletonSection label="Ranking behavioral leaks by dollar cost..." />}
             {!isPartialReport && prioritizedLeaks.length > 0 && (
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
