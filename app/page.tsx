@@ -107,7 +107,7 @@ export default async function LandingPage() {
       <section className="relative grid-paper overflow-hidden">
         {/* Glow behind hero text */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00C9A7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
-        <div className="max-w-5xl mx-auto px-6 pt-10 pb-8 relative z-10">
+        <div className="max-w-5xl mx-auto px-6 pt-24 pb-8 relative z-10">
           <div className="mb-8 animate-fade-in">
             <AnimatedShinyText className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase inline-block">
               CASE FILE // BEHAVIORAL ANALYSIS UNIT
