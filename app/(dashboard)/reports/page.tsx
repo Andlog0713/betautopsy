@@ -45,6 +45,7 @@ export default function ReportsPage() {
   const [sportsbooks, setSportsbooks] = useState<string[]>([]);
   const [newBetsSinceReport, setNewBetsSinceReport] = useState(0);
   const [lastReportDate, setLastReportDate] = useState<string | null>(null);
+  const [paidSnapshotId, setPaidSnapshotId] = useState<string | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -57,12 +58,17 @@ export default function ReportsPage() {
     else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
     else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
 
-    // Post-checkout redirect for one-time report unlock → fire GA4 purchase event
-    // and clean the query param so reloads don't double-fire.
+    // Post-checkout redirect for one-time report unlock → fire GA4 purchase event,
+    // save the paid snapshot ID so runAutopsy sends report_type: 'full',
+    // and clean the query params so reloads don't double-fire.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
       window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
+      const reportId = searchParams.get('id');
+      if (reportId) setPaidSnapshotId(reportId);
       const url = new URL(window.location.href);
       url.searchParams.delete('unlocked');
+      url.searchParams.delete('id');
+      url.searchParams.set('run', 'true');
       window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -177,7 +183,11 @@ export default function ReportsPage() {
     window.gtag?.('event', 'analysis_started');
 
     try {
-      const body: Record<string, string | string[]> = { report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot' };
+      const isPaidUpgrade = !!paidSnapshotId;
+      const body: Record<string, string | string[]> = {
+        report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
+        ...(isPaidUpgrade ? { paid_snapshot_id: paidSnapshotId } : {}),
+      };
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
       if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
@@ -288,6 +298,7 @@ export default function ReportsPage() {
               setActiveReport(report);
               setReports((prev) => [report, ...prev]);
               setRunning(false);
+              setPaidSnapshotId(null); // Clear after use
               streamComplete = true;
               window.gtag?.('event', 'analysis_completed', {
                 bet_count: (d.analyzed_bets as Bet[] | undefined)?.length,

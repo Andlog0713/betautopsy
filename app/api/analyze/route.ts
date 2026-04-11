@@ -49,6 +49,7 @@ export async function POST(request: Request) {
   let uploadIds: string[] = [];
   let sportsbook: string | null = null;
   let filterLabel = '';
+  let paidSnapshotId: string | null = null;
   try {
     const body = await request.json();
     if (body.report_type) reportType = body.report_type;
@@ -57,8 +58,26 @@ export async function POST(request: Request) {
     if (body.upload_id) uploadIds = [body.upload_id];
     if (body.upload_ids && Array.isArray(body.upload_ids)) uploadIds = body.upload_ids;
     if (body.sportsbook) sportsbook = body.sportsbook;
+    if (body.paid_snapshot_id) paidSnapshotId = body.paid_snapshot_id;
   } catch {
     // No body or invalid JSON is fine
+  }
+
+  // Verify paid report: free users requesting 'full' must have a paid snapshot
+  if (tier === 'free' && reportType === 'full' && paidSnapshotId) {
+    const { data: paidReport } = await supabase
+      .from('autopsy_reports')
+      .select('id, is_paid')
+      .eq('id', paidSnapshotId)
+      .eq('user_id', user.id)
+      .eq('is_paid', true)
+      .single();
+    if (!paidReport) {
+      return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
+    }
+  } else if (tier === 'free' && reportType === 'full') {
+    // Free user requesting full without a paid snapshot — downgrade to snapshot
+    reportType = 'snapshot';
   }
 
   // Input validation
@@ -227,8 +246,9 @@ export async function POST(request: Request) {
           && !hasUsedPromo;
 
         // Free users get snapshots; full reports require Pro, payment, or promo
-        const isSnapshot = promoEligible
-          ? false // promo users get a full report
+        const hasPaidForFull = tier === 'free' && reportType === 'full' && !!paidSnapshotId;
+        const isSnapshot = promoEligible || hasPaidForFull
+          ? false // promo or paid users get a full report
           : reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
         const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
 
