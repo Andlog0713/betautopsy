@@ -59,7 +59,7 @@ export default function HeroABTest() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</Link>
-          <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3 !border-white/30 !text-fg-bright hover:!bg-white/10">Take the 2-Min Quiz</Link>
+          <Link href="/quiz" className="btn-secondary text-sm !px-5 !py-2 !border-white/30 !text-fg-bright hover:!bg-white/10">Take the 2-Min Quiz</Link>
         </div>
         <span className="text-fg-muted text-xs mt-3">
           Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 — 50% off.
