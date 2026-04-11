@@ -1649,13 +1649,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Locked charts placeholder for free tier */}
       {snapshotLocked && (
-        <RedactedValue type="section">
-          <div className="space-y-4">
-            <div className="card p-6 h-40" />
-            <div className="card p-6 h-40" />
-            <div className="card p-6 h-40" />
-          </div>
-        </RedactedValue>
+        <div className="card p-6 text-center space-y-3">
+          <Lock size={20} className="text-fg-muted mx-auto" />
+          <p className="text-fg-muted text-sm font-mono">Timing patterns, heatmaps, and sportsbook breakdowns</p>
+          <p className="text-fg-dim text-xs">Available in the full report</p>
+        </div>
       )}
 
       {/* Timing Patterns */}
@@ -2140,14 +2138,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ── Session Analysis ── */}
       {snapshotLocked ? (
-        <RedactedValue type="section">
-          <div className="space-y-4">
-            <h2 className="font-bold text-2xl">Session Analysis</h2>
-            <div className="card p-6 h-32" />
-            <h2 className="font-bold text-2xl">Bet-by-Bet Analysis</h2>
-            <div className="card p-6 h-32" />
-          </div>
-        </RedactedValue>
+        <div className="card p-6 text-center space-y-3">
+          <Lock size={20} className="text-fg-muted mx-auto" />
+          <p className="text-fg-muted text-sm font-mono">Session analysis and bet-by-bet breakdown</p>
+          <p className="text-fg-dim text-xs">Available in the full report</p>
+        </div>
       ) : (
         <>
           {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
@@ -2271,25 +2266,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <ChapterHeader number={4} title="What It Costs" subtitle="The dollar impact of your behavioral leaks" />
 
       {snapshotLocked ? (
-        <RedactedValue type="section">
-          <div className="space-y-4">
-            <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
-            <div className="card-tier-1 p-5">
-              <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-              <p className="font-mono text-3xl font-bold text-scalpel">$2,847</p>
-              <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-            </div>
-            {filteredLeaks.map((leak, i) => (
-              <div key={i} className="card-tier-2 px-4 py-3.5 rounded-md flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm font-bold text-scalpel">#{i + 1}</span>
-                  <span className="text-sm font-medium text-fg-bright">{leak.category}</span>
-                </div>
-                <span className="text-sm font-mono text-loss">-${Math.abs(Math.round(leak.roi_impact * 10)).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </RedactedValue>
+        <div className="card p-6 text-center space-y-3">
+          <Lock size={20} className="text-fg-muted mx-auto" />
+          <p className="text-fg-muted text-sm font-mono">Leak prioritizer with dollar costs</p>
+          <p className="text-fg-dim text-xs">See exactly how much each leak costs you per quarter</p>
+        </div>
       ) : (
       <>
             {/* Leak Prioritizer */}
@@ -2414,20 +2395,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <ChapterHeader number={5} title="Protocol" subtitle="Your personalized action plan" />
 
       {snapshotLocked ? (
-        <RedactedValue type="section">
-          <div className="space-y-1.5">
-            <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-2.5 mt-7">PRESCRIBED PROTOCOL</p>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="card-tier-1 p-5">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="font-mono text-[11px] font-bold text-scalpel bg-scalpel/[0.08] px-2 py-0.5">RX-{String(i).padStart(2, '0')}</span>
-                  <span className="text-[14px] font-semibold text-fg-bright">Personalized rule based on your data</span>
-                </div>
-                <p className="text-[12px] text-fg-muted leading-relaxed">This rule is generated from your specific betting patterns and will help you recover estimated losses.</p>
-              </div>
-            ))}
-          </div>
-        </RedactedValue>
+        <div className="card p-6 text-center space-y-3">
+          <Lock size={20} className="text-fg-muted mx-auto" />
+          <p className="text-fg-muted text-sm font-mono">Personalized action plan and betting rules</p>
+          <p className="text-fg-dim text-xs">Custom rules generated from your specific patterns</p>
+        </div>
       ) : (
       <>
       {/* Action Plan */}
