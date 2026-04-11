@@ -2,15 +2,15 @@ import Stripe from 'stripe';
 
 let _stripe: Stripe | null = null;
 
-// Launch coupon: auto-applied at checkout so users see the strikethrough price.
-// Set STRIPE_LAUNCH_COUPON=LAUNCH50 in env. Remove the var to disable.
-const LAUNCH_COUPON = process.env.STRIPE_LAUNCH_COUPON || null;
+// Launch promo: auto-applied at checkout so users see the strikethrough price.
+// Set STRIPE_LAUNCH_PROMO=promo_xxx (the promotion code API ID). Remove to disable.
+const LAUNCH_PROMO = process.env.STRIPE_LAUNCH_PROMO || null;
 
-// When a coupon is active, we use `discounts` instead of `allow_promotion_codes`
+// When a promo is active, we use `discounts` instead of `allow_promotion_codes`
 // because Stripe doesn't allow both on the same checkout session.
-function checkoutDiscountParams(): { discounts: { coupon: string }[] } | { allow_promotion_codes: true } {
-  if (LAUNCH_COUPON) {
-    return { discounts: [{ coupon: LAUNCH_COUPON }] };
+function checkoutDiscountParams(): { discounts: { promotion_code: string }[] } | { allow_promotion_codes: true } {
+  if (LAUNCH_PROMO) {
+    return { discounts: [{ promotion_code: LAUNCH_PROMO }] };
   }
   return { allow_promotion_codes: true };
 }
