@@ -33,12 +33,12 @@ module.exports = {
           DEFAULT: 'rgba(255, 255, 255, 0.08)',
           strong: 'rgba(255, 255, 255, 0.12)',
         },
-        // Text hierarchy — 4 levels
+        // Text hierarchy — weight/size for hierarchy, not color
         fg: {
-          DEFAULT: '#B8C0CC',
+          DEFAULT: '#fbf9ff',
           bright: '#fbf9ff',
-          muted: '#8B95A5',
-          dim: '#7A8494',
+          muted: '#fbf9ff',
+          dim: '#9ca3af',
         },
         // Brand — unified teal
         scalpel: {
