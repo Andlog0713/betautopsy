@@ -711,9 +711,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <motion.div
             className={`border-2 ${gradeColor(summary.overall_grade).replace('text-', 'border-')} px-4 py-1.5`}
             initial={{ opacity: 0, scale: 1.5, rotate: -10 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: -3 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.8 }}
+            animate={{ opacity: 1, scale: 1, rotate: -3 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.8, delay: 0.3 }}
           >
             <p className={`font-mono text-[30px] font-bold leading-none ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
             <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
