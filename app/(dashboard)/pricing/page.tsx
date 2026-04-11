@@ -248,7 +248,7 @@ export default function PricingPage() {
               <button
                 onClick={() => setInterval('monthly')}
                 className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
-                  interval === 'monthly' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
+                  interval === 'monthly' ? 'bg-scalpel/15 text-fg-bright border border-scalpel/40' : 'text-fg-muted hover:text-fg border border-transparent'
                 }`}
               >
                 Monthly
@@ -256,7 +256,7 @@ export default function PricingPage() {
               <button
                 onClick={() => setInterval('annual')}
                 className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors inline-flex items-center justify-center gap-2 ${
-                  interval === 'annual' ? 'bg-surface-2 text-fg-bright' : 'text-fg-muted hover:text-fg'
+                  interval === 'annual' ? 'bg-scalpel/15 text-fg-bright border border-scalpel/40' : 'text-fg-muted hover:text-fg border border-transparent'
                 }`}
               >
                 Annual
