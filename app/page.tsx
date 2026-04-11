@@ -19,14 +19,14 @@ import ScrollToHash from '@/components/ScrollToHash';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'BetAutopsy (Bet Autopsy) — Sports Betting Behavioral Analysis Tool',
+  title: 'BetAutopsy (Bet Autopsy): Sports Betting Behavioral Analysis Tool',
   description:
-    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals — cognitive biases, loss chasing, parlay overuse, and emotional patterns — then give you a personalized action plan to fix the leaks.',
+    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals, including cognitive biases, loss chasing, parlay overuse, and emotional patterns, then give you a personalized action plan to fix the leaks.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'BetAutopsy — Sports Betting Behavioral Analysis Tool',
+    title: 'BetAutopsy: Sports Betting Behavioral Analysis Tool',
     description:
       'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
     url: 'https://www.betautopsy.com',
@@ -116,11 +116,6 @@ export default async function LandingPage() {
             </AnimatedShinyText>
           </div>
           <HeroABTest />
-
-          {/* DEBUG: Remove after confirming pricing shows. If you see this text on the live site, the env var is working. */}
-          {!PRICING_ENABLED && (
-            <p className="text-loss text-xs font-mono mt-4">DEBUG: PRICING_ENABLED is FALSE. Set NEXT_PUBLIC_PRICING_ENABLED=true in Vercel env vars and redeploy.</p>
-          )}
 
           {platformMetrics && (
             <div className="mt-6 flex gap-10 animate-fade-in-d3">

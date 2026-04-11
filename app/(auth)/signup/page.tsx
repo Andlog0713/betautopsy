@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import { trackSignup } from '@/lib/tiktok-events';
 import { createClient } from '@/lib/supabase';
 import OAuthButtons from '@/components/OAuthButtons';
@@ -14,28 +15,22 @@ function SignupForm() {
   const showVerifyNotice = searchParams.get('verify') === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
+  const isPricingFlow = next?.includes('pricing');
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
     setLoading(true);
 
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { name },
-      },
     });
 
     if (signUpError) {
@@ -52,7 +47,6 @@ function SignupForm() {
     }
 
     trackSignup();
-    // Welcome email sent via daily onboarding cron (1hr+ delay so it doesn't compete with the UI)
     router.push(next || '/dashboard?welcome=true');
     router.refresh();
   }
@@ -88,7 +82,9 @@ function SignupForm() {
       )}
       <div className="case-card p-8 animate-fade-in">
       <div className="pl-3 border-l border-l-scalpel mb-4">
-        <p className="text-scalpel text-sm font-medium">Full behavioral analysis from $9.99.</p>
+        <p className="text-scalpel text-sm font-medium">
+          {isPricingFlow ? 'Full behavioral analysis from $9.99.' : 'Free snapshot included. Full reports from $9.99.'}
+        </p>
       </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 
@@ -104,21 +100,6 @@ function SignupForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="label">
-            Display Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input-field w-full"
-            placeholder="Your name"
-            required
-          />
-        </div>
-
         <div>
           <label htmlFor="email" className="label">
             Email
@@ -138,32 +119,26 @@ function SignupForm() {
           <label htmlFor="password" className="label">
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-field w-full"
-            placeholder="••••••••"
-            minLength={6}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="confirmPassword" className="label">
-            Re-enter Password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="input-field w-full"
-            placeholder="••••••••"
-            minLength={6}
-            required
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input-field w-full pr-10"
+              placeholder="••••••••"
+              minLength={6}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-dim hover:text-fg-muted transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </div>
 
         {error && (
