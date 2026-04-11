@@ -60,7 +60,7 @@ export default function NavBar() {
     { href: '/whats-inside', label: 'The Report' },
     { href: '/blog', label: 'Blog' },
     { href: '/faq', label: 'FAQ' },
-    ...(PRICING_ENABLED ? [{ href: isLanding ? '/#pricing' : '/pricing', label: 'Pricing' }] : []),
+    ...(PRICING_ENABLED ? [{ href: '/#pricing', label: 'Pricing' }] : []),
   ];
 
   return (
@@ -75,17 +75,28 @@ export default function NavBar() {
 
             {/* Center links — desktop */}
             <div className="hidden md:flex items-center gap-8">
-              {navLinks.map((link) => (
-                link.href.startsWith('#') || link.href.startsWith('/#') ? (
-                  <a key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
-                    {link.label}
-                  </a>
-                ) : (
+              {navLinks.map((link) => {
+                if (link.href.startsWith('#') || link.href.startsWith('/#')) {
+                  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                    if (isLanding) {
+                      e.preventDefault();
+                      const id = link.href.replace('/#', '').replace('#', '');
+                      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    // On other pages, let the browser do a full navigation
+                  };
+                  return (
+                    <a key={link.href} href={link.href} onClick={handleClick} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
+                      {link.label}
+                    </a>
+                  );
+                }
+                return (
                   <Link key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
                     {link.label}
                   </Link>
-                )
-              ))}
+                );
+              })}
             </div>
 
             {/* Auth section */}
