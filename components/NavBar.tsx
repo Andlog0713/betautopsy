@@ -77,11 +77,11 @@ export default function NavBar() {
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
                 link.href.startsWith('#') || link.href.startsWith('/#') ? (
-                  <a key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-white transition-colors">
+                  <a key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
                     {link.label}
                   </a>
                 ) : (
-                  <Link key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-white transition-colors">
+                  <Link key={link.href} href={link.href} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
                     {link.label}
                   </Link>
                 )
@@ -97,7 +97,7 @@ export default function NavBar() {
                   {(profile?.streak_count ?? 0) > 0 && (
                     <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
                   )}
-                  <Link href="/dashboard" className="text-sm font-medium text-[#f6f0ff] hover:text-white transition-colors hidden sm:block">
+                  <Link href="/dashboard" className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors hidden sm:block">
                     Dashboard
                   </Link>
                   <div className="relative" ref={menuRef}>
@@ -122,7 +122,7 @@ export default function NavBar() {
                 </div>
               ) : (
                 <>
-                  <Link href="/login" className="text-sm font-medium text-[#f6f0ff] hover:text-white transition-colors hidden sm:block">
+                  <Link href="/login" className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors hidden sm:block">
                     Log in
                   </Link>
                   <Link href="/signup" className="text-sm font-semibold bg-scalpel text-[#0a0a12] px-5 py-2 rounded-full hover:brightness-110 transition-all">
@@ -134,7 +134,7 @@ export default function NavBar() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden text-[#f6f0ff] hover:text-white p-1"
+                className="md:hidden text-[#f6f0ff] hover:text-scalpel p-1"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
               </button>
