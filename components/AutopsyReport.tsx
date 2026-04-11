@@ -1348,7 +1348,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <p className="text-fg-muted text-xs italic mt-1">Categories where your ROI doesn&apos;t justify your volume.</p>
           </div>
           <div className="space-y-2">
-            {filteredLeaks.map((leak, i) => {
+            {(snapshotLocked ? filteredLeaks.slice(0, 3) : filteredLeaks).map((leak, i) => {
               const leakId = `leak-${i}`;
               const isExpanded = expandedFindings.has(leakId);
               return (
@@ -1386,6 +1386,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               );
             })}
+            {snapshotLocked && filteredLeaks.length > 3 && (
+              <RedactedValue type="section">
+                <div className="card-tier-2 p-5 text-center">
+                  <p className="text-fg-bright font-medium">See all {filteredLeaks.length} strategic leaks</p>
+                  <p className="text-fg-dim text-xs mt-1">Unlock the full report to see every leak and its dollar impact.</p>
+                </div>
+              </RedactedValue>
+            )}
           </div>
         </div>
       )}
@@ -1551,7 +1559,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <ChapterHeader number={3} title="Your Data" subtitle="Charts and evidence supporting the diagnosis" />
 
       {/* P&L Over Time Chart */}
-      {hasBets && pnlData.length > 1 && (
+      {!snapshotLocked && hasBets && pnlData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
@@ -1574,7 +1582,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Stake Size Timeline */}
-      {hasBets && stakeData.length > 1 && (
+      {!snapshotLocked && hasBets && stakeData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
@@ -1639,8 +1647,19 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
+      {/* Locked charts placeholder for free tier */}
+      {snapshotLocked && (
+        <RedactedValue type="section">
+          <div className="space-y-4">
+            <div className="card p-6 h-40" />
+            <div className="card p-6 h-40" />
+            <div className="card p-6 h-40" />
+          </div>
+        </RedactedValue>
+      )}
+
       {/* Timing Patterns */}
-      {analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
+      {!snapshotLocked && analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Timing Patterns</h2>
           <p className="text-fg-muted text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
@@ -1793,7 +1812,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Odds Intelligence */}
-      {analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
+      {!snapshotLocked && analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Odds Intelligence</h2>
           <p className="text-fg-muted text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
@@ -2120,13 +2139,26 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* ── Session Analysis ── */}
-      {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
-        <SessionAnalysisSection sessionData={analysis.session_detection} bets={bets} />
-      )}
+      {snapshotLocked ? (
+        <RedactedValue type="section">
+          <div className="space-y-4">
+            <h2 className="font-bold text-2xl">Session Analysis</h2>
+            <div className="card p-6 h-32" />
+            <h2 className="font-bold text-2xl">Bet-by-Bet Analysis</h2>
+            <div className="card p-6 h-32" />
+          </div>
+        </RedactedValue>
+      ) : (
+        <>
+          {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
+            <SessionAnalysisSection sessionData={analysis.session_detection} bets={bets} />
+          )}
 
-      {/* ── Bet-by-Bet Annotations ── */}
-      {analysis.bet_annotations && analysis.bet_annotations.annotations.length > 0 && (
-        <BetAnnotationsSection data={analysis.bet_annotations} />
+          {/* ── Bet-by-Bet Annotations ── */}
+          {analysis.bet_annotations && analysis.bet_annotations.annotations.length > 0 && (
+            <BetAnnotationsSection data={analysis.bet_annotations} />
+          )}
+        </>
       )}
 
       {/* Edge Profile */}
