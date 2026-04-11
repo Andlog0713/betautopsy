@@ -13,6 +13,7 @@ export default function PricingPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
+  const [latestSnapshotId, setLatestSnapshotId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -28,6 +29,17 @@ export default function PricingPage() {
         .eq('id', user.id)
         .single();
       if (data) setProfile(data as Profile);
+      // Check for existing unpaid snapshot to enable direct upgrade
+      const { data: snapshot } = await supabase
+        .from('autopsy_reports')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('report_type', 'snapshot')
+        .eq('is_paid', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (snapshot) setLatestSnapshotId(snapshot.id);
       setPageLoading(false);
     }
     load();
@@ -62,18 +74,25 @@ export default function PricingPage() {
       window.location.href = '/signup?next=/pricing';
       return;
     }
+    if (!latestSnapshotId) {
+      // No snapshot yet — send them to run one first
+      window.location.href = '/reports?run=true';
+      return;
+    }
     setLoadingAction('report');
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'report' }),
+        body: JSON.stringify({ type: 'report', snapshotReportId: latestSnapshotId }),
       });
       const data = await res.json();
       if (data.url) {
         trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
         window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
         window.location.href = data.url;
+      } else {
+        setLoadingAction(null);
       }
     } catch {
       setLoadingAction(null);
@@ -179,9 +198,16 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <Link href="/reports" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center mt-auto">
-            Get Your Report
-          </Link>
+          <button
+            onClick={handleBuyReport}
+            disabled={loadingAction === 'report'}
+            className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center mt-auto"
+          >
+            {loadingAction === 'report' ? 'Loading...' : latestSnapshotId ? 'Get Your Report' : 'Run Free Snapshot First'}
+          </button>
+          {!latestSnapshotId && (
+            <p className="text-fg-dim text-[10px] text-center mt-2">Run a free snapshot, then upgrade to the full report</p>
+          )}
         </div>
 
         {/* Pro */}

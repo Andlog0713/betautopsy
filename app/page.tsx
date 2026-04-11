@@ -261,7 +261,7 @@ export default async function LandingPage() {
                 <span className="font-mono text-3xl font-bold text-fg-bright">$0</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
-                {['Your overall grade + archetype', 'BetIQ score', 'Top bias identified'].map((f) => (
+                {['Your overall grade + archetype', 'Emotion + Discipline scores', 'Top bias identified', 'ROI by category breakdown'].map((f) => (
                   <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
                     <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
                   </li>
