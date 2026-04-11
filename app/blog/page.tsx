@@ -28,7 +28,7 @@ export default function BlogIndexPage() {
       />
       <div>
         <div className="flex items-center justify-between">
-          <h1 className="font-bold text-4xl tracking-tight mb-3">The Post-Mortem</h1>
+          <h1 className="font-bold text-4xl tracking-tight mb-3 text-fg-bright">The Post-Mortem</h1>
           <a
             href="/blog/feed.xml"
             target="_blank"
@@ -71,7 +71,7 @@ export default function BlogIndexPage() {
       </div>
 
       <div className="finding-card border-l-scalpel p-8 text-center">
-        <h3 className="font-semibold text-xl mb-2">Curious about your own biases?</h3>
+        <h3 className="font-semibold text-xl mb-2 text-fg-bright">Curious about your own biases?</h3>
         <p className="text-fg-muted text-sm mb-4">
           Take the free 2-minute Bet DNA quiz — no signup, no data needed.
         </p>

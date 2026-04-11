@@ -69,7 +69,7 @@ export default function UploadDetailPage() {
           <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">
             ← Back to Uploads
           </Link>
-          <h1 className="font-bold text-2xl mt-2">{name}</h1>
+          <h1 className="font-bold text-2xl mt-2 text-fg-bright">{name}</h1>
           <p className="text-fg-muted text-sm">
             {bets.length} bets · {upload?.sportsbook ?? 'Multiple books'} · {upload ? new Date(upload.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
           </p>

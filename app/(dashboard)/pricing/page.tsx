@@ -87,7 +87,7 @@ export default function PricingPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center">
-        <h1 className="font-bold text-3xl tracking-tight mb-2">Pricing</h1>
+        <h1 className="font-bold text-3xl tracking-tight mb-2 text-fg-bright">Pricing</h1>
         <p className="text-fg-muted">
           Free snapshots forever. Pay only when you want the full analysis.
         </p>
@@ -105,7 +105,7 @@ export default function PricingPage() {
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         {/* Free Snapshot */}
         <div className="card p-6 flex flex-col">
-          <h2 className="font-bold text-2xl">Free Snapshot</h2>
+          <h2 className="font-bold text-2xl text-fg-bright">Free Snapshot</h2>
           <div className="mt-2 mb-4">
             <span className="font-mono text-3xl font-bold">$0</span>
           </div>
@@ -124,7 +124,7 @@ export default function PricingPage() {
         {/* Single Report */}
         <div className="card p-6 flex flex-col">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="font-bold text-2xl">Full Report</h2>
+            <h2 className="font-bold text-2xl text-fg-bright">Full Report</h2>
             <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
           </div>
           <div className="mt-2 mb-4">
@@ -156,7 +156,7 @@ export default function PricingPage() {
           <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
             Best Value
           </span>
-          <h2 className="font-bold text-2xl">Pro</h2>
+          <h2 className="font-bold text-2xl text-fg-bright">Pro</h2>
           <div className="mt-2 mb-4">
             {interval === 'annual' && proConfig.annualPrice ? (
               <>

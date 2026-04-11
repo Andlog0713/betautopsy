@@ -112,7 +112,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </span>
           ))}
         </div>
-        <h1 className="font-bold text-3xl md:text-4xl tracking-tight mb-3">{post.title}</h1>
+        <h1 className="font-bold text-3xl md:text-4xl tracking-tight mb-3 text-fg-bright">{post.title}</h1>
         <div className="flex items-center gap-3 text-sm text-fg-dim">
           <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           <span>·</span>
@@ -126,7 +126,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       <div className="space-y-6 pt-8 border-t border-border-subtle">
         <div className="finding-card border-l-scalpel p-6 text-center">
-          <h3 className="font-bold text-lg mb-2">What&apos;s your Bet DNA?</h3>
+          <h3 className="font-bold text-lg mb-2 text-fg-bright">What&apos;s your Bet DNA?</h3>
           <p className="text-fg-muted text-sm mb-4">
             Take the free 2-minute quiz to discover your betting personality and hidden biases.
           </p>
@@ -136,7 +136,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         <div className="card p-6 text-center">
-          <h3 className="font-bold text-lg mb-2">Want the data, not just the theory?</h3>
+          <h3 className="font-bold text-lg mb-2 text-fg-bright">Want the data, not just the theory?</h3>
           <p className="text-fg-muted text-sm mb-4">
             Upload your bet history and get a full behavioral analysis, free.
           </p>
@@ -146,7 +146,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
 
         <div>
-          <h3 className="font-bold text-lg mb-4">Keep reading</h3>
+          <h3 className="font-bold text-lg mb-4 text-fg-bright">Keep reading</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             {BLOG_POSTS.filter((p) => p.slug !== slug).slice(0, 2).map((p) => (
               <Link

@@ -477,7 +477,7 @@ export default function ReportsPage() {
           <div className="relative">
             <div className="blur-sm pointer-events-none opacity-50">
               <div className="card p-5">
-                <h3 className="font-semibold text-lg mb-2">Behavioral Edge Analysis</h3>
+                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Behavioral Edge Analysis</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
                   <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
@@ -486,7 +486,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <div className="card p-5 mt-3">
-                <h3 className="font-semibold text-lg mb-2">Personal Betting Rules</h3>
+                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Personal Betting Rules</h3>
                 <div className="space-y-2">
                   <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
                   <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
@@ -644,7 +644,7 @@ export default function ReportsPage() {
       {totalBetCount === 0 && !running && (
         <div className="card p-12 text-center">
           <div className="mb-4"><UploadIcon size={40} className="text-fg-muted" /></div>
-          <h2 className="font-bold text-2xl mb-2">No bets to analyze</h2>
+          <h2 className="font-bold text-2xl mb-2 text-fg-bright">No bets to analyze</h2>
           <p className="text-fg-muted mb-6">
             Upload your bet history first, then come back to run your autopsy.
           </p>
@@ -658,7 +658,7 @@ export default function ReportsPage() {
       {reports.length > 0 && !running && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-xl">Past Reports</h2>
+            <h2 className="font-semibold text-xl text-fg-bright">Past Reports</h2>
             {reports.length > 1 && (
               <button onClick={deleteAllReports} className="text-xs text-fg-dim hover:text-loss/70 transition-colors">
                 Delete all reports
@@ -826,7 +826,7 @@ function AnalyzingState({ betCount }: { betCount: number }) {
   return (
     <div className="card p-8 text-center space-y-4">
       <div className="animate-pulse"><Brain size={40} className="text-fg-muted" /></div>
-      <h2 className="font-bold text-xl">{LOADING_MESSAGES[msgIndex]}</h2>
+      <h2 className="font-bold text-xl text-fg-bright">{LOADING_MESSAGES[msgIndex]}</h2>
       <div className="w-72 mx-auto">
         <div className="flex items-center justify-between text-xs text-fg-muted mb-1">
           <span>{estimate}</span>

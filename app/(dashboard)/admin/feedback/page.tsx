@@ -24,7 +24,7 @@ export default async function AdminFeedbackPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Feedback Stream</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg-bright">Feedback Stream</h1>
         <p className="text-fg-muted text-sm mt-1">All user feedback, sorted by recency</p>
       </div>
       <FeedbackStream />

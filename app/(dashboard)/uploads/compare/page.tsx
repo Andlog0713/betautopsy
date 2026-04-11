@@ -105,7 +105,7 @@ export default function ComparePage() {
       <div className="space-y-6 animate-fade-in">
         <Link href="/uploads" className="text-sm text-fg-muted hover:text-fg transition-colors">← Back to Uploads</Link>
         <div className="card border-scalpel/20 bg-scalpel-muted p-8 text-center space-y-4">
-          <h2 className="font-bold text-2xl">Upload Comparison</h2>
+          <h2 className="font-bold text-2xl text-fg-bright">Upload Comparison</h2>
           <p className="text-fg-muted text-sm max-w-md mx-auto">
             Compare how you perform across different sportsbooks, time periods, or bet sources.
             Available with Pro subscription.
@@ -137,7 +137,7 @@ export default function ComparePage() {
         ← Back to Uploads
       </Link>
 
-      <h1 className="font-bold text-2xl">Compare Uploads</h1>
+      <h1 className="font-bold text-2xl text-fg-bright">Compare Uploads</h1>
 
       {/* Summary */}
       {roiDiff > 0.5 && (
