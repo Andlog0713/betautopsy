@@ -303,6 +303,7 @@ export default async function LandingPage() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header">Pro</span>
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">BEST VALUE</span>
+                <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
               </div>
               <div className="mb-4">
                 <div className="flex items-baseline gap-2">
