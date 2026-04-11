@@ -152,8 +152,8 @@ export default async function LandingPage() {
                   <stop offset="0" stopColor="#00C9A7" stopOpacity="0"/><stop offset="0.06" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="0.5" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="0.94" stopColor="#00C9A7" stopOpacity="0.12"/><stop offset="1" stopColor="#00C9A7" stopOpacity="0"/>
                 </linearGradient>
               </defs>
-              <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-glow)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-full)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-glow)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="ekg-animate" style={{ animationDelay: '0.15s' }} />
+              <polyline points="0,30 60,30 80,30 95,28 105,30 130,30 160,30 178,30 186,22 192,30 198,12 204,48 210,4 216,56 222,18 228,42 234,30 250,30 270,28 280,30 320,30 400,30 420,30 435,28 445,30 470,30 500,30 518,30 526,22 532,30 538,12 544,48 550,4 556,56 562,18 568,42 574,30 590,30 610,28 620,30 660,30 740,30 760,30 775,28 785,30 810,30 840,30 858,30 866,22 872,30 878,12 884,48 890,4 896,56 902,18 908,42 914,30 930,30 950,28 960,30 1000,30 1080,30 1100,30 1115,28 1125,30 1200,30" fill="none" stroke="url(#ekg-full)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="ekg-animate" />
             </svg>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default async function LandingPage() {
       <AnimatedSection delay={0.05}>
       <section className="bg-surface-1 border-y border-border-subtle py-16 md:py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="case-header mb-8">PROTOCOL // HOW IT WORKS</div>
+          <div className="case-header case-header-reveal mb-8">PROTOCOL // HOW IT WORKS</div>
           <ProductShowcase />
         </div>
       </section>
@@ -219,7 +219,7 @@ export default async function LandingPage() {
       <section className="bg-surface-2 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden" id="sample">
         <div className="absolute -top-10 -left-20 w-[400px] h-[300px] bg-cyan-500/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <div className="case-header mb-3">EXHIBIT A // PRO TIER SAMPLE</div>
+          <div className="case-header case-header-reveal mb-3">EXHIBIT A // PRO TIER SAMPLE</div>
           <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
             See a real autopsy report
           </h2>
@@ -249,7 +249,7 @@ export default async function LandingPage() {
         {/* Pricing glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[#00C9A7]/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
+          <div className="case-header case-header-reveal mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-10 max-w-md text-sm">
             Start free. Upgrade for the full report with dollar costs and action plans.
           </p>
@@ -347,7 +347,7 @@ export default async function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <AnimatedSection delay={0.1}>
       <section className="max-w-5xl mx-auto px-6 py-12">
-        <div className="case-header mb-3">FROM THE POST-MORTEM</div>
+        <div className="case-header case-header-reveal mb-3">FROM THE POST-MORTEM</div>
         <p className="text-fg-muted text-sm mb-6">The behavioral side of sports betting.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {[
