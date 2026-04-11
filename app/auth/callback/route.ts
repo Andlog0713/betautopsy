@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // First-login users land on the dashboard with a welcome cue.
-      const target = wasFirstLogin ? '/dashboard?welcome=true' : next;
+      // First-login users: respect ?next= if set (e.g. /pricing), otherwise dashboard.
+      const target = next && next !== '/' ? next : (wasFirstLogin ? '/dashboard?welcome=true' : '/');
       return NextResponse.redirect(`${origin}${target}`);
     }
   }
