@@ -134,7 +134,7 @@ export default async function WhatsInsidePage() {
             Every BetAutopsy report is a five-chapter forensic analysis of your betting behavior. Here&apos;s what&apos;s inside.
           </p>
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-            Get Your Free Report
+            Get Your Autopsy Report
           </Link>
         </div>
       </section>
@@ -218,12 +218,12 @@ export default async function WhatsInsidePage() {
         <section className="py-20">
           <div className="max-w-xl mx-auto px-6 text-center">
             <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-4">
-              Your first snapshot is free.
+              Free snapshot. Full reports from $9.99.
             </h2>
-            <p className="text-fg-muted mb-8">No credit card required.</p>
+            <p className="text-fg-muted mb-8">No credit card required for your first snapshot.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-                Get Your Free Report
+                Get Your Autopsy Report
               </Link>
               <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3">
                 Or take the 2-min quiz
