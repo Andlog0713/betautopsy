@@ -22,14 +22,14 @@ export const metadata: Metadata = {
     description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis. Identify cognitive biases, strategic leaks, and emotional patterns.',
     url: 'https://www.betautopsy.com',
     siteName: 'BetAutopsy',
-    images: [{ url: '/api/og', width: 1200, height: 630 }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'BetAutopsy | Sports Betting Behavioral Analysis',
     description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis.',
-    images: ['/api/og'],
+    images: ['/og-image.png'],
   },
   alternates: {
     canonical: '/',
