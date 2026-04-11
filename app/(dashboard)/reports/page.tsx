@@ -386,7 +386,7 @@ export default function ReportsPage() {
               with dollar costs, strategic leaks, and a personalized action plan.
             </p>
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
-              Get Full Report: $9.99
+              Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
             </a>
           </div>
         )}
@@ -469,7 +469,7 @@ export default function ReportsPage() {
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Report: $9.99
+              Unlock Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
             </a>
           </div>
 
@@ -499,7 +499,7 @@ export default function ReportsPage() {
                 <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
                 <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: $9.99</a>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99</a>
               </div>
             </div>
           </div>

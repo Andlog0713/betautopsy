@@ -36,6 +36,9 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        console.error('Checkout error:', data.error);
+        setLoading(false);
       }
     } catch {
       setLoading(false);
@@ -86,7 +89,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
         >
           {loading ? 'Redirecting...' : (
             <>
-              See your full dollar costs {isPro ? '$4.99' : '$9.99'}
+              See your full dollar costs {isPro ? '$4.99' : <><span className="line-through opacity-60">$19.99</span> $9.99</>}
               <ChevronRight size={14} />
             </>
           )}
