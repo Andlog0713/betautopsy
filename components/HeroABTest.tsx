@@ -77,7 +77,7 @@ export default function HeroABTest() {
             duration={0.4}
             highlight="betting data"
           />
-          <p className="font-mono text-base md:text-lg text-[#fbf9ff] tracking-wide mt-4 mb-8 animate-fade-in-d2">
+          <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d2">
             47 behavioral metrics. 60 seconds. One forensic report.
           </p>
         </>
