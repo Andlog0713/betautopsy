@@ -32,11 +32,21 @@ export async function importBets(
     uploadGroups.set(key, group);
   }
 
-  // Fetch existing bets for this user to count matches
-  const { data: existingBets } = await supabase
-    .from('bets')
-    .select('placed_at, description, odds, stake')
-    .eq('user_id', userId);
+  // Fetch ALL existing bets for this user to count matches (paginate to avoid row limits)
+  const existingBets: { placed_at: string; description: string; odds: number; stake: number }[] = [];
+  let rangeStart = 0;
+  const PAGE_SIZE = 1000;
+  while (true) {
+    const { data: page } = await supabase
+      .from('bets')
+      .select('placed_at, description, odds, stake')
+      .eq('user_id', userId)
+      .range(rangeStart, rangeStart + PAGE_SIZE - 1);
+    if (!page || page.length === 0) break;
+    existingBets.push(...page);
+    if (page.length < PAGE_SIZE) break;
+    rangeStart += PAGE_SIZE;
+  }
 
   // Count existing bets by duplicate key
   const existingCounts = new Map<string, number>();

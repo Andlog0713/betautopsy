@@ -103,11 +103,25 @@ export async function POST(request: Request) {
     query = query.lt('placed_at', endDate.toISOString());
   }
 
-  const { data: bets, error: betsError } = await query;
+  // Paginate to avoid Supabase default row limits
+  const allBets: Bet[] = [];
+  let fetchStart = 0;
+  const FETCH_PAGE = 1000;
+  let betsError: unknown = null;
+  while (true) {
+    const { data: page, error } = await query.range(fetchStart, fetchStart + FETCH_PAGE - 1);
+    if (error) { betsError = error; break; }
+    if (!page || page.length === 0) break;
+    allBets.push(...(page as Bet[]));
+    if (page.length < FETCH_PAGE) break;
+    fetchStart += FETCH_PAGE;
+  }
 
   if (betsError) {
     return NextResponse.json({ error: 'Failed to fetch bets' }, { status: 500 });
   }
+
+  const bets = allBets;
 
   const betList = (bets ?? []) as Bet[];
 
@@ -120,16 +134,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `You need at least 10 bets to generate a report (you have ${betList.length}). For best results, we recommend 50+ bets. Upload more and try again.` }, { status: 400 });
   }
 
-  // Enforce per-report bet limit
+  // Enforce per-report bet limit (5000 for all tiers)
+  const ABSOLUTE_MAX_BETS = 5000;
   const totalBetCount = betList.length;
   let betsToAnalyze = betList;
   let tierLimited = false;
+  const effectiveLimit = limits.maxBetsPerReport ?? ABSOLUTE_MAX_BETS;
 
-  if (limits.maxBetsPerReport !== null && betList.length > limits.maxBetsPerReport) {
+  if (betList.length > effectiveLimit) {
     const sorted = [...betList].sort(
       (a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
     );
-    betsToAnalyze = sorted.slice(0, limits.maxBetsPerReport).reverse();
+    betsToAnalyze = sorted.slice(0, effectiveLimit).reverse();
     tierLimited = true;
   }
 
