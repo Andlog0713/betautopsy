@@ -247,7 +247,7 @@ export default function PricingPage() {
             <button
               onClick={handleSubscribe}
               disabled={loadingAction !== null}
-              className="w-full btn-primary mt-auto"
+              className="w-full btn-primary mt-auto font-mono text-sm min-h-[44px]"
             >
               {loadingAction === 'pro' ? 'Redirecting...' : 'Subscribe to Pro'}
             </button>
