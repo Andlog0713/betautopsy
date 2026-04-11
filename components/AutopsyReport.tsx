@@ -963,8 +963,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {effectiveTier === 'free' && analysis.betiq && (
         <div className="case-card p-6 relative overflow-hidden">
           <div className="case-header mb-2">BETIQ: SKILL ASSESSMENT</div>
-          <div className="blur-sm pointer-events-none">
-            <div className="font-mono text-4xl font-bold text-fg-bright"><NumberTicker value={analysis.betiq.score} />/100</div>
+          <div className="blur-md pointer-events-none select-none" aria-hidden="true">
+            <div className="font-mono text-4xl font-bold text-fg-bright">??/100</div>
             <div className="vitals-strip grid-cols-3 mt-4">
               <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
               <div className="vitals-cell"><div className="h-4 bg-surface-2 rounded-sm" /></div>
