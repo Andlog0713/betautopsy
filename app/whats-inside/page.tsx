@@ -128,7 +128,7 @@ export default async function WhatsInsidePage() {
             EXHIBIT A // REPORT OVERVIEW
           </p>
           <h1 className="font-bold text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright mb-4">
-            You know what happened. This shows you why.
+            You know <span className="text-scalpel">what</span> happened. This shows you <span className="text-scalpel">why</span>.
           </h1>
           <p className="text-fg-muted text-lg max-w-2xl mb-8 leading-relaxed">
             Five chapters. 47 behavioral signals. Every pattern, every leak, every dollar — laid out in one forensic report.

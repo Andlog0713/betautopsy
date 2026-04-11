@@ -60,7 +60,7 @@ export default function NavBar() {
     { href: '/whats-inside', label: 'The Report' },
     { href: '/blog', label: 'Blog' },
     { href: '/faq', label: 'FAQ' },
-    ...(PRICING_ENABLED ? [{ href: '/#pricing', label: 'Pricing' }] : []),
+    ...(PRICING_ENABLED ? [{ href: isLanding ? '/#pricing' : '/pricing', label: 'Pricing' }] : []),
   ];
 
   return (

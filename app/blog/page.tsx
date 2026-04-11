@@ -57,7 +57,7 @@ export default function BlogIndexPage() {
                 </span>
               ))}
             </div>
-            <h2 className="font-semibold text-xl group-hover:text-scalpel transition-colors mb-2">
+            <h2 className="font-semibold text-xl text-fg-bright group-hover:text-scalpel transition-colors mb-2">
               {post.title}
             </h2>
             <p className="text-fg-muted text-sm mb-3">{post.description}</p>
