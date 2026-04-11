@@ -100,7 +100,7 @@ export default function HeroABTest() {
         <Link href="/signup" className="btn-primary text-base !px-8 !py-3" onClick={trackClick}>
           Get Your Autopsy Report
         </Link>
-        <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3 !border-border-strong" onClick={trackClick}>
+        <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3 !border-white/30 !text-fg-bright hover:!bg-white/10" onClick={trackClick}>
           Take the 2-Min Quiz
         </Link>
       </div>
