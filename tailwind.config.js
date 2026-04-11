@@ -113,21 +113,6 @@ module.exports = {
           from: { transform: 'translateY(0)' },
           to: { transform: 'translateY(calc(-100% - var(--gap)))' },
         },
-        'draw-ekg': {
-          '0%': { 'stroke-dashoffset': '3200', opacity: '1' },
-          '70%': { 'stroke-dashoffset': '0', opacity: '1' },
-          '85%': { 'stroke-dashoffset': '0', opacity: '0' },
-          '86%': { 'stroke-dashoffset': '3200', opacity: '0' },
-          '100%': { 'stroke-dashoffset': '3200', opacity: '0' },
-        },
-        'bar-fill': {
-          from: { transform: 'scaleX(0)' },
-          to: { transform: 'scaleX(1)' },
-        },
-        'header-reveal': {
-          from: { 'clip-path': 'inset(0 100% 0 0)' },
-          to: { 'clip-path': 'inset(0 0% 0 0)' },
-        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out both',
@@ -149,9 +134,6 @@ module.exports = {
         'shiny-text': 'shiny-text 8s infinite',
         marquee: 'marquee var(--duration) infinite linear',
         'marquee-vertical': 'marquee-vertical var(--duration) infinite linear',
-        'draw-ekg': 'draw-ekg 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
-        'bar-fill': 'bar-fill 1s cubic-bezier(0.16, 1, 0.3, 1) both',
-        'header-reveal': 'header-reveal 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s both',
       },
     },
   },
