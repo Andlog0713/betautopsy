@@ -26,21 +26,15 @@ export async function GET(request: Request) {
         </div>
         <div
           style={{
-            fontSize: 56,
+            fontSize: 48,
             fontWeight: 800,
-            lineHeight: 1.2,
-            maxWidth: 900,
-            display: 'flex',
-            flexWrap: 'wrap',
+            lineHeight: 1.3,
+            maxWidth: 1000,
             color: '#fbf9ff',
           }}
         >
           {customTitle ? customTitle : (
-            <>
-              <span>See what your </span>
-              <span style={{ color: '#00C9A7' }}>betting data</span>
-              <span> is trying to tell you.</span>
-            </>
+            <span>See what your <span style={{ color: '#00C9A7' }}>betting data</span> is trying to tell you.</span>
           )}
         </div>
         <div
