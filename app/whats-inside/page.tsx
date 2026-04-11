@@ -125,12 +125,23 @@ export default async function WhatsInsidePage() {
         <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
           WHAT&apos;S INSIDE
         </p>
-        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-3">
+        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-6">
           What your report contains
         </h1>
-        <p className="text-fg-muted font-light max-w-xl">
-          Every BetAutopsy report is five chapters. Here&apos;s what each one covers and why it matters.
-        </p>
+        <div className="flex gap-6 md:gap-10">
+          <div className="border-l-2 border-scalpel pl-4">
+            <p className="font-mono text-3xl font-bold text-scalpel">5</p>
+            <p className="text-sm font-light">chapters</p>
+          </div>
+          <div className="border-l-2 border-scalpel pl-4">
+            <p className="font-mono text-3xl font-bold text-scalpel">47</p>
+            <p className="text-sm font-light">behavioral signals</p>
+          </div>
+          <div className="border-l-2 border-scalpel pl-4">
+            <p className="font-mono text-3xl font-bold text-scalpel">60s</p>
+            <p className="text-sm font-light">to generate</p>
+          </div>
+        </div>
       </div>
 
       {/* ═══ CHAPTERS ═══ */}
@@ -140,28 +151,28 @@ export default async function WhatsInsidePage() {
           return (
             <AnimatedSection key={ch.num} delay={0.05}>
               <div className="case-card p-6 md:p-8 border-l-2 border-l-scalpel">
-                <div className="md:flex md:gap-8">
-                  {/* Left — chapter header */}
-                  <div className="md:w-64 shrink-0 mb-4 md:mb-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Icon size={18} className="text-scalpel" />
-                      <span className="font-mono text-xs text-scalpel tracking-[2px]">CHAPTER {ch.num}</span>
-                    </div>
-                    <h2 className="font-extrabold text-xl text-fg-bright">{ch.title}</h2>
-                    <p className="text-fg-muted text-sm mt-1">{ch.subtitle}</p>
+                {/* Chapter header row */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-12 h-12 rounded-lg bg-scalpel/10 border border-scalpel/20 flex items-center justify-center shrink-0">
+                    <Icon size={22} className="text-scalpel" />
                   </div>
+                  <div>
+                    <span className="font-mono text-[10px] text-scalpel tracking-[2px] block">CHAPTER {ch.num}</span>
+                    <h2 className="font-extrabold text-xl text-fg-bright">{ch.title}</h2>
+                  </div>
+                  <p className="text-fg-dim text-sm font-light ml-auto hidden md:block">{ch.subtitle}</p>
+                </div>
 
-                  {/* Right — bullet list */}
-                  <ul className="flex-1 space-y-3">
-                    {ch.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="text-scalpel mt-1.5 shrink-0">
-                          <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><rect width="8" height="8" rx="1" /></svg>
-                        </span>
-                        <span className="text-fg-bright text-sm leading-relaxed">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Bullet grid */}
+                <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+                  {ch.items.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="text-scalpel mt-1.5 shrink-0">
+                        <svg width="6" height="6" viewBox="0 0 6 6" fill="currentColor"><rect width="6" height="6" rx="1" /></svg>
+                      </span>
+                      <span className="text-fg-bright text-sm leading-relaxed">{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </AnimatedSection>
