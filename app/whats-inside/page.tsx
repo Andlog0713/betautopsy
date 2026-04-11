@@ -41,76 +41,76 @@ const CHAPTERS = [
   {
     num: '01',
     title: 'Summary',
-    subtitle: 'The executive briefing',
+    subtitle: 'The verdict, up front.',
     icon: ClipboardList,
     items: [
-      'Your overall grade (A+ through F)',
-      'Emotion Score, Discipline Score, and BetIQ',
-      'Bankroll health assessment',
-      'Total recoverable dollars — how much your leaks are costing you',
-      'Your betting archetype (Surgeon, Heat Chaser, Parlay Dreamer, Grinder, or Gut Bettor)',
+      'Overall grade from A+ to F. No curve.',
+      'Emotion Score — how much your feelings are running the show',
+      'Discipline Score — process consistency across sizing, timing, and control',
+      'Recoverable dollars — the exact amount your leaks are costing you per quarter',
+      'Your betting archetype: Surgeon, Heat Chaser, Parlay Dreamer, Grinder, or Gut Bettor',
     ],
   },
   {
     num: '02',
     title: 'Findings',
-    subtitle: 'What the data says about you',
+    subtitle: 'The patterns you can\'t see yourself.',
     icon: AlertTriangle,
     items: [
       'Every cognitive bias detected in your data, ranked by severity',
-      'Dollar cost per bias per quarter',
-      'Sport-specific findings — which sports and bet types are leaking',
-      'Behavioral patterns: loss chasing, Weekend Warrior, late-night betting',
+      'The dollar cost of each bias per quarter — not vague, exact',
+      'Sport-by-sport breakdown — where you\'re profitable vs where you\'re bleeding',
+      'Behavioral flags: loss chasing, late-night betting, Weekend Warrior patterns',
       'Emotional trigger breakdown — 6 signals scored individually',
-      'Clickable bias explainer cards with plain-language fixes',
+      'Plain-language explainer cards for every bias with specific fixes',
     ],
   },
   {
     num: '03',
     title: 'Your Data',
-    subtitle: 'The evidence, visualized',
+    subtitle: 'The evidence. Visualized.',
     icon: BarChart3,
     items: [
-      'Profit/loss chart over time',
-      'Stake size timeline — highlights post-loss spikes',
-      'ROI by category (which bet types are actually profitable)',
-      'Session analysis with A-F grades',
-      'Bet-by-bet behavioral annotations (disciplined, emotional, chasing, impulsive)',
-      'Edge profile — where you have real edge vs where you\'re bleeding',
+      'Profit/loss chart over time — see exactly where things went wrong',
+      'Stake size timeline — highlights the post-loss spikes you didn\'t notice',
+      'ROI by category — which bet types are actually making money',
+      'Session grades (A-F) — your best and worst betting sessions, graded',
+      'Bet-by-bet annotations: disciplined, emotional, chasing, impulsive',
+      'Edge profile — where you have real edge vs where you\'re donating',
     ],
   },
   {
     num: '04',
     title: 'What It Costs',
-    subtitle: 'Dollars attached to every pattern',
+    subtitle: 'A dollar amount on every bad habit.',
     icon: DollarSign,
     items: [
-      'Leak prioritizer: your biases ranked by dollar impact',
-      '"What if you flat-staked?" — simulated P&L with consistent sizing',
-      '"What if you cut parlays?" — your numbers without long-shot bets',
+      'Leak prioritizer — your biases ranked by how much they\'re costing you',
+      '"What if you flat-staked?" — your P&L recalculated with consistent sizing',
+      '"What if you cut parlays?" — your numbers without the long-shot lottery tickets',
       '"What if you only bet your profitable spots?" — edge-only simulation',
-      'Specific dollar amounts attached to every behavioral pattern',
+      'No guessing. Specific dollar amounts attached to every pattern.',
     ],
   },
   {
     num: '05',
     title: 'Protocol',
-    subtitle: 'Your personalized action plan',
+    subtitle: 'What to actually do about it.',
     icon: Stethoscope,
     items: [
-      'RX prescriptions — specific actions generated from your data',
-      'Your rules — guardrails built from your actual patterns',
-      '"3 Moves" card: what to STOP and what to START',
-      'Discipline Score breakdown (tracking, sizing, control, strategy)',
-      'Ask Your Autopsy: ask questions about your report and get answers grounded in your data',
+      'RX prescriptions generated from your actual data, not generic advice',
+      'Your rules — guardrails built from the patterns in your history',
+      '"3 Moves" card: what to stop doing and what to start',
+      'Discipline Score breakdown across tracking, sizing, control, and strategy',
+      'Ask Your Autopsy — ask questions about your report, get answers grounded in your data',
     ],
   },
 ];
 
 const STEPS = [
-  { num: '01', label: 'Upload your betting history', detail: 'CSV, screenshot, paste, or Pikkit' },
-  { num: '02', label: 'We analyze 47 behavioral signals', detail: 'Biases, patterns, and emotional triggers' },
-  { num: '03', label: 'Get your five-chapter forensic report', detail: 'With dollar costs and a personalized action plan' },
+  { num: '01', label: 'Upload your history', detail: 'CSV from DraftKings, FanDuel, or any sportsbook. Screenshot or paste works too.' },
+  { num: '02', label: '47 signals analyzed', detail: 'Cognitive biases, emotional patterns, loss chasing, sizing consistency. 60 seconds.' },
+  { num: '03', label: 'Five-chapter forensic report', detail: 'Dollar costs, behavioral grades, and a plan to stop the leaks.' },
 ];
 
 export default async function WhatsInsidePage() {
@@ -128,10 +128,10 @@ export default async function WhatsInsidePage() {
             EXHIBIT A // REPORT OVERVIEW
           </p>
           <h1 className="font-bold text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright mb-4">
-            See exactly what your report reveals
+            You know what happened. This shows you why.
           </h1>
           <p className="text-fg-muted text-lg max-w-2xl mb-8 leading-relaxed">
-            Every BetAutopsy report is a five-chapter forensic analysis of your betting behavior. Here&apos;s what&apos;s inside.
+            Five chapters. 47 behavioral signals. Every pattern, every leak, every dollar — laid out in one forensic report.
           </p>
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
             Get Your Autopsy Report
@@ -164,7 +164,7 @@ export default async function WhatsInsidePage() {
                         <span className="text-scalpel mt-1.5 shrink-0">
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><rect width="8" height="8" rx="1" /></svg>
                         </span>
-                        <span className="text-fg text-sm leading-relaxed">{item}</span>
+                        <span className="text-fg-bright text-sm leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -218,9 +218,9 @@ export default async function WhatsInsidePage() {
         <section className="py-20">
           <div className="max-w-xl mx-auto px-6 text-center">
             <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-4">
-              Free snapshot. Full reports from $9.99.
+              Your betting data has a story. Read it.
             </h2>
-            <p className="text-fg-muted mb-8">No credit card required for your first snapshot.</p>
+            <p className="text-fg-muted mb-8">Free snapshot. Full reports from $9.99. No credit card to start.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
                 Get Your Autopsy Report
