@@ -51,7 +51,7 @@ export default function HeroABTest() {
   if (variant === null) {
     return (
       <>
-        <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2 text-fg-bright">
+        <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2 text-[#fbf9ff]">
           See what your betting data is trying to tell you.
         </h1>
         <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8">
@@ -73,7 +73,7 @@ export default function HeroABTest() {
         <>
           <TextGenerateEffect
             words="See what your betting data is trying to tell you."
-            className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
+            className="text-4xl md:text-6xl text-[#fbf9ff] leading-[1.08] mb-2"
             duration={0.4}
             highlight="betting data"
           />
@@ -85,7 +85,7 @@ export default function HeroABTest() {
         <>
           <TextGenerateEffect
             words="47 behavioral metrics. 60 seconds. One upload."
-            className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
+            className="text-4xl md:text-6xl text-[#fbf9ff] leading-[1.08] mb-2"
             duration={0.4}
             highlight="47"
           />
