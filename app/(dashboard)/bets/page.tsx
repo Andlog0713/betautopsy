@@ -10,6 +10,13 @@ import { formatBetDescription } from '@/lib/format-parlay';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import type { Bet, Profile } from '@/types';
 
+// Normalize sport names for display (fixes legacy "Nhl" → "NHL" etc.)
+const SPORT_DISPLAY: Record<string, string> = {
+  Nba: 'NBA', Nfl: 'NFL', Mlb: 'MLB', Nhl: 'NHL', Ncaab: 'NCAAB', Ncaaf: 'NCAAF', Mma: 'MMA',
+  nba: 'NBA', nfl: 'NFL', mlb: 'MLB', nhl: 'NHL', ncaab: 'NCAAB', ncaaf: 'NCAAF', mma: 'MMA',
+};
+function displaySport(s: string): string { return SPORT_DISPLAY[s] ?? s; }
+
 export default function BetsPage() {
   const searchParams = useSearchParams();
   const [bets, setBets] = useState<Bet[]>([]);
@@ -242,7 +249,7 @@ export default function BetsPage() {
                     : 'text-fg-muted hover:text-fg hover:bg-white/[0.03]'
                 }`}
               >
-                {sport === 'all' ? 'All Sports' : sport}
+                {sport === 'all' ? 'All Sports' : displaySport(sport)}
               </button>
             ))}
           </div>
@@ -414,7 +421,7 @@ export default function BetsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{bet.sport}</td>
+                    <td className="px-4 py-3 text-fg-muted hidden md:table-cell">{displaySport(bet.sport)}</td>
                     <td className="px-4 py-3 text-fg-muted hidden md:table-cell capitalize">{bet.bet_type}</td>
                     <td className="px-4 py-3 text-right font-mono text-xs">
                       {mask(bet.odds > 0 ? `+${bet.odds}` : `${bet.odds}`)}

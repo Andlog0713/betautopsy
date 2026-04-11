@@ -97,6 +97,14 @@ const PIKKIT_SPORT_MAP: Record<string, string> = {
   tennis: 'Tennis',
   mma: 'MMA',
   'mixed martial arts': 'MMA',
+  // Direct acronym matches (for non-Pikkit CSVs that use abbreviations)
+  nba: 'NBA', wnba: 'NBA',
+  nfl: 'NFL',
+  mlb: 'MLB',
+  nhl: 'NHL',
+  ncaab: 'NCAAB', ncaam: 'NCAAB', ncaaw: 'NCAAB',
+  ncaaf: 'NCAAF',
+  ufc: 'MMA',
 };
 
 // ── Bet type detection ──
@@ -348,8 +356,10 @@ function parseRow(
     if (mapped) {
       sport = mapped;
     } else if (meaningful) {
-      // Capitalize first letter
-      sport = meaningful.charAt(0).toUpperCase() + meaningful.slice(1);
+      // Short all-letter strings are likely acronyms (e.g. "nhl" → "NHL")
+      sport = /^[a-z]{2,6}$/.test(meaningful)
+        ? meaningful.toUpperCase()
+        : meaningful.charAt(0).toUpperCase() + meaningful.slice(1);
     }
   }
 
