@@ -322,6 +322,61 @@ export default function DashboardPage() {
         </h1>
       </div>
 
+      {/* Onboarding progress tracker — only for users who haven't run a report */}
+      {stats && stats.reportCount === 0 && (
+        <div className="case-card p-6 mb-8">
+          <p className="case-header mb-2">STATUS // ONBOARDING</p>
+          <h2 className="font-extrabold text-xl text-fg-bright mb-5">
+            You&apos;re {hasBets ? '1 step' : '2 steps'} away from your first autopsy
+          </h2>
+          <div className="space-y-0">
+            {/* Step 1: Create account — always complete */}
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-sm border-2 border-scalpel bg-scalpel/20 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-scalpel" /></svg>
+              </div>
+              <span className="font-mono text-sm text-fg-bright line-through">Create your account</span>
+            </div>
+            <div className="ml-2.5 h-6 border-l-2 border-scalpel" />
+
+            {/* Step 2: Upload betting history */}
+            <div className="flex items-center gap-3">
+              {hasBets ? (
+                <div className="w-5 h-5 rounded-sm border-2 border-scalpel bg-scalpel/20 flex items-center justify-center shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-scalpel" /></svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-sm border-2 border-border-subtle bg-transparent shrink-0" />
+              )}
+              {hasBets ? (
+                <span className="font-mono text-sm text-fg-bright line-through">Upload your betting history</span>
+              ) : (
+                <Link href="/upload" className="font-mono text-sm text-scalpel hover:underline">Upload your betting history</Link>
+              )}
+            </div>
+            <div className={`ml-2.5 h-6 border-l-2 ${hasBets ? 'border-scalpel' : 'border-border-subtle'}`} />
+
+            {/* Step 3: Run first autopsy — always incomplete here */}
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-sm border-2 border-border-subtle bg-transparent shrink-0" />
+              {hasBets ? (
+                <Link href="/reports" className="font-mono text-sm text-scalpel hover:underline">Run your first autopsy</Link>
+              ) : (
+                <span className="font-mono text-sm text-fg-dim">Run your first autopsy</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {hasBets ? (
+              <Link href="/reports" className="btn-primary">Run Your First Autopsy</Link>
+            ) : (
+              <Link href="/upload" className="btn-primary">Upload Your Bets</Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {!hasBets ? (
         <div
           id="upload-empty-state"
