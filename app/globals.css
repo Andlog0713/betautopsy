@@ -389,19 +389,7 @@
      FORENSIC MOTION — clinical themed animation
      ════════════════════════════════════════════ */
 
-  /* ── EKG heartbeat draw ── */
-  @keyframes draw-ekg {
-    0%       { stroke-dashoffset: 3200; opacity: 1; }
-    60%      { stroke-dashoffset: 0;    opacity: 1; }
-    80%      { stroke-dashoffset: 0;    opacity: 0.4; }
-    85%      { stroke-dashoffset: 3200; opacity: 0; }
-    100%     { stroke-dashoffset: 3200; opacity: 0; }
-  }
-  .ekg-animate {
-    stroke-dasharray: 3200;
-    stroke-dashoffset: 3200;
-    animation: draw-ekg 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
+  /* EKG animation defined outside @layer below for SVG specificity */
 
   /* ── Score bar fill ── */
   @keyframes bar-fill {
@@ -427,11 +415,6 @@
 
   /* ── Reduced motion ── */
   @media (prefers-reduced-motion: reduce) {
-    .ekg-animate {
-      animation: none;
-      stroke-dashoffset: 0;
-      stroke-dasharray: none;
-    }
     .animate-bar-fill {
       animation: none;
       transform: scaleX(1);
@@ -444,5 +427,26 @@
       animation: none;
       clip-path: none;
     }
+  }
+}
+
+/* ── EKG heartbeat draw (outside @layer for SVG specificity) ── */
+@keyframes draw-ekg {
+  0%       { stroke-dashoffset: 3200; opacity: 1; }
+  60%      { stroke-dashoffset: 0;    opacity: 1; }
+  80%      { stroke-dashoffset: 0;    opacity: 0.4; }
+  85%      { stroke-dashoffset: 3200; opacity: 0; }
+  100%     { stroke-dashoffset: 3200; opacity: 0; }
+}
+.ekg-animate {
+  stroke-dasharray: 3200;
+  stroke-dashoffset: 3200;
+  animation: draw-ekg 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ekg-animate {
+    animation: none;
+    stroke-dashoffset: 0;
+    stroke-dasharray: none;
   }
 }
