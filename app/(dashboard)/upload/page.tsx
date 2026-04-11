@@ -138,11 +138,22 @@ export default function UploadPage() {
         </div>
       )}
 
-      {/* First-upload celebration + bankroll prompt */}
-      {initialBetCount === 0 && uploadSucceeded && (
+      {/* Upload success */}
+      {uploadSucceeded && (
         <div className="case-card p-8 text-center space-y-5 border-scalpel/20">
           <div><FlaskConical size={40} className="text-fg-muted" /></div>
-          <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
+          {initialBetCount === 0 ? (
+            <h2 className="text-fg-bright font-bold text-2xl">Your betting history is loaded.</h2>
+          ) : (
+            <h2 className="text-fg-bright font-bold text-2xl">
+              {result!.bets_imported} bet{result!.bets_imported !== 1 ? 's' : ''} imported.
+              {result!.duplicates_skipped > 0 && (
+                <span className="block text-fg-muted font-normal text-sm mt-1">
+                  {result!.duplicates_skipped} duplicate{result!.duplicates_skipped !== 1 ? 's' : ''} skipped
+                </span>
+              )}
+            </h2>
+          )}
           {tier === 'pro' ? (
             <p className="text-fg-muted text-sm max-w-md mx-auto">
               Your full autopsy report will analyze every bet for cognitive biases, strategic leaks, and behavioral patterns.
@@ -158,7 +169,9 @@ export default function UploadPage() {
             </>
           ) : (
             <p className="text-fg-muted text-sm max-w-md mx-auto">
-              Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.
+              {initialBetCount === 0
+                ? 'Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.'
+                : 'Run a new report to include your latest bets in the analysis.'}
             </p>
           )}
 
@@ -205,9 +218,16 @@ export default function UploadPage() {
             <p className="text-win text-sm">Bankroll set. Your report will use this for grading.</p>
           )}
 
-          <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
-            {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Snapshot →'}
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+              {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Snapshot →'}
+            </Link>
+            {initialBetCount !== null && initialBetCount > 0 && (
+              <button onClick={() => { setState('idle'); setResult(null); }} className="btn-secondary text-sm !px-6 !py-3">
+                Upload More
+              </button>
+            )}
+          </div>
         </div>
       )}
 
