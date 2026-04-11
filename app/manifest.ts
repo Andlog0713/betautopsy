@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'BetAutopsy — Forensic Betting Analysis',
     short_name: 'BetAutopsy',
-    description: 'AI-powered behavioral analysis for sports bettors',
+    description: 'See what your betting data is trying to tell you. 47 behavioral signals. One forensic report.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0D1117',

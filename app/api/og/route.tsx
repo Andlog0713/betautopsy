@@ -4,7 +4,7 @@ export const runtime = 'edge';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const title = searchParams.get('title') || 'AI-Powered Sports Betting Behavioral Analysis';
+  const title = searchParams.get('title') || 'See what your betting data is trying to tell you.';
 
   return new ImageResponse(
     (
@@ -12,25 +12,25 @@ export async function GET(request: Request) {
         style={{
           width: '100%',
           height: '100%',
-          background: '#0f0e0c',
+          background: '#0D1117',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           padding: 80,
-          color: '#F0F0F0',
+          color: '#fbf9ff',
         }}
       >
         <div style={{ display: 'flex', fontSize: 36, marginBottom: 40 }}>
-          <span style={{ color: '#F0F0F0' }}>Bet</span>
-          <span style={{ color: '#C4463A' }}>Autopsy</span>
+          <span style={{ fontWeight: 900, color: '#fbf9ff' }}>BET</span>
+          <span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
         </div>
         <div
           style={{
             fontSize: 56,
-            fontWeight: 700,
+            fontWeight: 800,
             lineHeight: 1.2,
             maxWidth: 900,
-            color: '#F0F0F0',
+            color: '#fbf9ff',
           }}
         >
           {title}
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         <div
           style={{
             fontSize: 20,
-            color: '#A0A3B1',
+            color: '#00C9A7',
             marginTop: 32,
           }}
         >
