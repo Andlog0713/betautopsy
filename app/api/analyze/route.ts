@@ -64,6 +64,7 @@ export async function POST(request: Request) {
   }
 
   // Verify paid report: free users requesting 'full' must have a paid snapshot
+  // that hasn't already been used to generate a full report
   if (tier === 'free' && reportType === 'full' && paidSnapshotId) {
     const { data: paidReport } = await supabase
       .from('autopsy_reports')
@@ -74,6 +75,15 @@ export async function POST(request: Request) {
       .single();
     if (!paidReport) {
       return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
+    }
+    // Check if this paid snapshot was already used to generate a full report
+    const { count: existingFull } = await supabase
+      .from('autopsy_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('upgraded_from_snapshot_id', paidSnapshotId);
+    if ((existingFull ?? 0) > 0) {
+      return NextResponse.json({ error: 'This report has already been unlocked. View it in your report history.' }, { status: 400 });
     }
   } else if (tier === 'free' && reportType === 'full') {
     // Free user requesting full without a paid snapshot — downgrade to snapshot
@@ -345,6 +355,7 @@ export async function POST(request: Request) {
             tokens_used: tokensUsed,
             cost_cents: costCents,
             is_paid: !isSnapshot,
+            ...(paidSnapshotId ? { upgraded_from_snapshot_id: paidSnapshotId } : {}),
           })
           .select()
           .single();
