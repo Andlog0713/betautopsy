@@ -293,7 +293,7 @@ export default async function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
+              <Link href="/signup?next=/pricing" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
               <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" className="hidden md:block" />
             </div>
             <div className="bg-base p-6 flex flex-col">
