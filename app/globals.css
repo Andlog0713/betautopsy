@@ -86,6 +86,7 @@
   /* ── Buttons ── */
   .btn-primary {
     @apply bg-scalpel text-[#0a0a12] font-semibold px-6 py-2.5 rounded-md
+           min-h-[44px] inline-flex items-center justify-center
            transition-all duration-150
            hover:brightness-110
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
@@ -93,6 +94,7 @@
 
   .btn-secondary {
     @apply bg-transparent border border-border text-fg font-medium px-6 py-2.5 rounded-md
+           min-h-[44px] inline-flex items-center justify-center
            hover:bg-white/[0.03] hover:border-border-strong transition-all duration-150
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }

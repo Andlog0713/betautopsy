@@ -427,7 +427,6 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs text-fg-muted font-mono mt-6">
             Need a sample?{' '}
-            {/* TODO: generate /example-bets.csv with realistic rows */}
             <a href="/example-bets.csv" className="text-scalpel hover:underline" download>
               Download an example CSV
             </a>{' '}

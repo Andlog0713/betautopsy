@@ -199,13 +199,20 @@ export default function UploadPage() {
                     const val = parseFloat(bankrollInput);
                     if (!val || val <= 0) return;
                     setBankrollSaving(true);
-                    const supabase = createClient();
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                      await supabase.from('profiles').update({ bankroll: val }).eq('id', user.id);
+                    try {
+                      const supabase = createClient();
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (user) {
+                        const { error: saveErr } = await supabase.from('profiles').update({ bankroll: val }).eq('id', user.id);
+                        if (saveErr) throw saveErr;
+                      }
+                      setBankrollSaved(true);
+                    } catch {
+                      setError('Failed to save bankroll. Try again.');
+                      setState('error');
+                    } finally {
+                      setBankrollSaving(false);
                     }
-                    setBankrollSaving(false);
-                    setBankrollSaved(true);
                   }}
                   disabled={bankrollSaving || !bankrollInput}
                   className="btn-secondary text-sm !px-4 !py-2 shrink-0"
