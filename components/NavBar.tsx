@@ -78,12 +78,13 @@ export default function NavBar() {
               {navLinks.map((link) => {
                 if (link.href.startsWith('#') || link.href.startsWith('/#')) {
                   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.preventDefault();
+                    const id = link.href.replace('/#', '').replace('#', '');
                     if (isLanding) {
-                      e.preventDefault();
-                      const id = link.href.replace('/#', '').replace('#', '');
                       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                      window.location.href = '/#' + id;
                     }
-                    // On other pages, let the browser do a full navigation
                   };
                   return (
                     <a key={link.href} href={link.href} onClick={handleClick} className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors">
