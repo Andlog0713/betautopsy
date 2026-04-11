@@ -120,24 +120,18 @@ export default async function WhatsInsidePage() {
     <>
       <NavBar />
 
-      {/* ═══ HERO ═══ */}
-      <section className="relative grid-paper overflow-hidden">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00C9A7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
-        <div className="max-w-5xl mx-auto px-6 pt-24 pb-16 relative z-10">
-          <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-6">
-            EXHIBIT A // REPORT OVERVIEW
-          </p>
-          <h1 className="font-extrabold text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright mb-4">
-            You know <span className="text-scalpel">what</span> happened. This shows you <span className="text-scalpel">why</span>.
-          </h1>
-          <p className="text-fg-muted text-lg font-light max-w-2xl mb-8 leading-relaxed">
-            Five chapters. 47 behavioral signals. Every pattern, every leak, every dollar — laid out in one forensic report.
-          </p>
-          <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
-            Get Your Autopsy Report
-          </Link>
-        </div>
-      </section>
+      {/* ═══ HEADER ═══ */}
+      <div className="max-w-5xl mx-auto px-6 pt-8 pb-10">
+        <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
+          WHAT&apos;S INSIDE
+        </p>
+        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-3">
+          What your report contains
+        </h1>
+        <p className="text-fg-muted font-light max-w-xl">
+          Every BetAutopsy report is five chapters. Here&apos;s what each one covers and why it matters.
+        </p>
+      </div>
 
       {/* ═══ CHAPTERS ═══ */}
       <section className="max-w-5xl mx-auto px-6 py-16 space-y-8">
