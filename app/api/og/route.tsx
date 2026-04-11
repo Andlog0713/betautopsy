@@ -48,10 +48,8 @@ export async function GET(request: Request) {
               color: '#fbf9ff',
             }}
           >
-            <div style={{ display: 'flex' }}>
-              <span>See what your&nbsp;</span>
-              <span style={{ color: '#00C9A7' }}>betting data&nbsp;</span>
-            </div>
+            <span style={{ whiteSpace: 'pre' }}>See what your </span>
+            <span style={{ color: '#00C9A7', whiteSpace: 'pre' }}>betting data </span>
             <span>is trying to tell you.</span>
           </div>
         )}
