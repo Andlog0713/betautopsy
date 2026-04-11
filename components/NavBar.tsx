@@ -83,7 +83,8 @@ export default function NavBar() {
                     if (isLanding) {
                       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
                     } else {
-                      window.location.href = '/#' + id;
+                      // Navigate then scroll after page loads
+                      window.location.href = '/?scrollTo=' + id;
                     }
                   };
                   return (

@@ -12,6 +12,7 @@ import ResponsibleGambling from '@/components/ResponsibleGambling';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
+import ScrollToHash from '@/components/ScrollToHash';
 
 // Platform metric counters in the hero refresh hourly so they stay fresh
 // without hitting Supabase on every public page view.
@@ -100,6 +101,7 @@ export default async function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <NavBar />
+      <ScrollToHash />
 
       {/* ══════════════════════════════════════ */}
       {/* HERO — grid-paper bg                  */}
