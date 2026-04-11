@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { isLaunchPromoActive } from '@/types';
@@ -49,6 +50,29 @@ export default function PricingPage() {
         const value = interval === 'annual' ? 149.99 : 19.99;
         trackCheckout('pro', value);
         window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
+        window.location.href = data.url;
+      }
+    } catch {
+      setLoadingAction(null);
+    }
+  }
+
+  async function handleBuyReport() {
+    if (!profile) {
+      window.location.href = '/signup?next=/pricing';
+      return;
+    }
+    setLoadingAction('report');
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'report' }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
+        window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
         window.location.href = data.url;
       }
     } catch {
@@ -116,9 +140,9 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <div className="text-center text-sm text-fg-muted py-2">
-            Always free, no credit card
-          </div>
+          <Link href="/dashboard" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">
+            Start Free
+          </Link>
         </div>
 
         {/* Single Report */}
@@ -146,9 +170,13 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <div className="text-center text-sm text-fg-muted py-2">
-            Pay per report, no subscription
-          </div>
+          <button
+            onClick={handleBuyReport}
+            disabled={loadingAction === 'report'}
+            className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center disabled:opacity-50"
+          >
+            {loadingAction === 'report' ? 'Loading...' : 'Get Your Report'}
+          </button>
         </div>
 
         {/* Pro */}
