@@ -52,10 +52,10 @@ export default function HeroABTest() {
     return (
       <>
         <h1 className="font-bold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2 text-[#fbf9ff]">
-          See what your betting data is trying to tell you.
+          See what your <span className="text-scalpel">betting data</span> is trying to tell you.
         </h1>
         <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8">
-          Upload your sports betting history and get a full behavioral analysis — cognitive biases, emotional patterns, and a personalized action plan to stop the leaks.
+          47 behavioral metrics. 60 seconds. One forensic report.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</Link>
