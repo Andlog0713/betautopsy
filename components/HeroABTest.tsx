@@ -57,12 +57,13 @@ export default function HeroABTest() {
         <p className="font-mono text-base md:text-lg text-fg-muted font-light tracking-wide mt-4 mb-8">
           47 behavioral metrics. 60 seconds. One forensic report.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <div className="flex flex-col sm:flex-row gap-3 items-start">
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</Link>
-          <span className="text-fg-muted text-xs mt-3 sm:mt-4">
-            Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 (50% off).
-          </span>
+          <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3">Take the 2-Min Quiz</Link>
         </div>
+        <span className="text-fg-muted text-xs mt-3">
+          Free snapshot. Full reports from $9.99.
+        </span>
       </>
     );
   }
@@ -95,14 +96,17 @@ export default function HeroABTest() {
         </>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start animate-slide-up-d2">
+      <div className="flex flex-col sm:flex-row gap-3 items-start animate-slide-up-d2">
         <Link href="/signup" className="btn-primary text-base !px-8 !py-3" onClick={trackClick}>
           Get Your Autopsy Report
         </Link>
-        <span className="text-fg-muted text-xs mt-3 sm:mt-4">
-          Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 (50% off).
-        </span>
+        <Link href="/quiz" className="btn-secondary text-base !px-8 !py-3" onClick={trackClick}>
+          Take the 2-Min Quiz
+        </Link>
       </div>
+      <span className="text-fg-muted text-xs mt-3 animate-slide-up-d2">
+        Free snapshot. Full reports from $9.99.
+      </span>
     </>
   );
 }
