@@ -5,7 +5,7 @@ export default function PrivacyPolicyPage() {
     <main className="min-h-screen">
       <NavBar />
 
-      <div className="max-w-3xl mx-auto px-4 md:px-8 pt-28 pb-16">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Privacy Policy</h1>
         <p className="text-ink-600 text-sm mb-12">Last updated: April 8, 2026</p>
 
