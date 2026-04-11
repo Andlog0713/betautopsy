@@ -4,7 +4,7 @@ export const runtime = 'edge';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const title = searchParams.get('title') || 'See what your betting data is trying to tell you.';
+  const customTitle = searchParams.get('title');
 
   return new ImageResponse(
     (
@@ -30,10 +30,18 @@ export async function GET(request: Request) {
             fontWeight: 800,
             lineHeight: 1.2,
             maxWidth: 900,
+            display: 'flex',
+            flexWrap: 'wrap',
             color: '#fbf9ff',
           }}
         >
-          {title}
+          {customTitle ? customTitle : (
+            <>
+              <span>See what your </span>
+              <span style={{ color: '#00C9A7' }}>betting data</span>
+              <span> is trying to tell you.</span>
+            </>
+          )}
         </div>
         <div
           style={{
