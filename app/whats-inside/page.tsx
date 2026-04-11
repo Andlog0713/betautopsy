@@ -121,7 +121,7 @@ export default async function WhatsInsidePage() {
       <NavBar />
 
       {/* ═══ HEADER ═══ */}
-      <div className="max-w-5xl mx-auto px-6 pt-8 pb-10">
+      <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
         <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
           WHAT&apos;S INSIDE
         </p>
@@ -134,7 +134,7 @@ export default async function WhatsInsidePage() {
       </div>
 
       {/* ═══ CHAPTERS ═══ */}
-      <section className="max-w-5xl mx-auto px-6 py-16 space-y-8">
+      <section className="max-w-5xl mx-auto px-6 pt-6 pb-16 space-y-8">
         {CHAPTERS.map((ch) => {
           const Icon = ch.icon;
           return (
