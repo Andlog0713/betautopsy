@@ -75,11 +75,11 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               link.href.startsWith('#') || link.href.startsWith('/#') ? (
-                <a key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-fg-bright/85 hover:text-fg-bright transition-colors">
+                <a key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-[#f6f0ff] hover:text-white transition-colors">
                   {link.label}
                 </a>
               ) : (
-                <Link key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-fg-bright/85 hover:text-fg-bright transition-colors">
+                <Link key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-[#f6f0ff] hover:text-white transition-colors">
                   {link.label}
                 </Link>
               )
@@ -120,7 +120,7 @@ export default function NavBar() {
               </div>
             ) : (
               <>
-                <Link href="/login" className="font-mono text-sm tracking-wider font-medium text-fg-bright/85 hover:text-fg-bright transition-colors hidden sm:block">Log in</Link>
+                <Link href="/login" className="font-mono text-sm tracking-wider font-medium text-[#f6f0ff] hover:text-white transition-colors hidden sm:block">Log in</Link>
                 <Link href="/signup" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-fg-bright px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Get Started
                 </Link>
