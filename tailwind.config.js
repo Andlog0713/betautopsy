@@ -36,7 +36,7 @@ module.exports = {
         // Text hierarchy — 4 levels
         fg: {
           DEFAULT: '#B8C0CC',
-          bright: '#E8ECF0',
+          bright: '#fbf9ff',
           muted: '#8B95A5',
           dim: '#7A8494',
         },
