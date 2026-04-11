@@ -140,7 +140,7 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <Link href="/dashboard" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">
+          <Link href="/dashboard" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center mt-auto">
             Start Free
           </Link>
         </div>
@@ -173,7 +173,7 @@ export default function PricingPage() {
           <button
             onClick={handleBuyReport}
             disabled={loadingAction === 'report'}
-            className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center disabled:opacity-50"
+            className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center disabled:opacity-50 mt-auto"
           >
             {loadingAction === 'report' ? 'Loading...' : 'Get Your Report'}
           </button>
@@ -247,7 +247,7 @@ export default function PricingPage() {
             <button
               onClick={handleSubscribe}
               disabled={loadingAction !== null}
-              className="w-full btn-primary"
+              className="w-full btn-primary mt-auto"
             >
               {loadingAction === 'pro' ? 'Redirecting...' : 'Subscribe to Pro'}
             </button>
