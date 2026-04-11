@@ -127,10 +127,10 @@ export default async function WhatsInsidePage() {
           <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-6">
             EXHIBIT A // REPORT OVERVIEW
           </p>
-          <h1 className="font-bold text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright mb-4">
+          <h1 className="font-extrabold text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright mb-4">
             You know <span className="text-scalpel">what</span> happened. This shows you <span className="text-scalpel">why</span>.
           </h1>
-          <p className="text-fg-muted text-lg max-w-2xl mb-8 leading-relaxed">
+          <p className="text-fg-muted text-lg font-light max-w-2xl mb-8 leading-relaxed">
             Five chapters. 47 behavioral signals. Every pattern, every leak, every dollar — laid out in one forensic report.
           </p>
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
@@ -153,7 +153,7 @@ export default async function WhatsInsidePage() {
                       <Icon size={18} className="text-scalpel" />
                       <span className="font-mono text-xs text-scalpel tracking-[2px]">CHAPTER {ch.num}</span>
                     </div>
-                    <h2 className="font-bold text-xl text-fg-bright">{ch.title}</h2>
+                    <h2 className="font-extrabold text-xl text-fg-bright">{ch.title}</h2>
                     <p className="text-fg-muted text-sm mt-1">{ch.subtitle}</p>
                   </div>
 
@@ -186,8 +186,8 @@ export default async function WhatsInsidePage() {
               {STEPS.map((step) => (
                 <div key={step.num} className="case-card p-6">
                   <span className="font-mono text-xs text-scalpel tracking-[2px] block mb-3">STEP {step.num}</span>
-                  <p className="font-semibold text-fg-bright mb-1">{step.label}</p>
-                  <p className="text-fg-muted text-sm">{step.detail}</p>
+                  <p className="font-bold text-fg-bright mb-1">{step.label}</p>
+                  <p className="text-fg-muted text-sm font-light">{step.detail}</p>
                 </div>
               ))}
             </div>
@@ -217,10 +217,10 @@ export default async function WhatsInsidePage() {
       <AnimatedSection delay={0.05}>
         <section className="py-20">
           <div className="max-w-xl mx-auto px-6 text-center">
-            <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-4">
+            <h2 className="font-extrabold text-2xl md:text-3xl tracking-tight text-fg-bright mb-4">
               Your betting data has a story. Read it.
             </h2>
-            <p className="text-fg-muted mb-8">Free snapshot. Full reports from $9.99. No credit card to start.</p>
+            <p className="text-fg-muted font-light mb-8">Free snapshot. Full reports from $9.99. No credit card to start.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
                 Get Your Autopsy Report

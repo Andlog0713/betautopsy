@@ -161,8 +161,8 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <div className="mb-12">
-        <h1 className="font-bold text-4xl tracking-tight mb-3">Frequently Asked Questions</h1>
-        <p className="text-fg-muted">Everything you need to know about BetAutopsy.</p>
+        <h1 className="font-extrabold text-4xl tracking-tight mb-3 text-fg-bright">Frequently Asked Questions</h1>
+        <p className="text-fg-muted font-light">Everything you need to know about BetAutopsy.</p>
       </div>
 
       {FAQ_DATA.map((section, si) => (

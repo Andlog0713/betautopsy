@@ -28,7 +28,7 @@ export default function BlogIndexPage() {
       />
       <div>
         <div className="flex items-center justify-between">
-          <h1 className="font-bold text-4xl tracking-tight mb-3 text-fg-bright">The Post-Mortem</h1>
+          <h1 className="font-extrabold text-4xl tracking-tight mb-3 text-fg-bright">The Post-Mortem</h1>
           <a
             href="/blog/feed.xml"
             target="_blank"
@@ -38,7 +38,7 @@ export default function BlogIndexPage() {
             RSS
           </a>
         </div>
-        <p className="text-fg-muted">
+        <p className="text-fg-muted font-light">
           The behavioral side of sports betting. Patterns, biases, and what they cost you.
         </p>
       </div>
@@ -57,11 +57,11 @@ export default function BlogIndexPage() {
                 </span>
               ))}
             </div>
-            <h2 className="font-semibold text-xl text-fg-bright group-hover:text-scalpel transition-colors mb-2">
+            <h2 className="font-bold text-2xl text-fg-bright group-hover:text-scalpel transition-colors mb-2">
               {post.title}
             </h2>
-            <p className="text-fg-muted text-sm mb-3">{post.description}</p>
-            <div className="flex items-center gap-3 text-xs text-fg-muted">
+            <p className="text-fg-muted text-sm font-light mb-3">{post.description}</p>
+            <div className="flex items-center gap-3 text-xs text-fg-dim font-light">
               <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
               <span>·</span>
               <span>{post.readTime}</span>

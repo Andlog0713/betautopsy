@@ -220,10 +220,10 @@ export default async function LandingPage() {
         <div className="absolute -top-10 -left-20 w-[400px] h-[300px] bg-cyan-500/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="case-header mb-3">EXHIBIT A // PRO TIER SAMPLE</div>
-          <h2 className="font-bold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
+          <h2 className="font-extrabold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
             See a real autopsy report
           </h2>
-          <p className="text-fg-muted text-sm mb-8 max-w-xl">
+          <p className="text-fg-muted text-sm font-light mb-8 max-w-xl">
             280 bets. 3 months. 3 biases found. $480/quarter in recoverable losses.
           </p>
           <div className="border border-border-subtle rounded-sm overflow-hidden">
@@ -372,10 +372,10 @@ export default async function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <AnimatedSection>
       <section className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
-        <h2 className="font-bold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
+        <h2 className="font-extrabold text-2xl md:text-3xl tracking-tight mb-4 text-fg-bright">
           Stop betting on autopilot. Start <span className="text-scalpel">understanding your behavior.</span>
         </h2>
-        <p className="text-fg-muted mb-8 max-w-lg mx-auto text-sm">
+        <p className="text-fg-muted font-light mb-8 max-w-lg mx-auto text-sm">
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
         <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
