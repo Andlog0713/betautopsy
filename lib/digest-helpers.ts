@@ -145,7 +145,6 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
 }
 
 export interface Insight {
-  emoji: string;
   headline: string;
   detail: string;
 }
@@ -155,7 +154,6 @@ export function generateInsight(stats: DigestStats): Insight {
   if (stats.avgStakeAfterLoss > stats.avgStakeAfterWin * 1.3 && stats.losses > 2) {
     const pctIncrease = Math.round(((stats.avgStakeAfterLoss - stats.avgStakeAfterWin) / stats.avgStakeAfterWin) * 100);
     return {
-      emoji: '🔥',
       headline: 'Your stakes jumped after losses',
       detail: `Your average bet was $${stats.avgStakeAfterLoss.toLocaleString()} after a loss vs $${stats.avgStakeAfterWin.toLocaleString()} after a win, a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
     };
@@ -165,7 +163,6 @@ export function generateInsight(stats: DigestStats): Insight {
   if (stats.totalBets > 0 && stats.parlayCount / stats.totalBets > 0.35) {
     const pct = Math.round((stats.parlayCount / stats.totalBets) * 100);
     return {
-      emoji: '🎰',
       headline: `${pct}% of your bets were parlays`,
       detail: `Your parlay ROI this week: ${stats.parlayRoi >= 0 ? '+' : ''}${stats.parlayRoi}%. Your straight bet ROI: ${stats.straightBetRoi >= 0 ? '+' : ''}${stats.straightBetRoi}%. ${stats.straightBetRoi > stats.parlayRoi ? 'Your straight bets are outperforming. Consider shifting volume.' : 'Keep an eye on this. Parlays carry significantly higher sportsbook edge.'}`,
     };
@@ -174,7 +171,6 @@ export function generateInsight(stats: DigestStats): Insight {
   // 3. Late night bets
   if (stats.lateNightBets >= 3) {
     return {
-      emoji: '🌙',
       headline: `${stats.lateNightBets} late-night bets this week`,
       detail: 'Bets placed late at night tend to be less researched and more impulsive. Consider setting a betting cutoff time. Your morning-you makes better decisions than your midnight-you.',
     };
@@ -183,7 +179,6 @@ export function generateInsight(stats: DigestStats): Insight {
   // 4. Hot streak
   if (stats.longestWinStreak >= 4) {
     return {
-      emoji: '🔥',
       headline: `${stats.longestWinStreak}-bet win streak`,
       detail: 'Nice run. The real question: did your bet sizing stay flat during it, or did you start pressing? Streaks feel like skill in the moment, but keeping your process consistent is what separates long-term winners.',
     };
@@ -192,7 +187,6 @@ export function generateInsight(stats: DigestStats): Insight {
   // 5. Strong week
   if (stats.roi > 5 && stats.totalBets >= 5) {
     return {
-      emoji: '📈',
       headline: `+${stats.roi}% ROI this week`,
       detail: `Strong week. ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
     };
@@ -201,7 +195,6 @@ export function generateInsight(stats: DigestStats): Insight {
   // 6. Rough week
   if (stats.roi < -15 && stats.totalBets >= 5) {
     return {
-      emoji: '📉',
       headline: 'Tough week',
       detail: `${stats.wins}-${stats.losses} for -$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. Everyone has down weeks. The key is whether your behavior stayed consistent. Did bet sizes stay flat? Did you avoid chasing? If yes, the process is working even when results don't show it yet.`,
     };
@@ -209,32 +202,30 @@ export function generateInsight(stats: DigestStats): Insight {
 
   // 7. Default
   return {
-    emoji: '📊',
     headline: `${stats.totalBets} bets, ${stats.wins}-${stats.losses} record`,
     detail: `You wagered $${Math.round(stats.totalStaked).toLocaleString()} this week for ${stats.netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. ${stats.mostBetSport ? `Most of your action was on ${stats.mostBetSport}.` : ''} Run an autopsy to see what patterns are hiding in the data.`,
   };
 }
 
 export interface PositiveLead {
-  emoji: string;
   text: string;
 }
 
 export function generatePositiveLead(stats: DigestStats): PositiveLead {
   if (stats.biggestWin && stats.biggestWin.profit > 100) {
-    return { emoji: '💰', text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit.toLocaleString()}` };
+    return { text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit.toLocaleString()}` };
   }
   if (stats.mostProfitableSport) {
     const sport = stats.mostProfitableSport;
-    return { emoji: '🎯', text: `Your ${sport} bets are in the green this week` };
+    return { text: `Your ${sport} bets are in the green this week` };
   }
   if (stats.straightBetRoi > 0) {
-    return { emoji: '📈', text: `Your straight bets went +${stats.straightBetRoi}% this week` };
+    return { text: `Your straight bets went +${stats.straightBetRoi}% this week` };
   }
   if (stats.longestWinStreak >= 3) {
-    return { emoji: '🔥', text: `${stats.longestWinStreak}-bet win streak this week` };
+    return { text: `${stats.longestWinStreak}-bet win streak this week` };
   }
-  return { emoji: '📊', text: `${stats.totalBets} bets placed this week. Let's see how they went` };
+  return { text: `${stats.totalBets} bets placed this week. Let's see how they went` };
 }
 
 // ── Weekend-specific helpers ──

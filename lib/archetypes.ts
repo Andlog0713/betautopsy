@@ -5,7 +5,6 @@ export interface Archetype {
   description: string;
   oneLiner: string;
   color: string;
-  emoji: string;
 }
 
 /**
@@ -18,35 +17,30 @@ export const ARCHETYPES: Record<string, Archetype> = {
     description: 'Disciplined, profitable, data-backed. The numbers speak for themselves.',
     oneLiner: 'Disciplined. Profitable. Data-backed.',
     color: '#00C9A7', // scalpel teal
-    emoji: '🔬',
   },
   heat_chaser: {
     name: 'The Heat Chaser',
     description: 'Emotions are running the show. Losses trigger bigger bets, not better ones.',
     oneLiner: 'Emotions are running the show.',
     color: '#C4463A', // bleed red
-    emoji: '🔥',
   },
   parlay_dreamer: {
     name: 'The Parlay Dreamer',
     description: "Chasing the big hit. Heavy parlay volume, but the math isn't on your side.",
     oneLiner: 'Chasing the big hit.',
     color: '#C9A04E', // caution gold
-    emoji: '🎰',
   },
   grinder: {
     name: 'The Grinder',
     description: 'Consistent process and sizing. The discipline is there, now find the edge.',
     oneLiner: 'Disciplined process. Searching for edge.',
     color: '#8B95A5', // fg-muted
-    emoji: '⚙️',
   },
   gut_bettor: {
     name: 'The Gut Bettor',
     description: 'Betting on instinct across the board. No clear edge in any category yet.',
     oneLiner: 'Betting on instinct. No clear edge.',
     color: '#7A8494', // fg-dim
-    emoji: '🎯',
   },
 };
 

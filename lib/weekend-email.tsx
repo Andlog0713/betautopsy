@@ -37,7 +37,7 @@ export function renderWeekendEmail(props: WeekendEmailProps): string {
     behavioralHtml = `
     <tr><td style="padding:16px 24px 0">
       <div style="background:#fffbeb;border-left:3px solid #d97706;padding:14px 18px">
-        <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:6px">🔥 ${heatedCount} of ${sessionCount} sessions were heated</div>
+        <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:6px">${heatedCount} of ${sessionCount} sessions were heated</div>
         <div style="font-size:13px;color:#555;line-height:1.5">Your worst was ${esc(worstSession.day)} at ${esc(worstSession.startTime)} (Grade ${worstSession.grade}). ${worstSession.profit < 0 ? `That session cost $${Math.abs(worstSession.profit).toLocaleString()}.` : ''}</div>
       </div>
     </td></tr>`;

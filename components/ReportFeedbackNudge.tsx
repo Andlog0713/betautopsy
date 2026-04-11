@@ -117,7 +117,7 @@ export default function ReportFeedbackNudge({
 
             <div className="flex items-center justify-around gap-2">
               {(['positive', 'neutral', 'negative'] as Rating[]).map((r) => {
-                const emoji = r === 'positive' ? '👍' : r === 'neutral' ? '😐' : '👎';
+                const label = r === 'positive' ? '+' : r === 'neutral' ? '~' : '-';
                 const active = rating === r;
                 const activeClass =
                   r === 'positive'
@@ -130,13 +130,13 @@ export default function ReportFeedbackNudge({
                     key={r}
                     onClick={() => setRating(r)}
                     aria-label={`Rate ${r}`}
-                    className={`flex-1 min-h-[44px] rounded-sm border transition-colors flex items-center justify-center text-[24px] leading-none ${
+                    className={`flex-1 min-h-[44px] rounded-sm border transition-colors flex items-center justify-center text-[24px] leading-none font-mono ${
                       active
                         ? activeClass
                         : 'bg-surface-1 border-border-subtle hover:border-border-strong'
                     }`}
                   >
-                    <span role="img" aria-hidden="true">{emoji}</span>
+                    {label}
                   </button>
                 );
               })}

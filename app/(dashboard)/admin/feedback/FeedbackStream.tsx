@@ -31,10 +31,10 @@ const TYPE_LABEL: Record<FeedbackType, string> = {
   general: 'General',
 };
 
-const RATING_EMOJI: Record<string, string> = {
-  positive: '👍',
-  neutral: '😐',
-  negative: '👎',
+const RATING_LABEL: Record<string, string> = {
+  positive: '+',
+  neutral: '~',
+  negative: '-',
 };
 
 function relativeTime(iso: string): string {
@@ -215,8 +215,8 @@ export default function FeedbackStream() {
                     {TYPE_LABEL[item.type]}
                   </span>
                   {item.rating && (
-                    <span className="text-base leading-none" title={item.rating}>
-                      {RATING_EMOJI[item.rating]}
+                    <span className="text-base leading-none font-mono" title={item.rating}>
+                      {RATING_LABEL[item.rating]}
                     </span>
                   )}
                   <span className="ml-auto font-mono text-xs text-fg-dim">

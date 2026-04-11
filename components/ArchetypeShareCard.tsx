@@ -57,7 +57,6 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
 
           {/* Archetype hero */}
           <div>
-            <div style={{ fontSize: 120, lineHeight: 1 }}>{arch.emoji}</div>
             <div
               style={{
                 fontWeight: 800,

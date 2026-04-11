@@ -35,7 +35,7 @@ const ARCHETYPE_BG: Record<string, string> = {
 
 interface Props {
   result: QuizResult;
-  roasts?: { emoji: string; text: string }[];
+  roasts?: { text: string }[];
 }
 
 const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, ref) => {
@@ -50,9 +50,9 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
   // Ensure we always have 3 roast lines
   const baseRoasts = (roasts ?? []).slice(0, 3);
   const fallbacks = [
-    { emoji: '🎯', text: 'Took a quiz about betting instead of placing a bet. Growth.' },
-    { emoji: '📱', text: 'Has BetAutopsy bookmarked but won\'t upload their real history. Yet.' },
-    { emoji: '🧠', text: 'Knows their weaknesses now. Whether they fix them is another story.' },
+    { text: 'Took a quiz about betting instead of placing a bet. Growth.' },
+    { text: 'Has BetAutopsy bookmarked but won\'t upload their real history. Yet.' },
+    { text: 'Knows their weaknesses now. Whether they fix them is another story.' },
   ];
   const allRoasts = [...baseRoasts];
   while (allRoasts.length < 3) {
@@ -96,7 +96,6 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
 
       {/* ── Archetype ── */}
       <div style={{ textAlign: 'center' as const, marginBottom: 24 }}>
-        <div style={{ fontSize: 72, lineHeight: 1, marginBottom: 8 }}>{result.archetype.emoji}</div>
         <div style={{ fontSize: 48, fontWeight: 800, color: result.archetype.color, lineHeight: 1.15, marginBottom: 10 }}>{result.archetype.name}</div>
         <div style={{ fontSize: 17, color: '#848D9A', maxWidth: 700, margin: '0 auto', lineHeight: 1.5 }}>{result.archetype.description}</div>
       </div>
@@ -154,7 +153,6 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
           {allRoasts.map((roast, i) => (
             <div key={i} style={{ background: '#161820', borderRadius: 6, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
-              <span style={{ fontSize: 20, flexShrink: 0 }}>{roast.emoji}</span>
               <span style={{ fontSize: 15, color: '#848D9A', lineHeight: 1.4 }}>{roast.text}</span>
             </div>
           ))}
@@ -164,7 +162,6 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
       {/* ── CTA ── */}
       <div style={{ textAlign: 'center' as const, padding: '24px 0 0' }}>
         <div style={{ fontSize: 24, fontWeight: 700, color: '#F0F2F5', marginBottom: 6 }}>What&apos;s YOUR Bet DNA?</div>
-        <div style={{ fontSize: 12, color: '#515968', marginBottom: 6 }}>👇</div>
         <div style={{ fontSize: 18, color: '#00C9A7', fontWeight: 600 }}>betautopsy.com/quiz</div>
       </div>
     </div>

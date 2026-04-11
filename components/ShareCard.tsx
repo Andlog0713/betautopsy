@@ -124,7 +124,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
         {roast ? (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 24, color: '#D0D5DD', lineHeight: 1.4 }}>
-              {roast.emoji} {roast.text}
+              {roast.text}
             </div>
           </div>
         ) : null}

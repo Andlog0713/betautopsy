@@ -1,12 +1,11 @@
 interface DigestEmailProps {
   displayName: string;
-  positiveLead: { emoji: string; text: string };
+  positiveLead: { text: string };
   totalBets: number;
   record: string;
   netPnL: number;
   roi: number;
   streakCount: number;
-  insightEmoji: string;
   insightHeadline: string;
   insightDetail: string;
   biggestWin: { description: string; profit: number; odds: number } | null;
@@ -24,7 +23,7 @@ function esc(s: string): string {
 
 export function renderDigestEmail(props: DigestEmailProps): string {
   const { displayName, positiveLead, totalBets, record, netPnL, roi, streakCount,
-    insightEmoji, insightHeadline, insightDetail,
+    insightHeadline, insightDetail,
     biggestWin, biggestLoss, unsubscribeUrl, autopsyUrl, quizUrl,
     disciplineScore, disciplineDelta } = props;
 
@@ -58,7 +57,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
   }
 
   const streakHtml = streakCount > 0
-    ? `<td style="text-align:right"><span style="font-family:'Courier New',monospace;font-size:12px;color:#0d9488">🔥 ${streakCount}-week streak</span></td>`
+    ? `<td style="text-align:right"><span style="font-family:'Courier New',monospace;font-size:12px;color:#0d9488">${streakCount}-week streak</span></td>`
     : '';
 
   return `<!DOCTYPE html>
@@ -86,7 +85,7 @@ export function renderDigestEmail(props: DigestEmailProps): string {
 <!-- Positive lead -->
 <tr><td style="padding:20px 24px 0">
   <div style="background:#f0fdf4;border-left:3px solid #0d9488;padding:14px 18px">
-    <span style="font-size:14px;color:#1a1a1a">${positiveLead.emoji} ${esc(positiveLead.text)}</span>
+    <span style="font-size:14px;color:#1a1a1a">${esc(positiveLead.text)}</span>
   </div>
 </td></tr>
 
@@ -145,7 +144,7 @@ ${disciplineScore !== null ? `
 <!-- Insight card -->
 <tr><td style="padding:20px 24px 0">
   <div style="background:#fffbeb;padding:18px;border-left:3px solid #d97706">
-    <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${insightEmoji} ${esc(insightHeadline)}</div>
+    <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${esc(insightHeadline)}</div>
     <div style="font-size:13px;color:#555;line-height:1.6">${esc(insightDetail)}</div>
   </div>
 </td></tr>

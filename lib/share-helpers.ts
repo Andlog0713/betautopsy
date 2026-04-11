@@ -1,7 +1,6 @@
 import type { Bet } from '@/types';
 
 export interface RoastStat {
-  emoji: string;
   text: string;
 }
 
@@ -159,7 +158,6 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   });
   if (worstTeamTotal > 0) {
     roasts.push({
-      emoji: '💀',
       text: `Bet on ${worstTeamName} ${worstTeamTotal} times. They went ${worstTeamW}-${worstTeamL}.`,
     });
   }
@@ -173,7 +171,6 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
     const lnWins = lateNight.filter((b) => b.result === 'win').length;
     const lnLosses = lateNight.length - lnWins;
     roasts.push({
-      emoji: '🌙',
       text: `After-midnight bets: ${lnWins}-${lnLosses}. ${lnWins < lnLosses ? 'Maybe sleep on it.' : 'Night owl with an edge.'}`,
     });
   }
@@ -185,12 +182,10 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
     const parlayWinRate = Math.round((parlayWins / parlays.length) * 100);
     if (parlayWinRate < 20) {
       roasts.push({
-        emoji: '🎰',
         text: `${parlays.length} parlays placed. ${parlayWins} hit. That's a ${parlayWinRate}% hit rate.`,
       });
     } else {
       roasts.push({
-        emoji: '🎰',
         text: `${parlayWins} of ${parlays.length} parlays hit (${parlayWinRate}%). ${parlayWinRate > 30 ? 'Actually impressive.' : 'About average.'}`,
       });
     }
@@ -216,7 +211,6 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   if (worstDayLosses >= 5) {
     const dateStr = new Date(worstDayDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     roasts.push({
-      emoji: '📉',
       text: `${dateStr}: ${worstDayLosses} losses in ${worstDayCount} bets. Rough day.`,
     });
   }
@@ -234,7 +228,6 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   }
   if (maxLoseStreak >= 5) {
     roasts.push({
-      emoji: '💀',
       text: `${maxLoseStreak}-bet losing streak. The comeback started on bet ${maxLoseStreak + 1}.`,
     });
   }

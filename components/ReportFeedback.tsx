@@ -50,7 +50,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
             rating === 'positive' ? 'bg-win/15 text-win border border-win/30' : 'bg-surface-1 text-fg-muted hover:text-win'
           }`}
         >
-          👍 Nailed it
+          Nailed it
         </button>
         <button
           onClick={() => setRating('neutral')}
@@ -58,7 +58,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
             rating === 'neutral' ? 'bg-caution/15 text-caution border border-caution/30' : 'bg-surface-1 text-fg-muted hover:text-caution'
           }`}
         >
-          😐 It was okay
+          It was okay
         </button>
         <button
           onClick={() => setRating('negative')}
@@ -66,7 +66,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
             rating === 'negative' ? 'bg-loss/15 text-loss border border-loss/30' : 'bg-surface-1 text-fg-muted hover:text-loss'
           }`}
         >
-          👎 Missed it
+          Missed it
         </button>
       </div>
 

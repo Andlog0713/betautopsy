@@ -174,7 +174,6 @@ export const StorySlideReceipt = forwardRef<HTMLDivElement, StorySlideProps>(({ 
         <div style={{ fontSize: 40, color: '#0D1117', marginBottom: 60 }}>THE RECEIPTS</div>
         {hasRoast ? (
           <>
-            <div style={{ fontSize: 120, marginBottom: 50 }}>{stat.emoji}</div>
             <div style={{ fontSize: 90, fontWeight: 900, lineHeight: 1.25, letterSpacing: -2 }}>
               {stat.text}
             </div>

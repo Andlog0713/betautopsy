@@ -120,9 +120,9 @@ export default function QuizClient() {
 
   const handleShare = () => {
     if (!result) return;
-    let text = `My Bet DNA: ${result.archetype.name} ${result.archetype.emoji}\nEmotion Score: ${result.emotion_estimate}/100\n`;
-    if (roasts.length > 0) text += `\n${roasts[0].emoji} ${roasts[0].text}\n`;
-    text += '\nWhat\'s yours? 👇';
+    let text = `My Bet DNA: ${result.archetype.name}\nEmotion Score: ${result.emotion_estimate}/100\n`;
+    if (roasts.length > 0) text += `\n${roasts[0].text}\n`;
+    text += '\nWhat\'s yours?';
     const url = 'https://betautopsy.com/quiz';
     window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=500');
   };
@@ -153,7 +153,7 @@ export default function QuizClient() {
 
   const handleChallenge = () => {
     if (!result) return;
-    const text = `I got ${result.archetype.name} on the Bet DNA quiz. Bet yours is worse 💀`;
+    const text = `I got ${result.archetype.name} on the Bet DNA quiz. Bet yours is worse.`;
     const url = 'https://betautopsy.com/quiz';
     if (navigator.share) {
       navigator.share({ text, url });
@@ -176,7 +176,6 @@ export default function QuizClient() {
     return (
       <main className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-lg text-center animate-fade-in">
-          <span className="text-6xl block mb-6">🧬</span>
           <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-4">
             What&apos;s Your <span className="text-scalpel">Bet DNA</span>?
           </h1>
@@ -348,8 +347,7 @@ export default function QuizClient() {
         {/* Slide 3: Archetype reveal */}
         {revealSlide === 3 && (
           <div className="text-center">
-            <div className="text-7xl md:text-8xl reveal-bounce mb-4">{result.archetype.emoji}</div>
-            <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-3 animate-fade-in-d2" style={{ color: result.archetype.color }}>
+            <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-3 reveal-bounce" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
             <p className="text-fg-muted text-sm max-w-sm mx-auto animate-fade-in-d3">{result.archetype.description}</p>
@@ -372,7 +370,6 @@ export default function QuizClient() {
           </div>
           {/* Visual preview */}
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
-            <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="font-mono text-[10px] text-fg-dim tracking-widest mb-2">YOUR BET DNA</p>
             <h2 className="font-extrabold text-3xl tracking-tight mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
             <p className="text-fg-muted text-sm mb-4">{result.archetype.description}</p>
@@ -461,7 +458,6 @@ export default function QuizClient() {
 
           {/* 1. Archetype */}
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
-            <span className="text-5xl block mb-3">{result.archetype.emoji}</span>
             <p className="text-fg-muted text-xs uppercase tracking-widest mb-2 font-mono">Your Bet DNA</p>
             <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}

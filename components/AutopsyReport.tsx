@@ -747,7 +747,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               className="case-card p-4 flex items-start gap-3"
               style={{ borderLeftWidth: '3px', borderLeftColor: arch.color }}
             >
-              <span className="text-2xl leading-none mt-0.5">{arch.emoji}</span>
               <div>
                 <p className="font-bold text-lg text-fg-bright">{arch.name}</p>
                 <p className="text-fg-muted text-sm">{arch.description}</p>

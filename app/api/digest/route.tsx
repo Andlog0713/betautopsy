@@ -120,7 +120,6 @@ export async function GET(request: Request) {
         netPnL: stats.netPnL,
         roi: stats.roi,
         streakCount: typedProfile.streak_count ?? 0,
-        insightEmoji: insight.emoji,
         insightHeadline: insight.headline,
         insightDetail: insight.detail,
         biggestWin: stats.biggestWin,

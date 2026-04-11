@@ -209,51 +209,51 @@ export function getSliderInterpretation(value: string): string {
 
 // ── Roast Generator ──
 
-export function generateQuizRoasts(answers: Record<string, string>): { emoji: string; text: string }[] {
-  const roasts: { emoji: string; text: string; priority: number }[] = [];
+export function generateQuizRoasts(answers: Record<string, string>): { text: string }[] {
+  const roasts: { text: string; priority: number }[] = [];
 
   const q1 = answers['q1'];
   if (q1 === 'bigger' || q1 === 'parlay') {
-    roasts.push({ emoji: '💀', text: 'Admitted to chasing losses with bigger bets. We respect the honesty.', priority: 9 });
+    roasts.push({ text: 'Admitted to chasing losses with bigger bets. We respect the honesty.', priority: 9 });
   }
 
   const q2 = answers['q2'];
   if (q2 === 'alot' || q2 === 'everything') {
-    roasts.push({ emoji: '🎰', text: 'Shows people old parlay wins to justify the habit. Classic.', priority: 8 });
+    roasts.push({ text: 'Shows people old parlay wins to justify the habit. Classic.', priority: 8 });
   }
 
   const q6 = answers['q6'];
   if (q6 === 'action' || q6 === 'yes') {
-    roasts.push({ emoji: '🌙', text: 'Bets Turkish basketball at midnight. For the culture.', priority: 7 });
+    roasts.push({ text: 'Bets Turkish basketball at midnight. For the culture.', priority: 7 });
   }
 
   const q10 = answers['q10'];
   if (q10 === 'rush' || q10 === 'habit') {
-    roasts.push({ emoji: '⚡', text: "Doesn't even know why they bet anymore. Just vibes.", priority: 6 });
+    roasts.push({ text: "Doesn't even know why they bet anymore. Just vibes.", priority: 6 });
   }
 
   const q11 = answers['q11'];
   if (q11 === 'balance' || q11 === 'no') {
-    roasts.push({ emoji: '📊', text: 'Checks sportsbook balance instead of tracking. Living dangerously.', priority: 5 });
+    roasts.push({ text: 'Checks sportsbook balance instead of tracking. Living dangerously.', priority: 5 });
   }
 
   const q7 = answers['q7'];
   if (q7 === 'roll') {
-    roasts.push({ emoji: '🎢', text: 'Hits +800 and immediately rolls it into another parlay. Legend.', priority: 7 });
+    roasts.push({ text: 'Hits +800 and immediately rolls it into another parlay. Legend.', priority: 7 });
   }
 
   const q14 = answers['q14'];
   if (q14 === 'high' || q14 === 'extreme') {
-    roasts.push({ emoji: '😤', text: 'A bad loss ruins the whole day. Maybe the week.', priority: 4 });
+    roasts.push({ text: 'A bad loss ruins the whole day. Maybe the week.', priority: 4 });
   }
 
   const q15 = answers['q15'];
   if (q15 === 'add_legs') {
-    roasts.push({ emoji: '🦵', text: "Friend sends a 3-leg parlay. Adds 2 more legs. Obviously.", priority: 8 });
+    roasts.push({ text: "Friend sends a 3-leg parlay. Adds 2 more legs. Obviously.", priority: 8 });
   }
 
   roasts.sort((a, b) => b.priority - a.priority);
-  return roasts.slice(0, 3).map(({ emoji, text }) => ({ emoji, text }));
+  return roasts.slice(0, 3).map(({ text }) => ({ text }));
 }
 
 // ── Scoring Engine ──
@@ -262,7 +262,6 @@ export interface QuizResult {
   archetype: {
     name: string;
     description: string;
-    emoji: string;
     color: string;
   };
   emotion_estimate: number;
@@ -305,23 +304,23 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   let archetype: QuizResult['archetype'];
 
   if (avg.discipline >= 7.5 && avg.emotion <= 3.5 && avg.selectivity >= 6) {
-    archetype = { name: 'The Natural', emoji: '🧊', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
+    archetype = { name: 'The Natural', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
   } else if (avg.discipline >= 6 && avg.variance >= 6 && avg.selectivity >= 5) {
-    archetype = { name: 'Sharp Sleeper', emoji: '🎯', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
+    archetype = { name: 'Sharp Sleeper', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
   } else if (avg.emotion >= 6 && avg.chase_tendency >= 6 && avg.discipline <= 4) {
-    archetype = { name: 'Heated Bettor', emoji: '🔥', color: '#C4463A', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
+    archetype = { name: 'Heated Bettor', color: '#C4463A', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
   } else if (avg.fav_lean >= 7 && avg.discipline >= 4) {
-    archetype = { name: 'Chalk Grinder', emoji: '📋', color: '#B8944A', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
+    archetype = { name: 'Chalk Grinder', color: '#B8944A', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
   } else if (avg.parlay_lean >= 7) {
-    archetype = { name: 'Parlay Dreamer', emoji: '🎰', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
+    archetype = { name: 'Parlay Dreamer', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
   } else if (avg.selectivity >= 7 && avg.volume <= 4) {
-    archetype = { name: 'Sniper', emoji: '🎯', color: '#60a5fa', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused. Now it\'s about sharpening the edge on the shots you do take.' };
+    archetype = { name: 'Sniper', color: '#60a5fa', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused. Now it\'s about sharpening the edge on the shots you do take.' };
   } else if (avg.volume >= 7 && avg.variance <= 4) {
-    archetype = { name: 'Volume Warrior', emoji: '⚔️', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
+    archetype = { name: 'Volume Warrior', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
   } else if (avg.variance >= 7 && avg.parlay_lean >= 5 && avg.emotion >= 5) {
-    archetype = { name: 'Degen King', emoji: '👑', color: '#C4463A', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
+    archetype = { name: 'Degen King', color: '#C4463A', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
   } else {
-    archetype = { name: 'The Grinder', emoji: '💪', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
+    archetype = { name: 'The Grinder', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
   }
 
   // ── Emotion estimate (0-100) ──
