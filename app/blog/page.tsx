@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/blog-posts';
+import { Logo } from '@/components/logo';
 
 export const metadata: Metadata = {
   title: 'The Post-Mortem — Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
@@ -26,21 +27,37 @@ export default function BlogIndexPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <div>
-        <div className="flex items-center justify-between">
-          <h1 className="font-extrabold text-4xl tracking-tight mb-3 text-fg-bright">The Post-Mortem</h1>
-          <a
-            href="/blog/feed.xml"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-xs text-fg-dim hover:text-scalpel transition-colors"
-          >
-            RSS
-          </a>
+      {/* Blog hero banner */}
+      <div className="relative overflow-hidden rounded-lg border border-border-subtle grid-paper">
+        {/* Glow */}
+        <div className="absolute -top-16 -right-16 w-[300px] h-[300px] bg-scalpel/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-[200px] h-[200px] bg-scalpel/5 rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="relative px-8 py-10 md:py-14 md:px-12">
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <div className="flex items-center gap-4 mb-4">
+                <Logo size="xs" variant="mark" theme="dark" />
+                <div className="h-6 w-px bg-border-subtle" />
+                <span className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase">Behavioral Analysis</span>
+              </div>
+              <h1 className="font-extrabold text-5xl md:text-6xl tracking-tight text-fg-bright leading-none mb-3">
+                The Post-Mortem
+              </h1>
+              <p className="text-fg-muted font-light text-lg max-w-md">
+                The behavioral side of sports betting. Patterns, biases, and what they cost you.
+              </p>
+            </div>
+            <a
+              href="/blog/feed.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs text-fg-dim hover:text-scalpel transition-colors shrink-0 hidden md:block"
+            >
+              RSS
+            </a>
+          </div>
         </div>
-        <p className="text-fg-muted font-light">
-          The behavioral side of sports betting. Patterns, biases, and what they cost you.
-        </p>
       </div>
 
       <div className="space-y-8">
