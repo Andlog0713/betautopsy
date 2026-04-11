@@ -16,7 +16,7 @@ import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
 import RedactedValue from './RedactedValue';
-import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint } from 'lucide-react';
+import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint, ShieldCheck, Ban, Clock, DollarSign, ArrowRight, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
@@ -2097,12 +2097,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             )}
           </div>
           <div className="card p-5">
-            <p className="text-sm text-fg-bright">
-              Your winning sessions average{' '}
-              <span className="font-mono font-medium text-win">{analysis.session_analysis.avg_bets_per_winning_session}</span> bets.
-              Your losing sessions average{' '}
-              <span className="font-mono font-medium text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</span> bets.
-              {' '}{analysis.session_analysis.insight && !analysis.session_analysis.insight.toLowerCase().includes('winning sessions average')
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-win/5 border border-win/10 rounded-sm p-4 text-center">
+                <p className="font-mono text-2xl font-bold text-win">{analysis.session_analysis.avg_bets_per_winning_session}</p>
+                <p className="text-xs font-light mt-1">avg bets / winning session</p>
+              </div>
+              <div className="bg-loss/5 border border-loss/10 rounded-sm p-4 text-center">
+                <p className="font-mono text-2xl font-bold text-loss">{analysis.session_analysis.avg_bets_per_losing_session}</p>
+                <p className="text-xs font-light mt-1">avg bets / losing session</p>
+              </div>
+            </div>
+            <p className="text-sm font-light">
+              {analysis.session_analysis.insight && !analysis.session_analysis.insight.toLowerCase().includes('winning sessions average')
                 ? analysis.session_analysis.insight
                 : 'More bets per session = more losses. You\'re at your best when you\'re selective.'}
             </p>
@@ -2260,11 +2266,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="card-tier-1 p-5">
-                  <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                  <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
-                  <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
+                <div className="card-tier-1 p-5 border-l-2 border-l-scalpel">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-sm bg-scalpel/10 flex items-center justify-center">
+                      <DollarSign size={20} className="text-scalpel" />
+                    </div>
+                    <div>
+                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Total Recoverable</p>
+                      <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-light mt-2">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+                  <p className="text-fg-dim text-xs font-light mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -2491,13 +2504,26 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </button>
           </div>
           <div className="space-y-3">
-            {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => (
-              <div key={i} className="card-tier-1 p-5">
-                <p className="text-fg-bright font-medium mb-2">{rule.rule}</p>
-                <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-2"><p className="text-fg-muted text-sm">{rule.reason}</p></div>
-                <p className="text-fg-muted text-xs">Based on: {rule.based_on}</p>
-              </div>
-            ))}
+            {(analysis.personal_rules ?? []).map((rule: PersonalRule, i: number) => {
+              const icon = rule.rule.toLowerCase().includes('never') || rule.rule.toLowerCase().includes('no ')
+                ? Ban : rule.rule.toLowerCase().includes('after') || rule.rule.toLowerCase().includes('stop')
+                ? Clock : ShieldCheck;
+              const Icon = icon;
+              return (
+                <div key={i} className="card-tier-1 p-5 border-l-2 border-l-scalpel">
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 w-9 h-9 rounded-sm bg-scalpel/10 flex items-center justify-center">
+                      <Icon size={16} className="text-scalpel" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-fg-bright font-bold mb-1">{rule.rule}</p>
+                      <p className="text-fg-muted text-sm font-light mb-2">{rule.reason}</p>
+                      <p className="text-fg-dim text-xs font-mono font-light">Based on: {rule.based_on}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -2601,9 +2627,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         );
       })()}
 
-      <div className="case-card p-5 text-center space-y-3 mt-4">
-        <p className="text-fg-bright font-medium">What happens next?</p>
-        <p className="text-fg-muted text-sm">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
+      <div className="case-card p-6 text-center space-y-3 mt-4 border-t-2 border-t-scalpel">
+        <div className="flex justify-center mb-1">
+          <div className="w-10 h-10 rounded-full bg-scalpel/10 flex items-center justify-center">
+            <RefreshCw size={18} className="text-scalpel" />
+          </div>
+        </div>
+        <p className="text-fg-bright font-bold text-lg">What happens next?</p>
+        <p className="text-sm font-light">Run another autopsy in 2-4 weeks to see if your behavioral patterns are improving. Your scores update every time.</p>
       </div>
 
       </>
@@ -2678,11 +2709,18 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="space-y-4">
                 <h2 className="font-bold text-2xl">Leak Prioritizer</h2>
 
-                <div className="card-tier-1 p-5">
-                  <p className="text-fg-muted text-xs uppercase tracking-wider mb-1">Total Recoverable</p>
-                  <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
-                  <p className="text-fg-muted text-sm mt-1">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-muted text-xs mt-1">Estimated. Some leaks may overlap.</p>
+                <div className="card-tier-1 p-5 border-l-2 border-l-scalpel">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-sm bg-scalpel/10 flex items-center justify-center">
+                      <DollarSign size={20} className="text-scalpel" />
+                    </div>
+                    <div>
+                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Total Recoverable</p>
+                      <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-light mt-2">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
+                  <p className="text-fg-dim text-xs font-light mt-1">Estimated. Some leaks may overlap.</p>
                 </div>
 
                 <div className="space-y-2">
