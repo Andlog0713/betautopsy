@@ -8,15 +8,19 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only show the banner if the user hasn't already chosen.
+    // Delay showing the banner so it doesn't become the LCP element.
+    // The hero content paints first, then the banner fades in.
     if (typeof window === 'undefined') return;
-    try {
-      if (!window.localStorage.getItem(STORAGE_KEY)) {
-        setVisible(true);
+    const timer = setTimeout(() => {
+      try {
+        if (!window.localStorage.getItem(STORAGE_KEY)) {
+          setVisible(true);
+        }
+      } catch {
+        // localStorage disabled (private mode / strict cookie policies) — skip the banner.
       }
-    } catch {
-      // localStorage disabled (private mode / strict cookie policies) — skip the banner.
-    }
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   function handleAccept() {
