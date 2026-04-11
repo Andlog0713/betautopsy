@@ -65,7 +65,7 @@ export default function NavBar() {
   return (
     <>
       <nav className={`border-b border-border-subtle bg-surface-1 ${isLanding ? '' : 'sticky top-0 z-50'}`}>
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href={user ? '/dashboard' : '/'} className="shrink-0">
             <Logo size="xs" variant="horizontal" theme="dark" />
@@ -75,11 +75,11 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               link.href.startsWith('#') || link.href.startsWith('/#') ? (
-                <a key={link.href} href={link.href} className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors">
+                <a key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-fg-bright/70 hover:text-fg-bright transition-colors">
                   {link.label}
                 </a>
               ) : (
-                <Link key={link.href} href={link.href} className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors">
+                <Link key={link.href} href={link.href} className="font-mono text-sm tracking-wider font-medium text-fg-bright/70 hover:text-fg-bright transition-colors">
                   {link.label}
                 </Link>
               )
@@ -95,7 +95,7 @@ export default function NavBar() {
                 {(profile?.streak_count ?? 0) > 0 && (
                   <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
                 )}
-                <Link href="/dashboard" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/dashboard" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-fg-bright px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Dashboard
                 </Link>
                 <div className="relative" ref={menuRef}>
@@ -120,8 +120,8 @@ export default function NavBar() {
               </div>
             ) : (
               <>
-                <Link href="/login" className="font-mono text-xs tracking-wider text-fg-muted hover:text-fg transition-colors hidden sm:block">Log in</Link>
-                <Link href="/signup" className="font-mono text-xs tracking-wider border border-scalpel/25 text-fg px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/login" className="font-mono text-sm tracking-wider font-medium text-fg-bright/70 hover:text-fg-bright transition-colors hidden sm:block">Log in</Link>
+                <Link href="/signup" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-fg-bright px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Get Started
                 </Link>
               </>
