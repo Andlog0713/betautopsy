@@ -60,7 +60,7 @@ export default function HeroABTest() {
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <Link href="/signup" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</Link>
           <span className="text-fg-muted text-xs mt-3 sm:mt-4">
-            Free snapshot. Full reports from $9.99.
+            Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 (50% off).
           </span>
         </div>
       </>

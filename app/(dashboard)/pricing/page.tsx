@@ -117,6 +117,11 @@ export default function PricingPage() {
         </p>
       </div>
 
+      <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 max-w-sm mx-auto">
+        <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>
+        <span className="text-fg-muted text-xs font-mono">for the next 100 customers</span>
+      </div>
+
       {isLaunchPromoActive() && (
         <div className="pl-4 border-l border-l-scalpel max-w-lg mx-auto">
           <p className="data-label-sm text-scalpel/80 mb-1">Launch offer</p>
@@ -149,11 +154,15 @@ export default function PricingPage() {
         <div className="card p-6 flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <h2 className="font-bold text-2xl text-fg-bright">Full Report</h2>
-            <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
+            <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
+            <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
           </div>
           <div className="mt-2 mb-4">
-            <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
-            <p className="text-fg-muted text-xs mt-1">Pay once. Keep the report forever.</p>
+            <div className="flex items-baseline gap-2">
+              <span className="line-through text-fg-dim font-mono text-lg">$19.99</span>
+              <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
+            </div>
+            <p className="text-scalpel text-xs font-medium mt-1">Pay once. No subscription.</p>
           </div>
           <ul className="space-y-2 flex-1 mb-6">
             {[
@@ -188,18 +197,25 @@ export default function PricingPage() {
           <div className="mt-2 mb-4">
             {interval === 'annual' && proConfig.annualPrice ? (
               <>
-                <span className="font-mono text-3xl font-bold">
-                  ${(proConfig.annualPrice / 12).toFixed(2)}
-                </span>
-                <span className="text-fg-muted text-sm">/mo</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="line-through text-fg-dim font-mono text-lg">${((proConfig.annualPrice / 12) * 2).toFixed(2)}</span>
+                  <span className="font-mono text-3xl font-bold">
+                    ${(proConfig.annualPrice / 12).toFixed(2)}
+                  </span>
+                  <span className="text-fg-muted text-sm">/mo</span>
+                </div>
                 <p className="text-fg-muted text-xs mt-1">
-                  ${proConfig.annualPrice}/year. Save {Math.round((1 - proConfig.annualPrice / (proConfig.price * 12)) * 100)}%
+                  <span className="line-through text-fg-dim">${(proConfig.annualPrice * 2).toFixed(2)}</span> <span className="text-fg-bright ml-1">${proConfig.annualPrice}/yr</span>
+                  <span className="text-scalpel"> save 37%</span>
                 </p>
               </>
             ) : (
               <>
-                <span className="font-mono text-3xl font-bold">${proConfig.price}</span>
-                <span className="text-fg-muted text-sm">/mo</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="line-through text-fg-dim font-mono text-lg">${(proConfig.price * 2).toFixed(2)}</span>
+                  <span className="font-mono text-3xl font-bold">${proConfig.price}</span>
+                  <span className="text-fg-muted text-sm">/mo</span>
+                </div>
               </>
             )}
           </div>

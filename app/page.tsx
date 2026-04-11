@@ -247,9 +247,13 @@ export default async function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[#00C9A7]/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
-          <p className="text-fg-muted mb-10 max-w-md text-sm">
+          <p className="text-fg-muted mb-6 max-w-md text-sm">
             Start free. Upgrade for the full report with dollar costs and action plans.
           </p>
+          <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 mb-8 max-w-sm mx-auto">
+            <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>
+            <span className="text-fg-muted text-xs font-mono">for the next 100 customers</span>
+          </div>
           <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-border-subtle md:border border-border-subtle rounded-sm md:overflow-hidden">
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free Snapshot</span>
@@ -269,9 +273,13 @@ export default async function LandingPage() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">MOST POPULAR</span>
+                <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
               </div>
               <div className="mb-4">
-                <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="line-through text-fg-dim font-mono text-lg">$19.99</span>
+                  <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
+                </div>
                 <p className="text-scalpel text-xs font-medium mt-1">Pay once. No subscription.</p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
@@ -297,11 +305,14 @@ export default async function LandingPage() {
                 <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">BEST VALUE</span>
               </div>
               <div className="mb-4">
-                <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
-                <span className="text-fg-muted text-sm font-mono">/mo</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="line-through text-fg-dim font-mono text-lg">$39.99</span>
+                  <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
+                  <span className="text-fg-muted text-sm font-mono">/mo</span>
+                </div>
                 <p className="text-fg-muted text-xs mt-1 font-mono">
-                  or <span className="text-fg-bright">$149.99/yr</span>
-                  <span className="text-scalpel"> — save 37%</span>
+                  or <span className="line-through text-fg-dim">$299.99</span> <span className="text-fg-bright ml-1">$149.99/yr</span>
+                  <span className="text-scalpel"> save 37%</span>
                 </p>
               </div>
               <ul className="space-y-2 flex-1 mb-6">
