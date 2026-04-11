@@ -57,6 +57,7 @@ export default function NavBar() {
   const tier = profile?.subscription_tier ?? 'free';
 
   const navLinks = [
+    { href: '/whats-inside', label: 'The Report' },
     { href: '/blog', label: 'Blog' },
     { href: '/faq', label: 'FAQ' },
     ...(PRICING_ENABLED ? [{ href: '/#pricing', label: 'Pricing' }] : []),
