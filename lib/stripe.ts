@@ -2,6 +2,19 @@ import Stripe from 'stripe';
 
 let _stripe: Stripe | null = null;
 
+// Launch coupon: auto-applied at checkout so users see the strikethrough price.
+// Set STRIPE_LAUNCH_COUPON=LAUNCH50 in env. Remove the var to disable.
+const LAUNCH_COUPON = process.env.STRIPE_LAUNCH_COUPON || null;
+
+// When a coupon is active, we use `discounts` instead of `allow_promotion_codes`
+// because Stripe doesn't allow both on the same checkout session.
+function checkoutDiscountParams(): { discounts: { coupon: string }[] } | { allow_promotion_codes: true } {
+  if (LAUNCH_COUPON) {
+    return { discounts: [{ coupon: LAUNCH_COUPON }] };
+  }
+  return { allow_promotion_codes: true };
+}
+
 export function isStripeConfigured(): boolean {
   return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID);
 }
@@ -62,7 +75,7 @@ export async function createSubscriptionCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    allow_promotion_codes: true,
+    ...checkoutDiscountParams(),
     success_url: `${appUrl}/dashboard?upgraded=true`,
     cancel_url: `${appUrl}/pricing`,
     metadata: { supabase_user_id: userId, tier: 'pro' },
@@ -90,7 +103,7 @@ export async function createReportCheckoutSession(
     customer: customerId,
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
-    allow_promotion_codes: true,
+    ...checkoutDiscountParams(),
     success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
     cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
     metadata: {
