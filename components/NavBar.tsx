@@ -95,7 +95,7 @@ export default function NavBar() {
                 {(profile?.streak_count ?? 0) > 0 && (
                   <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
                 )}
-                <Link href="/dashboard" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-fg-bright px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/dashboard" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-[#f6f0ff] px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Dashboard
                 </Link>
                 <div className="relative" ref={menuRef}>
@@ -121,7 +121,7 @@ export default function NavBar() {
             ) : (
               <>
                 <Link href="/login" className="font-mono text-sm tracking-wider font-medium text-[#f6f0ff] hover:text-white transition-colors hidden sm:block">Log in</Link>
-                <Link href="/signup" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-fg-bright px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
+                <Link href="/signup" className="font-mono text-sm tracking-wider font-medium border border-scalpel/25 text-[#f6f0ff] px-4 py-1.5 rounded-sm hover:bg-scalpel-muted transition-colors">
                   Get Started
                 </Link>
               </>
