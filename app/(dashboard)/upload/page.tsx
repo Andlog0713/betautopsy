@@ -78,6 +78,7 @@ export default function UploadPage() {
   const betCount = initialBetCount ?? 0;
 
   const handleFile = useCallback(async (file: File) => {
+    if (state === 'uploading') return; // Prevent concurrent uploads
     if (!file.name.endsWith('.csv')) {
       setError('Please upload a CSV file.');
       setState('error');
@@ -100,7 +101,7 @@ export default function UploadPage() {
       setError('Upload failed. Please try again.');
       setState('error');
     }
-  }, []);
+  }, [state]);
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();

@@ -146,7 +146,7 @@ export async function importBets(
     if (insertError) {
       errors.push(`Batch insert failed at row ${i + 1}: ${insertError.message}`);
     } else {
-      totalInserted += inserted?.length ?? batch.length;
+      totalInserted += inserted?.length ?? 0;
     }
   }
 

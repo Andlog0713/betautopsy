@@ -425,7 +425,16 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
 }
 
 export function calculateMetrics(bets: Bet[], bankroll?: number | null): CalculatedMetrics {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  // Sanitize numeric fields to prevent NaN propagation from missing/undefined values
+  const sorted = [...bets]
+    .map((b) => ({
+      ...b,
+      stake: Number.isFinite(Number(b.stake)) ? Number(b.stake) : 0,
+      profit: Number.isFinite(Number(b.profit)) ? Number(b.profit) : 0,
+      odds: Number.isFinite(Number(b.odds)) ? Number(b.odds) : 0,
+      payout: Number.isFinite(Number(b.payout)) ? Number(b.payout) : 0,
+    }))
+    .sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
   const settled = sorted.filter((b) => b.result === 'win' || b.result === 'loss');
 
   // Summary
@@ -2529,14 +2538,14 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 
   const userMessage = `${metricsBlock}${dfsPromptBlock}${sportFindingsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
 
-  // Step 3: Call Claude for behavioral interpretation
+  // Step 3: Call Claude for behavioral interpretation (50s timeout to stay within serverless limits)
   const message = await client.messages.create({
     model,
     max_tokens: 8192,
     temperature: 0,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: userMessage }],
-  });
+  }, { timeout: 50000 });
 
   const textBlock = message.content.find((block) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
@@ -2679,7 +2688,7 @@ Return ONLY the JSON object, nothing else.`;
       temperature: 0,
       system: [{ type: 'text', text: SNAPSHOT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
-    });
+    }, { timeout: 30000 });
 
     const textBlock = message.content.find((block) => block.type === 'text');
     if (textBlock && textBlock.type === 'text') {

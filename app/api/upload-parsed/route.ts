@@ -24,7 +24,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Maximum 500 bets per import' }, { status: 400 });
     }
 
-    const result = await importBets(supabase, user.id, bets, source ?? 'paste-import');
+    // Validate required fields on each bet
+    const validBets = bets.filter((b) =>
+      b.placed_at && b.description && typeof b.odds === 'number' && typeof b.stake === 'number' && b.stake > 0 && b.result
+    );
+    if (validBets.length === 0) {
+      return NextResponse.json({ error: 'No valid bets found. Each bet needs a date, description, odds, stake, and result.' }, { status: 400 });
+    }
+
+    const result = await importBets(supabase, user.id, validBets, source ?? 'paste-import');
+    if (validBets.length < bets.length) {
+      result.errors.push(`${bets.length - validBets.length} bet(s) skipped due to missing required fields.`);
+    }
 
     return NextResponse.json(result);
   } catch (error) {

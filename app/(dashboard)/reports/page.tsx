@@ -216,6 +216,7 @@ export default function ReportsPage() {
       const decoder = new TextDecoder();
       let buffer = '';
       let streamComplete = false;
+      let metricsTimer: ReturnType<typeof setTimeout> | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -236,7 +237,7 @@ export default function ReportsPage() {
               const d = event.data;
               // Store data immediately but delay showing the report for 5-7s
               // to create a premium "analyzing" feel
-              setTimeout(() => {
+              metricsTimer = setTimeout(() => {
                 setTierLimited(d.tier_limited ?? false);
                 setTotalBetsAll(d.total_bets ?? 0);
                 setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
@@ -265,6 +266,8 @@ export default function ReportsPage() {
             }
 
             if (event.type === 'complete') {
+              // Cancel the delayed metrics timer so it doesn't overwrite the final report
+              if (metricsTimer) { clearTimeout(metricsTimer); metricsTimer = null; }
               const d = event.data;
               const report = d.report as AutopsyReportType;
               setTierLimited(d.tier_limited ?? false);
@@ -292,6 +295,7 @@ export default function ReportsPage() {
             }
 
             if (event.type === 'error') {
+              if (metricsTimer) { clearTimeout(metricsTimer); metricsTimer = null; }
               setError(event.data.error || 'Analysis failed');
               setRunning(false);
               streamComplete = true;
@@ -348,10 +352,27 @@ export default function ReportsPage() {
 
   // Viewing a specific report
   if (activeReport) {
-    const analysis: AutopsyAnalysis =
-      typeof activeReport.report_json === 'string'
-        ? JSON.parse(activeReport.report_json)
-        : activeReport.report_json;
+    let analysis: AutopsyAnalysis | null = null;
+    try {
+      analysis =
+        typeof activeReport.report_json === 'string'
+          ? JSON.parse(activeReport.report_json)
+          : activeReport.report_json;
+    } catch {
+      // Corrupted report JSON — show error instead of crashing
+    }
+
+    if (!analysis) {
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <button onClick={() => setActiveReport(null)} className="text-fg-muted text-sm hover:text-fg">&larr; Back to reports</button>
+          <div className="card p-8 text-center">
+            <p className="text-loss font-medium">This report&apos;s data appears to be corrupted.</p>
+            <p className="text-fg-muted text-sm mt-2">Try running a new analysis.</p>
+          </div>
+        </div>
+      );
+    }
 
     // Compare with previous report if one exists
     let reportComparison: ReportComparison | null = null;
@@ -666,10 +687,14 @@ export default function ReportsPage() {
             )}
           </div>
           {reports.map((report) => {
-            const analysis: AutopsyAnalysis =
-              typeof report.report_json === 'string'
-                ? JSON.parse(report.report_json as string)
-                : report.report_json;
+            let analysis: AutopsyAnalysis | null = null;
+            try {
+              analysis =
+                typeof report.report_json === 'string'
+                  ? JSON.parse(report.report_json as string)
+                  : report.report_json;
+            } catch { /* skip corrupted report */ }
+            if (!analysis) return null;
 
             return (
               <button

@@ -134,6 +134,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `You need at least 10 bets to generate a report (you have ${betList.length}). For best results, we recommend 50+ bets. Upload more and try again.` }, { status: 400 });
   }
 
+  // Require at least some settled bets (wins or losses) for meaningful analysis
+  const settledCount = betList.filter((b) => b.result === 'win' || b.result === 'loss').length;
+  if (settledCount < 5) {
+    return NextResponse.json({ error: `Not enough settled bets to analyze (${settledCount} settled out of ${betList.length} total). Need at least 5 wins or losses.` }, { status: 400 });
+  }
+
   // Enforce per-report bet limit (5000 for all tiers)
   const ABSOLUTE_MAX_BETS = 5000;
   const totalBetCount = betList.length;
@@ -325,6 +331,9 @@ export async function POST(request: Request) {
 
         if (insertError) {
           console.error('Failed to save report:', insertError);
+          sendEvent('error', { error: 'Report generated but failed to save. Please try again.' });
+          controller.close();
+          return;
         }
 
         // Save discipline score with component breakdown
@@ -395,7 +404,7 @@ export async function POST(request: Request) {
             loss_chase_ratio: metricsForDiscipline.loss_chase_ratio,
             bankroll_health: metricsForDiscipline.bankroll_health,
             overall_grade: metricsForDiscipline.summary.overall_grade,
-            discipline_score: disciplineResult.total,
+            discipline_score: disciplineResult?.total ?? null,
           }, { onConflict: 'user_id,snapshot_date' });
         } catch (snapErr) {
           console.error('Failed to save snapshot:', snapErr);
