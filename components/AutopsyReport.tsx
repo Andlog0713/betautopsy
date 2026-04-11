@@ -16,7 +16,7 @@ import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
 import RedactedValue from './RedactedValue';
-import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint, ShieldCheck, Ban, Clock, DollarSign, ArrowRight, RefreshCw } from 'lucide-react';
+import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint, ShieldCheck, Ban, Clock, DollarSign, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
@@ -232,6 +232,19 @@ function buildWhatIfs(bets: Bet[]) {
   }
 
   return whatIfs;
+}
+
+// ── Info Tooltip ──
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="relative group inline-flex ml-1 align-middle">
+      <Info size={11} className="text-fg-dim cursor-help" />
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-md bg-surface-2 border border-border text-[11px] text-fg-muted leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 shadow-lg">
+        {text}
+      </span>
+    </span>
+  );
 }
 
 // ── Custom Tooltip ──
@@ -872,7 +885,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] mb-6 rounded-md overflow-hidden">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE</span>
+            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better — under 25 is excellent, over 50 signals tilt risk." /></span>
             <span className={`font-mono text-[22px] font-bold ${
               emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
             }`}>{emotionScore}</span>
@@ -889,7 +902,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         {analysis.discipline_score ? (
           <div className="bg-base p-[18px]">
             <div className="flex justify-between items-baseline mb-2.5">
-              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE</span>
+              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE<InfoTip text="0-100 scale measuring process consistency. Scores four areas: tracking habits (logging bets regularly), stake sizing (consistent unit sizes), emotional control (staying level after losses), and strategic focus (sticking to profitable categories). Higher is better." /></span>
               <span className={`font-mono text-[22px] font-bold ${
                 analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-caution' : 'text-loss'
               }`}>{analysis.discipline_score.total}</span>
