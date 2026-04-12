@@ -11,14 +11,14 @@ export const metadata: Metadata = {
     title: 'What\'s Your Bet DNA? | BetAutopsy',
     description: 'Discover your betting personality type and hidden biases in 2 minutes.',
     url: 'https://www.betautopsy.com/quiz',
-    images: [{ url: '/api/og?title=What%27s+Your+Bet+DNA%3F', width: 1200, height: 630 }],
+    images: [{ url: '/og?title=What%27s+Your+Bet+DNA%3F', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'What\'s Your Bet DNA?',
     description: 'Free 2-minute quiz. Discover your betting personality and hidden biases.',
-    images: ['/api/og?title=What%27s+Your+Bet+DNA%3F'],
+    images: ['/og?title=What%27s+Your+Bet+DNA%3F'],
   },
 };
 
