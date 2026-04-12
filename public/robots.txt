@@ -6,7 +6,6 @@ Disallow: /bets
 Disallow: /reports
 Disallow: /uploads
 Disallow: /settings
-Disallow: /pricing
 Disallow: /upload
 Disallow: /admin
 Disallow: /api/

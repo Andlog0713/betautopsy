@@ -3,15 +3,14 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
 import { isResendConfigured, getResend } from '@/lib/resend';
 import { getWeeklyBets, calculateDigestStats, generateInsight, generatePositiveLead } from '@/lib/digest-helpers';
 import { renderDigestEmail } from '@/lib/digest-email';
+import { requireCronSecret } from '@/lib/cron-auth';
 import type { Profile } from '@/types';
 
 export const maxDuration = 300; // 5 min for processing all users
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const unauthorized = requireCronSecret(request, '/api/digest');
+  if (unauthorized) return unauthorized;
 
   if (!isResendConfigured()) {
     return NextResponse.json({ error: 'Resend not configured' }, { status: 500 });

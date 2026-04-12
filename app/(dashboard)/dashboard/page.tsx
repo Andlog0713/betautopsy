@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
-import { trackPurchase } from '@/lib/tiktok-events';
+import { trackPurchase, trackSignup } from '@/lib/tiktok-events';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
@@ -76,6 +76,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.location.search.includes('welcome=true')) {
+      // First-login conversion event. The auth callback only sets ?welcome=true
+      // when this user had never been welcomed before, so it's a clean signup
+      // signal. Fire to BOTH GA4 (which had no sign_up event before this) and
+      // TikTok pixel.
+      window.gtag?.('event', 'sign_up', { method: 'supabase' });
+      trackSignup();
       setWelcomePulse(true);
       window.history.replaceState({}, '', '/dashboard');
       const timeout = window.setTimeout(() => setWelcomePulse(false), 3500);

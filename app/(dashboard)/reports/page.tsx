@@ -13,6 +13,7 @@ const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload, ReportComparison } from '@/types';
 import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
+import { trackPurchase } from '@/lib/tiktok-events';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
 function daysAgo(n: number): string {
@@ -62,7 +63,11 @@ export default function ReportsPage() {
     // save the paid snapshot ID so runAutopsy sends report_type: 'full',
     // and clean the query params so reloads don't double-fire.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
+      // Fire conversion events to BOTH GA4 and TikTok pixel. Until this fix
+      // TikTok never saw one-time-report purchases, so its bidder couldn't
+      // optimize for actual buyers — only "started checkout" signals.
       window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
+      trackPurchase('report', 9.99);
       const reportId = searchParams.get('id');
       if (reportId) setPaidSnapshotId(reportId);
       const url = new URL(window.location.href);

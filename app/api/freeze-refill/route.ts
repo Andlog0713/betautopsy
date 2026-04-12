@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { requireCronSecret } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const unauthorized = requireCronSecret(request, '/api/freeze-refill');
+  if (unauthorized) return unauthorized;
 
   const supabase = createServiceRoleClient();
 

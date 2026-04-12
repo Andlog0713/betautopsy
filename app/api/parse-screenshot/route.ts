@@ -213,6 +213,29 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Parse-screenshot error:', error);
     logErrorServer(error, { path: '/api/parse-screenshot' });
+
+    // Distinguish upstream Anthropic outages from real parse failures so users
+    // don't blame their own screenshots and bounce. The Anthropic SDK exposes
+    // typed errors with a `status` field; everything 5xx, 429, or fetch-level
+    // ECONNRESET/ETIMEDOUT means "service issue, try again", not "bad input".
+    const err = error as { status?: number; name?: string; message?: string };
+    const status = typeof err?.status === 'number' ? err.status : undefined;
+    const isUpstreamOutage =
+      (status !== undefined && (status >= 500 || status === 429 || status === 529)) ||
+      err?.name === 'APIConnectionError' ||
+      err?.name === 'APITimeoutError' ||
+      /ECONNRESET|ETIMEDOUT|fetch failed/i.test(err?.message ?? '');
+
+    if (isUpstreamOutage) {
+      return NextResponse.json(
+        {
+          error: "Our analysis service is having a moment. Please try again in 30 seconds — your screenshot is fine.",
+          retryable: true,
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: 'Failed to process screenshots' }, { status: 500 });
   }
 }

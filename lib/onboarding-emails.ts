@@ -466,3 +466,48 @@ export function renderStreakEmail(props: StreakEmailProps): { subject: string; h
 </td></tr>`, unsubscribeUrl),
   };
 }
+
+// ── Payment failed: fires from Stripe webhook on invoice.payment_failed ──
+// Stripe will keep retrying internally for a few days, but most recoveries
+// happen because the user updates their card. This email gives them a direct
+// path to do exactly that before the subscription auto-cancels.
+
+interface PaymentFailedProps {
+  displayName: string;
+  appUrl: string;
+  portalUrl: string;
+  amountDue?: string;
+  unsubscribeUrl?: string;
+}
+
+export function renderPaymentFailedEmail(props: PaymentFailedProps): { subject: string; html: string } {
+  const { displayName, portalUrl, amountDue, unsubscribeUrl } = props;
+  return {
+    subject: 'Action required: your BetAutopsy payment failed',
+    html: emailShell(`
+<tr><td style="padding:24px 24px 0">
+  <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Hi ${esc(displayName)},</div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:16px">
+    Stripe just told us your most recent BetAutopsy charge${amountDue ? ` (${esc(amountDue)})` : ''} didn't go through. Usually this is an expired card, a new card number, or a temporary block from your bank.
+  </div>
+  <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:12px">
+    Your Pro access stays active for now while we retry, but we'll have to downgrade your account if the next attempt fails too. The fastest fix is to update your payment method:
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px;text-align:center">
+  <a href="${esc(portalUrl)}" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Update Payment Method →</a>
+  <div style="font-size:12px;color:#888;margin-top:8px">Opens your secure Stripe billing portal.</div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:13px;color:#555;line-height:1.6">
+    If you meant to cancel, you don't have to do anything — the subscription will end on its own. Otherwise, the link above takes about 30 seconds.
+  </div>
+</td></tr>
+
+<tr><td style="padding:0 24px 16px">
+  <div style="font-size:12px;color:#888;text-align:center">// Andrew, BetAutopsy</div>
+</td></tr>`, unsubscribeUrl),
+  };
+}
