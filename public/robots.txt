@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /api/og
 Disallow: /dashboard
 Disallow: /bets
 Disallow: /reports
