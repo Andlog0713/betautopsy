@@ -11,14 +11,14 @@ export const metadata: Metadata = {
     title: 'Quick Bet DNA Quiz | BetAutopsy',
     description: 'Find your betting personality in 60 seconds. 5 questions, instant result.',
     url: 'https://www.betautopsy.com/quiz/quick',
-    images: [{ url: '/api/og?title=Quick+Bet+DNA+Quiz', width: 1200, height: 630 }],
+    images: [{ url: '/og?title=Quick+Bet+DNA+Quiz', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Quick Bet DNA Quiz',
     description: '60-second quiz. Find your betting personality and hidden biases.',
-    images: ['/api/og?title=Quick+Bet+DNA+Quiz'],
+    images: ['/og?title=Quick+Bet+DNA+Quiz'],
   },
 };
 

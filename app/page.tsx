@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description:
       'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
     url: 'https://www.betautopsy.com',
-    images: [{ url: '/api/og', width: 1200, height: 630 }],
+    images: [{ url: '/og', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     title: 'BetAutopsy: Sports Betting Behavioral Analysis Tool',
     description:
       'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks.',
-    images: ['/api/og'],
+    images: ['/og'],
   },
 };
 

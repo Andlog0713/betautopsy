@@ -50,13 +50,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: 'article',
       publishedTime: post.publishedAt,
       url: `https://www.betautopsy.com/blog/${post.slug}`,
-      images: [{ url: `/api/og?title=${encodeURIComponent(post.title)}`, width: 1200, height: 630 }],
+      images: [{ url: `/og?title=${encodeURIComponent(post.title)}`, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.description,
-      images: [`/api/og?title=${encodeURIComponent(post.title)}`],
+      images: [`/og?title=${encodeURIComponent(post.title)}`],
     },
   };
 }
