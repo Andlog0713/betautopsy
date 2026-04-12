@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { getStripe, tierFromPriceId } from '@/lib/stripe';
+import { getStripe, tierFromPriceId, createCustomerPortalSession } from '@/lib/stripe';
 import type Stripe from 'stripe';
 import { logErrorServer } from '@/lib/log-error-server';
+import { isResendConfigured, getResend } from '@/lib/resend';
+import { renderPaymentFailedEmail } from '@/lib/onboarding-emails';
+
+const FROM_EMAIL = 'BetAutopsy <noreply@betautopsy.com>';
 
 // Use service role key -- this endpoint is called by Stripe, not a user session
 function createServiceClient() {
@@ -44,17 +48,28 @@ export async function POST(request: Request) {
   // Idempotency: Stripe retries on timeout/5xx, so we short-circuit if we've
   // already processed this event.id. A unique_violation (23505) on insert means
   // another delivery already claimed it.
-  const { error: dedupeErr } = await supabase
-    .from('stripe_events')
-    .insert({ id: event.id });
+  //
+  // If the dedup table itself errors out (e.g. transient DB issue, table missing
+  // post-deploy, RLS misconfigured), we MUST NOT block payment processing —
+  // returning 500 here causes Stripe to retry forever and creates a payment-
+  // confirmation outage. Log loudly and proceed; at worst we double-process a
+  // single event, which downstream handlers tolerate via .eq() updates.
+  try {
+    const { error: dedupeErr } = await supabase
+      .from('stripe_events')
+      .insert({ id: event.id });
 
-  if (dedupeErr) {
-    if (dedupeErr.code === '23505') {
-      return NextResponse.json({ received: true });
+    if (dedupeErr) {
+      if (dedupeErr.code === '23505') {
+        return NextResponse.json({ received: true });
+      }
+      // Non-duplicate error: alert but don't 500, so payment processing continues.
+      console.error('stripe_events insert failed (proceeding anyway):', dedupeErr);
+      logErrorServer(dedupeErr, { path: '/api/webhook', metadata: { event_id: event.id, event_type: event.type, dedupe_failed: true } });
     }
-    console.error('Failed to record stripe_events row:', dedupeErr);
-    logErrorServer(dedupeErr, { path: '/api/webhook', metadata: { event_id: event.id } });
-    return NextResponse.json({ error: 'Idempotency check failed' }, { status: 500 });
+  } catch (e) {
+    console.error('stripe_events dedupe threw (proceeding anyway):', e);
+    logErrorServer(e, { path: '/api/webhook', metadata: { event_id: event.id, event_type: event.type, dedupe_threw: true } });
   }
 
   try {
@@ -177,6 +192,44 @@ export async function POST(request: Request) {
             updated_at: new Date().toISOString(),
           })
           .eq('stripe_customer_id', customerId);
+
+        // Recovery email: give the user a one-click path to update their card
+        // before Stripe exhausts its retry schedule and we auto-cancel.
+        // Best-effort — failures here log to Sentry but don't 500 the webhook.
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, display_name')
+            .eq('stripe_customer_id', customerId)
+            .maybeSingle();
+
+          if (profile?.email && isResendConfigured()) {
+            const portalUrl = await createCustomerPortalSession(customerId);
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.betautopsy.com';
+            const amountDue =
+              typeof invoice.amount_due === 'number' && invoice.amount_due > 0
+                ? `$${(invoice.amount_due / 100).toFixed(2)}`
+                : undefined;
+            const email = renderPaymentFailedEmail({
+              displayName: (profile.display_name as string | null) || 'there',
+              appUrl,
+              portalUrl,
+              amountDue,
+            });
+            await getResend().emails.send({
+              from: FROM_EMAIL,
+              to: profile.email as string,
+              subject: email.subject,
+              html: email.html,
+            });
+          }
+        } catch (recoveryErr) {
+          console.error('Failed payment recovery email failed:', recoveryErr);
+          logErrorServer(recoveryErr, {
+            path: '/api/webhook',
+            metadata: { event_type: 'invoice.payment_failed', customer_id: customerId },
+          });
+        }
         break;
       }
     }
