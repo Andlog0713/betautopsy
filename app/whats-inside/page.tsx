@@ -17,6 +17,15 @@ export const metadata: Metadata = {
     description:
       'See exactly what a BetAutopsy behavioral analysis report contains. Five chapters covering your biases, emotional patterns, session analysis, dollar costs, and a personalized action plan.',
     url: 'https://www.betautopsy.com/whats-inside',
+    images: [{ url: '/api/og?title=What%27s+in+a+BetAutopsy+Report', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "What's in a BetAutopsy Report? | Full Breakdown",
+    description:
+      'See exactly what a BetAutopsy behavioral analysis report contains. Five chapters covering your biases, emotional patterns, session analysis, dollar costs, and a personalized action plan.',
+    images: ['/api/og?title=What%27s+in+a+BetAutopsy+Report'],
   },
 };
 
