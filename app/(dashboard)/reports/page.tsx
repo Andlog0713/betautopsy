@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
+import ProUpsellModal from '@/components/ProUpsellModal';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
@@ -48,6 +49,7 @@ export default function ReportsPage() {
   const [lastReportDate, setLastReportDate] = useState<string | null>(null);
   const [paidSnapshotId, setPaidSnapshotId] = useState<string | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
+  const [showProUpsell, setShowProUpsell] = useState(false);
 
   useEffect(() => {
     loadReports();
@@ -300,6 +302,23 @@ export default function ReportsPage() {
                 });
               }
 
+              // Pro upsell modal: fires once when a non-pro user just paid $9.99
+              // to unlock this report AND the top bias has a pitch-worthy cost
+              // (>= $100/qtr — below that the pitch economics don't land).
+              // This runs inside the completion handler because paidSnapshotId
+              // gets cleared on line 306 below; a later useEffect would miss it.
+              if (
+                paidSnapshotId !== null &&
+                getEffectiveTier(tier) !== 'pro' &&
+                topBias?.bias_name &&
+                typeof topBias.estimated_cost === 'number' &&
+                topBias.estimated_cost >= 100 &&
+                typeof window !== 'undefined' &&
+                !window.localStorage.getItem(`bap_pro_upsell_dismissed_${report.id}`)
+              ) {
+                setShowProUpsell(true);
+              }
+
               setActiveReport(report);
               setReports((prev) => [report, ...prev]);
               setRunning(false);
@@ -457,6 +476,24 @@ export default function ReportsPage() {
               Go to Dashboard →
             </Link>
           </div>
+        )}
+
+        {/* Pro upsell modal fires once after a paid $9.99 unlock. Parent
+            owns dismissal persistence so the modal stays stateless. */}
+        {showProUpsell && analysis && (
+          <ProUpsellModal
+            analysis={analysis}
+            reportId={activeReport.id}
+            onDismiss={() => {
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem(
+                  `bap_pro_upsell_dismissed_${activeReport.id}`,
+                  String(Date.now())
+                );
+              }
+              setShowProUpsell(false);
+            }}
+          />
         )}
       </div>
     );
