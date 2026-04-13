@@ -10,6 +10,7 @@ import HeroABTest from '@/components/HeroABTest';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
+import RealtimeActivity from '@/components/RealtimeActivity';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
 
@@ -174,6 +175,14 @@ export default async function LandingPage() {
           <LogoScroll />
         </div>
       </section>
+
+      {/* ══════════════════════════════════════ */}
+      {/* LIVE ACTIVITY TICKER                   */}
+      {/* ══════════════════════════════════════ */}
+      <RealtimeActivity
+        fallbackBets={platformMetrics ? platformMetrics.bets.toLocaleString() : '15,004'}
+        fallbackReports={platformMetrics ? platformMetrics.reports.toLocaleString() : '105'}
+      />
 
       {/* ══════════════════════════════════════ */}
       {/* PROBLEM / SOLUTION — same bg as hero  */}
