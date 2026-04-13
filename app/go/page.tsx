@@ -445,7 +445,7 @@ export default async function GoLandingPage({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-base border border-scalpel/40 rounded-md px-5 py-3 text-center">
                   <p className="font-mono text-[11px] text-scalpel tracking-wider">
-                    + 3 MORE BIASES · 5 CHAPTERS WAITING
+                    5 CHAPTERS WAITING
                   </p>
                   <p className="text-fg-muted text-xs mt-1">
                     Upload your history to see your own case file.
