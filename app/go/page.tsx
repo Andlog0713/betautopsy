@@ -175,7 +175,7 @@ export default async function GoLandingPage() {
       </section>
 
       {/* SECTION 4 — Trust bar */}
-      <div className="border-y border-border-subtle py-4">
+      <div className="border-y border-border-subtle py-4 overflow-hidden">
         <LogoScroll />
       </div>
 
