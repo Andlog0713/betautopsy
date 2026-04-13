@@ -203,7 +203,7 @@ export default function QuickQuizClient() {
             <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.narrative}</p>
+            <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
           </div>
 
           {/* Scores */}

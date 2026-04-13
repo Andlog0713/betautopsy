@@ -97,7 +97,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
       {/* ── Archetype ── */}
       <div style={{ textAlign: 'center' as const, marginBottom: 24 }}>
         <div style={{ fontSize: 48, fontWeight: 800, color: result.archetype.color, lineHeight: 1.15, marginBottom: 10 }}>{result.archetype.name}</div>
-        <div style={{ fontSize: 17, color: '#848D9A', maxWidth: 700, margin: '0 auto', lineHeight: 1.5 }}>{result.archetype.narrative}</div>
+        <div style={{ fontSize: 17, color: '#848D9A', maxWidth: 700, margin: '0 auto', lineHeight: 1.5 }}>{result.archetype.description}</div>
       </div>
 
       {/* ── Grade Stamp + Stats — side by side ── */}
