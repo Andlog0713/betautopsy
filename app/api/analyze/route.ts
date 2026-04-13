@@ -460,15 +460,17 @@ export async function POST(request: Request) {
         const lower = rawMessage.toLowerCase();
         let userMessage: string;
         if (lower.includes('overloaded') || lower.includes('529')) {
-          userMessage = 'Analysis engine is under heavy load. Please try again in a minute.';
+          userMessage = 'Our analysis engine is busy right now. Try again in about 30 seconds.';
         } else if (
           lower.includes('timeout') ||
           lower.includes('timed out') ||
           lower.includes('etimedout')
         ) {
-          userMessage = 'Analysis is taking longer than expected. Please try again.';
+          userMessage = 'Analysis is taking longer than expected. Please try again in a moment.';
+        } else if (lower.includes('rate limit') || lower.includes('429')) {
+          userMessage = "You've hit the rate limit on analyses. Please wait a minute and try again.";
         } else {
-          userMessage = rawMessage || 'Analysis failed';
+          userMessage = rawMessage || 'Analysis failed. Please try again or contact support if the problem persists.';
         }
         sendEvent('error', { error: userMessage });
       } finally {

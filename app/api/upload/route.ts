@@ -36,8 +36,22 @@ export async function POST(request: Request) {
     const { bets, errors, warnings, column_mapping } = parseCSV(text);
 
     if (bets.length === 0) {
+      // Surface the most specific error the parser produced. The csv-parser
+      // emits messages like "Could not find required column: stake. Found
+      // columns: date, sport, ..." which are much more actionable than
+      // the generic "No valid bets found" fallback. Prepend a one-line
+      // explainer and a link to the template so users know where to go
+      // next.
+      const firstSpecificError = errors.find((e) => e && e.length > 0);
+      const detail = firstSpecificError
+        ? `${firstSpecificError}`
+        : "We couldn't read any bets from this file.";
       return NextResponse.json(
-        { error: 'No valid bets found in CSV', errors, column_mapping },
+        {
+          error: `${detail} Download the CSV template at /example-bets.csv if you're not sure what format we expect.`,
+          errors,
+          column_mapping,
+        },
         { status: 400 }
       );
     }

@@ -86,7 +86,32 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Checkout error:', error);
     logErrorServer(error, { path: '/api/checkout' });
-    const message = error instanceof Error ? error.message : 'Checkout failed';
-    return NextResponse.json({ error: message }, { status: 500 });
+
+    // Friendlier server-side error messages. Card declined and session
+    // expired both happen on Stripe-hosted checkout (not in this route),
+    // but Stripe API / network failures DO hit here and we want the
+    // user to see something better than a raw error string.
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const lower = rawMessage.toLowerCase();
+    let userMessage: string;
+    let status = 500;
+
+    if (
+      lower.includes('econnrefused') ||
+      lower.includes('econnreset') ||
+      lower.includes('etimedout') ||
+      lower.includes('network') ||
+      lower.includes('fetch failed')
+    ) {
+      userMessage = 'Payment service is temporarily unreachable. Please try again in a moment.';
+      status = 503;
+    } else if (lower.includes('stripe')) {
+      // Stripe API error from our side (misconfigured key, missing price, etc.)
+      userMessage = "We couldn't start checkout right now. Please try again or contact support if the problem persists.";
+    } else {
+      userMessage = 'Checkout failed. Please try again or contact support if the problem persists.';
+    }
+
+    return NextResponse.json({ error: userMessage }, { status });
   }
 }
