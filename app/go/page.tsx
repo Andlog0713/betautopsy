@@ -103,7 +103,7 @@ const STEPS = [
   {
     num: '01',
     label: 'UPLOAD',
-    body: 'Drop your CSV or paste from any sportsbook. DraftKings, FanDuel, BetMGM, PrizePicks all work.',
+    body: 'Sync via Pikkit (fastest, no CSV needed) or upload a screenshot, CSV, or paste. DraftKings, FanDuel, BetMGM, PrizePicks and more.',
   },
   {
     num: '02',
@@ -448,7 +448,7 @@ export default async function GoLandingPage({
                     + 3 MORE BIASES · 5 CHAPTERS WAITING
                   </p>
                   <p className="text-fg-muted text-xs mt-1">
-                    Get your free report to unlock the full autopsy.
+                    Upload your history to see your own case file.
                   </p>
                 </div>
               </div>
