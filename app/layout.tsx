@@ -3,6 +3,7 @@ import './globals.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import TikTokPixel from '@/components/TikTokPixel';
 import CookieConsent from '@/components/CookieConsent';
+import { shouldRequireConsent } from '@/lib/consent-region';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
 import { jakarta, ibmPlexMono } from './fonts';
@@ -47,6 +48,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Geo-gate: EU/EEA/UK/CH users get the consent banner; everyone else is
+  // auto-granted at the GA4 consent-default level so we stop losing US
+  // analytics to banner abandonment.
+  const requireConsent = shouldRequireConsent();
+
   const orgJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -107,7 +113,7 @@ export default function RootLayout({
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
         <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
-        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><CookieConsent /></>}
+        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><CookieConsent alreadyGranted={!requireConsent} /></>}
         {children}
       </body>
     </html>
