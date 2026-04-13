@@ -228,7 +228,10 @@ export default function UploadPage() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/reports?run=true" className="btn-primary inline-block text-lg !px-8 !py-3 font-mono">
+            <Link
+              href={result?.upload_id ? `/reports?run=true&upload_id=${result.upload_id}` : '/reports?run=true'}
+              className="btn-primary inline-block text-lg !px-8 !py-3 font-mono"
+            >
               {tier === 'pro' ? 'Run Your Autopsy →' : 'Run Your Snapshot →'}
             </Link>
             {initialBetCount !== null && initialBetCount > 0 && (
@@ -385,7 +388,13 @@ export default function UploadPage() {
               <p className="text-fg-muted">All bets were already in your history.</p>
             )}
             <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
-              <Link href="/reports?run=true" className="btn-primary text-sm" onClick={(e) => e.stopPropagation()}>Run Autopsy</Link>
+              <Link
+                href={result.upload_id ? `/reports?run=true&upload_id=${result.upload_id}` : '/reports?run=true'}
+                className="btn-primary text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Run Autopsy
+              </Link>
               <button onClick={(e) => { e.stopPropagation(); setState('idle'); setResult(null); }} className="btn-secondary text-sm">Upload More</button>
             </div>
           </div>

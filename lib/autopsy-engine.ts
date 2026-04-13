@@ -2,6 +2,30 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 
+// Retry Anthropic calls on transient 529/overloaded errors. Non-overload errors
+// (4xx, timeouts, network failures) surface immediately so they hit the existing
+// user-facing handling in /api/analyze without extra latency.
+async function callWithOverloadRetry<T>(
+  fn: () => Promise<T>,
+  { attempts = 3 }: { attempts?: number } = {}
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const status = (err as { status?: number })?.status;
+      const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+      const isOverload = status === 529 || msg.includes('overloaded');
+      if (!isOverload || i === attempts - 1) throw err;
+      lastErr = err;
+      const backoffMs = 1000 * Math.pow(2, i) + Math.floor(Math.random() * 500);
+      await new Promise((r) => setTimeout(r, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 // ── Deterministic Metrics Calculator ──
 
 export interface CalculatedMetrics {
@@ -2538,14 +2562,18 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 
   const userMessage = `${metricsBlock}${dfsPromptBlock}${sportFindingsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
 
-  // Step 3: Call Claude for behavioral interpretation (50s timeout to stay within serverless limits)
-  const message = await client.messages.create({
-    model,
-    max_tokens: 8192,
-    temperature: 0,
-    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content: userMessage }],
-  }, { timeout: 50000 });
+  // Step 3: Call Claude for behavioral interpretation (50s timeout to stay within serverless limits).
+  // Wrapped in a small retry helper so a single transient 529/overloaded response doesn't immediately
+  // fail the autopsy — the SDK has no built-in retry for this and even small runs hit it occasionally.
+  const message = await callWithOverloadRetry(() =>
+    client.messages.create({
+      model,
+      max_tokens: 8192,
+      temperature: 0,
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: userMessage }],
+    }, { timeout: 50000 })
+  );
 
   const textBlock = message.content.find((block) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
@@ -2682,13 +2710,15 @@ Write a JSON object with these fields for this single bias:
 
 Return ONLY the JSON object, nothing else.`;
 
-    const message = await client.messages.create({
-      model,
-      max_tokens: 512,
-      temperature: 0,
-      system: [{ type: 'text', text: SNAPSHOT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: prompt }],
-    }, { timeout: 30000 });
+    const message = await callWithOverloadRetry(() =>
+      client.messages.create({
+        model,
+        max_tokens: 512,
+        temperature: 0,
+        system: [{ type: 'text', text: SNAPSHOT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: prompt }],
+      }, { timeout: 30000 })
+    );
 
     const textBlock = message.content.find((block) => block.type === 'text');
     if (textBlock && textBlock.type === 'text') {
