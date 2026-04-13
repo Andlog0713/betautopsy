@@ -29,7 +29,7 @@ export default function LogoScroll() {
         .logo-track {
           display: flex;
           align-items: center;
-          animation: logo-scroll 35s linear infinite;
+          animation: logo-scroll 80s linear infinite;
           width: max-content;
           gap: 48px;
         }
