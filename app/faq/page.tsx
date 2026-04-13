@@ -107,58 +107,33 @@ function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: b
 export default function FAQPage() {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
+  // Auto-generated from FAQ_DATA so the JSON-LD always matches the
+  // visible content exactly. Google's FAQ rich result guidelines
+  // require parity between JSON-LD text and what's rendered on the
+  // page — hardcoding a subset drifts out of sync the moment a Q&A
+  // is edited.
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
+    mainEntity: FAQ_DATA.flatMap((section) =>
+      section.items.map((item) => ({
         '@type': 'Question',
-        name: 'What is BetAutopsy?',
-        acceptedAnswer: { '@type': 'Answer', text: 'BetAutopsy is a behavioral analysis tool for sports bettors. You upload your bet history and we analyze it for cognitive biases, emotional patterns, and strategic leaks. The stuff your basic tracker can\'t tell you.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Does BetAutopsy give me picks or tell me what to bet?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Never. We are not a picks service and we never predict outcomes. BetAutopsy analyzes your behavior, not the games. Our goal is to help you understand yourself as a bettor so you can make smarter decisions on your own.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'How do I get my betting history into BetAutopsy?',
-        acceptedAnswer: { '@type': 'Answer', text: 'The easiest way is through Pikkit. Download Pikkit, connect your sportsbook accounts, activate their free 7-day Pro trial, go to Settings → Data Exports, and email yourself the CSV. The whole process takes about 3 minutes.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What does an Autopsy Report include?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Your report includes: a summary card (record, P&L, ROI, avg stake, overall grade), an Emotion Score (0–100 measuring your emotional volatility), bias detection cards, strategic leaks, behavioral patterns, an action plan with specific rules, and a bettor archetype profile.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What biases does BetAutopsy detect?',
-        acceptedAnswer: { '@type': 'Answer', text: 'We scan for: loss chasing, favorite bias, recency bias, parlay addiction, gambler\'s fallacy, availability bias, and sunk cost behavior. Each bias is backed by specific evidence from your data, not generic advice.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'How many bets do I need for a meaningful analysis?',
-        acceptedAnswer: { '@type': 'Answer', text: 'You\'ll start seeing patterns with as few as 30–50 bets. Free snapshots analyze all your bets. Full reports go 5,000 bets deep with detailed bias analysis, strategic leaks, and a personalized action plan.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What\'s free vs. paid?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Free: unlimited snapshot reports analyzing all your bets, showing grade, archetype, and top bias. Full Report ($9.99 one-time): complete 5-chapter analysis going 5,000 bets deep. Pro ($19.99/month or $149.99/year): 3 full reports per month, weekly digest, and progress tracking.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Who can see my betting data?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Only you. Your bet history is stored with row-level security. We do not sell your data, share it with third parties, or use it for advertising.' },
-      },
-    ],
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      }))
+    ),
   };
 
   return (
     <div className="space-y-4">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),
+        }}
       />
       <div className="mb-12">
         <h1 className="font-extrabold text-4xl tracking-tight mb-3 text-fg-bright">Frequently Asked Questions</h1>
