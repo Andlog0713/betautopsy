@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
+import RealtimeActivity from '@/components/RealtimeActivity';
 import GoPageView from './GoPageView';
 
 // Paid-traffic metric counters refresh hourly so they stay fresh without
@@ -206,18 +207,8 @@ export default async function GoLandingPage({
         </div>
       </section>
 
-      {/* ═══ SOCIAL PROOF BAR ═══ */}
-      <div className="bg-surface-1 border-y border-border-subtle py-4">
-        <div className="max-w-5xl mx-auto px-4">
-          <p className="text-center font-mono text-xs text-fg-muted leading-relaxed">
-            <span className="text-fg-bright font-bold">{betsDisplay}</span> bets analyzed
-            <span className="text-fg-dim mx-2 md:mx-3">·</span>
-            <span className="text-fg-bright font-bold">{reportsDisplay}</span> reports generated
-            <span className="text-fg-dim mx-2 md:mx-3">·</span>
-            <span className="text-fg-bright font-bold">47</span> signals per report
-          </p>
-        </div>
-      </div>
+      {/* ═══ SOCIAL PROOF / LIVE ACTIVITY TICKER ═══ */}
+      <RealtimeActivity fallbackBets={betsDisplay} fallbackReports={reportsDisplay} />
 
       {/* ═══ WHAT WE FIND — anxiety list ═══ */}
       <section className="py-14">
