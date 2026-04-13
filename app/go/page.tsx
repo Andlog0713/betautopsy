@@ -134,7 +134,7 @@ export default async function GoLandingPage() {
       <section className="relative grid-paper overflow-hidden pt-16 pb-12 md:pt-20 md:pb-16">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h1 className="font-extrabold text-3xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright">
-            Find out what your betting patterns are costing you.
+            Find out what your <span className="text-scalpel">betting patterns</span> are costing you.
           </h1>
           <p className="mt-4 text-fg-muted text-base md:text-lg font-light">
             Upload your history. Get a forensic behavioral report in 60 seconds.
