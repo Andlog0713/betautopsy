@@ -418,6 +418,28 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
   const [linkCopied, setLinkCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  // Pre-fetch share URL so quick-share "Copy Link" copies the real /share/<id> URL
+  // instead of window.location.href (which resolves to /reports on the dashboard).
+  useEffect(() => {
+    if (!reportId || readOnly) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ report_id: reportId }),
+        });
+        const result = await res.json();
+        if (!cancelled && result.share_id) {
+          setShareUrl(`${window.location.origin}/share/${result.share_id}`);
+        }
+      } catch { /* silent — button falls back below */ }
+    })();
+    return () => { cancelled = true; };
+  }, [reportId, readOnly]);
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
@@ -739,14 +761,16 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </button>
         <button
           onClick={() => {
-            navigator.clipboard.writeText(window.location.href).then(() => {
+            const url = shareUrl ?? window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
               setLinkCopied(true);
               setTimeout(() => setLinkCopied(false), 2000);
             });
           }}
-          className="btn-secondary font-mono text-xs"
+          disabled={!shareUrl && !readOnly}
+          className="btn-secondary font-mono text-xs disabled:opacity-50"
         >
-          {linkCopied ? 'Copied!' : 'Copy Link'}
+          {linkCopied ? 'Copied!' : shareUrl || readOnly ? 'Copy Link' : 'Preparing link…'}
         </button>
       </div>
 
