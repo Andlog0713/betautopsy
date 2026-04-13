@@ -97,6 +97,14 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     readTime: '15 min read',
     tags: ['betting psychology', 'cognitive biases', 'behavioral analysis', 'sports betting guide'],
   },
+  {
+    slug: 'how-sportsbooks-use-parlays-against-you',
+    title: 'How Sportsbooks Use Parlays Against You',
+    description: 'Same Game Parlays, boost promos, bet-slip design, and limits on sharp bettors. The six tactics sportsbooks use to steer you into their highest-margin product.',
+    publishedAt: '2026-04-13',
+    readTime: '9 min read',
+    tags: ['parlays', 'same game parlay', 'sportsbook edge', 'sports betting', 'betting strategy'],
+  },
 ];
 
 // ── Future DFS/Pick'em Posts (to be written) ──

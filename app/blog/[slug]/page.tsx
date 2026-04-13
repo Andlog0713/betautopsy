@@ -14,6 +14,7 @@ import LosingOnPrizePicks from '../_posts/why-am-i-losing-on-prizepicks';
 import SunkCostFallacy from '../_posts/sunk-cost-fallacy-sports-betting';
 import BettingArchetypes from '../_posts/betting-archetypes-behavioral-profiles';
 import CompleteGuidePsychology from '../_posts/complete-guide-betting-psychology';
+import HowSportsbooksUseParlays from '../_posts/how-sportsbooks-use-parlays-against-you';
 
 const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'why-am-i-losing-at-sports-betting': WhyAmILosing,
@@ -27,6 +28,7 @@ const POST_COMPONENTS: Record<string, React.ComponentType> = {
   'sunk-cost-fallacy-sports-betting': SunkCostFallacy,
   'betting-archetypes-behavioral-profiles': BettingArchetypes,
   'complete-guide-betting-psychology': CompleteGuidePsychology,
+  'how-sportsbooks-use-parlays-against-you': HowSportsbooksUseParlays,
 };
 
 export function generateStaticParams() {
