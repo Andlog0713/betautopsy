@@ -2440,7 +2440,7 @@ export async function runAutopsy(
   bankroll?: number | null
 ): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = 'claude-sonnet-4-20250514';
+  const model = 'claude-sonnet-4-6';
 
   // Step 1: Calculate all metrics deterministically in JS
   const metrics = calculateMetrics(bets, bankroll);
