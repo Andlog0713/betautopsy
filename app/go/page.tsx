@@ -183,7 +183,7 @@ export default async function GoLandingPage({
         />
         <div className="relative max-w-2xl mx-auto px-4 text-center">
           <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-4">
-            CASE FILE #{caseNum} // BEHAVIORAL ANALYSIS
+            {`CASE FILE #${caseNum} // BEHAVIORAL ANALYSIS`}
           </p>
           <h1 className="font-extrabold text-[28px] sm:text-4xl md:text-5xl leading-[1.1] tracking-tight text-fg-bright">
             Find out what your betting patterns are{' '}
