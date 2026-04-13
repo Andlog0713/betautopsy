@@ -92,16 +92,62 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     mainEntityOfPage: `https://www.betautopsy.com/blog/${post.slug}`,
   };
 
+  // Post-specific HowTo schema. Steps mirror the visible H3 sections in
+  // the post so Google can parse it as a step-by-step guide.
+  const howToJsonLd =
+    slug === 'how-to-analyze-your-betting-history'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: 'How to Analyze Your Betting History',
+          description:
+            'A four-step process for going beyond win/loss record to find the behavioral patterns costing you money.',
+          totalTime: 'PT1H',
+          step: [
+            {
+              '@type': 'HowToStep',
+              position: 1,
+              name: 'Export Your Data',
+              text: 'Export your bet history from your sportsbook. DraftKings: Account > My Bets > Settled > Download. FanDuel: Account > Activity > Transactions > Export. BetMGM: My Bets > History > Download CSV. Caesars: Account > Betting History > Export. Aim for at least 3-6 months of data so patterns have room to emerge.',
+            },
+            {
+              '@type': 'HowToStep',
+              position: 2,
+              name: 'Organize Your Spreadsheet',
+              text: 'Clean your export into columns: date and time placed, sport and league, bet type, odds, stake, result, profit or loss, and running balance. Add a column tracking the previous bet result so you can calculate loss chase ratio.',
+            },
+            {
+              '@type': 'HowToStep',
+              position: 3,
+              name: 'Run the Numbers',
+              text: "Calculate the five key metrics: overall ROI, sport-specific ROI, loss chase ratio, bet sizing coefficient of variation, and late-night ROI. Be honest with yourself. This only works if you don't flinch from bad numbers.",
+            },
+            {
+              '@type': 'HowToStep',
+              position: 4,
+              name: 'Identify Your Top 3 Leaks',
+              text: 'Rank your leaks by dollar impact and focus on the top three. For most bettors, the top three leaks account for 80 to 90 percent of total losses. Common high-impact leaks include parlay overallocation, loss chasing, and late-night impulsive betting.',
+            },
+          ],
+        }
+      : null;
+
   return (
     <article className="space-y-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c') }}
       />
+      {howToJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd).replace(/</g, '\\u003c') }}
+        />
+      )}
       <Link href="/blog" className="text-sm text-fg-muted hover:text-scalpel transition-colors">
         ← All posts
       </Link>
