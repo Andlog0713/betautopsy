@@ -350,7 +350,7 @@ export default function QuizClient() {
             <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-3 reveal-bounce" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-fg-muted text-sm max-w-sm mx-auto animate-fade-in-d3">{result.archetype.description}</p>
+            <p className="text-fg-muted text-sm max-w-sm mx-auto animate-fade-in-d3">{result.archetype.narrative}</p>
           </div>
         )}
       </main>
@@ -372,7 +372,7 @@ export default function QuizClient() {
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
             <p className="font-mono text-[10px] text-fg-dim tracking-widest mb-2">YOUR BET DNA</p>
             <h2 className="font-extrabold text-3xl tracking-tight mb-2" style={{ color: result.archetype.color }}>{result.archetype.name}</h2>
-            <p className="text-fg-muted text-sm mb-4">{result.archetype.description}</p>
+            <p className="text-fg-muted text-sm mb-4">{result.archetype.narrative}</p>
             <div className={`inline-block border-2 px-4 py-1 -rotate-3 mb-4`} style={{ borderColor: `${gradeColor(result.grade)}30` }}>
               <span className="font-mono text-4xl font-bold" style={{ color: gradeColor(result.grade) }}>{result.grade}</span>
             </div>
@@ -462,7 +462,7 @@ export default function QuizClient() {
             <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight mb-3" style={{ color: result.archetype.color }}>
               {result.archetype.name}
             </h1>
-            <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.description}</p>
+            <p className="text-fg-muted text-sm leading-relaxed">{result.archetype.narrative}</p>
             <p className="text-fg-muted text-xs mt-3 italic">
               {ARCH_PRODUCT_TEASER[result.archetype.name] ?? 'A full BetAutopsy would show you exactly how your real betting data compares to this quiz estimate.'}
             </p>
