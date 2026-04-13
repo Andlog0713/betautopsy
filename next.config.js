@@ -53,6 +53,13 @@ const nextConfig = {
         destination: 'https://www.betautopsy.com/:path*',
         permanent: true,
       },
+      // /whats-inside was replaced by /sample (which shows the actual
+      // ungated demo report instead of a marketing breakdown).
+      {
+        source: '/whats-inside',
+        destination: '/sample',
+        permanent: true,
+      },
     ];
   },
 };
