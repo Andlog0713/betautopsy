@@ -786,7 +786,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             >
               <div>
                 <p className="font-bold text-lg text-fg-bright">{arch.name}</p>
-                <p className="text-fg-muted text-sm">{arch.description}</p>
+                <p className="text-fg-muted text-sm leading-relaxed">{arch.narrative}</p>
                 {analysis.quiz_archetype &&
                  analysis.quiz_archetype !== analysis.betting_archetype!.name && (
                   <p className="text-fg-dim text-xs font-mono mt-2">
