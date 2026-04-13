@@ -298,18 +298,29 @@ export default async function GoLandingPage({
               <span className="severity-high">HIGH SEVERITY</span>
             </div>
 
-            {/* Overall grade */}
-            <div className="mb-5">
-              <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px] mb-1">
-                OVERALL GRADE
-              </p>
-              <p className="font-mono text-5xl font-extrabold text-caution leading-none">
-                C+
-              </p>
+            {/* Grade + Archetype row */}
+            <div className="flex items-start gap-5 mb-5">
+              <div>
+                <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px] mb-1">
+                  OVERALL GRADE
+                </p>
+                <p className="font-mono text-5xl font-extrabold text-caution leading-none">
+                  C+
+                </p>
+              </div>
+              <div className="flex-1 border-l-2 border-l-bleed pl-4 pt-1">
+                <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px] mb-1">
+                  ARCHETYPE
+                </p>
+                <p className="text-fg-bright font-bold">The Heat Chaser</p>
+                <p className="text-fg-muted text-xs mt-0.5">
+                  Emotions are running the show.
+                </p>
+              </div>
             </div>
 
-            {/* Vitals strip */}
-            <div className="vitals-strip grid-cols-3 mb-5">
+            {/* Vitals strip — 4 cells */}
+            <div className="vitals-strip grid-cols-2 sm:grid-cols-4 mb-5">
               <div className="vitals-cell">
                 <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">
                   EMOTION
@@ -329,6 +340,14 @@ export default async function GoLandingPage({
               </div>
               <div className="vitals-cell">
                 <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">
+                  ROI
+                </span>
+                <span className="font-mono text-lg font-bold text-loss">
+                  -7.4%
+                </span>
+              </div>
+              <div className="vitals-cell">
+                <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">
                   NET P&amp;L
                 </span>
                 <span className="font-mono text-lg font-bold text-loss">
@@ -337,54 +356,99 @@ export default async function GoLandingPage({
               </div>
             </div>
 
-            {/* Top finding (sharp) */}
-            <div className="border-l-2 border-l-bleed pl-4 mb-5">
-              <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1">
-                TOP FINDING
-              </p>
-              <p className="text-fg-bright font-bold flex items-center gap-2">
-                Loss Chasing
-                <span className="severity-high">HIGH</span>
-              </p>
-              <p className="text-fg-muted text-sm mt-1">
-                Estimated quarterly cost:{' '}
-                <span className="text-bleed font-mono font-bold">$1,240</span>
-              </p>
+            {/* Session grades strip */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">
+                  SESSIONS GRADED
+                </p>
+                <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">
+                  14 DETECTED
+                </p>
+              </div>
+              <div className="flex gap-1">
+                {/* Mostly C/D with a few F and one B — matches The Heat Chaser profile */}
+                {[
+                  'bg-caution/60', 'bg-bleed',     'bg-caution/60', 'bg-caution',
+                  'bg-bleed/70',   'bg-caution',   'bg-bleed',      'bg-caution/60',
+                  'bg-caution',    'bg-scalpel/60','bg-bleed',      'bg-caution/60',
+                  'bg-caution',    'bg-bleed',
+                ].map((color, i) => (
+                  <div
+                    key={i}
+                    className={`${color} h-5 flex-1 rounded-[1px]`}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="font-mono text-[9px] text-fg-dim">WORST</span>
+                <span className="font-mono text-[9px] text-fg-dim">LATEST</span>
+              </div>
+            </div>
+
+            {/* Top findings — 2 visible */}
+            <p className="font-mono text-[9px] text-fg-dim tracking-[1.5px] mb-3">
+              TOP FINDINGS
+            </p>
+            <div className="space-y-3 mb-5">
+              <div className="border-l-2 border-l-bleed pl-4">
+                <p className="text-fg-bright font-bold flex items-center gap-2 flex-wrap">
+                  Loss Chasing
+                  <span className="severity-high">HIGH</span>
+                </p>
+                <p className="text-fg-muted text-sm mt-1">
+                  Stakes jump 2.4x after losses. Quarterly cost:{' '}
+                  <span className="text-bleed font-mono font-bold">
+                    $1,240
+                  </span>
+                </p>
+              </div>
+              <div className="border-l-2 border-l-caution pl-4">
+                <p className="text-fg-bright font-bold flex items-center gap-2 flex-wrap">
+                  Parlay Overuse
+                  <span className="severity-medium">MEDIUM</span>
+                </p>
+                <p className="text-fg-muted text-sm mt-1">
+                  34% of volume, -18% ROI. Quarterly cost:{' '}
+                  <span className="text-bleed font-mono font-bold">$820</span>
+                </p>
+              </div>
             </div>
 
             {/* Blurred section with teal-bordered overlay */}
             <div className="relative">
               <div
-                style={{ filter: 'blur(4px)' }}
+                style={{ filter: 'blur(5px)' }}
                 aria-hidden="true"
                 className="opacity-70 select-none pointer-events-none space-y-3"
               >
                 <div className="border-l-2 border-l-caution pl-4">
-                  <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1">
-                    FINDING #2
-                  </p>
-                  <p className="text-fg-bright font-bold">Parlay Overuse</p>
+                  <p className="text-fg-bright font-bold">Emotional Sizing</p>
                   <p className="text-fg-muted text-sm">
-                    Estimated quarterly cost: $820
+                    Stake variance 3.1x baseline. Quarterly cost: $615
                   </p>
                 </div>
                 <div className="border-l-2 border-l-caution pl-4">
-                  <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1">
-                    FINDING #3
-                  </p>
-                  <p className="text-fg-bright font-bold">Emotional Sizing</p>
+                  <p className="text-fg-bright font-bold">Late-Night Betting</p>
                   <p className="text-fg-muted text-sm">
-                    Estimated quarterly cost: $615
+                    21% of bets after 11pm, grading out at D-. Quarterly cost: $430
+                  </p>
+                </div>
+                <div className="border-l-2 border-l-caution pl-4">
+                  <p className="text-fg-bright font-bold">Favorite Bias</p>
+                  <p className="text-fg-muted text-sm">
+                    71% on favorites. Quarterly cost: $290
                   </p>
                 </div>
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-base border border-scalpel/40 rounded-md px-5 py-3 text-center">
                   <p className="font-mono text-[11px] text-scalpel tracking-wider">
-                    + 3 MORE BIASES DETECTED
+                    + 3 MORE BIASES · 5 CHAPTERS WAITING
                   </p>
-                  <p className="text-fg-muted text-xs mt-0.5">
-                    Get your free report to see all findings.
+                  <p className="text-fg-muted text-xs mt-1">
+                    Get your free report to unlock the full autopsy.
                   </p>
                 </div>
               </div>
