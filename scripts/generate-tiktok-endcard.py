@@ -230,8 +230,8 @@ def build():
     cost_w = tw(d, cost_text, bold(28))
     d.text((card_right - 40 - cost_w, tb_y + 28), cost_text, font=bold(28), fill=BLEED)
 
-    # ── Disclaimer (small, sits above the button) ──
-    disc_y = 1260
+    # ── Disclaimer (small, sits above the URL + button) ──
+    disc_y = 1220
     disc = "For entertainment only  ·  18+  ·  1-800-GAMBLER"
     disc_w = tw(d, disc, light(22))
     safe_cx = (SAFE_L + SAFE_R) // 2
@@ -241,11 +241,17 @@ def build():
     draw_cta_button(
         d,
         center_x=safe_cx,
-        y=1300,
+        y=1270,
         text="GET YOUR REPORT  →",
         width=700,
         height=120,
     )
+
+    # ── URL reference under the button (small, mono, teal) ──
+    url_y = 1410
+    url_text = "betautopsy.com/go"
+    url_w = tw(d, url_text, bold(32))
+    d.text((safe_cx - url_w // 2, url_y), url_text, font=bold(32), fill=SCALPEL)
 
     # ── Save ──
     final = img.convert("RGB")
