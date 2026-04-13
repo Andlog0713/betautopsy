@@ -4,10 +4,24 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'cookie-consent';
 
-export default function CookieConsent() {
+interface Props {
+  /**
+   * When true, analytics consent has already been granted at the server
+   * (non-EU traffic — see lib/consent-region.ts) and we don't need to
+   * show a banner or ask the user. The banner is suppressed entirely.
+   */
+  alreadyGranted?: boolean;
+}
+
+export default function CookieConsent({ alreadyGranted = false }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Non-EU traffic: consent default was already `granted` at the server,
+    // no banner needed. Short-circuit so users outside the GDPR region
+    // never see a speed bump.
+    if (alreadyGranted) return;
+
     // Delay showing the banner so it doesn't become the LCP element.
     // The hero content paints first, then the banner fades in.
     if (typeof window === 'undefined') return;
@@ -21,7 +35,7 @@ export default function CookieConsent() {
       }
     }, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [alreadyGranted]);
 
   function handleAccept() {
     try {
