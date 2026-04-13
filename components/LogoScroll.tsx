@@ -35,7 +35,7 @@ export default function LogoScroll() {
         }
         @media (max-width: 640px) {
           .logo-track {
-            animation-duration: 35s;
+            animation-duration: 30s;
             gap: 32px;
           }
         }

@@ -95,7 +95,7 @@ export default async function GoLandingPage() {
         }
         @media (max-width: 640px) {
           .go-marquee-track {
-            animation-duration: 40s;
+            animation-duration: 30s;
             gap: 32px;
           }
         }
