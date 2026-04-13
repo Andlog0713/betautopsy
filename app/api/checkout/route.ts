@@ -4,6 +4,30 @@ import { getOrCreateCustomer, createSubscriptionCheckoutSession, createReportChe
 import type { Profile } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 
+/**
+ * Map of public-facing promo slugs to their Stripe promotion code IDs.
+ *
+ * The slug is what appears in URLs like /pricing?promo=producthunt — we
+ * deliberately never accept a raw Stripe ID from the client so untrusted
+ * input can't target arbitrary coupons.
+ *
+ * To add a new promo:
+ *   1. Create the coupon + promotion code in the Stripe dashboard
+ *   2. Copy the promotion code ID (starts with "promo_")
+ *   3. Set STRIPE_PROMO_<SLUG>_ID in Vercel env vars
+ *   4. Add an entry here mapping the URL slug to the env var
+ */
+const PROMO_CODE_MAP: Record<string, string | undefined> = {
+  producthunt: process.env.STRIPE_PROMO_PRODUCTHUNT_ID,
+};
+
+function resolvePromoSlug(slug: unknown): string | undefined {
+  if (typeof slug !== 'string' || !slug) return undefined;
+  const normalized = slug.toLowerCase().trim();
+  const id = PROMO_CODE_MAP[normalized];
+  return id || undefined;
+}
+
 export async function POST(request: Request) {
   try {
     if (!isStripeConfigured()) {
@@ -17,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, interval, snapshotReportId } = body;
+    const { type, interval, snapshotReportId, promoSlug } = body;
 
     if (type !== 'subscription' && type !== 'report') {
       return NextResponse.json({ error: 'Invalid checkout type. Must be "subscription" or "report".' }, { status: 400 });
@@ -54,7 +78,19 @@ export async function POST(request: Request) {
     let url: string;
 
     if (type === 'subscription') {
-      url = await createSubscriptionCheckoutSession(customerId, user.id, interval || 'monthly');
+      const subInterval = interval || 'monthly';
+      // Resolve the promo slug to a Stripe promotion code ID. Promo codes
+      // are explicitly scoped to monthly plans per the backlog spec — annual
+      // plan framing stays "4.5 months free" and doesn't double-dip with
+      // additional discounts.
+      const promoCodeId =
+        subInterval === 'monthly' ? resolvePromoSlug(promoSlug) : undefined;
+      url = await createSubscriptionCheckoutSession(
+        customerId,
+        user.id,
+        subInterval,
+        promoCodeId
+      );
     } else {
       // Report purchase
       if (!snapshotReportId) {

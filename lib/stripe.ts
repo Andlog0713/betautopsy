@@ -61,7 +61,16 @@ export async function getOrCreateCustomer(
 export async function createSubscriptionCheckoutSession(
   customerId: string,
   userId: string,
-  interval: 'monthly' | 'annual' = 'monthly'
+  interval: 'monthly' | 'annual' = 'monthly',
+  /**
+   * Optional Stripe promotion code ID (e.g. 'promo_1Abc...') to auto-apply
+   * to this session. When provided, overrides checkoutDiscountParams() and
+   * the user sees the discount already applied on Stripe's hosted page.
+   * Callers are expected to have already resolved slug -> ID server-side
+   * (e.g. via PROMO_CODE_MAP in /api/checkout) so untrusted client input
+   * never reaches this function directly.
+   */
+  promoCodeId?: string
 ): Promise<string> {
   const priceId = interval === 'annual'
     ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID!
@@ -71,11 +80,17 @@ export async function createSubscriptionCheckoutSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+  // If a specific promo code was resolved for this session, use it.
+  // Otherwise fall back to the global launch promo / allow_promotion_codes.
+  const discountParams = promoCodeId
+    ? { discounts: [{ promotion_code: promoCodeId }] }
+    : checkoutDiscountParams();
+
   const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    ...checkoutDiscountParams(),
+    ...discountParams,
     success_url: `${appUrl}/dashboard?upgraded=true`,
     cancel_url: `${appUrl}/pricing`,
     metadata: { supabase_user_id: userId, tier: 'pro' },

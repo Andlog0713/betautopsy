@@ -52,10 +52,21 @@ export default function PricingPage() {
     }
     setLoadingAction('pro');
     try {
+      // Forward any ?promo=<slug> query param on the current URL so the
+      // /api/checkout route can resolve it against PROMO_CODE_MAP. Only
+      // applies to monthly subscriptions (server guards against annual).
+      const urlPromoSlug =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('promo')
+          : null;
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'subscription', interval }),
+        body: JSON.stringify({
+          type: 'subscription',
+          interval,
+          ...(urlPromoSlug ? { promoSlug: urlPromoSlug } : {}),
+        }),
       });
       const data = await res.json();
       if (data.url) {
