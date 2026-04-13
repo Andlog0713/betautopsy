@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
+import { logErrorServer } from '@/lib/log-error-server';
 
 // Retry Anthropic calls on transient 529/overloaded errors. Non-overload errors
 // (4xx, timeouts, network failures) surface immediately so they hit the existing
@@ -2834,6 +2835,20 @@ Return ONLY the JSON object, nothing else.`;
 }
 
 // ── Parse JSON from response ──
+//
+// Claude occasionally returns malformed JSON (trailing commas, unescaped
+// newlines in strings, missing closing braces when it hits max_tokens).
+// Previously this silently degraded to {} and the downstream code filled
+// every field with ?? [] fallbacks — user gets a report, but with empty
+// Claude-provided prose. Invisible to us without Sentry logging.
+//
+// parseResponseJSON now logs parse failures and shape validation issues
+// to Sentry via logErrorServer so we can see the real failure rate in
+// production. Behavior is otherwise unchanged: fallback to {} on hard
+// failure, preserve all downstream ?? [] guards. Retry logic is
+// intentionally NOT added here because the main autopsy call already
+// uses most of the serverless timeout budget — a retry could push past
+// Vercel's 60s limit. We'll iterate once Sentry shows us the rate.
 
 function parseResponseJSON(raw: string): Record<string, unknown> {
   let text = raw.trim();
@@ -2842,8 +2857,62 @@ function parseResponseJSON(raw: string): Record<string, unknown> {
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace > firstBrace) text = text.slice(firstBrace, lastBrace + 1);
-  try { return JSON.parse(text); }
-  catch { return {}; }
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const issues = validateAnalysisShape(parsed as Record<string, unknown>);
+      if (issues.length > 0) {
+        logErrorServer(new Error('Claude response shape validation failed'), {
+          path: 'autopsy-engine.parseResponseJSON',
+          metadata: {
+            issues,
+            rawPreview: raw.slice(0, 500),
+          },
+        });
+      }
+      return parsed as Record<string, unknown>;
+    }
+    // Parsed to a non-object (string/number/array) — treat as failure
+    logErrorServer(new Error('Claude response parsed to non-object'), {
+      path: 'autopsy-engine.parseResponseJSON',
+      metadata: {
+        rawPreview: raw.slice(0, 500),
+      },
+    });
+    return {};
+  } catch (err) {
+    logErrorServer(err, {
+      path: 'autopsy-engine.parseResponseJSON',
+      metadata: {
+        stage: 'JSON.parse',
+        rawPreview: raw.slice(0, 500),
+      },
+    });
+    return {};
+  }
+}
+
+// Shape validator: checks that the parsed Claude response contains the
+// top-level fields the downstream merge code expects. Returns a list of
+// human-readable issues (empty list means valid). This is NOT a strict
+// type check — it's a "did the obvious fields come back at all" sanity
+// check so Sentry can flag partial / degraded responses.
+function validateAnalysisShape(data: Record<string, unknown>): string[] {
+  const issues: string[] = [];
+  const arrayFields = [
+    'biases_detected',
+    'strategic_leaks',
+    'behavioral_patterns',
+    'recommendations',
+  ] as const;
+  for (const field of arrayFields) {
+    if (!(field in data)) {
+      issues.push(`missing ${field}`);
+    } else if (!Array.isArray(data[field])) {
+      issues.push(`${field} is not an array`);
+    }
+  }
+  return issues;
 }
 
 // ── Keep formatBetsForAnalysis for backward compat ──
