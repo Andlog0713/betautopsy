@@ -4,8 +4,6 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
-import { trackSignup } from '@/lib/tiktok-events';
-import { trackSignup as trackSignupMeta } from '@/lib/meta-events';
 import { createClient } from '@/lib/supabase';
 import OAuthButtons from '@/components/OAuthButtons';
 
@@ -48,8 +46,20 @@ function SignupForm() {
       return;
     }
 
-    trackSignup();
-    trackSignupMeta();
+    // CompleteRegistration tracking is intentionally NOT fired here.
+    //
+    // This branch only runs when Supabase returns an immediate session
+    // (email confirmation disabled). Firing trackSignup() / trackSignupMeta()
+    // before router.push() races the in-flight pixel POST against the
+    // navigation — the browser tears down the page and cancels the request,
+    // so neither TikTok nor Meta ever receive the event.
+    //
+    // Instead we let dashboard's first-login useEffect fire both pixels
+    // after the new page has mounted, where there is no navigation hazard.
+    // See app/(dashboard)/dashboard/page.tsx — the `?welcome=true` query
+    // param flag is what triggers it. The auth/callback route also passes
+    // ?welcome=true through for the email-confirmation path, so both
+    // signup paths converge on the same fire site.
     router.push(next || '/dashboard?welcome=true');
     router.refresh();
   }
