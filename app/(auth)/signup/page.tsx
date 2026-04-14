@@ -28,9 +28,26 @@ function SignupForm() {
     setLoading(true);
 
     const supabase = createClient();
+
+    // Compute the post-verification destination and embed it in the
+    // emailRedirectTo. Without this, Supabase generates a confirmation
+    // email link with no `next` query param, and the auth callback's
+    // fallback path drops users on `/` instead of /dashboard?welcome=true,
+    // which means the dashboard's first-login useEffect never runs and
+    // CompleteRegistration tracking never fires.
+    //
+    // We respect ?next= when the user came from a deep link (e.g. /pricing),
+    // otherwise default to /dashboard?welcome=true so the welcome detection
+    // and pixel events fire.
+    const postVerifyPath = next || '/dashboard?welcome=true';
+    const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(postVerifyPath)}`;
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo,
+      },
     });
 
     if (signUpError) {
@@ -103,7 +120,12 @@ function SignupForm() {
       </div>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
 
-      <OAuthButtons next={next} />
+      {/* Default OAuth signups (no explicit ?next= deep link) need to land
+          on /dashboard?welcome=true so the dashboard's first-login useEffect
+          fires CompleteRegistration on TikTok + Meta. We only set this
+          default on the SIGNUP page — /login passes no next so returning
+          users don't keep re-triggering the welcome banner. */}
+      <OAuthButtons next={next || '/dashboard?welcome=true'} />
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">

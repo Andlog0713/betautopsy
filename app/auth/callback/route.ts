@@ -116,13 +116,40 @@ export async function GET(request: NextRequest) {
       // Increment login count for returning-user redirect
       await supabase.rpc('increment_login_count');
 
-      // Fire welcome email + get first-login signal. Never allow this to
-      // block the redirect — swallow any unexpected error.
+      // First-login detection is decoupled from welcome-email-sent state.
+      //
+      // Previously this used maybeFireWelcomeEmail's return value, but
+      // that function returns false if the profiles row doesn't exist
+      // yet — which races with Supabase's handle_new_user trigger and
+      // routinely misses actual first signups, sending them to `/`
+      // instead of /dashboard?welcome=true and silently dropping the
+      // server-side CAPI CompleteRegistration fire.
+      //
+      // Instead: a user is "first-login" if their auth.users.created_at
+      // is recent. Email verification typically completes within minutes
+      // of signup, so a 30-minute window catches all legitimate fresh
+      // signups while excluding returning logins. False positives (a
+      // user signing back in within 30 minutes of original signup) are
+      // acceptable for tracking — they're still effectively a fresh
+      // signup signal and the dashboard's welcome banner is harmless
+      // to re-show.
+      const FIRST_LOGIN_WINDOW_MS = 30 * 60 * 1000;
       let wasFirstLogin = false;
+      if (data.session?.user?.created_at) {
+        const createdAtMs = new Date(data.session.user.created_at).getTime();
+        if (Number.isFinite(createdAtMs)) {
+          wasFirstLogin = Date.now() - createdAtMs < FIRST_LOGIN_WINDOW_MS;
+        }
+      }
+
+      // Fire welcome email as a side effect. Its own first-send guard
+      // (onboarding_emails_sent.welcome) prevents double-sends across
+      // retries / cron fallback. The return value is intentionally
+      // ignored here — wasFirstLogin above is the authoritative signal.
       if (data.session?.user) {
         try {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
-          wasFirstLogin = await maybeFireWelcomeEmail(data.session.user.id, appUrl);
+          await maybeFireWelcomeEmail(data.session.user.id, appUrl);
         } catch (emailErr) {
           console.error('Welcome email dispatch failed:', emailErr);
         }
