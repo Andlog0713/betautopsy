@@ -343,10 +343,16 @@ export default function QuickQuizClient() {
               onClick={() => {
                 const text = `My Bet DNA: ${result.archetype.name}\nEmotion: ${result.emotion_estimate}/100\n\nWhat's yours?`;
                 const url = 'https://betautopsy.com/quiz/quick';
+                const tweetHref = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
                 if (navigator.share) {
-                  navigator.share({ text, url });
+                  navigator.share({ text, url }).catch((err: unknown) => {
+                    // User dismissed the native share sheet. Not an error.
+                    if (err instanceof Error && err.name === 'AbortError') return;
+                    // Any other failure: fall back to the tweet intent.
+                    window.open(tweetHref, '_blank', 'width=600,height=500');
+                  });
                 } else {
-                  window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=500');
+                  window.open(tweetHref, '_blank', 'width=600,height=500');
                 }
               }}
               className="btn-secondary text-sm font-mono"

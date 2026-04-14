@@ -155,10 +155,16 @@ export default function QuizClient() {
     if (!result) return;
     const text = `I got ${result.archetype.name} on the Bet DNA quiz. Bet yours is worse.`;
     const url = 'https://betautopsy.com/quiz';
+    const smsHref = `sms:?body=${encodeURIComponent(text + ' ' + url)}`;
     if (navigator.share) {
-      navigator.share({ text, url });
+      navigator.share({ text, url }).catch((err: unknown) => {
+        // User dismissed the native share sheet. Not an error.
+        if (err instanceof Error && err.name === 'AbortError') return;
+        // Any other failure: fall back to an SMS intent.
+        window.open(smsHref);
+      });
     } else {
-      window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`);
+      window.open(smsHref);
     }
   };
 
