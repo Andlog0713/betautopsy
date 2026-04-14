@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import AnimatedSection from '@/components/AnimatedSection';
+import SampleStickyBar from '@/components/SampleStickyBar';
 import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from 'lucide-react';
 
 export const revalidate = 3600;
@@ -152,6 +153,7 @@ export default async function SamplePage() {
       </AnimatedSection>
 
       <Footer />
+      <SampleStickyBar />
     </>
   );
 }
