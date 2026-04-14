@@ -57,7 +57,7 @@ export default function QuickQuizClient() {
           emotion_estimate: result?.emotion_estimate,
         }),
       });
-    } catch { /* silent — don't block conversion on lead save */ }
+    } catch { /* silent: don't block conversion on lead save */ }
     setEmailSubmitted(true);
     // Brief "sent" moment, then bridge straight to upload (via signup, since
     // /upload is auth-gated). Email is prefilled on the signup form.
@@ -281,7 +281,7 @@ export default function QuickQuizClient() {
                 Now run the real autopsy.
               </p>
               <p className="text-fg-muted text-sm">
-                The quiz was a sketch. Your bets are the evidence — every pattern priced in dollars.
+                The quiz was a sketch. Your bets are the evidence. Every pattern priced in dollars.
               </p>
             </div>
 
