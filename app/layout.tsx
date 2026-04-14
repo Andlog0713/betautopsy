@@ -36,6 +36,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  verification: {
+    other: {
+      'facebook-domain-verification': '0ch3o93veje4wxu90cj4xvdclpbq6g',
+    },
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
