@@ -144,7 +144,9 @@ export default async function SamplePage() {
             <h2 className="font-extrabold text-2xl md:text-3xl tracking-tight text-fg-bright mb-4">
               Your betting data has a story. Read it.
             </h2>
-            <p className="text-fg-muted font-light mb-8">Free snapshot. Full reports from $9.99. No credit card to start.</p>
+            <p className="text-fg-muted font-light mb-8">
+              Free snapshot. Full reports <span className="line-through opacity-60">$19.99</span> $9.99. 50% off. No credit card to start.
+            </p>
             <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
               Upload your bets
             </Link>
