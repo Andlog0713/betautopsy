@@ -13,7 +13,8 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
   const showVerifyNotice = searchParams.get('verify') === 'true';
-  const [email, setEmail] = useState('');
+  const emailParam = searchParams.get('email') ?? '';
+  const [email, setEmail] = useState(emailParam);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');

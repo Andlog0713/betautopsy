@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import { trackQuizComplete } from '@/lib/tiktok-events';
 
@@ -21,12 +22,38 @@ const QUICK_ACCENTS = [
 type Phase = 'intro' | 'questions' | 'revealing' | 'result';
 
 export default function QuickQuizClient() {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('intro');
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [sliderValue, setSliderValue] = useState<string | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
+  const [email, setEmail] = useState('');
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+
+  const handleEmailSubmit = useCallback(async () => {
+    if (!email.includes('@') || emailSubmitting) return;
+    setEmailSubmitting(true);
+    try {
+      await fetch('/api/quiz-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          archetype: result?.archetype.name,
+          emotion_estimate: result?.emotion_estimate,
+        }),
+      });
+    } catch { /* silent — don't block conversion on lead save */ }
+    setEmailSubmitted(true);
+    // Brief "sent" moment, then bridge straight to upload (via signup, since
+    // /upload is auth-gated). Email is prefilled on the signup form.
+    setTimeout(() => {
+      router.push(`/signup?email=${encodeURIComponent(email)}&next=${encodeURIComponent('/upload')}`);
+    }, 1200);
+  }, [email, emailSubmitting, result, router]);
 
   const accent = QUICK_ACCENTS[Math.min(currentQ, QUICK_ACCENTS.length - 1)];
   const progress = phase === 'questions' ? ((currentQ + 1) / QUICK_QUESTIONS.length) * 100 : 0;
@@ -233,20 +260,54 @@ export default function QuickQuizClient() {
             </div>
           )}
 
-          {/* Bridge to full quiz or signup */}
-          <div className="case-card p-6 text-center space-y-3 border-scalpel/20">
-            <p className="text-fg-bright font-bold text-lg">This was just 5 questions.</p>
-            <p className="text-fg-muted text-sm">
-              The full quiz goes deeper with 13 questions and reveals all your biases, strengths, and watch-outs. Or skip ahead and upload your real bets.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/quiz" className="btn-primary text-sm !px-6 !py-2.5 font-mono">
-                Take the Full Quiz
-              </Link>
-              <Link href="/signup" className="btn-secondary text-sm !px-6 !py-2.5 font-mono">
-                Upload Real Bets, Free
-              </Link>
+          {/* Email capture → upload bridge */}
+          <div className="case-card p-6 text-center space-y-4 border-scalpel/20">
+            <div className="space-y-2">
+              <p className="text-fg-bright font-bold text-lg">
+                See how these patterns show up in your real bets.
+              </p>
+              <p className="text-fg-muted text-sm">
+                The quiz tells you your archetype. Your actual history tells you what it&apos;s costing you — in dollars, bet by bet. Free full report.
+              </p>
             </div>
+
+            {emailSubmitted ? (
+              <div className="py-2 animate-fade-in">
+                <p className="font-mono text-xs text-scalpel tracking-wider">
+                  SENT → OPENING UPLOAD…
+                </p>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleEmailSubmit();
+                }}
+                className="space-y-3"
+              >
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                  inputMode="email"
+                  className="input-field w-full text-center"
+                  disabled={emailSubmitting}
+                />
+                <button
+                  type="submit"
+                  disabled={!email.includes('@') || emailSubmitting}
+                  className="btn-primary w-full font-mono text-sm !py-3 disabled:opacity-50"
+                >
+                  {emailSubmitting ? 'Sending…' : 'Get My Free Report →'}
+                </button>
+                <p className="text-fg-dim text-[10px] font-mono tracking-wider">
+                  NO SPAM · UNSUBSCRIBE ANYTIME
+                </p>
+              </form>
+            )}
           </div>
 
           {/* Share */}
