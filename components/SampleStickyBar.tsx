@@ -96,7 +96,7 @@ export default function SampleStickyBar() {
       {/* Desktop: flex row, value-prop label on left, CTA button on right. */}
       <div className="hidden sm:flex items-center justify-between h-full px-6 max-w-5xl mx-auto">
         <p className="font-mono text-[10px] text-fg-dim tracking-[1.5px] uppercase">
-          FREE SNAPSHOT. 50% OFF FULL REPORTS. NOW $9.99.
+          FREE SNAPSHOT. FULL REPORTS $9.99 (50% OFF).
         </p>
         <Link
           href="/signup"
