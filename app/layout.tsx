@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import TikTokPixel from '@/components/TikTokPixel';
+import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
 import { shouldRequireConsent } from '@/lib/consent-region';
 import NextTopLoader from 'nextjs-toploader';
@@ -113,7 +114,7 @@ export default function RootLayout({
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
         <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
-        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><CookieConsent alreadyGranted={!requireConsent} /></>}
+        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><MetaPixel /><CookieConsent alreadyGranted={!requireConsent} /></>}
         {children}
       </body>
     </html>

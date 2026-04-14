@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isResendConfigured, getResend } from '@/lib/resend';
 import { renderWelcomeEmail } from '@/lib/onboarding-emails';
+import { sendMetaEvent } from '@/lib/meta-capi';
 
 const FROM = 'BetAutopsy <noreply@betautopsy.com>';
 
@@ -124,6 +125,45 @@ export async function GET(request: NextRequest) {
           wasFirstLogin = await maybeFireWelcomeEmail(data.session.user.id, appUrl);
         } catch (emailErr) {
           console.error('Welcome email dispatch failed:', emailErr);
+        }
+      }
+
+      // Fire Meta CAPI CompleteRegistration on first-login only. Additive
+      // to the client-side pixel trackSignup() that fires when the form
+      // is submitted — the two fires happen at different lifecycle
+      // moments (submit vs. email-verified) so we give them the same
+      // event_id shape (`signup-<userId>`) to let Meta dedupe. Client
+      // fire doesn't know the user ID, so dedup is best-effort; worst
+      // case Meta double-counts a first-login, which is acceptable.
+      if (wasFirstLogin && data.session?.user) {
+        try {
+          const userEmail = data.session.user.email ?? null;
+          const ua = request.headers.get('user-agent');
+          const ip =
+            request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+            request.headers.get('x-real-ip') ||
+            null;
+          const fbc = cookieStore.get('_fbc')?.value ?? null;
+          const fbp = cookieStore.get('_fbp')?.value ?? null;
+          await sendMetaEvent({
+            event_name: 'CompleteRegistration',
+            event_id: `signup-${data.session.user.id}`,
+            event_source_url: process.env.NEXT_PUBLIC_APP_URL || origin,
+            user_data: {
+              email: userEmail,
+              client_ip_address: ip,
+              client_user_agent: ua,
+              fbc,
+              fbp,
+            },
+            custom_data: {
+              content_name: 'BetAutopsy Account',
+              currency: 'USD',
+              value: 0,
+            },
+          });
+        } catch (metaErr) {
+          console.error('Meta CAPI CompleteRegistration fire failed:', metaErr);
         }
       }
 

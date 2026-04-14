@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { trackCheckout } from '@/lib/tiktok-events';
+import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import type { AutopsyAnalysis } from '@/types';
 
 interface ProUpsellModalProps {
@@ -87,6 +88,7 @@ export default function ProUpsellModal({
     window.gtag?.('event', 'pro_upsell_click', { report_id: reportId });
     window.gtag?.('event', 'begin_checkout', { value: 19.99, currency: 'USD' });
     trackCheckout('pro', 19.99);
+    trackCheckoutMeta('pro', 19.99);
 
     try {
       const res = await fetch('/api/checkout', {

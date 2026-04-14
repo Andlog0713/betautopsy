@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
 import { trackPurchase, trackSignup } from '@/lib/tiktok-events';
+import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
@@ -82,6 +83,7 @@ export default function DashboardPage() {
       // TikTok pixel.
       window.gtag?.('event', 'sign_up', { method: 'supabase' });
       trackSignup();
+      trackSignupMeta();
       setWelcomePulse(true);
       window.history.replaceState({}, '', '/dashboard');
       const timeout = window.setTimeout(() => setWelcomePulse(false), 3500);
@@ -157,7 +159,10 @@ export default function DashboardPage() {
       // Track TikTok + GA4 purchase event on post-checkout redirect (subscription flow)
       if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
         const price = profileTier === 'pro' ? 19.99 : 0;
-        if (price > 0) trackPurchase(profileTier ?? 'pro', price);
+        if (price > 0) {
+          trackPurchase(profileTier ?? 'pro', price);
+          trackPurchaseMeta(profileTier ?? 'pro', price);
+        }
         window.gtag?.('event', 'purchase', { value: price, currency: 'USD' });
         window.history.replaceState({}, '', '/dashboard');
       }

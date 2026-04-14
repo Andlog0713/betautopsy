@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { trackUpload } from '@/lib/tiktok-events';
+import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
@@ -96,6 +97,7 @@ export default function UploadPage() {
       setResult(data as UploadResponse);
       window.gtag?.('event', 'csv_upload', { bet_count: (data as UploadResponse).bets_imported });
       trackUpload();
+      trackUploadMeta();
       setState('success');
     } catch {
       setError('Upload failed. Please try again.');

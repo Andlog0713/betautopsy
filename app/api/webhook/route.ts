@@ -5,6 +5,7 @@ import type Stripe from 'stripe';
 import { logErrorServer } from '@/lib/log-error-server';
 import { isResendConfigured, getResend } from '@/lib/resend';
 import { renderPaymentFailedEmail } from '@/lib/onboarding-emails';
+import { sendMetaEvent } from '@/lib/meta-capi';
 
 const FROM_EMAIL = 'BetAutopsy <noreply@betautopsy.com>';
 
@@ -124,6 +125,50 @@ export async function POST(request: Request) {
               })
               .eq('id', userId);
           }
+        }
+
+        // Fire Meta CAPI Purchase event (additive to client-side pixel).
+        // Best-effort: swallow failures so the webhook still returns 200 and
+        // Stripe doesn't retry on Meta's account. The DB updates above are
+        // authoritative — attribution is secondary.
+        try {
+          const email =
+            session.customer_details?.email ??
+            session.customer_email ??
+            null;
+          const amountTotal =
+            typeof session.amount_total === 'number'
+              ? session.amount_total / 100
+              : 0;
+          const currency = (session.currency ?? 'usd').toUpperCase();
+          const tier = session.mode === 'subscription' ? 'pro' : 'full';
+          await sendMetaEvent({
+            event_name: 'Purchase',
+            // Stripe session ID is unique & stable — use it as the dedup key
+            // so Meta collapses this with any client-side Purchase fire that
+            // references the same session.
+            event_id: session.id,
+            event_source_url:
+              process.env.NEXT_PUBLIC_APP_URL || 'https://www.betautopsy.com',
+            user_data: {
+              email,
+              // fbc/fbp cookies aren't available in a Stripe-initiated POST;
+              // Meta will attribute via email hash + event_id dedup instead.
+            },
+            custom_data: {
+              currency,
+              value: amountTotal,
+              content_name: `BetAutopsy ${tier}`,
+              content_ids: [tier],
+              content_type: 'product',
+            },
+          });
+        } catch (metaErr) {
+          console.error('Meta CAPI Purchase fire failed:', metaErr);
+          logErrorServer(metaErr, {
+            path: '/api/webhook',
+            metadata: { event_type: 'checkout.session.completed', stage: 'meta_capi' },
+          });
         }
         break;
       }

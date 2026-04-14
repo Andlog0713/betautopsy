@@ -15,6 +15,7 @@ import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, Progress
 import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { trackPurchase } from '@/lib/tiktok-events';
+import { trackPurchase as trackPurchaseMeta } from '@/lib/meta-events';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
 function daysAgo(n: number): string {
@@ -70,6 +71,7 @@ export default function ReportsPage() {
       // optimize for actual buyers — only "started checkout" signals.
       window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
       trackPurchase('report', 9.99);
+      trackPurchaseMeta('report', 9.99);
       const reportId = searchParams.get('id');
       if (reportId) setPaidSnapshotId(reportId);
       const url = new URL(window.location.href);

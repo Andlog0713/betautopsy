@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import { trackQuizComplete } from '@/lib/tiktok-events';
+import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
 
 // 5 questions that cover all scoring dimensions with minimal overlap
 const QUICK_QUESTION_IDS = ['q3', 'q1', 'q5', 'q6', 'q14'];
@@ -85,6 +86,7 @@ export default function QuickQuizClient() {
         const r = calculateQuizResult(newAnswers);
         setResult(r);
         trackQuizComplete(r.archetype.name);
+        trackQuizCompleteMeta(r.archetype.name);
         setPhase('revealing');
         setTimeout(() => setPhase('result'), 2000);
       }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { trackSignup } from '@/lib/tiktok-events';
+import { trackSignup as trackSignupMeta } from '@/lib/meta-events';
 import { createClient } from '@/lib/supabase';
 import OAuthButtons from '@/components/OAuthButtons';
 
@@ -48,6 +49,7 @@ function SignupForm() {
     }
 
     trackSignup();
+    trackSignupMeta();
     router.push(next || '/dashboard?welcome=true');
     router.refresh();
   }
