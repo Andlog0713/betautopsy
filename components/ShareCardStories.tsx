@@ -100,10 +100,10 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
           <div style={{ fontSize: 55, color: '#00C9A7', marginBottom: 50 }}>{insight.contextLabel}</div>
           <div style={{ fontSize: 320, fontWeight: 900, lineHeight: 0.85, letterSpacing: -10 }}>{insight.heroStat}</div>
           <div style={{ fontSize: 80, fontWeight: 700, marginTop: 50, lineHeight: 1.3 }}>{insight.heroLabel}</div>
-          <div style={{ fontSize: 55, color: '#848D9A', marginTop: 70, lineHeight: 1.5 }}>{insight.verdict}</div>
+          <div style={{ fontSize: 55, color: '#F0F2F5', marginTop: 70, lineHeight: 1.5 }}>{insight.verdict}</div>
         </div>
         <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 40, color: '#848D9A' }}>betautopsy.com</div>
+        <div style={{ fontSize: 40, color: '#F0F2F5' }}>betautopsy.com</div>
       </div>
     );
   }
@@ -125,7 +125,7 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <div style={{ fontSize: 50, color: '#00C9A7', marginBottom: 30 }}>{"When you're disciplined"}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 30 }}>
           <div style={{ fontSize: 160, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>{disc.bets}</div>
-          <div style={{ fontSize: 60, fontWeight: 400, color: '#848D9A' }}>bets</div>
+          <div style={{ fontSize: 60, fontWeight: 400, color: '#F0F2F5' }}>bets</div>
         </div>
         <div style={{ fontSize: 80, fontWeight: 700, color: '#00C9A7', marginTop: 10 }}>
           {disc.roi >= 0 ? '+' : ''}{disc.roi}% ROI
@@ -137,19 +137,19 @@ export const StorySlideBehavioral = forwardRef<HTMLDivElement, StorySlideProps>(
         <div style={{ fontSize: 50, color: '#C4463A', marginTop: 80, marginBottom: 30 }}>{"When you're emotional"}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 30 }}>
           <div style={{ fontSize: 160, fontWeight: 900, lineHeight: 0.9, letterSpacing: -4 }}>{emo.bets}</div>
-          <div style={{ fontSize: 60, fontWeight: 400, color: '#848D9A' }}>bets</div>
+          <div style={{ fontSize: 60, fontWeight: 400, color: '#F0F2F5' }}>bets</div>
         </div>
         <div style={{ fontSize: 80, fontWeight: 700, color: '#C4463A', marginTop: 10 }}>
           {emo.roi >= 0 ? '+' : ''}{emo.roi}% ROI
         </div>
 
         {/* Punchline */}
-        <div style={{ fontSize: 55, color: '#848D9A', marginTop: 80, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 55, color: '#F0F2F5', marginTop: 80, lineHeight: 1.5 }}>
           {punchline}
         </div>
       </div>
       <div style={{ flex: 0.8 }} />
-      <div style={{ fontSize: 40, color: '#848D9A' }}>betautopsy.com</div>
+      <div style={{ fontSize: 40, color: '#F0F2F5' }}>betautopsy.com</div>
     </div>
   );
 });
@@ -185,7 +185,7 @@ export const StorySlideReceipt = forwardRef<HTMLDivElement, StorySlideProps>(({ 
         )}
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ fontSize: 40, color: 'rgba(255,255,255,0.35)' }}>betautopsy.com</div>
+      <div style={{ fontSize: 40, color: 'rgba(255,255,255,0.75)' }}>betautopsy.com</div>
     </div>
   );
 });

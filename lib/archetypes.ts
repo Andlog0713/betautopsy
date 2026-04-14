@@ -34,13 +34,13 @@ export const ARCHETYPES: Record<string, Archetype> = {
     name: 'The Grinder',
     description: 'Consistent process and sizing. The discipline is there, now find the edge.',
     oneLiner: 'Disciplined process. Searching for edge.',
-    color: '#8B95A5', // fg-muted
+    color: '#3B82F6', // vibrant blue — disciplined, focused, cool-headed
   },
   gut_bettor: {
     name: 'The Gut Bettor',
     description: 'Betting on instinct across the board. No clear edge in any category yet.',
     oneLiner: 'Betting on instinct. No clear edge.',
-    color: '#7A8494', // fg-dim
+    color: '#9333EA', // vibrant purple — intuition, impulsive, mystical
   },
 };
 

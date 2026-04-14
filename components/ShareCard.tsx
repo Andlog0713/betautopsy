@@ -92,7 +92,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
               <div style={{ fontSize: 22, color: '#00C9A7', marginBottom: 10, fontWeight: 600 }}>{"When you're disciplined"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.disciplinedRecord!.bets}</div>
-                <div style={{ fontSize: 28, color: '#848D9A' }}>bets</div>
+                <div style={{ fontSize: 28, color: '#F0F2F5' }}>bets</div>
               </div>
               <div style={{ fontSize: 36, fontWeight: 700, color: '#00C9A7', marginTop: 4 }}>
                 {data.disciplinedRecord!.roi >= 0 ? '+' : ''}{data.disciplinedRecord!.roi}% ROI
@@ -102,7 +102,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
               <div style={{ fontSize: 22, color: '#C4463A', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.emotionalRecord!.bets}</div>
-                <div style={{ fontSize: 28, color: '#848D9A' }}>bets</div>
+                <div style={{ fontSize: 28, color: '#F0F2F5' }}>bets</div>
               </div>
               <div style={{ fontSize: 36, fontWeight: 700, color: '#C4463A', marginTop: 4 }}>
                 {data.emotionalRecord!.roi >= 0 ? '+' : ''}{data.emotionalRecord!.roi}% ROI

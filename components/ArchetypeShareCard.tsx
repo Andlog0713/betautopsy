@@ -22,7 +22,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
     // Determine if archetype color is light enough to need dark text
     const needsDarkText = arch.color === '#C9A04E' || arch.color === '#00C9A7';
     const leftText = needsDarkText ? '#0D1117' : '#F0F2F5';
-    const leftTextMuted = needsDarkText ? 'rgba(13,17,23,0.7)' : 'rgba(240,242,245,0.7)';
+    const leftTextMuted = needsDarkText ? 'rgba(13,17,23,0.85)' : 'rgba(240,242,245,0.85)';
 
     return (
       <div
@@ -107,7 +107,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                 style={{
                   fontFamily: FONT_MONO,
                   fontSize: 14,
-                  color: '#7A8494',
+                  color: '#F0F2F5',
                   letterSpacing: 3,
                   marginBottom: 8,
                 }}
@@ -133,7 +133,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                 style={{
                   fontFamily: FONT_MONO,
                   fontSize: 14,
-                  color: '#7A8494',
+                  color: '#F0F2F5',
                   letterSpacing: 3,
                   marginBottom: 8,
                 }}
@@ -156,7 +156,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                   style={{
                     fontFamily: FONT_MONO,
                     fontSize: 24,
-                    color: '#5A6474',
+                    color: '#F0F2F5',
                   }}
                 >
                   / 100
