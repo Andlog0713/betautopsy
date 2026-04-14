@@ -16,5 +16,18 @@
       "path": "/api/weekend-autopsy",
       "schedule": "0 14 * * 1"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(www\\.)?mysharpscore\\.com"
+        }
+      ],
+      "destination": "https://betautopsy.com/quiz/quick",
+      "permanent": false
+    }
   ]
 }
