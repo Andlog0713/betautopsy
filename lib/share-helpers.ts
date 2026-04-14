@@ -134,9 +134,15 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
   const roasts: RoastStat[] = [];
 
-  // 1. Most-bet losing team/description pattern
+  // 1. Most-bet losing team/description pattern.
+  // Skip parlays — their descriptions are multi-team aggregates like
+  // "3-leg parlay various teams" and don't represent a team-loyalty pattern.
+  // Feeding them into this aggregation produces nonsense roasts like
+  // "Bet on 3-leg parlays various 26 times." Parlay patterns get their own
+  // dedicated roast further down (section 3).
   const descCounts = new Map<string, { wins: number; losses: number; total: number }>();
   settled.forEach((b) => {
+    if (b.bet_type === 'parlay' || (b.parlay_legs && b.parlay_legs > 1)) return;
     let key = b.description.split(' | ')[0].trim();
     if (key.length > 30) key = key.slice(0, 28);
     const c = descCounts.get(key) ?? { wins: 0, losses: 0, total: 0 };
@@ -232,5 +238,20 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
     });
   }
 
-  return roasts.slice(0, 3);
+  // Defensive filter: drop any roast whose text contains template-interpolation
+  // bleed-through words. Belt-and-suspenders after the parlay-skip fix above —
+  // protects against future template bugs even if new aggregation logic is
+  // added later that reintroduces a bad key.
+  const BAD_ROAST_PATTERN = /\b(various|multiple|undefined|null|n\/a)\b/i;
+  const clean = roasts.filter((r) => !BAD_ROAST_PATTERN.test(r.text));
+
+  // If everything got filtered, surface a generic fallback so the Receipts
+  // slide is never empty.
+  if (clean.length === 0 && settled.length > 0) {
+    clean.push({
+      text: `${settled.length} bets placed. The receipts tell their own story.`,
+    });
+  }
+
+  return clean.slice(0, 3);
 }

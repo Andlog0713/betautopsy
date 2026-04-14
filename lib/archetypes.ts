@@ -49,7 +49,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Disciplined process. Searching for edge.',
     narrative:
       "You've figured out something most bettors haven't: process matters more than any single result. Your sizing is controlled, your emotions aren't running the show, and you're not blowing up on longshot volume. The discipline is already there. What you're looking for now is a sharper edge to apply it to.",
-    color: '#8B95A5', // fg-muted
+    color: '#3B82F6', // vibrant blue — disciplined, focused, cool-headed
   },
   gut_bettor: {
     name: 'The Gut Bettor',
@@ -57,7 +57,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Betting on instinct. No clear edge.',
     narrative:
       "Your betting doesn't follow a pattern yet, and without one you can't tell whether your results are skill, variance, or luck. The autopsy gives you a baseline to measure against. Small adjustments to how you pick spots and size bets will tell you fast what's working -- but right now, nothing does.",
-    color: '#7A8494', // fg-dim
+    color: '#9333EA', // vibrant purple — intuition, impulsive, mystical
   },
 };
 

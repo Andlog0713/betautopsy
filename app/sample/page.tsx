@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import AnimatedSection from '@/components/AnimatedSection';
+import SampleStickyBar from '@/components/SampleStickyBar';
 import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from 'lucide-react';
 
 export const revalidate = 3600;
@@ -31,18 +32,14 @@ export const metadata: Metadata = {
   },
 };
 
-async function loadPlatformMetrics(): Promise<{ bets: number; reports: number } | null> {
+async function loadPlatformMetrics(): Promise<{ bets: number } | null> {
   try {
     const supabase = createServiceRoleClient();
-    const [betsRes, reportsRes] = await Promise.all([
-      supabase.from('bets').select('id', { count: 'exact', head: true }),
-      supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }),
-    ]);
-    if (betsRes.error || reportsRes.error) return null;
+    const betsRes = await supabase.from('bets').select('id', { count: 'exact', head: true });
+    if (betsRes.error) return null;
     const bets = betsRes.count ?? 0;
-    const reports = reportsRes.count ?? 0;
-    if (bets <= 0 || reports <= 0) return null;
-    return { bets, reports };
+    if (bets <= 0) return null;
+    return { bets };
   } catch {
     return null;
   }
@@ -128,14 +125,12 @@ export default async function SamplePage() {
       {metrics && (
         <AnimatedSection delay={0.05}>
           <section className="py-16">
-            <div className="max-w-5xl mx-auto px-6 flex justify-center gap-16">
-              <div className="text-center">
-                <div className="font-mono text-3xl font-bold text-fg-bright">{metrics.bets.toLocaleString()}</div>
-                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">Bets Analyzed</div>
+            <div className="max-w-5xl mx-auto px-6 text-center">
+              <div className="font-mono text-5xl md:text-6xl font-bold text-fg-bright">
+                {metrics.bets.toLocaleString()}
               </div>
-              <div className="text-center">
-                <div className="font-mono text-3xl font-bold text-fg-bright">{metrics.reports.toLocaleString()}</div>
-                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">Reports Generated</div>
+              <div className="font-mono text-xs text-fg-dim tracking-[2px] uppercase mt-3">
+                Bets Analyzed
               </div>
             </div>
           </section>
@@ -158,6 +153,7 @@ export default async function SamplePage() {
       </AnimatedSection>
 
       <Footer />
+      <SampleStickyBar />
     </>
   );
 }
