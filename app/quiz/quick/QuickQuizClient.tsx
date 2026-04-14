@@ -32,9 +32,20 @@ export default function QuickQuizClient() {
   const [email, setEmail] = useState('');
   const [emailSubmitting, setEmailSubmitting] = useState(false);
   const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const handleEmailSubmit = useCallback(async () => {
-    if (!email.includes('@') || emailSubmitting) return;
+    if (emailSubmitting) return;
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError('Enter your email to continue.');
+      return;
+    }
+    if (!trimmed.includes('@') || !trimmed.includes('.')) {
+      setEmailError('That doesn\u2019t look like a valid email.');
+      return;
+    }
+    setEmailError('');
     setEmailSubmitting(true);
     try {
       await fetch('/api/quiz-lead', {
@@ -263,11 +274,14 @@ export default function QuickQuizClient() {
           {/* Email capture → upload bridge */}
           <div className="case-card p-6 text-center space-y-4 border-scalpel/20">
             <div className="space-y-2">
+              <p className="font-mono text-[10px] text-fg-dim tracking-widest">
+                NEXT STEP
+              </p>
               <p className="text-fg-bright font-bold text-lg">
-                See how these patterns show up in your real bets.
+                Now run the real autopsy.
               </p>
               <p className="text-fg-muted text-sm">
-                The quiz tells you your archetype. Your actual history tells you what it&apos;s costing you — in dollars, bet by bet. Free full report.
+                The quiz was a sketch. Your bets are the evidence — every pattern priced in dollars.
               </p>
             </div>
 
@@ -283,25 +297,38 @@ export default function QuickQuizClient() {
                   e.preventDefault();
                   handleEmailSubmit();
                 }}
+                noValidate
                 className="space-y-3"
               >
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError('');
+                  }}
                   placeholder="you@example.com"
-                  required
                   autoComplete="email"
                   inputMode="email"
-                  className="input-field w-full text-center"
+                  className={`input-field w-full text-center ${emailError ? 'border-bleed' : ''}`}
                   disabled={emailSubmitting}
+                  aria-invalid={emailError ? true : undefined}
+                  aria-describedby={emailError ? 'quiz-email-error' : undefined}
                 />
+                {emailError && (
+                  <p
+                    id="quiz-email-error"
+                    className="text-bleed text-xs font-mono text-center animate-fade-in"
+                  >
+                    {emailError}
+                  </p>
+                )}
                 <button
                   type="submit"
-                  disabled={!email.includes('@') || emailSubmitting}
+                  disabled={emailSubmitting}
                   className="btn-primary w-full font-mono text-sm !py-3 disabled:opacity-50"
                 >
-                  {emailSubmitting ? 'Sending…' : 'Get My Free Report →'}
+                  {emailSubmitting ? 'Opening…' : 'Run My Autopsy →'}
                 </button>
                 <p className="text-fg-dim text-[10px] font-mono tracking-wider">
                   NO SPAM · UNSUBSCRIBE ANYTIME
