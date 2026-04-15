@@ -15,6 +15,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
+  // Diagnostic: fires once when the login page first mounts.
+  // If we see this in the Xcode console, React has hydrated and
+  // this component is alive. If we don't, either the user never
+  // navigated to /login (still on the landing page with a broken
+  // link) or the JS bundle failed to hydrate.
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[login-page] mounted');
+  }, []);
+
   // Reverse auth gate: if the user is already signed in and their
   // email is verified (or they're an OAuth user), bounce to the
   // dashboard. This replaces the auth-route redirect that
@@ -43,6 +53,12 @@ export default function LoginPage() {
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
+    // Diagnostic: fires on form submit, before any state change.
+    // If we see `[login-form] sign-in button clicked` but not
+    // this one, the `<form onSubmit>` handler isn't being wired
+    // up by React.
+    // eslint-disable-next-line no-console
+    console.log('[auth] handleSubmit START');
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -178,7 +194,20 @@ export default function LoginPage() {
           <p className="text-bleed text-sm font-mono">{error}</p>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full font-mono">
+        <button
+          type="submit"
+          disabled={loading}
+          onClick={() => {
+            // Diagnostic: fires on raw button click, independent of
+            // form-submit handler. If we see this log but not
+            // `[auth] handleSubmit START`, something is preventing
+            // the form submission from reaching React's synthetic
+            // event system.
+            // eslint-disable-next-line no-console
+            console.log('[login-form] sign-in button clicked');
+          }}
+          className="btn-primary w-full font-mono"
+        >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
