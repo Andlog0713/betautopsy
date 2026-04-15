@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
@@ -13,6 +13,33 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  // Reverse auth gate: if the user is already signed in and their
+  // email is verified (or they're an OAuth user), bounce to the
+  // dashboard. This replaces the auth-route redirect that
+  // `middleware.ts` performs on web, for the mobile (static export)
+  // build where middleware doesn't run. On web this is a harmless
+  // double-check on top of middleware.
+  //
+  // We deliberately do NOT redirect unverified email-signup users —
+  // they need to be able to hit /login to resend confirmation /
+  // recover their password without being bounced back to
+  // /signup?verify=true in a loop.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled || !user) return;
+      const isOAuth = user.app_metadata?.provider === 'google';
+      if (user.email_confirmed_at || isOAuth) {
+        router.replace('/dashboard');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

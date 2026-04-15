@@ -7,6 +7,7 @@ import { Logo } from '@/components/logo';
 import { createClient } from '@/lib/supabase';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
 import FeedbackButton from '@/components/FeedbackButton';
+import AuthGuard from '@/components/AuthGuard';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Profile } from '@/types';
 import {
@@ -73,10 +74,17 @@ export default function DashboardShell({
   }, [pathname]);
 
   if (loading) {
+    // Wrapped in `<AuthGuard>` so unauthenticated mobile users never
+    // see this "loading profile" frame — they get redirected to
+    // `/login` from inside the guard instead. On web the middleware
+    // has already verified the session, so this is a harmless pass-
+    // through.
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
-      </div>
+      <AuthGuard>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
+        </div>
+      </AuthGuard>
     );
   }
 
@@ -86,6 +94,7 @@ export default function DashboardShell({
   const isActive = (href: string) => pathname === href;
 
   return (
+    <AuthGuard>
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* ── Mobile header ── */}
@@ -372,5 +381,6 @@ export default function DashboardShell({
       <FeedbackButton />
     </div>
     </PrivacyProvider>
+    </AuthGuard>
   );
 }

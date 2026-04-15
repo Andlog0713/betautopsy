@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
@@ -19,6 +19,34 @@ function SignupForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // Reverse auth gate — replaces middleware's auth-route redirect
+  // on the mobile (static export) build, harmless double-check on
+  // web. We skip the redirect when:
+  //
+  //   1. `?verify=true` is set — this page is doing double duty as
+  //      the email-verification notice for users who were bounced
+  //      here by the protected-route guard. Bouncing them onward
+  //      to /dashboard would just bounce them back in a loop.
+  //   2. The user is authenticated but their email isn't confirmed
+  //      and they're not an OAuth user — same reason as #1, they
+  //      belong on this page until they verify.
+  useEffect(() => {
+    if (showVerifyNotice) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled || !user) return;
+      const isOAuth = user.app_metadata?.provider === 'google';
+      if (user.email_confirmed_at || isOAuth) {
+        router.replace(next || '/dashboard');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, showVerifyNotice, next]);
 
   const isPricingFlow = next?.includes('pricing');
 
