@@ -18,6 +18,24 @@ async function headers() {
       ],
     },
     {
+      // CORS: allow the Capacitor native webview (served from a
+      // `capacitor://` or `https://localhost` origin, depending on
+      // platform) to call the hosted API over cross-origin fetch.
+      // Auth is still enforced per-request by
+      // `getAuthenticatedClient()` — either via the session cookie
+      // (web) or the `Authorization: Bearer <token>` header
+      // (mobile). `*` for the origin is intentional: the API is
+      // stateless per request and every endpoint authenticates on
+      // its own, so there is no cookie/session to protect via a
+      // narrow allowlist.
+      source: '/api/:path*',
+      headers: [
+        { key: 'Access-Control-Allow-Origin', value: '*' },
+        { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
+        { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+      ],
+    },
+    {
       source: '/blog/:path*',
       headers: [
         { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200' },

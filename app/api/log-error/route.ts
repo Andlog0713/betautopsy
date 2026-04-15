@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 
 export async function POST(request: Request) {
   try {
@@ -10,11 +10,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'message required' }, { status: 400 });
     }
 
-    // Use the session client only to resolve the caller's user id.
+    // Best-effort resolve the caller's user id via the shared auth
+    // helper. Supports both the web cookie path and the mobile
+    // Bearer-token path. Failure is intentionally tolerated —
+    // anonymous error reports are valid, the row just gets
+    // `user_id = null`, which the service-role insert below is
+    // permitted to write.
     let userId: string | null = null;
     try {
-      const sessionSupabase = await createServerSupabaseClient();
-      const { data: { user } } = await sessionSupabase.auth.getUser();
+      const { user } = await getAuthenticatedClient(request);
       userId = user?.id ?? null;
     } catch {
       // Not authenticated — that's fine, row will be user_id null.

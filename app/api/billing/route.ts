@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createCustomerPortalSession } from '@/lib/stripe';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { Profile } from '@/types';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { supabase, user, error: authError } = await getAuthenticatedClient(request);
 
-    if (authError || !user) {
+    if (authError || !user || !supabase) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

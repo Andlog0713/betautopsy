@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from "@sentry/nextjs";
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { classifyArchetype } from '@/lib/archetypes';
@@ -10,15 +10,17 @@ import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
 export async function POST(request: Request) {
   // ── Pre-stream validation (returns JSON errors) ──
-  let supabase;
+  // Resolve session via cookie (web) or Bearer token (mobile). Any
+  // failure path — thrown cookie error, missing header, invalid
+  // token, no user — collapses to a 401.
+  let authResult;
   try {
-    supabase = await createServerSupabaseClient();
+    authResult = await getAuthenticatedClient(request);
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const { supabase, user, error: authError } = authResult;
+  if (authError || !user || !supabase) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

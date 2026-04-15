@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { getOrCreateCustomer, createSubscriptionCheckoutSession, createReportCheckoutSession, isStripeConfigured } from '@/lib/stripe';
 import type { Profile } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
@@ -33,10 +33,9 @@ export async function POST(request: Request) {
     if (!isStripeConfigured()) {
       return NextResponse.json({ error: 'Payments are not configured yet.' }, { status: 503 });
     }
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { supabase, user, error: authError } = await getAuthenticatedClient(request);
 
-    if (authError || !user) {
+    if (authError || !user || !supabase) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
