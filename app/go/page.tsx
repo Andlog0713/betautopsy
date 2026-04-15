@@ -4,6 +4,7 @@ import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
 import RealtimeActivity from '@/components/RealtimeActivity';
 import GoPageView from './GoPageView';
+import GoSignupLink from './GoSignupLink';
 
 // Case file number is derived from the ISR cache window so it stays
 // stable across visitors within the hour. Mobile builds (`output:
@@ -49,24 +50,12 @@ function getCaseFileNumber(): string {
   return String(10000 + (h % 90000));
 }
 
-// Preserve ALL incoming query params on the signup CTA so UTM tags, ad-click
-// IDs (fbclid, ttclid, gclid), and custom attribution params survive the
-// landing-page bounce. Passing everything (not just utm_*) is intentional.
-type SearchParams = Record<string, string | string[] | undefined>;
-
-function buildSignupHref(searchParams: SearchParams): string {
-  const qs = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      for (const v of value) qs.append(key, v);
-    } else {
-      qs.set(key, value);
-    }
-  }
-  const s = qs.toString();
-  return s ? `/signup?${s}` : '/signup';
-}
+// UTM / ad-click ID preservation on the signup CTA used to happen
+// here via a `searchParams` prop on the Server Component. That
+// pattern marks the page dynamic, which `output: 'export'` (the
+// Capacitor mobile build) rejects. The logic now lives in
+// `./GoSignupLink.tsx`, a client component that reads
+// `useSearchParams()` after hydration.
 
 const ANXIETY_CARDS = [
   {
@@ -137,12 +126,7 @@ function CheckIcon() {
   );
 }
 
-export default function GoLandingPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const signupHref = buildSignupHref(searchParams);
+export default function GoLandingPage() {
   const caseNum = getCaseFileNumber();
 
   // `<RealtimeActivity>` fetches live ticker items from
@@ -161,12 +145,9 @@ export default function GoLandingPage({
           <Link href="/" aria-label="BetAutopsy home">
             <Logo size="xs" variant="horizontal" theme="dark" />
           </Link>
-          <Link
-            href={signupHref}
-            className="btn-primary text-sm !px-5 !py-2 !min-h-0"
-          >
+          <GoSignupLink className="btn-primary text-sm !px-5 !py-2 !min-h-0">
             Get Your Free Report
-          </Link>
+          </GoSignupLink>
         </div>
       </header>
 
@@ -189,12 +170,9 @@ export default function GoLandingPage({
             Upload your history. Get a 5-chapter forensic report in 60 seconds.
           </p>
           <div className="mt-7">
-            <Link
-              href={signupHref}
-              className="btn-primary text-base !px-10 !py-3.5"
-            >
+            <GoSignupLink className="btn-primary text-base !px-10 !py-3.5">
               Get Your Free Report
-            </Link>
+            </GoSignupLink>
           </div>
           <p className="mt-3 text-fg-dim text-xs font-mono">
             No credit card. Takes 2 minutes.
@@ -234,12 +212,9 @@ export default function GoLandingPage({
 
       {/* ═══ MID-PAGE CTA ═══ */}
       <section className="pb-4 text-center px-4">
-        <Link
-          href={signupHref}
-          className="btn-primary text-base !px-10 !py-3.5"
-        >
+        <GoSignupLink className="btn-primary text-base !px-10 !py-3.5">
           Get Your Free Report
-        </Link>
+        </GoSignupLink>
       </section>
 
       {/* ═══ HOW IT WORKS ═══ */}
@@ -470,12 +445,9 @@ export default function GoLandingPage({
             Most of it is behavioral, not bad luck.
           </p>
           <div className="mt-7">
-            <Link
-              href={signupHref}
-              className="btn-primary text-base !px-10 !py-3.5"
-            >
+            <GoSignupLink className="btn-primary text-base !px-10 !py-3.5">
               Get Your Free Report
-            </Link>
+            </GoSignupLink>
           </div>
           <p className="mt-3 text-fg-dim text-xs font-mono">
             No credit card. Takes 2 minutes.
