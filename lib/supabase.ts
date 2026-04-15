@@ -25,10 +25,15 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 // SSR / prerender, which is correct — cookie-based auth is the
 // right choice there.
 
+// Structured cast (matching `lib/platform.ts`) avoids an `any`
+// assertion that this project's ESLint config doesn't know how
+// to disable.
+type CapacitorGlobal = {
+  Capacitor?: { isNativePlatform?: () => boolean };
+};
 const isCapacitor =
   typeof window !== 'undefined' &&
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  !!(window as any).Capacitor?.isNativePlatform?.();
+  !!(window as unknown as CapacitorGlobal).Capacitor?.isNativePlatform?.();
 
 if (typeof window !== 'undefined') {
   // Intentional console.log — this is a debug signal we want
