@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "NEXT_PUBLIC_BUILD_TARGET=mobile next build",
+    "build:mobile": "sh scripts/build-mobile.sh",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
