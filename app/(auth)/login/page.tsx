@@ -48,17 +48,54 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    // Debug log for the mobile (Capacitor) build, which hung
-    // silently at this step until lib/supabase.ts switched to
-    // the localStorage-backed client. Visible in Xcode console
-    // on native, and browser devtools on web.
+    // Verbose logging for the Capacitor bring-up: we want a log
+    // line before AND after the call so we can tell the
+    // difference between "never fired" and "fired but hung". Also
+    // wrap in try/catch so any thrown error surfaces in the
+    // Xcode console instead of being swallowed by the await.
+    // Promise.race against a 15s timeout means a hung SDK call
+    // eventually surfaces a readable error instead of leaving
+    // the button stuck on "Signing in..." forever.
     // eslint-disable-next-line no-console
-    console.log('[auth] signInWithPassword result:', signInError || 'success');
+    console.log('[auth] calling signInWithPassword...');
+
+    let signInError: Error | null = null;
+    try {
+      const AUTH_TIMEOUT_MS = 15_000;
+      const authPromise = supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      const timeoutPromise = new Promise<{
+        data: null;
+        error: Error;
+      }>((resolve) =>
+        setTimeout(
+          () =>
+            resolve({
+              data: null,
+              error: new Error(
+                `[auth] timeout after ${AUTH_TIMEOUT_MS}ms — the Supabase auth endpoint did not respond`
+              ),
+            }),
+          AUTH_TIMEOUT_MS
+        )
+      );
+      const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+      // eslint-disable-next-line no-console
+      console.log(
+        '[auth] signInWithPassword result:',
+        error ? error.message : 'success',
+        data?.user?.email ?? ''
+      );
+      signInError = error as Error | null;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[auth] EXCEPTION:', e);
+      signInError =
+        e instanceof Error ? e : new Error('Unknown auth exception');
+    }
 
     if (signInError) {
       const msg = signInError.message.toLowerCase().includes('email not confirmed')

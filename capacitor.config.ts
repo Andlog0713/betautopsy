@@ -9,13 +9,39 @@ const config: CapacitorConfig = {
   // bundled assets.
   webDir: 'out',
   server: {
-    // Custom URL scheme so `https://betautopsy.com` links opened
-    // inside the app map to the bundled webview instead of trying
-    // to navigate to the hosted origin (where the user would lose
-    // their in-app state). Outbound API calls go to the real origin
-    // via `lib/api-client.ts`'s `getBaseUrl()` which is
-    // independent of this scheme.
-    iosScheme: 'betautopsy',
+    // Serve the bundled webview from `https://localhost` instead of
+    // a custom URL scheme like `betautopsy://localhost`. Rationale:
+    //
+    //   WKWebView at a custom URL scheme reports its origin as
+    //   `null` (or the raw scheme), which breaks cross-origin
+    //   `fetch()` to upstream APIs that require a real HTTPS
+    //   origin for CORS — including Supabase's auth server. The
+    //   first call to `supabase.auth.signInWithPassword` then
+    //   hangs indefinitely because the CORS preflight never
+    //   returns.
+    //
+    //   Using `iosScheme: 'https'` + `hostname: 'localhost'`
+    //   makes WKWebView load the bundle from `https://localhost`,
+    //   which has standard HTTPS CORS semantics and is what every
+    //   production Capacitor + Supabase app uses. Cookies also
+    //   start working at this scheme, but we still prefer the
+    //   localStorage-backed Supabase client for Capacitor (set
+    //   up in `lib/supabase.ts`) because the behavior is more
+    //   consistent across Capacitor upgrades.
+    //
+    // `allowNavigation` whitelists hosts the webview is allowed
+    // to navigate to externally (e.g. following a real-world link
+    // back to the hosted web app, or a Stripe checkout redirect).
+    // Does NOT govern `fetch()` calls — those are always allowed
+    // outbound.
+    hostname: 'localhost',
+    iosScheme: 'https',
+    androidScheme: 'https',
+    allowNavigation: [
+      '*.supabase.co',
+      'betautopsy.com',
+      'www.betautopsy.com',
+    ],
   },
   plugins: {
     SplashScreen: {
@@ -48,3 +74,4 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
