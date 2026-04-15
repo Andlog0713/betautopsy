@@ -11,6 +11,7 @@ import { Toaster } from 'sonner';
 import { jakarta, ibmPlexMono } from './fonts';
 import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import SplashHider from '@/components/SplashHider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -133,6 +134,13 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-scalpel focus:text-base focus:px-4 focus:py-2 focus:rounded-sm focus:text-sm focus:font-medium">
           Skip to content
         </a>
+        {/*
+         * Fires `hideSplashScreen()` exactly once on first mount
+         * (Capacitor only — no-op on web). Must sit above
+         * `{children}` so it mounts as part of the initial React
+         * tree, not gated behind route transitions.
+         */}
+        <SplashHider />
         <ScrollToTop />
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
