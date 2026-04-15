@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
+import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
 
 function SignupForm() {
@@ -152,17 +153,27 @@ function SignupForm() {
           on /dashboard?welcome=true so the dashboard's first-login useEffect
           fires CompleteRegistration on TikTok + Meta. We only set this
           default on the SIGNUP page — /login passes no next so returning
-          users don't keep re-triggering the welcome banner. */}
-      <OAuthButtons next={next || '/dashboard?welcome=true'} />
+          users don't keep re-triggering the welcome banner.
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border-subtle" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-surface-1 px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
-        </div>
-      </div>
+          OAuth is hidden in the Capacitor native app — the
+          `/auth/callback` redirect target is excluded from the
+          mobile build entirely and there's no Capacitor deep-link
+          listener to catch the return URL yet. Email signup is the
+          only supported mobile path until that's wired up. */}
+      {!isMobileApp() && (
+        <>
+          <OAuthButtons next={next || '/dashboard?welcome=true'} />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border-subtle" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-surface-1 px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

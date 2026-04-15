@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
 
 export default function LoginPage() {
@@ -52,6 +53,13 @@ export default function LoginPage() {
       password,
     });
 
+    // Debug log for the mobile (Capacitor) build, which hung
+    // silently at this step until lib/supabase.ts switched to
+    // the localStorage-backed client. Visible in Xcode console
+    // on native, and browser devtools on web.
+    // eslint-disable-next-line no-console
+    console.log('[auth] signInWithPassword result:', signInError || 'success');
+
     if (signInError) {
       const msg = signInError.message.toLowerCase().includes('email not confirmed')
         ? 'Please confirm your email first. Check your inbox for the confirmation link.'
@@ -73,16 +81,30 @@ export default function LoginPage() {
       <p className="text-fg-muted text-sm text-center mb-2">Your betting behavior doesn&apos;t lie. Let&apos;s see what&apos;s changed.</p>
       <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Welcome back</h2>
 
-      <OAuthButtons />
+      {/*
+       * OAuth flow (Google / Discord) is hidden in the Capacitor
+       * native app. The redirect lands on `/auth/callback`, which
+       * is excluded from the mobile build entirely by
+       * `scripts/build-mobile.sh`, so there would be nowhere for
+       * the OAuth provider to send the user back to. We'll wire
+       * this up properly later via Capacitor's App plugin deep-
+       * link listener + a native URL scheme redirect. Until then,
+       * email/password is the only supported path on mobile.
+       */}
+      {!isMobileApp() && (
+        <>
+          <OAuthButtons />
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border-subtle" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-surface-1 px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
-        </div>
-      </div>
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border-subtle" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-surface-1 px-3 font-mono text-[10px] text-fg-dim tracking-wider">OR</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
