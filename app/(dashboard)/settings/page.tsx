@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { triggerHaptic } from '@/lib/native';
 import { Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
@@ -344,6 +345,7 @@ export default function SettingsPage() {
           </div>
           <button
             onClick={async () => {
+              triggerHaptic('light');
               const newVal = !digestEnabled;
               setDigestEnabled(newVal);
               const supabase = createClient();

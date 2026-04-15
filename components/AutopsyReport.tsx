@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
+import { triggerHaptic } from '@/lib/native';
 import { getArchetypeByName } from '@/lib/archetypes';
 import { findExplainer } from '@/lib/bias-explainers';
 import ReportFeedbackNudge from './ReportFeedbackNudge';
@@ -419,6 +420,22 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  // Fire one heavy-impact haptic on first render so the grade
+  // "reveal" lands with weight on mobile. `readOnly` reports (e.g.
+  // shared links viewed from someone else's phone) get the haptic
+  // too — the grade is still the headline the user is reacting to.
+  // `isSnapshot` reports with the paywall overlay get skipped
+  // because the grade is hidden until upgrade. On web the
+  // `isMobileApp()` guard inside `triggerHaptic` no-ops this.
+  useEffect(() => {
+    if (snapshotLocked) return;
+    triggerHaptic('heavy');
+    // Intentionally empty dep array — we want the haptic to fire
+    // once per mount, not on every re-render when the user
+    // interacts with sections of the report.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pre-fetch share URL so quick-share "Copy Link" copies the real /share/<id> URL
   // instead of window.location.href (which resolves to /reports on the dashboard).

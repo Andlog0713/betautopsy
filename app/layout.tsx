@@ -102,7 +102,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakarta.variable} ${ibmPlexMono.variable}`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/*
+         * `viewport-fit=cover` is required for iOS to populate the
+         * `env(safe-area-inset-*)` CSS tokens with real notch / home
+         * indicator values. Without it they stay zero and the
+         * DashboardShell's mobile header sits under the status bar.
+         * `maximum-scale=1.0, user-scalable=no` prevents the
+         * pinch-to-zoom gesture from breaking the app chrome
+         * inside the Capacitor webview — the web build behaves
+         * the same, and accessibility-zoom still works at the OS
+         * level on both platforms.
+         */}
+        <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="preconnect" href="https://o4511186679365632.ingest.us.sentry.io" />
         <link rel="alternate" type="application/rss+xml" title="BetAutopsy Blog" href="/blog/feed.xml" />
         <script

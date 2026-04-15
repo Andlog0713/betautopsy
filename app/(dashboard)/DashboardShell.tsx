@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { createClient } from '@/lib/supabase';
+import { triggerHaptic } from '@/lib/native';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
 import FeedbackButton from '@/components/FeedbackButton';
 import AuthGuard from '@/components/AuthGuard';
@@ -93,12 +94,35 @@ export default function DashboardShell({
 
   const isActive = (href: string) => pathname === href;
 
+  // Nav-item click handlers. Fire a light impact haptic on mobile
+  // so nav feels tactile; on web these are no-ops (see
+  // `triggerHaptic`'s `isMobileApp()` guard). The mobile variant
+  // also closes the slide-in nav, matching the previous inline
+  // `() => setMobileNavOpen(false)` handler we replaced.
+  const handleMobileNavClick = () => {
+    triggerHaptic('light');
+    setMobileNavOpen(false);
+  };
+  const handleDesktopNavClick = () => {
+    triggerHaptic('light');
+  };
+
   return (
     <AuthGuard>
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* ── Mobile header ── */}
-      <header className="md:hidden border-b border-border-subtle bg-base sticky top-0 z-40">
+      {/*
+       * `padding-top: var(--safe-area-top)` lets the header sit
+       * flush against the top of the webview while keeping the
+       * actual content (the flex row inside) below the iOS notch
+       * / dynamic island. On web the CSS var resolves to 0px so
+       * the header lays out identically to before.
+       */}
+      <header
+        className="md:hidden border-b border-border-subtle bg-base sticky top-0 z-40"
+        style={{ paddingTop: 'var(--safe-area-top)' }}
+      >
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-3">
             <button
@@ -146,7 +170,7 @@ export default function DashboardShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMobileNavOpen(false)}
+                  onClick={handleMobileNavClick}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
@@ -210,7 +234,7 @@ export default function DashboardShell({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMobileNavOpen(false)}
+                  onClick={handleMobileNavClick}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
@@ -257,6 +281,7 @@ export default function DashboardShell({
               key={item.href}
               href={item.href}
               title={item.label}
+              onClick={handleDesktopNavClick}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
@@ -303,6 +328,7 @@ export default function DashboardShell({
               key={item.href}
               href={item.href}
               title={item.label}
+              onClick={handleDesktopNavClick}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'

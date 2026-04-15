@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { triggerHaptic } from '@/lib/native';
 import { trackUpload } from '@/lib/tiktok-events';
 import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
@@ -83,6 +84,8 @@ export default function UploadPage() {
     if (!file.name.endsWith('.csv')) {
       setError('Please upload a CSV file.');
       setState('error');
+      // Heavy impact on rejection so mobile users feel the failure.
+      triggerHaptic('heavy');
       return;
     }
     setState('uploading');
@@ -93,15 +96,24 @@ export default function UploadPage() {
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Upload failed'); setState('error'); return; }
+      if (!res.ok) {
+        setError(data.error || 'Upload failed');
+        setState('error');
+        triggerHaptic('heavy');
+        return;
+      }
       setResult(data as UploadResponse);
       window.gtag?.('event', 'csv_upload', { bet_count: (data as UploadResponse).bets_imported });
       trackUpload();
       trackUploadMeta();
       setState('success');
+      // Medium impact on successful import — confirms the upload
+      // landed without being as jarring as the error pulse.
+      triggerHaptic('medium');
     } catch {
       setError('Upload failed. Please try again.');
       setState('error');
+      triggerHaptic('heavy');
     }
   }, [state]);
 
