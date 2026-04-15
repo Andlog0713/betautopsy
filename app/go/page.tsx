@@ -1,15 +1,27 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { createServiceRoleClient } from '@/lib/supabase-server';
 import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
 import RealtimeActivity from '@/components/RealtimeActivity';
 import GoPageView from './GoPageView';
 
-// Paid-traffic metric counters refresh hourly so they stay fresh without
-// hitting Supabase on every ad click. Case file number is also derived from
-// the ISR cache window, so it stays stable across visitors within the hour.
-export const revalidate = 3600;
+// Case file number is derived from the ISR cache window so it stays
+// stable across visitors within the hour. Mobile builds (`output:
+// 'export'`) have no runtime to revalidate on, so ISR is dropped
+// there; the case number becomes stable for the lifetime of the
+// build, which is fine for the native app.
+export const revalidate =
+  process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
+
+// Social-proof fallbacks for the activity ticker. `<RealtimeActivity>`
+// is already a client component that fetches `/api/recent-activity`
+// on mount and replaces these once live data arrives. We used to
+// pass counts from a server-side Supabase query here, but that
+// path blocks the mobile static export — the client fetch inside
+// `<RealtimeActivity>` covers the web UX, so these hardcoded
+// defaults are sufficient.
+const FALLBACK_BETS = '15,004';
+const FALLBACK_REPORTS = '105';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy: Find Your Betting Leaks',
@@ -25,23 +37,6 @@ export const metadata: Metadata = {
     images: [{ url: '/og', width: 1200, height: 630 }],
   },
 };
-
-async function loadPlatformMetrics(): Promise<{ bets: number; reports: number } | null> {
-  try {
-    const supabase = createServiceRoleClient();
-    const [betsRes, reportsRes] = await Promise.all([
-      supabase.from('bets').select('id', { count: 'exact', head: true }),
-      supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }),
-    ]);
-    if (betsRes.error || reportsRes.error) return null;
-    const bets = betsRes.count ?? 0;
-    const reports = reportsRes.count ?? 0;
-    if (bets <= 0 || reports <= 0) return null;
-    return { bets, reports };
-  } catch {
-    return null;
-  }
-}
 
 // Deterministic 5-digit case file number derived from today's date. Stable
 // across visitors within the same day (and within the ISR cache window).
@@ -142,19 +137,19 @@ function CheckIcon() {
   );
 }
 
-export default async function GoLandingPage({
+export default function GoLandingPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const metrics = await loadPlatformMetrics();
   const signupHref = buildSignupHref(searchParams);
   const caseNum = getCaseFileNumber();
-  const nf = new Intl.NumberFormat('en-US');
 
-  // Fallbacks so the social-proof bar never shows zeros if Supabase fails.
-  const betsDisplay = metrics ? nf.format(metrics.bets) : '15,004';
-  const reportsDisplay = metrics ? nf.format(metrics.reports) : '105';
+  // `<RealtimeActivity>` fetches live ticker items from
+  // `/api/recent-activity` on mount; these stringified defaults are
+  // shown until that fetch resolves.
+  const betsDisplay = FALLBACK_BETS;
+  const reportsDisplay = FALLBACK_REPORTS;
 
   return (
     <>

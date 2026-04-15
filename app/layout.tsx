@@ -5,6 +5,7 @@ import TikTokPixel from '@/components/TikTokPixel';
 import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
 import { shouldRequireConsent } from '@/lib/consent-region';
+import { isMobileBuild } from '@/lib/platform';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
 import { jakarta, ibmPlexMono } from './fonts';
@@ -57,7 +58,13 @@ export default function RootLayout({
   // Geo-gate: EU/EEA/UK/CH users get the consent banner; everyone else is
   // auto-granted at the GA4 consent-default level so we stop losing US
   // analytics to banner abandonment.
-  const requireConsent = shouldRequireConsent();
+  //
+  // Mobile (Capacitor) builds run as `output: 'export'`, which means no
+  // request-time `headers()` is available — `shouldRequireConsent()`
+  // would throw. The native app ships to specific app stores with
+  // their own consent flows, so we force-grant here and skip the
+  // geo-gate entirely.
+  const requireConsent = isMobileBuild() ? false : shouldRequireConsent();
 
   const orgJsonLd = {
     '@context': 'https://schema.org',

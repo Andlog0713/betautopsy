@@ -1,14 +1,20 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { createServiceRoleClient } from '@/lib/supabase-server';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import AnimatedSection from '@/components/AnimatedSection';
 import SampleStickyBar from '@/components/SampleStickyBar';
+import PlatformMetrics from '@/components/PlatformMetrics';
 import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from 'lucide-react';
 
-export const revalidate = 3600;
+// Static for mobile builds (no runtime to revalidate on); ISR on web.
+export const revalidate =
+  process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
+
+// Same default string `<RealtimeActivity>` uses. `<PlatformMetrics>`
+// renders it after confirming `/api/recent-activity` is reachable.
+const FALLBACK_BETS = '15,004';
 
 export const metadata: Metadata = {
   title: 'Sample Autopsy Report | BetAutopsy',
@@ -32,19 +38,6 @@ export const metadata: Metadata = {
   },
 };
 
-async function loadPlatformMetrics(): Promise<{ bets: number } | null> {
-  try {
-    const supabase = createServiceRoleClient();
-    const betsRes = await supabase.from('bets').select('id', { count: 'exact', head: true });
-    if (betsRes.error) return null;
-    const bets = betsRes.count ?? 0;
-    if (bets <= 0) return null;
-    return { bets };
-  } catch {
-    return null;
-  }
-}
-
 const CHAPTERS = [
   { num: '01', title: 'Summary',      subtitle: 'The verdict, up front — grade, emotion score, archetype, recoverable dollars.', icon: ClipboardList },
   { num: '02', title: 'Findings',     subtitle: 'Every cognitive bias detected in your data, ranked by severity and dollar cost.', icon: AlertTriangle },
@@ -53,9 +46,7 @@ const CHAPTERS = [
   { num: '05', title: 'Protocol',     subtitle: 'RX prescriptions and personal rules generated from your actual betting history.', icon: Stethoscope },
 ];
 
-export default async function SamplePage() {
-  const metrics = await loadPlatformMetrics();
-
+export default function SamplePage() {
   return (
     <>
       <NavBar />
@@ -122,20 +113,11 @@ export default async function SamplePage() {
       </AnimatedSection>
 
       {/* ═══ SOCIAL PROOF ═══ */}
-      {metrics && (
-        <AnimatedSection delay={0.05}>
-          <section className="py-16">
-            <div className="max-w-5xl mx-auto px-6 text-center">
-              <div className="font-mono text-5xl md:text-6xl font-bold text-fg-bright">
-                {metrics.bets.toLocaleString()}
-              </div>
-              <div className="font-mono text-xs text-fg-dim tracking-[2px] uppercase mt-3">
-                Bets Analyzed
-              </div>
-            </div>
-          </section>
-        </AnimatedSection>
-      )}
+      <AnimatedSection delay={0.05}>
+        <section className="py-16">
+          <PlatformMetrics variant="sample" fallbackBets={FALLBACK_BETS} />
+        </section>
+      </AnimatedSection>
 
       {/* ═══ FINAL CTA ═══ */}
       <AnimatedSection delay={0.05}>

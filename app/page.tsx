@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
-import { createServiceRoleClient } from '@/lib/supabase-server';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import Footer from '@/components/Footer';
@@ -11,12 +10,24 @@ import { ProductShowcase } from '@/components/ProductShowcase';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
 import RealtimeActivity from '@/components/RealtimeActivity';
+import PlatformMetrics from '@/components/PlatformMetrics';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
 
 // Platform metric counters in the hero refresh hourly so they stay fresh
 // without hitting Supabase on every public page view.
-export const revalidate = 3600;
+//
+// Mobile builds (`output: 'export'`) can't use ISR — there is no
+// runtime to revalidate on — so drop the hint there. Web behavior is
+// unchanged (3600 s ISR).
+export const revalidate =
+  process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
+
+// Static fallbacks mirror the ones `<RealtimeActivity>` already ships
+// with. The `PlatformMetrics` client component renders these once it
+// confirms connectivity against `/api/recent-activity`.
+const FALLBACK_BETS = '15,004';
+const FALLBACK_REPORTS = '105';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy (Bet Autopsy): Sports Betting Behavioral Analysis Tool',
@@ -42,25 +53,7 @@ export const metadata: Metadata = {
   },
 };
 
-async function loadPlatformMetrics(): Promise<{ bets: number; reports: number } | null> {
-  try {
-    const supabase = createServiceRoleClient();
-    const [betsRes, reportsRes] = await Promise.all([
-      supabase.from('bets').select('id', { count: 'exact', head: true }),
-      supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }),
-    ]);
-    if (betsRes.error || reportsRes.error) return null;
-    const bets = betsRes.count ?? 0;
-    const reports = reportsRes.count ?? 0;
-    if (bets <= 0 || reports <= 0) return null;
-    return { bets, reports };
-  } catch {
-    return null;
-  }
-}
-
-export default async function LandingPage() {
-  const platformMetrics = await loadPlatformMetrics();
+export default function LandingPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -126,26 +119,11 @@ export default async function LandingPage() {
           </div>
           <HeroABTest />
 
-          {platformMetrics && (
-            <div className="mt-6 flex gap-10 animate-fade-in-d3">
-              <div>
-                <div className="font-mono text-2xl font-bold text-fg-bright">
-                  {platformMetrics.bets.toLocaleString()}
-                </div>
-                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">
-                  Bets Analyzed
-                </div>
-              </div>
-              <div>
-                <div className="font-mono text-2xl font-bold text-fg-bright">
-                  {platformMetrics.reports.toLocaleString()}
-                </div>
-                <div className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase mt-1">
-                  Reports Generated
-                </div>
-              </div>
-            </div>
-          )}
+          <PlatformMetrics
+            variant="landing"
+            fallbackBets={FALLBACK_BETS}
+            fallbackReports={FALLBACK_REPORTS}
+          />
 
           {/* EKG heartbeat line */}
           <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">
@@ -180,8 +158,8 @@ export default async function LandingPage() {
       {/* LIVE ACTIVITY TICKER                   */}
       {/* ══════════════════════════════════════ */}
       <RealtimeActivity
-        fallbackBets={platformMetrics ? platformMetrics.bets.toLocaleString() : '15,004'}
-        fallbackReports={platformMetrics ? platformMetrics.reports.toLocaleString() : '105'}
+        fallbackBets={FALLBACK_BETS}
+        fallbackReports={FALLBACK_REPORTS}
       />
 
       {/* ══════════════════════════════════════ */}
