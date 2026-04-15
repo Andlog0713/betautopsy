@@ -7,6 +7,7 @@ import { toPng } from 'html-to-image';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import ArchetypeShareCard from './ArchetypeShareCard';
+import { apiPost } from '@/lib/api-client';
 import { getArchetypeByName } from '@/lib/archetypes';
 import {
   StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
@@ -56,11 +57,7 @@ export default function ShareModal({
     if (!reportId) return;
     (async () => {
       try {
-        const res = await fetch('/api/share', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ report_id: reportId }),
-        });
+        const res = await apiPost('/api/share', { report_id: reportId });
         const result = await res.json();
         if (result.share_id) {
           setShareUrl(`${window.location.origin}/share/${result.share_id}`);

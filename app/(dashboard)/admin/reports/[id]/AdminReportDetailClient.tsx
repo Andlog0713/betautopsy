@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { apiGet } from '@/lib/api-client';
 import AutopsyReport from '@/components/AutopsyReport';
 import type { AutopsyAnalysis } from '@/types';
 
@@ -51,7 +52,7 @@ export default function AdminReportDetailClient() {
       if (!profile?.is_admin) { router.push('/dashboard'); return; }
 
       try {
-        const res = await fetch(`/api/admin/reports/${id}`);
+        const res = await apiGet(`/api/admin/reports/${id}`);
         if (res.status === 403) { router.push('/dashboard'); return; }
         if (res.status === 404) { setError('Report not found'); setLoading(false); return; }
         if (!res.ok) { setError('Failed to load report'); setLoading(false); return; }

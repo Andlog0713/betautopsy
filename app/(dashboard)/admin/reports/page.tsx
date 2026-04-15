@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { apiGet } from '@/lib/api-client';
 
 interface AdminReport {
   id: string;
@@ -62,7 +63,7 @@ export default function AdminReportsPage() {
       const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
       if (search) params.set('search', search);
 
-      const res = await fetch(`/api/admin/reports?${params}`);
+      const res = await apiGet(`/api/admin/reports?${params}`);
       if (res.status === 403) {
         router.push('/dashboard');
         return;

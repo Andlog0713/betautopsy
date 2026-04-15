@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { apiPost } from '@/lib/api-client';
 import { triggerHaptic } from '@/lib/native';
 import { Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
@@ -124,7 +125,7 @@ export default function SettingsPage() {
 
   async function handleManageSubscription() {
     try {
-      const res = await fetch('/api/billing', { method: 'POST' });
+      const res = await apiPost('/api/billing');
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api-client';
 
 type Activity = {
   kind: 'archetype' | 'grade' | 'bias' | 'report';
@@ -38,7 +39,7 @@ export default function RealtimeActivity({
     let cancelled = false;
     async function fetchActivities() {
       try {
-        const res = await fetch('/api/recent-activity');
+        const res = await apiGet('/api/recent-activity');
         if (!res.ok) return;
         const data = (await res.json()) as { activities?: Activity[] };
         if (!cancelled && data.activities && data.activities.length > 0) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { apiPost } from '@/lib/api-client';
 
 type Rating = 'positive' | 'neutral' | 'negative';
 
@@ -61,16 +62,12 @@ export default function ReportFeedbackNudge({
     if (!rating) return;
     setSubmitting(true);
     try {
-      await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'report_reaction',
-          rating,
-          message: message || null,
-          report_id: reportId,
-          page: '/reports',
-        }),
+      await apiPost('/api/feedback', {
+        type: 'report_reaction',
+        rating,
+        message: message || null,
+        report_id: reportId,
+        page: '/reports',
       });
     } catch {
       // Swallow — we still dismiss so we don't spam the user.

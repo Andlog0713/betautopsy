@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { apiPost } from '@/lib/api-client';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import type { AutopsyAnalysis } from '@/types';
@@ -91,10 +92,9 @@ export default function ProUpsellModal({
     trackCheckoutMeta('pro', 19.99);
 
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'subscription', interval: 'monthly' }),
+      const res = await apiPost('/api/checkout', {
+        type: 'subscription',
+        interval: 'monthly',
       });
       const data = await res.json();
       if (data.url) {

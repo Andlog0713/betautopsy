@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { apiGet } from '@/lib/api-client';
 import type { FeedbackCounts, FeedbackType, FeedbackWithUser } from '@/types';
 
 const PAGE_SIZE = 50;
@@ -83,7 +84,7 @@ export default function FeedbackStream() {
         });
         if (forFilter !== 'all') params.set('type', forFilter);
 
-        const res = await fetch(`/api/admin/feedback?${params}`);
+        const res = await apiGet(`/api/admin/feedback?${params}`);
         if (res.status === 403) {
           router.push('/dashboard');
           return;

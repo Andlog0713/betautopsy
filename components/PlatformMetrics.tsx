@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api-client';
 
 /**
  * Client-side platform metrics display.
@@ -45,7 +46,7 @@ export default function PlatformMetrics({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/recent-activity');
+        const res = await apiGet('/api/recent-activity');
         if (!res.ok) return;
         // We don't actually need the payload — a 200 is enough to
         // confirm connectivity. Parse it anyway so the edge cache

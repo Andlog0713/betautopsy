@@ -4,6 +4,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Zap, Flame, Snowflake, Dumbbell, Meh, ShieldAlert, Angry, Beer, Clock, TrendingDown } from 'lucide-react';
 import type { JournalEntryInput } from '@/types';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { apiPost } from '@/lib/api-client';
 
 interface Props {
   isOpen: boolean;
@@ -49,19 +50,15 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
     setError('');
 
     try {
-      const res = await fetch('/api/journal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          confidence,
-          emotional_state: emotionalState,
-          research_time: researchTime,
-          had_alcohol: hadAlcohol,
-          time_pressure: timePressure,
-          chasing_losses: chasingLosses,
-          notes: notes || undefined,
-        } satisfies JournalEntryInput),
-      });
+      const res = await apiPost('/api/journal', {
+        confidence,
+        emotional_state: emotionalState,
+        research_time: researchTime,
+        had_alcohol: hadAlcohol,
+        time_pressure: timePressure,
+        chasing_losses: chasingLosses,
+        notes: notes || undefined,
+      } satisfies JournalEntryInput);
 
       if (!res.ok) {
         const data = await res.json();

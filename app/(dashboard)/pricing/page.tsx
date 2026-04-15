@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { apiPost } from '@/lib/api-client';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import { isLaunchPromoActive } from '@/types';
@@ -60,14 +61,10 @@ export default function PricingPage() {
         typeof window !== 'undefined'
           ? new URLSearchParams(window.location.search).get('promo')
           : null;
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'subscription',
-          interval,
-          ...(urlPromoSlug ? { promoSlug: urlPromoSlug } : {}),
-        }),
+      const res = await apiPost('/api/checkout', {
+        type: 'subscription',
+        interval,
+        ...(urlPromoSlug ? { promoSlug: urlPromoSlug } : {}),
       });
       const data = await res.json();
       if (data.url) {
@@ -94,10 +91,9 @@ export default function PricingPage() {
     }
     setLoadingAction('report');
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'report', snapshotReportId: latestSnapshotId }),
+      const res = await apiPost('/api/checkout', {
+        type: 'report',
+        snapshotReportId: latestSnapshotId,
       });
       const data = await res.json();
       if (data.url) {
@@ -115,7 +111,7 @@ export default function PricingPage() {
 
   async function handleManage() {
     try {
-      const res = await fetch('/api/billing', { method: 'POST' });
+      const res = await apiPost('/api/billing');
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;

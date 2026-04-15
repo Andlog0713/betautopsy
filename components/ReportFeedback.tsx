@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiPost } from '@/lib/api-client';
 
 export default function ReportFeedback({ reportId }: { reportId?: string }) {
   const [rating, setRating] = useState<string | null>(null);
@@ -10,16 +11,12 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
 
   async function handleSubmit() {
     setSubmitting(true);
-    await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'report_reaction',
-        rating,
-        message: message || null,
-        report_id: reportId,
-        page: '/reports',
-      }),
+    await apiPost('/api/feedback', {
+      type: 'report_reaction',
+      rating,
+      message: message || null,
+      report_id: reportId,
+      page: '/reports',
     });
     setSubmitting(false);
     setSubmitted(true);

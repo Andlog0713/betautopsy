@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
+import { apiPost } from '@/lib/api-client';
 import { trackQuizComplete } from '@/lib/tiktok-events';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
 
@@ -49,14 +50,10 @@ export default function QuickQuizClient() {
     setEmailError('');
     setEmailSubmitting(true);
     try {
-      await fetch('/api/quiz-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          archetype: result?.archetype.name,
-          emotion_estimate: result?.emotion_estimate,
-        }),
+      await apiPost('/api/quiz-lead', {
+        email,
+        archetype: result?.archetype.name,
+        emotion_estimate: result?.emotion_estimate,
       });
     } catch { /* silent: don't block conversion on lead save */ }
     setEmailSubmitted(true);

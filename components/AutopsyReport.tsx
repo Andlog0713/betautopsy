@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
 import { triggerHaptic } from '@/lib/native';
+import { apiPost } from '@/lib/api-client';
 import { getArchetypeByName } from '@/lib/archetypes';
 import { findExplainer } from '@/lib/bias-explainers';
 import ReportFeedbackNudge from './ReportFeedbackNudge';
@@ -328,10 +329,9 @@ function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: Au
     setError('');
 
     try {
-      const res = await fetch('/api/ask-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question.trim(), report_id: reportId }),
+      const res = await apiPost('/api/ask-report', {
+        question: question.trim(),
+        report_id: reportId,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -444,11 +444,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/share', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ report_id: reportId }),
-        });
+        const res = await apiPost('/api/share', { report_id: reportId });
         const result = await res.json();
         if (!cancelled && result.share_id) {
           setShareUrl(`${window.location.origin}/share/${result.share_id}`);

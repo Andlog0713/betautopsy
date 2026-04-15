@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
+import { apiGet } from '@/lib/api-client';
 import { trackPurchase, trackSignup } from '@/lib/tiktok-events';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
 
@@ -116,7 +117,7 @@ export default function DashboardPage() {
           p_user_id: user.id,
           p_since: lastReportDate?.toISOString() ?? null,
         }),
-        fetch('/api/journal?count=true').then(r => r.ok ? r.json() : null).catch(() => null),
+        apiGet('/api/journal?count=true').then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
 
       const ds = (statsRpc.data ?? {}) as {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiPost } from '@/lib/api-client';
 
 export default function FeedbackButton() {
   const [open, setOpen] = useState(false);
@@ -12,14 +13,10 @@ export default function FeedbackButton() {
   async function handleSubmit() {
     if (!message.trim()) return;
     setSubmitting(true);
-    await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type,
-        message,
-        page: window.location.pathname,
-      }),
+    await apiPost('/api/feedback', {
+      type,
+      message,
+      page: window.location.pathname,
     });
     setSubmitting(false);
     setSubmitted(true);

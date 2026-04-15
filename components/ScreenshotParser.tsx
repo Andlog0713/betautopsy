@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Camera, Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { apiPost, apiPostFormData } from '@/lib/api-client';
 
 interface ParsedBet {
   placed_at: string;
@@ -58,7 +59,7 @@ export default function ScreenshotParser() {
     try {
       const formData = new FormData();
       files.forEach(f => formData.append('files', f));
-      const res = await fetch('/api/parse-screenshot', { method: 'POST', body: formData });
+      const res = await apiPostFormData('/api/parse-screenshot', formData);
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to parse screenshots'); setPhase('input'); return; }
       if (!data.bets || data.bets.length === 0) {
@@ -82,11 +83,7 @@ export default function ScreenshotParser() {
     if (betsToImport.length === 0) return;
     setPhase('importing');
     try {
-      const res = await fetch('/api/upload-parsed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bets: betsToImport }),
-      });
+      const res = await apiPost('/api/upload-parsed', { bets: betsToImport });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Import failed'); setPhase('preview'); return; }
       setImportResult({ imported: data.bets_imported, skipped: data.duplicates_skipped });

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { apiPost } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import ProUpsellModal from '@/components/ProUpsellModal';
@@ -204,11 +205,10 @@ export default function ReportsPage() {
       else if (analyzeScope.startsWith('book:')) body.sportsbook = analyzeScope.replace('book:', '');
       else if (analyzeScope === 'since_last' && lastReportDate) body.date_from = lastReportDate;
 
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      // `apiPost` returns the raw `Response` so the SSE stream
+      // reader below works unchanged — it just handles the
+      // cross-origin base URL + Bearer token on mobile for us.
+      const res = await apiPost('/api/analyze', body);
 
       // If JSON error response (pre-stream validation failures)
       if (!res.ok && res.headers.get('content-type')?.includes('application/json')) {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Lock, ChevronRight } from 'lucide-react';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { apiPost } from '@/lib/api-client';
 
 interface SnapshotPaywallProps {
   reportId?: string;
@@ -28,10 +29,9 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
     if (!reportId) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'report', snapshotReportId: reportId }),
+      const res = await apiPost('/api/checkout', {
+        type: 'report',
+        snapshotReportId: reportId,
       });
       const data = await res.json();
       if (data.url) {

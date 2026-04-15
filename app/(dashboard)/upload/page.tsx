@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { apiPostFormData } from '@/lib/api-client';
 import { triggerHaptic } from '@/lib/native';
 import { trackUpload } from '@/lib/tiktok-events';
 import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
@@ -94,7 +95,7 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const res = await apiPostFormData('/api/upload', formData);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Upload failed');

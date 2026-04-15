@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { apiPost } from '@/lib/api-client';
 import type { ParsedBet } from '@/types';
 
 type PasteState = 'input' | 'parsing' | 'preview' | 'success';
@@ -63,11 +64,7 @@ export default function PasteParser() {
         body.sportsbook_hint = sportsbook;
       }
 
-      const res = await fetch('/api/parse-paste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await apiPost('/api/parse-paste', body);
 
       const data: ParseResponse = await res.json();
 
@@ -100,11 +97,7 @@ export default function PasteParser() {
     if (selectedBets.length === 0) return;
 
     try {
-      const res = await fetch('/api/upload-parsed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bets: selectedBets }),
-      });
+      const res = await apiPost('/api/upload-parsed', { bets: selectedBets });
 
       const data: UploadResult = await res.json();
 
