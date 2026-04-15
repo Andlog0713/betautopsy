@@ -84,11 +84,26 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@anthropic-ai/sdk'],
   },
-  // Mobile (Capacitor) build target: fully static export. `headers()`
-  // and `redirects()` are unsupported under `output: 'export'`, so
-  // they are omitted for mobile builds. The web build is unchanged.
+  // Mobile (Capacitor) build target: fully static export.
+  //
+  //   - `headers()` and `redirects()` are unsupported under
+  //     `output: 'export'`, so they are omitted for mobile builds.
+  //
+  //   - `trailingSlash: true` makes Next emit `out/signup/index.html`
+  //     (directory layout) instead of `out/signup.html` (flat
+  //     layout), and rewrites every internal `<Link>` href to end
+  //     with `/`. Capacitor's local file server at
+  //     `betautopsy://localhost` serves the directory layout
+  //     reliably; the flat layout silently fails client-side
+  //     navigation because the Next router and the file server
+  //     disagree on where each route's chunk lives, and
+  //     `router.push('/signup')` ends up as a no-op.
+  //
+  // The web build keeps its default behavior (flat paths, no
+  // trailing slash) so existing URLs, canonical tags, and the
+  // Vercel route table are byte-for-byte unchanged.
   ...(isMobileBuild
-    ? { output: 'export' }
+    ? { output: 'export', trailingSlash: true }
     : { headers, redirects }),
 };
 
