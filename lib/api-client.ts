@@ -1,5 +1,13 @@
 import { isMobileApp } from './platform';
-import { createClient } from './supabase';
+
+// NOTE: `./supabase` is *not* imported statically here — it would
+// drag `@supabase/ssr` + `@supabase/supabase-js` into the chunk
+// graph of every page that transitively uses this helper (e.g.
+// `/go`, `/quiz/quick`, `/share/[id]`), adding ~55 kB of First
+// Load JS to public landing pages for no reason. The token lookup
+// inside `getAuthHeaders()` only runs on the mobile build, so we
+// lazy-load the module via `await import('./supabase')` below —
+// webpack code-splits that into a chunk that web never loads.
 
 /**
  * Cross-origin-aware API client for BetAutopsy.
@@ -35,6 +43,10 @@ function getBaseUrl(): string {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   if (!isMobileApp()) return {};
+  // Dynamic import — only reached inside the Capacitor webview.
+  // Web bundles never execute this branch, so webpack emits the
+  // chunk as lazy and strips it from every static route.
+  const { createClient } = await import('./supabase');
   const supabase = createClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
