@@ -86,7 +86,7 @@ export default function DisciplineScoreCard({ currentScore, previousScore, repor
         .limit(10);
 
       if (data && data.length > 0) {
-        setHistory(data.map((d) => d.score as number));
+        setHistory(data.map((d: Record<string, unknown>) => d.score as number));
       }
     }
     loadHistory();
