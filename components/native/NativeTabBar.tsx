@@ -36,7 +36,7 @@ export default function NativeTabBar() {
             }`}
           >
             <Icon size={20} strokeWidth={active ? 2.25 : 1.75} />
-            <span className="text-[10px] uppercase tracking-wider">{label}</span>
+            <span className="text-[10px] uppercase">{label}</span>
           </Link>
         );
       })}
