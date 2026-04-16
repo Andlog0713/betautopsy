@@ -48,7 +48,7 @@ export default function QuizClient() {
   useEffect(() => {
     if (phase !== 'result_preview') return;
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: unknown } }) => {
       if (user) setPhase('full_result');
     }).catch(() => { /* not logged in */ });
   }, [phase]);
