@@ -411,7 +411,7 @@ export default function DashboardShell({
           </p>
         </footer>
       </main>
-      <FeedbackButton />
+      {!nativeApp && <FeedbackButton />}
       <NativeTabBar />
     </div>
     </PrivacyProvider>
