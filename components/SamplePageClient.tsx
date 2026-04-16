@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import SampleModeToggle, { type SampleMode } from '@/components/SampleModeToggle';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { DEMO_DFS_ANALYSIS, DEMO_DFS_BETS } from '@/lib/demo-data';
@@ -24,15 +24,22 @@ function resolveInitialMode(viewParam: string | null): SampleMode {
 
 export default function SamplePageClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const viewParam = searchParams.get('view');
+  const paramStripped = useRef(false);
 
   const [mode, setMode] = useState<SampleMode>(() => resolveInitialMode(viewParam));
 
-  // Sync query param on mount (handles SSR/hydration)
+  // On mount: resolve from query param, then strip it so subsequent
+  // reloads fall through to localStorage (which reflects user's toggle).
   useEffect(() => {
-    const resolved = resolveInitialMode(viewParam);
-    setMode(resolved);
-  }, [viewParam]);
+    if (viewParam && !paramStripped.current) {
+      const resolved = resolveInitialMode(viewParam);
+      setMode(resolved);
+      paramStripped.current = true;
+      router.replace('/sample', { scroll: false });
+    }
+  }, [viewParam, router]);
 
   // Persist to localStorage on change
   useEffect(() => {
