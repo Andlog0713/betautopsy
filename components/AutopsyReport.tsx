@@ -922,7 +922,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] mb-6 rounded-md overflow-hidden">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better — under 25 is excellent, over 50 signals tilt risk." /></span>
+            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better — under 25 is excellent, over 50 signals frequent heated sessions." /></span>
             <span className={`font-mono text-[22px] font-bold ${
               emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
             }`}>{emotionScore}</span>
@@ -2120,7 +2120,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Session Analysis */}
-      {isPartialReport && !snapshotLocked && <SkeletonSection label="Building your session-by-session tilt analysis..." />}
+      {isPartialReport && !snapshotLocked && <SkeletonSection label="Building your session-by-session behavior analysis..." />}
       {!isPartialReport && analysis.session_analysis && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Session Analysis</h2>
