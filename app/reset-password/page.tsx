@@ -27,7 +27,7 @@ function ResetPasswordForm() {
 
     // Listen for PASSWORD_RECOVERY event — this fires when Supabase
     // processes the recovery token from the URL hash
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'PASSWORD_RECOVERY') {
         setSessionReady(true);
         setChecking(false);
