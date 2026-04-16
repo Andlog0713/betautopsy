@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { createClient } from '@/lib/supabase';
 import { triggerHaptic } from '@/lib/native';
+import { isMobileApp } from '@/lib/platform';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
 import FeedbackButton from '@/components/FeedbackButton';
 import AuthGuard from '@/components/AuthGuard';
+import NativeTabBar from '@/components/native/NativeTabBar';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Profile } from '@/types';
 import {
@@ -107,18 +109,14 @@ export default function DashboardShell({
     triggerHaptic('light');
   };
 
+  const nativeApp = isMobileApp();
+
   return (
     <AuthGuard>
     <PrivacyProvider>
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* ── Mobile header ── */}
-      {/*
-       * `padding-top: var(--safe-area-top)` lets the header sit
-       * flush against the top of the webview while keeping the
-       * actual content (the flex row inside) below the iOS notch
-       * / dynamic island. On web the CSS var resolves to 0px so
-       * the header lays out identically to before.
-       */}
+      {/* ── Mobile header (web only, hidden when native tab bar is active) ── */}
+      {!nativeApp && (
       <header
         className="md:hidden border-b border-border-subtle bg-base sticky top-0 z-40"
         style={{ paddingTop: 'var(--safe-area-top)' }}
@@ -142,9 +140,10 @@ export default function DashboardShell({
           )}
         </div>
       </header>
+      )}
 
-      {/* ── Mobile slide-in nav ── */}
-      {mobileNavOpen && (
+      {/* ── Mobile slide-in nav (web only) ── */}
+      {!nativeApp && mobileNavOpen && (
         <>
           {/* Overlay */}
           <div
@@ -266,7 +265,8 @@ export default function DashboardShell({
         </>
       )}
 
-      {/* ── Desktop sidebar — collapsed by default, expands on hover ── */}
+      {/* ── Desktop sidebar (hidden in native app) ── */}
+      {!nativeApp && (
       <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-border-subtle bg-base sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
         <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
@@ -378,10 +378,17 @@ export default function DashboardShell({
           </div>
         </div>
       </aside>
+      )}
 
       {/* ── Main content ── */}
       <main className="flex-1 min-h-screen">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
+        <div
+          className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10"
+          style={nativeApp ? {
+            paddingTop: 'calc(var(--safe-area-top, 0px) + 16px)',
+            paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px) + 16px)',
+          } : undefined}
+        >
           {children}
         </div>
         <footer className="text-center py-6 px-4 space-y-2">
@@ -405,6 +412,7 @@ export default function DashboardShell({
         </footer>
       </main>
       <FeedbackButton />
+      <NativeTabBar />
     </div>
     </PrivacyProvider>
     </AuthGuard>
