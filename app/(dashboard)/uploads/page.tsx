@@ -48,7 +48,7 @@ export default function UploadsPage() {
       const pushes = uBets.filter((b) => b.result === 'push').length;
       const netPnL = uBets.reduce((s, b) => s + Number(b.profit), 0);
       // Check if analyzed (rough: report exists with same bet count close in time)
-      const analyzed = reportsList.some((r) =>
+      const analyzed = reportsList.some((r: Record<string, unknown>) =>
         (r as { bet_count_analyzed: number }).bet_count_analyzed === uBets.length &&
         Math.abs(new Date((r as { created_at: string }).created_at).getTime() - new Date(u.created_at).getTime()) < 86400000 * 7
       );
