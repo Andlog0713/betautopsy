@@ -1,8 +1,9 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
-import DemoReportWrapper from '@/components/DemoReportWrapper';
+import SamplePageClient from '@/components/SamplePageClient';
 import AnimatedSection from '@/components/AnimatedSection';
 import SampleStickyBar from '@/components/SampleStickyBar';
 import PlatformMetrics from '@/components/PlatformMetrics';
@@ -51,38 +52,10 @@ export default function SamplePage() {
     <>
       <NavBar />
 
-      {/* ═══ HEADER ═══ */}
-      <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
-        <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
-          SAMPLE REPORT // EXHIBIT A
-        </p>
-        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-3">
-          A real autopsy report
-        </h1>
-        <p className="text-fg-muted font-light mb-6 max-w-2xl">
-          This is the full, unredacted sample. 280 bets analyzed across 5 chapters. Scroll through
-          the whole thing — when you&apos;re ready, upload your own history and get yours.
-        </p>
-        <div className="flex gap-6 md:gap-10">
-          <div className="border-l-2 border-scalpel pl-4">
-            <p className="font-mono text-3xl font-bold text-scalpel">5</p>
-            <p className="text-sm font-light">chapters</p>
-          </div>
-          <div className="border-l-2 border-scalpel pl-4">
-            <p className="font-mono text-3xl font-bold text-scalpel">47</p>
-            <p className="text-sm font-light">behavioral signals</p>
-          </div>
-          <div className="border-l-2 border-scalpel pl-4">
-            <p className="font-mono text-3xl font-bold text-scalpel">60s</p>
-            <p className="text-sm font-light">to generate</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ THE SAMPLE REPORT ═══ */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 pt-6 pb-16">
-        <DemoReportWrapper ungated />
-      </section>
+      {/* ═══ HEADER + TOGGLE + REPORT (client component for ?view= param) ═══ */}
+      <Suspense fallback={<div className="max-w-5xl mx-auto px-6 pt-8 pb-16 h-96 animate-pulse" />}>
+        <SamplePageClient />
+      </Suspense>
 
       {/* ═══ WHAT YOUR REPORT COVERS (slim chapter list) ═══ */}
       <AnimatedSection delay={0.05}>

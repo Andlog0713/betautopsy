@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
+import type { AutopsyAnalysis, Bet } from '@/types';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
@@ -13,9 +14,16 @@ interface DemoReportWrapperProps {
   /** When true, skips the collapsed gate + overlay and renders the full
    *  report immediately. Used on /sample where the page IS the sample. */
   ungated?: boolean;
+  /** Override the analysis dataset. Falls back to sportsbook DEMO_ANALYSIS. */
+  analysis?: AutopsyAnalysis;
+  /** Override the bets dataset. Falls back to sportsbook DEMO_BETS. */
+  bets?: Bet[];
 }
 
-export default function DemoReportWrapper({ ungated = false }: DemoReportWrapperProps) {
+export default function DemoReportWrapper({ ungated = false, analysis, bets }: DemoReportWrapperProps) {
+  const activeAnalysis = analysis ?? DEMO_ANALYSIS;
+  const activeBets = bets ?? DEMO_BETS;
+  const isDfs = activeAnalysis.dfs_mode === true;
   const [expanded, setExpanded] = useState(ungated);
   const isOpen = ungated || expanded;
 
@@ -43,8 +51,8 @@ export default function DemoReportWrapper({ ungated = false }: DemoReportWrapper
         {/* The actual report */}
         <div className="relative z-0 px-4 md:px-6">
           <AutopsyReport
-            analysis={DEMO_ANALYSIS}
-            bets={DEMO_BETS}
+            analysis={activeAnalysis}
+            bets={activeBets}
             tier="pro"
             readOnly
           />
@@ -84,7 +92,7 @@ export default function DemoReportWrapper({ ungated = false }: DemoReportWrapper
       {isOpen && (
         <div className="mt-8 text-center space-y-3">
           <p className="text-fg-muted text-sm">
-            That was a sample report with 280 bets. Imagine what yours would reveal.
+            That was a sample report with {isDfs ? '200 entries' : '280 bets'}. Imagine what yours would reveal.
           </p>
           <Link
             href="/signup"
