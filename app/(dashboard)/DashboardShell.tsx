@@ -381,7 +381,7 @@ export default function DashboardShell({
       )}
 
       {/* ── Main content ── */}
-      <main className={nativeApp ? 'flex-1 overflow-y-auto' : 'flex-1 min-h-screen'}>
+      <main className={nativeApp ? 'flex-1 overflow-y-auto overflow-x-hidden' : 'flex-1 min-h-screen'}>
         <div
           className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10"
           style={nativeApp ? {

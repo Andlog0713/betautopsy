@@ -19,6 +19,15 @@
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
+/* Prevent horizontal overflow on mobile (Capacitor webview and
+ * mobile browsers). Some dashboard components use px widths or
+ * min-widths that can exceed narrow viewports. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  html, body {
+    overflow-x: hidden;
+  }
+}
+
 /* Marquee scroll animation */
 @keyframes scroll-x {
   from { transform: translateX(0); }
