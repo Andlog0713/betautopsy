@@ -15,16 +15,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
-  // Diagnostic: fires once when the login page first mounts.
-  // If we see this in the Xcode console, React has hydrated and
-  // this component is alive. If we don't, either the user never
-  // navigated to /login (still on the landing page with a broken
-  // link) or the JS bundle failed to hydrate.
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('[login-page] mounted');
-  }, []);
-
   // Reverse auth gate: if the user is already signed in and their
   // email is verified (or they're an OAuth user), bounce to the
   // dashboard. This replaces the auth-route redirect that
@@ -53,29 +43,11 @@ export default function LoginPage() {
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
-    // eslint-disable-next-line no-console
-    console.log('[auth] handleSubmit START');
-    try {
-      e.preventDefault();
-      // eslint-disable-next-line no-console
-      console.log('[auth] 1. after preventDefault');
-      setError('');
-      // eslint-disable-next-line no-console
-      console.log('[auth] 2. after setError');
-      setLoading(true);
-      // eslint-disable-next-line no-console
-      console.log('[auth] 3. after setLoading');
-      // eslint-disable-next-line no-console
-      console.log('[auth] 4. env URL present:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-      // eslint-disable-next-line no-console
-      console.log('[auth] 5. env anon key present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-      // eslint-disable-next-line no-console
-      console.log('[auth] 6. before createClient()');
-      const supabase = createClient();
-      // eslint-disable-next-line no-console
-      console.log('[auth] 7. after createClient(), client:', typeof supabase);
-      // eslint-disable-next-line no-console
-      console.log('[auth] 8. calling signInWithPassword...');
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const supabase = createClient();
 
     let signInError: Error | null = null;
     try {
@@ -93,56 +65,33 @@ export default function LoginPage() {
             resolve({
               data: null,
               error: new Error(
-                `[auth] timeout after ${AUTH_TIMEOUT_MS}ms — the Supabase auth endpoint did not respond`
+                `Sign-in timed out after ${AUTH_TIMEOUT_MS / 1_000}s — please check your connection and try again`
               ),
             }),
           AUTH_TIMEOUT_MS
         )
       );
-      const { data, error } = await Promise.race([authPromise, timeoutPromise]);
-      // eslint-disable-next-line no-console
-      console.log(
-        '[auth] signInWithPassword result:',
-        error ? error.message : 'success',
-        data?.user?.email ?? ''
-      );
+      const { error } = await Promise.race([authPromise, timeoutPromise]);
       signInError = error as Error | null;
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('[auth] EXCEPTION:', e);
       signInError =
         e instanceof Error ? e : new Error('Unknown auth exception');
     }
 
-      if (signInError) {
-        const msg = signInError.message.toLowerCase().includes('email not confirmed')
-          ? 'Please confirm your email first. Check your inbox for the confirmation link.'
-          : signInError.message;
-        setError(msg);
-        setLoading(false);
-        return;
-      }
-
-      // Increment login count for returning-user redirect
-      await supabase.rpc('increment_login_count');
-
-      router.push('/dashboard');
-      router.refresh();
-    } catch (outerErr) {
-      // Diagnostic: surfaces ANY synchronous throw inside
-      // handleSubmit — including anything `createClient()` or
-      // the Supabase JS constructor throws during init. Without
-      // this, a thrown error just kills the promise and React
-      // logs nothing visible in the Xcode console.
-      // eslint-disable-next-line no-console
-      console.error('[auth] handleSubmit OUTER EXCEPTION:', outerErr);
-      setError(
-        outerErr instanceof Error
-          ? outerErr.message
-          : 'Unexpected error during sign-in.'
-      );
+    if (signInError) {
+      const msg = signInError.message.toLowerCase().includes('email not confirmed')
+        ? 'Please confirm your email first. Check your inbox for the confirmation link.'
+        : signInError.message;
+      setError(msg);
       setLoading(false);
+      return;
     }
+
+    // Increment login count for returning-user redirect
+    await supabase.rpc('increment_login_count');
+
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -210,20 +159,7 @@ export default function LoginPage() {
           <p className="text-bleed text-sm font-mono">{error}</p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          onClick={() => {
-            // Diagnostic: fires on raw button click, independent of
-            // form-submit handler. If we see this log but not
-            // `[auth] handleSubmit START`, something is preventing
-            // the form submission from reaching React's synthetic
-            // event system.
-            // eslint-disable-next-line no-console
-            console.log('[login-form] sign-in button clicked');
-          }}
-          className="btn-primary w-full font-mono"
-        >
+        <button type="submit" disabled={loading} className="btn-primary w-full font-mono">
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>

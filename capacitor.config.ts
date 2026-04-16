@@ -48,16 +48,14 @@ const config: CapacitorConfig = {
       // Matches the root layout / status-bar background so there's
       // no flash of white between launch and first paint.
       //
-      // `launchAutoHide: true` is a safety net. The primary hide
-      // path is `<SplashHider>` mounted in `app/layout.tsx`, which
-      // calls `hideSplashScreen()` on first React mount. If that
-      // import ever silently fails or React takes a long time to
-      // hydrate, Capacitor's own platform timer still dismisses
-      // the splash so the app can never be stuck on it forever.
-      // In the happy path (React mounts fast), `SplashHider` runs
-      // first and the auto-hide is a no-op.
+      // `launchAutoHide: false` — the splash is hidden
+      // deterministically by `<SplashHider>` in `app/layout.tsx`,
+      // which calls `hideSplashScreen()` once React has mounted.
+      // Setting this to `true` causes Capacitor's platform timer
+      // to race against React hydration and log a "SplashScreen
+      // was automatically hidden after default timeout" warning.
       backgroundColor: '#0D1117',
-      launchAutoHide: true,
+      launchAutoHide: false,
       showSpinner: false,
     },
     Keyboard: {

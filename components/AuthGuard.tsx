@@ -47,12 +47,6 @@ export default function AuthGuard({
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Debug log — visible in Xcode console on native, browser
-      // devtools on web. Helps confirm the auth state the guard
-      // is seeing when debugging a stuck login on mobile.
-      // eslint-disable-next-line no-console
-      console.log('[auth-guard] user:', user?.email || 'none');
-
       if (cancelled) return;
 
       if (!user) {
