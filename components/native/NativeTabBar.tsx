@@ -21,7 +21,7 @@ export default function NativeTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex bg-[#111318] border-t border-border-subtle"
+      className="flex-shrink-0 flex bg-[#111318] border-t border-border-subtle"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {TABS.map(({ href, label, Icon }) => {

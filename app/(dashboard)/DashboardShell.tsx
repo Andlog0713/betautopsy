@@ -114,7 +114,7 @@ export default function DashboardShell({
   return (
     <AuthGuard>
     <PrivacyProvider>
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className={nativeApp ? 'h-screen flex flex-col' : 'min-h-screen flex flex-col md:flex-row'}>
       {/* ── Mobile header (web only, hidden when native tab bar is active) ── */}
       {!nativeApp && (
       <header
@@ -381,7 +381,7 @@ export default function DashboardShell({
       )}
 
       {/* ── Main content ── */}
-      <main className="flex-1 min-h-screen">
+      <main className={nativeApp ? 'flex-1 overflow-y-auto' : 'flex-1 min-h-screen'}>
         <div
           className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10"
           style={nativeApp ? {
