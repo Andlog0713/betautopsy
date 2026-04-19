@@ -9,7 +9,6 @@ import HeroABTest from '@/components/HeroABTest';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
-import RealtimeActivity from '@/components/RealtimeActivity';
 import PlatformMetrics from '@/components/PlatformMetrics';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
@@ -23,8 +22,7 @@ import ScrollToHash from '@/components/ScrollToHash';
 export const revalidate =
   process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
 
-// Static fallbacks mirror the ones `<RealtimeActivity>` already ships
-// with. The `PlatformMetrics` client component renders these once it
+// The `PlatformMetrics` client component renders these once it
 // confirms connectivity against `/api/recent-activity`.
 const FALLBACK_BETS = '15,004';
 const FALLBACK_REPORTS = '105';
@@ -153,14 +151,6 @@ export default function LandingPage() {
           <LogoScroll />
         </div>
       </section>
-
-      {/* ══════════════════════════════════════ */}
-      {/* LIVE ACTIVITY TICKER                   */}
-      {/* ══════════════════════════════════════ */}
-      <RealtimeActivity
-        fallbackBets={FALLBACK_BETS}
-        fallbackReports={FALLBACK_REPORTS}
-      />
 
       {/* ══════════════════════════════════════ */}
       {/* PROBLEM / SOLUTION — same bg as hero  */}
