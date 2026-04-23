@@ -146,7 +146,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════ */}
       <section className="border-y border-border-subtle py-5 overflow-hidden">
         <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase text-center mb-3">
-          Works with — not affiliated with
+          Works with
         </p>
         <div className="relative">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
