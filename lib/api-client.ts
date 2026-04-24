@@ -20,9 +20,13 @@ import { isMobileApp } from './platform';
  * `true`), the helpers:
  *
  *   1. Rewrite the URL to the canonical web origin
- *      (`https://betautopsy.com`) so `fetch` hits the hosted API
- *      instead of looking for a local `/api/` in the bundled
- *      `out/` — which doesn't exist.
+ *      (`https://www.betautopsy.com`) so `fetch` hits the hosted
+ *      API instead of looking for a local `/api/` in the bundled
+ *      `out/` — which doesn't exist. The apex `betautopsy.com`
+ *      308-redirects to the `www` subdomain on Vercel; pointing
+ *      directly at `www` avoids a cross-host redirect that can
+ *      silently drop the `Authorization` header in WKWebView and
+ *      costs a round trip on every API call regardless.
  *   2. Attach an `Authorization: Bearer <supabase access token>`
  *      header pulled from the browser Supabase client's session.
  *      Supabase cookies don't cross origins, so the Bearer token
@@ -37,7 +41,7 @@ import { isMobileApp } from './platform';
  */
 
 function getBaseUrl(): string {
-  if (isMobileApp()) return 'https://betautopsy.com';
+  if (isMobileApp()) return 'https://www.betautopsy.com';
   return '';
 }
 
