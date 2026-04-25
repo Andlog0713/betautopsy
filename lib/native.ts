@@ -69,6 +69,37 @@ export async function openInBrowser(url: string): Promise<void> {
   }
 }
 
+// ─── Checkout / paid redirect ────────────────────────────────────
+
+/**
+ * Navigate to a Stripe checkout / billing portal URL.
+ *
+ * On web this is a same-tab `window.location.href` assignment — the
+ * existing behavior every call site assumes.
+ *
+ * Inside the Capacitor native webview the URL is opened via
+ * `@capacitor/browser`, which presents `SFSafariViewController` over
+ * the app. That's what makes the boundary visible to the user (URL
+ * bar, "Done" button) and is the behavior App Review expects for
+ * web-routed payments under Guideline 3.1.1 / 3.1.3 — a same-origin
+ * redirect inside the webview can read as in-app digital content.
+ */
+export async function openCheckoutUrl(url: string): Promise<void> {
+  if (isMobileApp()) {
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url, presentationStyle: 'fullscreen' });
+      return;
+    } catch {
+      // Fall through to a same-tab redirect — better than no-op
+      // if the plugin failed to load.
+    }
+  }
+  if (typeof window !== 'undefined') {
+    window.location.href = url;
+  }
+}
+
 // ─── Share ────────────────────────────────────────────────────────
 
 export async function shareContent(

@@ -67,7 +67,7 @@ export default function FeedbackButton() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="What's on your mind?"
-                  className="input-field w-full text-sm h-24 resize-none"
+                  className="input-field w-full h-24 resize-none"
                 />
 
                 <button

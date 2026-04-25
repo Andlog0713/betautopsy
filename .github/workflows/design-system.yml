@@ -1,0 +1,18 @@
+name: design-system
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # No `npm ci` — the script reads files directly with no deps.
+      - name: Run design-system lint
+        run: node scripts/check-design-system.mjs

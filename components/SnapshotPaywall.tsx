@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Lock, ChevronRight } from 'lucide-react';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { apiPost } from '@/lib/api-client';
+import { openCheckoutUrl } from '@/lib/native';
 
 interface SnapshotPaywallProps {
   reportId?: string;
@@ -35,7 +36,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
       } else {
         console.error('Checkout error:', data.error);
         setLoading(false);

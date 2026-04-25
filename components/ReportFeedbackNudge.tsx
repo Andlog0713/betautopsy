@@ -145,7 +145,7 @@ export default function ReportFeedbackNudge({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={PLACEHOLDERS[rating]}
-                  className="input-field w-full text-sm h-20 resize-none font-sans"
+                  className="input-field w-full h-20 resize-none font-sans"
                 />
                 <button
                   onClick={handleSubmit}

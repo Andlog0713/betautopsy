@@ -13,7 +13,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check:design": "node scripts/check-design-system.mjs"
   },
   "keywords": [],
   "author": "",
@@ -61,6 +63,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",
+    "@playwright/test": "^1.59.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.35",
     "vitest": "^4.1.1"

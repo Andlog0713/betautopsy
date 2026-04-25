@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    BetAutopsy iOS Privacy Manifest.
+
+    Required by Apple since 2024-05-01 for any app submitted to the
+    App Store. The keys below describe how this binary uses
+    "Required Reason" APIs and what user data it (and its bundled
+    third-party SDKs) collect.
+
+    Scope is the iOS binary only. Web-only third parties (GA4,
+    Resend, Vercel, Sentry web, PostHog web) ride on the
+    `www.betautopsy.com` origin the WebView talks to via fetch — they
+    don't ship as native code, so they don't need to be declared
+    here. They live in `app/privacy/page.tsx`.
+
+    Update this file when new native SDKs are linked (Firebase,
+    Sentry iOS, RevenueCat, etc.) — Apple will reject builds whose
+    declared reasons don't match what their static analyzer detects
+    in the binary.
+
+    Reason codes are from
+    https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+-->
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <!-- Capacitor and several plugins (Preferences, Push,
+                 Splash) read/write UserDefaults for state that the
+                 app itself wrote. CA92.1 is the standard reason. -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- @capacitor/filesystem links file-attribute APIs.
+                 C617.1 covers reading timestamps for files inside
+                 the app's container (the only place the plugin
+                 ever touches). -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

@@ -73,7 +73,7 @@ export default function ReportFeedback({ reportId }: { reportId?: string }) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={placeholders[rating]}
-            className="input-field w-full text-sm h-24 resize-none"
+            className="input-field w-full h-24 resize-none"
           />
           <button
             onClick={handleSubmit}

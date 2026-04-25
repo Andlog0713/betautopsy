@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { apiPost } from '@/lib/api-client';
+import { openCheckoutUrl } from '@/lib/native';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import type { AutopsyAnalysis } from '@/types';
@@ -98,7 +99,7 @@ export default function ProUpsellModal({
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
         return;
       }
       setCtaState('error');

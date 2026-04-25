@@ -18,8 +18,8 @@ export default function PercentileGauge({ percentile, invertedScale = false, lab
           className="absolute inset-0"
           style={{
             background: invertedScale
-              ? 'linear-gradient(90deg, #E8453C, #D29922, #00C9A7)'
-              : 'linear-gradient(90deg, #E8453C, #D29922, #00C9A7)',
+              ? 'linear-gradient(90deg, #C4463A, #D29922, #00C9A7)'
+              : 'linear-gradient(90deg, #C4463A, #D29922, #00C9A7)',
           }}
         />
         <div

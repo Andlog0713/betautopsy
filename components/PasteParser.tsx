@@ -314,7 +314,7 @@ export default function PasteParser() {
           onChange={(e) => setText(e.target.value)}
           readOnly={state === 'parsing'}
           placeholder="Go to your sportsbook → My Bets → Settled, select the page, copy it, and paste here. Works with DraftKings, FanDuel, BetMGM, and every other major sportsbook."
-          className={`w-full min-h-[250px] bg-base border border-border-subtle rounded-sm p-4 font-mono text-sm text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-all ${
+          className={`w-full min-h-[250px] bg-base border border-border-subtle rounded-sm p-4 font-mono text-base text-fg placeholder:text-fg-dim focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30 resize-y transition-all ${
             state === 'parsing' ? 'opacity-50' : ''
           }`}
         />

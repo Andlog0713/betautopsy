@@ -137,7 +137,9 @@
 
   /* ── Inputs ── */
   .input-field {
-    @apply bg-surface-2 border border-border-subtle rounded-md px-3 py-2 text-sm text-fg-bright
+    /* text-base (16px) is the iOS auto-zoom threshold — anything smaller
+       makes WKWebView zoom on focus and never zoom back. */
+    @apply bg-surface-2 border border-border-subtle rounded-md px-3 py-2 text-base text-fg-bright
            placeholder:text-fg-dim
            focus:outline-none focus:ring-1 focus:ring-scalpel/30 focus:border-scalpel/30
            transition-colors;
@@ -363,7 +365,7 @@
     color: #515968;
   }
   .data-body {
-    font-family: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-jakarta), system-ui, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 1.55;

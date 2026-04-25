@@ -194,7 +194,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any context: what game, why this bet, how you're feeling..."
-              className="input-field w-full h-20 resize-none text-sm"
+              className="input-field w-full h-20 resize-none"
               maxLength={500}
             />
           </div>

@@ -71,7 +71,19 @@ module.exports = {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
-      // Card style allows rounded surfaces (16px); inputs/buttons stay sharp.
+      // Forensic aesthetic: no soft shadows, no glass blur. Tailwind's
+      // defaults for these would let `shadow-md`/`backdrop-blur-sm` slip
+      // back in via training-data muscle memory; the empty objects make
+      // those classes emit no CSS so they fail loudly in review.
+      boxShadow: {},
+      backdropBlur: {},
+      // Cards top out at `lg` (10px). The previous `2xl` (16px) and
+      // `3xl` (20px) tokens encouraged shadcn-style soft shapes that
+      // don't fit the case-file metaphor — dropped here. Existing
+      // `rounded-2xl`/`rounded-3xl` usages will silently stop emitting
+      // CSS; `scripts/check-design-system.mjs` surfaces them as CI
+      // warnings until the sweep branch maps each one to the right
+      // token.
       borderRadius: {
         'none': '0px',
         'sm': '2px',
@@ -79,8 +91,6 @@ module.exports = {
         'md': '6px',
         'lg': '10px',
         'xl': '12px',
-        '2xl': '16px',
-        '3xl': '20px',
       },
       keyframes: {
         'fade-in': {

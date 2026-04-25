@@ -183,6 +183,10 @@ function SignupForm() {
           <input
             id="email"
             type="email"
+            autoComplete="email"
+            inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-field w-full"
@@ -199,6 +203,7 @@ function SignupForm() {
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-field w-full pr-10"

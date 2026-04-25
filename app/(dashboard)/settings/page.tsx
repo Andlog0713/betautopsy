@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { apiPost } from '@/lib/api-client';
-import { triggerHaptic } from '@/lib/native';
+import { triggerHaptic, openCheckoutUrl } from '@/lib/native';
 import { Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
@@ -116,9 +116,17 @@ export default function SettingsPage() {
   async function handleDeleteAccount() {
     if (!profile) return;
     setDeleting(true);
+    // Hard-delete via the server route, which uses the service-role
+    // key to call `auth.admin.deleteUser` — required by App Store
+    // Guideline 5.1.1(v). Profile + cascading user data go with it
+    // (see `supabase/schema.sql` ON DELETE CASCADE chain).
+    const res = await apiPost('/api/account/delete');
+    if (!res.ok) {
+      setDeleting(false);
+      toast.error('Could not delete account. Please contact support.');
+      return;
+    }
     const supabase = createClient();
-    // Delete all user data (cascade handles bets + reports)
-    await supabase.from('profiles').delete().eq('id', profile.id);
     await supabase.auth.signOut();
     router.push('/');
   }
@@ -128,7 +136,7 @@ export default function SettingsPage() {
       const res = await apiPost('/api/billing');
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
       } else {
         toast.error(data.error || 'Could not open billing portal. Please try again.');
       }

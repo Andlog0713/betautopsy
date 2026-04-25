@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { apiPost } from '@/lib/api-client';
+import { openCheckoutUrl } from '@/lib/native';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import { isLaunchPromoActive } from '@/types';
@@ -72,7 +73,7 @@ export default function PricingPage() {
         trackCheckout('pro', value);
         trackCheckoutMeta('pro', value);
         window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
       }
     } catch {
       setLoadingAction(null);
@@ -100,7 +101,7 @@ export default function PricingPage() {
         trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
         trackCheckoutMeta('report', REPORT_PURCHASE_LIMITS.price);
         window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
       } else {
         setLoadingAction(null);
       }
@@ -114,7 +115,7 @@ export default function PricingPage() {
       const res = await apiPost('/api/billing');
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        await openCheckoutUrl(data.url);
       }
     } catch {}
   }
