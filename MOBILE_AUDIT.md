@@ -186,7 +186,7 @@ already `caution`; just swap the bg.
 The mobile-regression Playwright suite (`tests/e2e/mobile-regression.spec.ts`)
 runs against `PUBLIC_ROUTES` only — the auth-protected dashboard
 routes need a seeded session via `storageState` to test, which lands
-in a follow-up. The four buttons below would fail the 44pt
+in a follow-up. The three buttons below would fail the 44pt
 tap-target assertion on those routes today. Each is a `text-xs` ✕
 glyph (~10–12px hit zone) inside a `<td>` of a dense list view.
 
@@ -195,7 +195,11 @@ glyph (~10–12px hit zone) inside a `<td>` of a dense list view.
 | `app/(dashboard)/bets/page.tsx:457` | Delete bet ✕ in bets table row | Inside `<td>` — bumping to 44pt forces row height up; full fix is the dense-table-on-mobile redesign (card stack at <768px). |
 | `app/(dashboard)/uploads/page.tsx:207` | Delete upload ✕ in uploads list row | Same row-height tradeoff as above; only renders for paid uploads (gated on `isPaid`). |
 | `app/(dashboard)/uploads/[id]/UploadDetailClient.tsx:163` | Delete bet ✕ in upload detail per-row | One-liner inside a table cell; the densest row layout in the codebase. |
-| `app/(dashboard)/reports/page.tsx:816` | Delete report ✕ in report card row | Less constrained than table cells (lives in a card grid) — could be fixed in isolation with `w-11 h-11 -m-2` without forcing a full redesign. Consider doing this one in the mobile-regression follow-up rather than waiting for the dense-table sweep. |
+
+(`reports/page.tsx:816` was the fourth item in this list; it lived
+in a card grid rather than a `<td>`, so it was fixed in isolation
+on this branch with the standard `w-11 h-11 -m-2 flex items-center
+justify-center` pattern.)
 
 **Worklist for the dense-table-mobile-redesign branch**:
 
@@ -205,10 +209,7 @@ glyph (~10–12px hit zone) inside a `<td>` of a dense list view.
 2. Each card has a swipe-to-delete affordance (Capacitor haptic
    on commit) instead of an inline ✕ — gives 44pt+ horizontal
    gesture zone and matches iOS conventions (Mail, Notes, Reminders).
-3. Reports page: less invasive — apply `w-11 h-11 -m-2 flex
-   items-center justify-center` to the existing ✕ button. Card
-   layout has room.
-4. After the redesign, extend `PUBLIC_ROUTES` in the Playwright
+3. After the redesign, extend `PUBLIC_ROUTES` in the Playwright
    spec with seeded `storageState` to cover `/dashboard`, `/bets`,
    `/uploads`, `/reports`, `/settings`. Suite should pass.
 

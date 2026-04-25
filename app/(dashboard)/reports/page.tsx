@@ -815,7 +815,7 @@ export default function ReportsPage() {
                     </span>
                     <button
                       onClick={(e) => deleteReport(report.id, e)}
-                      className="text-fg-dim hover:text-loss transition-colors text-xs ml-2"
+                      className="text-fg-dim hover:text-loss transition-colors text-xs ml-2 w-11 h-11 -m-2 flex items-center justify-center rounded-sm shrink-0"
                       aria-label="Delete report"
                     >
                       ✕
