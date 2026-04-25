@@ -51,9 +51,17 @@ export default defineConfig({
         // height inline text bounds. `next build && next start` uses
         // the production CSS bundle, which matches what ships in the
         // Capacitor iOS static export.
+        //
+        // `reuseExistingServer: false` everywhere — including local —
+        // because silently piggybacking on whatever node process
+        // happens to own port 3000 (commonly a stale `next dev` from
+        // an earlier session) produces test results measured against
+        // stale source. Better to fail fast with EADDRINUSE than to
+        // silently lie. If a dev server is running, kill it first:
+        //   lsof -tiTCP:3000 -sTCP:LISTEN | xargs kill -9
         command: 'npm run build && npm run start',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 240_000,
       },
 });
