@@ -68,12 +68,13 @@ export default function NavBar() {
       <div
         className={`w-full ${isLanding ? 'absolute top-0 left-0 z-50' : 'sticky top-0 z-50'}`}
         // Push the floating nav pill below the iOS status bar / Dynamic
-        // Island. Without this, the nav sits at y=0 and the wordmark +
-        // Sign Up button get clipped by the Dynamic Island on iPhone
-        // 14 Pro+ inside the Capacitor WebView. The dashboard chrome
-        // already does this in DashboardShell.tsx; the public nav has
-        // to do it independently because it has its own root.
-        style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 12px)' }}
+        // Island. `max(env(safe-area-inset-top, 0px), 44px)` floors the
+        // padding at 44px so the pill always clears the DI even if the
+        // WebView reports a smaller safe-area inset (which has been
+        // observed on the public landing page where the wrapper is
+        // `position: absolute` rather than the dashboard's `sticky`).
+        // Adds 12px on top for visual breathing room.
+        style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 44px) + 12px)' }}
       >
         <div className="max-w-6xl mx-auto px-4">
           <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-14 flex items-center justify-between">
@@ -170,7 +171,7 @@ export default function NavBar() {
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 z-50 bg-base flex flex-col"
-          style={{ paddingTop: 'var(--safe-area-top, 0px)' }}
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 44px)' }}
         >
           <div className="flex items-center justify-between px-6 h-14 border-b border-border-subtle">
             <Logo size="xs" variant="horizontal" theme="dark" />
