@@ -93,6 +93,12 @@ async function expectTapTargets(page: Page, exemptSelectors: string[]) {
         text: string;
         width: number;
         height: number;
+        rectW: number;
+        rectH: number;
+        display: string;
+        padX: number;
+        padY: number;
+        classes: string;
       }> = [];
       for (const el of candidates) {
         if (exemptSet.has(el)) continue;
@@ -102,12 +108,32 @@ async function expectTapTargets(page: Page, exemptSelectors: string[]) {
         if (rect.width === 0 && rect.height === 0) continue;
         const style = getComputedStyle(el);
         if (style.visibility === 'hidden' || style.display === 'none') continue;
-        if (rect.width < min || rect.height < min) {
+
+        // Effective tap rect. For inline elements, padding doesn't
+        // extend the layout box but DOES extend the visual hit zone —
+        // iOS / WebKit hit-test the padded area. Inflate the rect by
+        // the padding so the assertion matches what's actually
+        // tappable on a phone.
+        const padTop = parseFloat(style.paddingTop) || 0;
+        const padRight = parseFloat(style.paddingRight) || 0;
+        const padBottom = parseFloat(style.paddingBottom) || 0;
+        const padLeft = parseFloat(style.paddingLeft) || 0;
+        const isInline = style.display === 'inline';
+        const effectiveW = isInline ? rect.width + padLeft + padRight : rect.width;
+        const effectiveH = isInline ? rect.height + padTop + padBottom : rect.height;
+
+        if (effectiveW < min || effectiveH < min) {
           out.push({
             tag: el.tagName.toLowerCase(),
             text: (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 60),
-            width: Math.round(rect.width),
-            height: Math.round(rect.height),
+            width: Math.round(effectiveW),
+            height: Math.round(effectiveH),
+            rectW: Math.round(rect.width),
+            rectH: Math.round(rect.height),
+            display: style.display,
+            padX: Math.round(padLeft + padRight),
+            padY: Math.round(padTop + padBottom),
+            classes: el.className.toString().slice(0, 100),
           });
         }
       }
@@ -120,7 +146,13 @@ async function expectTapTargets(page: Page, exemptSelectors: string[]) {
     `${offenders.length} tap target(s) below ${TAP_TARGET_MIN}pt:\n` +
       offenders
         .slice(0, 20)
-        .map((o) => `  <${o.tag}> ${o.width}x${o.height} "${o.text}"`)
+        .map(
+          (o) =>
+            `  <${o.tag}> "${o.text}"\n` +
+            `      effective ${o.width}x${o.height}  rect ${o.rectW}x${o.rectH}  ` +
+            `display=${o.display}  pad=${o.padX}x${o.padY}\n` +
+            `      class="${o.classes}"`
+        )
         .join('\n')
   ).toEqual([]);
 }
