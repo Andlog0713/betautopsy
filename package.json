@@ -6,10 +6,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "sh scripts/build-mobile.sh",
-    "ios:build": "npm run build:mobile && npx cap sync ios",
-    "ios:open": "npx cap open ios",
-    "ios:run": "npx cap run ios",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
