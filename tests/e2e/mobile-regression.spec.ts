@@ -186,6 +186,12 @@ async function expectNoFixedUnderHomeIndicator(page: Page) {
     for (const el of all) {
       const style = getComputedStyle(el);
       if (style.position !== 'fixed') continue;
+      // `pointer-events: none` elements are explicitly opted out of
+      // hit-testing — taps pass through them entirely. The most
+      // common case is a full-screen decorative overlay (noise
+      // texture, gradient mask, etc.). They sit `inset-0` and would
+      // otherwise produce a false positive on every route.
+      if (style.pointerEvents === 'none') continue;
       const rect = el.getBoundingClientRect();
       const distFromBottom = window.innerHeight - rect.bottom;
       if (distFromBottom < 0 || distFromBottom > SAFE_AREA) continue;

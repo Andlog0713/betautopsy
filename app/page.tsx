@@ -359,7 +359,12 @@ export default function LandingPage() {
           ))}
         </div>
         <div className="text-center mt-6">
-          <Link href="/blog" className="font-mono text-xs text-scalpel hover:underline tracking-wider">VIEW ALL POSTS →</Link>
+          <Link
+            href="/blog"
+            className="font-mono text-xs text-scalpel hover:underline tracking-wider min-h-[44px] inline-flex items-center justify-center px-4"
+          >
+            VIEW ALL POSTS →
+          </Link>
         </div>
       </section>
       </AnimatedSection>

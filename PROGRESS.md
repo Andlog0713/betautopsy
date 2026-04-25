@@ -44,7 +44,7 @@
 ## Current branch: `claude/fix-capacitor-ios-bugs-ZTqzz`
 
 ### In progress
-- Verifying Playwright mobile-regression suite passes locally. First real run (after fixing dev-server reuse, JIT race, and inline-vs-padded measurement) surfaced legitimate violations across three categories: (a) a11y skip link / footer text-links — exempted, (b) NavBar Sign Up / Logo + step buttons under 44pt — fixed inline, (c) AutopsyReport disclosure buttons inside `DemoReportWrapper` — deferred to the dense-table-redesign branch via `data-demo-showcase` exemption + `MOBILE_AUDIT.md` Section 4 worklist.
+- Final Playwright pass: skip `pointer-events: none` elements in the home-indicator check (eliminates `<NoiseOverlay />` false positive across all routes), bump "VIEW ALL POSTS" landing-page link and FAQ Quick-links row ("Take the Quiz" / "Pricing" / "Blog") to 44pt. Should bring the suite green.
 
 ### Done this session
 - Account deletion server route (`/api/account/delete`) calling `auth.admin.deleteUser`; settings UI rewired.

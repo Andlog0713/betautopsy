@@ -170,11 +170,29 @@ export default function FAQPage() {
         </a>
       </div>
 
-      {/* Quick links */}
+      {/* Quick links — each link gets a 44pt tap zone via min-h + inline-flex
+          so the row isn't a strip of unreachable text-links on iPhone. */}
       <div className="flex flex-wrap gap-4 justify-center text-sm text-fg-muted pb-4">
-        <Link href="/quiz" className="hover:text-scalpel transition-colors">Take the Quiz</Link>
-        {PRICING_ENABLED && <Link href="/pricing" className="hover:text-scalpel transition-colors">Pricing</Link>}
-        <Link href="/blog" className="hover:text-scalpel transition-colors">Blog</Link>
+        <Link
+          href="/quiz"
+          className="hover:text-scalpel transition-colors min-h-[44px] inline-flex items-center px-2"
+        >
+          Take the Quiz
+        </Link>
+        {PRICING_ENABLED && (
+          <Link
+            href="/pricing"
+            className="hover:text-scalpel transition-colors min-h-[44px] inline-flex items-center px-2"
+          >
+            Pricing
+          </Link>
+        )}
+        <Link
+          href="/blog"
+          className="hover:text-scalpel transition-colors min-h-[44px] inline-flex items-center px-2"
+        >
+          Blog
+        </Link>
       </div>
     </div>
   );
