@@ -65,8 +65,17 @@ export default function NavBar() {
 
   return (
     <>
-      <div className={`w-full ${isLanding ? 'absolute top-0 left-0 z-50' : 'sticky top-0 z-50'}`}>
-        <div className="max-w-6xl mx-auto px-4 pt-3">
+      <div
+        className={`w-full ${isLanding ? 'absolute top-0 left-0 z-50' : 'sticky top-0 z-50'}`}
+        // Push the floating nav pill below the iOS status bar / Dynamic
+        // Island. Without this, the nav sits at y=0 and the wordmark +
+        // Sign Up button get clipped by the Dynamic Island on iPhone
+        // 14 Pro+ inside the Capacitor WebView. The dashboard chrome
+        // already does this in DashboardShell.tsx; the public nav has
+        // to do it independently because it has its own root.
+        style={{ paddingTop: 'calc(var(--safe-area-top, 0px) + 12px)' }}
+      >
+        <div className="max-w-6xl mx-auto px-4">
           <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-14 flex items-center justify-between">
             {/* Logo */}
             <Link href={user ? '/dashboard' : '/'} className="shrink-0">
@@ -147,7 +156,8 @@ export default function NavBar() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden text-[#f6f0ff] hover:text-scalpel p-1"
+                aria-label="Open menu"
+                className="md:hidden text-[#f6f0ff] hover:text-scalpel w-11 h-11 -m-2 flex items-center justify-center"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
               </button>
@@ -158,10 +168,17 @@ export default function NavBar() {
 
       {/* Mobile full-screen overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-base flex flex-col">
+        <div
+          className="fixed inset-0 z-50 bg-base flex flex-col"
+          style={{ paddingTop: 'var(--safe-area-top, 0px)' }}
+        >
           <div className="flex items-center justify-between px-6 h-14 border-b border-border-subtle">
             <Logo size="xs" variant="horizontal" theme="dark" />
-            <button onClick={() => setMobileMenuOpen(false)} className="text-fg-muted hover:text-fg">
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+              className="text-fg-muted hover:text-fg w-11 h-11 -m-2 flex items-center justify-center"
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
