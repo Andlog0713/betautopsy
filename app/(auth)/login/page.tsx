@@ -179,7 +179,7 @@ export default function LoginPage() {
           });
           setResetSent(true);
         }}
-        className="text-fg-muted hover:text-scalpel transition-colors mt-3 block mx-auto font-mono text-xs py-2 px-3"
+        className="text-fg-muted hover:text-scalpel transition-colors mt-3 block mx-auto font-mono text-xs min-h-[44px] px-3 inline-flex items-center justify-center"
       >
         Forgot your password?
       </button>

@@ -145,7 +145,37 @@ export default function RootLayout({
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
         <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
-        {process.env.NODE_ENV === 'production' && <><GoogleAnalytics /><TikTokPixel /><MetaPixel /><CookieConsent alreadyGranted={!requireConsent} /></>}
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <GoogleAnalytics />
+            {/*
+             * Meta + TikTok ad pixels are web-only. Skipping them on
+             * the mobile build:
+             *
+             *   - Removes reviewer-optics liability — having TikTok's
+             *     analytics SDK inside the iOS binary triggers App
+             *     Privacy Nutrition Label disclosures and can read
+             *     as third-party tracking, even though we don't use
+             *     it for cross-app correlation.
+             *   - Pixels don't function inside a Capacitor WebView
+             *     anyway — conversion attribution depends on web
+             *     cookies and third-party-cookie context the iOS app
+             *     doesn't have.
+             *
+             * `isMobileBuild()` is a compile-time check
+             * (NEXT_PUBLIC_BUILD_TARGET) so Next inlines the boolean
+             * and tree-shakes both component trees out of the mobile
+             * bundle entirely. Web tracking is unchanged.
+             */}
+            {!isMobileBuild() && (
+              <>
+                <TikTokPixel />
+                <MetaPixel />
+              </>
+            )}
+            <CookieConsent alreadyGranted={!requireConsent} />
+          </>
+        )}
         {children}
       </body>
     </html>

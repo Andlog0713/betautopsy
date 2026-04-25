@@ -92,7 +92,13 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
             <div className="case-header">PRE-BET CHECK-IN</div>
             <p className="text-fg-muted text-xs font-mono mt-1">Log your state before you bet. 30 seconds.</p>
           </div>
-          <button onClick={onClose} className="text-fg-dim hover:text-fg transition-colors text-lg leading-none">&times;</button>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-fg-dim hover:text-fg transition-colors text-lg leading-none w-11 h-11 -m-2 flex items-center justify-center rounded-sm shrink-0"
+          >
+            &times;
+          </button>
         </div>
 
         <div className="p-5 space-y-5">

@@ -41,14 +41,20 @@ const PUBLIC_ROUTES = [
 const TAP_TARGET_MIN = 44;
 
 // Selectors that may legitimately be smaller than 44pt — typically
-// inline text links inside paragraphs where the surrounding line
-// height provides the actual hit zone. Keep this list short and
+// inline text links/buttons inside paragraphs where the surrounding
+// line height provides the actual hit zone. Keep this list short and
 // specific; never widen it to make a failing test pass.
+//
+// `p button` covers the inline-button-as-link pattern (e.g. signup's
+// "TRY AGAIN" word inside a sentence). When that's the only way to
+// trigger a behavior, expanding the button to 44pt visually breaks
+// the surrounding text flow.
 const TAP_TARGET_EXEMPT_SELECTORS = [
   'p a',           // text-link inside a paragraph
   'li a',          // text-link inside a list item
   'span a',        // text-link inside inline span
   '[role="link"]', // explicitly-marked text link
+  'p button',      // inline button-as-link inside a paragraph
 ];
 
 async function expectNoHorizontalOverflow(page: Page) {

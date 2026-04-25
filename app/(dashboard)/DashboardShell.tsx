@@ -127,7 +127,7 @@ export default function DashboardShell({
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
               aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={mobileNavOpen}
-              className="text-fg-dim hover:text-fg p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+              className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
             >
               {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -158,7 +158,8 @@ export default function DashboardShell({
               </Link>
               <button
                 onClick={() => setMobileNavOpen(false)}
-                className="text-fg-dim hover:text-fg p-1 rounded-lg hover:bg-surface-1 transition-colors"
+                aria-label="Close navigation"
+                className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -254,7 +255,7 @@ export default function DashboardShell({
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="text-fg-dim hover:text-loss p-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+                  className="text-fg-dim hover:text-loss w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
                   aria-label="Sign out"
                 >
                   <LogOut size={16} />

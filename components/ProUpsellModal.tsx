@@ -137,7 +137,7 @@ export default function ProUpsellModal({
           </p>
           <button
             onClick={handleDismiss}
-            className="text-fg-dim hover:text-fg transition-colors text-xl leading-none -mt-1"
+            className="text-fg-dim hover:text-fg transition-colors text-xl leading-none w-11 h-11 -m-2 flex items-center justify-center rounded-sm shrink-0"
             aria-label="Close"
           >
             &times;
