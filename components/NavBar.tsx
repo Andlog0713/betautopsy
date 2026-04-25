@@ -78,8 +78,13 @@ export default function NavBar() {
       >
         <div className="max-w-6xl mx-auto px-4">
           <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-14 flex items-center justify-between">
-            {/* Logo */}
-            <Link href={user ? '/dashboard' : '/'} className="shrink-0">
+            {/* Logo — wrapper expands to 44pt min-height so the tap zone meets
+                Apple HIG without changing the rendered Logo glyph size. */}
+            <Link
+              href={user ? '/dashboard' : '/'}
+              aria-label="BetAutopsy home"
+              className="shrink-0 inline-flex items-center min-h-[44px] -my-2"
+            >
               <Logo size="xs" variant="horizontal" theme="dark" />
             </Link>
 
@@ -148,7 +153,10 @@ export default function NavBar() {
                   <Link href="/login" className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors hidden sm:block">
                     Log in
                   </Link>
-                  <Link href="/signup" className="text-sm font-semibold bg-scalpel text-[#0a0a12] px-5 py-2 rounded-full hover:brightness-110 transition-all">
+                  <Link
+                    href="/signup"
+                    className="text-sm font-semibold bg-scalpel text-[#0a0a12] px-5 min-h-[44px] inline-flex items-center justify-center rounded-full hover:brightness-110 transition-all"
+                  >
                     Sign Up
                   </Link>
                 </>

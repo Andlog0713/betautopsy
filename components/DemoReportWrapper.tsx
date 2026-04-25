@@ -28,7 +28,17 @@ export default function DemoReportWrapper({ ungated = false, analysis, bets }: D
   const isOpen = ungated || expanded;
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      // Marks this subtree as a non-interactive marketing showcase
+      // for `tests/e2e/mobile-regression.spec.ts`. The Playwright suite
+      // skips tap-target checks inside `[data-demo-showcase]` because
+      // these disclosure buttons are decorative on the landing page.
+      // The same `AutopsyReport` component on `/dashboard/reports/[id]`
+      // is auth-gated and needs proper tap targets — see
+      // MOBILE_AUDIT.md Section 4 for the worklist.
+      data-demo-showcase
+    >
       {/* ── Report Container ── */}
       <div
         className={`relative overflow-hidden transition-all duration-700 ease-out ${

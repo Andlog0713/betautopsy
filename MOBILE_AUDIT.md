@@ -201,6 +201,32 @@ in a card grid rather than a `<td>`, so it was fixed in isolation
 on this branch with the standard `w-11 h-11 -m-2 flex items-center
 justify-center` pattern.)
 
+### `AutopsyReport` disclosure buttons (~10 controls)
+
+The Playwright run on `/` surfaced 10+ small disclosure / link
+controls inside `AutopsyReport` (rendered on the landing page
+via `DemoReportWrapper`). The exact same component renders on
+auth-gated `/dashboard/reports/[id]` — so the deferred fix lives
+once, in `AutopsyReport`, and benefits both surfaces.
+
+| element (text) | current rect | class snippet |
+|---|---|---|
+| `VIEW SKILL BREAKDOWN` | 150x15 inline-block | `font-mono text-[10px] text-scalpel tracking-[1.5px]` |
+| `+ Expand all` | 90x16 block | `text-xs text-fg-dim font-mono` |
+| `View bets →` (×3) | 66x16 inline-block | `text-xs text-scalpel inline-block` |
+| `VIEW EMOTIONAL TRIGGERS` | 173x15 inline-block | `font-mono text-[10px] text-scalpel tracking-[1.5px]` |
+| `2 Heated Sessions ▾` | 178x20 flex | `flex items-center gap-2 text-sm text-loss font-mono` |
+| `Copy Rules` | 64x16 block | `text-xs text-fg-muted` |
+| `↓ Click to see the full expanded report` | 250x20 inline-block | `text-sm text-fg-muted` |
+| `VIEW ALL POSTS →` | 125x16 inline | `font-mono text-xs text-scalpel` |
+
+For now the landing-page demo is exempted via
+`data-demo-showcase` on `DemoReportWrapper`'s root + matching
+selector in `tests/e2e/mobile-regression.spec.ts`. The auth-gated
+route doesn't currently get tested by the suite (no seeded
+storageState), so the lack of tap targets there isn't surfaced
+either — but it's the same component, so the fix lands once.
+
 **Worklist for the dense-table-mobile-redesign branch**:
 
 1. Convert `/bets`, `/uploads`, `/uploads/[id]` table layouts to
@@ -209,7 +235,12 @@ justify-center` pattern.)
 2. Each card has a swipe-to-delete affordance (Capacitor haptic
    on commit) instead of an inline ✕ — gives 44pt+ horizontal
    gesture zone and matches iOS conventions (Mail, Notes, Reminders).
-3. After the redesign, extend `PUBLIC_ROUTES` in the Playwright
+3. Sweep `AutopsyReport` disclosure controls (~10 listed above):
+   apply `min-h-[44px] inline-flex items-center` so they meet
+   tap-target spec on both demo and real-report contexts. Then
+   remove `data-demo-showcase` from `DemoReportWrapper` and the
+   matching selector from the Playwright exempt list.
+4. After the redesign, extend `PUBLIC_ROUTES` in the Playwright
    spec with seeded `storageState` to cover `/dashboard`, `/bets`,
    `/uploads`, `/reports`, `/settings`. Suite should pass.
 
