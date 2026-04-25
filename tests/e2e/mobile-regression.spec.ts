@@ -162,6 +162,13 @@ async function expectNoFixedUnderHomeIndicator(page: Page) {
 for (const route of PUBLIC_ROUTES) {
   test(`mobile regression — ${route}`, async ({ page }) => {
     await page.goto(route, { waitUntil: 'networkidle' });
+    // Belt-and-suspenders for hydration: after networkidle, the React
+    // tree has typically finished its first commit, but `min-h-[44px]`
+    // and other layout-critical classes can still be one paint away
+    // from settling. A small idle wait stops the suite from measuring
+    // mid-hydration on slow CI runners.
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(250);
     await expectNoHorizontalOverflow(page);
     await expectTapTargets(page, TAP_TARGET_EXEMPT_SELECTORS);
     await expectNoFixedUnderHomeIndicator(page);

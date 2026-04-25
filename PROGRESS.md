@@ -44,7 +44,7 @@
 ## Current branch: `claude/fix-capacitor-ios-bugs-ZTqzz`
 
 ### In progress
-- Verifying NavBar safe-area fix on iPhone 15 Pro simulator (commit `8b48e27` floors padding at 44pt to clear Dynamic Island).
+- Verifying Playwright suite passes against `next start` (production-bundled CSS) — first run against `next dev` produced 24 false-positive tap-target failures because Tailwind's JIT raced page hydration, so config now boots the production server instead.
 
 ### Done this session
 - Account deletion server route (`/api/account/delete`) calling `auth.admin.deleteUser`; settings UI rewired.
@@ -64,7 +64,8 @@
 - `tsconfig.json` excludes `playwright.config.ts` and `tests/**` from production typecheck.
 - `MOBILE_AUDIT.md` triage table for the 55 design-system violations grouped by semantic intent.
 - `MOBILE_AUDIT.md` Section 4: 3 deferred auth-gated tap-target violations for the dense-table-redesign branch.
-- Public NavBar safe-area-top fix (commits `58f3520`, `8b48e27`).
+- Public NavBar safe-area-top fix (commits `58f3520`, `8b48e27`) — verified visually on iPhone 15 Pro simulator.
+- Playwright config switched from `next dev` to `next build && next start` — production-bundled CSS matches the iOS static export and prevents Tailwind-JIT-vs-hydration race producing phantom 18px tap-target failures.
 
 ### Parked / next branch
 - **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Service ID, key, AASA).
