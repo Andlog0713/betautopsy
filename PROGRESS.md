@@ -79,15 +79,20 @@
 
 ### Verification still pending (simulator)
 - (a) Edge-swipe pops navigation — **passed**
-- (b) Account deletion removes the row from Supabase Authentication → Users — **iOS still hangs after the try/catch hardening**; commit `3594dd6` adds full diagnostic logging + 30s AbortController + Promise.race timeouts so the next test reveals which await stalls. Re-test with Xcode console open, grep `[delete-account]`. The hardened handler did fix the unhandled-rejection class of stuck state; the remaining hang is something else (suspected: WKWebView CORS preflight stall, or `getAuthHeaders` Supabase getSession hang, or `signOut` not resolving).
+- (b) Account deletion removes the row from Supabase Authentication → Users — **diagnosed end-to-end**. Diagnostic build (commit `3594dd6`, since reverted in `145c952`) showed the WKWebView fetch rejecting at ~926ms with `TypeError: Load failed`. Confirmed via `curl https://www.betautopsy.com/api/account/delete` returning `404 /_not-found` with `X-Next-Error-Status: 404` — the route doesn't exist on production because bugs-ZTqzz isn't merged. CORS preflight (triggered by Bearer + Content-Type headers) requires a 2xx response; the 404 fails the preflight even though `Access-Control-Allow-Origin: *` is present. Once the route deploys to production, the call succeeds and the row drops. **No code fix needed — gated on the merge itself.**
 - (c) Stripe checkout opens in SafariViewController with visible URL chrome (set `NEXT_PUBLIC_PRICING_ENABLED=true` first).
 - (d) iCloud Keychain — autofill integration verified ("🔑 Passwords" pill above keyboard); save-prompt modal is a real-device test (simulator iCloud Keychain is unreliable in WKWebView without an AASA `webcredentials` claim, which is parked).
 - (e) Hamburger ↔ Logo edge-tap spot check — **passed**
 
 ### Web production status
-- **bugs-ZTqzz is NOT merged to main** (16 commits unmerged as of `3594dd6`).
+- **bugs-ZTqzz is NOT merged to main** (now 18 commits unmerged as of `145c952`).
 - Production betautopsy.com is therefore running main's original broken `handleDeleteAccount`: client-side `from('profiles').delete()` (silently blocked by RLS — no delete policy), then `signOut`, then `router.push('/')`. Tester correctly observed "signs me out, doesn't delete the account" — the auth user persists.
-- Fix: merge bugs-ZTqzz → main once the simulator gate passes. Verify `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel production env vars before/after the merge — `lib/supabase-server.ts:39` uses it without fallback, so a missing env var would 500 the new route.
+- Fix: merge bugs-ZTqzz → main. Same merge fixes (b) on iOS simultaneously (the simulator route call will finally have a real endpoint to hit).
+- **Pre-merge env-var check** — confirmed by tester in Vercel dashboard:
+  - `SUPABASE_SERVICE_ROLE_KEY` — **present** (required by `lib/supabase-server.ts:39`).
+  - `NEXT_PUBLIC_SUPABASE_URL` — **present** (required by all Supabase client constructors).
+- **Branch is merge-ready.** Diagnostic instrumentation reverted in `145c952`; `handleDeleteAccount` is the clean `0de195e` version (try/catch/finally, toast on error, `setDeleting(false)` in finally — guarantees the button can never freeze).
+- **Merging to main now** as a fast-forward. Same deploy fixes (b) on iOS by giving the WKWebView a real route to hit.
 
 ### Parked / next branch
 - **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Service ID, key, AASA).
