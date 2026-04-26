@@ -120,15 +120,25 @@ export default function SettingsPage() {
     // key to call `auth.admin.deleteUser` — required by App Store
     // Guideline 5.1.1(v). Profile + cascading user data go with it
     // (see `supabase/schema.sql` ON DELETE CASCADE chain).
-    const res = await apiPost('/api/account/delete');
-    if (!res.ok) {
+    //
+    // try/catch/finally guards against WKWebView fetch failures and
+    // a hung `signOut()` — without them, an unhandled rejection
+    // leaves `deleting` stuck at true and the button frozen at
+    // "Deleting...".
+    try {
+      const res = await apiPost('/api/account/delete');
+      if (!res.ok) {
+        toast.error('Could not delete account. Please contact support.');
+        return;
+      }
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch {
+      toast.error('Could not connect. Please try again.');
+    } finally {
       setDeleting(false);
-      toast.error('Could not delete account. Please contact support.');
-      return;
     }
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/');
   }
 
   async function handleManageSubscription() {
