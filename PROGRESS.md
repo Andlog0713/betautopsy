@@ -79,10 +79,15 @@
 
 ### Verification still pending (simulator)
 - (a) Edge-swipe pops navigation — **passed**
-- (b) Account deletion removes the row from Supabase Authentication → Users — re-test with the hardened handler.
+- (b) Account deletion removes the row from Supabase Authentication → Users — **iOS still hangs after the try/catch hardening**; commit `3594dd6` adds full diagnostic logging + 30s AbortController + Promise.race timeouts so the next test reveals which await stalls. Re-test with Xcode console open, grep `[delete-account]`. The hardened handler did fix the unhandled-rejection class of stuck state; the remaining hang is something else (suspected: WKWebView CORS preflight stall, or `getAuthHeaders` Supabase getSession hang, or `signOut` not resolving).
 - (c) Stripe checkout opens in SafariViewController with visible URL chrome (set `NEXT_PUBLIC_PRICING_ENABLED=true` first).
 - (d) iCloud Keychain — autofill integration verified ("🔑 Passwords" pill above keyboard); save-prompt modal is a real-device test (simulator iCloud Keychain is unreliable in WKWebView without an AASA `webcredentials` claim, which is parked).
 - (e) Hamburger ↔ Logo edge-tap spot check — **passed**
+
+### Web production status
+- **bugs-ZTqzz is NOT merged to main** (16 commits unmerged as of `3594dd6`).
+- Production betautopsy.com is therefore running main's original broken `handleDeleteAccount`: client-side `from('profiles').delete()` (silently blocked by RLS — no delete policy), then `signOut`, then `router.push('/')`. Tester correctly observed "signs me out, doesn't delete the account" — the auth user persists.
+- Fix: merge bugs-ZTqzz → main once the simulator gate passes. Verify `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel production env vars before/after the merge — `lib/supabase-server.ts:39` uses it without fallback, so a missing env var would 500 the new route.
 
 ### Parked / next branch
 - **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Service ID, key, AASA).
