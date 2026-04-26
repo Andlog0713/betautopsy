@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
+import { toast } from 'sonner';
 import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import { isLaunchPromoActive } from '@/types';
@@ -67,15 +68,19 @@ export default function PricingPage() {
         interval,
         ...(urlPromoSlug ? { promoSlug: urlPromoSlug } : {}),
       });
-      const data = await res.json();
-      if (data.url) {
-        const value = interval === 'annual' ? 149.99 : 19.99;
-        trackCheckout('pro', value);
-        trackCheckoutMeta('pro', value);
-        window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
-        await openCheckoutUrl(data.url);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        toast.error(data.error || 'Could not start checkout. Please try again.');
+        return;
       }
+      const value = interval === 'annual' ? 149.99 : 19.99;
+      trackCheckout('pro', value);
+      trackCheckoutMeta('pro', value);
+      window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
+      await openCheckoutUrl(data.url);
     } catch {
+      toast.error('Could not connect. Please try again.');
+    } finally {
       setLoadingAction(null);
     }
   }
@@ -96,16 +101,18 @@ export default function PricingPage() {
         type: 'report',
         snapshotReportId: latestSnapshotId,
       });
-      const data = await res.json();
-      if (data.url) {
-        trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
-        trackCheckoutMeta('report', REPORT_PURCHASE_LIMITS.price);
-        window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
-        await openCheckoutUrl(data.url);
-      } else {
-        setLoadingAction(null);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        toast.error(data.error || 'Could not start checkout. Please try again.');
+        return;
       }
+      trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
+      trackCheckoutMeta('report', REPORT_PURCHASE_LIMITS.price);
+      window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
+      await openCheckoutUrl(data.url);
     } catch {
+      toast.error('Could not connect. Please try again.');
+    } finally {
       setLoadingAction(null);
     }
   }
@@ -113,11 +120,15 @@ export default function PricingPage() {
   async function handleManage() {
     try {
       const res = await apiPost('/api/billing');
-      const data = await res.json();
-      if (data.url) {
-        await openCheckoutUrl(data.url);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        toast.error(data.error || 'Could not open billing portal. Please try again.');
+        return;
       }
-    } catch {}
+      await openCheckoutUrl(data.url);
+    } catch {
+      toast.error('Could not connect. Please try again.');
+    }
   }
 
   const currentTier = profile?.subscription_tier ?? 'free';
