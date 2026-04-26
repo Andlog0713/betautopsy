@@ -79,7 +79,7 @@
 
 ### Verification still pending (simulator)
 - (a) Edge-swipe pops navigation — **passed**
-- (b) Account deletion removes the row from Supabase Authentication → Users — **diagnosed end-to-end, fix shipped via the main merge**. Diagnostic build (commit `3594dd6`, since reverted in `145c952`) showed the WKWebView fetch rejecting at ~926ms with `TypeError: Load failed`. Confirmed via `curl https://www.betautopsy.com/api/account/delete` returning `404 /_not-found` — the route didn't exist on production because bugs-ZTqzz hadn't merged. CORS preflight (triggered by Bearer + Content-Type headers) requires a 2xx response; the 404 failed the preflight even though `Access-Control-Allow-Origin: *` was present. Merged at commit `9337dba`; awaiting Vercel deploy + final tester confirmation that the auth row actually drops post-deploy.
+- (b) Account deletion removes the row from Supabase Authentication → Users — **passed** post-deploy. Tester confirmed simulator deletion succeeded after the main merge (`9337dba`) gave WKWebView a real route to hit. Root cause was prod missing the route, not a code bug. Diagnostic build (`3594dd6`, reverted in `145c952`) was instrumental — pinpointed the WKWebView fetch rejecting at ~926ms with `TypeError: Load failed`, which curl-confirmed as a CORS preflight failure on the 404 `/_not-found` response.
 - (c) Stripe checkout opens in SafariViewController with visible URL chrome (set `NEXT_PUBLIC_PRICING_ENABLED=true` first).
 - (d) iCloud Keychain — autofill integration verified ("🔑 Passwords" pill above keyboard); save-prompt modal is a real-device test (simulator iCloud Keychain is unreliable in WKWebView without an AASA `webcredentials` claim, which is parked).
 - (e) Hamburger ↔ Logo edge-tap spot check — **passed**
