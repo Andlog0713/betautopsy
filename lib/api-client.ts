@@ -60,7 +60,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 export async function apiPost(
   path: string,
   body?: unknown,
-  options?: { headers?: HeadersInit }
+  options?: { headers?: HeadersInit; signal?: AbortSignal }
 ): Promise<Response> {
   const baseHeaders = await getAuthHeaders();
   return fetch(`${getBaseUrl()}${path}`, {
@@ -71,6 +71,7 @@ export async function apiPost(
       ...options?.headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal: options?.signal,
   });
 }
 

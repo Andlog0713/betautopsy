@@ -114,29 +114,67 @@ export default function SettingsPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!profile) return;
+    // ── DIAGNOSTIC INSTRUMENTATION (remove after iOS hang root-caused) ──
+    // Capacitor pipes WebView console.log to Xcode's native console; each
+    // line below is grep-able as `[delete-account]`. The 30s AbortController
+    // forces a network cancel if the fetch itself hangs (WKWebView CORS
+    // preflight stall is the prime suspect). A separate Promise.race
+    // wraps the whole flow to also catch hangs in `getAuthHeaders` or
+    // `signOut`, which AbortController doesn't cover.
+    const t = (label: string) => console.log(`[delete-account] ${Date.now()} ${label}`);
+    t('handler entered');
+    if (!profile) { t('no profile, returning'); return; }
+    t(`profile.id=${profile.id}`);
     setDeleting(true);
-    // Hard-delete via the server route, which uses the service-role
-    // key to call `auth.admin.deleteUser` — required by App Store
-    // Guideline 5.1.1(v). Profile + cascading user data go with it
-    // (see `supabase/schema.sql` ON DELETE CASCADE chain).
-    //
-    // try/catch/finally guards against WKWebView fetch failures and
-    // a hung `signOut()` — without them, an unhandled rejection
-    // leaves `deleting` stuck at true and the button frozen at
-    // "Deleting...".
+    t('setDeleting(true) called');
+
+    const controller = new AbortController();
+    const abortTimer = setTimeout(() => {
+      t('FETCH TIMEOUT 30s — calling controller.abort()');
+      controller.abort();
+    }, 30_000);
+
+    const overallTimeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('OVERALL_TIMEOUT_30s')), 30_000)
+    );
+
     try {
-      const res = await apiPost('/api/account/delete');
+      t('about to call apiPost');
+      const res = await Promise.race([
+        apiPost('/api/account/delete', undefined, { signal: controller.signal }),
+        overallTimeout,
+      ]);
+      t(`apiPost returned, status=${res.status} ok=${res.ok}`);
+
       if (!res.ok) {
+        const bodyText = await res.text().catch(() => '<unreadable>');
+        t(`non-ok body: ${bodyText.slice(0, 200)}`);
         toast.error('Could not delete account. Please contact support.');
         return;
       }
+
+      t('about to call signOut');
       const supabase = createClient();
-      await supabase.auth.signOut();
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('SIGNOUT_TIMEOUT_30s')), 30_000)
+        ),
+      ]);
+      t('signOut returned, calling router.push');
       router.push('/');
-    } catch {
-      toast.error('Could not connect. Please try again.');
+      t('router.push returned');
+    } catch (err) {
+      const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      t(`CAUGHT: ${msg}`);
+      if (msg.includes('TIMEOUT') || (err instanceof Error && err.name === 'AbortError')) {
+        toast.error('Deletion timed out after 30s. Check connection.');
+      } else {
+        toast.error('Could not connect. Please try again.');
+      }
     } finally {
+      clearTimeout(abortTimer);
+      t('finally — setDeleting(false)');
       setDeleting(false);
     }
   }
