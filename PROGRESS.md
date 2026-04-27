@@ -41,7 +41,17 @@
 
 ---
 
-## Current branch: `claude/fix-capacitor-ios-bugs-ZTqzz`
+## Current branch: `claude/fix-navbar-overlap-w8CJV`
+
+### In progress
+- (none)
+
+### Done this session
+- Landing-page hero `pt-24` → `calc(max(env(safe-area-inset-top, 0px), 44px) + 92px)` so the absolute-positioned NavBar pill no longer covers the "CASE FILE // BEHAVIORAL ANALYSIS UNIT" eyebrow. Math mirrors the NavBar wrapper's own safe-area floor + 12px top padding + 56px pill height (`h-14`) + 24px breathing room.
+
+---
+
+## Previous branch: `claude/fix-capacitor-ios-bugs-ZTqzz`
 
 ### In progress
 - (none — branch is ready to merge pending the in-app verification checklist)

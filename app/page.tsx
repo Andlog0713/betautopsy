@@ -109,7 +109,13 @@ export default function LandingPage() {
       <section className="relative grid-paper overflow-hidden">
         {/* Glow behind hero text */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00C9A7]/10 rounded-full blur-[120px] pointer-events-none z-0" />
-        <div className="max-w-5xl mx-auto px-6 pt-24 pb-8 relative z-10">
+        <div
+          className="max-w-5xl mx-auto px-6 pb-8 relative z-10"
+          // Clear the absolute-positioned NavBar: mirror its safe-area
+          // floor + wrapper padding (12px) + pill height (h-14 = 56px)
+          // + 24px breathing room.
+          style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 44px) + 92px)' }}
+        >
           <div className="mb-8 animate-fade-in">
             <AnimatedShinyText className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase inline-block">
               CASE FILE // BEHAVIORAL ANALYSIS UNIT
