@@ -21,14 +21,47 @@ jobs:
       - name: Build Next app
         # Pulled out of `webServer.command` so this step's runtime —
         # dominated by the Sentry sourcemap pipeline on slow runners —
-        # doesn't race the 240s webServer-start budget Playwright was
+        # doesn't race the webServer-start budget Playwright was
         # previously enforcing on `npm run build && npm run start`.
         run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Start Next server
+        # Boot the server here (instead of letting Playwright spawn it
+        # from `webServer.command`) so that any `next start` boot
+        # error surfaces in workflow logs instead of being hidden
+        # behind a generic "Timed out waiting … from config.webServer"
+        # message. Tail-fails after 90s with the captured log if the
+        # port never opens.
+        run: |
+          npm run start > /tmp/next-start.log 2>&1 &
+          SERVER_PID=$!
+          echo "$SERVER_PID" > /tmp/next-start.pid
+          for i in $(seq 1 90); do
+            if curl -sf -o /dev/null http://localhost:3000; then
+              echo "next start ready after ${i}s (pid=$SERVER_PID)"
+              exit 0
+            fi
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              echo "next start exited before binding"
+              break
+            fi
+            sleep 1
+          done
+          echo "::group::next start log"
+          cat /tmp/next-start.log
+          echo "::endgroup::"
+          exit 1
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Run mobile regression suite
         run: npm run test:e2e
         env:
+          # Skip Playwright's own webServer block — we already booted
+          # the server in the previous step and verified it's serving
+          # 200s on :3000. Setting PLAYWRIGHT_BASE_URL flips the
+          # `webServer` config to `undefined` (see playwright.config.ts).
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
           # Without a seeded Supabase session this run skips
           # `/dashboard/*` routes — the public/auth surface is
           # where the regression spike came from anyway.
