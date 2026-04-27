@@ -52,6 +52,12 @@ export default defineConfig({
         // the production CSS bundle, which matches what ships in the
         // Capacitor iOS static export.
         //
+        // CI runs `npm run build` as its own workflow step (so build
+        // failures surface separately and the Sentry sourcemap step
+        // isn't racing this 240s budget), and webServer here only
+        // boots `next start`. Locally we still build inline so a
+        // bare `npm run test:e2e` works without ceremony.
+        //
         // `reuseExistingServer: false` everywhere — including local —
         // because silently piggybacking on whatever node process
         // happens to own port 3000 (commonly a stale `next dev` from
@@ -59,9 +65,9 @@ export default defineConfig({
         // stale source. Better to fail fast with EADDRINUSE than to
         // silently lie. If a dev server is running, kill it first:
         //   lsof -tiTCP:3000 -sTCP:LISTEN | xargs kill -9
-        command: 'npm run build && npm run start',
+        command: process.env.CI ? 'npm run start' : 'npm run build && npm run start',
         url: 'http://localhost:3000',
         reuseExistingServer: false,
-        timeout: 240_000,
+        timeout: process.env.CI ? 120_000 : 240_000,
       },
 });

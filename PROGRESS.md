@@ -41,12 +41,19 @@
 
 ---
 
-## Current branch: `claude/fix-navbar-overlap-w8CJV`
+## Current branch: `claude/fix-e2e-tests-timeout-YJRzd`
 
 ### In progress
 - (none)
 
 ### Done this session
+- `mobile-regression` CI was failing with `Timed out waiting 240000ms from config.webServer` — `npm run build && npm run start` couldn't finish within Playwright's 240s window on the GitHub-hosted runner because the Sentry sourcemap pipeline pushed `next build` past the budget. Split the build out of `webServer.command`: workflow now runs `npm run build` as a dedicated step, and `playwright.config.ts` only invokes `npm run start` (with a tighter 120s timeout) when `process.env.CI` is set. Local `npm run test:e2e` still runs the inline build-then-start path.
+
+---
+
+## Previous branch: `claude/fix-navbar-overlap-w8CJV`
+
+### Done
 - Landing-page hero `pt-24` → `calc(max(env(safe-area-inset-top, 0px), 44px) + 92px)` so the absolute-positioned NavBar pill no longer covers the "CASE FILE // BEHAVIORAL ANALYSIS UNIT" eyebrow. Math mirrors the NavBar wrapper's own safe-area floor + 12px top padding + 56px pill height (`h-14`) + 24px breathing room.
 
 ---

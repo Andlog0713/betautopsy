@@ -18,6 +18,14 @@ jobs:
       - run: npm ci
       - name: Install Playwright (WebKit only)
         run: npx playwright install --with-deps webkit
+      - name: Build Next app
+        # Pulled out of `webServer.command` so this step's runtime —
+        # dominated by the Sentry sourcemap pipeline on slow runners —
+        # doesn't race the 240s webServer-start budget Playwright was
+        # previously enforcing on `npm run build && npm run start`.
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
       - name: Run mobile regression suite
         run: npm run test:e2e
         env:
