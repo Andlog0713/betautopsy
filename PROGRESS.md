@@ -44,11 +44,11 @@
 ## Current branch: `claude/resume-app-build-JvTmM`
 
 ### In progress
-- App icon — need a 1024×1024 master PNG from the user, then `npx @capacitor/assets generate --ios` (currently the Capacitor placeholder, will auto-reject).
 - Sign in with Apple OAuth (Guideline 4.8) — needs Apple Developer dashboard work (Service ID, key, AASA) before code can land.
 - App Store Connect submission assets (screenshots, privacy nutrition labels, App Review notes for Stripe Reader exception under 3.1.3(a)) — user-side.
 
 ### Done this session
+- **iOS app icon + launch screen generated from a 1024 master** (`assets/icon.png`, source uploaded to `public/betautopsy app.png` via main → merged into branch). Ran `npx @capacitor/assets generate --ios --iconBackgroundColor "#00C9A7" --iconBackgroundColorDark "#00C9A7" --splashBackgroundColor "#0D1117" --splashBackgroundColorDark "#0D1117"`. Output: single `AppIcon-512@2x.png` (1024×1024, no transparency — Apple's only required size for App Store) plus 6 splash variants (light + dark, 1x/2x/3x, midnight surface bg matching forced-dark `UIUserInterfaceStyle`). `cap sync ios` was skipped because it requires a built `out/` directory; the icon assets live in `ios/App/App/Assets.xcassets/` and Xcode picks them up directly. Replaces the Capacitor placeholder, which would have been an auto-rejection on submission.
 - **First-launch generative-AI consent modal** (`components/AIConsentModal.tsx`) mounted in root layout. Names Anthropic explicitly per Guideline 5.1.2(i) (Nov 2025 update). Persists `'ai-consent-v1'` via `storeLocally` (Capacitor Preferences on native, localStorage on web). Two CTAs: "I understand — continue" stores acceptance; "Decline and exit" calls `App.exitApp()` via dynamic import of `@capacitor/app`. Gated to `isMobileBuild()` so the web product is unaffected — web users continue to consent through signup's Privacy Policy + Terms gate. Storage key versioned so a future disclosure-text change can force a re-prompt.
 - **Native cold-launch redirect** (`components/NativeRootRedirect.tsx`) mounted at top of `app/page.tsx`. On Capacitor cold launch (`isMobileApp()`), `router.replace('/login')` — the existing login page already forwards an authenticated session straight to `/dashboard`, so this handles both states. Addresses Guideline 4.2.2 risk (iOS-app-as-website appearance from landing on the marketing page). Web is unaffected (`isMobileApp()` returns false outside the Capacitor webview).
 - Verified: `npx tsc --noEmit` clean, `npx next lint` clean on changed files, `npm run check:design` shows the same 55 pre-existing violations (no new ones from these components), `npm run build` produces a clean static + SSG + dynamic route tree.
@@ -127,7 +127,6 @@
 - **`@sentry/capacitor`** for native crash reporting (in addition to web Sentry).
 - **Off-palette color sweep** — work the `MOBILE_AUDIT.md` triage table; introduce `flame`/`freeze`/`dfs` tokens; flip `STRICT = true` in `scripts/check-design-system.mjs`.
 - **Dense-table mobile redesign** (`/bets`, `/uploads`, `/uploads/[id]`) — card stack at <768px with swipe-to-delete; then extend Playwright `PUBLIC_ROUTES` with seeded `storageState`.
-- **App icon assets** — current iOS icon is the Capacitor placeholder. Generate via `npx @capacitor/assets generate --ios` from a 1024×1024 master (need to create one; current `public/icon-512.png` is too small).
 - **Onboarding carousel** — current cold-launch redirect (`/` → `/login` on native) ships the bare login form. A 2–3 screen native carousel ("upload → analyze → fix") before the form would lift activation; not a submission blocker.
 - **WOFF2 font conversion** — Plus Jakarta Sans + IBM Plex Mono are TTF; ~30% byte savings.
 - **`DEVELOPMENT_TEAM` to xcconfig** — currently lives uncommitted in `project.pbxproj` locally; `ios/App/debug.xcconfig` already referenced in pbxproj, ideal home.
