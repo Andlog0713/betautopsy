@@ -12,6 +12,7 @@ import { jakarta, ibmPlexMono } from './fonts';
 import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import SplashHider from '@/components/SplashHider';
+import AIConsentModal from '@/components/AIConsentModal';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -141,6 +142,7 @@ export default function RootLayout({
          * tree, not gated behind route transitions.
          */}
         <SplashHider />
+        <AIConsentModal />
         <ScrollToTop />
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />

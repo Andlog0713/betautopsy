@@ -41,12 +41,19 @@
 
 ---
 
-## Current branch: `claude/fix-e2e-tests-timeout-YJRzd`
+## Current branch: `claude/resume-app-build-JvTmM`
 
 ### In progress
-- (none)
+- App icon — need a 1024×1024 master PNG from the user, then `npx @capacitor/assets generate --ios` (currently the Capacitor placeholder, will auto-reject).
+- Sign in with Apple OAuth (Guideline 4.8) — needs Apple Developer dashboard work (Service ID, key, AASA) before code can land.
+- App Store Connect submission assets (screenshots, privacy nutrition labels, App Review notes for Stripe Reader exception under 3.1.3(a)) — user-side.
 
 ### Done this session
+- **First-launch generative-AI consent modal** (`components/AIConsentModal.tsx`) mounted in root layout. Names Anthropic explicitly per Guideline 5.1.2(i) (Nov 2025 update). Persists `'ai-consent-v1'` via `storeLocally` (Capacitor Preferences on native, localStorage on web). Two CTAs: "I understand — continue" stores acceptance; "Decline and exit" calls `App.exitApp()` via dynamic import of `@capacitor/app`. Gated to `isMobileBuild()` so the web product is unaffected — web users continue to consent through signup's Privacy Policy + Terms gate. Storage key versioned so a future disclosure-text change can force a re-prompt.
+- **Native cold-launch redirect** (`components/NativeRootRedirect.tsx`) mounted at top of `app/page.tsx`. On Capacitor cold launch (`isMobileApp()`), `router.replace('/login')` — the existing login page already forwards an authenticated session straight to `/dashboard`, so this handles both states. Addresses Guideline 4.2.2 risk (iOS-app-as-website appearance from landing on the marketing page). Web is unaffected (`isMobileApp()` returns false outside the Capacitor webview).
+- Verified: `npx tsc --noEmit` clean, `npx next lint` clean on changed files, `npm run check:design` shows the same 55 pre-existing violations (no new ones from these components), `npm run build` produces a clean static + SSG + dynamic route tree.
+
+### Previous (`claude/fix-e2e-tests-timeout-YJRzd`, merged into this branch)
 - `mobile-regression` CI was failing with `Timed out waiting 240000ms from config.webServer` — `npm run build && npm run start` couldn't finish within Playwright's 240s window on the GitHub-hosted runner because the Sentry sourcemap pipeline pushed `next build` past the budget. Split the build out of `webServer.command`: workflow now runs `npm run build` as a dedicated step.
 - First retry then failed with `Timed out waiting 120000ms from config.webServer` even though the standalone build had already finished — `next start` was crashing silently and Playwright's webServer block swallowed the boot log. Replaced the webServer hand-off with an explicit `Start Next server` workflow step that backgrounds `npm run start`, polls `curl http://localhost:3000` for up to 90s, and dumps `/tmp/next-start.log` to the GH Actions log group on failure. Suite is then invoked with `PLAYWRIGHT_BASE_URL=http://localhost:3000`, which flips `playwright.config.ts`'s `webServer` to `undefined` (line 44). Local `npm run test:e2e` is unchanged — still builds + starts inline.
 
@@ -114,7 +121,6 @@
 
 ### Parked / next branch
 - **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Service ID, key, AASA).
-- **First-launch AI consent modal** naming Anthropic explicitly (Guideline 5.1.2(i) Nov 2025 update).
 - **Native push notifications** via `@capacitor-firebase/messaging`.
 - **Biometric login** via `@capgo/capacitor-native-biometric`.
 - **Native CSV file picker** via `@capawesome/capacitor-file-picker`.
@@ -122,7 +128,7 @@
 - **Off-palette color sweep** — work the `MOBILE_AUDIT.md` triage table; introduce `flame`/`freeze`/`dfs` tokens; flip `STRICT = true` in `scripts/check-design-system.mjs`.
 - **Dense-table mobile redesign** (`/bets`, `/uploads`, `/uploads/[id]`) — card stack at <768px with swipe-to-delete; then extend Playwright `PUBLIC_ROUTES` with seeded `storageState`.
 - **App icon assets** — current iOS icon is the Capacitor placeholder. Generate via `npx @capacitor/assets generate --ios` from a 1024×1024 master (need to create one; current `public/icon-512.png` is too small).
-- **Cold-launch UX architecture** — currently `/` shows the marketing landing page on iOS (Guideline 4.2.2 risk + UX inconsistency). Either redirect `/` → `/login` on mobile (~10-line fix) or build a 2-3 screen native onboarding carousel.
+- **Onboarding carousel** — current cold-launch redirect (`/` → `/login` on native) ships the bare login form. A 2–3 screen native carousel ("upload → analyze → fix") before the form would lift activation; not a submission blocker.
 - **WOFF2 font conversion** — Plus Jakarta Sans + IBM Plex Mono are TTF; ~30% byte savings.
 - **`DEVELOPMENT_TEAM` to xcconfig** — currently lives uncommitted in `project.pbxproj` locally; `ios/App/debug.xcconfig` already referenced in pbxproj, ideal home.
 - **App Store submission assets** — Connect metadata, screenshots, privacy nutrition labels, App Review notes covering Stripe Reader-app exception under 3.1.3(a).

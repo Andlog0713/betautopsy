@@ -12,6 +12,7 @@ import LogoScroll from '@/components/LogoScroll';
 import PlatformMetrics from '@/components/PlatformMetrics';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
+import NativeRootRedirect from '@/components/NativeRootRedirect';
 
 // Platform metric counters in the hero refresh hourly so they stay fresh
 // without hitting Supabase on every public page view.
@@ -100,6 +101,7 @@ export default function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <NativeRootRedirect />
       <NavBar />
       <ScrollToHash />
 
