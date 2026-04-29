@@ -20,11 +20,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Fail open when Supabase isn't configured (e.g. CI smoke runs that
+  // boot `next start` without secrets, or a misdeploy that wipes env
+  // vars). `createServerClient` throws synchronously on empty
+  // URL/key, which would 500 every protected and auth route — better
+  // to let the request through and rely on the page-level AuthGuard
+  // + API-route auth checks. Production prod always has these set
+  // (verified pre-merge for bugs-ZTqzz), so this is a defensive
+  // fallback, not a routine code path.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
