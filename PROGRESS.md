@@ -44,17 +44,27 @@
 ## Current branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
-- Diagnose recurring `mobile-regression.yml` failure on push-to-main runs (~2 weeks history).
-  Latest run: e2e exits 1 at 5m30s; `test-results/` empty so no per-test artifacts uploaded.
-  Empty output dir rules out per-spec assertion failures (Playwright writes screenshots/videos
-  for failed tests by default). Working hypotheses, in order: (a) WebKit launch failure on
-  `ubuntu-latest` after the runner image flipped to 24.04 — `--with-deps webkit` doesn't always
-  cover the new glibc/libwebp deps; (b) `next start` returns 500s on a non-`/` route (Sentry
-  sourcemap upload corruption) — `Start Next server` only curls `/` so a partial 500 looks
-  like a test failure; (c) `playwright test` exits 1 on a global setup error before any spec runs.
-  Awaiting actual log of "Run mobile regression suite" step from the user, or run URL to
-  WebFetch. Independent CI-hardening proposed: probe each `PUBLIC_ROUTES` entry in the curl
-  poll, pin `runs-on: ubuntu-22.04`, add `--reporter=list,html` + always-upload HTML report.
+- (none — CI fix shipped)
+
+### CI: `mobile-regression.yml` env-var inlining fix
+- **Root cause** (from `next start log` group, ~1346 stack-trace lines): `middleware.ts:25-27`
+  calls `createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, ANON_KEY!, …)`. CI runner
+  has neither set, Next inlines `undefined` at build time, the constructor throws
+  `"Your project's URL and Key are required to create a Supabase client!"` on every request.
+  Every curl probe in `Start Next server` gets a 500, the 90s polling loop never sees a 200,
+  step exits 1, suite skipped, `test-results/` empty. Has been failing on every push-to-main
+  for ~2 weeks. Local runs pass because `.env.local` provides the values.
+- **Fix:** added stub `NEXT_PUBLIC_SUPABASE_URL=https://stub.supabase.co` +
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY=stub-…` to both `Build Next app` and `Start Next server` env
+  blocks in `.github/workflows/mobile-regression.yml`. `NEXT_PUBLIC_*` is inlined at build time
+  so build needs them; `lib/supabase-*` constructs a server client on API routes too so start
+  step gets them as well (defense in depth). `getUser()` against a bogus host returns
+  `{ user: null, error }` — middleware's `data: { user }` destructure proceeds with `user=null`
+  and falls through cleanly for the suite's public/auth routes. Bypass list at `middleware.ts:17`
+  already covers `/privacy /faq /reset-password` so those never construct the client at all.
+- **Not fixed (deferred):** the Node-20 deprecation warning for `actions/checkout@v4`,
+  `actions/setup-node@v4`, `actions/upload-artifact@v4` — soft warning until June 2026, bump to
+  `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
 - Audited current behavior of all 5 CTAs:

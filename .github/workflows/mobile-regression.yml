@@ -26,6 +26,21 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # `NEXT_PUBLIC_*` values are inlined at build time. Without
+          # these, `middleware.ts:25-27` compiles
+          # `createServerClient(undefined, undefined, ...)` and the
+          # constructor throws "Your project's URL and Key are required"
+          # on every request — every curl probe in the next step gets a
+          # 500, the polling loop never sees a 200, the step exits 1
+          # with no test artifacts. Stub values are sufficient because
+          # `getUser()` against a bogus host returns `{ user: null,
+          # error }`, which the public/auth routes the suite covers all
+          # handle cleanly (line 19 bypasses for /privacy /faq
+          # /reset-password; user=null falls through for /, /pricing,
+          # /terms; auth routes /login /signup with user=null also
+          # fall through).
+          NEXT_PUBLIC_SUPABASE_URL: https://stub.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: stub-anon-key-ci-build-only
       - name: Start Next server
         # Boot the server here (instead of letting Playwright spawn it
         # from `webServer.command`) so that any `next start` boot
@@ -54,6 +69,12 @@ jobs:
           exit 1
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # Mirror the build step: server-side code in `lib/supabase-*`
+          # reads these at request time too (createServerClient on every
+          # API route). Stubs keep the same { user: null } fallthrough
+          # the build-time inline relies on.
+          NEXT_PUBLIC_SUPABASE_URL: https://stub.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: stub-anon-key-ci-runtime-only
       - name: Run mobile regression suite
         run: npm run test:e2e
         env:
