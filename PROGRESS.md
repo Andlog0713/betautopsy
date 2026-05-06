@@ -44,10 +44,7 @@
 ## Current branch: `claude/autopsy-report-flow-5vJx0`
 
 ### In progress
-- **Landing + pricing CTA flow audit** — proposed per-CTA flows for the 5 entry points (hero "Get your autopsy report", landing Full Report "Get your report", landing Pro "Go Pro", `/pricing` "Get your report", `/pricing` "Subscribe to Pro"). Awaiting user sign-off on:
-  - Hero #1 destination for authed users with an existing snapshot (`/dashboard` vs `/reports/[latest]`).
-  - Whether to add an `intent=report|pro` query param on `/pricing` to auto-fire checkout post-signup (resolves the "land on /pricing, click again" gap from `?next=/pricing` redirects).
-  - Whether to add a Pro-tier short-circuit on "Subscribe to Pro" → billing portal instead of duplicate checkout.
+- (none — both commits pushed)
 
 ### Done this session
 - Audited current behavior of all 5 CTAs:
@@ -56,6 +53,18 @@
   - #3 Landing Go Pro: `app/page.tsx:320` — unconditional `/signup?next=/pricing`.
   - #4 `/pricing` Get your report: `app/(dashboard)/pricing/page.tsx:213` `handleBuyReport` — auth-gated, snapshot-gated, fires `/api/checkout` type=report via `openCheckoutUrl()`.
   - #5 `/pricing` Subscribe to Pro: `app/(dashboard)/pricing/page.tsx:296` `handleSubscribe` — auth-gated, fires `/api/checkout` type=subscription via `openCheckoutUrl()`.
+- **Commit 1 (`13acd8d`) — three blocking bug fixes shipped:**
+  - `middleware.ts` now reads `next` from the auth-route redirect, validates same-origin (rejects `//`, `/\`, absolute URLs), and routes there directly. Fixes #1/#2/#3 dead-ending at `/dashboard?next=…`.
+  - `handleSubscribe` got the missing `else { setLoadingAction(null) }` branch so the button no longer hangs on "Redirecting…" forever, plus a defensive `subscription_tier === 'pro'` guard that routes to `handleManage()` instead of starting a duplicate checkout.
+  - Both `handleSubscribe` and `handleBuyReport` now surface API error messages via `toast.error()` instead of silently swallowing them — production can finally see *why* `/api/checkout` returns no URL.
+- **Commit 2 (`3d2e541`) — auth-aware CTA routing:**
+  - New `components/AuthProvider.tsx` mounted in `app/layout.tsx`: single `getUser()` + `profiles` + latest-snapshot fetch on mount, exposed via React Context (`useAuthState()`).
+  - `components/NavBar.tsx` and `components/AuthGuard.tsx` refactored to consume the provider instead of running their own fetches — saves a redundant round-trip on every dashboard navigation.
+  - New `components/SmartCTALink.tsx` with `intent: 'snapshot' | 'report' | 'pro'` prop. While `status === 'loading'` it renders a disabled placeholder so a fast click during the auth roundtrip doesn't ship an authed user to `/signup`.
+  - `/pricing` reads `?intent=pro` and auto-fires `handleSubscribe()` once the page resolves (`useRef` guard prevents double-fire) — Pro CTAs from marketing now ship the user straight into Stripe.
+  - CTAs replaced with `<SmartCTALink>`: `HeroABTest.tsx` (SSR fallback + tracked variant), `app/page.tsx` (Free Snapshot card "Start Free", Full Report "Get Your Report", Pro "Go Pro", final CTA), `DemoReportWrapper.tsx` (collapsed + expanded), `SampleStickyBar.tsx` (mobile + desktop), `app/sample/page.tsx`.
+  - Out of scope: `app/go/GoSignupLink.tsx` (preserves UTM/attribution params for paid traffic — auth-aware routing would clobber attribution); `NavBar.tsx` signup links (only render when unauthed, already correct).
+- Verified: `npx tsc --noEmit` clean, `npx next build` green.
 
 ---
 
