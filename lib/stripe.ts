@@ -40,13 +40,60 @@ export function tierFromPriceId(priceId: string): 'pro' | null {
   return null;
 }
 
+/**
+ * Resolve a Stripe customer ID for the given Supabase user.
+ *
+ * `created` is true when this call had to mint a fresh Stripe
+ * customer — the caller MUST persist the new ID to
+ * `profiles.stripe_customer_id`, otherwise the next checkout
+ * attempt will hit the same stale-ID problem we just recovered
+ * from.
+ *
+ * Why not just trust `existingCustomerId`: a stored ID can be
+ * invalid for several reasons in the live environment —
+ *
+ *   - **Test→live key cutover.** A customer created against
+ *     `sk_test_...` is invisible to a `sk_live_...` request
+ *     and Stripe responds with `resource_missing` + a hint
+ *     about test/live separation. We saw this in production
+ *     on 2026-05-06 (req_oeokpchVEwYg7b).
+ *   - **Manual deletion in the Stripe dashboard** for cleanup.
+ *   - **Stripe account swap** (rare, but possible across
+ *     ownership changes).
+ *
+ * In all three cases the right move is to mint a fresh customer
+ * in the *current* mode and overwrite the stale row. We don't
+ * try to migrate / merge subscription history because there's
+ * nothing to migrate — a stale ID means there were no live
+ * payments associated anyway.
+ */
 export async function getOrCreateCustomer(
   email: string,
   userId: string,
   existingCustomerId: string | null
-): Promise<string> {
+): Promise<{ customerId: string; created: boolean }> {
   if (existingCustomerId) {
-    return existingCustomerId;
+    try {
+      const customer = await getStripe().customers.retrieve(existingCustomerId);
+      // Stripe's `retrieve` returns a `DeletedCustomer` shape (with
+      // `deleted: true`) when the customer was soft-deleted. Treat
+      // that as missing too — `customers.create` will mint a fresh
+      // active one.
+      if (!('deleted' in customer) || !customer.deleted) {
+        return { customerId: existingCustomerId, created: false };
+      }
+    } catch (err) {
+      // `code === 'resource_missing'` covers test/live mismatch and
+      // hard-deleted customers. Any other Stripe error (auth, rate
+      // limit, transient network) we re-throw so the route's catch
+      // block surfaces it to the user.
+      const isMissing =
+        err !== null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code?: unknown }).code === 'resource_missing';
+      if (!isMissing) throw err;
+    }
   }
 
   const customer = await getStripe().customers.create({
@@ -54,7 +101,7 @@ export async function getOrCreateCustomer(
     metadata: { supabase_user_id: userId },
   });
 
-  return customer.id;
+  return { customerId: customer.id, created: true };
 }
 
 // Pro subscription checkout ($19.99/mo or $149.99/yr)

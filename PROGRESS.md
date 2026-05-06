@@ -67,6 +67,34 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **Hotfix: stale test-mode Stripe customer IDs blocking live-mode checkout.**
+  Symptom: every "Get Your Report" / "Subscribe to Pro" click on production showed the
+  generic "Checkout failed" toast. Surfaced because commit `13acd8d` added the toast in the
+  first place — the underlying error had likely been silent for a while. Vercel runtime log
+  showed `StripeInvalidRequestError: No such customer: 'cus_UCml1T40Pcd7at'; a similar
+  object exists in test mode, but a live mode key was used to make this request.`
+  (req_oeokpchVEwYg7b, 2026-05-06 16:53). Root cause: `lib/stripe.ts:48`
+  `getOrCreateCustomer` blindly returned the stored `profiles.stripe_customer_id` without
+  verifying it existed in the current Stripe mode. A user whose customer was minted under
+  the test key was permanently locked out after the live key took over.
+  Fix:
+    - `lib/stripe.ts:getOrCreateCustomer` now `customers.retrieve`s any stored ID first.
+      On `code === 'resource_missing'` (test/live mismatch, hard-deleted, or soft-deleted
+      via `DeletedCustomer.deleted: true`) it falls through to mint a fresh customer in the
+      current mode. Other Stripe errors re-throw so they surface at the route. Return shape
+      changed to `{ customerId, created }`.
+    - `app/api/checkout/route.ts` always persists the new ID when `created === true`, not
+      just when the stored value was null. Same code path covers fresh signups and stale-ID
+      recovery without any flag inspection at the call site.
+    - Route's catch-block error classification tightened: now duck-types Stripe SDK errors
+      via `error.type.startsWith('Stripe')` (the stable shape on every `StripeError` subclass)
+      in addition to the existing `lower.includes('stripe')` substring check. Future Stripe
+      failures whose `.message` doesn't happen to contain the literal word "stripe" — like
+      this one — now route to the friendlier "We couldn't start checkout right now" message
+      instead of the generic fallback.
+  No data migration needed: any user with a stale ID will get a fresh live-mode customer
+  on their next click and `profiles.stripe_customer_id` will be overwritten in the same
+  request. Cleanup is lazy and bounded to active-trying users.
 - **First-launch AI consent modal (Guideline 5.1.2(i)):** new `components/AIConsentModal.tsx`
   mounted at the bottom of `app/layout.tsx` body, gated on `isMobileBuild()` so it tree-shakes
   out of the web bundle. Reads/writes consent via `storeLocally`/`getLocally` (Capacitor

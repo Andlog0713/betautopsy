@@ -59,15 +59,21 @@ export async function POST(request: Request) {
 
     const typedProfile = profile as Profile;
 
-    // Get or create Stripe customer
-    const customerId = await getOrCreateCustomer(
+    // Get or create Stripe customer.
+    //
+    // `created: true` covers two cases — the user had no stored ID,
+    // OR the stored ID failed `customers.retrieve` because it lived
+    // in test mode while we now run with a live key (or the customer
+    // was deleted in the dashboard). In both cases we just minted a
+    // fresh live-mode customer and need to overwrite the stale row,
+    // otherwise the very next click hits the same error.
+    const { customerId, created } = await getOrCreateCustomer(
       typedProfile.email,
       user.id,
       typedProfile.stripe_customer_id
     );
 
-    // Save customer ID if new
-    if (!typedProfile.stripe_customer_id) {
+    if (created) {
       await supabase
         .from('profiles')
         .update({ stripe_customer_id: customerId })
@@ -128,6 +134,18 @@ export async function POST(request: Request) {
     // user to see something better than a raw error string.
     const rawMessage = error instanceof Error ? error.message : String(error);
     const lower = rawMessage.toLowerCase();
+    // Duck-type Stripe SDK errors. `instanceof Stripe.errors.StripeError`
+    // would be cleaner but pulls the SDK's class hierarchy into this
+    // route bundle for one check; the `type: 'Stripe…'` shape is part
+    // of Stripe's stable error contract and matches every error class
+    // they throw (StripeInvalidRequestError, StripeAPIError,
+    // StripeAuthenticationError, etc.).
+    const stripeType =
+      error !== null && typeof error === 'object' && 'type' in error
+        ? (error as { type?: unknown }).type
+        : undefined;
+    const isStripeError =
+      typeof stripeType === 'string' && stripeType.startsWith('Stripe');
     let userMessage: string;
     let status = 500;
 
@@ -140,8 +158,10 @@ export async function POST(request: Request) {
     ) {
       userMessage = 'Payment service is temporarily unreachable. Please try again in a moment.';
       status = 503;
-    } else if (lower.includes('stripe')) {
-      // Stripe API error from our side (misconfigured key, missing price, etc.)
+    } else if (isStripeError || lower.includes('stripe')) {
+      // Stripe API error from our side (misconfigured key, missing
+      // price/customer, etc.). Logged in full above for support
+      // triage; user just sees the soft message.
       userMessage = "We couldn't start checkout right now. Please try again or contact support if the problem persists.";
     } else {
       userMessage = 'Checkout failed. Please try again or contact support if the problem persists.';
