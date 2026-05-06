@@ -160,7 +160,7 @@
 - **Merging to main now** as a fast-forward. Same deploy fixes (b) on iOS by giving the WKWebView a real route to hit.
 
 ### Parked / next branch
-- **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Service ID, key, AASA).
+- **Sign in with Apple OAuth** (Guideline 4.8 blocker — needs Apple Developer dashboard work: Services ID, .p8 key, Xcode capability). **Blocked on DUNS number** for LLC Apple Developer enrollment as of 2026-05-06. Full implementation plan drafted in chat: 6 manual steps (Apple portal + Supabase + Xcode) + ~5 code changes (`@capacitor-community/apple-sign-in` plugin, `lib/native.ts` helper, `OAuthButtons.tsx` dual-path handler with web `signInWithOAuth` and native `signInWithIdToken({ provider: 'apple', token, nonce })`). Resume when Apple Dev access lands.
 - **First-launch AI consent modal** naming Anthropic explicitly (Guideline 5.1.2(i) Nov 2025 update).
 - **Native push notifications** via `@capacitor-firebase/messaging`.
 - **Biometric login** via `@capgo/capacitor-native-biometric`.
