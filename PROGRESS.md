@@ -41,10 +41,20 @@
 
 ---
 
-## Current branch: `claude/autopsy-report-flow-5vJx0`
+## Current branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
-- (none — both commits pushed)
+- Diagnose recurring `mobile-regression.yml` failure on push-to-main runs (~2 weeks history).
+  Latest run: e2e exits 1 at 5m30s; `test-results/` empty so no per-test artifacts uploaded.
+  Empty output dir rules out per-spec assertion failures (Playwright writes screenshots/videos
+  for failed tests by default). Working hypotheses, in order: (a) WebKit launch failure on
+  `ubuntu-latest` after the runner image flipped to 24.04 — `--with-deps webkit` doesn't always
+  cover the new glibc/libwebp deps; (b) `next start` returns 500s on a non-`/` route (Sentry
+  sourcemap upload corruption) — `Start Next server` only curls `/` so a partial 500 looks
+  like a test failure; (c) `playwright test` exits 1 on a global setup error before any spec runs.
+  Awaiting actual log of "Run mobile regression suite" step from the user, or run URL to
+  WebFetch. Independent CI-hardening proposed: probe each `PUBLIC_ROUTES` entry in the curl
+  poll, pin `runs-on: ubuntu-22.04`, add `--reporter=list,html` + always-upload HTML report.
 
 ### Done this session
 - Audited current behavior of all 5 CTAs:
