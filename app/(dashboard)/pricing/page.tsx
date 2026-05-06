@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase';
 import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
@@ -50,7 +51,13 @@ export default function PricingPage() {
 
   async function handleSubscribe() {
     if (!profile) {
-      window.location.href = '/signup';
+      window.location.href = '/signup?next=' + encodeURIComponent('/pricing?intent=pro');
+      return;
+    }
+    // Already Pro — never start a duplicate checkout. The render branch already
+    // hides the button for isPro, but a webhook-state desync could leave us here.
+    if (profile.subscription_tier === 'pro') {
+      handleManage();
       return;
     }
     setLoadingAction('pro');
@@ -74,8 +81,12 @@ export default function PricingPage() {
         trackCheckoutMeta('pro', value);
         window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
         await openCheckoutUrl(data.url);
+      } else {
+        toast.error(data.error || 'Could not start checkout. Please try again.');
+        setLoadingAction(null);
       }
     } catch {
+      toast.error('Could not start checkout. Please try again.');
       setLoadingAction(null);
     }
   }
@@ -103,9 +114,11 @@ export default function PricingPage() {
         window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
         await openCheckoutUrl(data.url);
       } else {
+        toast.error(data.error || 'Could not start checkout. Please try again.');
         setLoadingAction(null);
       }
     } catch {
+      toast.error('Could not start checkout. Please try again.');
       setLoadingAction(null);
     }
   }

@@ -77,11 +77,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth routes
+  // Redirect authenticated users away from auth routes. Honor a same-origin
+  // ?next= so landing-page CTAs (e.g. /signup?next=/reports?run=true) survive
+  // the redirect — without this, signed-in users dead-end on /dashboard.
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
   if (isAuthRoute && user) {
+    const next = request.nextUrl.searchParams.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\')) {
+      try {
+        const dest = new URL(next, request.nextUrl.origin);
+        if (dest.origin === request.nextUrl.origin) {
+          return NextResponse.redirect(dest);
+        }
+      } catch {}
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 
