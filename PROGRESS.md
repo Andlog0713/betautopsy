@@ -67,6 +67,15 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **First-launch AI consent modal (Guideline 5.1.2(i)):** new `components/AIConsentModal.tsx`
+  mounted at the bottom of `app/layout.tsx` body, gated on `isMobileBuild()` so it tree-shakes
+  out of the web bundle. Reads/writes consent via `storeLocally`/`getLocally` (Capacitor
+  Preferences on native, no-op on web). Versioned key `ai-consent-anthropic-v1` so future
+  language changes can re-prompt by bumping the version. Names Anthropic Claude explicitly
+  per the November 2025 update, links to /privacy for full disclosure, single "I agree" CTA.
+  Component self-gates on `isMobileApp()` at runtime as a safety net for browser previews of
+  the mobile static export. Design-system clean: `bg-surface-2`, `border-border-subtle`,
+  `rounded-md`, `btn-primary`, no shadow/blur/off-palette.
 - Audited current behavior of all 5 CTAs:
   - #1 Hero: `components/HeroABTest.tsx:99` — unconditional `Link href="/signup"`, no auth branch.
   - #2 Landing Full Report: `app/page.tsx:293` — unconditional `/signup?next=/pricing`.

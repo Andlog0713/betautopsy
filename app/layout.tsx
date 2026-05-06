@@ -13,6 +13,7 @@ import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import SplashHider from '@/components/SplashHider';
 import AuthProvider from '@/components/AuthProvider';
+import AIConsentModal from '@/components/AIConsentModal';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -178,6 +179,14 @@ export default function RootLayout({
           </>
         )}
         <AuthProvider>{children}</AuthProvider>
+        {/*
+         * Mobile-only AI processing disclosure (App Store Review
+         * Guideline 5.1.2(i), Nov 2025 update). The component
+         * itself self-gates on `isMobileApp()` at runtime, but
+         * `isMobileBuild()` here lets webpack tree-shake it out of
+         * the web bundle entirely.
+         */}
+        {isMobileBuild() && <AIConsentModal />}
       </body>
     </html>
   );
