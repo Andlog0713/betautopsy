@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import SmartCTALink from '@/components/SmartCTALink';
 
 /**
  * Fixed-bottom CTA bar for the /sample page. Appears after the user scrolls
@@ -84,13 +84,13 @@ export default function SampleStickyBar() {
     >
       {/* Mobile: centered full-width button, label hidden entirely. */}
       <div className="flex sm:hidden items-center justify-center h-full px-4">
-        <Link
-          href="/signup"
+        <SmartCTALink
+          intent="snapshot"
           onClick={handleClick}
           className="btn-primary w-full text-center"
         >
           Get Your Autopsy
-        </Link>
+        </SmartCTALink>
       </div>
 
       {/* Desktop: flex row, value-prop label on left, CTA button on right. */}
@@ -98,13 +98,13 @@ export default function SampleStickyBar() {
         <p className="font-mono text-[10px] text-fg-bright tracking-[1.5px] uppercase">
           FREE SNAPSHOT. FULL REPORTS $9.99 (50% OFF).
         </p>
-        <Link
-          href="/signup"
+        <SmartCTALink
+          intent="snapshot"
           onClick={handleClick}
           className="btn-primary"
         >
           Get Your Autopsy
-        </Link>
+        </SmartCTALink>
       </div>
     </div>
   );

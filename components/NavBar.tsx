@@ -5,37 +5,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Flame } from 'lucide-react';
-import type { Profile } from '@/types';
 import { Logo } from '@/components/logo';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { useAuthState } from '@/components/AuthProvider';
 
 export default function NavBar() {
   const pathname = usePathname();
   const isLanding = pathname === '/';
-  const [user, setUser] = useState<{ email: string } | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const auth = useAuthState();
+  const authChecked = auth.status !== 'loading';
+  const user = auth.status === 'no-snapshot' || auth.status === 'has-snapshot'
+    ? { email: auth.user.email ?? '' }
+    : null;
+  const profile = auth.status === 'no-snapshot' || auth.status === 'has-snapshot'
+    ? auth.profile
+    : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    async function checkAuth() {
-      const supabase = createClient();
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser({ email: authUser.email ?? '' });
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
-        if (data) setProfile(data as Profile);
-      }
-      setAuthChecked(true);
-    }
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

@@ -12,6 +12,7 @@ import { jakarta, ibmPlexMono } from './fonts';
 import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import SplashHider from '@/components/SplashHider';
+import AuthProvider from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -176,7 +177,7 @@ export default function RootLayout({
             <CookieConsent alreadyGranted={!requireConsent} />
           </>
         )}
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

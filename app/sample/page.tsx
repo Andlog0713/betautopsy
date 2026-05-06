@@ -7,6 +7,7 @@ import SamplePageClient from '@/components/SamplePageClient';
 import AnimatedSection from '@/components/AnimatedSection';
 import SampleStickyBar from '@/components/SampleStickyBar';
 import PlatformMetrics from '@/components/PlatformMetrics';
+import SmartCTALink from '@/components/SmartCTALink';
 import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from 'lucide-react';
 
 // Static for mobile builds (no runtime to revalidate on); ISR on web.
@@ -102,9 +103,9 @@ export default function SamplePage() {
             <p className="text-fg-muted font-light mb-8">
               Free snapshot. Full reports <span className="line-through opacity-60">$19.99</span> $9.99. 50% off. No credit card to start.
             </p>
-            <Link href="/signup" className="btn-primary text-base !px-8 !py-3">
+            <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3">
               Upload your bets
-            </Link>
+            </SmartCTALink>
           </div>
         </section>
       </AnimatedSection>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase';
@@ -18,6 +18,7 @@ export default function PricingPage() {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
   const [latestSnapshotId, setLatestSnapshotId] = useState<string | null>(null);
+  const intentFiredRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -48,6 +49,22 @@ export default function PricingPage() {
     }
     load();
   }, []);
+
+  // Auto-fire Stripe checkout when arriving at /pricing?intent=pro — this is
+  // the post-signup landing for Pro CTAs from the marketing surface, so we
+  // ship the user straight into Stripe instead of forcing another click.
+  useEffect(() => {
+    if (pageLoading || intentFiredRef.current) return;
+    if (typeof window === 'undefined') return;
+    const intent = new URLSearchParams(window.location.search).get('intent');
+    if (intent !== 'pro') return;
+    if (!profile) return;
+    if (profile.subscription_tier === 'pro') return;
+    intentFiredRef.current = true;
+    handleSubscribe();
+    // handleSubscribe is stable for the lifetime of the component
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageLoading, profile]);
 
   async function handleSubscribe() {
     if (!profile) {

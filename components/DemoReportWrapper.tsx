@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
 import type { AutopsyAnalysis, Bet } from '@/types';
+import SmartCTALink from '@/components/SmartCTALink';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
@@ -86,12 +86,12 @@ export default function DemoReportWrapper({ ungated = false, analysis, bets }: D
                 <p className="text-fg-bright text-lg font-medium mb-2">
                   This is a sample. Yours will be even more personal.
                 </p>
-                <Link
-                  href="/signup"
+                <SmartCTALink
+                  intent="snapshot"
                   className="btn-primary text-lg !px-10 !py-3.5 inline-block"
                 >
                   Get Your Autopsy Report
-                </Link>
+                </SmartCTALink>
               </div>
             </div>
           </div>
@@ -104,12 +104,12 @@ export default function DemoReportWrapper({ ungated = false, analysis, bets }: D
           <p className="text-fg-muted text-sm">
             That was a sample report with {isDfs ? '200 entries' : '280 bets'}. Imagine what yours would reveal.
           </p>
-          <Link
-            href="/signup"
+          <SmartCTALink
+            intent="snapshot"
             className="btn-primary text-lg !px-10 !py-3.5 inline-block"
           >
             Get Your Autopsy Report
-          </Link>
+          </SmartCTALink>
         </div>
       )}
     </div>

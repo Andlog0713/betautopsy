@@ -6,6 +6,7 @@ import DemoReportWrapper from '@/components/DemoReportWrapper';
 import Footer from '@/components/Footer';
 import AnimatedSection from '@/components/AnimatedSection';
 import HeroABTest from '@/components/HeroABTest';
+import SmartCTALink from '@/components/SmartCTALink';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
@@ -261,7 +262,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Start Free</Link>
+              <SmartCTALink intent="snapshot" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Start Free</SmartCTALink>
             </div>
             <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 rounded-md" style={{ background: 'linear-gradient(180deg, rgba(0,201,167,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
@@ -290,7 +291,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</Link>
+              <SmartCTALink intent="report" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</SmartCTALink>
               <BorderBeam colorFrom="#00C9A7" colorTo="#00C9A7" className="hidden md:block" />
             </div>
             <div className="bg-base p-6 flex flex-col">
@@ -317,7 +318,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?next=/pricing" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Go Pro</Link>
+              <SmartCTALink intent="pro" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Go Pro</SmartCTALink>
             </div>
           </div>
           {/* Trust block */}
@@ -386,9 +387,9 @@ export default function LandingPage() {
         <p className="text-fg-muted font-light mb-8 max-w-lg mx-auto text-sm">
           Your next bet is coming. Know what your patterns say before you place it.
         </p>
-        <Link href="/signup" className="btn-primary text-base !px-10 !py-3">
+        <SmartCTALink intent="snapshot" className="btn-primary text-base !px-10 !py-3">
           Get Your Autopsy Report
-        </Link>
+        </SmartCTALink>
       </section>
       </AnimatedSection>
 

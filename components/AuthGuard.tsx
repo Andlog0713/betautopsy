@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { useAuthState } from '@/components/AuthProvider';
 
 /**
  * Client-side auth guard.
  *
- * Runs `supabase.auth.getUser()` on mount and:
+ * Consumes the app-wide `AuthProvider` context (single `getUser()` per
+ * page load) and:
  *
  *   1. Redirects unauthenticated users to `/login`.
  *   2. Redirects unverified email-signup users to `/signup?verify=true`
@@ -21,8 +22,8 @@ import { createClient } from '@/lib/supabase';
  * the web build on every navigation. The mobile (Capacitor)
  * `output: 'export'` build does not run middleware, so a
  * client-side replacement is required. On web this component is a
- * harmless double-check on top of middleware and the existing
- * shell-level profile fetch, so it's safe to mount unconditionally.
+ * harmless double-check on top of middleware, so it's safe to mount
+ * unconditionally.
  *
  * Security posture: this is a UX gate, not a security boundary.
  * Every API route (`app/api/**` on web) and every admin-sensitive
@@ -30,53 +31,38 @@ import { createClient } from '@/lib/supabase';
  * server-side, so a user who bypasses this guard still can't read
  * any data they aren't entitled to.
  */
-type AuthState = 'checking' | 'authenticated';
-
 export default function AuthGuard({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<AuthState>('checking');
+  const auth = useAuthState();
 
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (cancelled) return;
-
-      if (!user) {
-        router.replace('/login');
-        return;
-      }
-
+    if (auth.status === 'anon') {
+      router.replace('/login');
+      return;
+    }
+    if (auth.status === 'no-snapshot' || auth.status === 'has-snapshot') {
       // OAuth users (Google) are auto-verified by Supabase at signup,
       // so `email_confirmed_at` is already set. The provider check is
       // a belt-and-suspenders safeguard in case that guarantee ever
       // slips — we'd rather let a Google user through than bounce
-      // them to `/signup?verify=true` where they have no path
-      // forward.
-      const provider = user.app_metadata?.provider;
+      // them to `/signup?verify=true` where they have no path forward.
+      const provider = auth.user.app_metadata?.provider;
       const isOAuth = provider === 'google';
-
-      if (!user.email_confirmed_at && !isOAuth) {
+      if (!auth.user.email_confirmed_at && !isOAuth) {
         router.replace('/signup?verify=true');
-        return;
       }
+    }
+  }, [auth, router]);
 
-      setState('authenticated');
-    })();
+  const verified =
+    (auth.status === 'no-snapshot' || auth.status === 'has-snapshot') &&
+    (!!auth.user.email_confirmed_at || auth.user.app_metadata?.provider === 'google');
 
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  if (state !== 'authenticated') {
+  if (!verified) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-fg-muted font-mono text-sm animate-pulse">
