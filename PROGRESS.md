@@ -41,7 +41,25 @@
 
 ---
 
-## Current branch: `claude/fix-e2e-tests-timeout-YJRzd`
+## Current branch: `claude/autopsy-report-flow-5vJx0`
+
+### In progress
+- **Landing + pricing CTA flow audit** — proposed per-CTA flows for the 5 entry points (hero "Get your autopsy report", landing Full Report "Get your report", landing Pro "Go Pro", `/pricing` "Get your report", `/pricing` "Subscribe to Pro"). Awaiting user sign-off on:
+  - Hero #1 destination for authed users with an existing snapshot (`/dashboard` vs `/reports/[latest]`).
+  - Whether to add an `intent=report|pro` query param on `/pricing` to auto-fire checkout post-signup (resolves the "land on /pricing, click again" gap from `?next=/pricing` redirects).
+  - Whether to add a Pro-tier short-circuit on "Subscribe to Pro" → billing portal instead of duplicate checkout.
+
+### Done this session
+- Audited current behavior of all 5 CTAs:
+  - #1 Hero: `components/HeroABTest.tsx:99` — unconditional `Link href="/signup"`, no auth branch.
+  - #2 Landing Full Report: `app/page.tsx:293` — unconditional `/signup?next=/pricing`.
+  - #3 Landing Go Pro: `app/page.tsx:320` — unconditional `/signup?next=/pricing`.
+  - #4 `/pricing` Get your report: `app/(dashboard)/pricing/page.tsx:213` `handleBuyReport` — auth-gated, snapshot-gated, fires `/api/checkout` type=report via `openCheckoutUrl()`.
+  - #5 `/pricing` Subscribe to Pro: `app/(dashboard)/pricing/page.tsx:296` `handleSubscribe` — auth-gated, fires `/api/checkout` type=subscription via `openCheckoutUrl()`.
+
+---
+
+## Previous branch: `claude/fix-e2e-tests-timeout-YJRzd`
 
 ### In progress
 - (none)
