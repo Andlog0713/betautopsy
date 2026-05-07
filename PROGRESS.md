@@ -67,6 +67,12 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **Multi-select bulk delete + select-all on `/uploads`** — added `deleteSelected()` that
+  deletes bets (`.in('upload_id', ids)`) and then uploads (`.in('id', ids)`) in two
+  round-trips regardless of selection size, with a confirm dialog showing total bets
+  across the selection. Header now has a "Select All" / "Deselect All" toggle next to
+  "Upload New CSV". Multi-select action bar gained a "Delete Selected" button (red
+  `text-loss`, right-aligned via `ml-auto` so it sits opposite Analyze/Compare).
 - **Ungated delete actions on `/uploads` and `/bets`** — both pages had delete UI gated
   behind Pro tier. Removed the `{isPaid && (` wrap around the per-upload `✕` button at
   `app/(dashboard)/uploads/page.tsx:206` and the `{(getEffectiveTier(tier) === 'pro') && (`

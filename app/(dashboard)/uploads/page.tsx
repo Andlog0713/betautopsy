@@ -78,6 +78,30 @@ export default function UploadsPage() {
     setSelected((prev) => { const n = new Set(prev); n.delete(uploadId); return n; });
   }
 
+  async function deleteSelected() {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    const totalBets = uploads
+      .filter((u) => selected.has(u.id))
+      .reduce((sum, u) => sum + (u.bet_count ?? 0), 0);
+    const msg =
+      ids.length === 1
+        ? `Delete this upload and its ${totalBets} bets? This cannot be undone.`
+        : `Delete ${ids.length} uploads and their ${totalBets} bets? This cannot be undone.`;
+    if (!confirm(msg)) return;
+    const supabase = createClient();
+    // Delete bets first (FK), then uploads. Both `.in()` so it's a single
+    // round-trip per table regardless of selection size.
+    await supabase.from('bets').delete().in('upload_id', ids);
+    await supabase.from('uploads').delete().in('id', ids);
+    setUploads((prev) => prev.filter((u) => !selected.has(u.id)));
+    setSelected(new Set());
+  }
+
+  function selectAll() {
+    setSelected(new Set(uploads.map((u) => u.id)));
+  }
+
   async function saveName(uploadId: string) {
     const supabase = createClient();
     await supabase.from('uploads').update({ display_name: editName }).eq('id', uploadId);
@@ -121,7 +145,18 @@ export default function UploadsPage() {
           <p className="text-sm text-fg-muted mt-1">Your previous imports</p>
           <p className="text-xs text-fg-muted mt-0.5">{uploads.length} upload{uploads.length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>
+        <div className="flex items-center gap-3">
+          {uploads.length > 0 && (
+            <button
+              type="button"
+              onClick={selected.size === uploads.length ? () => setSelected(new Set()) : selectAll}
+              className="text-xs text-fg-muted hover:text-fg transition-colors"
+            >
+              {selected.size === uploads.length ? 'Deselect All' : 'Select All'}
+            </button>
+          )}
+          <Link href="/upload" className="btn-primary text-sm">Upload New CSV</Link>
+        </div>
       </div>
 
       {/* Legacy bets notice */}
@@ -242,6 +277,13 @@ export default function UploadsPage() {
               Compare
             </button>
           )}
+          <button
+            type="button"
+            onClick={deleteSelected}
+            className="text-sm text-loss hover:underline ml-auto"
+          >
+            Delete Selected
+          </button>
         </div>
       )}
     </div>
