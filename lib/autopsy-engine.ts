@@ -2440,7 +2440,14 @@ export async function runAutopsy(
   bets: Bet[],
   bankroll?: number | null
 ): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // `maxRetries: 0` — the SDK's default is 2 retries on timeout, which on
+  // a 50s per-call budget could burn 150s before giving up (exactly what
+  // we observed in production 2026-05-07 req fm2sl-1778192184146-831325ed0701:
+  // 3× 50s timeouts on /v1/messages, function ran 153s and returned an
+  // error event the user never saw because the temp loading report
+  // covered it). Our `callWithOverloadRetry` wrapper handles the only
+  // retryable case (529 overloaded); any other failure should fast-fail.
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
   const model = 'claude-sonnet-4-6';
 
   // Step 1: Calculate all metrics deterministically in JS
@@ -2563,9 +2570,15 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 
   const userMessage = `${metricsBlock}${dfsPromptBlock}${sportFindingsBlock}\n\n=== RAW BETS FOR PATTERN ANALYSIS ===\n${betTable}`;
 
-  // Step 3: Call Claude for behavioral interpretation (50s timeout to stay within serverless limits).
-  // Wrapped in a small retry helper so a single transient 529/overloaded response doesn't immediately
-  // fail the autopsy — the SDK has no built-in retry for this and even small runs hit it occasionally.
+  // Step 3: Call Claude for behavioral interpretation. 240s per-call timeout
+  // because Sonnet 4.6 generating up to 8192 tokens of structured analysis on
+  // a multi-thousand-bet dataset routinely takes 100-180s at the SDK's typical
+  // throughput. Combined with maxRetries=0 above, worst case is one 240s call
+  // — comfortably under the route's maxDuration=300s. The 50s default we used
+  // to ship at was the source of the 2026-05-07 production hang.
+  // Wrapped in callWithOverloadRetry so a single transient 529/overloaded
+  // response doesn't immediately fail; everything else (timeout, auth, parse)
+  // throws on first attempt.
   const message = await callWithOverloadRetry(() =>
     client.messages.create({
       model,
@@ -2573,7 +2586,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       temperature: 0,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userMessage }],
-    }, { timeout: 50000 })
+    }, { timeout: 240000 })
   );
 
   const textBlock = message.content.find((block) => block.type === 'text');
