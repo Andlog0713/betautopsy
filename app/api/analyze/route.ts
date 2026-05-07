@@ -8,6 +8,17 @@ import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
+// 5-minute Vercel function timeout. Default (10s edge / 60s serverless on
+// hobby, 300s on pro) is too short for full-report LLM analyses on the
+// max-cap 5000-bet dataset — observed in production 2026-05-06 when a
+// paying user's full-report runAutopsy stalled mid-LLM-stream around the
+// 60s mark, the function got killed, no autopsy_reports row was committed
+// and the user was left with is_paid=true but no full report row to
+// render. Vercel caps this at the plan max (300s on pro), so this is a
+// no-op on hobby — but on pro it's the difference between completion and
+// silent timeout for large analyses.
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   // ── Pre-stream validation (returns JSON errors) ──
   // Resolve session via cookie (web) or Bearer token (mobile). Any
