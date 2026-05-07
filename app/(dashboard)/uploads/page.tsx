@@ -203,15 +203,20 @@ export default function UploadsPage() {
                     <Link href={`/reports?upload_id=${u.id}`} className="text-xs text-scalpel hover:underline">
                       Analyze
                     </Link>
-                    {isPaid && (
-                      <button
-                        onClick={() => deleteUpload(u.id, u.bet_count)}
-                        className="text-xs text-fg-dim hover:text-loss transition-colors"
-                        aria-label="Delete upload"
-                      >
-                        ✕
-                      </button>
-                    )}
+                    {/*
+                     * Per-upload delete is available to every tier, not
+                     * just Pro. Users who want to clean out a bad CSV
+                     * import or remove their data shouldn't have to
+                     * upgrade — and "right to delete" is also a privacy
+                     * baseline (GDPR Art. 17 / CCPA).
+                     */}
+                    <button
+                      onClick={() => deleteUpload(u.id, u.bet_count)}
+                      className="text-xs text-fg-dim hover:text-loss transition-colors"
+                      aria-label="Delete upload"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               </div>

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase';
 import { Lock, Target } from 'lucide-react';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
-import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Bet, Profile } from '@/types';
 
 // Normalize sport names for display (fixes legacy "Nhl" → "NHL" etc.)
@@ -366,9 +366,14 @@ export default function BetsPage() {
                   <SortTh col="result" label="Result" align="center" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <SortTh col="profit" label="P&L" align="right" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
                   <th className="px-4 py-3 w-10">
-                    {(getEffectiveTier(tier) === 'pro') && (
-                      <ClearAllBets betCount={bets.length} onCleared={loadBets} />
-                    )}
+                    {/*
+                     * Delete-all is available to every tier, not just
+                     * Pro. Users own their data; "right to delete"
+                     * shouldn't sit behind a paywall (GDPR Art. 17 /
+                     * CCPA baseline). Per-row ✕ below was already
+                     * ungated.
+                     */}
+                    <ClearAllBets betCount={bets.length} onCleared={loadBets} />
                   </th>
                 </tr>
               </thead>

@@ -67,6 +67,13 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **Ungated delete actions on `/uploads` and `/bets`** — both pages had delete UI gated
+  behind Pro tier. Removed the `{isPaid && (` wrap around the per-upload `✕` button at
+  `app/(dashboard)/uploads/page.tsx:206` and the `{(getEffectiveTier(tier) === 'pro') && (`
+  gate around `<ClearAllBets>` at `app/(dashboard)/bets/page.tsx:369`. Per-row bet delete
+  was already ungated. Dropped unused `getEffectiveTier` import. Rationale: data deletion
+  is a privacy baseline (GDPR Art. 17 / CCPA) and shouldn't sit behind a paywall — Pro
+  paywalls the analysis features, not the right to walk away.
 - **Hotfix: stale test-mode Stripe customer IDs blocking live-mode checkout.**
   Symptom: every "Get Your Report" / "Subscribe to Pro" click on production showed the
   generic "Checkout failed" toast. Surfaced because commit `13acd8d` added the toast in the
