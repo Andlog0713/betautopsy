@@ -67,6 +67,26 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **Hotfix: post-checkout unlock kept producing snapshots instead of full reports.**
+  Confirmed live with paid snapshot `923aeb2d-097f-459e-ad3a-11c7e4cf7837` — Stripe redirect
+  to `/reports?id=…&unlocked=true` regenerated the analysis but the new row came back as a
+  locked snapshot. Root cause was a state-timing race in `app/(dashboard)/reports/page.tsx`:
+  the first effect did `setPaidSnapshotId(X)` then immediately `history.replaceState` to
+  rewrite the URL to `?run=true` (dropping `id`). The second effect, gated on
+  `[searchParams, loading, totalBetCount]`, fired once `loadReports` flipped `loading=false`
+  and called `runAutopsy()` — which read `paidSnapshotId` from state. If React hadn't yet
+  applied the `setPaidSnapshotId` from the first effect (or the user refreshed mid-flight),
+  the request went out without `paid_snapshot_id` and the server-side fallback at
+  `app/api/analyze/route.ts:90-92` ("free user requesting full without a paid snapshot —
+  downgrade to snapshot") silently flipped `report_type` to `'snapshot'`. The new row
+  rendered as locked even though `is_paid=true` on the original snapshot.
+  Fix: capture `paid_snapshot_id` directly from `searchParams` synchronously inside the
+  auto-run effect, pass it to `runAutopsy(paidIdOverride?: string)` as an explicit
+  argument, and only `replaceState` to clean the URL *after* the capture. State setter is
+  still called for legacy callers that read `paidSnapshotId` later in the render. The two
+  manual `<button onClick={runAutopsy}>` callers got wrapped in `() => runAutopsy()`
+  arrow functions because the new optional `paidIdOverride: string` arg conflicted with
+  `MouseEventHandler`.
 - **Multi-select bulk delete + select-all on `/uploads`** — added `deleteSelected()` that
   deletes bets (`.in('upload_id', ids)`) and then uploads (`.in('id', ids)`) in two
   round-trips regardless of selection size, with a confirm dialog showing total bets

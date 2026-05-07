@@ -63,29 +63,30 @@ export default function ReportsPage() {
     else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
     else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
 
-    // Post-checkout redirect for one-time report unlock → fire GA4 purchase event,
-    // save the paid snapshot ID so runAutopsy sends report_type: 'full',
-    // and clean the query params so reloads don't double-fire.
+    // Fire conversion pixels exactly once on the post-checkout redirect.
+    // The actual unlock trigger (capturing paid_snapshot_id and running
+    // the full analysis) lives in the auto-run effect below — we used
+    // to do that work here too, but setPaidSnapshotId followed by a
+    // history.replaceState produced a race where runAutopsy could fire
+    // before the state update applied AND before useSearchParams picked
+    // up the new URL, sending the request without paid_snapshot_id and
+    // letting the server downgrade to a snapshot. Now we capture
+    // straight from `searchParams` synchronously in the run effect.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
-      // Fire conversion events to BOTH GA4 and TikTok pixel. Until this fix
-      // TikTok never saw one-time-report purchases, so its bidder couldn't
-      // optimize for actual buyers — only "started checkout" signals.
       window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
       trackPurchase('report', 9.99);
       trackPurchaseMeta('report', 9.99);
-      const reportId = searchParams.get('id');
-      if (reportId) setPaidSnapshotId(reportId);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('unlocked');
-      url.searchParams.delete('id');
-      url.searchParams.set('run', 'true');
-      window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-trigger analysis when ?run=true or ?upload_id=xxx
+  // Auto-trigger analysis after a post-checkout unlock (`?id=…&unlocked=true`)
+  // OR a deep-link run trigger (`?run=true`, `?upload_id=…`). The unlock
+  // path captures the paid snapshot id straight from the URL so timing
+  // with React state updates can't drop it.
   useEffect(() => {
-    const shouldAutoRun = (searchParams.get('run') === 'true' || searchParams.get('upload_id'));
+    const isUnlock = searchParams.get('unlocked') === 'true';
+    const shouldAutoRun =
+      isUnlock || searchParams.get('run') === 'true' || searchParams.get('upload_id');
     if (
       shouldAutoRun &&
       !autoRunTriggered.current &&
@@ -93,9 +94,13 @@ export default function ReportsPage() {
       totalBetCount > 0
     ) {
       autoRunTriggered.current = true;
-      // Clean up URL so refresh doesn't re-trigger
+      const paidId = isUnlock ? searchParams.get('id') : null;
+      if (paidId) setPaidSnapshotId(paidId);
+      // Clean URL only AFTER capturing what we need so refresh-during-run
+      // doesn't strand the user on a stale `?unlocked=true` link or lose
+      // the snapshot id mid-flight.
       window.history.replaceState({}, '', '/reports');
-      runAutopsy();
+      runAutopsy(paidId ?? undefined);
     }
   }, [searchParams, loading, totalBetCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,17 +191,21 @@ export default function ReportsPage() {
     setReports([]);
   }
 
-  async function runAutopsy() {
+  async function runAutopsy(paidIdOverride?: string) {
     setRunning(true);
     setError('');
     setActiveReport(null);
     window.gtag?.('event', 'analysis_started');
 
     try {
-      const isPaidUpgrade = !!paidSnapshotId;
+      // Prefer the caller-supplied id (post-checkout unlock effect) so we
+      // don't race against React's state batching on `paidSnapshotId`.
+      // Falls back to state for the legacy callers that still rely on it.
+      const paidId = paidIdOverride ?? paidSnapshotId;
+      const isPaidUpgrade = !!paidId;
       const body: Record<string, string | string[]> = {
         report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
-        ...(isPaidUpgrade ? { paid_snapshot_id: paidSnapshotId } : {}),
+        ...(isPaidUpgrade ? { paid_snapshot_id: paidId } : {}),
       };
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
@@ -641,7 +650,7 @@ export default function ReportsPage() {
               />
             </div>
             <button
-              onClick={runAutopsy}
+              onClick={() => runAutopsy()}
               disabled={running || betCountForRun === 0}
               className="btn-primary"
             >
@@ -698,7 +707,7 @@ export default function ReportsPage() {
 
       {/* No date picker needed — just the button if no bets */}
       {totalBetCount > 0 && !running && false && (
-        <button onClick={runAutopsy} disabled={running} className="btn-primary">
+        <button onClick={() => runAutopsy()} disabled={running} className="btn-primary">
           <span className="flex items-center gap-1.5"><FlaskConical size={16} /> Run New Autopsy</span>
         </button>
       )}
