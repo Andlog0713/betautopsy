@@ -95,6 +95,14 @@ export default function ReportsPage() {
     ) {
       autoRunTriggered.current = true;
       const paidId = isUnlock ? searchParams.get('id') : null;
+      // eslint-disable-next-line no-console
+      console.log('[unlock-debug] auto-run effect firing', {
+        isUnlock,
+        paidId,
+        searchParamsString: searchParams.toString(),
+        loading,
+        totalBetCount,
+      });
       if (paidId) setPaidSnapshotId(paidId);
       // Clean URL only AFTER capturing what we need so refresh-during-run
       // doesn't strand the user on a stale `?unlocked=true` link or lose
@@ -207,6 +215,14 @@ export default function ReportsPage() {
         report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
         ...(isPaidUpgrade ? { paid_snapshot_id: paidId } : {}),
       };
+      // eslint-disable-next-line no-console
+      console.log('[unlock-debug] runAutopsy outgoing body', {
+        body,
+        tier,
+        effectiveTier: getEffectiveTier(tier),
+        paidIdOverride,
+        paidSnapshotId,
+      });
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
       if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
@@ -298,6 +314,13 @@ export default function ReportsPage() {
               if (metricsTimer) { clearTimeout(metricsTimer); metricsTimer = null; }
               const d = event.data;
               const report = d.report as AutopsyReportType;
+              // eslint-disable-next-line no-console
+              console.log('[unlock-debug] complete event received', {
+                report_id: report.id,
+                report_type: report.report_type,
+                is_paid: report.is_paid,
+                upgraded_from_snapshot_id: report.upgraded_from_snapshot_id,
+              });
               setTierLimited(d.tier_limited ?? false);
               setTotalBetsAll(d.total_bets ?? 0);
               setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
