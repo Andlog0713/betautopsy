@@ -12,6 +12,8 @@
 
 This is the single source of truth for the iOS polish project. Both Andrew and Claude Code reference and update this file across sessions.
 
+Repo-wide progress lives in `PROGRESS.md`. iOS polish lives here.
+
 **For Claude Code:** When you start a session on this project, your first action is to read this entire file. Then run `git status && git branch --show-current && git log --oneline -5` and update CURRENT STATE below. Identify which PR is in flight from CURRENT FOCUS. Do not proceed past whatever phase that PR is in. After every commit, append to the SESSION LOG and check the relevant boxes. Never skip the verification gate on any PR — that gate exists because Andrew's calibration miss in PR 2 of the perf work shipped a regression that wasn't caught until production.
 
 **For Andrew:** Update CURRENT STATE manually before starting a new CC session. Add to DECISION LOG when you make a call CC asked about. Add to CALIBRATION LOG when something didn't work the way it was supposed to.

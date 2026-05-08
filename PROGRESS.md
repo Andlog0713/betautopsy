@@ -33,6 +33,7 @@
 - If the user's message introduces a new task that's out of current scope, append it to "Parked / next branch" without being asked.
 - If unsure whether something belongs in scope, ask before adding.
 - Treat `PROGRESS.md` as the source of truth for "where are we" — read it at the start of every session.
+- iOS polish work tracked in `IOS_POLISH.md`.
 
 ## Pushback expected
 - Refuse requests that violate the design system.
