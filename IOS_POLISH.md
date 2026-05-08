@@ -305,6 +305,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] Toast clears notch on physical iPhone
 - [ ] Chart tooltip fires on first tap on iOS Safari (recharts #444 workaround verified)
 - [ ] Bundle delta <8KB gzipped (only Sonner; no countup, no skeleton lib)
+- [ ] NORTH STAR row updated below — skeletons, animated numbers, and recharts refit affect felt time and must be measured
 
 **Decisions logged in DECISION LOG:** none yet
 **Calibration notes:** none yet
