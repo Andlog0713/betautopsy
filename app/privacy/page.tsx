@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
               <li><span className="text-fg-bright">Resend</span>: transactional email delivery</li>
               <li><span className="text-fg-bright">Google Analytics</span>: anonymized usage data only</li>
               <li><span className="text-fg-bright">Sentry</span>: server- and client-side error and performance monitoring (stack traces, request metadata; no bet history or report content)</li>
-              <li><span className="text-fg-bright">Meta Pixel</span> and <span className="text-fg-bright">TikTok Pixel</span>: conversion tracking for our ads on those platforms (events fire on signup and checkout, not on report content)</li>
+              <li><span className="text-fg-bright">Meta Pixel</span>: conversion tracking for our ads on Meta platforms (events fire on signup and checkout, not on report content)</li>
             </ul>
             <p className="mt-3">
               We may also disclose information if required by law, subpoena, or court order, or to protect our rights, safety, or the safety of others.

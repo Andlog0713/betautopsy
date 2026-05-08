@@ -5,9 +5,9 @@ import Script from 'next/script';
 /**
  * Meta (Facebook) Pixel loader.
  *
- * Additive to TikTok pixel and GA4 — does not replace existing tracking.
- * Only renders when NEXT_PUBLIC_META_PIXEL_ID is set, and only mounted
- * from app/layout.tsx inside the production-env conditional.
+ * Companion to GA4. Only renders when NEXT_PUBLIC_META_PIXEL_ID is set,
+ * and only mounted from app/layout.tsx inside the production-env
+ * conditional.
  */
 export default function MetaPixel() {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;

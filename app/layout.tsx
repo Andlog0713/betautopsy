@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
-import TikTokPixel from '@/components/TikTokPixel';
 import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
 import { isMobileBuild } from '@/lib/platform';
@@ -145,27 +144,17 @@ export default function RootLayout({
           <>
             <GoogleAnalytics />
             {/*
-             * Meta + TikTok ad pixels are web-only. Skipping them on
-             * the mobile build:
-             *
-             *   - Removes reviewer-optics liability — having TikTok's
-             *     analytics SDK inside the iOS binary triggers App
-             *     Privacy Nutrition Label disclosures and can read
-             *     as third-party tracking, even though we don't use
-             *     it for cross-app correlation.
-             *   - Pixels don't function inside a Capacitor WebView
-             *     anyway — conversion attribution depends on web
-             *     cookies and third-party-cookie context the iOS app
-             *     doesn't have.
-             *
+             * Meta ad pixel is web-only. Skipped on the mobile build
+             * because pixels don't function inside a Capacitor WebView
+             * (conversion attribution depends on web cookies and
+             * third-party-cookie context the iOS app doesn't have).
              * `isMobileBuild()` is a compile-time check
              * (NEXT_PUBLIC_BUILD_TARGET) so Next inlines the boolean
-             * and tree-shakes both component trees out of the mobile
+             * and tree-shakes the component tree out of the mobile
              * bundle entirely. Web tracking is unchanged.
              */}
             {!isMobileBuild() && (
               <>
-                <TikTokPixel />
                 <MetaPixel />
                 <CookieConsent />
               </>

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
-import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import type { AutopsyAnalysis } from '@/types';
 
@@ -47,18 +46,10 @@ export default function ProUpsellModal({
   const quarterlyCost = topBias ? Math.round(topBias.estimated_cost) : 0;
   const grade = analysis.summary?.overall_grade ?? '?';
 
-  // Fire GA4 + TikTok view events on mount. Runs exactly once per
-  // mount because deps are empty.
+  // Fire GA4 view event on mount. Runs exactly once per mount because
+  // deps are empty.
   useEffect(() => {
     window.gtag?.('event', 'pro_upsell_view', { report_id: reportId });
-    (window as unknown as { ttq?: { track: (name: string, data: unknown) => void } }).ttq?.track(
-      'ViewContent',
-      {
-        contents: [{ content_id: 'pro_upsell', content_type: 'product', content_name: 'Pro Upsell Modal' }],
-        value: 0,
-        currency: 'USD',
-      }
-    );
     // Lock body scroll while the modal is up
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -89,7 +80,6 @@ export default function ProUpsellModal({
     // page unload (gtag uses sendBeacon).
     window.gtag?.('event', 'pro_upsell_click', { report_id: reportId });
     window.gtag?.('event', 'begin_checkout', { value: 19.99, currency: 'USD' });
-    trackCheckout('pro', 19.99);
     trackCheckoutMeta('pro', 19.99);
 
     try {

@@ -19,7 +19,6 @@ const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
 import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ReportComparison } from '@/types';
 import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
-import { trackPurchase } from '@/lib/tiktok-events';
 import { trackPurchase as trackPurchaseMeta } from '@/lib/meta-events';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 
@@ -87,7 +86,6 @@ export default function ReportsPage() {
     // straight from `searchParams` synchronously in the run effect.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
       window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
-      trackPurchase('report', 9.99);
       trackPurchaseMeta('report', 9.99);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
