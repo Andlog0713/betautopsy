@@ -3,7 +3,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
+import { useReports } from '@/hooks/useReports';
 import { apiPostFormData } from '@/lib/api-client';
 import { triggerHaptic } from '@/lib/native';
 import { trackUpload } from '@/lib/tiktok-events';
@@ -11,7 +13,7 @@ import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
-import type { UploadResponse, Profile } from '@/types';
+import type { UploadResponse } from '@/types';
 import { userQualifiesForPromo } from '@/types';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Upload as UploadIcon, Smartphone, ClipboardList, FileText } from 'lucide-react';
@@ -29,13 +31,13 @@ export default function UploadPage() {
       ? (methodParam as ActiveMethod)
       : null;
 
+  const { user, profile, mutate: mutateUser } = useUser();
+  const { reports } = useReports();
+
   const [state, setState] = useState<UploadState>('idle');
   const [dragOver, setDragOver] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
   const [error, setError] = useState('');
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [reportCount, setReportCount] = useState<number | null>(null);
-  const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
   const [activeMethod, setActiveMethod] = useState<ActiveMethod>(initialMethod ?? 'pikkit');
   const [showPikkitSteps, setShowPikkitSteps] = useState(false);
   const [bankrollInput, setBankrollInput] = useState('');
@@ -44,39 +46,40 @@ export default function UploadPage() {
   const [promoEligible, setPromoEligible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // initialBetCount is captured ONCE — even after the user uploads more bets
+  // mid-session, the success copy still distinguishes "first import" from
+  // "incremental update" based on what was there when they landed.
+  const [initialBetCount, setInitialBetCount] = useState<number | null>(null);
   useEffect(() => {
-    async function loadProfile() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const [profileRes, reportsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      ]);
-      if (profileRes.data) {
-        const p = profileRes.data as Profile;
-        setProfile(p);
-        const bc = p.bet_count;
-        setInitialBetCount(bc);
-        // Query param takes precedence; otherwise default by bet count.
-        if (!initialMethod) {
-          setActiveMethod(bc > 0 ? 'screenshot' : 'pikkit');
-        }
-        // Check promo eligibility
-        if (PRICING_ENABLED && p.subscription_tier === 'free' && userQualifiesForPromo(p.created_at)) {
-          const { count: fullCount } = await supabase
-            .from('autopsy_reports')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('report_type', 'full');
-          if ((fullCount ?? 0) === 0) setPromoEligible(true);
-        }
+    if (initialBetCount === null && profile) {
+      setInitialBetCount(profile.bet_count ?? 0);
+      if (!initialMethod) {
+        setActiveMethod((profile.bet_count ?? 0) > 0 ? 'screenshot' : 'pikkit');
       }
-      setReportCount(reportsRes.count ?? 0);
     }
-    loadProfile();
-  }, []);
+  }, [profile, initialBetCount, initialMethod]);
 
+  // Promo eligibility: free tier + qualifying signup window + zero full reports.
+  // Full-report count is a one-off query (not a useReports concern), runs once
+  // when profile is hydrated.
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (!PRICING_ENABLED || profile.subscription_tier !== 'free') return;
+    if (!userQualifiesForPromo(profile.created_at)) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createBrowserSupabaseClient();
+      const { count: fullCount } = await supabase
+        .from('autopsy_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('report_type', 'full');
+      if (!cancelled && (fullCount ?? 0) === 0) setPromoEligible(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user, profile]);
+
+  const reportCount = reports.length;
   const isOnboarding = reportCount === 0;
   const betCount = initialBetCount ?? 0;
 
@@ -216,12 +219,13 @@ export default function UploadPage() {
                     if (!val || val <= 0) return;
                     setBankrollSaving(true);
                     try {
-                      const supabase = createClient();
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (user) {
-                        const { error: saveErr } = await supabase.from('profiles').update({ bankroll: val }).eq('id', user.id);
+                      const supabase = createBrowserSupabaseClient();
+                      const { data: { user: bankrollUser } } = await supabase.auth.getUser();
+                      if (bankrollUser) {
+                        const { error: saveErr } = await supabase.from('profiles').update({ bankroll: val }).eq('id', bankrollUser.id);
                         if (saveErr) throw saveErr;
                       }
+                      mutateUser();
                       setBankrollSaved(true);
                     } catch {
                       setError('Failed to save bankroll. Try again.');
