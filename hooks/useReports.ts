@@ -5,28 +5,27 @@ import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
 import type { AutopsyReport } from '@/types';
 
-// Lightweight summary row — drops the heavy `report_json` + `report_markdown`
-// columns so the list query stays small. The full row is fetched on demand
-// via `useReport(id)` when a user opens a specific report.
-export type AutopsyReportSummary = Omit<
-  AutopsyReport,
-  'report_json' | 'report_markdown'
->;
-
+// Note: PR 2 originally planned a lightweight summary list (no report_json /
+// report_markdown), with `useReport(id)` fetching the heavy row on click.
+// Reverted: the /reports list rows render bias chips, grade, record, and
+// profit directly off `analysis = report.report_json` — dropping that column
+// from the list query breaks the UI. Hard rule "Do NOT modify any UI/styling
+// /copy" wins over the perf concern. Future cleanup: denormalize summary
+// fields onto the autopsy_reports row at insert time and revisit the
+// projection. Until then, useReports returns full AutopsyReport rows; the
+// total payload is bounded by the user's report count (typically 1–10).
 export type ReportsKey = readonly ['reports', string];
 export type ReportKey = readonly ['report', string];
 
-async function fetchReports([, userId]: ReportsKey): Promise<AutopsyReportSummary[]> {
+async function fetchReports([, userId]: ReportsKey): Promise<AutopsyReport[]> {
   const supabase = createBrowserSupabaseClient();
   const { data, error } = await supabase
     .from('autopsy_reports')
-    .select(
-      'id, user_id, report_type, bet_count_analyzed, date_range_start, date_range_end, model_used, tokens_used, cost_cents, is_paid, stripe_payment_intent_id, upgraded_from_snapshot_id, created_at'
-    )
+    .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as AutopsyReportSummary[];
+  return (data ?? []) as AutopsyReport[];
 }
 
 async function fetchReport([, reportId]: ReportKey): Promise<AutopsyReport | null> {
@@ -44,16 +43,16 @@ async function fetchReport([, reportId]: ReportKey): Promise<AutopsyReport | nul
 }
 
 export interface UseReportsResult {
-  reports: AutopsyReportSummary[];
+  reports: AutopsyReport[];
   isLoading: boolean;
   error: unknown;
-  mutate: KeyedMutator<AutopsyReportSummary[]>;
+  mutate: KeyedMutator<AutopsyReport[]>;
 }
 
 export function useReports(): UseReportsResult {
   const { user } = useUser();
   const key: ReportsKey | null = user ? (['reports', user.id] as const) : null;
-  const { data, error, isLoading, mutate } = useSWR<AutopsyReportSummary[]>(
+  const { data, error, isLoading, mutate } = useSWR<AutopsyReport[]>(
     key,
     fetchReports,
     {
