@@ -1,6 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { preferencesStorage } from './preferences-storage';
 
 // Singleton browser-side Supabase client used by all SWR hooks.
 //
@@ -11,8 +12,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // lazy-loads sub-modules and skips realtime when not subscribed). Mobile
 // (Capacitor) builds keep `@supabase/supabase-js` because cookies are
 // unreliable at `capacitor://localhost` in WKWebView — `flowType:
-// 'implicit'` + localStorage is the only reliable session-persistence
-// path inside the native webview.
+// 'implicit'` + Capacitor Preferences (see `auth.storage` below) is the
+// only reliable session-persistence path inside the native webview.
 //
 // Lazy + cached so every hook call returns the same instance, preventing
 // the "Multiple GoTrueClient instances detected" warning.
@@ -30,6 +31,12 @@ export function createBrowserSupabaseClient(): SupabaseClient {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
+          // Capacitor Preferences-backed storage. Survives WKWebView
+          // localStorage eviction (low-disk pressure, "Offload Unused
+          // Apps", privacy cleanup) which would otherwise sign users
+          // out silently between launches. See `lib/preferences-storage.ts`
+          // for the adapter and rationale.
+          storage: preferencesStorage,
           flowType: 'implicit',
           detectSessionInUrl: false,
           persistSession: true,
