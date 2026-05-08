@@ -6,7 +6,6 @@ import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-brow
 import { apiPost } from '@/lib/api-client';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
-import { trackQuizComplete } from '@/lib/tiktok-events';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
 
 function gradeColor(g: string): string {
@@ -69,7 +68,6 @@ export default function QuizClient() {
       if (revealSlide < 3) {
         setRevealSlide(revealSlide + 1);
       } else {
-        trackQuizComplete(result?.archetype.name ?? 'unknown');
         trackQuizCompleteMeta(result?.archetype.name ?? 'unknown');
         setPhase('result_preview');
       }

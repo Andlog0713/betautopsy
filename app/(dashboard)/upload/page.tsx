@@ -8,7 +8,6 @@ import { useUser } from '@/hooks/useUser';
 import { useReports } from '@/hooks/useReports';
 import { apiPostFormData } from '@/lib/api-client';
 import { triggerHaptic } from '@/lib/native';
-import { trackUpload } from '@/lib/tiktok-events';
 import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
@@ -108,7 +107,6 @@ export default function UploadPage() {
       }
       setResult(data as UploadResponse);
       window.gtag?.('event', 'csv_upload', { bet_count: (data as UploadResponse).bets_imported });
-      trackUpload();
       trackUploadMeta();
       setState('success');
       // Medium impact on successful import — confirms the upload

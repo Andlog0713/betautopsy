@@ -3,9 +3,6 @@
 /**
  * Meta (Facebook) Pixel client-side event helpers.
  *
- * Mirrors the shape of lib/tiktok-events.ts so call sites can fire both
- * alongside each other. Additive only — does not replace TikTok events.
- *
  * Each helper generates a unique event_id and passes it to fbq via the
  * {eventID} option. Server-side CAPI calls that want to dedupe with a
  * client fire should reuse the same event_id (returned from these

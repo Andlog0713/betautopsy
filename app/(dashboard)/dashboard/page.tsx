@@ -9,7 +9,6 @@ import { useUser } from '@/hooks/useUser';
 import { useReports } from '@/hooks/useReports';
 import { useSnapshots } from '@/hooks/useSnapshots';
 import { apiGet } from '@/lib/api-client';
-import { trackPurchase, trackSignup } from '@/lib/tiktok-events';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
@@ -93,9 +92,8 @@ export default function DashboardPage() {
       // First-login conversion event. The auth callback only sets ?welcome=true
       // when this user had never been welcomed before, so it's a clean signup
       // signal. Fire to BOTH GA4 (which had no sign_up event before this) and
-      // TikTok pixel.
+      // Meta Pixel.
       window.gtag?.('event', 'sign_up', { method: 'supabase' });
-      trackSignup();
       trackSignupMeta();
       setWelcomePulse(true);
       window.history.replaceState({}, '', '/dashboard');
@@ -158,7 +156,6 @@ export default function DashboardPage() {
         if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
           const price = tier === 'pro' ? 19.99 : 0;
           if (price > 0) {
-            trackPurchase(tier ?? 'pro', price);
             trackPurchaseMeta(tier ?? 'pro', price);
           }
           window.gtag?.('event', 'purchase', { value: price, currency: 'USD' });

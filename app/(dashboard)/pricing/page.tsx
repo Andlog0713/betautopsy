@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
-import { trackCheckout } from '@/lib/tiktok-events';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import { isLaunchPromoActive } from '@/types';
 import type { Profile, SubscriptionTier } from '@/types';
@@ -108,7 +107,6 @@ export default function PricingPage() {
       const data = await res.json();
       if (data.url) {
         const value = interval === 'annual' ? 149.99 : 19.99;
-        trackCheckout('pro', value);
         trackCheckoutMeta('pro', value);
         window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
         await openCheckoutUrl(data.url);
@@ -140,7 +138,6 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (data.url) {
-        trackCheckout('report', REPORT_PURCHASE_LIMITS.price);
         trackCheckoutMeta('report', REPORT_PURCHASE_LIMITS.price);
         window.gtag?.('event', 'begin_checkout', { value: REPORT_PURCHASE_LIMITS.price, currency: 'USD' });
         await openCheckoutUrl(data.url);

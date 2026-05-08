@@ -95,10 +95,10 @@ function SignupForm() {
     // CompleteRegistration tracking is intentionally NOT fired here.
     //
     // This branch only runs when Supabase returns an immediate session
-    // (email confirmation disabled). Firing trackSignup() / trackSignupMeta()
-    // before router.push() races the in-flight pixel POST against the
-    // navigation — the browser tears down the page and cancels the request,
-    // so neither TikTok nor Meta ever receive the event.
+    // (email confirmation disabled). Firing trackSignupMeta() before
+    // router.push() races the in-flight pixel POST against the
+    // navigation — the browser tears down the page and cancels the
+    // request, so Meta never receives the event.
     //
     // Instead we let dashboard's first-login useEffect fire both pixels
     // after the new page has mounted, where there is no navigation hazard.
@@ -151,9 +151,9 @@ function SignupForm() {
 
       {/* Default OAuth signups (no explicit ?next= deep link) need to land
           on /dashboard?welcome=true so the dashboard's first-login useEffect
-          fires CompleteRegistration on TikTok + Meta. We only set this
-          default on the SIGNUP page — /login passes no next so returning
-          users don't keep re-triggering the welcome banner.
+          fires CompleteRegistration on Meta. We only set this default on
+          the SIGNUP page — /login passes no next so returning users don't
+          keep re-triggering the welcome banner.
 
           OAuth is hidden in the Capacitor native app — the
           `/auth/callback` redirect target is excluded from the

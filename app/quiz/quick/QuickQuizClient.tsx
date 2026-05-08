@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import { apiPost } from '@/lib/api-client';
-import { trackQuizComplete } from '@/lib/tiktok-events';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
 
 // 5 questions that cover all scoring dimensions with minimal overlap
@@ -82,7 +81,6 @@ export default function QuickQuizClient() {
         // Calculate result and go to reveal
         const r = calculateQuizResult(newAnswers);
         setResult(r);
-        trackQuizComplete(r.archetype.name);
         trackQuizCompleteMeta(r.archetype.name);
         setPhase('revealing');
         setTimeout(() => setPhase('result'), 2000);
