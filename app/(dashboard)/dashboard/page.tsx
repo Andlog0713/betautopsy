@@ -4,7 +4,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
+import { useReports } from '@/hooks/useReports';
+import { useSnapshots } from '@/hooks/useSnapshots';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase, trackSignup } from '@/lib/tiktok-events';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
@@ -15,7 +18,6 @@ const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
 import DisciplineScoreCard from '@/components/DisciplineScoreCard';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import JournalEntryModal from '@/components/JournalEntryModal';
-import type { ProgressSnapshot } from '@/types';
 import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Lock, Snowflake, AlertTriangle } from 'lucide-react';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { BorderBeam } from '@/components/ui/border-beam';
@@ -56,24 +58,34 @@ function gradeColor(grade: string): string {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, profile, isLoading: userLoading } = useUser();
+  const { reports, isLoading: reportsLoading } = useReports();
+  const { snapshots, isLoading: snapshotsLoading } = useSnapshots();
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [bankroll, setBankroll] = useState('');
-  const [tier, setTier] = useState('free');
-  const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
   const [newBetsSinceReport, setNewBetsSinceReport] = useState(0);
-  const [streakCount, setStreakCount] = useState(0);
-  const [streakBest, setStreakBest] = useState(0);
-  const [streakLastDate, setStreakLastDate] = useState<string | null>(null);
-  const [streakFreezes, setStreakFreezes] = useState(1);
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('inactive');
   const [journalOpen, setJournalOpen] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
   const [daysSinceLastBet, setDaysSinceLastBet] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [welcomePulse, setWelcomePulse] = useState(false);
+
+  // Profile-derived values: read directly off the cached row instead of
+  // shadowing them in local state. Mutations (settings page, manual entry)
+  // call mutate('user-and-profile') to refresh the cache, so these stay
+  // current without per-page refetch wiring.
+  const tier = profile?.subscription_tier ?? 'free';
+  const streakCount = profile?.streak_count ?? 0;
+  const streakBest = profile?.streak_best ?? 0;
+  const streakLastDate = profile?.streak_last_date ?? null;
+  const streakFreezes = (profile as Record<string, unknown> | null)?.streak_freezes as number ?? 1;
+  const subscriptionStatus = profile?.subscription_status ?? 'inactive';
+  const reportCount = reports.length;
+  void subscriptionStatus; // surfaced in the JSX further down via profile?.subscription_status
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -92,90 +104,79 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Keep the bankroll input string synced with the cached profile.bankroll.
   useEffect(() => {
+    if (profile?.bankroll != null) setBankroll(profile.bankroll.toString());
+  }, [profile?.bankroll]);
+
+  // dashboard_stats RPC + journal count — leave inline since they're the
+  // only consumers. Fires once user + reports list are hydrated so we can
+  // pass the latest report's created_at as the `since` parameter.
+  useEffect(() => {
+    if (userLoading || reportsLoading || !user) return;
+
+    const lastReport = reports[0]; // useReports already orders by created_at desc
+    const lastReportDate = lastReport ? new Date(lastReport.created_at) : null;
+
+    let cancelled = false;
     async function load() {
       try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+        const supabase = createBrowserSupabaseClient();
+        const [statsRpc, journalRes] = await Promise.all([
+          supabase.rpc('dashboard_stats', {
+            p_user_id: user!.id,
+            p_since: lastReportDate?.toISOString() ?? null,
+          }),
+          apiGet('/api/journal?count=true').then(r => r.ok ? r.json() : null).catch(() => null),
+        ]);
+        if (cancelled) return;
 
-      // Fetch last report date first so we can pass it to the stats RPC
-      const [profileRes, reportsRes, snapshotsRes, lastReportRes] = await Promise.all([
-        supabase.from('profiles').select('bankroll, subscription_tier, subscription_status, streak_count, streak_best, streak_last_date').eq('id', user.id).single(),
-        supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: true }),
-        supabase.from('autopsy_reports').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
-      ]);
+        const ds = (statsRpc.data ?? {}) as {
+          total_bets: number; total_wagered: number; net_pnl: number;
+          wins: number; settled: number; avg_stake: number;
+          newest_created_at: string | null; bets_since: number;
+        };
 
-      const reportCount = reportsRes.count ?? 0;
-      const lastReport = lastReportRes.data?.[0];
-      const lastReportDate = lastReport ? new Date(lastReport.created_at) : null;
+        const totalBets = ds.total_bets ?? 0;
+        const totalWagered = ds.total_wagered ?? 0;
+        const netPnL = ds.net_pnl ?? 0;
+        const winRate = ds.settled > 0 ? (ds.wins / ds.settled) * 100 : 0;
+        const avgStake = ds.avg_stake ?? 0;
 
-      // Single RPC replaces fetching every bet row — returns aggregates in ~50ms
-      const [statsRpc, journalRes] = await Promise.all([
-        supabase.rpc('dashboard_stats', {
-          p_user_id: user.id,
-          p_since: lastReportDate?.toISOString() ?? null,
-        }),
-        apiGet('/api/journal?count=true').then(r => r.ok ? r.json() : null).catch(() => null),
-      ]);
-
-      const ds = (statsRpc.data ?? {}) as {
-        total_bets: number; total_wagered: number; net_pnl: number;
-        wins: number; settled: number; avg_stake: number;
-        newest_created_at: string | null; bets_since: number;
-      };
-
-      const totalBets = ds.total_bets ?? 0;
-      const totalWagered = ds.total_wagered ?? 0;
-      const netPnL = ds.net_pnl ?? 0;
-      const winRate = ds.settled > 0 ? (ds.wins / ds.settled) * 100 : 0;
-      const avgStake = ds.avg_stake ?? 0;
-
-      if (profileRes.data?.bankroll) setBankroll(profileRes.data.bankroll.toString());
-      if (profileRes.data?.streak_count) setStreakCount(profileRes.data.streak_count);
-      if (profileRes.data?.streak_best) setStreakBest(profileRes.data.streak_best);
-      if (profileRes.data?.streak_last_date) setStreakLastDate(profileRes.data.streak_last_date);
-      setStreakFreezes((profileRes.data as Record<string, unknown>)?.streak_freezes as number ?? 1);
-      const profileTier = profileRes.data?.subscription_tier;
-      if (profileTier) setTier(profileTier);
-      setSubscriptionStatus(profileRes.data?.subscription_status ?? 'inactive');
-
-      if (profileRes.error) console.error('Profile query error:', profileRes.error);
-      if (snapshotsRes.data) setSnapshots(snapshotsRes.data as ProgressSnapshot[]);
-
-      if (lastReportDate) {
-        setNewBetsSinceReport(ds.bets_since ?? 0);
-        setDaysSinceReport(Math.floor((Date.now() - lastReportDate.getTime()) / 86400000));
-      }
-
-      if (ds.newest_created_at) {
-        setDaysSinceLastBet(Math.floor((Date.now() - new Date(ds.newest_created_at).getTime()) / 86400000));
-      }
-
-      setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });
-
-      if (journalRes?.count) setJournalCount(journalRes.count);
-
-      // Track TikTok + GA4 purchase event on post-checkout redirect (subscription flow)
-      if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
-        const price = profileTier === 'pro' ? 19.99 : 0;
-        if (price > 0) {
-          trackPurchase(profileTier ?? 'pro', price);
-          trackPurchaseMeta(profileTier ?? 'pro', price);
+        if (lastReportDate) {
+          setNewBetsSinceReport(ds.bets_since ?? 0);
+          setDaysSinceReport(Math.floor((Date.now() - lastReportDate.getTime()) / 86400000));
         }
-        window.gtag?.('event', 'purchase', { value: price, currency: 'USD' });
-        window.history.replaceState({}, '', '/dashboard');
-      }
+        if (ds.newest_created_at) {
+          setDaysSinceLastBet(Math.floor((Date.now() - new Date(ds.newest_created_at).getTime()) / 86400000));
+        }
+        setStats({ totalBets, totalWagered, netPnL, winRate, avgStake, reportCount });
+        if (journalRes?.count) setJournalCount(journalRes.count);
+
+        // Post-subscription-checkout conversion pixel. The redirect carries
+        // ?upgraded=true; profile.subscription_tier is already cached here.
+        if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
+          const price = tier === 'pro' ? 19.99 : 0;
+          if (price > 0) {
+            trackPurchase(tier ?? 'pro', price);
+            trackPurchaseMeta(tier ?? 'pro', price);
+          }
+          window.gtag?.('event', 'purchase', { value: price, currency: 'USD' });
+          window.history.replaceState({}, '', '/dashboard');
+        }
       } catch (err) {
+        if (cancelled) return;
         console.error('Dashboard load failed:', err);
         setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard');
       } finally {
-        setLoading(false);
+        if (!cancelled) setStatsLoading(false);
       }
     }
     load();
-  }, [router, reloadToken]);
+    return () => { cancelled = true; };
+  }, [user, userLoading, reportsLoading, reports, reportCount, tier, reloadToken]);
+
+  const loading = userLoading || reportsLoading || snapshotsLoading || statsLoading;
 
   const { mask } = usePrivacy();
 
@@ -201,7 +202,7 @@ export default function DashboardPage() {
             className="btn-primary"
             onClick={() => {
               setLoadError(null);
-              setLoading(true);
+              setStatsLoading(true);
               setReloadToken((n) => n + 1);
             }}
           >
