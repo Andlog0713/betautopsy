@@ -44,7 +44,29 @@
 ## Current branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
-- (none — CI fix shipped; perf audit complete, awaiting user direction on which item to ship first)
+- (none — Tier 1 perf items all shipped; awaiting user direction on Tier 2)
+
+### Done this session — Tier 1 perf wins
+- **Tier 1 #1: Static layout fix (commit `df9caeb`).** Moved geo-consent decision out
+  of `app/layout.tsx`. Middleware now stamps `ba-geo-eu={"1"|"0"}` cookie at the edge
+  based on `x-vercel-ip-country`; `CookieConsent` reads it client-side; `GoogleAnalytics`
+  inline script reads it before any gtag call. `lib/consent-region.ts` lost its
+  `headers()` dependency. **Every** previously-`ƒ Dynamic` marketing/legal/auth/dashboard
+  route flipped to `○ Static`: `/`, `/sample`, `/go`, `/blog`, `/faq`, `/privacy`,
+  `/terms`, `/pricing`, `/dashboard`, `/login`, `/signup`, `/reset-password`, `/quiz`,
+  `/upload`, `/uploads`, `/uploads/compare`, `/bets`, `/reports`, `/settings`,
+  `/admin/feedback`, `/admin/reports`. Only API routes + edge OG generators remain `ƒ`.
+- **Tier 1 #2: Anthropic SDK leak fix (commit `acf1f26`).** Replaced eager
+  `import Anthropic from '@anthropic-ai/sdk'` at top of `lib/autopsy-engine.ts` with
+  `loadAnthropic()` helper that does `await import('@anthropic-ai/sdk')` inside
+  `runAutopsy` + `runSnapshot`. SDK no longer ships to client bundle.
+  `/uploads/compare`: 33.5 kB / 253 KB → 14.1 kB / 234 KB First Load JS (−19 KB,
+  exact match to audit prediction).
+- **Tier 1 #3: Code-split AutopsyReport on `/share/[id]` + `/admin/reports/[id]`
+  (commit `0c53d8d`).** Both pages converted to `next/dynamic` with loading skeleton.
+  `/share/[id]`: 355 KB → 164 KB (−191 KB). `/admin/reports/[id]`: 407 KB → 221 KB
+  (−186 KB). `/share/[id]` is the viral surface; every shared-report click now
+  paints the header + fallback instantly instead of eating 355 KB up front.
 
 ### Performance audit (2026-05-08, read-only diagnostic, full report at `/tmp/perf-audit-report.md`)
 Branch: `claude/update-app-website-sync-vuQB7`. Cleanup: `next.config.js` restored from
