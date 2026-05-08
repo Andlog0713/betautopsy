@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { apiPost } from '@/lib/api-client';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';

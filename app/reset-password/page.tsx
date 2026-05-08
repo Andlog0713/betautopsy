@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { Logo } from '@/components/logo';
 import { Suspense } from 'react';
 

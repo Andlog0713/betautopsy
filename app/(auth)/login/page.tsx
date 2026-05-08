@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
 

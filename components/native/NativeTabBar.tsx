@@ -1,10 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSWRConfig } from 'swr';
 import { LayoutDashboard, Plus, FileText, List, Settings } from 'lucide-react';
 import { isMobileApp } from '@/lib/platform';
 import { triggerHaptic } from '@/lib/native';
+import { useUser, USER_KEY } from '@/hooks/useUser';
 
 const TABS = [
   { href: '/dashboard', label: 'Home', Icon: LayoutDashboard },
@@ -16,6 +19,22 @@ const TABS = [
 
 export default function NativeTabBar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const { mutate } = useSWRConfig();
+
+  // Warm the SWR cache for the routes the user is one tap away from. Fires
+  // once when user is hydrated (and again whenever userId changes — sign-in
+  // flows). Each `mutate(key)` triggers a background revalidation; cached
+  // hits short-circuit. <Link prefetch> on the tab links handles the JS
+  // chunk prefetch — combined, the destination page renders instantly.
+  useEffect(() => {
+    if (!user) return;
+    mutate(USER_KEY);
+    mutate(['bets', user.id, undefined, undefined]);
+    mutate(['reports', user.id]);
+    mutate(['snapshots', user.id, true, undefined]);
+    mutate(['uploads', user.id]);
+  }, [user, mutate]);
 
   if (!isMobileApp()) return null;
 

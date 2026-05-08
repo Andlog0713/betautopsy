@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 
 interface Props {
   /** Current score from latest progress snapshot. */

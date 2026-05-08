@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
 import { triggerHaptic } from '@/lib/native';
 import { isMobileApp } from '@/lib/platform';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
@@ -12,7 +13,6 @@ import FeedbackButton from '@/components/FeedbackButton';
 import AuthGuard from '@/components/AuthGuard';
 import NativeTabBar from '@/components/native/NativeTabBar';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
-import type { Profile } from '@/types';
 import {
   LayoutDashboard, Upload, Clock, FolderOpen, FileText,
   Settings, Gem, LogOut, Menu, X, ArrowUpRight, Shield, Flame, MessageSquare,
@@ -37,35 +37,21 @@ export default function DashboardShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, isLoading } = useUser();
+  const loading = isLoading;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  // Web: middleware + the server-rendered dashboard layout already redirected
+  // anon users before this client component mounts. This effect is the
+  // mobile-build safety net (output: 'export' skips the server gate).
   useEffect(() => {
-    async function loadProfile() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (data) setProfile(data as Profile);
-      setLoading(false);
+    if (!isLoading && !user) {
+      router.push('/login');
     }
-
-    loadProfile();
-  }, [router]);
+  }, [isLoading, user, router]);
 
   async function handleSignOut() {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

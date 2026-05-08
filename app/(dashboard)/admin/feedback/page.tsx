@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import type { Profile } from '@/types';
 import FeedbackStream from './FeedbackStream';
 

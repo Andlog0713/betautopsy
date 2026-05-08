@@ -44,7 +44,57 @@
 ## Current branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
-- (none — Tier 1 perf items all shipped; awaiting user direction on Tier 2)
+- (none — PR 2 data-layer overhaul shipped to feature branch; awaiting user merge to main)
+
+### PR 2: Dashboard Data Layer Overhaul (commits cb8e380 → 926fef4)
+Six-phase structural refactor. SWR + persistent cache + server-side seed in
+the dashboard layout. Recon doc `/tmp/pr2-recon.md`, final report
+`/tmp/pr2-final-report.md`.
+
+- **Phase 1 (`cb8e380`)**: foundation. New files: `lib/supabase-browser.ts`,
+  `lib/swr-persistent-cache.ts`, `hooks/{useUser,useBets,useReports,
+  useSnapshots,useUploads}.ts`, `components/SWRProvider.tsx`. SWR added.
+- **Phase 2 (`2863236`)**: dashboard layout converted to async server
+  component. Web-only `createServerSupabaseClient()` fetch of user+profile
+  (gated `!isMobileBuild()`). `<SWRProvider><AuthBootstrap><DashboardShell>`
+  wiring. AuthBootstrap uses SWRConfig `fallback` for synchronous seed —
+  no isLoading flash. No layout-level redirect (middleware owns auth
+  gating; /pricing is intentionally anon-visitable). DashboardShell migrated
+  to `useUser()`.
+- **Phase 3 (commits `ad7f9f0`, `d599177`, `ec3513f`, `55d1c29`,
+  `f05c849`, `685ab1d`)**: six page migrations.
+  - dashboard: `useUser`/`useReports`/`useSnapshots` + inline RPC + journal.
+  - bets: `useUser`/`useBets` + inline mutation invalidation.
+  - reports: `useUser`/`useReports`/`useSnapshots`/`useUploads` + inline
+    bets count, sportsbook list, bets-since-last-report.
+  - uploads: `useUser`/`useUploads` + inline projection-only stats.
+  - upload: `useUser`/`useReports` + inline promo-eligibility check.
+  - settings: `useUser`. Counts stay inline (head:true; useBets/useReports
+    would fetch full rows for `.length`).
+- **Phase 4 (`47cf65c`)**: NativeTabBar warms SWR cache for user/bets/
+  reports/snapshots/uploads on mount.
+- **Phase 5 (`926fef4`)**: 14 client consumers migrated to
+  `lib/supabase-browser.ts` (aliased import preserves callsite identifiers).
+  `lib/supabase.ts` deleted. Compile-time `NEXT_PUBLIC_BUILD_TARGET`
+  branching in supabase-browser drops the direct supabase-js import on web
+  but `@supabase/ssr` still pulls GoTrueClient transitively — chunk 2990
+  unchanged.
+- **Phase 6**: typecheck + build clean. Manual nav test PENDING (no real
+  environment with Supabase creds in agent SDK harness).
+
+**Bundle target NOT met**: each dashboard route is +6 KB vs audit baseline
+(SWR overhead). The audit's "switch to ssr saves 30–50 KB" prediction was
+wrong about lib/supabase.ts — it ALREADY used ssr on web. The heavy SDK
+shipped via the runtime Capacitor fallback, not the legacy createClient.
+Removing the fallback didn't shrink because ssr's transitive deps
+(GoTrueClient, postgrest-js, storage-js) account for nearly all of chunk
+2990. Actual win is TIME: cached cross-page nav, localStorage hydration on
+reload, server-seeded first paint.
+
+**Deviations**: useReports returns full report_json (UI dependency on
+`analysis = report.report_json` for list cards). No layout-level redirect.
+AuthProvider not deleted — marketing NavBar/SmartCTALink still consume it.
+Used SWRConfig fallback instead of mutate-on-mount (same goal, no flash).
 
 ### Done this session — Tier 1 perf wins
 - **Tier 1 #1: Static layout fix (commit `df9caeb`).** Moved geo-consent decision out

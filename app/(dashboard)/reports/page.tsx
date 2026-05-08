@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
+import { useReports } from '@/hooks/useReports';
+import { useSnapshots } from '@/hooks/useSnapshots';
+import { useUploads } from '@/hooks/useUploads';
 import { apiPost } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
@@ -12,7 +16,7 @@ import ProUpsellModal from '@/components/ProUpsellModal';
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
-import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ProgressSnapshot, Upload, ReportComparison } from '@/types';
+import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ReportComparison } from '@/types';
 import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { trackPurchase } from '@/lib/tiktok-events';
@@ -27,17 +31,27 @@ function daysAgo(n: number): string {
 
 export default function ReportsPage() {
   const searchParams = useSearchParams();
+  const { profile } = useUser();
+  const { reports: cachedReports, mutate: mutateReports } = useReports();
+  const { snapshots: latestTwoSnapshots } = useSnapshots({ ascending: false, limit: 2 });
+  const { uploads } = useUploads();
+
+  // Local reports mirror so optimistic post-runAutopsy updates render
+  // synchronously alongside the SWR cache.
   const [reports, setReports] = useState<AutopsyReportType[]>([]);
+  useEffect(() => { setReports(cachedReports); }, [cachedReports]);
+
+  const tier = profile?.subscription_tier ?? 'free';
+  const prevSnapshot = latestTwoSnapshots.length >= 2 ? latestTwoSnapshots[1] : null;
+
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
   const [activeReport, setActiveReport] = useState<AutopsyReportType | null>(null);
   const [analyzedBets, setAnalyzedBets] = useState<Bet[]>([]);
-  const [prevSnapshot, setPrevSnapshot] = useState<ProgressSnapshot | null>(null);
   const [tierLimited, setTierLimited] = useState(false);
   const [totalBetsAll, setTotalBetsAll] = useState(0);
   const [totalBetCount, setTotalBetCount] = useState(0);
-  const [tier, setTier] = useState('free');
   const [firstInsight, setFirstInsight] = useState<{ biasName: string; cost: number } | null>(null);
   const autoRunTriggered = useRef(false);
 
@@ -45,7 +59,6 @@ export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [analyzeScope, setAnalyzeScope] = useState('all');
-  const [uploads, setUploads] = useState<Upload[]>([]);
   const [sportsbooks, setSportsbooks] = useState<string[]>([]);
   const [newBetsSinceReport, setNewBetsSinceReport] = useState(0);
   const [lastReportDate, setLastReportDate] = useState<string | null>(null);
@@ -114,7 +127,7 @@ export default function ReportsPage() {
 
   // Fetch filtered bet count when date range changes
   const fetchFilteredCount = useCallback(async () => {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -140,37 +153,33 @@ export default function ReportsPage() {
     if (!loading) fetchFilteredCount();
   }, [dateFrom, dateTo, loading, fetchFilteredCount]);
 
+  // What useReports/useUser/useSnapshots/useUploads don't cover:
+  //   - bets count (head:true) — used as totalBetCount
+  //   - distinct sportsbook list — projection-only over bets
+  //   - bets-since-last-report count — needs the latest report date
+  // All three are bets-table queries that aren't worth a dedicated hook
+  // (count-only would be a wasteful useBets() of full rows). Keep inline.
   async function loadReports() {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [reportsRes, betsRes, profileRes, snapshotsRes, uploadsRes, sportsbooksRes] = await Promise.all([
-      supabase.from('autopsy_reports').select('id, user_id, report_type, bet_count_analyzed, date_range_start, date_range_end, report_json, model_used, tokens_used, cost_cents, is_paid, stripe_payment_intent_id, upgraded_from_snapshot_id, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+    const [betsRes, sportsbooksRes] = await Promise.all([
       supabase.from('bets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
-      supabase.from('progress_snapshots').select('*').eq('user_id', user.id).order('snapshot_date', { ascending: false }).limit(2),
-      supabase.from('uploads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('bets').select('sportsbook').eq('user_id', user.id).not('sportsbook', 'is', null),
     ]);
 
-    if (reportsRes.data) setReports(reportsRes.data as AutopsyReportType[]);
-    if (profileRes.data) setTier(profileRes.data.subscription_tier);
-    if (uploadsRes.data) setUploads(uploadsRes.data as Upload[]);
-    // Unique sportsbooks
     const books = new Set<string>();
     (sportsbooksRes.data ?? []).forEach((b: { sportsbook: string | null }) => { if (b.sportsbook) books.add(b.sportsbook); });
     setSportsbooks(Array.from(books).sort());
-    // The second-most-recent snapshot is the "previous" one
-    const snaps = (snapshotsRes.data ?? []) as ProgressSnapshot[];
-    if (snaps.length >= 2) setPrevSnapshot(snaps[1]);
     const count = betsRes.count ?? 0;
     setTotalBetCount(count);
     setFilteredCount(count);
-    // Count bets since last report
-    const reportsList = (reportsRes.data ?? []) as AutopsyReportType[];
-    if (reportsList.length > 0) {
-      const lastDate = reportsList[0].created_at;
+
+    // Bets-since-last-report — depends on the cached reports list. Read
+    // directly off the SWR cache instead of refetching.
+    if (cachedReports.length > 0) {
+      const lastDate = cachedReports[0].created_at;
       setLastReportDate(lastDate);
       const { count: newCount } = await supabase
         .from('bets')
@@ -185,18 +194,20 @@ export default function ReportsPage() {
   async function deleteReport(reportId: string, e: React.MouseEvent) {
     e.stopPropagation();
     if (!confirm('Delete this report?')) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.from('autopsy_reports').delete().eq('id', reportId);
     setReports((prev) => prev.filter((r) => r.id !== reportId));
+    mutateReports();
   }
 
   async function deleteAllReports() {
     if (!confirm('Delete all reports? This cannot be undone.')) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     await supabase.from('autopsy_reports').delete().eq('user_id', user.id);
     setReports([]);
+    mutateReports();
   }
 
   async function runAutopsy(paidIdOverride?: string) {
@@ -359,6 +370,7 @@ export default function ReportsPage() {
 
               setActiveReport(report);
               setReports((prev) => [report, ...prev]);
+              mutateReports();
               setRunning(false);
               setPaidSnapshotId(null); // Clear after use
               streamComplete = true;
@@ -392,7 +404,7 @@ export default function ReportsPage() {
   async function openReport(report: AutopsyReportType) {
     setActiveReport(report);
     // Fetch bets for this report's date range so What-If and Leak Prioritizer work
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     let query = supabase.from('bets').select('*').eq('user_id', user.id).order('placed_at', { ascending: true });

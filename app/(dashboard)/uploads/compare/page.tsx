@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { calculateMetrics } from '@/lib/autopsy-engine';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Bet, Upload } from '@/types';
