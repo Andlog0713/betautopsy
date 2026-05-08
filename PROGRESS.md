@@ -41,10 +41,42 @@
 
 ---
 
-## Current branch: `claude/update-app-website-sync-vuQB7`
+## Current branch: `main` (post-PR-9 merge + post-rip-server-seed)
 
 ### In progress
-- (none — PR 2 data-layer overhaul shipped to feature branch; awaiting user merge to main)
+- (none — server-seed rip-out shipped, dashboard back to ○ Static, reload "a lot faster" per user)
+
+### PR-3a: rip server-side seed (commit `54a9b49`, merged to main)
+PR 2's phase-2 server seed turned out to be the warm-cache reload bottleneck.
+Async server-component layout + `createServerSupabaseClient` fetch put a
+Vercel function execution + 2× Supabase round-trips on the critical render
+path of every Cmd+R: 5s warm reload, 9s cold. Reload-attempt-pattern test
+(9, 5, 5, 4, 4, 8) confirmed cold-start contributes ~4s on top of a 5s
+warm-cache floor; even the warm floor was unacceptable.
+- `app/(dashboard)/layout.tsx`: dropped `async`, dropped server fetch, dropped
+  imports for it. Plain layout that wraps children in
+  `<SWRProvider><AuthBootstrap><DashboardShell>{children}</DashboardShell></AuthBootstrap></SWRProvider>`.
+- `components/AuthBootstrap.tsx`: dropped `initialUser`/`initialProfile` props.
+  Now a thin pass-through. Kept (rather than inlined) as a seam for future
+  client-side seed work — Capacitor Preferences, auth-state-change subs, etc.
+- All dashboard routes flipped back to ○ Static. `/pricing` also back to ○.
+  First Load JS unchanged from PR 2 (~225–254 KB) — bundle work is PR 4.
+- Hard rules respected: SWR hooks, persistent cache, AuthGuard hot-fix,
+  PR 2 phase 3-5 page migrations all untouched.
+
+### Hot-fix: AuthGuard non-blocking on cached user (commit `2b5db89`, merged to main via PR #9)
+AuthGuard previously sourced from `useAuthState()` (legacy `AuthProvider`,
+mounted in root layout OUTSIDE the SWR layer, no cache). Every cold load
+showed "Checking auth…" for ~500ms while AuthProvider's network fetch
+resolved — even though the SWR cache already had user data ready.
+- Refactored to source from `useUser()` (SWR + localStorage cache + cookie auth).
+- Renders children immediately the moment a user is present (cached, seeded,
+  or fresh). No `isLoading` gate.
+- `useEffect` handles redirects: `!isLoading && !user` → /login (covers
+  first-time visitors AND stale-cache + revoked-session case); `error` →
+  /login; user present but unverified → /signup?verify=true.
+- "Checking auth…" gate only fires when `isLoading` AND no data (truly
+  first-time visit, no cache, no seed).
 
 ### PR 2: Dashboard Data Layer Overhaul (commits cb8e380 → 926fef4)
 Six-phase structural refactor. SWR + persistent cache + server-side seed in
