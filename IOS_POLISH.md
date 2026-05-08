@@ -127,7 +127,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] Add one-time `migrateAuthFromLocalStorage()` migration
 
 **Verification gate (must pass before merge):**
-- [ ] Cold open <1.5s on physical iPhone (stopwatch)
+- [ ] Cold open <1.5s on physical iPhone (interim target — NORTH STAR is <800ms, achieved cumulatively across iOS-PR-1 through iOS-PR-3) (stopwatch)
 - [ ] No white flash on launch
 - [ ] No console errors on first launch
 - [ ] Uninstall + reinstall confirms auth tokens cleared from Preferences
