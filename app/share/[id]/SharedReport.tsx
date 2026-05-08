@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Logo } from '@/components/logo';
-import AutopsyReport from '@/components/AutopsyReport';
 import type { AutopsyAnalysis } from '@/types';
+
+// Lazy-load AutopsyReport so /share/[id]'s First Load JS drops from 355 KB
+// to ~160 KB. The shared-report fallback card renders synchronously; the
+// full report is only mounted when `data.report_json` is present.
+const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
+  loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
+});
 
 interface ShareData {
   grade: string;

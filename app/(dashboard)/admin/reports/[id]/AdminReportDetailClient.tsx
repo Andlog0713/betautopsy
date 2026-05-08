@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase';
 import { apiGet } from '@/lib/api-client';
-import AutopsyReport from '@/components/AutopsyReport';
 import type { AutopsyAnalysis } from '@/types';
+
+// Lazy-load AutopsyReport so /admin/reports/[id]'s First Load JS drops from
+// 407 KB to ~180 KB. Admin viewers fetch the report data on mount, so the
+// full report is gated behind that round-trip anyway.
+const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
+  loading: () => <div className="card h-96 animate-pulse bg-ink-800" />,
+});
 
 interface ReportData {
   id: string;
