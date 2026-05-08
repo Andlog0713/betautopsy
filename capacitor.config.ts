@@ -16,12 +16,15 @@ const config: CapacitorConfig = {
     // default `'always'` adds a translucent inset that produces a
     // visible gap at the top of the splash → first-paint hand-off.
     contentInset: 'never',
-    // `scrollEnabled: false` disables WKWebView's outer rubber-band
-    // scroll. Inner scroll containers (the dashboard list, etc.)
-    // still scroll because they own their own scroll context. This
-    // kills the "whole app pulls down then snaps back" gesture that
-    // doesn't exist in native iOS apps.
-    scrollEnabled: false,
+    // NOTE: `scrollEnabled: false` was set in iOS-PR-1 Phase 1 (commit
+    // 978e377) but reverted here after physical-iPhone testing showed
+    // it broke landing-page scroll. The marketing landing has no inner
+    // scroll container (the body itself is the scroll context), so
+    // disabling WKWebView's outer scroll left users stuck at the top
+    // of the viewport. iOS-PR-2 will reintroduce this once AppShell
+    // provides per-screen scroll containers — at that point the
+    // landing route will have its own scroll container and the outer
+    // rubber-band can safely be killed without trapping content.
     // Disables the iOS "peek" preview when long-pressing links. We
     // own our own long-press semantics (PR-4 will add a context-menu
     // sheet), and the OS preview reads as "this is a website."

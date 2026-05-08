@@ -44,10 +44,10 @@ If any PR closes without moving these numbers, that PR is incomplete regardless 
 ## CURRENT STATE
 
 ```
-Branch: claude/ios-pr1-cold-start (renamed from claude/capacitor-cold-start-foundation-uAmco at session start)
-Latest commit on branch: 1d6a7ac chore(claude): record cp-from-upload permission grant
-Active CC session: claude/ios-pr1-cold-start (Phase 0 recon complete, Phase 1 starting)
-Last verified on iPhone: never
+Branch: claude/ios-pr1-fix-scroll-zoom (off main 88d25ff; iOS-PR-1 fix-forward)
+Latest commit on main: 88d25ff docs(ios): log WORKFLOW PROTOCOL override before shipping iOS-PR-1 to main
+Active CC session: claude/ios-pr1-fix-scroll-zoom (PR-1 fix-forward in flight)
+Last verified on iPhone: 2026-05-08 (PR-1 partial — surfaced 2 bugs being fixed in this branch + 1 noted-only)
 DUNS requested: not yet
 Apple Developer enrollment: not started
 ```
@@ -58,11 +58,11 @@ CC updates this on session start, after running `git status && git branch --show
 
 ## CURRENT FOCUS
 
-**This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** All 4 phases shipped (Phase 1 `978e377`, Phase 2 `c3821ed`, Phase 3 `c3b0d29`, Phase 4 `cad0f78`). PR-1 is feature-complete; awaiting Andrew's verification gate on physical iPhone.
-**Branch:** `claude/ios-pr1-cold-start`
-**Blocking:** Verification gate (must pass before merge — see iOS-PR-1 checklist below).
-**Next action:** Andrew runs `npm run ios:build && npm run ios:open`, tests cold-open + auth-storage on physical iPhone, updates the NORTH STAR table.
+**This PR:** iOS-PR-1 fix-forward — landing-scroll + pinch-zoom regressions surfaced in physical-iPhone test
+**Phase:** Fix-forward in flight on `claude/ios-pr1-fix-scroll-zoom` (off main 88d25ff)
+**Branch:** `claude/ios-pr1-fix-scroll-zoom`
+**Blocking:** Andrew re-tests on iPhone after this branch ships
+**Next action:** Andrew installs the fix-forward on iPhone, confirms (a) landing scrolls, (b) pinch-zoom no longer works, (c) all PR-1 happy-path verification still passes. If clean, FF main from this branch.
 
 Update this block when PR status changes.
 
@@ -391,6 +391,10 @@ When something didn't work the way it was supposed to. Future PRs reference this
 2026-05-08 · Earlier perf work · Celebrated PR 2 data layer based on diff metrics (route table flips, KB drops). Reality: dashboard reload still 12s. Lesson: every PR's verification gate must include felt-time stopwatch on physical iPhone, not just `next build` output.
 
 2026-05-08 · iOS-PR-1 · Andrew explicitly overrode the WORKFLOW PROTOCOL "no merge to main without iPhone verification" rule and instructed CC to ship iOS-PR-1 to main (514171b → main as fast-forward) before testing on a physical iPhone. CC pushed back twice (per-protocol), Andrew confirmed twice. Risk surface logged at merge time: (a) Phase 4 Preferences adapter shape — if get/set/removeItem return type or null-handling is wrong, every existing logged-in user gets silently signed out on next launch with no detection short of a real device launch; (b) Phase 3 ba-auth-cache-v1 round-trip — if a field is dropped or mistyped, SmartCTALink misroutes for authed users on cold start of marketing pages. Both undetectable in typecheck/build. Watch the next CC session's "Last verified on iPhone" date in CURRENT STATE: if iOS-PR-2 starts before that's filled, this skip likely caused a regression no one's caught yet.
+
+2026-05-08 · iOS-PR-1 · Verification-gate skip caught us as predicted. Andrew tested on iPhone post-merge and surfaced 3 issues: (1) Landing page (app/page.tsx) doesn't scroll. Phase 1's `ios.scrollEnabled: false` killed WKWebView's outer scroll; the marketing landing has no inner scroll container, so users got stuck at top of viewport. Fix-forward: revert scrollEnabled, restore default true. iOS-PR-2's app shell will reintroduce per-screen scroll containers so we can re-disable. (2) Pinch-zoom still works app-wide despite viewport `user-scalable=no` — Apple has ignored that token in WKWebView since iOS 10 for accessibility reasons. Fix-forward: `touch-action: pan-x pan-y` on html and body in globals.css + `<ZoomGate>` JS belt-and-suspenders that calls preventDefault on iOS-proprietary `gesturestart`/`gesturechange`/`gestureend` events. Native iOS Settings → Accessibility → Zoom still works (operates above webview layer). (3) First-login dashboard load was 6-7s (NOT a blocker, expected). Pre-PR-3 caching the dashboard's SWR queries fire serially against cold cache, plus AuthGuard's revalidate(). PR-2 (app shell) and PR-3 (caching + parallel queries) address — see NORTH STAR row.
+
+Lessons: (a) The "every PR's verification gate must include felt-time stopwatch on physical iPhone" rule from earlier work proved itself again — both regressions were trivially visible on device but silent in build/typecheck. Cost was a fix-forward branch, ~30 min. (b) `scrollEnabled: false` is a per-screen decision, not an app-wide one. Don't disable until per-screen containers exist. (c) `user-scalable=no` is ineffective in iOS WKWebView; future "disable a viewport behavior" work needs CSS + JS layers, not just the meta tag.
 ```
 
 Append entries as they happen. Don't delete old ones — they're the lessons.
@@ -455,6 +459,8 @@ Actual log:
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 2 shipped: SplashHider switched from single useEffect to double-rAF chain so SplashScreen.hide() only fires after first paint (capacitor#960 white-flash fix). Component name + import sites unchanged. · c3821ed
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 3 shipped: Sentry init deferred 1s via setTimeout in sentry.client.config.ts; AuthProvider rewritten with synchronous ba-auth-cache-v1 seed (24h TTL) + new {state,revalidate,signOut} context API; AuthGuard fires revalidate on dashboard mount; 5 call sites migrated to useAuthSignOut/useAuthRevalidate (login/signup/NavBar/DashboardShell/settings). Marketing pages now cold-start with zero auth network. · c3b0d29
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 4 shipped (PR-1 feature-complete): preferencesStorage adapter (lib/preferences-storage.ts) wired into Supabase mobile-branch as auth.storage. Survives WKWebView localStorage eviction; web branch untouched. Awaiting verification gate on physical iPhone. · cad0f78
+2026-05-08 · iOS-PR-1 · main · iOS-PR-1 fast-forward merged to main (1d6a7ac → 88d25ff). Sandbox proxy returned 403 on direct push from CC; Andrew completed FF + push from his laptop. Verification gate NOT run pre-merge — iPhone test still owed. · 88d25ff
+2026-05-08 · iOS-PR-1 fix-forward · claude/ios-pr1-fix-scroll-zoom · iPhone test post-merge surfaced 2 bugs + 1 expected slow-load. Fix-forward branch off main: revert capacitor.config.ts `ios.scrollEnabled` (was breaking landing-page scroll); add `touch-action: pan-x pan-y` to html/body in globals.css + new `<ZoomGate>` component that preventDefaults on iOS gesturestart events to kill pinch-zoom (user-scalable=no is ignored by WKWebView since iOS 10). 6-7s first-login dashboard noted in NORTH STAR — addressed by PR-2/PR-3. · TBD
 ```
 
 ---
@@ -467,7 +473,8 @@ Update this after every PR's verification step. Felt-time numbers only. Stopwatc
 |---|---|---|---|---|---|---|
 | baseline | 2026-05-08 | 5s | 1-2s | 12s | 1-3s | Pre-PR-2-rip-out, physical iPhone via Xcode signing |
 | post Tier 1 + PR 2 + rip-server-seed | 2026-05-08 | ? | ? | <1s on web | ? | iPhone test deferred — only verified on web localhost |
-| iOS-PR-1 | | | | | | |
+| iOS-PR-1 | 2026-05-08 | not measured | not measured | not measured | not measured | iPhone test surfaced 2 bugs (no landing scroll, pinch-zoom). First-login dashboard 6-7s — expected, addressed by PR-2/PR-3. Cold-open stopwatch not run because app was unusable on landing. Re-test after fix-forward branch ships. |
+| iOS-PR-1 fix-forward | | | | | | |
 | iOS-PR-2 | | | | | | |
 | iOS-PR-3 | | | | | | |
 | iOS-PR-4 | | | | | | |

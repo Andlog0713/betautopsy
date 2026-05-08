@@ -10,6 +10,7 @@ import { jakarta, ibmPlexMono } from './fonts';
 import { NoiseOverlay } from '@/components/NoiseOverlay';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import SplashHider from '@/components/SplashHider';
+import ZoomGate from '@/components/ZoomGate';
 import AuthProvider from '@/components/AuthProvider';
 import AIConsentModal from '@/components/AIConsentModal';
 
@@ -136,6 +137,15 @@ export default function RootLayout({
          * tree, not gated behind route transitions.
          */}
         <SplashHider />
+        {/*
+         * iOS-PR-1 fix-forward: WKWebView ignores
+         * `user-scalable=no` since iOS 10. ZoomGate calls
+         * `preventDefault` on Apple's `gesturestart` /
+         * `gesturechange` / `gestureend` events as a JS
+         * belt-and-suspenders on top of `touch-action: pan-x pan-y`
+         * in globals.css. No-op on non-iOS browsers.
+         */}
+        <ZoomGate />
         <ScrollToTop />
         <NextTopLoader color="#00C9A7" height={2} showSpinner={false} shadow="0 0 10px #00C9A7,0 0 5px #00C9A7" />
         <NoiseOverlay />
