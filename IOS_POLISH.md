@@ -210,6 +210,9 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - localStorage quota: iOS WKWebView clears at ~2.5MB. If `report_json` is in cache, this will trip. Strip heavy fields before persistence.
 - Stale cache + revoked session: AuthGuard's `useUser()` should redirect on revalidation returning null user. Verify on a forced session expiry.
 
+**Decisions logged in DECISION LOG:** none yet
+**Calibration notes:** none yet
+
 ---
 
 ### iOS-PR-4 — Haptics + pressable buttons + tab bar polish
@@ -253,6 +256,9 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] iPhone 15 Pro home indicator does not overlap content
 - [ ] Same-tab tap triggers `tab:reselect`
 
+**Decisions logged in DECISION LOG:** none yet
+**Calibration notes:** none yet
+
 ---
 
 ### iOS-PR-5 — Visual polish: skeletons, animated numbers, toasts, empty states, typography
@@ -287,6 +293,9 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] Toast clears notch on physical iPhone
 - [ ] Chart tooltip fires on first tap on iOS Safari (recharts #444 workaround verified)
 - [ ] Bundle delta <8KB gzipped (only Sonner; no countup, no skeleton lib)
+
+**Decisions logged in DECISION LOG:** none yet
+**Calibration notes:** none yet
 
 ---
 
@@ -325,6 +334,9 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] Tap scrolled tab → scroll-to-top with light haptic
 - [ ] Full onboarding complete in <90 seconds end-to-end on physical iPhone
 - [ ] All NORTH STAR targets met
+
+**Decisions logged in DECISION LOG:** none yet
+**Calibration notes:** none yet
 
 ---
 
