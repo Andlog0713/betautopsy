@@ -59,10 +59,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** Phase 2 shipped (`c3821ed`); awaiting Andrew's go-ahead for Phase 3 (Sentry defer + AuthProvider lazy)
+**Phase:** Phase 3 shipped (`c3b0d29`); awaiting Andrew's go-ahead for Phase 4 (Preferences adapter — final phase)
 **Branch:** `claude/ios-pr1-cold-start`
 **Blocking:** Nothing
-**Next action:** Andrew reviews Phase 2 commit; CC starts Phase 3 on go
+**Next action:** Andrew reviews Phase 3 commit; CC starts Phase 4 on go
 
 Update this block when PR status changes.
 
@@ -125,9 +125,10 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 **Phase 2 — Splash screen hook + double-rAF** — **shipped `c3821ed`**
 - [x] Replace `<SplashHider>`'s single `useEffect` with double `requestAnimationFrame` to hide splash after first commit (avoids capacitor#960 white flash). Component name + import sites unchanged.
 
-**Phase 3 — Sentry defer + AuthProvider lazy fetch** (Stripe item moot — see below)
-- [ ] Defer `Sentry.init()` by 1s via small client component with `setTimeout`. Keep `@sentry/nextjs` (web build needs server/edge instrumentation).
-- [ ] AuthProvider: synchronous read from localStorage on first render (cached state via versioned key `ba-auth-cache-v1`); defer `getUser()` + profile + snapshot network fetch to AuthGuard mount only. Marketing pages no longer trigger any auth network on cold start.
+**Phase 3 — Sentry defer + AuthProvider lazy fetch** (Stripe item moot — see below) — **shipped `c3b0d29`**
+- [x] Defer `Sentry.init()` by 1s via `setTimeout` in `sentry.client.config.ts`. Keep `@sentry/nextjs`. Errors in first 1s not captured (acceptable tradeoff).
+- [x] AuthProvider rewritten: synchronous first-render seed from `ba-auth-cache-v1` (24h TTL); new context exposes `{ state, revalidate, signOut }`. Marketing pages cold-start with zero auth network. AuthGuard triggers `revalidate()` on dashboard mount; login/signup fire it after successful auth; `useAuthSignOut()` clears cache + sets anon BEFORE the supabase.auth.signOut network call so post-redirect destinations see correct anon state. 401 on getUser/profile fetch → clear cache + drop to anon.
+- [x] 5 call sites migrated: login, signup, NavBar signOut, DashboardShell signOut, settings (signOut + delete-account).
 - [x] ~~Move Stripe.js out of root layout; only `loadStripe()` on checkout route~~ — **moot.** `@stripe/stripe-js` is not installed in this repo. Checkout already redirects to a Stripe-hosted page via `openCheckoutUrl()` (Capacitor Browser → SFSafariViewController). No client Stripe SDK is bundled. Confirmed in Phase 0 recon.
 
 **Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch — and PR-1 ends here)
@@ -450,6 +451,7 @@ Actual log:
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete: 6 decisions surfaced and resolved (branch rename, Sentry approach, AuthProvider laziness, Phase 5 removal, Stripe-moot, preferences@^8). Branch renamed from claude/capacitor-cold-start-foundation-uAmco. IOS_POLISH.md updated with new scope. · 57a0d9d
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 1 shipped: capacitor.config.ts ios block (contentInset/scrollEnabled/allowsLinkPreview/preferredContentMode/backgroundColor) + explicit SplashScreen.launchShowDuration: 0 + globals.css touch rules (tap-highlight, touch-callout, overscroll-behavior, 16px input floor, touch-action manipulation). · 978e377, fb89686
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 2 shipped: SplashHider switched from single useEffect to double-rAF chain so SplashScreen.hide() only fires after first paint (capacitor#960 white-flash fix). Component name + import sites unchanged. · c3821ed
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 3 shipped: Sentry init deferred 1s via setTimeout in sentry.client.config.ts; AuthProvider rewritten with synchronous ba-auth-cache-v1 seed (24h TTL) + new {state,revalidate,signOut} context API; AuthGuard fires revalidate on dashboard mount; 5 call sites migrated to useAuthSignOut/useAuthRevalidate (login/signup/NavBar/DashboardShell/settings). Marketing pages now cold-start with zero auth network. · c3b0d29
 ```
 
 ---
