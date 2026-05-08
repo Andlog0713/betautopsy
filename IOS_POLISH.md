@@ -114,16 +114,26 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 **Depends on:** Nothing
 **Goal:** Kill the 5s cold open before any architectural changes.
 
-**Key changes:**
+**Phases (commit per phase — Phase 4-5 is the highest-risk piece and runs last so auth-migration verification isn't poisoned by earlier-phase regressions):**
+
+**Phase 1 — `capacitor.config.ts` + viewport + global CSS** (lowest risk, easy revert)
 - [ ] `capacitor.config.ts`: `ios.contentInset: 'never'`, `scrollEnabled: false`, `allowsLinkPreview: false`, `preferredContentMode: 'mobile'`, `backgroundColor: '#0D1117'`
 - [ ] `capacitor.config.ts`: `plugins.SplashScreen.launchShowDuration: 0`, `launchAutoHide: false`, `backgroundColor: '#0D1117'`, `showSpinner: false`
-- [ ] Add `useSplashHide()` hook in root layout: hides splash inside double `requestAnimationFrame` after first commit (avoids capacitor#960 white flash)
 - [ ] Next.js viewport: `viewportFit: 'cover'`
 - [ ] Global CSS additions: `-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`, `overscroll-behavior-y: contain` on body, `font-size: 16px` minimum on inputs, `touch-action: manipulation` on buttons
+
+**Phase 2 — Splash screen hook + double-rAF**
+- [ ] Add `useSplashHide()` hook in root layout: hides splash inside double `requestAnimationFrame` after first commit (avoids capacitor#960 white flash)
+
+**Phase 3 — Sentry defer + Stripe lazy-load + Supabase lazy singleton**
 - [ ] Defer Sentry init by 1s in `useEffect`; switch from `@sentry/nextjs` to `@sentry/browser`
 - [ ] Move Stripe.js out of root layout; only `loadStripe()` on checkout route
 - [ ] Lazy Supabase singleton — no auth refresh until first call
+
+**Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch)
 - [ ] Install `@capacitor/preferences@^7`, build `preferencesStorage` adapter, wire into Supabase as `auth.storage`
+
+**Phase 5 — `migrateAuthFromLocalStorage` + uninstall/reinstall verification** (auth-migration test only meaningful with all earlier phases stable)
 - [ ] Add one-time `migrateAuthFromLocalStorage()` migration
 
 **Verification gate (must pass before merge):**
