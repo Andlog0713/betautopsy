@@ -41,7 +41,43 @@
 
 ---
 
-## Current branch: `claude/update-app-website-sync-vuQB7`
+## Current branch: `claude/capacitor-migration-recon-l0LuG`
+
+### Done this session
+- **Capacitor migration Phase 0 recon** committed at `docs/capacitor-migration-recon.md`. Read-only audit
+  of the dual-target build state — Capacitor config, build flags, auth architecture, all 29 API routes,
+  dynamic-route placeholders, middleware → `<AuthGuard>` mapping, Stripe SFSafariViewController flow,
+  heavy assets, route exclusions, and 5-phase migration mapping vs. work already shipped on
+  `f430311 → 542ed3b`. Conclusion: Phases A–D are done; Phase E (URL-scheme deep links for Stripe
+  success + OAuth callback) and Phase F (on-device smoke) remain.
+
+### Parked — 8 decisions Andrew owes (Section 11 of recon doc)
+1. OAuth scope on iOS — function for Google/Discord now, or wait for Apple Sign-In to land first?
+2. Stripe success deep-link — register a custom URL scheme to bounce out of SFSafariViewController, or
+   keep the "tap Done, state refreshes on next mount" UX?
+3. `/sample` in mobile bundle — keep (drags ~62 KB demo fixture) or exclude alongside cold-launch UX work?
+4. `/admin/*` in mobile bundle — keep (trivial cost) or exclude for semantic clarity?
+5. `/uploads/[id]` runtime — does Next 14's client router resolve `/uploads/<real-id>` against the
+   `__placeholder__` chunk inside Capacitor's WKWebView? Needs on-device test.
+6. Auth-route bounce on mobile — should an authed user landing on `/login`/`/signup` get a client-side
+   redirect to `/dashboard` (currently only middleware does this)?
+7. `@capacitor/preferences` mirror for the Supabase session — defense against iOS storage-pressure
+   eviction, or premature without measurement?
+8. Cold-launch UX — `/` → `/login`, 2–3 screen onboarding carousel, or keep marketing landing?
+
+### Quick wins identified during recon (do not fix in this branch)
+- `app/(dashboard)/bets/page.tsx` and `reports/page.tsx` each call `getUser()` 4 times — should consume
+  `useAuthState()` from `<AuthProvider>`.
+- `DashboardShell.tsx:47`, `DisciplineScoreCard.tsx:78`, `admin/feedback/page.tsx:33` also re-fetch user
+  state instead of consuming the provider.
+- `/api/admin/*` routes still use raw `supabase.auth.getUser()` instead of `getAuthenticatedClient` —
+  silent 401 if mobile admin is ever attempted.
+- `PROGRESS.md` "Current branch" string was stale (`update-app-website-sync-vuQB7`) — fixed in this
+  commit.
+
+---
+
+## Previous branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
 - (none — Tier 1 perf items all shipped; awaiting user direction on Tier 2)
