@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
+import { useUploads } from '@/hooks/useUploads';
 import { FolderOpen } from 'lucide-react';
-import type { Upload, Bet, Profile } from '@/types';
+import type { Upload, Bet } from '@/types';
 
 interface UploadWithStats extends Upload {
   record: string;
@@ -15,39 +17,43 @@ interface UploadWithStats extends Upload {
 
 export default function UploadsPage() {
   const router = useRouter();
+  const { profile } = useUser();
+  const { uploads: rawUploads, mutate: mutateUploads } = useUploads();
+  const tier = profile?.subscription_tier ?? 'free';
+
+  // Computed-stats view of the cached uploads. Recomputed whenever the
+  // hook returns fresh upload rows or the inline bets/reports projections
+  // resolve below.
   const [uploads, setUploads] = useState<UploadWithStats[]>([]);
   const [legacyBets, setLegacyBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tier, setTier] = useState('free');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
+  // Per-upload stats need bets.upload_id/result/profit + reports.bet_count_analyzed/
+  // created_at. Both are projection-only (small) and not generally cached
+  // — leave as inline fetches that re-run when the underlying tables change
+  // via mutate calls.
   const loadUploads = useCallback(async () => {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [uploadsRes, betsRes, reportsRes, profileRes] = await Promise.all([
-      supabase.from('uploads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    const [betsRes, reportsRes] = await Promise.all([
       supabase.from('bets').select('upload_id, result, profit').eq('user_id', user.id),
       supabase.from('autopsy_reports').select('bet_count_analyzed, created_at').eq('user_id', user.id),
-      supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
     ]);
-
-    if (profileRes.data) setTier((profileRes.data as Profile).subscription_tier);
 
     const allBets = (betsRes.data ?? []) as { upload_id: string | null; result: string; profit: number }[];
     const reportsList = reportsRes.data ?? [];
 
-    // Build stats per upload
-    const uploadsList = ((uploadsRes.data ?? []) as Upload[]).map((u) => {
+    const uploadsList = rawUploads.map((u) => {
       const uBets = allBets.filter((b) => b.upload_id === u.id);
       const wins = uBets.filter((b) => b.result === 'win').length;
       const losses = uBets.filter((b) => b.result === 'loss').length;
       const pushes = uBets.filter((b) => b.result === 'push').length;
       const netPnL = uBets.reduce((s, b) => s + Number(b.profit), 0);
-      // Check if analyzed (rough: report exists with same bet count close in time)
       const analyzed = reportsList.some((r: Record<string, unknown>) =>
         (r as { bet_count_analyzed: number }).bet_count_analyzed === uBets.length &&
         Math.abs(new Date((r as { created_at: string }).created_at).getTime() - new Date(u.created_at).getTime()) < 86400000 * 7
@@ -57,11 +63,10 @@ export default function UploadsPage() {
 
     setUploads(uploadsList);
 
-    // Legacy bets (no upload_id)
     const legacy = allBets.filter((b) => !b.upload_id);
     setLegacyBets(legacy as unknown as Bet[]);
     setLoading(false);
-  }, []);
+  }, [rawUploads]);
 
   useEffect(() => { loadUploads(); }, [loadUploads]);
 
@@ -71,11 +76,12 @@ export default function UploadsPage() {
 
   async function deleteUpload(uploadId: string, betCount: number) {
     if (!confirm(`Delete this upload and its ${betCount} bets? This cannot be undone.`)) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.from('bets').delete().eq('upload_id', uploadId);
     await supabase.from('uploads').delete().eq('id', uploadId);
     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
     setSelected((prev) => { const n = new Set(prev); n.delete(uploadId); return n; });
+    mutateUploads();
   }
 
   async function deleteSelected() {
@@ -89,13 +95,14 @@ export default function UploadsPage() {
         ? `Delete this upload and its ${totalBets} bets? This cannot be undone.`
         : `Delete ${ids.length} uploads and their ${totalBets} bets? This cannot be undone.`;
     if (!confirm(msg)) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     // Delete bets first (FK), then uploads. Both `.in()` so it's a single
     // round-trip per table regardless of selection size.
     await supabase.from('bets').delete().in('upload_id', ids);
     await supabase.from('uploads').delete().in('id', ids);
     setUploads((prev) => prev.filter((u) => !selected.has(u.id)));
     setSelected(new Set());
+    mutateUploads();
   }
 
   function selectAll() {
@@ -103,10 +110,11 @@ export default function UploadsPage() {
   }
 
   async function saveName(uploadId: string) {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.from('uploads').update({ display_name: editName }).eq('id', uploadId);
     setUploads((prev) => prev.map((u) => u.id === uploadId ? { ...u, display_name: editName } : u));
     setEditingId(null);
+    mutateUploads();
   }
 
   function analyzeSelected() {
