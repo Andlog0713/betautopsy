@@ -44,12 +44,12 @@ If any PR closes without moving these numbers, that PR is incomplete regardless 
 ## CURRENT STATE
 
 ```
-Branch: <fill in>
-Latest commit on main: <fill in>
-Active CC session: <none | branch name>
-Last verified on iPhone: <date or "never">
-DUNS requested: <YYYY-MM-DD or "not yet">
-Apple Developer enrollment: <not started | in progress | active>
+Branch: claude/ios-pr1-cold-start (renamed from claude/capacitor-cold-start-foundation-uAmco at session start)
+Latest commit on branch: 1d6a7ac chore(claude): record cp-from-upload permission grant
+Active CC session: claude/ios-pr1-cold-start (Phase 0 recon complete, Phase 1 starting)
+Last verified on iPhone: never
+DUNS requested: not yet
+Apple Developer enrollment: not started
 ```
 
 CC updates this on session start, after running `git status && git branch --show-current && git log --oneline -5`. Andrew reads it.
@@ -59,10 +59,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** Not started
-**Branch:** `claude/ios-pr1-cold-start` (planned)
+**Phase:** Phase 0 recon complete; Phase 1 starting (config + viewport + global CSS)
+**Branch:** `claude/ios-pr1-cold-start`
 **Blocking:** Nothing
-**Next action:** Andrew runs iOS-PR-1 prompt against fresh CC session
+**Next action:** CC ships Phase 1 commit; Andrew reviews before Phase 2
 
 Update this block when PR status changes.
 
@@ -114,36 +114,37 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 **Depends on:** Nothing
 **Goal:** Kill the 5s cold open before any architectural changes.
 
-**Phases (commit per phase — Phase 4-5 is the highest-risk piece and runs last so auth-migration verification isn't poisoned by earlier-phase regressions):**
+**Phases (commit per phase — Phase 4 is the highest-risk piece and runs last so auth-storage verification isn't poisoned by earlier-phase regressions):**
 
 **Phase 1 — `capacitor.config.ts` + viewport + global CSS** (lowest risk, easy revert)
 - [ ] `capacitor.config.ts`: `ios.contentInset: 'never'`, `scrollEnabled: false`, `allowsLinkPreview: false`, `preferredContentMode: 'mobile'`, `backgroundColor: '#0D1117'`
-- [ ] `capacitor.config.ts`: `plugins.SplashScreen.launchShowDuration: 0`, `launchAutoHide: false`, `backgroundColor: '#0D1117'`, `showSpinner: false`
-- [ ] Next.js viewport: `viewportFit: 'cover'`
+- [ ] `capacitor.config.ts`: `plugins.SplashScreen.launchShowDuration: 0` (explicit; `launchAutoHide: false`, `backgroundColor: '#0D1117'`, `showSpinner: false` already in place)
+- [ ] Viewport: keep existing `<meta name="viewport" content="viewport-fit=cover, …, maximum-scale=1.0, user-scalable=no">` (already in `app/layout.tsx:112`); spec's bare `viewportFit: 'cover'` already satisfied — no change needed
 - [ ] Global CSS additions: `-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`, `overscroll-behavior-y: contain` on body, `font-size: 16px` minimum on inputs, `touch-action: manipulation` on buttons
 
 **Phase 2 — Splash screen hook + double-rAF**
-- [ ] Add `useSplashHide()` hook in root layout: hides splash inside double `requestAnimationFrame` after first commit (avoids capacitor#960 white flash)
+- [ ] Replace `<SplashHider>`'s single `useEffect` with double `requestAnimationFrame` to hide splash after first commit (avoids capacitor#960 white flash). Component name + import sites unchanged.
 
-**Phase 3 — Sentry defer + Stripe lazy-load + Supabase lazy singleton**
-- [ ] Defer Sentry init by 1s in `useEffect`; switch from `@sentry/nextjs` to `@sentry/browser`
-- [ ] Move Stripe.js out of root layout; only `loadStripe()` on checkout route
-- [ ] Lazy Supabase singleton — no auth refresh until first call
+**Phase 3 — Sentry defer + AuthProvider lazy fetch** (Stripe item moot — see below)
+- [ ] Defer `Sentry.init()` by 1s via small client component with `setTimeout`. Keep `@sentry/nextjs` (web build needs server/edge instrumentation).
+- [ ] AuthProvider: synchronous read from localStorage on first render (cached state via versioned key `ba-auth-cache-v1`); defer `getUser()` + profile + snapshot network fetch to AuthGuard mount only. Marketing pages no longer trigger any auth network on cold start.
+- [x] ~~Move Stripe.js out of root layout; only `loadStripe()` on checkout route~~ — **moot.** `@stripe/stripe-js` is not installed in this repo. Checkout already redirects to a Stripe-hosted page via `openCheckoutUrl()` (Capacitor Browser → SFSafariViewController). No client Stripe SDK is bundled. Confirmed in Phase 0 recon.
 
-**Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch)
-- [ ] Install `@capacitor/preferences@^7`, build `preferencesStorage` adapter, wire into Supabase as `auth.storage`
+**Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch — and PR-1 ends here)
+- [ ] Build `preferencesStorage` adapter using already-installed `@capacitor/preferences@^8.0.1` (spec said `^7`; we keep `^8` to match the rest of `@capacitor/*@^8`)
+- [ ] Wire adapter into `createBrowserSupabaseClient()`'s mobile branch as `auth.storage`. Web branch untouched.
 
-**Phase 5 — `migrateAuthFromLocalStorage` + uninstall/reinstall verification** (auth-migration test only meaningful with all earlier phases stable)
-- [ ] Add one-time `migrateAuthFromLocalStorage()` migration
+**Phase 5 — REMOVED.** Per Andrew's call (2026-05-08): no production users, no TestFlight, only Andrew's own physical iPhone. Anyone testing post-PR-1 can log in fresh — Preferences storage populates on first login. No `migrateAuthFromLocalStorage()` needed.
 
 **Verification gate (must pass before merge):**
 - [ ] Cold open <1.5s on physical iPhone (interim target — NORTH STAR is <800ms, achieved cumulatively across iOS-PR-1 through iOS-PR-3) (stopwatch)
 - [ ] No white flash on launch
 - [ ] No console errors on first launch
-- [ ] Uninstall + reinstall confirms auth tokens cleared from Preferences
+- [ ] Fresh install → log in → force-quit → cold reopen: session persists (proves Preferences `auth.storage` wired correctly)
+- [ ] Uninstall + reinstall: lands on logged-out state (proves no stale tokens leak across installs)
 - [ ] NORTH STAR cold-open number updated below
 
-**Decisions logged in DECISION LOG:** none yet
+**Decisions logged in DECISION LOG:** branch rename, Sentry approach, AuthProvider laziness pattern, Phase 5 removal, Stripe-item-moot
 **Calibration notes:** none yet
 
 ---
@@ -362,6 +363,13 @@ Log every decision Andrew makes that CC asked about. Format: `YYYY-MM-DD · PR# 
 2026-05-08 · n/a · Reference apps: Pikkit, Robinhood, BettingPros, Coinbase · Confirmed by Andrew
 2026-05-08 · n/a · Open to new dependencies (Konsta, framer-motion alternatives, native plugins) · Andrew explicitly said "open to anything"
 2026-05-08 · n/a · Speed and polish equal priority · Andrew explicitly said "both equally"
+2026-05-08 · iOS-PR-1 · Branch renamed claude/capacitor-cold-start-foundation-uAmco → claude/ios-pr1-cold-start · Match IOS_POLISH.md naming convention; system-set worktree branch was a one-off artifact
+2026-05-08 · iOS-PR-1 · Sentry: defer init by 1s via small client component, keep @sentry/nextjs · Full swap to @sentry/browser would lose web's server/edge auto-instrumentation; deferral captures the cold-start win at lower blast radius
+2026-05-08 · iOS-PR-1 · AuthProvider: read cached state synchronously from localStorage on first render; defer network fetch (getUser/profile/snapshot) to AuthGuard mount only · Marketing pages don't need auth state at first paint; cached read prevents SmartCTALink flicker; standard fast-app pattern
+2026-05-08 · iOS-PR-1 · Phase 5 removed (no migrateAuthFromLocalStorage) · No production users, no TestFlight, only Andrew on physical iPhone — anyone testing post-PR-1 can log in fresh
+2026-05-08 · iOS-PR-1 · Stripe.js Phase 3 item marked moot · @stripe/stripe-js not installed; checkout already redirects via openCheckoutUrl() to Stripe-hosted page. No client Stripe SDK in bundle.
+2026-05-08 · iOS-PR-1 · Use @capacitor/preferences@^8.0.1 (already installed) instead of spec's @^7 · Matches the rest of @capacitor/*@^8 deps
+2026-05-08 · iOS-PR-1 · Keep existing viewport <meta> tag instead of migrating to Next 14 viewport export · Already includes viewport-fit=cover plus maximum-scale=1.0/user-scalable=no which the bare viewport export wouldn't preserve
 ```
 
 When CC asks a multi-select / single-select question, paste the question and answer here verbatim.
@@ -439,6 +447,7 @@ Actual log:
 
 ```
 2026-05-08 (initial scaffold) · n/a · main · IOS_POLISH.md created · n/a
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete: 6 decisions surfaced and resolved (branch rename, Sentry approach, AuthProvider laziness, Phase 5 removal, Stripe-moot, preferences@^8). Branch renamed from claude/capacitor-cold-start-foundation-uAmco. IOS_POLISH.md updated with new scope. · (no commits yet)
 ```
 
 ---
