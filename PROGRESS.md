@@ -41,10 +41,42 @@
 
 ---
 
-## Current branch: `main` (post-PR-9 merge + post-rip-server-seed)
+## Current branch: `main` (post-PR-11 merge)
 
 ### In progress
-- (none — server-seed rip-out shipped, dashboard back to ○ Static, reload "a lot faster" per user)
+- (none — PR 3 third-party tracking cleanup shipped; PR 4 bundle trim queued)
+
+### PR 3: third-party tracking cleanup (PR #11, merged `735752f`)
+Lighthouse on `/sample` was 69, third-party scripts accounted for 388 KiB
+(63%) of page weight, TBT ~360ms floor on every page including `/blog`.
+
+- **Phase 1 (`e8d3b64`)**: removed TikTok Pixel entirely. No active TikTok
+  ad campaigns; the pixel was pure dead weight, plus the `next.config.js`
+  `script-src` doesn't whitelist `analytics.tiktok.com` so the external
+  loader was failing silently in production. Deleted
+  `components/TikTokPixel.tsx`, `lib/tiktok-events.ts`, the `<TikTokPixel />`
+  mount from `app/layout.tsx`, 9 helper call sites across quiz/upload/
+  pricing/dashboard/reports/ProUpsellModal (the modal had two refs:
+  helper call + standalone `window.ttq?.track('ViewContent', …)`), and
+  the TikTok Pixel claim from `app/privacy/page.tsx`. Updated 5 stale
+  comments.
+- **Phase 2 (`693154c`)**: deferred Meta Pixel from `afterInteractive` to
+  `lazyOnload`. Single-line in `components/MetaPixel.tsx`. Safe because
+  `lib/meta-events.ts` already buffers `fbq` calls when `window.fbq` is
+  undefined (deferred-queue, 100ms polling, 3s max-defer).
+- **Phase 3 SKIPPED — spec premise was wrong.** Recon confirmed
+  `GoogleAnalytics.tsx`'s `isMobileBuild()` block manages only GA4
+  consent, not TikTok. There was no TikTok consent grant to remove.
+  Both pixels were already gated behind `!isMobileBuild()` in
+  `app/layout.tsx` and never shipped to mobile. Documented in
+  `/tmp/pr3-final-report.md` §11.
+- **CAPI dedup pre-existing broken — flagged for PR 3.5.** Server CAPI
+  uses `session.id`, client `trackPurchase()` generates a fresh UUID;
+  they don't dedupe. NOT fixed in PR 3 per spec hard rule.
+- First Load JS deltas minimal (TBT/LCP win is in main-thread time, not
+  bundle size). `npm run build:mobile` clean. Manual Vercel preview
+  Lighthouse + Stripe test checkout dedup baseline pending.
+- Final report at `/tmp/pr3-final-report.md`.
 
 ### PR-3a: rip server-side seed (commit `54a9b49`, merged to main)
 PR 2's phase-2 server seed turned out to be the warm-cache reload bottleneck.
