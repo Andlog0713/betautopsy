@@ -47,11 +47,44 @@
   html {
     background-color: #0D1117;
     color-scheme: dark;
+    /* Kills the gray flash WKWebView draws on every tap. Native
+       iOS UIs don't show one — we own tap feedback via component
+       active states + (PR-4) haptics. */
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-base text-fg font-sans antialiased;
     position: relative;
+    /* Suppresses iOS's link/image long-press preview popup. Doesn't
+       affect text selection (that's `user-select`). Reads as native
+       app behavior; the existing share/context-menu surfaces are
+       routed through our own components. */
+    -webkit-touch-callout: none;
+    /* Stops the document's vertical scroll from chaining into the
+       WKWebView outer rubber-band when an inner scroll container
+       hits its boundary. Combined with `ios.scrollEnabled: false`
+       in capacitor.config.ts, the "whole app bounces" gesture is
+       gone on Capacitor; on web/mobile-Safari this just contains
+       overscroll within the page. */
+    overscroll-behavior-y: contain;
+  }
+
+  /* iOS auto-zooms any input under 16px on focus and never zooms back.
+     `.input-field` already enforces 16px via @apply text-base, but raw
+     `<input>` / `<textarea>` / `<select>` without the class also need
+     coverage. `max(16px, 1rem)` keeps user-preference root-font-size
+     scaling working — only floors below 16px. */
+  input, textarea, select {
+    font-size: max(16px, 1rem);
+  }
+
+  /* Removes the 300ms double-tap-zoom delay on tappable elements.
+     `manipulation` keeps panning/pinch but disables double-tap zoom,
+     which is the part that costs latency. Native iOS apps don't
+     have this delay at all. */
+  button, a, [role="button"], input[type="button"], input[type="submit"], input[type="reset"] {
+    touch-action: manipulation;
   }
 
   /* Global noise overlay — 2% fractalNoise across the entire page,

@@ -8,6 +8,33 @@ const config: CapacitorConfig = {
   // this directory into `ios/App/App/public/` as the webview's
   // bundled assets.
   webDir: 'out',
+  ios: {
+    // `contentInset: 'never'` lets the webview content draw under the
+    // status bar / home indicator so we control safe-area math via
+    // `env(safe-area-inset-*)` instead of WKWebView's automatic
+    // top/bottom insets. Native-feeling apps draw edge-to-edge; the
+    // default `'always'` adds a translucent inset that produces a
+    // visible gap at the top of the splash → first-paint hand-off.
+    contentInset: 'never',
+    // `scrollEnabled: false` disables WKWebView's outer rubber-band
+    // scroll. Inner scroll containers (the dashboard list, etc.)
+    // still scroll because they own their own scroll context. This
+    // kills the "whole app pulls down then snaps back" gesture that
+    // doesn't exist in native iOS apps.
+    scrollEnabled: false,
+    // Disables the iOS "peek" preview when long-pressing links. We
+    // own our own long-press semantics (PR-4 will add a context-menu
+    // sheet), and the OS preview reads as "this is a website."
+    allowsLinkPreview: false,
+    // Forces the mobile UA string regardless of device class. Without
+    // this, iPad Capacitor webviews advertise as desktop Safari and
+    // server-side `Sec-CH-UA-Mobile`-driven branches misroute.
+    preferredContentMode: 'mobile',
+    // Background color WKWebView paints before the bundle is ready.
+    // Matches the splash + body so there's no flash of any other
+    // color during the launch handoff.
+    backgroundColor: '#0D1117',
+  },
   server: {
     // Serve the bundled webview from `https://localhost` instead of
     // a custom URL scheme like `betautopsy://localhost`. Rationale:
@@ -54,8 +81,16 @@ const config: CapacitorConfig = {
       // Setting this to `true` causes Capacitor's platform timer
       // to race against React hydration and log a "SplashScreen
       // was automatically hidden after default timeout" warning.
+      //
+      // `launchShowDuration: 0` is explicit-not-default. With
+      // `launchAutoHide: false` the platform timer is a no-op
+      // anyway, but pinning the duration to 0 documents the intent
+      // and stops Capacitor from logging a "default timeout"
+      // warning if a future plugin upgrade flips the auto-hide
+      // default back on.
       backgroundColor: '#0D1117',
       launchAutoHide: false,
+      launchShowDuration: 0,
       showSpinner: false,
     },
     Keyboard: {
