@@ -59,10 +59,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** Phase 0 recon complete; Phase 1 starting (config + viewport + global CSS)
+**Phase:** Phase 1 shipped (`978e377`); awaiting Andrew's go-ahead for Phase 2 (splash double-rAF)
 **Branch:** `claude/ios-pr1-cold-start`
 **Blocking:** Nothing
-**Next action:** CC ships Phase 1 commit; Andrew reviews before Phase 2
+**Next action:** Andrew reviews Phase 1 commit; CC starts Phase 2 on go
 
 Update this block when PR status changes.
 
@@ -116,11 +116,11 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 **Phases (commit per phase — Phase 4 is the highest-risk piece and runs last so auth-storage verification isn't poisoned by earlier-phase regressions):**
 
-**Phase 1 — `capacitor.config.ts` + viewport + global CSS** (lowest risk, easy revert)
-- [ ] `capacitor.config.ts`: `ios.contentInset: 'never'`, `scrollEnabled: false`, `allowsLinkPreview: false`, `preferredContentMode: 'mobile'`, `backgroundColor: '#0D1117'`
-- [ ] `capacitor.config.ts`: `plugins.SplashScreen.launchShowDuration: 0` (explicit; `launchAutoHide: false`, `backgroundColor: '#0D1117'`, `showSpinner: false` already in place)
-- [ ] Viewport: keep existing `<meta name="viewport" content="viewport-fit=cover, …, maximum-scale=1.0, user-scalable=no">` (already in `app/layout.tsx:112`); spec's bare `viewportFit: 'cover'` already satisfied — no change needed
-- [ ] Global CSS additions: `-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none`, `overscroll-behavior-y: contain` on body, `font-size: 16px` minimum on inputs, `touch-action: manipulation` on buttons
+**Phase 1 — `capacitor.config.ts` + viewport + global CSS** (lowest risk, easy revert) — **shipped `978e377`**
+- [x] `capacitor.config.ts`: `ios.contentInset: 'never'`, `scrollEnabled: false`, `allowsLinkPreview: false`, `preferredContentMode: 'mobile'`, `backgroundColor: '#0D1117'`
+- [x] `capacitor.config.ts`: `plugins.SplashScreen.launchShowDuration: 0` (explicit; `launchAutoHide: false`, `backgroundColor: '#0D1117'`, `showSpinner: false` already in place)
+- [x] Viewport: confirmed existing `<meta>` already includes `viewport-fit=cover` plus `maximum-scale=1.0, user-scalable=no` — no change needed
+- [x] Global CSS additions: `-webkit-tap-highlight-color: transparent` on html, `-webkit-touch-callout: none` + `overscroll-behavior-y: contain` on body, `font-size: max(16px, 1rem)` on raw input/textarea/select, `touch-action: manipulation` on button/a/[role=button]
 
 **Phase 2 — Splash screen hook + double-rAF**
 - [ ] Replace `<SplashHider>`'s single `useEffect` with double `requestAnimationFrame` to hide splash after first commit (avoids capacitor#960 white flash). Component name + import sites unchanged.
@@ -447,7 +447,8 @@ Actual log:
 
 ```
 2026-05-08 (initial scaffold) · n/a · main · IOS_POLISH.md created · n/a
-2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete: 6 decisions surfaced and resolved (branch rename, Sentry approach, AuthProvider laziness, Phase 5 removal, Stripe-moot, preferences@^8). Branch renamed from claude/capacitor-cold-start-foundation-uAmco. IOS_POLISH.md updated with new scope. · (no commits yet)
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete: 6 decisions surfaced and resolved (branch rename, Sentry approach, AuthProvider laziness, Phase 5 removal, Stripe-moot, preferences@^8). Branch renamed from claude/capacitor-cold-start-foundation-uAmco. IOS_POLISH.md updated with new scope. · 57a0d9d
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 1 shipped: capacitor.config.ts ios block (contentInset/scrollEnabled/allowsLinkPreview/preferredContentMode/backgroundColor) + explicit SplashScreen.launchShowDuration: 0 + globals.css touch rules (tap-highlight, touch-callout, overscroll-behavior, 16px input floor, touch-action manipulation). · 978e377
 ```
 
 ---
