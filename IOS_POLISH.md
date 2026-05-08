@@ -16,7 +16,7 @@ Repo-wide progress lives in `PROGRESS.md`. iOS polish lives here.
 
 **For Claude Code:** When you start a session on this project, your first action is to read this entire file. Then run `git status && git branch --show-current && git log --oneline -5` and update CURRENT STATE below. Identify which PR is in flight from CURRENT FOCUS. Do not proceed past whatever phase that PR is in. After every commit, append to the SESSION LOG and check the relevant boxes. Never skip the verification gate on any PR — that gate exists because Andrew's calibration miss in PR 2 of the perf work shipped a regression that wasn't caught until production.
 
-**For Andrew:** Update CURRENT STATE manually before starting a new CC session. Add to DECISION LOG when you make a call CC asked about. Add to CALIBRATION LOG when something didn't work the way it was supposed to.
+**For Andrew:** CC owns CURRENT STATE — it writes the block on session start after running `git status`. You read it. Add to DECISION LOG when you make a call CC asked about. Add to CALIBRATION LOG when something didn't work the way it was supposed to.
 
 ---
 
@@ -48,11 +48,11 @@ Branch: <fill in>
 Latest commit on main: <fill in>
 Active CC session: <none | branch name>
 Last verified on iPhone: <date or "never">
-Days until DUNS clears (estimate): <fill in>
+DUNS requested: <YYYY-MM-DD or "not yet">
 Apple Developer enrollment: <not started | in progress | active>
 ```
 
-Update this block at the start of each session.
+CC updates this on session start, after running `git status && git branch --show-current && git log --oneline -5`. Andrew reads it.
 
 ---
 
