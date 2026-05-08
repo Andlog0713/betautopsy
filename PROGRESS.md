@@ -44,7 +44,47 @@
 ## Current branch: `claude/update-app-website-sync-vuQB7`
 
 ### In progress
-- (none — CI fix shipped)
+- (none — CI fix shipped; perf audit complete, awaiting user direction on which item to ship first)
+
+### Performance audit (2026-05-08, read-only diagnostic, full report at `/tmp/perf-audit-report.md`)
+Branch: `claude/update-app-website-sync-vuQB7`. Cleanup: `next.config.js` restored from
+`next.config.original.js` after the audit agent failed to revert its analyze wrapper —
+working tree clean. Top 10 priority order (highest ROI first):
+1. **Anthropic SDK leak (`/uploads/compare`)** — `lib/autopsy-engine.ts:1` does top-level
+   `import Anthropic from '@anthropic-ai/sdk'`; only `runAutopsy` uses it but the entire
+   72 KB / 19 KB gzip ships to every client of `/uploads/compare` via the
+   `calculateMetrics` import. Fix: lazy `await import('@anthropic-ai/sdk')` inside
+   `runAutopsy`, or split into `autopsy-engine-pure.ts` + `autopsy-engine-llm.ts`.
+   One-file change, low risk.
+2. **Static layout fix** — `app/layout.tsx:70` calls `shouldRequireConsent()` which
+   reads `headers()` synchronously, opting the entire route tree out of static gen.
+   Every marketing/legal page (`/`, `/sample`, `/go`, `/blog`, `/faq`, `/privacy`,
+   `/terms`) renders ƒ Dynamic instead of CDN-cached. Fix: move geo-check to client
+   component reading a middleware-set cookie. **Biggest UX win** (~200–500ms TTFB
+   → ~30ms CDN HIT) but touches the root layout — needs careful testing.
+3. **Code-split `AutopsyReport` on `/share/[id]` and `/admin/reports/[id]`** — both
+   statically import it; First Load JS is 355 KB and 407 KB respectively. `next/dynamic`
+   brings them to ~160–180 KB. Two files: `app/share/[id]/SharedReport.tsx` and
+   `app/(dashboard)/admin/reports/[id]/AdminReportDetailClient.tsx`.
+4. **Lazy-load `ShareModal` from `AutopsyReport`** (and `html-to-image` with it).
+   ~6 KB gzip off the report chunk.
+5. **Migrate client Supabase to `createBrowserClient` from `@supabase/ssr`** — `lib/supabase.ts`
+   ships full `@supabase/supabase-js` (auth-js + postgrest-js + storage-js + realtime-js +
+   phoenix, ≈205 KB parsed / 53 KB gzip in chunk `2990` on every authed page). `@supabase/ssr`
+   is already in deps. Likely 30–50 KB savings.
+6. **12 internal `<a href="/...">` → `next/link`** — chiefly the `/pricing` cluster
+   (`app/(dashboard)/reports/page.tsx:482,583,614`, `bets/page.tsx:284`,
+   `settings/page.tsx:351`, `components/AutopsyReport.tsx:2857`) and `/terms`/`/privacy`
+   footer links (blog/faq layouts, signup, terms→privacy). Cheap, mechanical.
+7. **`Cache-Control` on `/api/template`** — public, GET, deterministic CSV. One-line:
+   `Cache-Control: public, max-age=86400, immutable`.
+8. **`LogoScroll.tsx <img>` → `next/image`** for landing-page LCP. Plus pre-convert
+   TTF fonts to WOFF2 (~30% bandwidth win).
+9. **`lib/demo-data.ts` (62 KB parsed in client bundle)** — sample-report fixture.
+   Move to JSON + lazy fetch or server-only file passed via props.
+10. **Reduce `framer-motion` surface area on landing** — `AnimatedSection`,
+    `number-ticker`, `text-generate-effect` could be CSS-only or use the lighter
+    `motion` module instead of `framer-motion`. ~14 KB gzip on `/` and `/sample`.
 
 ### CI: `mobile-regression.yml` env-var inlining fix
 - **Root cause** (from `next start log` group, ~1346 stack-trace lines): `middleware.ts:25-27`
