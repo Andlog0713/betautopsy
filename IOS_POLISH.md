@@ -59,10 +59,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** Phase 3 shipped (`c3b0d29`); awaiting Andrew's go-ahead for Phase 4 (Preferences adapter — final phase)
+**Phase:** All 4 phases shipped (Phase 1 `978e377`, Phase 2 `c3821ed`, Phase 3 `c3b0d29`, Phase 4 `cad0f78`). PR-1 is feature-complete; awaiting Andrew's verification gate on physical iPhone.
 **Branch:** `claude/ios-pr1-cold-start`
-**Blocking:** Nothing
-**Next action:** Andrew reviews Phase 3 commit; CC starts Phase 4 on go
+**Blocking:** Verification gate (must pass before merge — see iOS-PR-1 checklist below).
+**Next action:** Andrew runs `npm run ios:build && npm run ios:open`, tests cold-open + auth-storage on physical iPhone, updates the NORTH STAR table.
 
 Update this block when PR status changes.
 
@@ -131,9 +131,9 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [x] 5 call sites migrated: login, signup, NavBar signOut, DashboardShell signOut, settings (signOut + delete-account).
 - [x] ~~Move Stripe.js out of root layout; only `loadStripe()` on checkout route~~ — **moot.** `@stripe/stripe-js` is not installed in this repo. Checkout already redirects to a Stripe-hosted page via `openCheckoutUrl()` (Capacitor Browser → SFSafariViewController). No client Stripe SDK is bundled. Confirmed in Phase 0 recon.
 
-**Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch — and PR-1 ends here)
-- [ ] Build `preferencesStorage` adapter using already-installed `@capacitor/preferences@^8.0.1` (spec said `^7`; we keep `^8` to match the rest of `@capacitor/*@^8`)
-- [ ] Wire adapter into `createBrowserSupabaseClient()`'s mobile branch as `auth.storage`. Web branch untouched.
+**Phase 4 — Preferences adapter + Supabase `auth.storage` wiring** (highest-risk: wrong adapter shape → users logged out on next launch — and PR-1 ends here) — **shipped `cad0f78`**
+- [x] Build `preferencesStorage` adapter (`lib/preferences-storage.ts`) using `@capacitor/preferences@^8.0.1`. Each method dynamic-imports the plugin per project pattern; static import of the adapter module from `supabase-browser.ts` is cheap. Plugin code only loads on mobile (web branch DCE'd).
+- [x] Wire adapter into `createBrowserSupabaseClient()`'s mobile branch as `auth.storage`. Web branch untouched.
 
 **Phase 5 — REMOVED.** Per Andrew's call (2026-05-08): no production users, no TestFlight, only Andrew's own physical iPhone. Anyone testing post-PR-1 can log in fresh — Preferences storage populates on first login. No `migrateAuthFromLocalStorage()` needed.
 
@@ -452,6 +452,7 @@ Actual log:
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 1 shipped: capacitor.config.ts ios block (contentInset/scrollEnabled/allowsLinkPreview/preferredContentMode/backgroundColor) + explicit SplashScreen.launchShowDuration: 0 + globals.css touch rules (tap-highlight, touch-callout, overscroll-behavior, 16px input floor, touch-action manipulation). · 978e377, fb89686
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 2 shipped: SplashHider switched from single useEffect to double-rAF chain so SplashScreen.hide() only fires after first paint (capacitor#960 white-flash fix). Component name + import sites unchanged. · c3821ed
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 3 shipped: Sentry init deferred 1s via setTimeout in sentry.client.config.ts; AuthProvider rewritten with synchronous ba-auth-cache-v1 seed (24h TTL) + new {state,revalidate,signOut} context API; AuthGuard fires revalidate on dashboard mount; 5 call sites migrated to useAuthSignOut/useAuthRevalidate (login/signup/NavBar/DashboardShell/settings). Marketing pages now cold-start with zero auth network. · c3b0d29
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 4 shipped (PR-1 feature-complete): preferencesStorage adapter (lib/preferences-storage.ts) wired into Supabase mobile-branch as auth.storage. Survives WKWebView localStorage eviction; web branch untouched. Awaiting verification gate on physical iPhone. · cad0f78
 ```
 
 ---
