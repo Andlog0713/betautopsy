@@ -286,11 +286,15 @@ export default function ReportsPage() {
                 setTotalBetsAll(d.total_bets ?? 0);
                 setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
 
-                // Create temporary report so AutopsyReport can render partial results
+                // Create temporary report so AutopsyReport can render partial results.
+                // Mark it as `full` + paid when we're in a post-checkout unlock so the
+                // 30-90s LLM-generation window doesn't render the snapshot lock UI
+                // ("Get a Full Report" CTA) to a user who already paid. Without this,
+                // the user stares at a paywall mid-run for the report they just bought.
                 const tempReport: AutopsyReportType = {
                   id: 'loading',
                   user_id: '',
-                  report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot',
+                  report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
                   bet_count_analyzed: d.partial_analysis.summary.total_bets,
                   date_range_start: null,
                   date_range_end: null,
@@ -299,9 +303,9 @@ export default function ReportsPage() {
                   model_used: null,
                   tokens_used: null,
                   cost_cents: null,
-                  is_paid: tier === 'pro',
+                  is_paid: tier === 'pro' || isPaidUpgrade,
                   stripe_payment_intent_id: null,
-                  upgraded_from_snapshot_id: null,
+                  upgraded_from_snapshot_id: isPaidUpgrade ? (paidId ?? null) : null,
                   created_at: new Date().toISOString(),
                 };
                 setActiveReport(tempReport);

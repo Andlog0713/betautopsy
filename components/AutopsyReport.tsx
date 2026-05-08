@@ -469,7 +469,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const roiData = useMemo(() => buildROIData(bets), [bets]);
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
-  const isSharp = effectiveTier === 'pro'; // Sharp features now included in Pro
+  // "Sharp" features (What-If Simulator, Leak Prioritizer with dollar costs) are
+  // unlocked for Pro tier *and* anyone viewing a non-snapshot report. The $9.99
+  // one-time Full Report explicitly markets these as included; gating them only
+  // on Pro tier was hiding them from paying full-report buyers.
+  const isSharp = effectiveTier === 'pro' || !isSnapshot;
 
   // ── Scroll-triggered feedback nudge ──
   const lastChapterRef = useRef<HTMLDivElement>(null);
@@ -964,8 +968,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         )}
       </div>
 
-      {/* ── BetIQ Score — Pro only ── */}
-      {(effectiveTier === 'pro') && analysis.betiq && !analysis.betiq.insufficient_data && (
+      {/* ── BetIQ Score — Pro tier or paid full report ── */}
+      {isSharp && analysis.betiq && !analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-4">BETIQ: SKILL ASSESSMENT</div>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
@@ -1002,15 +1006,15 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {(effectiveTier === 'pro') && analysis.betiq && analysis.betiq.insufficient_data && (
+      {isSharp && analysis.betiq && analysis.betiq.insufficient_data && (
         <div className="case-card p-6">
           <div className="case-header mb-3">BETIQ: SKILL ASSESSMENT</div>
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-fg-muted text-sm">{analysis.betiq.interpretation}</p></div>
         </div>
       )}
 
-      {/* BetIQ — free tier teaser */}
-      {effectiveTier === 'free' && analysis.betiq && (
+      {/* BetIQ — locked teaser for unpaid snapshots only */}
+      {!isSharp && analysis.betiq && (
         <div className="case-card p-6 relative overflow-hidden">
           <div className="case-header mb-2">BETIQ: SKILL ASSESSMENT</div>
           <div className="blur-md pointer-events-none select-none" aria-hidden="true">
