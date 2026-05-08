@@ -17,7 +17,20 @@ export default function PricingPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
-  const [latestSnapshotId, setLatestSnapshotId] = useState<string | null>(null);
+  // We track the full snapshot row (not just the id) so the "Get Your
+  // Report" CTA can stamp the bet count + date that the buyer is paying
+  // to upgrade. Without this, the user clicks $9.99 with no indication
+  // of which dataset they're getting deep analysis on.
+  type LatestSnapshot = {
+    id: string;
+    bet_count_analyzed: number | null;
+    date_range_start: string | null;
+    date_range_end: string | null;
+    created_at: string | null;
+    analyzed_upload_ids: string[] | null;
+  };
+  const [latestSnapshot, setLatestSnapshot] = useState<LatestSnapshot | null>(null);
+  const latestSnapshotId = latestSnapshot?.id ?? null;
   const intentFiredRef = useRef(false);
 
   useEffect(() => {
@@ -34,17 +47,18 @@ export default function PricingPage() {
         .eq('id', user.id)
         .single();
       if (data) setProfile(data as Profile);
-      // Check for existing unpaid snapshot to enable direct upgrade
+      // Check for existing unpaid snapshot to enable direct upgrade.
+      // Pull the metadata too so the CTA can show what's being purchased.
       const { data: snapshot } = await supabase
         .from('autopsy_reports')
-        .select('id')
+        .select('id, bet_count_analyzed, date_range_start, date_range_end, created_at, analyzed_upload_ids')
         .eq('user_id', user.id)
         .eq('report_type', 'snapshot')
         .eq('is_paid', false)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
-      if (snapshot) setLatestSnapshotId(snapshot.id);
+      if (snapshot) setLatestSnapshot(snapshot as LatestSnapshot);
       setPageLoading(false);
     }
     load();
@@ -246,6 +260,26 @@ export default function PricingPage() {
           >
             {loadingAction === 'report' ? 'Loading...' : latestSnapshotId ? 'Get Your Report' : 'Run Free Snapshot First'}
           </button>
+          {/*
+            Stamp the snapshot's bet count + date directly under the CTA so
+            the user knows which dataset they're paying $9.99 to upgrade.
+            Without this, "Get Your Report" gives no signal about which
+            snapshot is about to be unlocked — which matters because the
+            full report is now locked to that snapshot's exact bets.
+            Filtered snapshots (analyzed_upload_ids non-empty) get a
+            "from N upload" suffix so the user sees the focus they ran with.
+          */}
+          {latestSnapshot && (
+            <p className="text-fg-dim text-[10px] text-center mt-2 font-mono">
+              {(latestSnapshot.bet_count_analyzed ?? 0).toLocaleString()} bets
+              {latestSnapshot.created_at && (
+                <> · {new Date(latestSnapshot.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
+              )}
+              {latestSnapshot.analyzed_upload_ids && latestSnapshot.analyzed_upload_ids.length > 0 && (
+                <> · {latestSnapshot.analyzed_upload_ids.length} upload{latestSnapshot.analyzed_upload_ids.length === 1 ? '' : 's'}</>
+              )}
+            </p>
+          )}
           {!latestSnapshotId && (
             <p className="text-fg-dim text-[10px] text-center mt-2">Run a free snapshot, then upgrade to the full report</p>
           )}

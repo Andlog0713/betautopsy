@@ -81,13 +81,39 @@ export async function POST(request: Request) {
   if (tier === 'free' && reportType === 'full' && paidSnapshotId) {
     const { data: paidReport } = await supabase
       .from('autopsy_reports')
-      .select('id, is_paid')
+      .select('id, is_paid, analyzed_upload_ids, analyzed_sportsbook')
       .eq('id', paidSnapshotId)
       .eq('user_id', user.id)
       .eq('is_paid', true)
       .single();
     if (!paidReport) {
       return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
+    }
+    // Lock the full-report run to the EXACT upload-and-sportsbook scope the
+    // snapshot was produced from. The user paid for a deep dive on that
+    // snapshot's bets — not a fresh analysis of whatever's in their account
+    // now. If they uploaded new bets between snapshot and purchase, those
+    // are NOT included; if they deleted some, those are still missing too.
+    // Either way, the contract is what they saw on the Buy CTA.
+    //
+    // Note: we don't override dateFrom/dateTo here. The snapshot's
+    // date_range_start/end are the *observed* range of analyzed bets, not
+    // the user-supplied filter — locking to them would be imperfect
+    // (backfilled bets in the same range still slip through) AND requires
+    // converting timestamptz → YYYY-MM-DD to satisfy the date-format
+    // regex above. Upload + sportsbook locks cover the realistic
+    // post-payment data-drift cases without that complexity.
+    //
+    // Legacy snapshots (analyzed_upload_ids === NULL — pre-migration rows)
+    // fall through to the body filter, preserving the old "analyze all
+    // current bets" behavior so existing rows keep working.
+    const typedPaid = paidReport as {
+      analyzed_upload_ids: string[] | null;
+      analyzed_sportsbook: string | null;
+    };
+    if (typedPaid.analyzed_upload_ids !== null) {
+      uploadIds = typedPaid.analyzed_upload_ids;
+      sportsbook = typedPaid.analyzed_sportsbook;
     }
     // Check if this paid snapshot was already used to generate a full report
     const { count: existingFull } = await supabase
@@ -368,6 +394,13 @@ export async function POST(request: Request) {
             tokens_used: tokensUsed,
             cost_cents: costCents,
             is_paid: !isSnapshot,
+            // Persist the filter that produced this report so /api/analyze
+            // can lock to the exact dataset on a paid_snapshot_id unlock.
+            // analyzed_upload_ids = [] means "no upload filter" — distinct
+            // from NULL which means "legacy row, no lock data persisted."
+            // analyzed_sportsbook is null when no sportsbook filter applied.
+            analyzed_upload_ids: uploadIds,
+            analyzed_sportsbook: sportsbook,
             ...(paidSnapshotId ? { upgraded_from_snapshot_id: paidSnapshotId } : {}),
           })
           .select()

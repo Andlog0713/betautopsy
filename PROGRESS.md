@@ -67,6 +67,26 @@
   `@v5` (or whichever ships Node 24 support) is a one-line cleanup but unrelated to the failure.
 
 ### Done this session
+- **Lock full-report purchases to the snapshot's exact dataset.** Buying a full
+  report no longer re-runs the analysis on whatever bets are in the user's account
+  at unlock time — it locks to the upload+sportsbook scope the snapshot was
+  produced from, so data drift between snapshot and purchase (uploading more bets,
+  deleting an upload) can't change the product the user paid for.
+  - Migration `autopsy_reports_persist_analyzed_filter` adds `analyzed_upload_ids
+    uuid[]` and `analyzed_sportsbook text` to `autopsy_reports`. NULL on the 112
+    legacy rows preserves their pre-lock behavior.
+  - `app/api/analyze/route.ts` insert (~line 388) now persists the user-supplied
+    `uploadIds` + `sportsbook` on every report. The paid-snapshot validation
+    (~line 81) fetches those columns and overrides the request body's filter when
+    `analyzed_upload_ids !== NULL` (sentinel for "row has lock data"). Date filter
+    intentionally not overridden — `date_range_start/end` are observed bet bounds,
+    not user-supplied filter; locking to them needs a timestamptz→YYYY-MM-DD
+    conversion not worth the payoff for the realistic data-drift cases.
+  - `app/(dashboard)/pricing/page.tsx` "Get Your Report" CTA now stamps
+    `bet_count_analyzed` + `created_at` (+ `N upload(s)` suffix when filtered)
+    directly under the button. Users see the contract they're paying for instead
+    of a generic $9.99 button. Page state changed from `latestSnapshotId: string |
+    null` to a full `latestSnapshot` row.
 - **Hotfix: post-checkout unlock kept producing snapshots instead of full reports.**
   Confirmed live with paid snapshot `923aeb2d-097f-459e-ad3a-11c7e4cf7837` — Stripe redirect
   to `/reports?id=…&unlocked=true` regenerated the analysis but the new row came back as a
