@@ -389,6 +389,8 @@ When something didn't work the way it was supposed to. Future PRs reference this
 2026-05-08 · Earlier perf work · CC reported "pushed 0c53d8d" but local `git log` didn't show it. Real cause: pushed to remote feature branch, local main hadn't pulled. Lesson: trust CC reports of pushes, verify with `git log origin/<branch>` not `git log main`.
 
 2026-05-08 · Earlier perf work · Celebrated PR 2 data layer based on diff metrics (route table flips, KB drops). Reality: dashboard reload still 12s. Lesson: every PR's verification gate must include felt-time stopwatch on physical iPhone, not just `next build` output.
+
+2026-05-08 · iOS-PR-1 · Andrew explicitly overrode the WORKFLOW PROTOCOL "no merge to main without iPhone verification" rule and instructed CC to ship iOS-PR-1 to main (514171b → main as fast-forward) before testing on a physical iPhone. CC pushed back twice (per-protocol), Andrew confirmed twice. Risk surface logged at merge time: (a) Phase 4 Preferences adapter shape — if get/set/removeItem return type or null-handling is wrong, every existing logged-in user gets silently signed out on next launch with no detection short of a real device launch; (b) Phase 3 ba-auth-cache-v1 round-trip — if a field is dropped or mistyped, SmartCTALink misroutes for authed users on cold start of marketing pages. Both undetectable in typecheck/build. Watch the next CC session's "Last verified on iPhone" date in CURRENT STATE: if iOS-PR-2 starts before that's filled, this skip likely caused a regression no one's caught yet.
 ```
 
 Append entries as they happen. Don't delete old ones — they're the lessons.
