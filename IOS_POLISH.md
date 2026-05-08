@@ -59,10 +59,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-1 — Capacitor + cold-start foundation
-**Phase:** Phase 1 shipped (`978e377`); awaiting Andrew's go-ahead for Phase 2 (splash double-rAF)
+**Phase:** Phase 2 shipped (`c3821ed`); awaiting Andrew's go-ahead for Phase 3 (Sentry defer + AuthProvider lazy)
 **Branch:** `claude/ios-pr1-cold-start`
 **Blocking:** Nothing
-**Next action:** Andrew reviews Phase 1 commit; CC starts Phase 2 on go
+**Next action:** Andrew reviews Phase 2 commit; CC starts Phase 3 on go
 
 Update this block when PR status changes.
 
@@ -122,8 +122,8 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [x] Viewport: confirmed existing `<meta>` already includes `viewport-fit=cover` plus `maximum-scale=1.0, user-scalable=no` — no change needed
 - [x] Global CSS additions: `-webkit-tap-highlight-color: transparent` on html, `-webkit-touch-callout: none` + `overscroll-behavior-y: contain` on body, `font-size: max(16px, 1rem)` on raw input/textarea/select, `touch-action: manipulation` on button/a/[role=button]
 
-**Phase 2 — Splash screen hook + double-rAF**
-- [ ] Replace `<SplashHider>`'s single `useEffect` with double `requestAnimationFrame` to hide splash after first commit (avoids capacitor#960 white flash). Component name + import sites unchanged.
+**Phase 2 — Splash screen hook + double-rAF** — **shipped `c3821ed`**
+- [x] Replace `<SplashHider>`'s single `useEffect` with double `requestAnimationFrame` to hide splash after first commit (avoids capacitor#960 white flash). Component name + import sites unchanged.
 
 **Phase 3 — Sentry defer + AuthProvider lazy fetch** (Stripe item moot — see below)
 - [ ] Defer `Sentry.init()` by 1s via small client component with `setTimeout`. Keep `@sentry/nextjs` (web build needs server/edge instrumentation).
@@ -448,7 +448,8 @@ Actual log:
 ```
 2026-05-08 (initial scaffold) · n/a · main · IOS_POLISH.md created · n/a
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete: 6 decisions surfaced and resolved (branch rename, Sentry approach, AuthProvider laziness, Phase 5 removal, Stripe-moot, preferences@^8). Branch renamed from claude/capacitor-cold-start-foundation-uAmco. IOS_POLISH.md updated with new scope. · 57a0d9d
-2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 1 shipped: capacitor.config.ts ios block (contentInset/scrollEnabled/allowsLinkPreview/preferredContentMode/backgroundColor) + explicit SplashScreen.launchShowDuration: 0 + globals.css touch rules (tap-highlight, touch-callout, overscroll-behavior, 16px input floor, touch-action manipulation). · 978e377
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 1 shipped: capacitor.config.ts ios block (contentInset/scrollEnabled/allowsLinkPreview/preferredContentMode/backgroundColor) + explicit SplashScreen.launchShowDuration: 0 + globals.css touch rules (tap-highlight, touch-callout, overscroll-behavior, 16px input floor, touch-action manipulation). · 978e377, fb89686
+2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 2 shipped: SplashHider switched from single useEffect to double-rAF chain so SplashScreen.hide() only fires after first paint (capacitor#960 white-flash fix). Component name + import sites unchanged. · c3821ed
 ```
 
 ---
