@@ -100,6 +100,8 @@ iOS-PR-1 (foundation)  →  iOS-PR-2 (app shell)  →  iOS-PR-3 (caching)  →  
                                                    iOS-PR-5 (visual polish)  →  iOS-PR-6 (last mile)
 ```
 
+Logical dependency, not parallelism — CC sessions still run serial per WORKFLOW PROTOCOL.
+
 Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` done · `[v]` verified on iPhone
 
 ---
