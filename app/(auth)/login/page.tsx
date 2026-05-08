@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
+import { useAuthRevalidate } from '@/components/AuthProvider';
 
 export default function LoginPage() {
   const router = useRouter();
+  const revalidateAuthCache = useAuthRevalidate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -89,6 +91,13 @@ export default function LoginPage() {
 
     // Increment login count for returning-user redirect
     await supabase.rpc('increment_login_count');
+
+    // Populate AuthProvider's cache (ba-auth-cache-v1) with fresh
+    // user/profile/snapshot data before navigating. AuthGuard on the
+    // dashboard would otherwise have to do it on first paint, which
+    // forces a network round-trip before the SmartCTALink-style
+    // surfaces (NavBar, etc.) can route correctly.
+    void revalidateAuthCache();
 
     router.push('/dashboard');
     router.refresh();

@@ -1,26 +1,46 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import type { Profile } from '@/types';
 
 /**
- * App-wide auth + snapshot state, fetched once per page load and shared
- * via context. Exists to dedupe the otherwise-redundant `getUser()` /
- * profile / latest-snapshot queries that NavBar, AuthGuard, and every
- * SmartCTALink would each fire independently on landing pages.
+ * App-wide auth + snapshot state.
  *
- * Status enum:
- *   - `loading`       — initial fetch in flight
+ * Cold-start contract (iOS-PR-1 Phase 3):
+ *   - First render seeds state synchronously from `localStorage`
+ *     under key `ba-auth-cache-v1`. Cold marketing pages get correct
+ *     SmartCTALink routing on the first paint with zero network
+ *     traffic, as long as the cache is fresh (<24h).
+ *   - There is NO automatic network revalidation on mount. The
+ *     network fetch only fires when something explicitly calls
+ *     `revalidate()` — currently AuthGuard on dashboard mount, plus
+ *     the post-login / post-signup flows. Marketing pages never
+ *     trigger one.
+ *   - `signOut()` clears the cache synchronously *before* invoking
+ *     `supabase.auth.signOut()` so any redirect that runs after the
+ *     promise resolves doesn't briefly read stale "has-snapshot"
+ *     state from cache.
+ *
+ * Status enum (unchanged from the legacy provider so consumers
+ * don't need to migrate):
+ *   - `loading`       — no cache, no fetch yet
  *   - `anon`          — no Supabase user
  *   - `no-snapshot`   — authed user with no autopsy_reports snapshot
  *   - `has-snapshot`  — authed user with at least one snapshot
  *
- * Snapshot lookup matches the existing `app/(dashboard)/pricing/page.tsx`
- * shape: `report_type = 'snapshot'`, ordered by `created_at desc`. We
- * intentionally do NOT filter on `is_paid = false` here — the SmartCTALink
- * routing only cares whether the user has *any* snapshot to show.
+ * Cache TTL is 24h — stale entries are treated as a cache miss. The
+ * tradeoff: a marketing-only visitor who hasn't opened the dashboard
+ * in 24h sees `loading` on cold start instead of an instant cached
+ * answer. Per Andrew (2026-05-08 decision): acceptable.
  */
 export type AuthState =
   | { status: 'loading' }
@@ -28,29 +48,134 @@ export type AuthState =
   | { status: 'no-snapshot'; user: User; profile: Profile | null }
   | { status: 'has-snapshot'; user: User; profile: Profile | null; snapshotId: string };
 
-const AuthContext = createContext<AuthState>({ status: 'loading' });
+interface AuthContextValue {
+  state: AuthState;
+  /** Fetch user/profile/snapshot, write cache, update state. Deduped. */
+  revalidate: () => Promise<void>;
+  /** Clear cache, drop state to anon, then call `supabase.auth.signOut()`. */
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue>({
+  state: { status: 'loading' },
+  revalidate: async () => {},
+  signOut: async () => {},
+});
 
 export function useAuthState(): AuthState {
-  return useContext(AuthContext);
+  return useContext(AuthContext).state;
+}
+
+export function useAuthRevalidate(): () => Promise<void> {
+  return useContext(AuthContext).revalidate;
+}
+
+export function useAuthSignOut(): () => Promise<void> {
+  return useContext(AuthContext).signOut;
+}
+
+const CACHE_KEY = 'ba-auth-cache-v1';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface CacheEntry {
+  userId: string;
+  email: string;
+  profile: Profile | null;
+  snapshotId: string | null;
+  hasActiveSnapshot: boolean;
+  cachedAt: number;
+}
+
+function readCache(): CacheEntry | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CacheEntry;
+    if (
+      typeof parsed?.cachedAt !== 'number' ||
+      Date.now() - parsed.cachedAt > CACHE_TTL_MS
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(entry: CacheEntry): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    /* Safari private mode / quota — silent */
+  }
+}
+
+function clearCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(CACHE_KEY);
+  } catch {
+    /* silent */
+  }
+}
+
+function stateFromCache(entry: CacheEntry): AuthState {
+  // Reconstruct a User-shaped object from cached id+email. The full
+  // `User` type from supabase-js carries app_metadata, identities,
+  // etc. — anything beyond id/email read from cached state should be
+  // a code smell. If a consumer needs more, call revalidate() first
+  // to overwrite cached state with fresh data from getUser().
+  const user = { id: entry.userId, email: entry.email } as User;
+  if (entry.hasActiveSnapshot && entry.snapshotId) {
+    return {
+      status: 'has-snapshot',
+      user,
+      profile: entry.profile,
+      snapshotId: entry.snapshotId,
+    };
+  }
+  return { status: 'no-snapshot', user, profile: entry.profile };
 }
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AuthState>({ status: 'loading' });
+  // Synchronous first-render seed. SSR returns 'loading' (no window);
+  // the very first client render reads the cache and sets state in
+  // one pass, so SmartCTALink renders correct routing on first paint
+  // for any user whose cache is fresh.
+  const [state, setState] = useState<AuthState>(() => {
+    const cached = readCache();
+    return cached ? stateFromCache(cached) : { status: 'loading' };
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  // Dedupe concurrent revalidate() calls (e.g. AuthGuard mount races
+  // with a post-login revalidate). The first call's promise is
+  // returned to subsequent callers so they don't double-fetch.
+  const inFlight = useRef<Promise<void> | null>(null);
 
-    (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
-
-      if (!user) {
+  const revalidate = useCallback(async () => {
+    if (inFlight.current) return inFlight.current;
+    const supabase = createClient();
+    const promise = (async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      // No session, or token rejected at the auth server. Treat as
+      // logged out: clear cache so a subsequent cold load doesn't
+      // re-render stale "has-snapshot" state.
+      if (userError || !user) {
+        clearCache();
         setState({ status: 'anon' });
         return;
       }
 
-      const [{ data: profileData }, { data: snapshotData }] = await Promise.all([
+      const [
+        { data: profileData, error: profileError },
+        { data: snapshotData },
+      ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('autopsy_reports')
@@ -61,20 +186,72 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           .limit(1)
           .maybeSingle(),
       ]);
-      if (cancelled) return;
+
+      // RLS-class 401 surfaces here when getUser() succeeded with a
+      // cached/refreshed session but the row-level access has since
+      // been revoked. Drop to anon and clear cache.
+      if (profileError && (profileError as { status?: number }).status === 401) {
+        clearCache();
+        setState({ status: 'anon' });
+        return;
+      }
 
       const profile = (profileData as Profile | null) ?? null;
-      if (snapshotData?.id) {
-        setState({ status: 'has-snapshot', user, profile, snapshotId: snapshotData.id });
+      const snapshotId = (snapshotData?.id as string | undefined) ?? null;
+      const hasActiveSnapshot = Boolean(snapshotId);
+
+      writeCache({
+        userId: user.id,
+        email: user.email ?? '',
+        profile,
+        snapshotId,
+        hasActiveSnapshot,
+        cachedAt: Date.now(),
+      });
+
+      if (hasActiveSnapshot && snapshotId) {
+        setState({ status: 'has-snapshot', user, profile, snapshotId });
       } else {
         setState({ status: 'no-snapshot', user, profile });
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    inFlight.current = promise;
+    try {
+      await promise;
+    } finally {
+      inFlight.current = null;
+    }
   }, []);
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  const signOut = useCallback(async () => {
+    // Clear cache + state synchronously *before* hitting the Supabase
+    // network call. Any redirect that runs after `signOut()` resolves
+    // will see anon state immediately, with no risk of a brief flash
+    // of cached "has-snapshot" state on the destination page.
+    clearCache();
+    setState({ status: 'anon' });
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Network may have failed, but local state is already correct.
+      // Supabase tokens persist in localStorage on a failed signOut;
+      // they'll be cleared on the next successful one.
+    }
+  }, []);
+
+  // No mount-time fetch. AuthGuard triggers revalidate() on dashboard
+  // mount; login/signup pages trigger it after a successful auth call.
+  useEffect(() => {
+    // Empty effect kept for shape — if we later add a deferred
+    // revalidate (e.g. requestIdleCallback) we land it here without
+    // perturbing the provider's external API. Currently a no-op.
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ state, revalidate, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

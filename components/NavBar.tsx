@@ -3,16 +3,16 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { Flame } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
-import { useAuthState } from '@/components/AuthProvider';
+import { useAuthState, useAuthSignOut } from '@/components/AuthProvider';
 
 export default function NavBar() {
   const pathname = usePathname();
   const isLanding = pathname === '/';
   const auth = useAuthState();
+  const signOutAndClearCache = useAuthSignOut();
   const authChecked = auth.status !== 'loading';
   const user = auth.status === 'no-snapshot' || auth.status === 'has-snapshot'
     ? { email: auth.user.email ?? '' }
@@ -35,8 +35,11 @@ export default function NavBar() {
   }, [menuOpen]);
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    // Clears ba-auth-cache-v1 + sets state to anon BEFORE the network
+    // signOut, so the post-redirect destination ('/') reads correct
+    // auth state on first paint and SmartCTALink-style routing doesn't
+    // briefly point at /dashboard.
+    await signOutAndClearCache();
     window.location.href = '/';
   }
 

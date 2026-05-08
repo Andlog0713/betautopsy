@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
-import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
+import { useAuthSignOut } from '@/components/AuthProvider';
 import { triggerHaptic } from '@/lib/native';
 import { isMobileApp } from '@/lib/platform';
 import { PrivacyProvider, EyeToggle } from '@/components/PrivacyContext';
@@ -38,6 +38,7 @@ export default function DashboardShell({
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, isLoading } = useUser();
+  const signOutAndClearCache = useAuthSignOut();
   const loading = isLoading;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -51,8 +52,9 @@ export default function DashboardShell({
   }, [isLoading, user, router]);
 
   async function handleSignOut() {
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signOut();
+    // Clears ba-auth-cache-v1 + sets state to anon BEFORE the network
+    // signOut, so /login reads correct anon state on first paint.
+    await signOutAndClearCache();
     router.push('/login');
     router.refresh();
   }

@@ -7,9 +7,11 @@ import { Eye, EyeOff } from 'lucide-react';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
+import { useAuthRevalidate } from '@/components/AuthProvider';
 
 function SignupForm() {
   const router = useRouter();
+  const revalidateAuthCache = useAuthRevalidate();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
   const showVerifyNotice = searchParams.get('verify') === 'true';
@@ -106,6 +108,13 @@ function SignupForm() {
     // param flag is what triggers it. The auth/callback route also passes
     // ?welcome=true through for the email-confirmation path, so both
     // signup paths converge on the same fire site.
+
+    // Populate AuthProvider's cache (ba-auth-cache-v1) with the freshly
+    // created user/profile so the dashboard's NavBar/SmartCTALink read
+    // correct routing on first paint instead of waiting for AuthGuard's
+    // mount-time revalidate.
+    void revalidateAuthCache();
+
     router.push(next || '/dashboard?welcome=true');
     router.refresh();
   }

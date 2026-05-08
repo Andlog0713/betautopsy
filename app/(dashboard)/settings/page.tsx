@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
+import { useAuthSignOut } from '@/components/AuthProvider';
 import { apiPost } from '@/lib/api-client';
 import { triggerHaptic, openCheckoutUrl } from '@/lib/native';
 import { Snowflake } from 'lucide-react';
@@ -13,6 +14,7 @@ import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 export default function SettingsPage() {
   const router = useRouter();
   const { profile, isLoading: userLoading, mutate: mutateUser } = useUser();
+  const signOutAndClearCache = useAuthSignOut();
 
   const [betCount, setBetCount] = useState(0);
   const [reportCount, setReportCount] = useState(0);
@@ -117,8 +119,9 @@ export default function SettingsPage() {
   }
 
   async function handleSignOut() {
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signOut();
+    // Clears ba-auth-cache-v1 + sets state to anon BEFORE the network
+    // signOut, so /login reads correct anon state on first paint.
+    await signOutAndClearCache();
     router.push('/login');
   }
 
@@ -140,8 +143,9 @@ export default function SettingsPage() {
         toast.error('Could not delete account. Please contact support.');
         return;
       }
-      const supabase = createBrowserSupabaseClient();
-      await supabase.auth.signOut();
+      // Clears ba-auth-cache-v1 + sets state to anon before redirecting,
+      // so the marketing landing reads correct anon state on first paint.
+      await signOutAndClearCache();
       router.push('/');
     } catch {
       toast.error('Could not connect. Please try again.');
