@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
+import { useBets } from '@/hooks/useBets';
 import { Lock, Target } from 'lucide-react';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
-import type { Bet, Profile } from '@/types';
+import type { Bet } from '@/types';
 
 // Normalize sport names for display (fixes legacy "Nhl" → "NHL" etc.)
 const SPORT_DISPLAY: Record<string, string> = {
@@ -19,12 +21,18 @@ function displaySport(s: string): string { return SPORT_DISPLAY[s] ?? s; }
 
 export default function BetsPage() {
   const searchParams = useSearchParams();
+  const { profile, mutate: mutateUser } = useUser();
+  const { bets: cachedBets, isLoading: betsLoading, mutate: mutateBets } = useBets();
+  // Local optimistic copy so per-row delete / bulk delete / form-submit
+  // updates feel instant. SWR's cached array stays the source of truth on
+  // navigation; we resync from it whenever it changes.
   const [bets, setBets] = useState<Bet[]>([]);
-  const [loading, setLoading] = useState(true);
+  useEffect(() => { setBets(cachedBets); }, [cachedBets]);
+  const loading = betsLoading;
+  const tier = profile?.subscription_tier ?? 'free';
   const [sportFilter, setSportFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [tier, setTier] = useState('free');
   const [prefill, setPrefill] = useState<Record<string, string> | null>(null);
 
   // Apply query params on mount
@@ -34,33 +42,6 @@ export default function BetsPage() {
     if (sp) setSportFilter(sp);
     if (bt) setTypeFilter(bt);
   }, [searchParams]);
-
-  const loadBets = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const [betsRes, profileRes] = await Promise.all([
-      supabase
-        .from('bets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('placed_at', { ascending: false }),
-      supabase
-        .from('profiles')
-        .select('subscription_tier')
-        .eq('id', user.id)
-        .single(),
-    ]);
-
-    if (betsRes.data) setBets(betsRes.data as Bet[]);
-    if (profileRes.data) setTier((profileRes.data as Profile).subscription_tier);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadBets();
-  }, [loadBets]);
 
   function handleLogBet(values: { description: string; odds: string; stake: string; sport: string; bet_type: string }) {
     setPrefill(values);
@@ -165,15 +146,16 @@ export default function BetsPage() {
 
   async function handleDelete(betId: string) {
     if (!confirm('Delete this bet?')) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.from('bets').delete().eq('id', betId);
     setBets((prev) => prev.filter((b) => b.id !== betId));
     setSelected((prev) => { const next = new Set(prev); next.delete(betId); return next; });
+    mutateBets();
   }
 
   async function handleBulkDelete() {
     setBulkDeleting(true);
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const ids = Array.from(selected);
 
     // Delete in batches of 100
@@ -190,7 +172,7 @@ export default function BetsPage() {
     setDeleteSuccess(`${count} bet${count !== 1 ? 's' : ''} deleted`);
     setTimeout(() => setDeleteSuccess(''), 3000);
 
-    // Update bet count
+    // Update bet count on profile
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { count: remaining } = await supabase
@@ -199,6 +181,8 @@ export default function BetsPage() {
         .eq('user_id', user.id);
       await supabase.from('profiles').update({ bet_count: remaining ?? 0 }).eq('id', user.id);
     }
+    mutateBets();
+    mutateUser();
   }
 
   return (
@@ -226,7 +210,7 @@ export default function BetsPage() {
       </div>
 
       {/* Manual entry form */}
-      {showForm && <BetEntryForm prefill={prefill} onSuccess={() => { setShowForm(false); setPrefill(null); loadBets(); }} />}
+      {showForm && <BetEntryForm prefill={prefill} onSuccess={() => { setShowForm(false); setPrefill(null); mutateBets(); mutateUser(); }} />}
 
       {/* Delete success message */}
       {deleteSuccess && (
@@ -373,7 +357,7 @@ export default function BetsPage() {
                      * CCPA baseline). Per-row ✕ below was already
                      * ungated.
                      */}
-                    <ClearAllBets betCount={bets.length} onCleared={loadBets} />
+                    <ClearAllBets betCount={bets.length} onCleared={() => { mutateBets(); mutateUser(); }} />
                   </th>
                 </tr>
               </thead>
@@ -512,7 +496,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
 
   async function handleDelete() {
     setDeleting(true);
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -617,7 +601,7 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
     setSubmitting(true);
     setError('');
 
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
