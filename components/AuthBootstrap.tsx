@@ -1,43 +1,28 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SWRConfig } from 'swr';
-import type { User } from '@supabase/supabase-js';
-import { USER_KEY, type UserAndProfile } from '@/hooks/useUser';
-import type { Profile } from '@/types';
-
-interface Props {
-  initialUser: User | null;
-  initialProfile: Profile | null;
-  children: ReactNode;
-}
 
 /**
- * Seeds the SWR cache with the server-fetched user + profile so the very
- * first render of any dashboard page already has data — no isLoading flash
- * on cold loads, no extra round-trip after the server already paid for it.
+ * Pass-through after the server-side seed was ripped out.
  *
- * Implemented via SWRConfig's `fallback` map (synchronous, available on
- * first render) rather than `mutate(USER_KEY, …, false)` on mount, which
- * would only land after the first effect tick — by which point useUser()
- * has already started its own fetch and returned isLoading=true.
+ * The original PR 2 phase 2 design fetched user + profile in the dashboard
+ * layout (server side) and seeded SWR's `fallback` here so the very first
+ * render of any dashboard page already had data. That bought "no isLoading
+ * flash" but cost a Vercel function execution + Supabase round-trip on
+ * every Cmd+R — flipping the entire dashboard from ○ Static back to
+ * ƒ Dynamic and adding several seconds of server-render latency before
+ * any HTML reached the client.
  *
- * When initialUser is null (mobile builds skip the server fetch by design,
- * see app/(dashboard)/layout.tsx), this component is a no-op pass-through;
- * client-side AuthGuard handles auth from there.
+ * Now the SWR layer hydrates synchronously from localStorage
+ * (lib/swr-persistent-cache.ts → readFromStorage). On second-visit reload,
+ * useUser() / useBets() / useReports() return cached data on first render
+ * with no network round-trip, AuthGuard sees the cached user immediately,
+ * and the page paints. Background revalidation runs but never blocks UI.
+ *
+ * Component kept (rather than inlined into the layout) so future revisions
+ * of the boot sequence have a clear seam: client-side seeding from
+ * Capacitor Preferences, one-time auth-state-change subscriptions, etc.
  */
-export default function AuthBootstrap({
-  initialUser,
-  initialProfile,
-  children,
-}: Props) {
-  if (!initialUser) {
-    return <>{children}</>;
-  }
-  const seeded: UserAndProfile = { user: initialUser, profile: initialProfile };
-  return (
-    <SWRConfig value={{ fallback: { [USER_KEY]: seeded } }}>
-      {children}
-    </SWRConfig>
-  );
+export default function AuthBootstrap({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }
