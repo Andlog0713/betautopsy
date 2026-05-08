@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { useUser } from '@/hooks/useUser';
 import { apiPost } from '@/lib/api-client';
 import { triggerHaptic, openCheckoutUrl } from '@/lib/native';
 import { Snowflake } from 'lucide-react';
 import { toast } from 'sonner';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
-import type { Profile } from '@/types';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { profile, isLoading: userLoading, mutate: mutateUser } = useUser();
+
   const [betCount, setBetCount] = useState(0);
   const [reportCount, setReportCount] = useState(0);
+  const [countsLoading, setCountsLoading] = useState(true);
 
   // Form state
   const [displayName, setDisplayName] = useState('');
@@ -35,72 +36,80 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Sync form state from cached profile when it hydrates.
   useEffect(() => {
-    async function load() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    if (!profile) return;
+    setDisplayName(profile.display_name ?? '');
+    setBankroll(profile.bankroll ? profile.bankroll.toString() : '');
+    setDigestEnabled(profile.email_digest_enabled !== false);
+  }, [profile]);
 
-      const [profileRes, betsRes, reportsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('bets').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+  // Counts are head:true queries — using useBets/useReports just for .length
+  // would fetch every row. Keep inline. mutateUser() is enough for cross-page
+  // staleness because bet_count/report_count are stamped on the profile row
+  // anyway.
+  useEffect(() => {
+    if (!profile) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createBrowserSupabaseClient();
+      const [betsRes, reportsRes] = await Promise.all([
+        supabase.from('bets').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+        supabase.from('autopsy_reports').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
       ]);
-
-      if (profileRes.data) {
-        const p = profileRes.data as Profile;
-        setProfile(p);
-        setDisplayName(p.display_name ?? '');
-        if (p.bankroll) setBankroll(p.bankroll.toString());
-        setDigestEnabled(p.email_digest_enabled !== false);
-      }
+      if (cancelled) return;
       setBetCount(betsRes.count ?? 0);
       setReportCount(reportsRes.count ?? 0);
-      setLoading(false);
-    }
-    load();
-  }, []);
+      setCountsLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [profile]);
+
+  const loading = userLoading || countsLoading;
 
   async function saveProfile() {
     if (!profile) return;
     setProfileSaving(true);
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase
       .from('profiles')
       .update({ display_name: displayName })
       .eq('id', profile.id);
     setProfileSaving(false);
+    mutateUser();
     toast.success('Profile saved');
   }
 
   async function saveBankroll() {
     if (!profile) return;
     setBankrollSaving(true);
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     const value = parseFloat(bankroll);
     await supabase
       .from('profiles')
       .update({ bankroll: isNaN(value) ? null : value })
       .eq('id', profile.id);
     setBankrollSaving(false);
+    mutateUser();
     toast.success('Bankroll saved');
   }
 
   async function handleClearBets() {
     if (!profile) return;
     setClearing(true);
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.from('bets').delete().eq('user_id', profile.id);
     await supabase.from('profiles').update({ bet_count: 0 }).eq('id', profile.id);
     setBetCount(0);
     setClearing(false);
     setShowClearBets(false);
     setClearConfirm('');
+    mutateUser();
   }
 
   async function handlePasswordReset() {
     if (!profile?.email) return;
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.auth.resetPasswordForEmail(profile.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -108,7 +117,7 @@ export default function SettingsPage() {
   }
 
   async function handleSignOut() {
-    const supabase = createClient();
+    const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.push('/login');
   }
@@ -131,7 +140,7 @@ export default function SettingsPage() {
         toast.error('Could not delete account. Please contact support.');
         return;
       }
-      const supabase = createClient();
+      const supabase = createBrowserSupabaseClient();
       await supabase.auth.signOut();
       router.push('/');
     } catch {
@@ -367,12 +376,13 @@ export default function SettingsPage() {
               triggerHaptic('light');
               const newVal = !digestEnabled;
               setDigestEnabled(newVal);
-              const supabase = createClient();
+              const supabase = createBrowserSupabaseClient();
               const { error } = await supabase
                 .from('profiles')
                 .update({ email_digest_enabled: newVal })
                 .eq('id', profile!.id);
               if (error) setDigestEnabled(!newVal); // revert on error
+              else mutateUser();
             }}
             className={`relative w-11 h-6 rounded-full transition-colors ${digestEnabled ? 'bg-scalpel' : 'bg-surface-1'}`}
           >
