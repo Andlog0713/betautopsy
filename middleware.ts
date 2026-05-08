@@ -1,9 +1,27 @@
 // Rebuild trigger: 2026-04-09 — pick up NEXT_PUBLIC_SENTRY_DSN env var
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { GEO_COOKIE_NAME, isConsentRequiredCountry } from '@/lib/consent-region';
 
 const protectedRoutes = ['/dashboard', '/upload', '/uploads', '/bets', '/reports', '/settings', '/admin'];
 const authRoutes = ['/login', '/signup'];
+
+// Stamps the geo-consent cookie on the outgoing response so the static layout
+// + client-side scripts can decide whether to show the EU banner / default
+// GA consent to denied. Idempotent: skips if the cookie is already present.
+function attachGeoCookie(request: NextRequest, response: NextResponse): NextResponse {
+  if (request.cookies.has(GEO_COOKIE_NAME)) return response;
+  const country = request.headers.get('x-vercel-ip-country');
+  const requireConsent = isConsentRequiredCountry(country);
+  response.cookies.set(GEO_COOKIE_NAME, requireConsent ? '1' : '0', {
+    httpOnly: false, // CookieConsent + GoogleAnalytics inline script must read it
+    sameSite: 'lax',
+    secure: true,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,7 +35,7 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/blog', '/quiz', '/faq', '/how-to-upload', '/privacy', '/sitemap.xml', '/robots.txt', '/reset-password'];
   const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith('/blog/'));
   if (isPublicRoute) {
-    return NextResponse.next();
+    return attachGeoCookie(request, NextResponse.next());
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -50,7 +68,7 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    return NextResponse.redirect(url);
+    return attachGeoCookie(request, NextResponse.redirect(url));
   }
 
   // Defense-in-depth: block protected routes for users who haven't verified their email.
@@ -59,7 +77,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/signup';
     url.searchParams.set('verify', 'true');
-    return NextResponse.redirect(url);
+    return attachGeoCookie(request, NextResponse.redirect(url));
   }
 
   // Admin route protection — require is_admin flag
@@ -73,7 +91,7 @@ export async function middleware(request: NextRequest) {
     if (!profile?.is_admin) {
       const url = request.nextUrl.clone();
       url.pathname = '/dashboard';
-      return NextResponse.redirect(url);
+      return attachGeoCookie(request, NextResponse.redirect(url));
     }
   }
 
@@ -87,17 +105,17 @@ export async function middleware(request: NextRequest) {
       try {
         const dest = new URL(next, request.nextUrl.origin);
         if (dest.origin === request.nextUrl.origin) {
-          return NextResponse.redirect(dest);
+          return attachGeoCookie(request, NextResponse.redirect(dest));
         }
       } catch {}
     }
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     url.search = '';
-    return NextResponse.redirect(url);
+    return attachGeoCookie(request, NextResponse.redirect(url));
   }
 
-  return supabaseResponse;
+  return attachGeoCookie(request, supabaseResponse);
 }
 
 export const config = {

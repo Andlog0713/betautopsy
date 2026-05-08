@@ -4,7 +4,6 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import TikTokPixel from '@/components/TikTokPixel';
 import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
-import { shouldRequireConsent } from '@/lib/consent-region';
 import { isMobileBuild } from '@/lib/platform';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
@@ -58,16 +57,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Geo-gate: EU/EEA/UK/CH users get the consent banner; everyone else is
-  // auto-granted at the GA4 consent-default level so we stop losing US
-  // analytics to banner abandonment.
-  //
-  // Mobile (Capacitor) builds run as `output: 'export'`, which means no
-  // request-time `headers()` is available — `shouldRequireConsent()`
-  // would throw. The native app ships to specific app stores with
-  // their own consent flows, so we force-grant here and skip the
-  // geo-gate entirely.
-  const requireConsent = isMobileBuild() ? false : shouldRequireConsent();
+  // Geo-gate moved out of the server-rendered layout: middleware writes the
+  // `ba-geo-eu` cookie at the edge and `<CookieConsent>` reads it on mount.
+  // Keeping `headers()` out of the layout lets every static-content route
+  // (`/`, `/sample`, `/blog`, `/faq`, `/privacy`, `/terms`, …) prerender to
+  // the CDN instead of going through ƒ Dynamic on every request.
 
   const orgJsonLd = {
     '@context': 'https://schema.org',
@@ -173,9 +167,9 @@ export default function RootLayout({
               <>
                 <TikTokPixel />
                 <MetaPixel />
+                <CookieConsent />
               </>
             )}
-            <CookieConsent alreadyGranted={!requireConsent} />
           </>
         )}
         <AuthProvider>{children}</AuthProvider>

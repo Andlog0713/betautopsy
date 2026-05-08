@@ -1,30 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { GEO_COOKIE_NAME } from '@/lib/consent-region';
 
 const STORAGE_KEY = 'cookie-consent';
 
-interface Props {
-  /**
-   * When true, analytics consent has already been granted at the server
-   * (non-EU traffic — see lib/consent-region.ts) and we don't need to
-   * show a banner or ask the user. The banner is suppressed entirely.
-   */
-  alreadyGranted?: boolean;
-}
-
-export default function CookieConsent({ alreadyGranted = false }: Props) {
+export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Non-EU traffic: consent default was already `granted` at the server,
-    // no banner needed. Short-circuit so users outside the GDPR region
-    // never see a speed bump.
-    if (alreadyGranted) return;
+    if (typeof window === 'undefined') return;
+
+    // Geo decision lives in the `ba-geo-eu` cookie set by middleware:
+    // "1" = require consent (EU/EEA/UK/CH or unknown), "0" = auto-granted.
+    // Fail-closed if the cookie is missing entirely (e.g. middleware skipped
+    // for some reason) — better to show the banner than silently track.
+    const cookieMatch = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith(`${GEO_COOKIE_NAME}=`));
+    const cookieValue = cookieMatch ? cookieMatch.split('=')[1] : null;
+    const requireConsent = cookieValue === null ? true : cookieValue === '1';
+    if (!requireConsent) return;
 
     // Delay showing the banner so it doesn't become the LCP element.
     // The hero content paints first, then the banner fades in.
-    if (typeof window === 'undefined') return;
     const timer = setTimeout(() => {
       try {
         if (!window.localStorage.getItem(STORAGE_KEY)) {
@@ -35,7 +34,7 @@ export default function CookieConsent({ alreadyGranted = false }: Props) {
       }
     }, 2000);
     return () => clearTimeout(timer);
-  }, [alreadyGranted]);
+  }, []);
 
   function handleAccept() {
     try {

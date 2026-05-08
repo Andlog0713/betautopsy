@@ -1,5 +1,3 @@
-import { headers } from 'next/headers';
-
 /**
  * ISO-3166 alpha-2 codes for the region where GDPR (or an effectively
  * identical regime) applies. We treat a request as "consent-required" if
@@ -21,23 +19,15 @@ export const CONSENT_REQUIRED_COUNTRIES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Returns true if the current request should default analytics consent to
- * DENIED (EU/EEA/UK/CH or unknown origin). Returns false if we can
- * confidently say the request is from a non-consent-required region (US,
- * CA, AU, etc.) and it's safe to default to GRANTED.
- *
- * Reads Vercel's geo-IP header `x-vercel-ip-country`, which Vercel sets on
- * every edge/serverless request at the platform level — no paid add-on
- * required. Locally (no header) we fail closed.
+ * Pure-function counterpart to the old request-time `shouldRequireConsent()`.
+ * Caller is responsible for sourcing the country code (middleware reads
+ * `x-vercel-ip-country`; client reads the `ba-geo-eu` cookie set by middleware).
+ * Fail-closed on missing/unknown country.
  */
-export function shouldRequireConsent(): boolean {
-  try {
-    const h = headers();
-    const country = h.get('x-vercel-ip-country')?.toUpperCase() ?? '';
-    if (!country) return true; // Fail-closed: no geo data → require consent
-    return CONSENT_REQUIRED_COUNTRIES.has(country);
-  } catch {
-    // headers() can throw in edge cases (e.g. static generation) — require consent
-    return true;
-  }
+export function isConsentRequiredCountry(country: string | null | undefined): boolean {
+  if (!country) return true;
+  return CONSENT_REQUIRED_COUNTRIES.has(country.toUpperCase());
 }
+
+/** Cookie name written by middleware. Value is `"1"` (require consent) or `"0"`. */
+export const GEO_COOKIE_NAME = 'ba-geo-eu';
