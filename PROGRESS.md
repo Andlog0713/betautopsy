@@ -49,42 +49,55 @@
 ### Performance audit (2026-05-08, read-only diagnostic, full report at `/tmp/perf-audit-report.md`)
 Branch: `claude/update-app-website-sync-vuQB7`. Cleanup: `next.config.js` restored from
 `next.config.original.js` after the audit agent failed to revert its analyze wrapper —
-working tree clean. Top 10 priority order (highest ROI first):
-1. **Anthropic SDK leak (`/uploads/compare`)** — `lib/autopsy-engine.ts:1` does top-level
-   `import Anthropic from '@anthropic-ai/sdk'`; only `runAutopsy` uses it but the entire
-   72 KB / 19 KB gzip ships to every client of `/uploads/compare` via the
-   `calculateMetrics` import. Fix: lazy `await import('@anthropic-ai/sdk')` inside
+working tree clean.
+
+#### User-set tier ordering (revises agent's raw priority list)
+
+**Tier 1 — ship this week, in this order:**
+1. **Static layout fix (was audit #2)** — `app/layout.tsx:70` `shouldRequireConsent()` reads
+   `headers()` synchronously, opting every route out of static gen. Move geo-check to client
+   component reading a middleware-set cookie. Unlocks every other static optimization.
+   *Gotcha (user-flagged):* on first visit from a new EU user, middleware runs at the edge
+   but the cookie isn't set yet, so the consent UI flashes in client-side instead of being
+   pre-rendered. Render the page WITHOUT the consent gate by default and let the client mount
+   it — most consent libs work this way; current implementation likely renders SSR-aware of
+   geo and that has to change. Worth thinking through before shipping.
+2. **Anthropic SDK leak (was audit #1)** — `lib/autopsy-engine.ts:1` top-level
+   `import Anthropic from '@anthropic-ai/sdk'`; entire 72 KB / 19 KB gzip ships to every
+   client of `/uploads/compare`. Fix: lazy `await import('@anthropic-ai/sdk')` inside
    `runAutopsy`, or split into `autopsy-engine-pure.ts` + `autopsy-engine-llm.ts`.
-   One-file change, low risk.
-2. **Static layout fix** — `app/layout.tsx:70` calls `shouldRequireConsent()` which
-   reads `headers()` synchronously, opting the entire route tree out of static gen.
-   Every marketing/legal page (`/`, `/sample`, `/go`, `/blog`, `/faq`, `/privacy`,
-   `/terms`) renders ƒ Dynamic instead of CDN-cached. Fix: move geo-check to client
-   component reading a middleware-set cookie. **Biggest UX win** (~200–500ms TTFB
-   → ~30ms CDN HIT) but touches the root layout — needs careful testing.
-3. **Code-split `AutopsyReport` on `/share/[id]` and `/admin/reports/[id]`** — both
-   statically import it; First Load JS is 355 KB and 407 KB respectively. `next/dynamic`
-   brings them to ~160–180 KB. Two files: `app/share/[id]/SharedReport.tsx` and
-   `app/(dashboard)/admin/reports/[id]/AdminReportDetailClient.tsx`.
-4. **Lazy-load `ShareModal` from `AutopsyReport`** (and `html-to-image` with it).
-   ~6 KB gzip off the report chunk.
-5. **Migrate client Supabase to `createBrowserClient` from `@supabase/ssr`** — `lib/supabase.ts`
-   ships full `@supabase/supabase-js` (auth-js + postgrest-js + storage-js + realtime-js +
-   phoenix, ≈205 KB parsed / 53 KB gzip in chunk `2990` on every authed page). `@supabase/ssr`
-   is already in deps. Likely 30–50 KB savings.
-6. **12 internal `<a href="/...">` → `next/link`** — chiefly the `/pricing` cluster
-   (`app/(dashboard)/reports/page.tsx:482,583,614`, `bets/page.tsx:284`,
-   `settings/page.tsx:351`, `components/AutopsyReport.tsx:2857`) and `/terms`/`/privacy`
-   footer links (blog/faq layouts, signup, terms→privacy). Cheap, mechanical.
-7. **`Cache-Control` on `/api/template`** — public, GET, deterministic CSV. One-line:
-   `Cache-Control: public, max-age=86400, immutable`.
-8. **`LogoScroll.tsx <img>` → `next/image`** for landing-page LCP. Plus pre-convert
-   TTF fonts to WOFF2 (~30% bandwidth win).
-9. **`lib/demo-data.ts` (62 KB parsed in client bundle)** — sample-report fixture.
-   Move to JSON + lazy fetch or server-only file passed via props.
-10. **Reduce `framer-motion` surface area on landing** — `AnimatedSection`,
-    `number-ticker`, `text-generate-effect` could be CSS-only or use the lighter
-    `motion` module instead of `framer-motion`. ~14 KB gzip on `/` and `/sample`.
+   One-file change, low risk. Embarrassing to ship without.
+3. **Code-split `AutopsyReport` on `/share/[id]` and `/admin/reports/[id]` (was audit #3)** —
+   `/share/[id]` is the viral surface; people sharing reports currently hit a 355 KB page.
+   `next/dynamic` brings 355/407 KB First Load JS down to ~160–180 KB. Two files:
+   `app/share/[id]/SharedReport.tsx`, `app/(dashboard)/admin/reports/[id]/AdminReportDetailClient.tsx`.
+   *Reminder:* SSG (●) doesn't shrink the JS payload — only the First Load HTML. Visitors
+   still download the whole bundle.
+
+**Tier 2 — next week:**
+4. **Supabase ssr migration (was audit #5)** — 30–50 KB on every authenticated page; helps
+   `/dashboard` most. `@supabase/ssr` already in deps.
+5. **`<a>` → `next/link` on 12 sites (was audit #6)** — mechanical, do during a coffee break.
+6. **Reduce `framer-motion` on landing (was audit #10)** — `/sample` is the Meta paid-traffic
+   landing; LCP matters here.
+
+**Tier 3 — when there's time:**
+7. `Cache-Control` on `/api/template` (audit #7), `LogoScroll <img>` → `next/image` (audit #8),
+   `lib/demo-data.ts` 62 KB → JSON/lazy fetch (audit #9), TTF → WOFF2 fonts.
+
+#### User-flagged items the audit didn't cover
+
+- **`lib/demo-data.ts` is the `/sample` page killer specifically.** 62 KB demo-report fixture
+  + framer-motion on landing means the Meta paid-traffic landing ships a lot of JS to
+  convert. After Tier 1 #1 gets the HTML to the user fast, demo-data is the next priority for
+  `/sample` specifically (currently parked at audit #9 — bumps up if `/sample` conv data
+  shows it's costing).
+- **`global-error.tsx` Sentry import is worse than the audit suggested.** It runs on every
+  error boundary and pulls all of `@sentry/nextjs` into the client bundle. Investigate
+  Sentry's lazy-load wrapper.
+- **No runtime perf measured.** Audit was static-only. After shipping Tier 1 #1, run
+  Lighthouse on `/sample` and `/dashboard` to confirm the win — possibly via a follow-up
+  prompt that includes a Lighthouse run.
 
 ### CI: `mobile-regression.yml` env-var inlining fix
 - **Root cause** (from `next start log` group, ~1346 stack-trace lines): `middleware.ts:25-27`
