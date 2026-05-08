@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 
 export default function OAuthButtons({ next }: { next?: string | null }) {
   const [loading, setLoading] = useState<'google' | 'discord' | null>(null);

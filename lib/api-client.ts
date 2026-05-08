@@ -50,8 +50,8 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   // Dynamic import — only reached inside the Capacitor webview.
   // Web bundles never execute this branch, so webpack emits the
   // chunk as lazy and strips it from every static route.
-  const { createClient } = await import('./supabase');
-  const supabase = createClient();
+  const { createBrowserSupabaseClient } = await import('./supabase-browser');
+  const supabase = createBrowserSupabaseClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return token ? { Authorization: `Bearer ${token}` } : {};

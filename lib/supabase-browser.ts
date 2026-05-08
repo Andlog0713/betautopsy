@@ -4,32 +4,27 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Singleton browser-side Supabase client used by all SWR hooks.
 //
-// Mirrors the runtime branching that `lib/supabase.ts` has carried since
-// the Capacitor session fix: web uses `@supabase/ssr`'s `createBrowserClient`
-// (cookie-backed, lets middleware read the same session), Capacitor uses
-// `@supabase/supabase-js` with `flowType: 'implicit'` + localStorage because
-// cookies at `capacitor://localhost` are unreliable in WKWebView. Phase 5 of
-// the data-layer overhaul will swap this to a compile-time gate via
-// `isMobileBuild()` so webpack can fully tree-shake the unused SDK on web —
-// for now the runtime branch keeps both Capacitor and web auth working.
+// Compile-time branching on NEXT_PUBLIC_BUILD_TARGET: webpack inlines the
+// env literal during build, so the unreachable branch is dead-code-
+// eliminated. Web bundle drops the `@supabase/supabase-js` direct import
+// (it still arrives transitively via `@supabase/ssr`, but that path
+// lazy-loads sub-modules and skips realtime when not subscribed). Mobile
+// (Capacitor) builds keep `@supabase/supabase-js` because cookies are
+// unreliable at `capacitor://localhost` in WKWebView — `flowType:
+// 'implicit'` + localStorage is the only reliable session-persistence
+// path inside the native webview.
 //
 // Lazy + cached so every hook call returns the same instance, preventing
-// the "Multiple GoTrueClient instances detected" warning that the original
-// `lib/supabase.ts` hit when each component minted its own client.
+// the "Multiple GoTrueClient instances detected" warning.
 
-type CapacitorGlobal = {
-  Capacitor?: { isNativePlatform?: () => boolean };
-};
-const isCapacitor =
-  typeof window !== 'undefined' &&
-  !!(window as unknown as CapacitorGlobal).Capacitor?.isNativePlatform?.();
+const IS_MOBILE_BUILD = process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile';
 
 let cached: SupabaseClient | null = null;
 
 export function createBrowserSupabaseClient(): SupabaseClient {
   if (cached) return cached;
 
-  if (isCapacitor) {
+  if (IS_MOBILE_BUILD) {
     cached = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

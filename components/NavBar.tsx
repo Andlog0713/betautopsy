@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import { Flame } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
