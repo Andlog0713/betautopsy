@@ -1,7 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk';
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
+
+// Lazy-load the Anthropic SDK so it never lands in the client bundle.
+// `lib/autopsy-engine.ts` exports `calculateMetrics` (a pure server-or-client
+// function), and `app/(dashboard)/uploads/compare/page.tsx` imports that as a
+// `'use client'` component. A top-level `import Anthropic from '@anthropic-ai/sdk'`
+// dragged the entire SDK (~72 KB parsed / 19 KB gzip) into chunk 7022 on
+// `/uploads/compare` even though only `runAutopsy`/`runSnapshot` use it. Webpack
+// can't tree-shake CommonJS-y namespace bindings out of an ESM module that
+// imports them, but it CAN code-split a `const { default: ... } = await import(...)`
+// dynamic import — which is what this helper produces.
+async function loadAnthropic(): Promise<typeof import('@anthropic-ai/sdk').default> {
+  const mod = await import('@anthropic-ai/sdk');
+  return mod.default;
+}
 
 // Retry Anthropic calls on transient 529/overloaded errors. Non-overload errors
 // (4xx, timeouts, network failures) surface immediately so they hit the existing
@@ -2447,6 +2460,7 @@ export async function runAutopsy(
   // error event the user never saw because the temp loading report
   // covered it). Our `callWithOverloadRetry` wrapper handles the only
   // retryable case (529 overloaded); any other failure should fast-fail.
+  const Anthropic = await loadAnthropic();
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0 });
   const model = 'claude-sonnet-4-6';
 
@@ -2692,6 +2706,7 @@ export async function runSnapshot(
   bets: Bet[],
   bankroll?: number | null
 ): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
+  const Anthropic = await loadAnthropic();
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = 'claude-haiku-4-5-20251001';
 
