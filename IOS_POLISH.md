@@ -56,11 +56,11 @@ Update this block at the start of each session.
 
 ## CURRENT FOCUS
 
-**This PR:** PR 1 — Capacitor + cold-start foundation
+**This PR:** iOS-PR-1 — Capacitor + cold-start foundation
 **Phase:** Not started
 **Branch:** `claude/ios-pr1-cold-start` (planned)
 **Blocking:** Nothing
-**Next action:** Andrew runs PR 1 prompt against fresh CC session
+**Next action:** Andrew runs iOS-PR-1 prompt against fresh CC session
 
 Update this block when PR status changes.
 
@@ -93,16 +93,16 @@ These rules exist because they prevent specific failure modes from earlier in th
 Six PRs, in dependency order. Estimated 8-10 working days total. Each PR is independently shippable but later PRs depend on earlier infrastructure.
 
 ```
-PR 1 (foundation)  →  PR 2 (app shell)  →  PR 3 (caching)  →  PR 4 (haptics)
-                                       ↘                  ↘
-                                          PR 5 (visual polish)  →  PR 6 (last mile)
+iOS-PR-1 (foundation)  →  iOS-PR-2 (app shell)  →  iOS-PR-3 (caching)  →  iOS-PR-4 (haptics)
+                                                ↘                          ↘
+                                                   iOS-PR-5 (visual polish)  →  iOS-PR-6 (last mile)
 ```
 
 Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` done · `[v]` verified on iPhone
 
 ---
 
-### PR 1 — Capacitor + cold-start foundation
+### iOS-PR-1 — Capacitor + cold-start foundation
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr1-cold-start`
@@ -134,12 +134,12 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 ---
 
-### PR 2 — App shell architecture
+### iOS-PR-2 — App shell architecture
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr2-app-shell`
 **Estimated:** 2 days
-**Depends on:** PR 1 merged
+**Depends on:** iOS-PR-1 merged
 **Goal:** Replace Next.js routing with single client-rendered tab shell. All 6 tabs mounted simultaneously, switched via `display: none/flex`.
 
 **Key changes:**
@@ -164,7 +164,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 - [ ] NORTH STAR tab-switch number updated below
 
 **Risks (track here as they materialize):**
-- AppShell mount cost on first launch — if cold open regresses past PR 1's number, the lazy-init pattern is wrong
+- AppShell mount cost on first launch — if cold open regresses past iOS-PR-1's number, the lazy-init pattern is wrong
 - Scroll memory across rotation / split view (low priority, document if broken)
 - Deep links to specific tabs from notifications / Stripe return — requires `useTabStore.setActive()` on URL match
 
@@ -173,12 +173,12 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 ---
 
-### PR 3 — SWR caching + optimistic mutations + bundle splitting
+### iOS-PR-3 — SWR caching + optimistic mutations + bundle splitting
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr3-caching-mutations`
 **Estimated:** 1.5 days
-**Depends on:** PR 2 merged
+**Depends on:** iOS-PR-2 merged
 **Goal:** Instant cached renders, instant-feeling mutations, initial JS <200KB gzipped.
 
 **Key changes:**
@@ -210,12 +210,12 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 ---
 
-### PR 4 — Haptics + pressable buttons + tab bar polish
+### iOS-PR-4 — Haptics + pressable buttons + tab bar polish
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr4-haptics`
 **Estimated:** 1 day
-**Depends on:** PR 2 merged (needs TabBar component)
+**Depends on:** iOS-PR-2 merged (needs TabBar component)
 **Goal:** Every touch feels tactile.
 
 **Key changes:**
@@ -253,12 +253,12 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 ---
 
-### PR 5 — Visual polish: skeletons, animated numbers, toasts, empty states, typography
+### iOS-PR-5 — Visual polish: skeletons, animated numbers, toasts, empty states, typography
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr5-visual-polish`
 **Estimated:** 1.5 days
-**Depends on:** PR 3 merged
+**Depends on:** iOS-PR-3 merged
 **Goal:** Match Robinhood/Coinbase visual quality at the forensic aesthetic.
 
 **Key changes:**
@@ -288,12 +288,12 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 
 ---
 
-### PR 6 — Pull-to-refresh + bottom sheets + page-level polish + onboarding
+### iOS-PR-6 — Pull-to-refresh + bottom sheets + page-level polish + onboarding
 
 **Status:** `[ ]` Not started
 **Branch:** `claude/ios-pr6-last-mile`
 **Estimated:** 1 day
-**Depends on:** PR 4, PR 5 merged
+**Depends on:** iOS-PR-4, iOS-PR-5 merged
 **Goal:** Last mile of native feel.
 
 **Key changes:**
@@ -402,8 +402,8 @@ YYYY-MM-DD HH:MM · PR# · Branch · Summary · Commits
 Examples:
 
 ```
-2026-05-08 14:30 · PR 1 · claude/ios-pr1-cold-start · Phase 0 recon complete, 3 decisions surfaced for Andrew · (none)
-2026-05-08 16:45 · PR 1 · claude/ios-pr1-cold-start · Capacitor config + splash screen fix shipped · abc1234, def5678
+2026-05-08 14:30 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 0 recon complete, 3 decisions surfaced for Andrew · (none)
+2026-05-08 16:45 · iOS-PR-1 · claude/ios-pr1-cold-start · Capacitor config + splash screen fix shipped · abc1234, def5678
 ```
 
 Format hint: include CC session URL (claude.ai/code/session_*) when available so you can re-open the session if needed.
@@ -424,12 +424,12 @@ Update this after every PR's verification step. Felt-time numbers only. Stopwatc
 |---|---|---|---|---|---|---|
 | baseline | 2026-05-08 | 5s | 1-2s | 12s | 1-3s | Pre-PR-2-rip-out, physical iPhone via Xcode signing |
 | post Tier 1 + PR 2 + rip-server-seed | 2026-05-08 | ? | ? | <1s on web | ? | iPhone test deferred — only verified on web localhost |
-| PR 1 | | | | | | |
-| PR 2 | | | | | | |
-| PR 3 | | | | | | |
-| PR 4 | | | | | | |
-| PR 5 | | | | | | |
-| PR 6 | | | | | | |
+| iOS-PR-1 | | | | | | |
+| iOS-PR-2 | | | | | | |
+| iOS-PR-3 | | | | | | |
+| iOS-PR-4 | | | | | | |
+| iOS-PR-5 | | | | | | |
+| iOS-PR-6 | | | | | | |
 
 If a row's number doesn't move forward of the row above it, that PR didn't deliver perceived speed. Investigate before moving to next PR.
 
