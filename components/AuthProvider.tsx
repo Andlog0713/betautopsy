@@ -243,10 +243,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   // No mount-time fetch. AuthGuard triggers revalidate() on dashboard
   // mount; login/signup pages trigger it after a successful auth call.
+  // Marketing pages have neither — without the flip below, a visitor
+  // whose cache is missing or expired (>24h) would be stuck on the
+  // 'loading' seed forever, leaving SmartCTALink rendered as
+  // <button disabled> and NavBar showing the loading placeholder
+  // (no Login/Signup links). Flip 'loading' → 'anon' once on mount;
+  // explicit revalidate() callers overwrite this when they fire.
   useEffect(() => {
-    // Empty effect kept for shape — if we later add a deferred
-    // revalidate (e.g. requestIdleCallback) we land it here without
-    // perturbing the provider's external API. Currently a no-op.
+    setState((prev) => (prev.status === 'loading' ? { status: 'anon' } : prev));
   }, []);
 
   return (
