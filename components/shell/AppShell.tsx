@@ -6,15 +6,15 @@ import { useScrollMemory } from '@/hooks/useScrollMemory';
 import TabBar from '@/components/shell/TabBar';
 import DashboardTab from '@/components/tabs/DashboardTab';
 import BetsTab from '@/components/tabs/BetsTab';
+import ReportsTab from '@/components/tabs/ReportsTab';
 import SWRProvider from '@/components/SWRProvider';
 import AuthBootstrap from '@/components/AuthBootstrap';
 import { PrivacyProvider } from '@/components/PrivacyContext';
 
-// Phase 3.3 placeholder copy for the 3 tabs not yet migrated.
-// Phase 3.4-3.6 swap each placeholder for the real tab body
+// Phase 3.4a placeholder copy for the 2 tabs not yet migrated.
+// Phase 3.5-3.6 swap each placeholder for the real tab body
 // imported from `@/components/tabs/<Tab>Tab.tsx`.
-const PLACEHOLDER: Record<Exclude<TabId, 'dashboard' | 'bets'>, string> = {
-  reports: 'REPORTS TAB // PHASE 3.4 MIGRATES THE REAL CONTENT HERE',
+const PLACEHOLDER: Record<Exclude<TabId, 'dashboard' | 'bets' | 'reports'>, string> = {
   upload: 'UPLOAD TAB // PHASE 3.5 MIGRATES THE REAL CONTENT HERE',
   settings: 'SETTINGS TAB // PHASE 3.6 MIGRATES THE REAL CONTENT HERE',
 };
@@ -86,6 +86,8 @@ export default function AppShell() {
                         <DashboardTab />
                       ) : id === 'bets' ? (
                         <BetsTab />
+                      ) : id === 'reports' ? (
+                        <ReportsTab />
                       ) : (
                         <p className="font-mono text-xs text-fg-dim text-center tracking-wider leading-relaxed py-32">
                           {PLACEHOLDER[id]}
