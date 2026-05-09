@@ -53,11 +53,26 @@ export default function TabBar() {
             role="tab"
             aria-selected={isActive}
             aria-label={label}
+            // Haptic on touch-down (`onTouchStart`), not touch-up
+            // (`onClick`). iOS WKWebView fires the sequence
+            // `touchstart → touchend → click`, so this lands on
+            // first finger contact — matches the Robinhood/iOS
+            // native tab-bar feel where the buzz precedes the
+            // visual transition. PR-4 will extend this pattern
+            // to every primary CTA via <PressableButton>; pulling
+            // the TabBar piece forward here so the Phase 2 iPhone
+            // test isn't biased by misleading touch-up timing.
+            //
+            // setActive stays on `onClick` so a touch that drags
+            // off (touchcancel — no `click` fires) doesn't switch
+            // tabs. Haptic fired but no nav happened, which is
+            // also iOS-native behavior.
+            onTouchStart={() => triggerHaptic('light')}
             onClick={() => {
-              triggerHaptic('light');
-              // Same-tab tap is a no-op for setActive but stays a haptic
-              // event so it feels responsive. PR-4 wires it to a
-              // 'tab:reselect' CustomEvent for scroll-to-top.
+              // Same-tab tap is a no-op for setActive; the
+              // touch-down haptic already fired. PR-4 will wire
+              // this case to a 'tab:reselect' CustomEvent for
+              // scroll-to-top.
               if (!isActive) setActive(id);
             }}
             className={`relative flex-1 flex flex-col items-center justify-center h-14 gap-0.5 transition-colors ${
