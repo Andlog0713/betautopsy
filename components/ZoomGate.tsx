@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { isMobileApp } from '@/lib/platform';
 
 /**
  * iOS-only pinch-zoom suppression.
@@ -31,6 +32,12 @@ import { useEffect } from 'react';
  */
 export default function ZoomGate() {
   useEffect(() => {
+    // Mac Safari fires `gesturestart` on any two-finger trackpad
+    // input — including the gesture session that backs two-finger
+    // scrolling. Calling `preventDefault` on it kills the whole
+    // session, breaking trackpad scroll on every page. The listener
+    // is only useful inside the iOS WKWebView; gate to native.
+    if (!isMobileApp()) return;
     function preventGesture(e: Event) {
       e.preventDefault();
     }
