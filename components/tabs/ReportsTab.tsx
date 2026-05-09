@@ -163,22 +163,27 @@ export default function ReportsTab() {
     }
   }, [tabParams, loading, totalBetCount, clearParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Run autopsy (one-shot via runConsumedRef) ──
+  // ── Run autopsy intent (one-shot via runConsumedRef) ──
   // Phase 3.2 recipe rule: after consuming pendingParams via useTabSearchParams,
   // call useShellNav.clearParams(currentTab) at the END of the consume effect.
   // ALWAYS, regardless of intent type. The store's dedup case (manual TabBar tap on
   // active tab) does NOT auto-clear, so stale params can persist across renders if
   // the consumer doesn't clean up. This is a hard requirement, not a "best practice."
   //
-  // Fire-once intent: trigger autopsy run on whatever scope is currently
-  // active (no scope mutation here). Dashboard's "Run Autopsy" CTA fires
-  // navigate('reports', {run: 'true'}) which lands here.
+  // Phase 3.4c: ?run=true no longer auto-fires runAutopsy. Per Andrew's product
+  // call after the 3.4b iPhone test: BetAutopsy is a behavioral analysis tool,
+  // not an instant-results gambler app. The user should land on Reports, pick
+  // scope (date range, sport filter, upload selection), then tap Run manually.
+  // The deliberate moment IS the value. We still consume the param (so a stale
+  // ?run=true doesn't sit in pendingParams and re-arm later) but the autopsy
+  // does not run on arrival. ?upload_id and ?unlocked=true&id auto-fire stays
+  // in place — those carry specific scope intent (chosen upload, paid snapshot)
+  // and the user is already past the deliberation step when they arrive.
   useEffect(() => {
     if (runConsumedRef.current) return;
     if (tabParams.get('run') !== 'true') return;
     if (loading || totalBetCount === 0) return; // wait for data
     runConsumedRef.current = true;
-    runAutopsy();
     clearParams('reports');
     if (!isMobileApp()) {
       window.history.replaceState({}, '', '/reports');
@@ -704,73 +709,12 @@ export default function ReportsTab() {
         </p>
       </div>
 
-      {/* Free tier exhausted */}
-      {freeExhausted && !running && (
-        <div className="space-y-4">
-          <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
-            <p className="text-fg-bright mb-2">
-              This is a snapshot. The full report goes much deeper.
-            </p>
-            <p className="text-fg-muted text-sm mb-4">
-              A full report goes 5,000 bets deep with dollar costs for every bias, strategic leak detection, and a personalized action plan.
-            </p>
-            <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Strategic leaks ranked by impact</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
-            </ul>
-            {/* PR-6 audit: convert to PageStack push or sheet — out-of-shell
-                /pricing currently unmounts AppShell on native. Cross-shell-nav
-                UX regression filed under iOS-PR-2 Risks (2026-05-09). */}
-            <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
-            </a>
-          </div>
-
-          {/* Locked feature previews — behavioral framing */}
-          <div className="relative">
-            <div className="blur-sm pointer-events-none opacity-50">
-              <div className="card p-5">
-                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Behavioral Edge Analysis</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
-                </div>
-              </div>
-              <div className="card p-5 mt-3">
-                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Personal Betting Rules</h3>
-                <div className="space-y-2">
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="card bg-surface-1/95 p-6 text-center max-w-sm">
-                <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
-                <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
-                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
-                {/* PR-6 audit: convert to PageStack push or sheet — out-of-shell
-                    /pricing currently unmounts AppShell on native. Cross-shell-nav
-                    UX regression filed under iOS-PR-2 Risks (2026-05-09). */}
-                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Free tier note */}
-      {PRICING_ENABLED && tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
-        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $9.99.</p>
-      )}
-
-      {/* Analyze controls */}
-      {totalBetCount > 0 && !running && !freeExhausted && (
+      {/* Analyze controls — Phase 3.4c: ALWAYS visible at top when bets exist
+          and not running. Previously gated on !freeExhausted, which hid the
+          form for free-tier users with 1+ reports — they had to delete a
+          report to access the run UI. Free-exhausted upsell card moved
+          below the past reports list (still seen, no longer blocking). */}
+      {totalBetCount > 0 && !running && (
         <div className="card p-5 space-y-4">
           {/* Scope selector */}
           <div>
@@ -1030,6 +974,75 @@ export default function ReportsTab() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Free tier note — Phase 3.4c: moved below past reports list (was at
+          top above the form). Reminder of free-tier limit; non-blocking. */}
+      {PRICING_ENABLED && tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
+        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $9.99.</p>
+      )}
+
+      {/* Free tier exhausted — Phase 3.4c: moved below past reports list (was
+          at top, replacing the form). Upsell + locked-feature previews still
+          render for free users with 1+ reports, but they no longer block
+          access to running another snapshot. */}
+      {freeExhausted && !running && (
+        <div className="space-y-4">
+          <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
+            <p className="text-fg-bright mb-2">
+              This is a snapshot. The full report goes much deeper.
+            </p>
+            <p className="text-fg-muted text-sm mb-4">
+              A full report goes 5,000 bets deep with dollar costs for every bias, strategic leak detection, and a personalized action plan.
+            </p>
+            <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Strategic leaks ranked by impact</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data</li>
+              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
+            </ul>
+            {/* PR-6 audit: convert to PageStack push or sheet — out-of-shell
+                /pricing currently unmounts AppShell on native. Cross-shell-nav
+                UX regression filed under iOS-PR-2 Risks (2026-05-09). */}
+            <a href="/pricing" className="btn-primary inline-block">
+              Unlock Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
+            </a>
+          </div>
+
+          {/* Locked feature previews — behavioral framing */}
+          <div className="relative">
+            <div className="blur-sm pointer-events-none opacity-50">
+              <div className="card p-5">
+                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Behavioral Edge Analysis</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
+                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
+                </div>
+              </div>
+              <div className="card p-5 mt-3">
+                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Personal Betting Rules</h3>
+                <div className="space-y-2">
+                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
+                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
+                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="card bg-surface-1/95 p-6 text-center max-w-sm">
+                <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
+                <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
+                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
+                {/* PR-6 audit: convert to PageStack push or sheet — out-of-shell
+                    /pricing currently unmounts AppShell on native. Cross-shell-nav
+                    UX regression filed under iOS-PR-2 Risks (2026-05-09). */}
+                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99</a>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       </div>
