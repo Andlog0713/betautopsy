@@ -54,13 +54,15 @@ export default function TabBar() {
     <nav
       role="tablist"
       className="flex-shrink-0 flex bg-[#111318] border-t border-border-subtle"
-      // 10px above safe-area-inset-bottom for Pikkit-style breathing
+      // 20px above safe-area-inset-bottom for Pikkit-style breathing
       // room between tab labels and the home-indicator white line.
-      // Phase 2 iPhone test had labels visually touching the line
-      // even though the safe-area inset was respected — the OS-
-      // reserved zone is for the indicator's tap region, not for
-      // visual breathing room.
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
+      // Phase 2.7 added 10px, but Andrew's iPhone re-test against
+      // Pikkit's reference still showed our labels closer to the
+      // indicator than Pikkit's. Bumped to 20px (Phase 2.8) — the
+      // OS-reserved safe-area inset covers tap-region only, not
+      // visual breathing, so pure visual padding above the inset
+      // is the correct knob.
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
     >
       {TAB_IDS.map((id) => {
         const isActive = active === id;
