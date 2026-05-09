@@ -47,42 +47,31 @@
   html {
     background-color: #0D1117;
     color-scheme: dark;
-    /* Kills the gray flash WKWebView draws on every tap. Native
-       iOS UIs don't show one — we own tap feedback via component
-       active states + (PR-4) haptics. */
+    /* Kills the gray flash WKWebView draws on every tap. */
     -webkit-tap-highlight-color: transparent;
-    /* `pan-x pan-y` allows scrolling along both axes but disables
-       pinch-zoom and double-tap-zoom site-wide. Set on html (and
-       body below) because iOS WKWebView ignores the viewport
-       <meta>'s `user-scalable=no` since iOS 10 — the only reliable
-       way to disable user zoom is touch-action plus a JS
-       `gesturestart` listener (see components/ZoomGate.tsx).
-       Native iOS apps don't pinch-zoom, so this matches the
-       expected feel; assistive zoom (Settings → Accessibility →
-       Zoom) is unaffected. */
-    touch-action: pan-x pan-y;
   }
 
   body {
     @apply bg-base text-fg font-sans antialiased;
     position: relative;
-    /* Suppresses iOS's link/image long-press preview popup. Doesn't
-       affect text selection (that's `user-select`). Reads as native
-       app behavior; the existing share/context-menu surfaces are
-       routed through our own components. */
+    /* Suppresses iOS's link/image long-press preview popup. */
     -webkit-touch-callout: none;
-    /* Mirror html's pan-x pan-y. Belt-and-suspenders for nested
-       contexts where touch-action would otherwise default back to
-       `auto` and re-enable pinch-zoom. */
-    touch-action: pan-x pan-y;
-    /* Stops the document's vertical scroll from chaining into the
-       WKWebView outer rubber-band when an inner scroll container
-       hits its boundary. With `ios.scrollEnabled` left at the default
-       (true) in capacitor.config.ts — see iOS-PR-1 fix-forward —
-       the outer scroll still owns the rubber-band; this just keeps
-       overscroll contained within page boundaries on web/mobile-Safari.
-       iOS-PR-2's app shell will revisit. */
-    overscroll-behavior-y: contain;
+  }
+
+  /* Pinch-zoom suppression scoped to actual touch devices. The
+     previous global rule blocked Mac trackpad two-finger scroll
+     because macOS Safari treats Magic-Trackpad multi-touch as
+     touch input. `(hover: none) and (pointer: coarse)` matches
+     phones/tablets/iOS WKWebView and excludes desktops with mice
+     or trackpads. ZoomGate covers the iOS-only `gesturestart`
+     escape hatch. */
+  @media (hover: none) and (pointer: coarse) {
+    html, body {
+      touch-action: pan-x pan-y;
+    }
+    body {
+      overscroll-behavior-y: contain;
+    }
   }
 
   /* iOS auto-zooms any input under 16px on focus and never zooms back.
