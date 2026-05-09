@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
 import { useReports } from '@/hooks/useReports';
@@ -13,6 +12,9 @@ import OnboardingSteps from '@/components/OnboardingSteps';
 import ProUpsellModal from '@/components/ProUpsellModal';
 import TabLink from '@/components/shell/TabLink';
 import { useScrollMemory } from '@/hooks/useScrollMemory';
+import { useShellNav } from '@/hooks/useShellNav';
+import { useTabSearchParams } from '@/hooks/useTabSearchParams';
+import { isMobileApp } from '@/lib/platform';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
@@ -30,17 +32,18 @@ function daysAgo(n: number): string {
 }
 
 export default function ReportsTab() {
-  // iOS-PR-2 Phase 3.4a: body-only migration. Cross-tab <Link> / <a>
-  // sites converted to TabLink (or kept as <a> with PR-6 audit
-  // comments where they target out-of-shell /pricing). useSearchParams
-  // reads INTENTIONALLY left untouched in 3.4a — they'll be migrated
-  // to useTabSearchParams in Phase 3.4b with per-param patterns
-  // (useRef one-shot for fire-once flags like run/upload_id/unlocked,
-  // early-return-from-no-params for re-applicable filters like
-  // sportsbook). On native today, cross-tab navigate('reports', {run:'true'})
-  // activates the tab but does NOT trigger autopsy — that wires up in
-  // 3.4b.
-  const searchParams = useSearchParams();
+  // iOS-PR-2 Phase 3.4b: useSearchParams → useTabSearchParams with
+  // per-param pattern map (Andrew's spec):
+  //   run=true            → useRef one-shot (runConsumedRef)
+  //   upload_id           → useRef one-shot (uploadConsumedRef, fires autopsy)
+  //   upload_ids          → useRef one-shot (uploadConsumedRef, scope-set only)
+  //   unlocked=true + id  → useRef one-shot (unlockConsumedRef, paired)
+  //   sportsbook          → early-return-from-no-params (re-applicable filter)
+  // Each consume effect calls clearParams('reports') at the end (recipe rule).
+  // Web replaceState cleanup wrapped in `if (!isMobileApp())` for explicit
+  // intent — same pattern as DashboardTab Phase 3.2.
+  const tabParams = useTabSearchParams();
+  const { clearParams } = useShellNav();
   const { profile } = useUser();
   const { reports: cachedReports, mutate: mutateReports } = useReports();
   const { snapshots: latestTwoSnapshots } = useSnapshots({ ascending: false, limit: 2 });
@@ -70,7 +73,20 @@ export default function ReportsTab() {
   const [totalBetsAll, setTotalBetsAll] = useState(0);
   const [totalBetCount, setTotalBetCount] = useState(0);
   const [firstInsight, setFirstInsight] = useState<{ biasName: string; cost: number } | null>(null);
-  const autoRunTriggered = useRef(false);
+
+  // Phase 3.4b consume-effect refs. Three separate one-shots — one per
+  // intent — so a navigate carrying ?run=true doesn't block a subsequent
+  // navigate with ?upload_id=X (different intent). Each ref is set
+  // once per mount; subsequent navigates with the same param are no-ops.
+  // upload_id and upload_ids share `uploadConsumedRef` since they're
+  // alternative encodings of the same intent (load specific upload(s)).
+  // Edge case: if multiple fire-once params arrive on the same navigate
+  // (e.g. unlocked + run), each effect fires runAutopsy independently —
+  // realistic-likelihood ~0 (the URL flows that produce these params
+  // produce one at a time), accepted per Andrew (2026-05-09).
+  const runConsumedRef = useRef(false);
+  const uploadConsumedRef = useRef(false);
+  const unlockConsumedRef = useRef(false);
 
   // Filter state
   const [dateFrom, setDateFrom] = useState('');
@@ -83,63 +99,126 @@ export default function ReportsTab() {
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [showProUpsell, setShowProUpsell] = useState(false);
 
+  // ── loadReports on mount (no params consumed) ──
   useEffect(() => {
     loadReports();
-    // Set scope from query params
-    const qUploadId = searchParams.get('upload_id');
-    const qUploadIds = searchParams.get('upload_ids');
-    const qSportsbook = searchParams.get('sportsbook');
-    if (qUploadId) setAnalyzeScope(`upload:${qUploadId}`);
-    else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
-    else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
-
-    // Fire conversion pixels exactly once on the post-checkout redirect.
-    // The actual unlock trigger (capturing paid_snapshot_id and running
-    // the full analysis) lives in the auto-run effect below — we used
-    // to do that work here too, but setPaidSnapshotId followed by a
-    // history.replaceState produced a race where runAutopsy could fire
-    // before the state update applied AND before useSearchParams picked
-    // up the new URL, sending the request without paid_snapshot_id and
-    // letting the server downgrade to a snapshot. Now we capture
-    // straight from `searchParams` synchronously in the run effect.
-    if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
-      window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
-      trackPurchaseMeta('report', 9.99);
-    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-trigger analysis after a post-checkout unlock (`?id=…&unlocked=true`)
-  // OR a deep-link run trigger (`?run=true`, `?upload_id=…`). The unlock
-  // path captures the paid snapshot id straight from the URL so timing
-  // with React state updates can't drop it.
+  // ── Sportsbook scope-set (early-return-from-no-params) ──
+  // Phase 3.2 recipe rule: after consuming pendingParams via useTabSearchParams,
+  // call useShellNav.clearParams(currentTab) at the END of the consume effect.
+  // ALWAYS, regardless of intent type. The store's dedup case (manual TabBar tap on
+  // active tab) does NOT auto-clear, so stale params can persist across renders if
+  // the consumer doesn't clean up. This is a hard requirement, not a "best practice."
+  //
+  // Sportsbook is re-applicable: the user can navigate from Uploads with
+  // ?sportsbook=DraftKings, then later navigate from another tab with
+  // ?sportsbook=FanDuel. Both should set scope. Early-return-from-no-
+  // params guard prevents the re-render loop after clearParams. Same
+  // pattern as BetsTab's filter consume.
   useEffect(() => {
-    const isUnlock = searchParams.get('unlocked') === 'true';
-    const shouldAutoRun =
-      isUnlock || searchParams.get('run') === 'true' || searchParams.get('upload_id');
-    if (
-      shouldAutoRun &&
-      !autoRunTriggered.current &&
-      !loading &&
-      totalBetCount > 0
-    ) {
-      autoRunTriggered.current = true;
-      const paidId = isUnlock ? searchParams.get('id') : null;
-      // eslint-disable-next-line no-console
-      console.log('[unlock-debug] auto-run effect firing', {
-        isUnlock,
-        paidId,
-        searchParamsString: searchParams.toString(),
-        loading,
-        totalBetCount,
-      });
-      if (paidId) setPaidSnapshotId(paidId);
-      // Clean URL only AFTER capturing what we need so refresh-during-run
-      // doesn't strand the user on a stale `?unlocked=true` link or lose
-      // the snapshot id mid-flight.
-      window.history.replaceState({}, '', '/reports');
-      runAutopsy(paidId ?? undefined);
+    const sb = tabParams.get('sportsbook');
+    if (!sb) return;
+    setAnalyzeScope(`book:${sb}`);
+    clearParams('reports');
+    // No replaceState — original mount effect didn't clean URL on
+    // sportsbook-only navigation either. Web behavior preserved.
+  }, [tabParams, clearParams]);
+
+  // ── Upload scope-set + auto-run (one-shot via uploadConsumedRef) ──
+  // Phase 3.2 recipe rule: after consuming pendingParams via useTabSearchParams,
+  // call useShellNav.clearParams(currentTab) at the END of the consume effect.
+  // ALWAYS, regardless of intent type. The store's dedup case (manual TabBar tap on
+  // active tab) does NOT auto-clear, so stale params can persist across renders if
+  // the consumer doesn't clean up. This is a hard requirement, not a "best practice."
+  //
+  // Fire-once intent: load specific upload(s) for analysis. Sets scope
+  // and (only for upload_id, not upload_ids — matching original
+  // behavior) auto-fires runAutopsy. The `scopeOverride` parameter on
+  // runAutopsy is needed here because setAnalyzeScope is async — by
+  // the time React applies the state update, runAutopsy's closure
+  // already has the OLD scope. Passing `scopeOverride` explicitly
+  // sidesteps the staleness.
+  useEffect(() => {
+    if (uploadConsumedRef.current) return;
+    const upId = tabParams.get('upload_id');
+    const upIds = tabParams.get('upload_ids');
+    if (!upId && !upIds) return;
+    if (loading || totalBetCount === 0) return; // wait for data
+    uploadConsumedRef.current = true;
+    if (upId) {
+      const newScope = `upload:${upId}`;
+      setAnalyzeScope(newScope);
+      runAutopsy(undefined, newScope);
+    } else if (upIds) {
+      // Original code set scope but did NOT auto-run autopsy on upload_ids
+      // (only upload_id). Preserve that asymmetry — user picks scope and
+      // hits Run manually for multi-upload analysis.
+      setAnalyzeScope(`uploads:${upIds}`);
     }
-  }, [searchParams, loading, totalBetCount]); // eslint-disable-line react-hooks/exhaustive-deps
+    clearParams('reports');
+    if (!isMobileApp()) {
+      window.history.replaceState({}, '', '/reports');
+    }
+  }, [tabParams, loading, totalBetCount, clearParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Run autopsy (one-shot via runConsumedRef) ──
+  // Phase 3.2 recipe rule: after consuming pendingParams via useTabSearchParams,
+  // call useShellNav.clearParams(currentTab) at the END of the consume effect.
+  // ALWAYS, regardless of intent type. The store's dedup case (manual TabBar tap on
+  // active tab) does NOT auto-clear, so stale params can persist across renders if
+  // the consumer doesn't clean up. This is a hard requirement, not a "best practice."
+  //
+  // Fire-once intent: trigger autopsy run on whatever scope is currently
+  // active (no scope mutation here). Dashboard's "Run Autopsy" CTA fires
+  // navigate('reports', {run: 'true'}) which lands here.
+  useEffect(() => {
+    if (runConsumedRef.current) return;
+    if (tabParams.get('run') !== 'true') return;
+    if (loading || totalBetCount === 0) return; // wait for data
+    runConsumedRef.current = true;
+    runAutopsy();
+    clearParams('reports');
+    if (!isMobileApp()) {
+      window.history.replaceState({}, '', '/reports');
+    }
+  }, [tabParams, loading, totalBetCount, clearParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Post-checkout unlock (one-shot via unlockConsumedRef, paired params) ──
+  // Phase 3.2 recipe rule: after consuming pendingParams via useTabSearchParams,
+  // call useShellNav.clearParams(currentTab) at the END of the consume effect.
+  // ALWAYS, regardless of intent type. The store's dedup case (manual TabBar tap on
+  // active tab) does NOT auto-clear, so stale params can persist across renders if
+  // the consumer doesn't clean up. This is a hard requirement, not a "best practice."
+  //
+  // Fire-once intent: post-checkout redirect carries `?unlocked=true&id=<paid_snapshot_id>`
+  // together. Captures paidId from the URL synchronously and passes to
+  // runAutopsy via the paidIdOverride parameter (avoids a state-batching
+  // race where setPaidSnapshotId hasn't applied before runAutopsy reads
+  // it). Fires the conversion pixel exactly once on this consume.
+  useEffect(() => {
+    if (unlockConsumedRef.current) return;
+    if (tabParams.get('unlocked') !== 'true') return;
+    if (loading || totalBetCount === 0) return; // wait for data
+    unlockConsumedRef.current = true;
+    const paidId = tabParams.get('id');
+    // eslint-disable-next-line no-console
+    console.log('[unlock-debug] unlock consume effect firing', {
+      paidId,
+      paramsString: tabParams.toString(),
+      loading,
+      totalBetCount,
+    });
+    if (paidId) setPaidSnapshotId(paidId);
+    // Conversion pixel — fires only on the unlock path (matches original).
+    window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
+    trackPurchaseMeta('report', 9.99);
+    clearParams('reports');
+    if (!isMobileApp()) {
+      window.history.replaceState({}, '', '/reports');
+    }
+    runAutopsy(paidId ?? undefined);
+  }, [tabParams, loading, totalBetCount, clearParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch filtered bet count when date range changes
   const fetchFilteredCount = useCallback(async () => {
@@ -226,7 +305,7 @@ export default function ReportsTab() {
     mutateReports();
   }
 
-  async function runAutopsy(paidIdOverride?: string) {
+  async function runAutopsy(paidIdOverride?: string, scopeOverride?: string) {
     setRunning(true);
     setError('');
     setActiveReport(null);
@@ -238,6 +317,15 @@ export default function ReportsTab() {
       // Falls back to state for the legacy callers that still rely on it.
       const paidId = paidIdOverride ?? paidSnapshotId;
       const isPaidUpgrade = !!paidId;
+      // Phase 3.4b: scopeOverride is needed by the upload consume effect,
+      // which calls setAnalyzeScope(`upload:X`) and then runAutopsy in
+      // the same effect body — runAutopsy's closure has the OLD
+      // analyzeScope, so we accept an explicit override to bypass the
+      // React state-batching staleness. Other callers (manual Run button,
+      // run/unlock consume effects) pass undefined and we fall back to
+      // the closure value, which is correct because those flows don't
+      // mutate scope synchronously before the call.
+      const effectiveScope = scopeOverride ?? analyzeScope;
       const body: Record<string, string | string[]> = {
         report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
         ...(isPaidUpgrade ? { paid_snapshot_id: paidId } : {}),
@@ -249,13 +337,15 @@ export default function ReportsTab() {
         effectiveTier: getEffectiveTier(tier),
         paidIdOverride,
         paidSnapshotId,
+        scopeOverride,
+        effectiveScope,
       });
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
-      if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
-      else if (analyzeScope.startsWith('upload:')) body.upload_id = analyzeScope.replace('upload:', '');
-      else if (analyzeScope.startsWith('book:')) body.sportsbook = analyzeScope.replace('book:', '');
-      else if (analyzeScope === 'since_last' && lastReportDate) body.date_from = lastReportDate;
+      if (effectiveScope.startsWith('uploads:')) body.upload_ids = effectiveScope.replace('uploads:', '').split(',');
+      else if (effectiveScope.startsWith('upload:')) body.upload_id = effectiveScope.replace('upload:', '');
+      else if (effectiveScope.startsWith('book:')) body.sportsbook = effectiveScope.replace('book:', '');
+      else if (effectiveScope === 'since_last' && lastReportDate) body.date_from = lastReportDate;
 
       // `apiPost` returns the raw `Response` so the SSE stream
       // reader below works unchanged — it just handles the
