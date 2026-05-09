@@ -2,6 +2,7 @@
 
 import { LayoutDashboard, FileText, Plus, List, Settings } from 'lucide-react';
 import { m } from 'framer-motion';
+import type { CSSProperties } from 'react';
 import { useTabStore, TAB_IDS, type TabId } from '@/lib/tab-store';
 import { triggerHaptic } from '@/lib/native';
 
@@ -23,6 +24,18 @@ const TABS: Record<TabId, { label: string; Icon: typeof LayoutDashboard }> = {
   settings: { label: 'Settings', Icon: Settings },
 };
 
+// Per-button selection-blocking style. Phase 2 iPhone test surfaced
+// that long-pressing a tab label triggered iOS's text-selection
+// "copy" menu. globals.css PR-1 sets these on body, but inheritance
+// doesn't reach button text content on iOS WKWebView — the rules
+// have to land on the actual long-pressable element. Both `-webkit-`
+// prefixed and unprefixed variants for older WKWebView coverage.
+const NO_SELECT_STYLE: CSSProperties = {
+  WebkitUserSelect: 'none',
+  userSelect: 'none',
+  WebkitTouchCallout: 'none',
+};
+
 // Bottom tab bar for the AppShell. Reads `active` + `setActive` from
 // the zustand store; consumer must mount this inside a `<LazyMotion>`
 // ancestor (AppShell provides one) so the `m.span` hairline indicator
@@ -41,7 +54,13 @@ export default function TabBar() {
     <nav
       role="tablist"
       className="flex-shrink-0 flex bg-[#111318] border-t border-border-subtle"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      // 10px above safe-area-inset-bottom for Pikkit-style breathing
+      // room between tab labels and the home-indicator white line.
+      // Phase 2 iPhone test had labels visually touching the line
+      // even though the safe-area inset was respected — the OS-
+      // reserved zone is for the indicator's tap region, not for
+      // visual breathing room.
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
     >
       {TAB_IDS.map((id) => {
         const isActive = active === id;
@@ -75,6 +94,11 @@ export default function TabBar() {
               // scroll-to-top.
               if (!isActive) setActive(id);
             }}
+            // NO_SELECT_STYLE blocks the long-press selection menu
+            // (Phase 2 iPhone test caught the "copy" callout on a
+            // long-pressed label). Has to live on the button itself
+            // — globals.css's body-level rules don't propagate.
+            style={NO_SELECT_STYLE}
             className={`relative flex-1 flex flex-col items-center justify-center h-14 gap-0.5 transition-colors ${
               isActive ? 'text-scalpel' : 'text-fg-dim'
             }`}
