@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -15,11 +16,27 @@ import type { Profile } from '@/types';
 /**
  * App-wide auth + snapshot state.
  *
- * Cold-start contract (iOS-PR-1 Phase 3):
- *   - First render seeds state synchronously from `localStorage`
- *     under key `ba-auth-cache-v1`. Cold marketing pages get correct
- *     SmartCTALink routing on the first paint with zero network
- *     traffic, as long as the cache is fresh (<24h).
+ * Cold-start contract (iOS-PR-1 Phase 3 → iOS-PR-2 Phase 3.0 amendment):
+ *   - First render returns `{ status: 'loading' }` on both server and
+ *     client. An isomorphic layout effect (useLayoutEffect on the
+ *     client, useEffect during SSR) reads the `ba-auth-cache-v1` cache
+ *     and flips state in one tick. On the client, useLayoutEffect
+ *     fires synchronously after DOM mutations but before browser
+ *     paint, so the `loading` frame is typically invisible.
+ *   - **Why not synchronous seed in useState (the iOS-PR-1 design)?**
+ *     The static-export prerender (`output: 'export'`) ran the
+ *     useState initializer with `typeof window === 'undefined'` →
+ *     readCache() returned null → SSR HTML emitted SmartCTALink's
+ *     `<button disabled>` and NavBar's `<div className="w-20" />`
+ *     placeholders. First client render re-ran the same initializer,
+ *     this time with localStorage available, returned cached state →
+ *     SmartCTALink emitted `<Link>` (an `<a>`) and NavBar emitted the
+ *     authed avatar UI. SSR/client tree mismatch threw React #418
+ *     ("Hydration failed") + #423 ("recovered via client re-render"),
+ *     forcing a full client re-render. That cost more than the
+ *     loading-frame flicker the synchronous seed was designed to
+ *     avoid. Trade made wrong way — see CALIBRATION LOG 2026-05-09
+ *     iOS-PR-2 Phase 3.0.
  *   - There is NO automatic network revalidation on mount. The
  *     network fetch only fires when something explicitly calls
  *     `revalidate()` — currently AuthGuard on dashboard mount, plus
@@ -32,7 +49,7 @@ import type { Profile } from '@/types';
  *
  * Status enum (unchanged from the legacy provider so consumers
  * don't need to migrate):
- *   - `loading`       — no cache, no fetch yet
+ *   - `loading`       — no cache read yet (first render only)
  *   - `anon`          — no Supabase user
  *   - `no-snapshot`   — authed user with no autopsy_reports snapshot
  *   - `has-snapshot`  — authed user with at least one snapshot
@@ -47,6 +64,17 @@ export type AuthState =
   | { status: 'anon' }
   | { status: 'no-snapshot'; user: User; profile: Profile | null }
   | { status: 'has-snapshot'; user: User; profile: Profile | null; snapshotId: string };
+
+// Standard isomorphic-layout-effect pattern. useLayoutEffect logs a
+// warning during SSR because the layout phase doesn't exist server-
+// side; resolving to useEffect on the server suppresses the warning
+// without changing runtime behavior (the client always uses
+// useLayoutEffect, the server runs the effect-equivalent at hydration
+// time anyway). Module-scope so the choice is locked in at module
+// evaluation, not per render — React's hook-order invariant requires
+// stability.
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface AuthContextValue {
   state: AuthState;
@@ -141,14 +169,15 @@ function stateFromCache(entry: CacheEntry): AuthState {
 }
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Synchronous first-render seed. SSR returns 'loading' (no window);
-  // the very first client render reads the cache and sets state in
-  // one pass, so SmartCTALink renders correct routing on first paint
-  // for any user whose cache is fresh.
-  const [state, setState] = useState<AuthState>(() => {
-    const cached = readCache();
-    return cached ? stateFromCache(cached) : { status: 'loading' };
-  });
+  // Initial state matches SSR output ('loading'). The cache read
+  // moved out of the useState initializer (iOS-PR-1 Phase 3 design)
+  // and into the useIsomorphicLayoutEffect below (iOS-PR-2 Phase 3.0
+  // amendment). Reason: the synchronous seed produced different
+  // output during SSR prerender (no localStorage → loading) vs.
+  // first client render (localStorage present → cached state),
+  // breaking React's hydration check (#418/#423). See doc comment
+  // at the top of this file.
+  const [state, setState] = useState<AuthState>({ status: 'loading' });
 
   // Dedupe concurrent revalidate() calls (e.g. AuthGuard mount races
   // with a post-login revalidate). The first call's promise is
@@ -241,12 +270,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // No mount-time fetch. AuthGuard triggers revalidate() on dashboard
-  // mount; login/signup pages trigger it after a successful auth call.
-  useEffect(() => {
-    // Empty effect kept for shape — if we later add a deferred
-    // revalidate (e.g. requestIdleCallback) we land it here without
-    // perturbing the provider's external API. Currently a no-op.
+  // Cache read runs in an isomorphic layout effect — useLayoutEffect
+  // on the client (synchronous after DOM mutations, before paint —
+  // the 'loading' frame is typically invisible) and useEffect during
+  // SSR (skips React's "useLayoutEffect does nothing on the server"
+  // warning). State flips from 'loading' to 'no-snapshot' /
+  // 'has-snapshot' in one tick if a fresh cache entry exists.
+  //
+  // No mount-time network fetch. AuthGuard triggers revalidate() on
+  // dashboard mount; login/signup pages trigger it after a successful
+  // auth call. Marketing pages stay at the cached state until the
+  // user navigates into the dashboard.
+  useIsomorphicLayoutEffect(() => {
+    const cached = readCache();
+    if (cached) setState(stateFromCache(cached));
   }, []);
 
   return (
