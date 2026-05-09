@@ -42,10 +42,66 @@
 
 ---
 
-## Current branch: `main` (post-PR-11 merge)
+## Current branch: `claude/fix-dashboard-performance-4YOlM`
 
 ### In progress
-- (none — PR 3 third-party tracking cleanup shipped; PR 4 bundle trim queued)
+- (none — dashboard cold-load fix shipped, awaiting verification)
+
+### Done this session — Dashboard cold-load 12s → ~2-3s
+
+User reported dashboard cold-loading at 12s after PR-3a + AuthGuard hot-fix
+were supposed to have fixed it. Two regressions identified, both from
+iOS-PR-1 Phase 3 (`c3b0d29`, "defer Sentry init + lazy AuthProvider"):
+
+1. **Duplicate auth fetch on every dashboard mount.** The Phase 3 rewrite
+   added `useAuthRevalidate()` + a one-shot useEffect to `AuthGuard.tsx`,
+   which fired AuthProvider's own `getUser` + `profiles` + `autopsy_reports
+   (limit 1)` triplet alongside `useUser()`'s SWR-driven `getUser` +
+   `profiles` fetch. Two parallel auth chains, separate caches, no dedupe.
+   Removed the `useAuthRevalidate()` + effect from `AuthGuard.tsx`.
+   AuthProvider's cache still gets refreshed by login/signup post-auth
+   handlers and TTLs at 24h; useUser's SWR layer with persistent
+   localStorage cache remains the canonical auth-state source for the
+   dashboard tree.
+2. **Page-level loading gate waited on `statsLoading`.** Dashboard rendered
+   *nothing* until all of `userLoading || reportsLoading || snapshotsLoading
+   || statsLoading` cleared. The `statsLoading` source is the
+   `dashboard_stats` RPC + `/api/journal?count=true` waterfall, which is
+   itself gated on `reports[0].created_at` (third wave of cold-load
+   round-trips, including a Vercel function cold-start for the journal
+   API). So the skeleton sat there until the slowest of three serial
+   waves finished. Dropped `statsLoading` from the page-level gate; added
+   an inline placeholder for the vitals/numbers strip so users with bets
+   don't briefly see the "no bets" empty state while stats loads.
+
+Not touched (Phase 3 retained): Sentry init defer (harmless on web,
+saves ~50–150ms TTI), Capacitor preferences storage import (tree-shakes
+out of the web bundle), AuthProvider cache shape itself (used by
+NavBar/SmartCTALink for marketing-page CTAs).
+
+Not touched (separate work): `useReports` still pulls full `report_json`
+on the dashboard even though only `length` + `[0].created_at` are read.
+On users with 10+ reports this ships ~500KB of unused JSON. Parked for
+follow-up — needs a `useReportsSummary` thin hook or a server-side
+denormalization of summary fields onto `autopsy_reports` rows.
+
+### Parked / next branch
+- **Native iOS app pivot to React Native.** User scrapping the Capacitor
+  build entirely; restarting as a React Native app. iOS-PR-1 Phase 1, 2, 4
+  CSS/splash/storage work is technically still in this codebase but no
+  longer maintained — fine to leave in place since they're harmless on
+  web (tree-shaken or no-op).
+- **`useReportsSummary` hook for the dashboard** — drop `report_json` from
+  the `/dashboard` query path. Real cold-load win on top of the auth
+  dedupe + render-gate fixes. Still need to hold the existing `useReports`
+  contract on `/reports` since it renders `analysis = report.report_json`
+  per row.
+
+---
+
+## Previous branch: `main` (post-PR-11 merge)
+
+### Done
 
 ### PR 3: third-party tracking cleanup (PR #11, merged `735752f`)
 Lighthouse on `/sample` was 69, third-party scripts accounted for 388 KiB

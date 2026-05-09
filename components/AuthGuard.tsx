@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { useAuthRevalidate } from '@/components/AuthProvider';
 
 /**
  * Client-side auth guard.
@@ -41,16 +40,13 @@ export default function AuthGuard({
 }) {
   const router = useRouter();
   const { user, isLoading, error } = useUser();
-  const revalidateAuthCache = useAuthRevalidate();
 
-  // AuthGuard owns AuthProvider's revalidate trigger: marketing pages
-  // never fire one (they only read cached state synchronously), so
-  // entering the dashboard is when AuthProvider's cache gets refreshed
-  // against the server. Fires once per AuthGuard mount; AuthProvider
-  // dedupes if a post-login revalidate is already in flight.
-  useEffect(() => {
-    void revalidateAuthCache();
-  }, [revalidateAuthCache]);
+  // AuthProvider's cache is refreshed by login/signup post-auth handlers
+  // and TTLs out at 24h. We deliberately don't fire revalidate() here:
+  // useUser's SWR layer (with persistent localStorage cache) is already
+  // the canonical auth-state source for AuthGuard, and a redundant
+  // AuthProvider revalidate doubles the getUser + profiles round-trip
+  // on every dashboard mount with no functional benefit.
 
   // OAuth (Google) users are auto-verified by Supabase at signup, so
   // `email_confirmed_at` is already set. The provider check is a
