@@ -10,6 +10,7 @@ import { apiPost } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import ProUpsellModal from '@/components/ProUpsellModal';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import TabLink from '@/components/shell/TabLink';
 import { useScrollMemory } from '@/hooks/useScrollMemory';
 import { useShellNav } from '@/hooks/useShellNav';
@@ -629,36 +630,47 @@ export default function ReportsTab() {
           </button>
         )}
 
-        <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} />
-        {/* Post-first-report prompt */}
-        {isFirstReport && (
-          <div className="card p-5 text-center space-y-2">
-            <p className="text-fg-muted text-sm">
-              Want more accurate results? Set your bankroll and review your betting goals.
-            </p>
-            <TabLink to="dashboard" className="text-sm text-scalpel hover:underline">
-              Go to Dashboard →
-            </TabLink>
-          </div>
-        )}
+        {/* Wraps AutopsyReport + dependent UI (post-first-report prompt,
+            ProUpsellModal) so a render-time exception inside AutopsyReport
+            (recharts, hook-order issues, etc.) renders a recoverable
+            fallback instead of unmounting the page and tripping React
+            #310. The back button + snapshot-upgrade card above the
+            boundary stay accessible so the user can always escape.
+            Mirrors main's `acb914f` fix on app/(dashboard)/reports/page.tsx
+            so the iOS-PR-2 tab body has the same crash containment when
+            this branch ships. */}
+        <ErrorBoundary>
+          <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} />
+          {/* Post-first-report prompt */}
+          {isFirstReport && (
+            <div className="card p-5 text-center space-y-2">
+              <p className="text-fg-muted text-sm">
+                Want more accurate results? Set your bankroll and review your betting goals.
+              </p>
+              <TabLink to="dashboard" className="text-sm text-scalpel hover:underline">
+                Go to Dashboard →
+              </TabLink>
+            </div>
+          )}
 
-        {/* Pro upsell modal fires once after a paid $9.99 unlock. Parent
-            owns dismissal persistence so the modal stays stateless. */}
-        {showProUpsell && analysis && (
-          <ProUpsellModal
-            analysis={analysis}
-            reportId={activeReport.id}
-            onDismiss={() => {
-              if (typeof window !== 'undefined') {
-                window.localStorage.setItem(
-                  `bap_pro_upsell_dismissed_${activeReport.id}`,
-                  String(Date.now())
-                );
-              }
-              setShowProUpsell(false);
-            }}
-          />
-        )}
+          {/* Pro upsell modal fires once after a paid $9.99 unlock. Parent
+              owns dismissal persistence so the modal stays stateless. */}
+          {showProUpsell && analysis && (
+            <ProUpsellModal
+              analysis={analysis}
+              reportId={activeReport.id}
+              onDismiss={() => {
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem(
+                    `bap_pro_upsell_dismissed_${activeReport.id}`,
+                    String(Date.now())
+                  );
+                }
+                setShowProUpsell(false);
+              }}
+            />
+          )}
+        </ErrorBoundary>
         </div>
       </div>
     );
