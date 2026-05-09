@@ -13,6 +13,7 @@ import LogoScroll from '@/components/LogoScroll';
 import PlatformMetrics from '@/components/PlatformMetrics';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
+import ShellPreviewLink from '@/components/dev/ShellPreviewLink';
 
 // Platform metric counters in the hero refresh hourly so they stay fresh
 // without hitting Supabase on every public page view.
@@ -103,6 +104,8 @@ export default function LandingPage() {
       />
       <NavBar />
       <ScrollToHash />
+      {/* iOS-PR-2 verification affordance — native-only, removed in Phase 5. */}
+      <ShellPreviewLink />
 
       {/* ══════════════════════════════════════ */}
       {/* HERO — grid-paper bg                  */}
