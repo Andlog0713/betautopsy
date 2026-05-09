@@ -126,19 +126,37 @@ export const useTabStore = create<TabStore>()((set) => ({
   pendingParams: emptyParams(),
 
   setActive: (tab, params) =>
-    set((s) => ({
-      active: tab,
-      wasEverActive: s.wasEverActive[tab]
-        ? s.wasEverActive
-        : { ...s.wasEverActive, [tab]: true },
-      // `params !== undefined` distinguishes "no arg" (don't touch)
-      // from "empty object" (explicit clear). Don't conflate via
-      // truthy check — `{}` is truthy but means "clear".
-      pendingParams:
-        params !== undefined
-          ? { ...s.pendingParams, [tab]: params }
-          : s.pendingParams,
-    })),
+    set((s) => {
+      // Phase 3.1.5 dedup: tapping the currently-active tab without
+      // params is a no-op for the store. PR-4 will wire same-tab tap
+      // to a separate scroll-to-top event (`tab:reselect`) — that's
+      // a different code path. setActive should only fire when there's
+      // actually something to change, so a TabBar tap on the active
+      // tab doesn't trigger spurious re-renders.
+      if (tab === s.active && params === undefined) return s;
+
+      // Phase 3.1.5 Option A semantics: bare setActive (no params arg)
+      // CLEARS the destination tab's pending. Reasoning: a bare
+      // navigate / TabBar tap = "fresh start at this tab" — old
+      // intents from a prior `navigate(tab, params)` shouldn't survive
+      // a manual re-tap. Explicit `setActive(tab, params)` writes the
+      // new params; explicit `setActive(tab, {})` is also a clear (same
+      // effect). Documented rapid-tap race in iOS-PR-2 Risks: if the
+      // user taps the destination tab between `navigate(tab, params)`
+      // and the destination's consume effect (~16ms window), the
+      // intent is lost. Acceptable per Andrew (2026-05-09) — narrow
+      // race, no existing per-call "force-fire" semantics needed.
+      return {
+        active: tab,
+        wasEverActive: s.wasEverActive[tab]
+          ? s.wasEverActive
+          : { ...s.wasEverActive, [tab]: true },
+        pendingParams:
+          params !== undefined
+            ? { ...s.pendingParams, [tab]: params }
+            : { ...s.pendingParams, [tab]: {} },
+      };
+    }),
 
   push: (tab, screen) =>
     set((s) => ({

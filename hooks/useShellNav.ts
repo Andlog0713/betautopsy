@@ -95,17 +95,41 @@ export function useShellNav(): ShellNav {
 
   const pushDetail = useCallback(
     (component: ScreenComponent, params: Record<string, string>) => {
-      // Phase 3.1 stub — both branches navigate via Next routing.
-      // Phase 4 replaces the native branch with a store push so the
-      // detail screen mounts inside PageStack instead of unmounting
-      // AppShell. Web keeps router.push semantics permanently.
+      if (isMobileApp()) {
+        // Phase 3.1.5 safety net (Andrew-requested). Phase 3.1 stub
+        // falls through to router.push on both branches; on native
+        // that unmounts the AppShell and loses tab/scroll/stack
+        // state — same failure mode as cross-shell navigation to
+        // /pricing. This warn fires loud if anything in 3.2-3.6
+        // accidentally wires a detail push before Phase 4 lands the
+        // real PageStack push semantics. Drop the warn in Phase 4
+        // when native-branch implementation replaces this fallthrough.
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[useShellNav] pushDetail() called on native before Phase 4 PageStack wiring. ' +
+            'Falling through to router.push, which on Capacitor static export will unmount ' +
+            'the AppShell and lose tab/scroll/stack state. Phase 4 will replace this with ' +
+            'store-driven PageStack push.',
+        );
+      }
       router.push(SCREEN_HREF[component](params));
     },
     [router],
   );
 
   const popDetail = useCallback(() => {
-    // Phase 3.1 stub — Phase 4 replaces native branch with store pop.
+    if (isMobileApp()) {
+      // Phase 3.1.5 safety net (paired with pushDetail's warn).
+      // router.back() on Capacitor with no real navigation history
+      // can navigate out of the app entirely; once Phase 4 wires
+      // store pop, the warn goes too.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[useShellNav] popDetail() called on native before Phase 4 PageStack wiring. ' +
+          'Falling through to router.back(); on Capacitor this can navigate out of the ' +
+          'AppShell. Phase 4 will replace with store-driven PageStack pop.',
+      );
+    }
     router.back();
   }, [router]);
 
