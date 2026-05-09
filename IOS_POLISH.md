@@ -531,6 +531,20 @@ State of things that block App Store submission, not the polish work itself.
 
 ---
 
+## PRE-EXISTING WEB BUGS (deferred to PR-3 recon)
+
+Bugs that exist on production betautopsy.com today, surfaced during iOS PR work but NOT introduced by it. Logged here so PR-3's recon phase picks them up as a group rather than rediscovering them ad hoc. Each entry: when surfaced · what fails · what works · diagnostic next step.
+
+```
+2026-05-09 (surfaced during iOS-PR-2 Phase 3.2 iPhone test) · Trackpad two-finger scroll on /dashboard fails; browser scrollbar drag works; reported on production. NOT caused by Phase 3.2 — confirmed by Andrew on production live betautopsy.com. Possibly from PR-1's globals.css `touch-action: pan-x pan-y` rule on html/body (added to block iOS pinch-zoom — may be intercepting trackpad pan events on web), possibly from older code. Diagnose in PR-3 recon along with React #418/#423 family of pre-existing issues.
+
+2026-05-09 (surfaced during iOS-PR-2 Phase 2.6 iPhone test, fixed in Phase 3.0 — kept here as PR-3 reference) · React #418/#423 hydration errors on app/page.tsx in Capacitor webview console. Fixed at Phase 3.0 by moving AuthProvider's cache read from useState initializer to useIsomorphicLayoutEffect. RESOLVED for the landing page, but the same SSR/client-divergence pattern may exist in other components that read localStorage during render — PR-3 recon should grep for `useState(() => readFrom...)` patterns and audit each one.
+```
+
+Append entries as they surface. Move resolved entries to the SESSION LOG only after the fix actually ships AND the resolution is verified — strikethrough doesn't help PR-3's recon scan.
+
+---
+
 ## OPEN QUESTIONS
 
 Questions waiting on Andrew's input. CC reads this before asking — if an answer is here, don't re-ask.
