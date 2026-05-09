@@ -44,9 +44,10 @@ If any PR closes without moving these numbers, that PR is incomplete regardless 
 ## CURRENT STATE
 
 ```
-Branch: claude/ios-pr1-verified-docs (off main ce65792; doc-only follow-up to iOS-PR-1 verification)
-Latest commit on main: ce65792 fix(ios): iOS-PR-1 fix-forward — restore landing scroll, kill pinch-zoom
-Active CC session: claude/ios-pr1-verified-docs (closing out iOS-PR-1 docs after iPhone verification passed)
+Branch: claude/ios-pr2-app-shell (renamed from system-set claude/ios-app-shell-setup-JREXo per Andrew's call; matches IOS_POLISH naming convention)
+Latest commit on branch: pending (Phase 0 recon doc commit lands next; iOS-PR-1 verification doc commit 38fe8f0 carries forward)
+Latest commit on main: ce65792 fix(ios): iOS-PR-1 fix-forward — restore landing scroll, kill pinch-zoom (iOS-PR-1 verification doc commit not yet merged)
+Active CC session: iOS-PR-2 Phase 0 recon resolved — 4 decisions answered, doc commit landing; phase plan being surfaced for Andrew's review
 Last verified on iPhone: 2026-05-08 (iOS-PR-1 + fix-forward both pass: landing scrolls, no pinch-zoom, all original gate items green)
 DUNS requested: not yet
 Apple Developer enrollment: not started
@@ -59,10 +60,10 @@ CC updates this on session start, after running `git status && git branch --show
 ## CURRENT FOCUS
 
 **This PR:** iOS-PR-2 — App shell architecture
-**Phase:** Not started
-**Branch:** `claude/ios-pr2-app-shell` (planned)
-**Blocking:** Nothing
-**Next action:** Andrew runs the iOS-PR-2 prompt against a fresh CC session. Recon-first per WORKFLOW PROTOCOL.
+**Phase:** Phase 0 recon resolved (4 decisions answered, doc commit landing now). Phase plan being surfaced next; awaiting Andrew's "go" before any code edits.
+**Branch:** `claude/ios-pr2-app-shell` (renamed from system-set `claude/ios-app-shell-setup-JREXo` per Andrew's call)
+**Blocking:** Andrew's review of the phase plan that follows the doc commit
+**Next action:** CC surfaces phased implementation plan (Phase 1 store/skeleton → Phase 2 5 tabs migration → Phase 3 PageStack + push routes → Phase 4 build-target gate + landing extraction → Phase 5 capacitor.config scrollEnabled re-enable). Andrew reviews, says "go", code starts.
 
 Update this block when PR status changes.
 
@@ -164,35 +165,47 @@ Status legend: `[ ]` not started · `[~]` in progress · `[!]` blocked · `[x]` 
 **Branch:** `claude/ios-pr2-app-shell`
 **Estimated:** 2 days
 **Depends on:** iOS-PR-1 merged
-**Goal:** Replace Next.js routing with single client-rendered tab shell. All 6 tabs mounted simultaneously, switched via `display: none/flex`.
+**Goal:** Replace Next.js routing with single client-rendered tab shell. **5 tabs** (Home/Reports/Upload/Bets/Settings — matches existing NativeTabBar, stays inside iOS HIG cap of 5) mounted simultaneously, switched via `display: none/flex`. Marketing landing on web `/` untouched; iOS `/` switches to AppShell via build-target gate.
 
-**Key changes:**
-- [ ] Install `motion@^12` (use `motion/react`, not `framer-motion`) and `zustand@^4.5`
-- [ ] `app/page.tsx` becomes thin `dynamic(() => import('@/shell/AppShell'), { ssr: false })` wrapper
-- [ ] `src/shell/useTabStore.ts` — zustand store: `active`, `stacks`, `scrollY`, `setActive`, `push`, `pop`, `setScroll`
-- [ ] `src/shell/AppShell.tsx` — `<LazyMotion features={domAnimation}>`, all 6 tabs as siblings with `display: isActive ? 'flex' : 'none'`
-- [ ] `src/shell/PageStack.tsx` — per-tab nav stack with iOS push/pop animation, motion variants, `ease: [0.32, 0.72, 0, 1]`, duration 0.30-0.35s
-- [ ] `src/shell/useScrollMemory.ts` — preserves scroll position per cacheKey
-- [ ] `src/shell/TabBar.tsx` — bottom tab bar, `paddingBottom: env(safe-area-inset-bottom)`, lucide outline → filled on active, `layoutId` hairline indicator
-- [ ] `src/screens/lazy.ts` — lazy-loaded BetDetail/ReportDetail with `prefetchScreens()` call 1.5s after shell mount, plus `onTouchStart` prefetch on rows
-- [ ] Migrate existing tab page bodies to `src/tabs/*.tsx`
-- [ ] Replace every `next/link` and `useRouter` inside the shell with `useTabStore` calls
+**Key changes (file paths use repo convention — no `src/` dir):**
+- [ ] Install `framer-motion@^12.38.0` (already in deps; import from `motion/react` per Motion v12) and `zustand@^4.5`
+- [ ] Extract current `app/page.tsx` body into `components/MarketingLanding.tsx` (refactor only, zero content change)
+- [ ] `app/page.tsx` becomes a build-target gate: `if (isMobileBuild()) return <AppShell />; return <MarketingLanding />;`. AppShell loaded via `dynamic(..., { ssr: false })`. Resolves the parked "Cold-launch UX architecture" item (PROGRESS.md) for native — Guideline 4.2.2 risk goes away.
+- [ ] `lib/tab-store.ts` — zustand store: `active`, `stacks`, `scrollY`, `setActive`, `push`, `pop`, `setScroll`
+- [ ] `components/shell/AppShell.tsx` — `<LazyMotion features={domAnimation}>`, all 5 tabs as siblings with `display: isActive ? 'flex' : 'none'`
+- [ ] `components/shell/PageStack.tsx` — per-tab nav stack with iOS push/pop animation, motion variants, `ease: [0.32, 0.72, 0, 1]`, duration 0.30-0.35s. Wired up to existing pushable detail routes only: `/uploads/[id]` and `/admin/reports/[id]`. **No BetDetail/ReportDetail extraction in PR-2** — bets/reports list pages keep their inline detail UI; that refactor belongs to a later mobile-first IA redesign PR (provisionally iOS-PR-8).
+- [ ] `hooks/useScrollMemory.ts` — preserves scroll position per cacheKey
+- [ ] `components/shell/TabBar.tsx` — bottom tab bar, `paddingBottom: env(safe-area-inset-bottom)`, lucide outline → filled on active, `layoutId` hairline indicator. Replaces `components/native/NativeTabBar.tsx` (delete the old file once shell is wired).
+- [ ] `lib/screen-prefetch.ts` — `prefetchScreens()` call 1.5s after shell mount, plus `onTouchStart` prefetch on rows for `/uploads/[id]` and `/admin/reports/[id]`
+- [ ] Migrate existing tab page bodies to `components/tabs/{Dashboard,Bets,Reports,Upload,Settings}Tab.tsx`. The `app/(dashboard)/<tab>/page.tsx` files become 1-line re-exports so the web router still works for direct URL hits.
+- [ ] Replace every `next/link` and `useRouter` inside the AppShell with `useTabStore` calls (web `<Link>` outside the shell is untouched)
 - [ ] Add `wasEverActive` lazy-init pattern on Bets and Reports tabs (lighter first-launch)
+- [ ] Reintroduce `ios.scrollEnabled: false` in `capacitor.config.ts` once per-screen scroll containers exist inside AppShell (per the PR-1 fix-forward note — landing page no longer renders on native because of build-target gate, so the original blocker is gone)
 
 **Verification gate (must pass before merge):**
 - [ ] Tab tap → content visible <50ms (Safari Web Inspector Timeline)
 - [ ] Switch from scrolled Bets → Settings → back: scroll position preserved
 - [ ] Tab switch fires zero network requests (Network tab proof)
 - [ ] Push BetDetail: ≥58fps slide-in (Xcode Instruments → Core Animation FPS)
-- [ ] All 6 tabs warm: <150MB resident memory on iPhone 12 (Xcode Instruments → Allocations)
+- [ ] All tabs warm: <150MB resident memory on iPhone 12 (Xcode Instruments → Allocations)
 - [ ] NORTH STAR tab-switch number updated below
+- [ ] **Per-screen safe-area audit on physical iPhone** (Andrew-added 2026-05-09; calibration: PR-1 fix-forward proved viewport assumptions need device verification, not desk reasoning):
+  - [ ] Every full-screen view checked: dashboard, bets, reports, upload, uploads, settings, pricing, admin/feedback, admin/reports, login, signup, reset-password, marketing landing, sample, blog index + post, faq, privacy, terms, share/[id]
+  - [ ] Every pushed detail screen checked: uploads/[id], admin/reports/[id], plus any new BetDetail/ReportDetail surfaces this PR introduces
+  - [ ] Every modal checked: AIConsentModal, NavBar mobile drawer, DashboardShell mobile slide-in nav, settings delete-account confirm
+  - [ ] Every sheet checked: any vaul/native sheet surface introduced this PR (none planned in PR-2 — sheets land in PR-6, but if any ship early, audit them)
+  - [ ] No content cut off by notch/Dynamic Island (top safe-area)
+  - [ ] No buttons or interactive elements overlapping the home indicator (bottom safe-area)
+  - [ ] Back/close buttons reachable and not under system UI (status bar, Dynamic Island, home indicator)
+  - [ ] Forms tested with software keyboard open: primary CTA and submit button not covered (login, signup, reset-password, settings forms, upload field, any inline form in tabs)
+  - [ ] Screenshots captured for any issue found, fixes applied before merge (no "documented and deferred" exceptions for safe-area regressions)
 
 **Risks (track here as they materialize):**
 - AppShell mount cost on first launch — if cold open regresses past iOS-PR-1's number, the lazy-init pattern is wrong
 - Scroll memory across rotation / split view (low priority, document if broken)
 - Deep links to specific tabs from notifications / Stripe return — requires `useTabStore.setActive()` on URL match
 
-**Decisions logged in DECISION LOG:** none yet
+**Decisions logged in DECISION LOG:** branch rename, 5-tab cap, web/native build-target gating for app/page.tsx, PageStack scope (2 existing detail routes only), repo-convention file org, framer-motion-v12 reuse
 **Calibration notes:** none yet
 
 ---
@@ -379,6 +392,12 @@ Log every decision Andrew makes that CC asked about. Format: `YYYY-MM-DD · PR# 
 2026-05-08 · iOS-PR-1 · Stripe.js Phase 3 item marked moot · @stripe/stripe-js not installed; checkout already redirects via openCheckoutUrl() to Stripe-hosted page. No client Stripe SDK in bundle.
 2026-05-08 · iOS-PR-1 · Use @capacitor/preferences@^8.0.1 (already installed) instead of spec's @^7 · Matches the rest of @capacitor/*@^8 deps
 2026-05-08 · iOS-PR-1 · Keep existing viewport <meta> tag instead of migrating to Next 14 viewport export · Already includes viewport-fit=cover plus maximum-scale=1.0/user-scalable=no which the bare viewport export wouldn't preserve
+2026-05-09 · iOS-PR-2 · Branch renamed claude/ios-app-shell-setup-JREXo → claude/ios-pr2-app-shell · Match IOS_POLISH naming convention; same artifact pattern as PR-1's system-set worktree branch
+2026-05-09 · iOS-PR-2 · Tab count: 5 (Home/Reports/Upload/Bets/Settings) · iOS HIG caps tab bars at 5; Apple rejects more. Matches existing NativeTabBar. Upload History stays a desktop-only nav item — accessible via Uploads page on mobile (linked from Bets / Dashboard)
+2026-05-09 · iOS-PR-2 · `app/page.tsx` build-target gating · On web `/` keeps marketing landing (SEO + paid-traffic untouched); on iOS `/` renders AppShell. Extract current page body into `components/MarketingLanding.tsx`, then `app/page.tsx` becomes `if (isMobileBuild()) return <AppShell />; return <MarketingLanding />;`. Resolves PROGRESS.md "Cold-launch UX architecture" parked item for native — Guideline 4.2.2 risk goes away because iOS users no longer land on the marketing page
+2026-05-09 · iOS-PR-2 · Detail screens: PageStack infra + 2 existing routes only · `/uploads/[id]` and `/admin/reports/[id]` are the only real pushable detail routes today. Bets and Reports list pages keep their current inline detail UI for PR-2. BetDetail/ReportDetail extraction (with swipeable archetype cards etc.) belongs to a later mobile-first IA redesign PR (provisionally iOS-PR-8). Keeps PR-2 inside its 2-day estimate; avoids touching bets/page.tsx (832 lines) and reports/page.tsx (1025 lines) during the same PR that introduces zustand + motion + AppShell
+2026-05-09 · iOS-PR-2 · File org: repo convention, no `src/` dir · `components/shell/{AppShell,TabBar,PageStack}.tsx`, `components/tabs/{Dashboard,Bets,Reports,Upload,Settings}Tab.tsx`, `lib/tab-store.ts` (zustand), `hooks/useScrollMemory.ts`, `lib/screen-prefetch.ts`, `components/MarketingLanding.tsx`. Existing `@/components/*`, `@/hooks/*`, `@/lib/*` tsconfig paths already resolve — no tsconfig change needed
+2026-05-09 · iOS-PR-2 · Use existing `framer-motion@^12.38.0` instead of separate `motion@^12` install · Same package (renamed in v12); spec's `motion/react` import path is supported by framer-motion v12.38. Saves a dep install + dedup risk
 ```
 
 When CC asks a multi-select / single-select question, paste the question and answer here verbatim.
@@ -469,7 +488,9 @@ Actual log:
 2026-05-08 · iOS-PR-1 · claude/ios-pr1-cold-start · Phase 4 shipped (PR-1 feature-complete): preferencesStorage adapter (lib/preferences-storage.ts) wired into Supabase mobile-branch as auth.storage. Survives WKWebView localStorage eviction; web branch untouched. Awaiting verification gate on physical iPhone. · cad0f78
 2026-05-08 · iOS-PR-1 · main · iOS-PR-1 fast-forward merged to main (1d6a7ac → 88d25ff). Sandbox proxy returned 403 on direct push from CC; Andrew completed FF + push from his laptop. Verification gate NOT run pre-merge — iPhone test still owed. · 88d25ff
 2026-05-08 · iOS-PR-1 fix-forward · claude/ios-pr1-fix-scroll-zoom · iPhone test post-merge surfaced 2 bugs + 1 expected slow-load. Fix-forward branch off main: revert capacitor.config.ts `ios.scrollEnabled` (was breaking landing-page scroll); add `touch-action: pan-x pan-y` to html/body in globals.css + new `<ZoomGate>` component that preventDefaults on iOS gesturestart events to kill pinch-zoom (user-scalable=no is ignored by WKWebView since iOS 10). 6-7s first-login dashboard noted in NORTH STAR — addressed by PR-2/PR-3. · ce65792 (merged via PR #13 + MCP rebase, since direct main push is sandbox-blocked)
-2026-05-08 · iOS-PR-1 verification · claude/ios-pr1-verified-docs · Andrew confirmed iPhone test passes after fix-forward landed. Both regressions fixed (landing scrolls, pinch-zoom blocked). All original gate items green. Doc-only branch off main (ce65792): iOS-PR-1 status flipped to [v] Verified, all phase + verification-gate boxes upgraded to [v], NORTH STAR row filled in (sub-1s landing cold-open, 6-7s first-login dashboard noted as PR-2/PR-3 territory), CURRENT FOCUS pivots to iOS-PR-2 (app shell). · TBD
+2026-05-08 · iOS-PR-1 verification · claude/ios-pr1-verified-docs · Andrew confirmed iPhone test passes after fix-forward landed. Both regressions fixed (landing scrolls, pinch-zoom blocked). All original gate items green. Doc-only branch off main (ce65792): iOS-PR-1 status flipped to [v] Verified, all phase + verification-gate boxes upgraded to [v], NORTH STAR row filled in (sub-1s landing cold-open, 6-7s first-login dashboard noted as PR-2/PR-3 territory), CURRENT FOCUS pivots to iOS-PR-2 (app shell). · 38fe8f0
+2026-05-09 · iOS-PR-2 · claude/ios-app-shell-setup-JREXo · Phase 0 recon complete (no commits yet — pure read + doc updates). Read app/page.tsx (LandingPage with NavBar/SmartCTALink/sections), app/(dashboard)/layout.tsx (thin SWRProvider+AuthBootstrap+DashboardShell wrapper, post-PR-3a static), DashboardShell.tsx (web sidebar + mobile slide-in + native NativeTabBar, AuthGuard wrap), components/NavBar.tsx (marketing public NavBar with auth state), components/native/NativeTabBar.tsx (5 tabs: Home/Reports/Upload/Bets/Settings — NOT 6 as spec assumed), capacitor.config.ts. Mapped routing: 11 dashboard routes (dashboard, upload, bets, uploads, uploads/[id], uploads/compare, reports, settings, pricing, admin/feedback, admin/reports, admin/reports/[id]) + auth (login/signup/reset-password) + 11 public marketing routes. Found 5 vs 6 tab discrepancy (mobile=5, desktop=6 with Upload History added), motion already installed as framer-motion@^12.38.0, zustand NOT installed, no src/ dir (repo uses components/hooks/lib). 4 decisions surfaced via AskUserQuestion. Added per-screen safe-area audit checklist (~10 sub-items) to PR-2 verification gate per Andrew's session-open instruction. CURRENT STATE + CURRENT FOCUS updated. · (none yet)
+2026-05-09 · iOS-PR-2 · claude/ios-pr2-app-shell · Phase 0 recon decisions logged + PR-2 spec rewritten. Andrew answered 4 questions: 5 tabs (not 6), build-target gate at app/page.tsx (web=marketing, native=AppShell, MarketingLanding extracted), PageStack infra + 2 existing detail routes only (no BetDetail/ReportDetail extraction in PR-2 — deferred to provisional iOS-PR-8 IA redesign), repo-convention file paths (no src/). Branch renamed claude/ios-app-shell-setup-JREXo → claude/ios-pr2-app-shell. Updated PR-2 Key Changes section (file paths, scope, build-target gate, NativeTabBar replacement, capacitor.config scrollEnabled re-enable). Added 7 entries to DECISION LOG (rename, tab count, gating, scope, file org, framer-motion-v12 reuse, MarketingLanding extraction). · (commit pending)
 ```
 
 ---
