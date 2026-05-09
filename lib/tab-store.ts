@@ -1,3 +1,4 @@
+import { createContext } from 'react';
 import { create } from 'zustand';
 
 // The 5 tabs that mount inside the AppShell on native. Order in this
@@ -33,12 +34,30 @@ export type Screen = {
 
 type TabStacks = Record<TabId, Screen[]>;
 
+// Per-tab pending query params. iOS-PR-2 Phase 3.1: this is what
+// `useShellNav.navigate(tab, params)` writes into when a cross-tab
+// CTA carries args (e.g. Dashboard's "Run Autopsy" → reports tab
+// with `{ run: 'true' }`). The destination tab body reads via
+// `useTabSearchParams()`, processes the param, then calls
+// `clearPendingParams(tab)` to prevent re-trigger on remount —
+// equivalent to the `window.history.replaceState` cleanup pattern
+// the existing tab bodies already do for URL params on web.
+type TabParams = Record<TabId, Record<string, string>>;
+
 const emptyStacks = (): TabStacks => ({
   dashboard: [],
   reports: [],
   upload: [],
   bets: [],
   settings: [],
+});
+
+const emptyParams = (): TabParams => ({
+  dashboard: {},
+  reports: {},
+  upload: {},
+  bets: {},
+  settings: {},
 });
 
 const allFalse = (): Record<TabId, boolean> => ({
@@ -48,6 +67,20 @@ const allFalse = (): Record<TabId, boolean> => ({
   bets: false,
   settings: false,
 });
+
+// URL builders for the two pushable detail screens. Used by
+// `useShellNav.pushDetail` (Phase 3.1 stub: calls router.push;
+// Phase 4 will replace with store-driven PageStack push on native)
+// and by `lib/screen-prefetch.ts` indirectly. Keeping the map here
+// next to ScreenComponent so adding a new pushable screen is a
+// single-file edit.
+export const SCREEN_HREF: Record<
+  ScreenComponent,
+  (params: Record<string, string>) => string
+> = {
+  UploadDetail: (p) => `/uploads/${encodeURIComponent(p.id ?? '')}`,
+  AdminReportDetail: (p) => `/admin/reports/${encodeURIComponent(p.id ?? '')}`,
+};
 
 export type TabStore = {
   active: TabId;
@@ -66,11 +99,23 @@ export type TabStore = {
   // first activation so cold-open touches Dashboard only).
   wasEverActive: Record<TabId, boolean>;
 
-  setActive: (tab: TabId) => void;
+  // Per-tab pending query params (iOS-PR-2 Phase 3.1). See TabParams
+  // type doc above for the consume-then-clear pattern.
+  pendingParams: TabParams;
+
+  // setActive: when `params` is supplied, also writes into pendingParams[tab].
+  // When omitted, leaves pendingParams[tab] untouched — that's so a
+  // bare TabBar tap (no params) doesn't clobber pending params from
+  // an earlier in-app navigate. Pass `{}` explicitly to clear.
+  setActive: (tab: TabId, params?: Record<string, string>) => void;
   push: (tab: TabId, screen: Screen) => void;
   pop: (tab: TabId) => void;
   popAll: (tab: TabId) => void;
   setScroll: (cacheKey: string, y: number) => void;
+  // Tab body calls this after consuming params to prevent re-trigger
+  // on remount (mirrors the existing `window.history.replaceState`
+  // pattern used on web for URL-param cleanup).
+  clearPendingParams: (tab: TabId) => void;
 };
 
 export const useTabStore = create<TabStore>()((set) => ({
@@ -78,13 +123,21 @@ export const useTabStore = create<TabStore>()((set) => ({
   stacks: emptyStacks(),
   scrollY: {},
   wasEverActive: { ...allFalse(), dashboard: true },
+  pendingParams: emptyParams(),
 
-  setActive: (tab) =>
+  setActive: (tab, params) =>
     set((s) => ({
       active: tab,
       wasEverActive: s.wasEverActive[tab]
         ? s.wasEverActive
         : { ...s.wasEverActive, [tab]: true },
+      // `params !== undefined` distinguishes "no arg" (don't touch)
+      // from "empty object" (explicit clear). Don't conflate via
+      // truthy check — `{}` is truthy but means "clear".
+      pendingParams:
+        params !== undefined
+          ? { ...s.pendingParams, [tab]: params }
+          : s.pendingParams,
     })),
 
   push: (tab, screen) =>
@@ -106,7 +159,23 @@ export const useTabStore = create<TabStore>()((set) => ({
   // need to dedupe here.
   setScroll: (cacheKey, y) =>
     set((s) => ({ scrollY: { ...s.scrollY, [cacheKey]: y } })),
+
+  clearPendingParams: (tab) =>
+    set((s) => ({ pendingParams: { ...s.pendingParams, [tab]: {} } })),
 }));
+
+// Context that tells `useTabSearchParams()` which tab the calling
+// component represents. AppShell's tab-rendering loop wraps each
+// section in `<ShellTabContext.Provider value={tabId}>` (Phase 3.2
+// onward) so a tab body can call `useTabSearchParams()` with no
+// arguments and get the right slice of pendingParams. On web the
+// context is unused (consumers fall back to next/navigation's
+// `useSearchParams`), so no Provider is mounted on web.
+//
+// createContext is callable in non-`'use client'` modules — only
+// the Provider/Consumer JSX requires the client boundary, and that
+// lives in AppShell which is already a client component.
+export const ShellTabContext = createContext<TabId | null>(null);
 
 // Read-only helper for non-React contexts that need the active tab
 // (e.g. screen-prefetch deciding which routes to warm). Avoids the
