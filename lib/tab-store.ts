@@ -118,45 +118,61 @@ export type TabStore = {
   clearPendingParams: (tab: TabId) => void;
 };
 
-export const useTabStore = create<TabStore>()((set) => ({
+export const useTabStore = create<TabStore>()((set, get) => ({
   active: 'dashboard',
   stacks: emptyStacks(),
   scrollY: {},
   wasEverActive: { ...allFalse(), dashboard: true },
   pendingParams: emptyParams(),
 
-  setActive: (tab, params) =>
-    set((s) => {
-      // Phase 3.1.5 dedup: tapping the currently-active tab without
-      // params is a no-op for the store. PR-4 will wire same-tab tap
-      // to a separate scroll-to-top event (`tab:reselect`) — that's
-      // a different code path. setActive should only fire when there's
-      // actually something to change, so a TabBar tap on the active
-      // tab doesn't trigger spurious re-renders.
-      if (tab === s.active && params === undefined) return s;
+  setActive: (tab, params) => {
+    // Phase 3.1.6 true early-return refactor (Andrew-requested).
+    // Previous implementation used `set((s) => { if (...) return s; })`
+    // which relies on zustand v4's `Object.is(current, next)` bailout
+    // to skip subscriber notification. That works today but is an
+    // implicit dependency on the library's internal optimization
+    // that v5+ may not preserve. By reading state via `get()` and
+    // returning before any `set` call, the dedup is explicit and
+    // survives library version bumps.
+    const s = get();
 
-      // Phase 3.1.5 Option A semantics: bare setActive (no params arg)
-      // CLEARS the destination tab's pending. Reasoning: a bare
-      // navigate / TabBar tap = "fresh start at this tab" — old
-      // intents from a prior `navigate(tab, params)` shouldn't survive
-      // a manual re-tap. Explicit `setActive(tab, params)` writes the
-      // new params; explicit `setActive(tab, {})` is also a clear (same
-      // effect). Documented rapid-tap race in iOS-PR-2 Risks: if the
-      // user taps the destination tab between `navigate(tab, params)`
-      // and the destination's consume effect (~16ms window), the
-      // intent is lost. Acceptable per Andrew (2026-05-09) — narrow
-      // race, no existing per-call "force-fire" semantics needed.
-      return {
-        active: tab,
-        wasEverActive: s.wasEverActive[tab]
-          ? s.wasEverActive
-          : { ...s.wasEverActive, [tab]: true },
-        pendingParams:
-          params !== undefined
-            ? { ...s.pendingParams, [tab]: params }
-            : { ...s.pendingParams, [tab]: {} },
-      };
-    }),
+    // Phase 3.1.5 dedup: tapping the currently-active tab without
+    // params is a no-op for the store. PR-4 will wire same-tab tap
+    // to a separate scroll-to-top event (`tab:reselect`) — that's
+    // a different code path. setActive should only fire when there's
+    // actually something to change, so a TabBar tap on the active
+    // tab doesn't trigger spurious re-renders.
+    //
+    // Note: setActive(tab, {}) when tab === active and pendingParams[tab]
+    // === {} triggers a spurious re-render. No realistic call path hits
+    // this (navigate always carries params, clearParams uses
+    // clearPendingParams not setActive, TabBar taps pass undefined).
+    // Tighter dedup with Object.keys checks isn't worth the cost.
+    // Filed under iOS-PR-2 Risks if it ever comes up in practice.
+    if (tab === s.active && params === undefined) return;
+
+    // Phase 3.1.5 Option A semantics: bare setActive (no params arg)
+    // CLEARS the destination tab's pending. Reasoning: a bare
+    // navigate / TabBar tap = "fresh start at this tab" — old
+    // intents from a prior `navigate(tab, params)` shouldn't survive
+    // a manual re-tap. Explicit `setActive(tab, params)` writes the
+    // new params; explicit `setActive(tab, {})` is also a clear (same
+    // effect). Documented rapid-tap race in iOS-PR-2 Risks: if the
+    // user taps the destination tab between `navigate(tab, params)`
+    // and the destination's consume effect (~16ms window), the
+    // intent is lost. Acceptable per Andrew (2026-05-09) — narrow
+    // race, no existing per-call "force-fire" semantics needed.
+    set({
+      active: tab,
+      wasEverActive: s.wasEverActive[tab]
+        ? s.wasEverActive
+        : { ...s.wasEverActive, [tab]: true },
+      pendingParams:
+        params !== undefined
+          ? { ...s.pendingParams, [tab]: params }
+          : { ...s.pendingParams, [tab]: {} },
+    });
+  },
 
   push: (tab, screen) =>
     set((s) => ({
