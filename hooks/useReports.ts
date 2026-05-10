@@ -68,6 +68,65 @@ export function useReports(): UseReportsResult {
   };
 }
 
+// Thin projection used by /dashboard. Drops `report_json` (per-bet
+// analysis blob — scales linearly with bet count, can hit MBs on
+// high-volume accounts) and `report_markdown` (free-form prose, also
+// large). The dashboard only reads `length` + `[0].created_at`, so
+// shipping the full row is pure waste — was the dominant cold-load
+// cost on a $100k-bets account (~10s of the original 12s figure).
+//
+// Separate SWR key from useReports so the two caches don't collide.
+// The full /reports list page still uses useReports().
+export interface ReportSummary {
+  id: string;
+  created_at: string;
+  report_type: 'snapshot' | 'full' | string;
+}
+
+export type ReportsSummaryKey = readonly ['reports-summary', string];
+
+async function fetchReportsSummary([
+  ,
+  userId,
+]: ReportsSummaryKey): Promise<ReportSummary[]> {
+  const supabase = createBrowserSupabaseClient();
+  const { data, error } = await supabase
+    .from('autopsy_reports')
+    .select('id, created_at, report_type')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ReportSummary[];
+}
+
+export interface UseReportsSummaryResult {
+  reports: ReportSummary[];
+  isLoading: boolean;
+  error: unknown;
+  mutate: KeyedMutator<ReportSummary[]>;
+}
+
+export function useReportsSummary(): UseReportsSummaryResult {
+  const { user } = useUser();
+  const key: ReportsSummaryKey | null = user
+    ? (['reports-summary', user.id] as const)
+    : null;
+  const { data, error, isLoading, mutate } = useSWR<ReportSummary[]>(
+    key,
+    fetchReportsSummary,
+    {
+      dedupingInterval: 30_000,
+      revalidateOnFocus: false,
+    }
+  );
+  return {
+    reports: data ?? [],
+    isLoading: isLoading || !user,
+    error,
+    mutate,
+  };
+}
+
 export interface UseReportResult {
   report: AutopsyReport | null;
   isLoading: boolean;

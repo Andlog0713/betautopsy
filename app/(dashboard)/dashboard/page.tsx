@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
-import { useReports } from '@/hooks/useReports';
+import { useReportsSummary } from '@/hooks/useReports';
 import { useSnapshots } from '@/hooks/useSnapshots';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
@@ -58,7 +58,7 @@ function gradeColor(grade: string): string {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, isLoading: userLoading } = useUser();
-  const { reports, isLoading: reportsLoading } = useReports();
+  const { reports, isLoading: reportsLoading } = useReportsSummary();
   const { snapshots, isLoading: snapshotsLoading } = useSnapshots();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);

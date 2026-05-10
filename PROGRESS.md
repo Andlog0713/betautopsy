@@ -47,6 +47,34 @@
 ### In progress
 - (none — dashboard cold-load fix shipped, awaiting verification)
 
+### Done this session — useReportsSummary thin hook
+User confirmed the cold-load slowness scales with **bet count**, not
+account age: $10k account ~2s, $100k account ~12s. Empirical evidence
+that the bottleneck is per-bet payload size, not auth/round-trip count.
+Logged-out + logged-back-in on the $100k account dropped to 1s — that's
+warm SWR cache hydrating from `ba-swr-cache` localStorage, no network
+fetch of the heavy rows.
+
+`useReports()` (used by `/dashboard`) called `.select('*')` on
+`autopsy_reports`, which includes `report_json` — the per-bet analysis
+blob whose size scales linearly with bet count. On a $100k account with
+multiple reports the blob is in the MB range per row; total payload to
+the dashboard could be 5–20 MB just for `reports.length` and
+`[0].created_at`. Dominant cold-load cost.
+
+- `hooks/useReports.ts`: added `useReportsSummary()` returning
+  `{ id, created_at, report_type }` only. Separate SWR key
+  (`['reports-summary', userId]`) so the cache doesn't collide with the
+  full `useReports()` consumed by `/reports`.
+- `app/(dashboard)/dashboard/page.tsx`: swapped `useReports` →
+  `useReportsSummary`. The page only reads `reports.length` and
+  `reports[0].created_at`; both are available on the thin shape.
+
+Not touched: `/reports` list page still uses full `useReports` because
+the row UI renders bias chips, grade, record, profit directly off
+`report.report_json`. Hard rule "Do NOT modify any UI/styling/copy"
+keeps that contract.
+
 ### Done this session — Dashboard cold-load 12s → ~2-3s
 
 User reported dashboard cold-loading at 12s after PR-3a + AuthGuard hot-fix
