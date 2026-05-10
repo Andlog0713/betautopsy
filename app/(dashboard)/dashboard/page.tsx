@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
-import { useReports } from '@/hooks/useReports';
+import { useReportsSummary } from '@/hooks/useReports';
 import { useSnapshots } from '@/hooks/useSnapshots';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
@@ -58,7 +58,7 @@ function gradeColor(grade: string): string {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, isLoading: userLoading } = useUser();
-  const { reports, isLoading: reportsLoading } = useReports();
+  const { reports, isLoading: reportsLoading } = useReportsSummary();
   const { snapshots, isLoading: snapshotsLoading } = useSnapshots();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -173,7 +173,12 @@ export default function DashboardPage() {
     return () => { cancelled = true; };
   }, [user, userLoading, reportsLoading, reports, reportCount, tier, reloadToken]);
 
-  const loading = userLoading || reportsLoading || snapshotsLoading || statsLoading;
+  // Page-shell render gate: only block on the SWR-hydrated sources
+  // (user, reports, snapshots). Don't wait for the dashboard_stats RPC
+  // or /api/journal — those are gated on reports resolving and add a
+  // serial third wave to the cold-load critical path. Stats sections
+  // render their own inline placeholders below until the RPC lands.
+  const loading = userLoading || reportsLoading || snapshotsLoading;
 
   const { mask } = usePrivacy();
 
@@ -339,6 +344,28 @@ export default function DashboardPage() {
         </h1>
       </div>
 
+      {/* Stats-dependent content: render an inline skeleton while the
+          dashboard_stats RPC + /api/journal call are still in flight,
+          rather than flashing the "no bets" empty state to users who
+          actually have bets. */}
+      {!stats ? (
+        <div className="animate-pulse space-y-8">
+          <div className="space-y-3">
+            <div className="h-3 w-32 bg-surface-2 rounded-sm" />
+            <div className="h-14 w-64 bg-surface-2 rounded-sm" />
+            <div className="h-3 w-72 bg-surface-2 rounded-sm" />
+          </div>
+          <div className="flex flex-wrap gap-x-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-3 w-16 bg-surface-2 rounded-sm" />
+                <div className="h-7 w-20 bg-surface-2 rounded-sm" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Onboarding progress tracker — only for users who haven't run a report */}
       {stats && stats.reportCount === 0 && (
         <div className="case-card p-6 mb-8">
@@ -747,6 +774,8 @@ export default function DashboardPage() {
             onSaved={() => setJournalCount(prev => prev + 1)}
           />
         </>
+      )}
+      </>
       )}
     </div>
   );
