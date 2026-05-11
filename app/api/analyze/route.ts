@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from "@sentry/nextjs";
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { classifyArchetype } from '@/lib/archetypes';
@@ -379,8 +380,15 @@ export async function POST(request: Request) {
             .eq('id', user.id);
         }
 
-        // Save report
-        const { data: savedReport, error: insertError } = await supabase
+        // Save report. Use the service-role client specifically for this
+        // INSERT: report_json is a multi-hundred-KB JSON blob, and the
+        // anon role's 3s statement_timeout cancels it (Postgres 57014)
+        // even though the INSERT itself completes in <500ms on a role
+        // without that timeout. service_role inherits the 120s default.
+        // Every other call in this route stays on the user-scoped
+        // `supabase` client so RLS policies remain in effect.
+        const serviceRole = createServiceRoleClient();
+        const { data: savedReport, error: insertError } = await serviceRole
           .from('autopsy_reports')
           .insert({
             user_id: user.id,

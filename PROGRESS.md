@@ -42,7 +42,37 @@
 
 ---
 
-## Current branch: `claude/check-rate-limit-nzypO`
+## Current branch: `claude/fix-insert-timeout-YlbA8`
+
+### Done this session — autopsy_reports INSERT uses service_role
+- **Root cause** (confirmed via `pg_roles` diagnostic in Supabase):
+  `anon` role has `statement_timeout = 3s`; `authenticated`, `service_role`,
+  and `postgres` all have 120s. The 667 KB `report_json` INSERT on
+  `autopsy_reports` was being cancelled at ~3s with Postgres error 57014,
+  even though the INSERT itself completes in <500ms — the role was wrong.
+- **Fix** (`app/api/analyze/route.ts`): imported `createServiceRoleClient`
+  from `lib/supabase-server`; the single `.from('autopsy_reports').insert(...)
+  .select().single()` call now uses a fresh service-role client instead of
+  the user-scoped `supabase` returned by `getAuthenticatedClient`. Every
+  other call in the route — bets fetch, profiles read, progress_snapshots
+  read, discipline_scores insert, profile streak update, autopsy_reports
+  paid-snapshot validation — stays on the user-scoped client so RLS policies
+  remain enforced. Service role bypasses RLS, which is acceptable for the
+  INSERT because the row's `user_id` is set to `user.id` from the
+  authenticated session resolved at the top of the route.
+- **Why not raise the anon statement_timeout instead?** Per user direction —
+  the save isn't slow, the role is wrong. anon's 3s ceiling is intentional
+  protection for the public surface; only this specific server-side INSERT
+  needs to escape it.
+- **Pending verification** (user): `SUPABASE_SERVICE_ROLE_KEY` is set on the
+  Vercel production env (already confirmed previously in
+  `claude/fix-capacitor-ios-bugs-ZTqzz` notes above — needed by
+  `lib/supabase-server.ts:39`). After deploy, test with a fresh JWT + real
+  CSV upload from iOS — expected: INSERT completes in <500ms, full SSE
+  stream finishes with `complete` event, iOS app renders the report
+  end-to-end.
+
+## Previous branch: `claude/check-rate-limit-nzypO`
 
 ### Done this session — diagnostic: comment out progress_snapshots upsert
 - `app/api/analyze/route.ts:469-490`: commented out the `progress_snapshots`
