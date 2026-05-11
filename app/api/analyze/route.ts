@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   // Rate limit: 5 reports per hour
-  if (!(await checkRateLimit(user.id, 5, 60 * 60 * 1000))) {
+  if (!(await checkRateLimit(user.id, 5, 60 * 60 * 1000, user.email))) {
     return NextResponse.json({ error: "You've hit the hourly analysis limit. Try again in a few minutes." }, { status: 429 });
   }
 

@@ -42,7 +42,25 @@
 
 ---
 
-## Current branch: `claude/fix-dashboard-performance-4YOlM`
+## Current branch: `claude/check-rate-limit-nzypO`
+
+### Done this session — rate-limit bypass for andlog0713@gmail.com
+- `lib/rate-limit.ts`: added `RATE_LIMIT_BYPASS_EMAILS` Set with
+  `andlog0713@gmail.com` and an `isBypassed(email)` check that
+  returns `true` (request allowed) before any RPC call. Email comparison
+  is case-insensitive and trimmed; the set is the single source of truth
+  for future bypasses. `checkRateLimit` signature gained an optional
+  trailing `email?: string | null` so callers that don't pass it keep
+  working unchanged.
+- All four callsites now pass `user.email`:
+  `app/api/analyze/route.ts:39`, `app/api/ask-report/route.ts:133`,
+  `app/api/parse-paste/route.ts:90`, `app/api/parse-screenshot/route.ts:58`.
+- Rationale for code-level bypass vs. DB allowlist: keeps the bypass
+  list visible at the call boundary and avoids a second Supabase round-trip
+  on every request just to check an allowlist table. Trade-off: adding a
+  new bypass email requires a deploy. Acceptable for the owner-only use case.
+
+## Previous branch: `claude/fix-dashboard-performance-4YOlM`
 
 ### In progress
 - (none — dashboard cold-load fix shipped, awaiting verification)
