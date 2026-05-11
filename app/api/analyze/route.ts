@@ -467,25 +467,28 @@ export async function POST(request: Request) {
         }
 
         // Save progress snapshot
-        try {
-          await supabase.from('progress_snapshots').upsert({
-            user_id: user.id,
-            snapshot_date: new Date().toISOString().split('T')[0],
-            total_bets: betsToAnalyze.length,
-            total_profit: metricsForDiscipline.summary.total_profit,
-            roi_percent: metricsForDiscipline.summary.roi_percent,
-            win_rate: metricsForDiscipline.summary.win_rate,
-            tilt_score: metricsForDiscipline.emotion_score,
-            avg_stake: metricsForDiscipline.summary.avg_stake,
-            parlay_percent: metricsForDiscipline.parlay_stats.parlay_percent,
-            loss_chase_ratio: metricsForDiscipline.loss_chase_ratio,
-            bankroll_health: metricsForDiscipline.bankroll_health,
-            overall_grade: metricsForDiscipline.summary.overall_grade,
-            discipline_score: disciplineResult?.total ?? null,
-          }, { onConflict: 'user_id,snapshot_date' });
-        } catch (snapErr) {
-          console.error('Failed to save snapshot:', snapErr);
-        }
+        // DIAGNOSTIC 2026-05-11: commented out to test whether this upsert is
+        // the source of the per-function timeout after Postgres statement-timeout
+        // was raised to 120s. Restore after confirming.
+        // try {
+        //   await supabase.from('progress_snapshots').upsert({
+        //     user_id: user.id,
+        //     snapshot_date: new Date().toISOString().split('T')[0],
+        //     total_bets: betsToAnalyze.length,
+        //     total_profit: metricsForDiscipline.summary.total_profit,
+        //     roi_percent: metricsForDiscipline.summary.roi_percent,
+        //     win_rate: metricsForDiscipline.summary.win_rate,
+        //     tilt_score: metricsForDiscipline.emotion_score,
+        //     avg_stake: metricsForDiscipline.summary.avg_stake,
+        //     parlay_percent: metricsForDiscipline.parlay_stats.parlay_percent,
+        //     loss_chase_ratio: metricsForDiscipline.loss_chase_ratio,
+        //     bankroll_health: metricsForDiscipline.bankroll_health,
+        //     overall_grade: metricsForDiscipline.summary.overall_grade,
+        //     discipline_score: disciplineResult?.total ?? null,
+        //   }, { onConflict: 'user_id,snapshot_date' });
+        // } catch (snapErr) {
+        //   console.error('Failed to save snapshot:', snapErr);
+        // }
 
         // Send complete event
         const report = savedReport ?? { report_json: analysis, report_markdown: markdown };
