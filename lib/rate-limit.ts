@@ -1,5 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 
+const RATE_LIMIT_BYPASS_EMAILS = new Set<string>([
+  'andlog0713@gmail.com',
+]);
+
+function isBypassed(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return RATE_LIMIT_BYPASS_EMAILS.has(email.trim().toLowerCase());
+}
+
 /**
  * Atomic rate limit check using a Postgres RPC function.
  * Returns true if the request is within limits, false if rate limited.
@@ -8,8 +17,11 @@ import { createServerClient } from '@supabase/ssr';
 export async function checkRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  email?: string | null
 ): Promise<boolean> {
+  if (isBypassed(email)) return true;
+
   try {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

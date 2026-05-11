@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'report_id is required.' }, { status: 400 });
     }
 
-    if (!(await checkRateLimit(`ask-report:${user.id}`, 15, 60 * 60 * 1000))) {
+    if (!(await checkRateLimit(`ask-report:${user.id}`, 15, 60 * 60 * 1000, user.email))) {
       return NextResponse.json(
         { error: 'You can ask 15 questions per hour. Try again later.' },
         { status: 429 }

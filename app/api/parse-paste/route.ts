@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!(await checkRateLimit(user.id + ':parse', 5, 60 * 60 * 1000))) {
+    if (!(await checkRateLimit(user.id + ':parse', 5, 60 * 60 * 1000, user.email))) {
       return NextResponse.json(
         { error: "You've hit the paste/screenshot parsing limit. Try again in a few minutes." },
         { status: 429 }
