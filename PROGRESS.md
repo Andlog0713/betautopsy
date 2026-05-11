@@ -44,6 +44,16 @@
 
 ## Current branch: `claude/check-rate-limit-nzypO`
 
+### Done this session — diagnostic: comment out progress_snapshots upsert
+- `app/api/analyze/route.ts:469-490`: commented out the `progress_snapshots`
+  upsert + its surrounding try/catch. Hypothesis being tested: now that
+  Postgres statement-timeout is raised to 120s, this upsert is the call
+  blocking long enough to push the Vercel function past its per-function
+  limit. The existing try/catch only swallows thrown errors — it doesn't
+  break out of a hung `await` — so commenting is the meaningful diagnostic.
+- TODO: restore the block once we confirm or rule out this as the
+  bottleneck. Note left in code referencing this rollback.
+
 ### Done this session — rate-limit bypass for andlog0713@gmail.com
 - `lib/rate-limit.ts`: added `RATE_LIMIT_BYPASS_EMAILS` Set with
   `andlog0713@gmail.com` and an `isBypassed(email)` check that
