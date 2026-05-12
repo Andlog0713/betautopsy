@@ -42,7 +42,50 @@
 
 ---
 
-## Current branch: `claude/fix-insert-timeout-YlbA8`
+## Current branch: `claude/fix-gateway-timeouts-AZKJl`
+
+### In progress — diagnosing MIDDLEWARE_INVOCATION_TIMEOUT outage
+- **Symptom:** betautopsy.com homepage + sign-ins + iOS `/api/analyze` returning
+  504 MIDDLEWARE_INVOCATION_TIMEOUT. Started ~03:12 UTC (`/api/analyze`),
+  cascaded to `/dashboard` at 03:20 UTC, homepage `/` at 03:21 UTC. Last
+  observed at 03:39 UTC with `Ft [AuthUnknownError]` thrown from middleware.
+- **Deploys since last-good `3XMJnFxmu` (yesterday 19:03 EDT, anon→service_role
+  fix):** PR #24 `feat(case-study)` at 22:27 EDT, then **revert via PR #25**
+  at 22:39 EDT. Current production (`9RQtJpw`) is the revert — runtime
+  behavior identical to `3XMJnFxmu`. Neither touched `middleware.ts` or its
+  imports. **Vercel rollback won't help.**
+- **Root cause (high confidence): Supabase auth gateway degraded.** Supabase
+  api logs show repeated HTTP 522 (Cloudflare→origin timeout) and 524
+  (origin took >100s) on `/auth/v1/user`, `/auth/v1/token?grant_type=refresh_token`,
+  `/auth/v1/token?grant_type=password`, plus `/rest/v1/autopsy_reports` and
+  `/rest/v1/error_logs`. Internal `/user` requests complete in 3–340ms when
+  they reach origin — perimeter is the failure surface. Same upstream as
+  yesterday's INSERT timeout, escalated. Free-plan project running hot.
+- **Why middleware times out (not just slows):** `middleware.ts:64`
+  `await supabase.auth.getUser()` runs on every non-bypassed route including
+  `/`. When the perimeter returns 522 the supabase-js client retries
+  internally; on a stuck socket it hangs until the Vercel ~25s middleware
+  budget trips → 504. `/api/analyze` cascades because `getAuthenticatedClient`
+  also calls `auth.getUser()` on every request.
+- **Notably:** `/` is not in `publicRoutes` (`middleware.ts:35`). The
+  marketing homepage is tied to Supabase availability even though it has
+  no per-user content. Adding `'/'` to the bypass list would make the
+  homepage immune to Supabase outages without touching auth-gated routes.
+
+### Recommended path (awaiting user direction)
+1. Don't roll back in Vercel — current code === last-good code.
+2. Check status.supabase.com manually (WebFetch blocked by Cloudflare WAF).
+3. If incident isn't posted but 522s persist, consider Supabase support
+   ticket / plan upgrade — the cascade (yesterday's INSERT, today's auth)
+   suggests this instance is throttled.
+4. **Optional hotfix on this branch:** add `'/'` to middleware bypass list +
+   wrap `supabase.auth.getUser()` in a `Promise.race` 800ms timeout that
+   degrades to anonymous on miss. Keeps the marketing homepage and public
+   routes loadable while Supabase recovers. Doesn't unstick `/api/analyze`
+   (auth + db are mandatory there) but prevents the 504 from being the first
+   thing a new visitor sees.
+
+## Previous branch: `claude/fix-insert-timeout-YlbA8`
 
 ### Done this session — autopsy_reports INSERT uses service_role
 - **Root cause** (confirmed via `pg_roles` diagnostic in Supabase):

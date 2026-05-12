@@ -27,7 +27,10 @@
       "mcp__d27adcb9-0eee-4460-80fb-1fbf3d35269f__execute_sql",
       "Bash(grep -qxF 'next.config.analyze.mjs' .git/info/exclude || echo 'next.config.analyze.mjs' >> .git/info/exclude && cat .git/info/exclude)",
       "Bash(grep -qxF 'next.config.original.js' .git/info/exclude || echo 'next.config.original.js' >> .git/info/exclude && cat .git/info/exclude)",
-      "Bash(cp \"/root/.claude/uploads/069a81d8-29ef-4776-b164-c7db788b7402/bb7e1c5d-IOS_POLISH.md\" /home/user/betautopsy/IOS_POLISH.md && wc -l /home/user/betautopsy/IOS_POLISH.md)"
+      "Bash(cp \"/root/.claude/uploads/069a81d8-29ef-4776-b164-c7db788b7402/bb7e1c5d-IOS_POLISH.md\" /home/user/betautopsy/IOS_POLISH.md && wc -l /home/user/betautopsy/IOS_POLISH.md)",
+      "mcp__d27adcb9-0eee-4460-80fb-1fbf3d35269f__get_project",
+      "mcp__fe7307ab-7f46-4dca-88c4-6f6505b16d3a__get_runtime_logs",
+      "mcp__d27adcb9-0eee-4460-80fb-1fbf3d35269f__get_logs"
     ]
   }
 }
