@@ -104,11 +104,3 @@ Use test card `4242 4242 4242 4242` for payments.
 
 - **Weekly Digest**: Tuesdays at 2pm UTC — `/api/digest`
 - **Streak Freeze Refill**: 1st of each month — `/api/freeze-refill`
-
-## `/case-study`
-
-Long-scroll operator page at `/case-study`, targeted at CRM, lifecycle, paid-social, and growth-marketing hiring managers at FanDuel, DraftKings, ESPN, SeatGeek, Fanatics, and bet365. Not a developer portfolio — leads with the PrizePicks lifecycle/CRM work and the BetAutopsy GTM, with the stack relegated to one tasteful "built with" line.
-
-Pair file: `app/case-study/COPY.md` — same narrative as plain markdown, intended to be pasted in pieces into LinkedIn posts and cover letters. Update copy in both places when the story shifts.
-
-Open `TK` placeholders (LinkedIn URL, demo video URL, product screenshots, the reactivation A/B primary metric) are intentional and clearly marked — fill them in before sharing the link.
