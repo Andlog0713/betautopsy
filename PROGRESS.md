@@ -42,7 +42,41 @@
 
 ---
 
-## Current branch: `claude/fix-insert-timeout-YlbA8`
+## Current branch: `claude/add-case-study-page-8DxCI`
+
+### Done this session — `/case-study` operator page
+- New route `app/case-study/page.tsx` (App Router, server component) —
+  single long-scroll page aimed at CRM / lifecycle / paid-social / growth
+  hiring managers at FanDuel, DraftKings, ESPN, SeatGeek, Fanatics, bet365.
+  Explicitly NOT a developer portfolio: lead is the PrizePicks operator
+  story + BetAutopsy GTM, the stack gets one tasteful "built with" line.
+- 8 sections per scope: hero, the bet (TAM thesis), what I built (incl.
+  demo-video slot and 3 screenshot slots, all with TK placeholders), GTM
+  distribution (Meta / TikTok / Reddit / cold email), PrizePicks chapter
+  (reactivation A/B as the signature case study), background (In Mets We
+  Trust, brief), built-with line, contact (LinkedIn / email / live link).
+- Pair file `app/case-study/COPY.md` — same narrative as plain markdown
+  for pasting into LinkedIn / cover letters / recruiter outreach. Both
+  files must move together when copy changes.
+- Reuses `NavBar`, `Footer`, `AnimatedSection`, `btn-primary`,
+  `btn-secondary`, `evidence-tag`, `case-header`, `data-value`,
+  `data-label`. No new shared components needed. No off-palette colors,
+  no backdrop-blur, no soft shadows, no oversized radii — design-system
+  checker reports zero violations on the new file.
+- README updated with a `/case-study` section explaining the page's
+  audience and the COPY.md pair-file convention.
+
+### Open TKs (intentional, marked in code)
+- `DEMO_VIDEO_URL` at top of `page.tsx` — drop the hosted demo video URL.
+- `SCREENSHOTS.report / .archetype / .pricing` — drop product screenshots
+  into `/public/case-study/` and reference them.
+- LinkedIn URL — replaced in two places in `page.tsx` and once in
+  `COPY.md`. Search for `/in/andrew-tk/`.
+- TAM citation for the "~70% of bettors don't track" figure.
+- Reactivation A/B primary metric — placeholder reads
+  `[TK — primary metric: reactivation rate / open / placed-a-lineup lift]`.
+
+## Previous branch: `claude/fix-insert-timeout-YlbA8`
 
 ### Done this session — autopsy_reports INSERT uses service_role
 - **Root cause** (confirmed via `pg_roles` diagnostic in Supabase):
