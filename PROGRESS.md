@@ -85,6 +85,19 @@
    (auth + db are mandatory there) but prevents the 504 from being the first
    thing a new visitor sees.
 
+### Update — Supabase upgraded to Pro, project migrating
+User upgraded the project to Pro. Supabase dashboard now reports project
+status "Unhealthy" with Database / PostgREST / Auth / Storage in
+"migrating" state; Realtime + Edge Functions already healthy. Note:
+"Recently restored projects can take up to 5 minutes to become fully
+operational." Standing by — no code/infra actions during migration.
+
+Working hypothesis: 522/524 pattern was shared-tenant CDN variance on the
+free plan, and the Pro migration to dedicated capacity resolves it. If
+the 522/524 pattern returns within 24 h post-migration, Pro alone was
+not the fix and we need to investigate further (candidates: middleware
+hot-path itself, supabase-js client config, a specific endpoint).
+
 ## Previous branch: `claude/fix-insert-timeout-YlbA8`
 
 ### Done this session — autopsy_reports INSERT uses service_role
