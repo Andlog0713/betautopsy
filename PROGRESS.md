@@ -98,6 +98,21 @@ the 522/524 pattern returns within 24 h post-migration, Pro alone was
 not the fix and we need to investigate further (candidates: middleware
 hot-path itself, supabase-js client config, a specific endpoint).
 
+### Update — actual root cause: Disk IO Budget exhaustion on Nano compute
+Supabase dashboard surfaced the real root cause once Pro unlocked the
+compute panel: **Disk IO Budget exhaustion on the Nano tier**, not
+shared-tenant CDN variance. Disk IO ceiling is the gating resource;
+once the budget is spent, Postgres + the auth service back off / queue,
+the perimeter eventually returns 522/524 because origin isn't answering
+in time. Explains both yesterday's INSERT timeout (single 667 KB row write
+spiked IO) and tonight's auth outage (sustained `/auth/v1/user` traffic
+hit the same wall).
+
+User took the free Micro compute upgrade on top of Pro. Project
+restarting to apply the compute resize (2–5 min). Pro plan + Micro
+compute together = dedicated CPU + higher disk IO ceiling. Structural
+fix for both incidents. Standing by for restart.
+
 ## Previous branch: `claude/fix-insert-timeout-YlbA8`
 
 ### Done this session — autopsy_reports INSERT uses service_role
