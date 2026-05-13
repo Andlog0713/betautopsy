@@ -4,7 +4,6 @@ import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { classifyArchetype } from '@/lib/archetypes';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import { parseCSV } from '@/lib/csv-parser';
@@ -398,26 +397,6 @@ export async function POST(request: Request) {
         analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
-
-        // Data-driven archetype classifier (overrides engine's heuristic archetype)
-        const settledBets = betsToAnalyze.filter(
-          (b) => b.result === 'win' || b.result === 'loss'
-        ).length;
-        const dataArchetype = classifyArchetype({
-          emotionScore: analysis.emotion_score ?? 0,
-          disciplineScore: disciplineResult?.total ?? null,
-          roiPercent: metricsForDiscipline.summary.roi_percent,
-          lossChaseRatio: metricsForDiscipline.loss_chase_ratio,
-          parlayPercent: metricsForDiscipline.parlay_stats.parlay_percent,
-          parlayRoi: metricsForDiscipline.parlay_stats.parlay_roi,
-          settledBets,
-        });
-        if (dataArchetype) {
-          analysis.betting_archetype = {
-            name: dataArchetype.name,
-            description: dataArchetype.description,
-          };
-        }
 
         // Check if user took the quiz — store quiz archetype for comparison
         try {
