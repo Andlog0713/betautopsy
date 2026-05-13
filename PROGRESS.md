@@ -42,7 +42,55 @@
 
 ---
 
-## Current branch: `claude/api-analyze-multipart-ingest`
+## Current branch: `claude/path-a-archetype-rename`
+
+### Done this session — strip `lib/archetypes.ts` override on `/api/analyze`
+- **Root cause:** Engine Phase B (commit `c657565`) emits V3 archetype names
+  from `determineArchetype()` in `lib/autopsy-engine.ts` ("The Sharp",
+  "The Tilter", "The Grinder" [chalk], "The Lottery Bettor", "The Methodical",
+  "The Action Junkie", "The Chaser" — 7 distinct non-DFS names). But
+  `/api/analyze` lines 402–420 then ran `classifyArchetype` from
+  `lib/archetypes.ts` over the same engine-computed metrics and **overwrote**
+  `analysis.betting_archetype` with the legacy 5-name taxonomy (The Surgeon,
+  The Heat Chaser, The Parlay Dreamer, The Grinder [disciplined-process
+  variant], The Gut Bettor). iOS Chapter 1 verdict read the overwritten name
+  via `ChapterTheVerdictView.swift:29 → analysis.bettingArchetype?.name`,
+  which is why every iOS report displayed the same legacy archetype (usually
+  "The Gut Bettor" — the override's default fallback for ≥20 settled bets).
+- **Fix** (`app/api/analyze/route.ts`, PR #28): removed the `classifyArchetype`
+  import and the 19-line override block at the post-engine merge point. The
+  engine's V3 archetype now persists unchanged on `autopsy_reports.report_json
+  .betting_archetype`. No `lib/archetypes.ts` change — the three web consumers
+  of `getArchetypeByName` (`AutopsyReport.tsx`, `ArchetypeShareCard.tsx`,
+  `ShareModal.tsx`) keep importing it as a legacy-taxonomy lookup table and
+  degrade gracefully via existing `if (!arch) return null` guards.
+- **Premise correction from the Notion launch plan:** the plan described
+  `lib/archetypes.ts` as a "quiz classifier" that needed renaming to avoid
+  clobbering. It isn't — it's a bet-data classifier that consumes
+  engine-computed metrics. The actual quiz onboarding flow
+  (`app/quiz/QuizClient.tsx`, `app/quiz/quick/QuickQuizClient.tsx`) uses
+  `lib/quiz-engine.ts` (separate taxonomy: Natural, Sharp Sleeper, Heated
+  Bettor, Chalk Grinder, Parlay Dreamer, Sniper, Volume Warrior, Degen King,
+  The Grinder). Onboarding is unaffected by this strip.
+- **Name collision (intentional):** engine emits "The Grinder" (chalk profile
+  per V3 — heavy favorites, paying juice) which collides with
+  `lib/archetypes.ts`'s pre-strip "The Grinder" (disciplined-process profile —
+  controlled emotions, disciplined sizing). Post-strip the name persists but
+  its meaning is the engine's V3 definition. This was knowingly accepted in
+  PR #28 rather than renaming the engine output.
+- **Web-side regression (accepted, deferred to v1.1 web rebuild):** colored
+  Verdict badge in `AutopsyReport.tsx:794-817` and archetype share card in
+  `ShareModal.tsx` will return `null` for ≥20-bet reports because
+  `getArchetypeByName` doesn't know the V3 names. Subject Classification card
+  at `AutopsyReport.tsx:854-862` stays alive — it reads
+  `betting_archetype.name` + `.description` directly, both set by the engine.
+- **Pending verification** (user, on iPhone): pre-merge SQL to capture
+  current legacy archetype names → upload chase-heavy CSV → confirm new row's
+  `betting_archetype.name` is an engine V3 name → upload parlay-heavy CSV →
+  confirm it differs from chase-heavy result → iOS Chapter 1 displays engine
+  V3 name, not "The Gut Bettor".
+
+## Previous branch: `claude/api-analyze-multipart-ingest`
 
 ### Done this session — wire CSV ingestion into `/api/analyze` for iOS
 - **Root cause:** iOS `AnalyzeClient.swift` posts `multipart/form-data` (file +
@@ -214,6 +262,14 @@ follow-up — needs a `useReportsSummary` thin hook or a server-side
 denormalization of summary fields onto `autopsy_reports` rows.
 
 ### Parked / next branch
+- **Audit canonical V3 archetype list.** Phase 0 of PR #28 found 7 distinct
+  V3 names in `determineArchetype()` (non-DFS path) but the Notion launch
+  plan referenced "9 V3 archetypes." Read both `determineArchetype` and
+  `determineDFSArchetype` end-to-end in `lib/autopsy-engine.ts`, dedupe
+  name collisions across the two paths, and produce a definitive
+  canonical list in a follow-up Notion page. Two candidate missing names
+  may be DFS-specific variants that weren't enumerated in the Phase 0
+  recon. Surface gaps if any.
 - **Native iOS app pivot to React Native.** User scrapping the Capacitor
   build entirely; restarting as a React Native app. iOS-PR-1 Phase 1, 2, 4
   CSS/splash/storage work is technically still in this codebase but no
