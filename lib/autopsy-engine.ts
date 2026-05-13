@@ -736,6 +736,64 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     biases.push({ bias_name: 'Favorite-Heavy Lean', severity: sev, data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%`, evidence_bet_ids: losingFavs });
   }
 
+  // Category Concentration Leak — promote a deeply negative category into a bias.
+  // Pulls from existing categoryRoi which already covers sport, bet_type, sport+bet_type, and sportsbook keys.
+  if (totalStaked > 0) {
+    const leakyCategories = categoryRoi
+      .filter((c) => c.count >= 10 && c.roi <= -20 && Math.abs(c.profit) >= totalStaked * 0.05)
+      .sort((a, b) => a.profit - b.profit);
+    if (leakyCategories.length > 0) {
+      const worst = leakyCategories[0];
+      const sev = worst.roi <= -50 ? 'critical' : worst.roi <= -35 ? 'high' : worst.roi <= -25 ? 'medium' : 'low';
+      const leakEvidence = settled
+        .filter((b) => `${b.sport} ${b.bet_type}` === worst.category || b.sport === worst.category || b.bet_type === worst.category || b.sportsbook === worst.category)
+        .filter((b) => b.result === 'loss')
+        .sort((a, b) => Number(b.stake) - Number(a.stake))
+        .slice(0, 8)
+        .map((b) => b.id);
+      biases.push({
+        bias_name: 'Category Concentration Leak',
+        severity: sev,
+        data: `${worst.category}: ${worst.count} bets at ${worst.roi.toFixed(1)}% ROI ($${worst.profit.toFixed(0)})`,
+        evidence_bet_ids: leakEvidence,
+      });
+    }
+  }
+
+  // Late-Night Betting — 23:00-04:59 window. Skip if the CSV has no time-of-day data
+  // (avoids false positives when all bets land at midnight UTC from date-only timestamps).
+  const midnightOnlyCount = settled.filter((b) => {
+    const d = new Date(b.placed_at);
+    return d.getHours() === 0 && d.getMinutes() === 0;
+  }).length;
+  const hasTimeOfDay = settled.length >= 5 && midnightOnlyCount / settled.length < 0.8;
+  if (hasTimeOfDay) {
+    const lateNightBets = settled.filter((b) => {
+      const h = new Date(b.placed_at).getHours();
+      return h >= 23 || h < 5;
+    });
+    if (lateNightBets.length >= 5) {
+      const lateNightPct = (lateNightBets.length / settled.length) * 100;
+      const lateNightStaked = lateNightBets.reduce((s, b) => s + Number(b.stake), 0);
+      const lateNightProfit = lateNightBets.reduce((s, b) => s + Number(b.profit), 0);
+      const lateNightRoi = lateNightStaked > 0 ? (lateNightProfit / lateNightStaked) * 100 : 0;
+      if (lateNightPct >= 25 && lateNightRoi < -10) {
+        const sev = lateNightRoi <= -30 ? 'high' : lateNightRoi <= -20 ? 'medium' : 'low';
+        const lateNightLosingIds = lateNightBets
+          .filter((b) => b.result === 'loss')
+          .sort((a, b) => Number(b.stake) - Number(a.stake))
+          .slice(0, 8)
+          .map((b) => b.id);
+        biases.push({
+          bias_name: 'Late-Night Betting',
+          severity: sev,
+          data: `${lateNightPct.toFixed(0)}% of bets after 11pm, ROI ${lateNightRoi.toFixed(1)}% ($${lateNightProfit.toFixed(0)})`,
+          evidence_bet_ids: lateNightLosingIds,
+        });
+      }
+    }
+  }
+
   // Overall grade (deterministic)
   let gradeScore = 100;
   // Emotion score penalty
@@ -856,6 +914,20 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
   }
 
+  // Emotional Session Pattern — promote heatedSessionPercent into a bias
+  // once tilt is exceptional (after Fix 2 tightening). Needs sessionDetection.
+  if (result.sessionDetection && result.sessionDetection.totalSessions >= 5) {
+    const heatedPct = result.sessionDetection.heatedSessionPercent;
+    if (heatedPct >= 25) {
+      const sev = heatedPct >= 50 ? 'critical' : heatedPct >= 40 ? 'high' : heatedPct >= 30 ? 'medium' : 'low';
+      result.biases_detected.push({
+        bias_name: 'Emotional Session Pattern',
+        severity: sev,
+        data: `${heatedPct.toFixed(0)}% of ${result.sessionDetection.totalSessions} sessions classified as heated`,
+      });
+    }
+  }
+
   // Bet-by-bet annotations
   if (sorted.length > 0 && result.sessionDetection) {
     result.annotations = annotateBets(sorted, result.sessionDetection.sessions, medianStake, result.dfs);
@@ -872,40 +944,40 @@ function determineArchetype(
   const hasProfitableCats = categoryRoi.some((c) => c.roi > 0 && c.count >= 5);
   const sportCount = new Set(categoryRoi.filter((c) => !c.category.includes(' ')).map((c) => c.category)).size;
 
-  // The Natural — genuinely sharp
+  // The Sharp — genuinely sharp (low emotion, +ROI, diversified)
   if (emotionScore <= 30 && roi > 0 && lossChaseRatio < 1.2 && sportCount >= 2) {
-    return { name: 'The Natural', description: "Low emotion, positive ROI, diversified. You're genuinely sharp." };
+    return { name: 'The Sharp', description: "Low emotion, positive ROI, diversified. You're genuinely sharp." };
   }
-  // Sharp Sleeper — has edges but sizing issues
+  // The Sharp (Sleeper variant) — has edges but sizing issues
   if (hasProfitableCats && roi > -5 && stakeCv >= 0.8) {
-    return { name: 'Sharp Sleeper', description: "You've got real edges but your sizing is holding you back." };
+    return { name: 'The Sharp', description: "You've got real edges but your sizing is holding you back." };
   }
-  // Heated Bettor — decent picks, emotions ruin it
+  // The Tilter — decent picks, emotions ruin it
   if (hasProfitableCats && emotionScore > 55 && lossChaseRatio > 1.4) {
-    return { name: 'Heated Bettor', description: "Your strategy has promise but your emotions are eating the profit." };
+    return { name: 'The Tilter', description: "Your strategy has promise but your emotions are eating the profit." };
   }
-  // Chalk Grinder — heavy favorites, paying juice
+  // The Grinder — heavy favorites, paying juice (Chalk profile)
   if (favPct >= 65 && stakeCv < 0.8 && roi < 0) {
-    return { name: 'Chalk Grinder', description: "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll." };
+    return { name: 'The Grinder', description: "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll." };
   }
-  // Parlay Dreamer — heavy parlays
+  // The Lottery Bettor — heavy parlays
   if (parlayPct >= 40) {
-    return { name: 'Parlay Dreamer', description: "The big ticket is always calling. Your straight bet game is probably better than you think." };
+    return { name: 'The Lottery Bettor', description: "The big ticket is always calling. Your straight bet game is probably better than you think." };
   }
-  // Sniper — selective bettor
+  // The Methodical — selective bettor
   if (totalBets < 50 && sportCount <= 2) {
-    return { name: 'Sniper', description: "Selective and focused. You pick your spots. Now it's about sharpening the edge." };
+    return { name: 'The Methodical', description: "Selective and focused. You pick your spots. Now it's about sharpening the edge." };
   }
-  // Volume Warrior — lots of bets, flat stakes
+  // The Action Junkie — lots of bets, flat stakes
   if (totalBets >= 150 && stakeCv < 0.8) {
-    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach. Now find the leaks in the volume." };
+    return { name: 'The Action Junkie', description: "You grind it out with consistent sizing. It's a sustainable approach. Now find the leaks in the volume." };
   }
-  // Degen King — high variance, mixed, emotional
+  // The Chaser — high variance, mixed, emotional
   if (stakeCv >= 1.0 && parlayPct >= 20 && emotionScore > 40) {
-    return { name: 'Degen King', description: "You're here for the ride. Embrace it , but know which parts of the ride are costing you." };
+    return { name: 'The Chaser', description: "You're here for the ride. Embrace it, but know which parts of the ride are costing you." };
   }
-  // Default
-  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation. The analysis shows where to build on it." };
+  // Default — The Methodical (V3 fallback)
+  return { name: 'The Methodical', description: "Consistent and steady. You've got a foundation. The analysis shows where to build on it." };
 }
 
 function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: number): { name: string; description: string } {
@@ -913,34 +985,37 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   const highPickPct = dm.pickCountDistribution.reduce((s, d) => s + d.count, 0) > 0
     ? (highPickEntries.reduce((s, d) => s + d.count, 0) / dm.pickCountDistribution.reduce((s, d) => s + d.count, 0)) * 100 : 0;
 
-  // Multiplier Chaser — high pick count + bad ROI on high picks
+  // The Lottery Bettor — high pick count + bad ROI on high picks (Multiplier Chaser variant)
   if (dm.avgPickCount > 4.5 && dm.highPickROI < -40) {
-    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket , and it performs like one too." };
+    return { name: 'The Lottery Bettor', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket, and it performs like one too." };
   }
-  // All-or-Nothing — Power heavy + Flex is better
+  // The Lottery Bettor — Power heavy + Flex is better (All-or-Nothing variant)
   if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
     const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
     const powerPct = totalPF > 0 ? (dm.powerVsFlex.powerCount / totalPF) * 100 : 0;
     if (powerPct > 65 && dm.powerVsFlex.flexROI > dm.powerVsFlex.powerROI) {
-      return { name: 'All-or-Nothing Player', description: "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing." };
+      return { name: 'The Lottery Bettor', description: "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing." };
     }
   }
-  // Loyalty Bettor — player concentration + emotional
+  // The Methodical — player concentration + emotional (Loyalty Bettor doesn't map cleanly to V3)
   const topPlayer = dm.playerConcentration[0];
   if (topPlayer && topPlayer.percent >= 25 && emotionScore > 45) {
-    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy. It's a relationship.` };
+    return { name: 'The Methodical', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy. It's a relationship.` };
   }
-  // Fall through to standard archetypes based on discipline/emotion
+  // The Sharp — low emotion, controlled sizing
   if (emotionScore <= 30 && stakeCv < 0.8) {
-    return { name: 'The Natural', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
+    return { name: 'The Sharp', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
   }
+  // The Tilter — emotional + chasing bigger multipliers
   if (emotionScore > 55 && dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2) {
-    return { name: 'Heated Bettor', description: "Your reads aren't bad , but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
+    return { name: 'The Tilter', description: "Your reads aren't bad, but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
   }
+  // The Lottery Bettor — high-pick fallback
   if (highPickPct > 60) {
-    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
+    return { name: 'The Lottery Bettor', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
   }
-  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation. The analysis shows where to build on it." };
+  // Default — The Methodical (V3 fallback)
+  return { name: 'The Methodical', description: "Steady and consistent. You've got a foundation. The analysis shows where to build on it." };
 }
 
 // ── Discipline Score Calculator ──
@@ -1769,18 +1844,21 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     deductions.sort((a, b) => b.points - a.points);
     const gradeReasons = deductions.slice(0, 3).map(d => d.reason);
 
-    // Heated detection
+    // Heated detection.
+    // Previous predicate fired on any session at grade D/F, which dragged tilt rate
+    // to ~75% on real CSVs (any moderately busy losing session got auto-tilt).
+    // Tightened to require either grade F outright, or multi-signal confluence.
     const isHeated =
-      (grade === 'D' || grade === 'F') ||
-      (stakeEscalation > 2.0 && chasedAfterLoss) ||
-      (betsPerHour > 4 && longestLossStreak >= 3) ||
-      (sessionBets.length >= 8 && roi < -25);
+      (grade === 'F') ||
+      (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) ||
+      (betsPerHour > 5 && longestLossStreak >= 4) ||
+      (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss);
 
     const heatSignals: string[] = [];
-    if (grade === 'D' || grade === 'F') heatSignals.push(`Session grade: ${grade}`);
-    if (stakeEscalation > 2.0 && chasedAfterLoss) heatSignals.push('Stakes more than doubled while chasing losses');
-    if (betsPerHour > 4 && longestLossStreak >= 3) heatSignals.push('Rapid-fire betting during a loss streak');
-    if (sessionBets.length >= 8 && roi < -25) heatSignals.push('Extended session with heavy losses');
+    if (grade === 'F') heatSignals.push('Session grade: F');
+    if (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) heatSignals.push('Stakes more than doubled while chasing losses');
+    if (betsPerHour > 5 && longestLossStreak >= 4) heatSignals.push('Rapid-fire betting during a loss streak');
+    if (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss) heatSignals.push('Extended session with heavy losses while chasing');
 
     return {
       id,
