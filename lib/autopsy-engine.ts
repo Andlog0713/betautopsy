@@ -1841,18 +1841,21 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     deductions.sort((a, b) => b.points - a.points);
     const gradeReasons = deductions.slice(0, 3).map(d => d.reason);
 
-    // Heated detection
+    // Heated detection.
+    // Previous predicate fired on any session at grade D/F, which dragged tilt rate
+    // to ~75% on real CSVs (any moderately busy losing session got auto-tilt).
+    // Tightened to require either grade F outright, or multi-signal confluence.
     const isHeated =
-      (grade === 'D' || grade === 'F') ||
-      (stakeEscalation > 2.0 && chasedAfterLoss) ||
-      (betsPerHour > 4 && longestLossStreak >= 3) ||
-      (sessionBets.length >= 8 && roi < -25);
+      (grade === 'F') ||
+      (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) ||
+      (betsPerHour > 5 && longestLossStreak >= 4) ||
+      (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss);
 
     const heatSignals: string[] = [];
-    if (grade === 'D' || grade === 'F') heatSignals.push(`Session grade: ${grade}`);
-    if (stakeEscalation > 2.0 && chasedAfterLoss) heatSignals.push('Stakes more than doubled while chasing losses');
-    if (betsPerHour > 4 && longestLossStreak >= 3) heatSignals.push('Rapid-fire betting during a loss streak');
-    if (sessionBets.length >= 8 && roi < -25) heatSignals.push('Extended session with heavy losses');
+    if (grade === 'F') heatSignals.push('Session grade: F');
+    if (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) heatSignals.push('Stakes more than doubled while chasing losses');
+    if (betsPerHour > 5 && longestLossStreak >= 4) heatSignals.push('Rapid-fire betting during a loss streak');
+    if (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss) heatSignals.push('Extended session with heavy losses while chasing');
 
     return {
       id,
