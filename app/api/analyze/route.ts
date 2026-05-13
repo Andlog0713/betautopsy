@@ -7,6 +7,8 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { classifyArchetype } from '@/lib/archetypes';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
+import { parseCSV } from '@/lib/csv-parser';
+import { importBets } from '@/lib/import-bets';
 import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
 // 5-minute Vercel function timeout. Default (10s edge / 60s serverless on
@@ -64,17 +66,80 @@ export async function POST(request: Request) {
   let sportsbook: string | null = null;
   let filterLabel = '';
   let paidSnapshotId: string | null = null;
-  try {
-    const body = await request.json();
-    if (body.report_type) reportType = body.report_type;
-    if (body.date_from) dateFrom = body.date_from;
-    if (body.date_to) dateTo = body.date_to;
-    if (body.upload_id) uploadIds = [body.upload_id];
-    if (body.upload_ids && Array.isArray(body.upload_ids)) uploadIds = body.upload_ids;
-    if (body.sportsbook) sportsbook = body.sportsbook;
-    if (body.paid_snapshot_id) paidSnapshotId = body.paid_snapshot_id;
-  } catch {
-    // No body or invalid JSON is fine
+
+  // iOS posts multipart/form-data (file + report_type). Web posts JSON.
+  // The multipart branch parses + inserts bets, then falls through to the
+  // shared analysis flow below; the JSON branch is unchanged.
+  const contentType = request.headers.get('content-type') ?? '';
+  const isMultipart = contentType.toLowerCase().startsWith('multipart/form-data');
+
+  if (isMultipart) {
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (err) {
+      logErrorServer(err, { path: '/api/analyze', metadata: { stage: 'formdata-parse' } });
+      return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
+    }
+
+    const file = formData.get('file');
+    if (!file || typeof file === 'string') {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+    const csvFile = file as File;
+
+    const rt = formData.get('report_type');
+    if (typeof rt === 'string' && (rt === 'snapshot' || rt === 'full' || rt === 'weekly' || rt === 'quick')) {
+      reportType = rt;
+    }
+
+    // Same validation as /api/upload — .csv suffix or text/csv MIME, 10MB cap.
+    if (!csvFile.name.endsWith('.csv') && csvFile.type !== 'text/csv') {
+      return NextResponse.json({ error: 'Only CSV files are accepted.' }, { status: 400 });
+    }
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (csvFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 413 });
+    }
+
+    const text = await csvFile.text();
+    const { bets: parsedBets, errors: parseErrors } = parseCSV(text);
+
+    if (parsedBets.length === 0) {
+      const firstSpecificError = parseErrors.find((e) => e && e.length > 0);
+      const detail = firstSpecificError ?? "We couldn't read any bets from this file.";
+      return NextResponse.json({ error: detail, errors: parseErrors }, { status: 400 });
+    }
+
+    try {
+      const importResult = await importBets(supabase, user.id, parsedBets, csvFile.name);
+      // bets_imported === 0 && duplicates_skipped > 0 is the silent-dedup path —
+      // user re-uploaded the same CSV; fall through to analysis on existing bets.
+      // bets_imported === 0 && duplicates_skipped === 0 means nothing landed AND
+      // nothing was deduped — real failure, return a pre-stream 400.
+      if (importResult.bets_imported === 0 && importResult.duplicates_skipped === 0) {
+        return NextResponse.json(
+          { error: 'Failed to import bets.', errors: importResult.errors },
+          { status: 400 }
+        );
+      }
+    } catch (err) {
+      logErrorServer(err, { path: '/api/analyze', metadata: { stage: 'import-bets' } });
+      return NextResponse.json({ error: 'Failed to import bets.' }, { status: 500 });
+    }
+  } else {
+    try {
+      const body = await request.json();
+      if (body.report_type) reportType = body.report_type;
+      if (body.date_from) dateFrom = body.date_from;
+      if (body.date_to) dateTo = body.date_to;
+      if (body.upload_id) uploadIds = [body.upload_id];
+      if (body.upload_ids && Array.isArray(body.upload_ids)) uploadIds = body.upload_ids;
+      if (body.sportsbook) sportsbook = body.sportsbook;
+      if (body.paid_snapshot_id) paidSnapshotId = body.paid_snapshot_id;
+    } catch {
+      // No body or invalid JSON is fine
+    }
   }
 
   // Verify paid report: free users requesting 'full' must have a paid snapshot
@@ -419,6 +484,16 @@ export async function POST(request: Request) {
           sendEvent('error', { error: 'Report generated but failed to save. Please try again.' });
           controller.close();
           return;
+        }
+
+        // Emit a durable handle for the new report row before any further SSE
+        // event. iOS doesn't consume `report_started` yet (iOS-PR-V0.5), but
+        // the contract has to exist now so the client can adopt it without a
+        // server change — and so a dropped/timed-out stream still leaves the
+        // client with a report_id it can poll the v1.1 Trigger.dev recovery
+        // endpoint with.
+        if (savedReport?.id) {
+          sendEvent('report_started', { report_id: savedReport.id });
         }
 
         // Save discipline score with component breakdown
