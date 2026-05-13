@@ -736,6 +736,64 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     biases.push({ bias_name: 'Favorite-Heavy Lean', severity: sev, data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%`, evidence_bet_ids: losingFavs });
   }
 
+  // Category Concentration Leak — promote a deeply negative category into a bias.
+  // Pulls from existing categoryRoi which already covers sport, bet_type, sport+bet_type, and sportsbook keys.
+  if (totalStaked > 0) {
+    const leakyCategories = categoryRoi
+      .filter((c) => c.count >= 10 && c.roi <= -20 && Math.abs(c.profit) >= totalStaked * 0.05)
+      .sort((a, b) => a.profit - b.profit);
+    if (leakyCategories.length > 0) {
+      const worst = leakyCategories[0];
+      const sev = worst.roi <= -50 ? 'critical' : worst.roi <= -35 ? 'high' : worst.roi <= -25 ? 'medium' : 'low';
+      const leakEvidence = settled
+        .filter((b) => `${b.sport} ${b.bet_type}` === worst.category || b.sport === worst.category || b.bet_type === worst.category || b.sportsbook === worst.category)
+        .filter((b) => b.result === 'loss')
+        .sort((a, b) => Number(b.stake) - Number(a.stake))
+        .slice(0, 8)
+        .map((b) => b.id);
+      biases.push({
+        bias_name: 'Category Concentration Leak',
+        severity: sev,
+        data: `${worst.category}: ${worst.count} bets at ${worst.roi.toFixed(1)}% ROI ($${worst.profit.toFixed(0)})`,
+        evidence_bet_ids: leakEvidence,
+      });
+    }
+  }
+
+  // Late-Night Betting — 23:00-04:59 window. Skip if the CSV has no time-of-day data
+  // (avoids false positives when all bets land at midnight UTC from date-only timestamps).
+  const midnightOnlyCount = settled.filter((b) => {
+    const d = new Date(b.placed_at);
+    return d.getHours() === 0 && d.getMinutes() === 0;
+  }).length;
+  const hasTimeOfDay = settled.length >= 5 && midnightOnlyCount / settled.length < 0.8;
+  if (hasTimeOfDay) {
+    const lateNightBets = settled.filter((b) => {
+      const h = new Date(b.placed_at).getHours();
+      return h >= 23 || h < 5;
+    });
+    if (lateNightBets.length >= 5) {
+      const lateNightPct = (lateNightBets.length / settled.length) * 100;
+      const lateNightStaked = lateNightBets.reduce((s, b) => s + Number(b.stake), 0);
+      const lateNightProfit = lateNightBets.reduce((s, b) => s + Number(b.profit), 0);
+      const lateNightRoi = lateNightStaked > 0 ? (lateNightProfit / lateNightStaked) * 100 : 0;
+      if (lateNightPct >= 25 && lateNightRoi < -10) {
+        const sev = lateNightRoi <= -30 ? 'high' : lateNightRoi <= -20 ? 'medium' : 'low';
+        const lateNightLosingIds = lateNightBets
+          .filter((b) => b.result === 'loss')
+          .sort((a, b) => Number(b.stake) - Number(a.stake))
+          .slice(0, 8)
+          .map((b) => b.id);
+        biases.push({
+          bias_name: 'Late-Night Betting',
+          severity: sev,
+          data: `${lateNightPct.toFixed(0)}% of bets after 11pm, ROI ${lateNightRoi.toFixed(1)}% ($${lateNightProfit.toFixed(0)})`,
+          evidence_bet_ids: lateNightLosingIds,
+        });
+      }
+    }
+  }
+
   // Overall grade (deterministic)
   let gradeScore = 100;
   // Emotion score penalty
@@ -854,6 +912,20 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     }
   } else {
     result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
+  }
+
+  // Emotional Session Pattern — promote heatedSessionPercent into a bias
+  // once tilt is exceptional (after Fix 2 tightening). Needs sessionDetection.
+  if (result.sessionDetection && result.sessionDetection.totalSessions >= 5) {
+    const heatedPct = result.sessionDetection.heatedSessionPercent;
+    if (heatedPct >= 25) {
+      const sev = heatedPct >= 50 ? 'critical' : heatedPct >= 40 ? 'high' : heatedPct >= 30 ? 'medium' : 'low';
+      result.biases_detected.push({
+        bias_name: 'Emotional Session Pattern',
+        severity: sev,
+        data: `${heatedPct.toFixed(0)}% of ${result.sessionDetection.totalSessions} sessions classified as heated`,
+      });
+    }
   }
 
   // Bet-by-bet annotations
