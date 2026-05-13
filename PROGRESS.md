@@ -182,6 +182,27 @@ denormalization of summary fields onto `autopsy_reports` rows.
   dedupe + render-gate fixes. Still need to hold the existing `useReports`
   contract on `/reports` since it renders `analysis = report.report_json`
   per row.
+- **iOS-PR-units-and-times** (work belongs in `betautopsy-ios` repo,
+  surfaced 2026-05-12 from Engine Phase A audit). Native iOS double-
+  multiplies odds-bucket `winRate` and `edge` at
+  `ChapterYourSportsView.swift:229,235` (engine ships percent-scale
+  `0..100`; iOS multiplies by 100 again, producing "4,872%" / "-2,412pp"
+  in Ch 6). Engine math and web React renderer are both correct; the
+  fix lives in the iOS repo. Also: iOS should suppress the
+  "12:00 AM - 12:00 AM" time range on session cards when bets arrive
+  with date-only timestamps (engine literal-renders `toLocaleTimeString`
+  on UTC midnight; CSVs without time-of-day are common). Mock fixtures
+  at `MockReport.swift:356-360` use `0..1` decimals and would also
+  need updating, or the iOS renderer needs to be aligned to the
+  engine's `0..100` convention.
+- **Spec v2: revisit snapshot session redaction.** Commit `f6b15d6`
+  (Apr 7) zeros `profit/staked/roi/avgStake` on every session in the
+  snapshot payload "for security." If native iOS Ch 2 is rendering
+  snapshot data, all sessions read "+$0" by design (only grade and bet
+  count come through). Decide whether the redaction is too aggressive
+  for Ch 2, or whether the iOS app should be hitting the paid endpoint
+  for paying users. Lives in the same redaction spec that owns
+  `snapshotTeaser`.
 
 ---
 
