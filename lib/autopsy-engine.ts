@@ -944,40 +944,40 @@ function determineArchetype(
   const hasProfitableCats = categoryRoi.some((c) => c.roi > 0 && c.count >= 5);
   const sportCount = new Set(categoryRoi.filter((c) => !c.category.includes(' ')).map((c) => c.category)).size;
 
-  // The Natural — genuinely sharp
+  // The Sharp — genuinely sharp (low emotion, +ROI, diversified)
   if (emotionScore <= 30 && roi > 0 && lossChaseRatio < 1.2 && sportCount >= 2) {
-    return { name: 'The Natural', description: "Low emotion, positive ROI, diversified. You're genuinely sharp." };
+    return { name: 'The Sharp', description: "Low emotion, positive ROI, diversified. You're genuinely sharp." };
   }
-  // Sharp Sleeper — has edges but sizing issues
+  // The Sharp (Sleeper variant) — has edges but sizing issues
   if (hasProfitableCats && roi > -5 && stakeCv >= 0.8) {
-    return { name: 'Sharp Sleeper', description: "You've got real edges but your sizing is holding you back." };
+    return { name: 'The Sharp', description: "You've got real edges but your sizing is holding you back." };
   }
-  // Heated Bettor — decent picks, emotions ruin it
+  // The Tilter — decent picks, emotions ruin it
   if (hasProfitableCats && emotionScore > 55 && lossChaseRatio > 1.4) {
-    return { name: 'Heated Bettor', description: "Your strategy has promise but your emotions are eating the profit." };
+    return { name: 'The Tilter', description: "Your strategy has promise but your emotions are eating the profit." };
   }
-  // Chalk Grinder — heavy favorites, paying juice
+  // The Grinder — heavy favorites, paying juice (Chalk profile)
   if (favPct >= 65 && stakeCv < 0.8 && roi < 0) {
-    return { name: 'Chalk Grinder', description: "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll." };
+    return { name: 'The Grinder', description: "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll." };
   }
-  // Parlay Dreamer — heavy parlays
+  // The Lottery Bettor — heavy parlays
   if (parlayPct >= 40) {
-    return { name: 'Parlay Dreamer', description: "The big ticket is always calling. Your straight bet game is probably better than you think." };
+    return { name: 'The Lottery Bettor', description: "The big ticket is always calling. Your straight bet game is probably better than you think." };
   }
-  // Sniper — selective bettor
+  // The Methodical — selective bettor
   if (totalBets < 50 && sportCount <= 2) {
-    return { name: 'Sniper', description: "Selective and focused. You pick your spots. Now it's about sharpening the edge." };
+    return { name: 'The Methodical', description: "Selective and focused. You pick your spots. Now it's about sharpening the edge." };
   }
-  // Volume Warrior — lots of bets, flat stakes
+  // The Action Junkie — lots of bets, flat stakes
   if (totalBets >= 150 && stakeCv < 0.8) {
-    return { name: 'Volume Warrior', description: "You grind it out with consistent sizing. It's a sustainable approach. Now find the leaks in the volume." };
+    return { name: 'The Action Junkie', description: "You grind it out with consistent sizing. It's a sustainable approach. Now find the leaks in the volume." };
   }
-  // Degen King — high variance, mixed, emotional
+  // The Chaser — high variance, mixed, emotional
   if (stakeCv >= 1.0 && parlayPct >= 20 && emotionScore > 40) {
-    return { name: 'Degen King', description: "You're here for the ride. Embrace it , but know which parts of the ride are costing you." };
+    return { name: 'The Chaser', description: "You're here for the ride. Embrace it, but know which parts of the ride are costing you." };
   }
-  // Default
-  return { name: 'The Grinder', description: "Consistent and steady. You've got a foundation. The analysis shows where to build on it." };
+  // Default — The Methodical (V3 fallback)
+  return { name: 'The Methodical', description: "Consistent and steady. You've got a foundation. The analysis shows where to build on it." };
 }
 
 function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: number): { name: string; description: string } {
@@ -985,34 +985,37 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   const highPickPct = dm.pickCountDistribution.reduce((s, d) => s + d.count, 0) > 0
     ? (highPickEntries.reduce((s, d) => s + d.count, 0) / dm.pickCountDistribution.reduce((s, d) => s + d.count, 0)) * 100 : 0;
 
-  // Multiplier Chaser — high pick count + bad ROI on high picks
+  // The Lottery Bettor — high pick count + bad ROI on high picks (Multiplier Chaser variant)
   if (dm.avgPickCount > 4.5 && dm.highPickROI < -40) {
-    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket , and it performs like one too." };
+    return { name: 'The Lottery Bettor', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives. Every big Power Play feels like a lottery ticket, and it performs like one too." };
   }
-  // All-or-Nothing — Power heavy + Flex is better
+  // The Lottery Bettor — Power heavy + Flex is better (All-or-Nothing variant)
   if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
     const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
     const powerPct = totalPF > 0 ? (dm.powerVsFlex.powerCount / totalPF) * 100 : 0;
     if (powerPct > 65 && dm.powerVsFlex.flexROI > dm.powerVsFlex.powerROI) {
-      return { name: 'All-or-Nothing Player', description: "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing." };
+      return { name: 'The Lottery Bettor', description: "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing." };
     }
   }
-  // Loyalty Bettor — player concentration + emotional
+  // The Methodical — player concentration + emotional (Loyalty Bettor doesn't map cleanly to V3)
   const topPlayer = dm.playerConcentration[0];
   if (topPlayer && topPlayer.percent >= 25 && emotionScore > 45) {
-    return { name: 'Loyalty Bettor', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy. It's a relationship.` };
+    return { name: 'The Methodical', description: `You ride with your guys. ${topPlayer.player} in ${topPlayer.percent}% of your entries isn't a strategy. It's a relationship.` };
   }
-  // Fall through to standard archetypes based on discipline/emotion
+  // The Sharp — low emotion, controlled sizing
   if (emotionScore <= 30 && stakeCv < 0.8) {
-    return { name: 'The Natural', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
+    return { name: 'The Sharp', description: "Cool, calculated, and data-driven. You treat pick'em like a business, not a game." };
   }
+  // The Tilter — emotional + chasing bigger multipliers
   if (emotionScore > 55 && dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2) {
-    return { name: 'Heated Bettor', description: "Your reads aren't bad , but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
+    return { name: 'The Tilter', description: "Your reads aren't bad, but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
   }
+  // The Lottery Bettor — high-pick fallback
   if (highPickPct > 60) {
-    return { name: 'Multiplier Chaser', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
+    return { name: 'The Lottery Bettor', description: "You keep swinging for the 20x payout when the 3x entries are where your edge lives." };
   }
-  return { name: 'The Grinder', description: "Steady and consistent. You've got a foundation. The analysis shows where to build on it." };
+  // Default — The Methodical (V3 fallback)
+  return { name: 'The Methodical', description: "Steady and consistent. You've got a foundation. The analysis shows where to build on it." };
 }
 
 // ── Discipline Score Calculator ──

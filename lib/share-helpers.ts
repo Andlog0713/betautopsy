@@ -14,6 +14,15 @@ export interface BehavioralInsight {
 // ── Archetype roast lines ──
 
 const ARCHETYPE_ROASTS: Record<string, string> = {
+  // V3 taxonomy (autopsy engine path B — current)
+  'The Sharp': "You actually know what you're doing. That makes one of us.",
+  'The Tilter': "You don't lose bets. You lose arguments with yourself about whether to stop.",
+  'The Grinder': "Consistent, methodical, boring in the best way.",
+  'The Lottery Bettor': "You don't want to win. You want to win big. There's a difference.",
+  'The Methodical': "Selective and patient. Now go find the edge to apply it to.",
+  'The Action Junkie': "You don't have a strategy. You have a quota.",
+  'The Chaser': "You're not here to make money. You're here to feel alive.",
+  // Legacy autopsy engine names (kept for back-compat on already-rendered share cards)
   'Heated Bettor': "You don't lose bets. You lose arguments with yourself about whether to stop.",
   'Parlay Dreamer': "You don't want to win. You want to win big. There's a difference.",
   'The Natural': "You actually know what you're doing. That makes one of us.",
@@ -22,11 +31,10 @@ const ARCHETYPE_ROASTS: Record<string, string> = {
   'Volume Warrior': "You don't have a strategy. You have a quota.",
   'Sniper': "Few bets. High conviction. You treat this like a job.",
   'Degen King': "You're not here to make money. You're here to feel alive.",
-  'The Grinder': "Consistent, methodical, boring in the best way.",
   'Multiplier Chaser': "You see a 10-legger and think 'why not.' That's why not.",
   'All-or-Nothing Player': "Go big or go home, and you go big a lot.",
   'Loyalty Bettor': "Your favorite team loves your support. Your bankroll doesn't.",
-  // Data-driven report archetypes (lib/archetypes.ts)
+  // Quiz-result archetypes (lib/archetypes.ts — path A, untouched in this phase)
   'The Surgeon': "Profitable and disciplined. The sportsbook's least favorite customer.",
   'The Heat Chaser': "Emotions placing the bets. Wallet paying the price.",
   'The Parlay Dreamer': "Still chasing that one big hit. Math said no.",
