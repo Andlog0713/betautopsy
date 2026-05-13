@@ -42,7 +42,49 @@
 
 ---
 
-## Current branch: `claude/fix-insert-timeout-YlbA8`
+## Current branch: `claude/api-analyze-multipart-ingest`
+
+### Done this session — wire CSV ingestion into `/api/analyze` for iOS
+- **Root cause:** iOS `AnalyzeClient.swift` posts `multipart/form-data` (file +
+  `report_type`, Bearer JWT) to `/api/analyze`. The route was strict-JSON:
+  `await request.json()` threw on the multipart body, the catch swallowed it,
+  the route proceeded with defaults and ran analysis on whatever was already
+  in the user's `bets` table. CSV bytes → void. The web `/api/upload` +
+  `/api/upload-parsed` routes were the only paths that had ever INSERTed into
+  the `bets` table. iOS-originated requests therefore contributed zero rows.
+- **Fix** (`app/api/analyze/route.ts`, PR #27): added a `Content-Type` check
+  at the top of the body-parse block. Multipart requests now go through:
+  `request.formData()` → file/`report_type` extraction → same validation as
+  `/api/upload` (.csv suffix or text/csv MIME, 10MB cap) → `parseCSV(text)` →
+  `importBets(supabase, user.id, parsedBets, file.name)`. JSON requests fall
+  through to the original destructure unchanged. Pre-stream JSON 400 returned
+  if `bets_imported === 0 && duplicates_skipped === 0` (real failure); the
+  silent-dedup path (`bets_imported === 0 && duplicates_skipped > 0`) falls
+  through to analysis so re-uploading the same CSV still works.
+- **New `report_started` SSE event:** emitted via the existing `sendEvent`
+  helper immediately after the `autopsy_reports` row inserts successfully —
+  same embedded-type wire format as `metrics`/`complete`/`error`
+  (`data: {"type":"report_started","data":{"report_id":"<uuid>"}}\n\n`).
+  iOS doesn't consume it yet (planned for iOS-PR-V0.5), but the contract
+  has to exist now so the client can adopt it without a server change. The
+  event serves as the recovery handle for the v1.1 Trigger.dev migration:
+  if the SSE stream drops mid-analysis, the client still knows the report
+  row's id and can poll for completion.
+- **importBets dedup behavior preserved.** Application-level dedup on
+  `(placed_at[day-only] | description.trim().toLowerCase() | odds | stake)`,
+  difference-based (group counts in upload vs existing bets). No DB unique
+  constraint. Re-upload of the same CSV returns `bets_imported: 0,
+  duplicates_skipped: N`, which the multipart branch treats as a pass-through
+  to analysis.
+- **Out of scope:** iOS code is untouched (`/Users/Andrew/betautopsy-ios`).
+  The contract is server-only. iOS continues sending multipart today; it now
+  works end-to-end without an iOS PR.
+- **Pending verification** (user, on iPhone): pre-upload bets count → upload
+  5-bet test CSV → count = 5 → re-upload → count stays 5, analysis still
+  runs → upload different 10-bet CSV → count grows → confirm SSE stream
+  contains `report_started` event with valid uuid.
+
+## Previous branch: `claude/fix-insert-timeout-YlbA8`
 
 ### Done this session — autopsy_reports INSERT uses service_role
 - **Root cause** (confirmed via `pg_roles` diagnostic in Supabase):
