@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
+import { scoreCheckIn } from '@/lib/check-in-scorer';
 import {
   CHECK_IN_SPORTS,
   CHECK_IN_BET_TYPES,
   type PreBetCheckInRequest,
-  type PreBetCheckInResponse,
 } from '@/types';
 
 // Pure compute. Sub-second response. Reads from Supabase, no writes Phase 1.
@@ -62,8 +62,8 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-  const { user, error: authError } = authResult;
-  if (authError || !user) {
+  const { supabase, user, error: authError } = authResult;
+  if (authError || !user || !supabase) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -79,13 +79,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
 
-  // Stub response for Commit 1. Commit 2 wires lib/check-in-scorer.ts.
-  const response: PreBetCheckInResponse = {
-    betQualityScore: 60,
-    flags: [],
-    recommendation: 'place_bet',
-    summary: 'Baseline response. Scorer wiring lands in commit 2.',
-  };
-
-  return NextResponse.json(response);
+  try {
+    const response = await scoreCheckIn(validated.value, user.id, supabase);
+    return NextResponse.json(response);
+  } catch {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
