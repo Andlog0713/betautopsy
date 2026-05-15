@@ -48,3 +48,15 @@ next-env.d.ts
 # (historical: ios/App/Pods/)
 ios/App/App/public/
 ios/App/output/
+
+# Day 6 engine audit harness outputs (raw bet PII / full Sonnet response).
+# scripts/audit-engine.ts re-fetches from Supabase + re-runs runAutopsy
+# on demand, so neither file needs to live in the repo.
+scripts/audit-bets.json
+scripts/audit-output.json
+
+# One-off verification harnesses: re-fetch from Supabase on demand and
+# emit raw bet/PII to stdout. Source script + the Day 6 audit script
+# itself are excluded from the repo for the same reason.
+scripts/audit-engine.ts
+scripts/test-check-in.ts

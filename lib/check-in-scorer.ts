@@ -1,14 +1,59 @@
 import { randomUUID } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type {
-  AutopsyAnalysis,
-  BiasDetected,
-  CheckInRecommendation,
-  CheckInSeverity,
-  PreBetCheckInFlag,
-  PreBetCheckInRequest,
-  PreBetCheckInResponse,
+import {
+  CHECK_IN_SPORTS,
+  CHECK_IN_BET_TYPES,
+  type AutopsyAnalysis,
+  type BiasDetected,
+  type CheckInRecommendation,
+  type CheckInSeverity,
+  type PreBetCheckInFlag,
+  type PreBetCheckInRequest,
+  type PreBetCheckInResponse,
 } from '@/types';
+
+const SPORT_SET: ReadonlySet<string> = new Set(CHECK_IN_SPORTS);
+const BET_TYPE_SET: ReadonlySet<string> = new Set(CHECK_IN_BET_TYPES);
+
+export type ValidationOk = { ok: true; value: PreBetCheckInRequest };
+export type ValidationErr = { ok: false; error: string };
+
+export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationErr {
+  if (raw === null || typeof raw !== 'object') {
+    return { ok: false, error: 'Body must be a JSON object' };
+  }
+  const r = raw as Record<string, unknown>;
+
+  const sport = r.sport;
+  if (typeof sport !== 'string' || !SPORT_SET.has(sport)) {
+    return { ok: false, error: 'sport must be one of: ' + CHECK_IN_SPORTS.join(', ') };
+  }
+
+  const stake = r.stake;
+  if (typeof stake !== 'number' || !Number.isFinite(stake) || stake <= 0) {
+    return { ok: false, error: 'stake must be a positive number' };
+  }
+
+  const odds = r.odds;
+  if (typeof odds !== 'number' || !Number.isInteger(odds) || odds === 0) {
+    return { ok: false, error: 'odds must be a non-zero integer (American odds)' };
+  }
+
+  const betType = r.betType;
+  if (typeof betType !== 'string' || !BET_TYPE_SET.has(betType)) {
+    return { ok: false, error: 'betType must be one of: ' + CHECK_IN_BET_TYPES.join(', ') };
+  }
+
+  const placedAt = r.placedAt;
+  if (typeof placedAt !== 'string' || Number.isNaN(Date.parse(placedAt))) {
+    return { ok: false, error: 'placedAt must be an ISO 8601 datetime string' };
+  }
+
+  return {
+    ok: true,
+    value: { sport, stake, odds, betType, placedAt },
+  };
+}
 
 // Deterministic pre-bet scorer. No LLM, no DB writes Phase 1. Reads the
 // user's latest autopsy report + last 30 bets and emits flags + a

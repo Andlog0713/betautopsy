@@ -1,59 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
-import { scoreCheckIn } from '@/lib/check-in-scorer';
-import {
-  CHECK_IN_SPORTS,
-  CHECK_IN_BET_TYPES,
-  type PreBetCheckInRequest,
-} from '@/types';
+import { scoreCheckIn, validateCheckInRequest } from '@/lib/check-in-scorer';
 
 // Pure compute. Sub-second response. Reads from Supabase, no writes Phase 1.
 // Wire format is locked by iOS PreBetCheckInModels.swift — do not rename
 // fields. Phase 2 of the iOS prebet feature swaps its MockedPreBetScorer
 // for this endpoint.
-
-const SPORT_SET: ReadonlySet<string> = new Set(CHECK_IN_SPORTS);
-const BET_TYPE_SET: ReadonlySet<string> = new Set(CHECK_IN_BET_TYPES);
-
-type ValidationOk = { ok: true; value: PreBetCheckInRequest };
-type ValidationErr = { ok: false; error: string };
-
-function validateRequest(raw: unknown): ValidationOk | ValidationErr {
-  if (raw === null || typeof raw !== 'object') {
-    return { ok: false, error: 'Body must be a JSON object' };
-  }
-  const r = raw as Record<string, unknown>;
-
-  const sport = r.sport;
-  if (typeof sport !== 'string' || !SPORT_SET.has(sport)) {
-    return { ok: false, error: 'sport must be one of: ' + CHECK_IN_SPORTS.join(', ') };
-  }
-
-  const stake = r.stake;
-  if (typeof stake !== 'number' || !Number.isFinite(stake) || stake <= 0) {
-    return { ok: false, error: 'stake must be a positive number' };
-  }
-
-  const odds = r.odds;
-  if (typeof odds !== 'number' || !Number.isInteger(odds) || odds === 0) {
-    return { ok: false, error: 'odds must be a non-zero integer (American odds)' };
-  }
-
-  const betType = r.betType;
-  if (typeof betType !== 'string' || !BET_TYPE_SET.has(betType)) {
-    return { ok: false, error: 'betType must be one of: ' + CHECK_IN_BET_TYPES.join(', ') };
-  }
-
-  const placedAt = r.placedAt;
-  if (typeof placedAt !== 'string' || Number.isNaN(Date.parse(placedAt))) {
-    return { ok: false, error: 'placedAt must be an ISO 8601 datetime string' };
-  }
-
-  return {
-    ok: true,
-    value: { sport, stake, odds, betType, placedAt },
-  };
-}
 
 export async function POST(request: Request) {
   let authResult;
@@ -74,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const validated = validateRequest(body);
+  const validated = validateCheckInRequest(body);
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
