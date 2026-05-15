@@ -6,10 +6,10 @@ import {
   type AutopsyAnalysis,
   type BiasDetected,
   type CheckInRecommendation,
+  type CheckInScoreResult,
   type CheckInSeverity,
   type PreBetCheckInFlag,
   type PreBetCheckInRequest,
-  type PreBetCheckInResponse,
 } from '@/types';
 
 const SPORT_SET: ReadonlySet<string> = new Set(CHECK_IN_SPORTS);
@@ -151,7 +151,7 @@ export async function scoreCheckIn(
   request: PreBetCheckInRequest,
   userId: string,
   supabase: SupabaseClient,
-): Promise<PreBetCheckInResponse> {
+): Promise<CheckInScoreResult> {
   const { data: reportRow } = await supabase
     .from('autopsy_reports')
     .select('report_json')

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from "@sentry/nextjs";
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { scoreCheckIn, validateCheckInRequest } from '@/lib/check-in-scorer';
 
@@ -34,9 +35,48 @@ export async function POST(request: Request) {
 
   try {
     const response = await scoreCheckIn(validated.value, user.id, supabase);
-    return NextResponse.json(response);
+
+    Sentry.addBreadcrumb({
+      category: 'db',
+      level: 'info',
+      message: 'pre_bet_checkins INSERT attempt',
+      data: {
+        user_id: user.id,
+        score: response.betQualityScore,
+        flag_count: response.flags.length,
+        recommendation: response.recommendation,
+      },
+    });
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('pre_bet_checkins')
+      .insert({
+        user_id: user.id,
+        sport: validated.value.sport,
+        stake: validated.value.stake,
+        odds: validated.value.odds,
+        bet_type: validated.value.betType,
+        placed_at: validated.value.placedAt,
+        local_hour: validated.value.localHour ?? null,
+        bet_quality_score: response.betQualityScore,
+        flag_count: response.flags.length,
+        recommendation: response.recommendation,
+        flags: response.flags,
+        summary: response.summary,
+      })
+      .select('id')
+      .single();
+
+    if (insertError || !inserted) {
+      console.error('[check-in] INSERT failed:', insertError);
+      Sentry.captureException(insertError ?? new Error('pre_bet_checkins INSERT returned no row'));
+      return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+
+    return NextResponse.json({ checkInId: inserted.id, ...response });
   } catch (err) {
     console.error('[check-in] scorer failed:', err);
+    Sentry.captureException(err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
