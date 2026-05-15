@@ -11,7 +11,8 @@ export async function POST(request: Request) {
   let authResult;
   try {
     authResult = await getAuthenticatedClient(request);
-  } catch {
+  } catch (err) {
+    console.error('[check-in] auth failed:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
   const { supabase, user, error: authError } = authResult;
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
   try {
     const response = await scoreCheckIn(validated.value, user.id, supabase);
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error('[check-in] scorer failed:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

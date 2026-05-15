@@ -126,7 +126,12 @@ function computeRecommendation(flags: PreBetCheckInFlag[], score: number): Check
   return 'wait_thirty';
 }
 
-function computeSummary(flags: PreBetCheckInFlag[]): string {
+function computeSummary(flags: PreBetCheckInFlag[], noHistory: boolean): string {
+  if (noHistory) {
+    return flags.length === 0
+      ? 'No flags fire from this request alone. Upload your bet history for personalized analysis.'
+      : 'Flags reference general patterns. Upload your bet history for personalized analysis.';
+  }
   if (flags.length === 0) return 'No risk flags. Behavioral state looks clean.';
   if (flags.length === 1) return 'One risk flag. Worth a pause.';
   return `${flags.length} risk flags. Waiting 30 minutes is the smart play.`;
@@ -161,28 +166,7 @@ export async function scoreCheckIn(
     profit: b.profit === null ? null : Number(b.profit),
   }));
 
-  // Empty-state override: zero reports + zero bets. Compute late-night
-  // from the request alone, force baseline score 60 / place_bet, and
-  // note limited history in the summary.
-  if (!report && recentBets.length === 0) {
-    const placedAt = new Date(request.placedAt);
-    const hour = placedAt.getUTCHours();
-    const flags: PreBetCheckInFlag[] = [];
-    if (isLateNightHour(hour)) {
-      flags.push(flag(
-        'high',
-        'Late-night betting',
-        'Late-night betting tends to correlate with worse outcomes. Real engine analysis kicks in after your first autopsy.',
-      ));
-    }
-    return {
-      betQualityScore: 60,
-      flags,
-      recommendation: 'place_bet',
-      summary: 'Limited history. Real engine analysis kicks in after your first autopsy.',
-    };
-  }
-
+  const noHistory = !report && recentBets.length === 0;
   const flags: PreBetCheckInFlag[] = [];
 
   // ── Flag (a): Late-night betting ──
@@ -191,9 +175,10 @@ export async function scoreCheckIn(
   if (isLateNightHour(hour)) {
     const lateStats = report?.timing_analysis?.late_night_stats ?? null;
     let detail: string;
-    if (lateStats && lateStats.count > 0) {
-      const roiPct = (lateStats.roi * 100).toFixed(0);
-      detail = `Your ROI between 11pm and 4am is ${roiPct}% across ${lateStats.count} bets.`;
+    if (lateStats && typeof lateStats.roi === 'number' && Math.abs(lateStats.roi) <= 100) {
+      detail = `Your ROI between 11pm and 4am is ${Math.round(lateStats.roi)}% across ${lateStats.count} bets.`;
+    } else if (lateStats && typeof lateStats.count === 'number') {
+      detail = `Your late-night sessions have been deeply unprofitable across ${lateStats.count} bets.`;
     } else {
       detail = 'Late-night betting tends to correlate with worse outcomes. Real engine analysis kicks in after your first autopsy.';
     }
@@ -286,6 +271,6 @@ export async function scoreCheckIn(
     betQualityScore: score,
     flags,
     recommendation: computeRecommendation(flags, score),
-    summary: computeSummary(flags),
+    summary: computeSummary(flags, noHistory),
   };
 }
