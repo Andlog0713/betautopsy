@@ -709,3 +709,45 @@ export interface FeedbackCounts {
   feature_request: number;
   general: number;
 }
+
+// ── Pre-bet Check-in (deterministic scorer for iOS Phase 2 swap) ──
+// Wire format is LOCKED by iOS PreBetCheckInModels.swift. Keys are
+// camelCase on the wire; enum string values are snake_case to match
+// iOS Codable raw values. Do not rename without coordinating an iOS
+// release.
+
+export type CheckInSeverity = 'high' | 'medium' | 'low' | 'info';
+export type CheckInRecommendation = 'place_anyway' | 'wait_thirty' | 'place_bet';
+
+export const CHECK_IN_SPORTS = [
+  'nfl', 'nba', 'mlb', 'nhl', 'ncaaf', 'ncaab',
+  'soccer', 'mma', 'tennis', 'golf', 'other',
+] as const;
+export type CheckInSport = (typeof CHECK_IN_SPORTS)[number];
+
+export const CHECK_IN_BET_TYPES = [
+  'moneyline', 'spread', 'total', 'parlay', 'prop', 'futures',
+] as const;
+export type CheckInBetType = (typeof CHECK_IN_BET_TYPES)[number];
+
+export interface PreBetCheckInRequest {
+  sport: string;
+  stake: number;
+  odds: number;
+  betType: string;
+  placedAt: string;
+}
+
+export interface PreBetCheckInFlag {
+  id: string;
+  severity: CheckInSeverity;
+  title: string;
+  detail: string;
+}
+
+export interface PreBetCheckInResponse {
+  betQualityScore: number;
+  flags: PreBetCheckInFlag[];
+  recommendation: CheckInRecommendation;
+  summary: string;
+}
