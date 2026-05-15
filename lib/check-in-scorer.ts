@@ -170,19 +170,26 @@ export async function scoreCheckIn(
   const flags: PreBetCheckInFlag[] = [];
 
   // ── Flag (a): Late-night betting ──
+  // Severity scales with data confidence: HIGH only when we have the user's
+  // own late-night history (count > 0); MEDIUM when firing on time-of-day
+  // alone.
   const placedAt = new Date(request.placedAt);
   const hour = placedAt.getUTCHours();
   if (isLateNightHour(hour)) {
     const lateStats = report?.timing_analysis?.late_night_stats ?? null;
+    let severity: CheckInSeverity;
     let detail: string;
-    if (lateStats && typeof lateStats.roi === 'number' && Math.abs(lateStats.roi) <= 100) {
+    if (lateStats && lateStats.count > 0 && typeof lateStats.roi === 'number' && Math.abs(lateStats.roi) <= 100) {
+      severity = 'high';
       detail = `Your ROI between 11pm and 4am is ${Math.round(lateStats.roi)}% across ${lateStats.count} bets.`;
-    } else if (lateStats && typeof lateStats.count === 'number') {
+    } else if (lateStats && lateStats.count > 0) {
+      severity = 'high';
       detail = `Your late-night sessions have been deeply unprofitable across ${lateStats.count} bets.`;
     } else {
+      severity = 'medium';
       detail = 'Late-night betting tends to correlate with worse outcomes. Real engine analysis kicks in after your first autopsy.';
     }
-    flags.push(flag('high', 'Late-night betting', detail));
+    flags.push(flag(severity, 'Late-night betting', detail));
   }
 
   // ── Flag (b): Above usual stake ──
