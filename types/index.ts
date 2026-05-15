@@ -749,9 +749,33 @@ export interface PreBetCheckInFlag {
   detail: string;
 }
 
-export interface PreBetCheckInResponse {
+// Pure scorer output. lib/check-in-scorer.ts produces this; the route
+// handler attaches `checkInId` from the pre_bet_checkins INSERT before
+// returning the wire-format PreBetCheckInResponse below.
+export interface CheckInScoreResult {
   betQualityScore: number;
   flags: PreBetCheckInFlag[];
   recommendation: CheckInRecommendation;
   summary: string;
+}
+
+export interface PreBetCheckInResponse {
+  // Added Phase 3 (2026-05-16). Additive wire-format change: iOS Phase 2's
+  // Codable ignores unknown keys, so the shipped iOS build continues to
+  // work without decoding checkInId. iOS Phase 3 begins reading it and
+  // sends it back via POST /api/check-in/outcome.
+  checkInId: string;
+  betQualityScore: number;
+  flags: PreBetCheckInFlag[];
+  recommendation: CheckInRecommendation;
+  summary: string;
+}
+
+export type CheckInOutcome = 'placed_anyway' | 'waited' | 'placed_bet';
+
+export const CHECK_IN_OUTCOMES = ['placed_anyway', 'waited', 'placed_bet'] as const;
+
+export interface CheckInOutcomeRequest {
+  checkInId: string;
+  outcome: CheckInOutcome;
 }
