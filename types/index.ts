@@ -736,6 +736,10 @@ export interface PreBetCheckInRequest {
   odds: number;
   betType: string;
   placedAt: string;
+  // Optional 0-23 hour of day in the user's local timezone. iOS Phase 2
+  // computes this via Calendar.current and sends it on every request.
+  // Backend falls back to UTC parsing of placedAt when absent.
+  localHour?: number;
 }
 
 export interface PreBetCheckInFlag {

@@ -49,9 +49,19 @@ export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationE
     return { ok: false, error: 'placedAt must be an ISO 8601 datetime string' };
   }
 
+  const localHour = r.localHour;
+  if (localHour !== undefined) {
+    if (typeof localHour !== 'number' || !Number.isInteger(localHour) || localHour < 0 || localHour > 23) {
+      return { ok: false, error: 'localHour must be an integer 0-23' };
+    }
+  }
+
   return {
     ok: true,
-    value: { sport, stake, odds, betType, placedAt },
+    value: {
+      sport, stake, odds, betType, placedAt,
+      ...(localHour !== undefined && { localHour }),
+    },
   };
 }
 
@@ -174,7 +184,13 @@ export async function scoreCheckIn(
   // own late-night history (count > 0); MEDIUM when firing on time-of-day
   // alone.
   const placedAt = new Date(request.placedAt);
-  const hour = placedAt.getUTCHours();
+  // Prefer the client's local hour when supplied (iOS Phase 2 sends it via
+  // Calendar.current); fall back to UTC parsing for older clients or web.
+  // Note: minutesSince calculations below still use the UTC Date for
+  // correctness — time deltas are timezone-independent.
+  const hour = typeof request.localHour === 'number'
+    ? request.localHour
+    : placedAt.getUTCHours();
   if (isLateNightHour(hour)) {
     const lateStats = report?.timing_analysis?.late_night_stats ?? null;
     let severity: CheckInSeverity;
