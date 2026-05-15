@@ -1184,7 +1184,7 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
     return {
       score: 0,
       components: { line_value: 0, calibration: 0, sophistication: 0, specialization: 0, timing: 0, confidence: 0 },
-      percentile: 50,
+      percentile: null,
       interpretation: `Need at least 50 settled bets for a meaningful BetIQ score. You have ${settled.length}.`,
       insufficient_data: true,
     };
@@ -1291,7 +1291,10 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
 
   // COMPOSITE
   const score = Math.min(100, lineValue + calibration + sophistication + specialization + timing + confidence);
-  const percentile = estimatePercentile('betiq_score', score);
+  // percentile is intentionally null — the estimatePercentile baseline
+  // for 'betiq_score' is a hand-picked curve that produced impossible
+  // combos like archetype="The Sharp" + percentile=80th + grade="D".
+  // Hide until a real cohort baseline exists (Phase 3 amendment).
 
   let interpretation = '';
   if (score >= 75) interpretation = 'Elite-level betting skill. You consistently find value and specialize where you have edge.';
@@ -1303,7 +1306,7 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
   return {
     score,
     components: { line_value: lineValue, calibration, sophistication, specialization, timing, confidence },
-    percentile,
+    percentile: null,
     interpretation,
     insufficient_data: false,
   };
@@ -2304,7 +2307,7 @@ export function calculateMetricsOnly(
       roi_percent: metrics.summary.roi_percent,
       avg_stake: metrics.summary.avg_stake,
       date_range: metrics.summary.date_range,
-      overall_grade: metrics.summary.overall_grade,
+      overall_grade: null,
     },
     biases_detected: metrics.biases_detected.map((b) => ({
       bias_name: b.bias_name,
@@ -2689,7 +2692,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   const tokensUsed = (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0);
   const claudeData = parseResponseJSON(textBlock.text);
 
-  // Step 4: Merge — JS metrics are authoritative, Claude provides text
+  // Step 4: Merge — JS metrics are authoritative, Claude provides text.
+  // overall_grade is intentionally null until grade methodology is
+  // reconciled with BetIQ deterministically. metrics.summary.overall_grade
+  // is still computed internally (and passed into Sonnet's prompt for
+  // tone-setting) but never surfaced on the user-facing analysis.
   const analysis: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
@@ -2698,7 +2705,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       roi_percent: metrics.summary.roi_percent,
       avg_stake: metrics.summary.avg_stake,
       date_range: metrics.summary.date_range,
-      overall_grade: metrics.summary.overall_grade,
+      overall_grade: null,
     },
     biases_detected: metrics.biases_detected.map((jsBias) => {
       const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
@@ -2893,7 +2900,7 @@ Return ONLY the JSON object, nothing else.`;
       roi_percent: metrics.summary.roi_percent,
       avg_stake: metrics.summary.avg_stake,
       date_range: metrics.summary.date_range,
-      overall_grade: metrics.summary.overall_grade,
+      overall_grade: null,
     },
     biases_detected: allBiases,
     strategic_leaks: snapshotLeaks,

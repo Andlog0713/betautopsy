@@ -110,7 +110,8 @@ function SkeletonSection({ label }: { label: string }) {
   );
 }
 
-function gradeColor(grade: string): string {
+function gradeColor(grade: string | null | undefined): string {
+  if (!grade) return 'text-fg-dim';
   const g = grade.toUpperCase();
   if (g.startsWith('A')) return 'text-win';
   if (g.startsWith('B')) return 'text-win/70';
@@ -752,11 +753,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {summary.date_range.toUpperCase()} · {summary.total_bets} {analysis.dfs_mode ? 'ENTRIES' : 'SPECIMENS'} ANALYZED
           </p>
         </div>
-        {/* Stamp-style grade — tilted like the mockup */}
-        <div className={`border-2 ${gradeColor(summary.overall_grade).replace('text-', 'border-')} px-4 py-1.5 -rotate-3`}>
-          <p className={`font-mono text-[30px] font-bold leading-none ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
-          <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
-        </div>
+        {/* Stamp-style grade — hidden until grade methodology is reconciled
+            with BetIQ deterministically (Snapshot Redaction Spec amendment). */}
+        {summary.overall_grade ? (
+          <div className={`border-2 ${gradeColor(summary.overall_grade).replace('text-', 'border-')} px-4 py-1.5 -rotate-3`}>
+            <p className={`font-mono text-[30px] font-bold leading-none ${gradeColor(summary.overall_grade)}`}>{summary.overall_grade}</p>
+            <p className={`font-mono text-[8px] tracking-[2px] text-center ${gradeColor(summary.overall_grade)}`}>GRADE</p>
+          </div>
+        ) : null}
       </div>
 
       {/* Quick share strip */}
@@ -957,7 +961,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <PercentileGauge percentile={analysis.discipline_score.percentile} label={`Better than ${analysis.discipline_score.percentile}% of bettors`} />
             )}
           </div>
-        ) : (
+        ) : summary.overall_grade ? (
           <div className="bg-base p-[18px]">
             <div className="flex justify-between items-baseline mb-2.5">
               <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">OVERALL GRADE</span>
@@ -965,7 +969,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             </div>
             <p className="font-mono text-[10px] text-fg-muted mt-2">Combines ROI, discipline, and emotional control</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* ── BetIQ Score — Pro tier or paid full report ── */}
@@ -975,9 +979,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
             <span className="font-mono text-4xl font-bold text-fg-bright">{readOnly ? analysis.betiq.score : <NumberTicker value={analysis.betiq.score} />}</span>
             <span className="font-mono text-sm text-fg-dim">/100</span>
-            <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
+            {analysis.betiq.percentile != null && (
+              <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
+            )}
           </div>
-          <PercentileGauge percentile={analysis.betiq.percentile} label={`Better than ${analysis.betiq.percentile}% of bettors`} />
+          {analysis.betiq.percentile != null && (
+            <PercentileGauge percentile={analysis.betiq.percentile} label={`Better than ${analysis.betiq.percentile}% of bettors`} />
+          )}
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-4"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
           <button onClick={() => setShowBetIQBreakdown(!showBetIQBreakdown)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors">
             {showBetIQBreakdown ? 'HIDE' : 'VIEW'} SKILL BREAKDOWN
@@ -3342,7 +3350,7 @@ function ShareSection({ analysis, summary, reportId, bets }: { analysis: Autopsy
   }
 
   const shareData: ShareCardData = {
-    grade: summary.overall_grade,
+    grade: summary.overall_grade ?? '—',
     emotion_score: emotionScore,
     roi_percent: summary.roi_percent,
     win_rate: winRate,
