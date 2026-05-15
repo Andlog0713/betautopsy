@@ -207,6 +207,41 @@ export interface AutopsyAnalysis {
     sessionGrades: Record<string, number>;
     heatedSessionCount: number;
   };
+  // Filled by /api/analyze when the user has at least one prior report.
+  // Omitted entirely for first reports OR when no archetype / betIQ /
+  // impact deltas survive the stability thresholds. iOS Chapter 1
+  // renderer consumes this; web reports surface uses lib/report-comparison
+  // separately.
+  whatChanged?: WhatChanged;
+}
+
+// ── What Changed (longitudinal-memory deltas for Chapter 1) ──
+
+export interface ArchetypeChange {
+  from: string;
+  to: string;
+}
+
+export interface BetIQDelta {
+  from: number;
+  to: number;
+  direction: 'improved' | 'regressed' | 'stable';
+}
+
+export interface ImpactDelta {
+  biasName: string;
+  previousImpact: number;
+  currentImpact: number;
+  deltaPercent: number;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface WhatChanged {
+  previousReportDate: string;
+  daysSincePrevious: number;
+  archetypeChange?: ArchetypeChange;
+  betIQDelta?: BetIQDelta;
+  topImpactDeltas?: ImpactDelta[];
 }
 
 export interface PersonalRule {
