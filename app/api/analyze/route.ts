@@ -3,12 +3,13 @@ import * as Sentry from "@sentry/nextjs";
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
+import { computeWhatChanged } from '@/lib/what-changed';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import { parseCSV } from '@/lib/csv-parser';
 import { importBets } from '@/lib/import-bets';
-import type { Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
+import type { AutopsyAnalysis, Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
 // 5-minute Vercel function timeout. Default (10s edge / 60s serverless on
 // hobby, 300s on pro) is too short for full-report LLM analyses on the
@@ -412,6 +413,40 @@ export async function POST(request: Request) {
 
         // Stamp the current saved-report schema version so future readers can branch on shape.
         analysis.schema_version = 1;
+
+        // Longitudinal-memory deltas. Pull the most recent prior report for
+        // this user, feed it + the just-computed analysis into the pure
+        // computeWhatChanged. The pre-INSERT SELECT naturally excludes the
+        // row we are about to write. whatChanged is optional on the wire —
+        // any failure here is non-blocking.
+        try {
+          const { data: priorRow } = await supabase
+            .from('autopsy_reports')
+            .select('report_json, created_at, bet_count_analyzed')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (priorRow?.report_json && priorRow.created_at) {
+            const whatChanged = computeWhatChanged(
+              {
+                analysis: priorRow.report_json as AutopsyAnalysis,
+                createdAt: priorRow.created_at as string,
+                betCountAnalyzed: (priorRow.bet_count_analyzed as number | null) ?? 0,
+              },
+              {
+                analysis,
+                createdAt: new Date().toISOString(),
+                betCountAnalyzed: betsToAnalyze.length,
+              },
+            );
+            if (whatChanged) analysis.whatChanged = whatChanged;
+          }
+        } catch (err) {
+          console.error('[analyze] whatChanged computation failed:', err);
+          Sentry.captureException(err);
+        }
 
         // For Pro users running full reports, track usage
         if (!isSnapshot && tier === 'pro') {
