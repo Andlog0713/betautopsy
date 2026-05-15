@@ -352,7 +352,9 @@ export interface AutopsySummary {
   roi_percent: number;
   avg_stake: number;
   date_range: string;
-  overall_grade: string; // A through F
+  // Nullable: engine emits null until grade methodology is reconciled with
+  // BetIQ deterministically (Snapshot Redaction Spec amendment, Phase 3).
+  overall_grade: string | null;
 }
 
 export type DeltaDirection = 'up' | 'down' | 'flat';
@@ -540,7 +542,11 @@ export interface BetIQComponent {
 export interface BetIQResult {
   score: number;            // 0-100 composite
   components: BetIQComponent;
-  percentile: number;       // Estimated population percentile (1-99)
+  // Nullable: hidden until an honest cohort baseline exists (Snapshot
+  // Redaction Spec amendment, Phase 3). The fabricated estimatePercentile
+  // value was producing impossible combinations like archetype="The Sharp"
+  // + percentile=80 + grade="D" on the same report.
+  percentile: number | null;
   interpretation: string;   // One-sentence summary
   insufficient_data: boolean; // True if < 50 settled bets
 }

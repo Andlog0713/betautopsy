@@ -816,16 +816,16 @@ export default function ReportsPage() {
                   <div className="flex items-center gap-4">
                     <span
                       className={`font-bold text-2xl font-bold ${
-                        analysis.summary.overall_grade.startsWith('A')
+                        analysis.summary.overall_grade?.startsWith('A')
                           ? 'text-win'
-                          : analysis.summary.overall_grade.startsWith('B')
+                          : analysis.summary.overall_grade?.startsWith('B')
                           ? 'text-win/70'
-                          : analysis.summary.overall_grade.startsWith('C')
+                          : analysis.summary.overall_grade?.startsWith('C')
                           ? 'text-caution'
                           : 'text-loss'
                       }`}
                     >
-                      {analysis.summary.overall_grade}
+                      {analysis.summary.overall_grade ?? '—'}
                     </span>
                     <div>
                       <p className="font-medium">
