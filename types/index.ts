@@ -770,3 +770,12 @@ export interface PreBetCheckInResponse {
   recommendation: CheckInRecommendation;
   summary: string;
 }
+
+export type CheckInOutcome = 'placed_anyway' | 'waited' | 'placed_bet';
+
+export const CHECK_IN_OUTCOMES = ['placed_anyway', 'waited', 'placed_bet'] as const;
+
+export interface CheckInOutcomeRequest {
+  checkInId: string;
+  outcome: CheckInOutcome;
+}

@@ -3,8 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   CHECK_IN_SPORTS,
   CHECK_IN_BET_TYPES,
+  CHECK_IN_OUTCOMES,
   type AutopsyAnalysis,
   type BiasDetected,
+  type CheckInOutcomeRequest,
   type CheckInRecommendation,
   type CheckInScoreResult,
   type CheckInSeverity,
@@ -12,11 +14,38 @@ import {
   type PreBetCheckInRequest,
 } from '@/types';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const OUTCOME_SET: ReadonlySet<string> = new Set(CHECK_IN_OUTCOMES);
+
 const SPORT_SET: ReadonlySet<string> = new Set(CHECK_IN_SPORTS);
 const BET_TYPE_SET: ReadonlySet<string> = new Set(CHECK_IN_BET_TYPES);
 
 export type ValidationOk = { ok: true; value: PreBetCheckInRequest };
 export type ValidationErr = { ok: false; error: string };
+
+export type OutcomeValidationOk = { ok: true; value: CheckInOutcomeRequest };
+export type OutcomeValidationErr = { ok: false; error: string };
+
+export function validateOutcomeRequest(
+  raw: unknown,
+): OutcomeValidationOk | OutcomeValidationErr {
+  if (raw === null || typeof raw !== 'object') {
+    return { ok: false, error: 'Body must be a JSON object' };
+  }
+  const r = raw as Record<string, unknown>;
+
+  const checkInId = r.checkInId;
+  if (typeof checkInId !== 'string' || !UUID_REGEX.test(checkInId)) {
+    return { ok: false, error: 'checkInId must be a UUID string' };
+  }
+
+  const outcome = r.outcome;
+  if (typeof outcome !== 'string' || !OUTCOME_SET.has(outcome)) {
+    return { ok: false, error: 'outcome must be one of: ' + CHECK_IN_OUTCOMES.join(', ') };
+  }
+
+  return { ok: true, value: { checkInId, outcome: outcome as CheckInOutcomeRequest['outcome'] } };
+}
 
 export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationErr {
   if (raw === null || typeof raw !== 'object') {
