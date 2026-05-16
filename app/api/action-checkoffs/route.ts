@@ -108,3 +108,39 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ checkoff: data });
 }
+
+// GET /api/action-checkoffs?report_id=X
+// Returns every check-off row for the given report scoped to the
+// authenticated user (RLS enforces ownership; we add an explicit
+// report_id filter on top). Used by iOS ActionCheckoffStore.load on
+// Chapter 7 onAppear to hydrate the in-memory dict.
+
+export async function GET(request: Request) {
+  const { supabase, user, error: authError } = await getAuthenticatedClient(request);
+  if (authError || !user || !supabase) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const reportId = url.searchParams.get('report_id');
+  if (!reportId || !UUID_REGEX.test(reportId)) {
+    return NextResponse.json({ error: 'report_id query param is required and must be a UUID' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('action_checkoffs')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    logErrorServer(error, {
+      path: '/api/action-checkoffs',
+      userId: user.id,
+      metadata: { stage: 'list', report_id: reportId },
+    });
+    return NextResponse.json({ error: 'Failed to load check-offs' }, { status: 500 });
+  }
+
+  return NextResponse.json({ checkoffs: data ?? [] });
+}
