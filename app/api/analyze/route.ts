@@ -4,6 +4,7 @@ import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { computeWhatChanged } from '@/lib/what-changed';
+import { maybeSendHeatedPush } from '@/lib/push-heated-send';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
@@ -508,6 +509,11 @@ export async function POST(request: Request) {
         // endpoint with.
         if (savedReport?.id) {
           sendEvent('report_started', { report_id: savedReport.id });
+          // Fire-and-forget heated-session push. Internally wrapped in
+          // try/catch + Sentry; never throws and never blocks the SSE
+          // stream. One push per analyze run by construction
+          // (pickHeatedSessionForPush returns at most one session).
+          void maybeSendHeatedPush(user.id, savedReport.id, analysis);
         }
 
         // Save discipline score with component breakdown
