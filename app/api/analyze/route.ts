@@ -5,6 +5,7 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
 import { computeWhatChanged } from '@/lib/what-changed';
 import { maybeSendHeatedPush } from '@/lib/push-heated-send';
+import { waitUntil } from '@vercel/functions';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
@@ -513,7 +514,14 @@ export async function POST(request: Request) {
           // try/catch + Sentry; never throws and never blocks the SSE
           // stream. One push per analyze run by construction
           // (pickHeatedSessionForPush returns at most one session).
-          void maybeSendHeatedPush(user.id, savedReport.id, analysis);
+          //
+          // waitUntil keeps the Vercel function alive past SSE close
+          // until the Promise resolves. A bare `void` Promise gets
+          // reaped along with the instance when the response stream
+          // closes, which on the first prod run killed the in-flight
+          // http2 request to APNs before the response arrived and
+          // notifications_sent was never written.
+          waitUntil(maybeSendHeatedPush(user.id, savedReport.id, analysis));
         }
 
         // Save discipline score with component breakdown
