@@ -33,10 +33,14 @@ function getSession(host: string): ClientHttp2Session {
   const session = connect(`https://${host}`);
   session.on('error', () => { sessionCache.delete(host); });
   session.on('close', () => { sessionCache.delete(host); });
-  // Don't keep the event loop alive for the cached session — when the
-  // function instance is about to be reaped, no in-flight requests
-  // exist and we don't want to block shutdown.
-  session.unref();
+  // Note: we intentionally do NOT call session.unref(). It would let
+  // serverless instances hibernate sooner, but it also lets Node exit
+  // mid-await in any standalone-script context (including
+  // scripts/test-push.ts Mode B), because once the http2 socket no
+  // longer counts as an active handle there is nothing keeping the
+  // loop alive while awaiting the APNs response. Vercel keeps the
+  // function instance around for the few minutes it takes the socket
+  // to idle out anyway, so the cost of staying ref'd is negligible.
   sessionCache.set(host, session);
   return session;
 }
