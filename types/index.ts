@@ -814,3 +814,33 @@ export interface CheckInOutcomeRequest {
   checkInId: string;
   outcome: CheckInOutcome;
 }
+
+// ── Action item check-offs (Chapter 7 → dashboard progress ring) ──
+// recommendation_id is "${report_id}:${priority}" where priority is
+// the engine-assigned integer on Recommendation. iOS uses priority as
+// Identifiable.id so the wire format matches the in-app id without a
+// transform.
+
+export type ActionCheckoffStatus = 'completed' | 'dismissed' | 'reset';
+
+export const ACTION_CHECKOFF_STATUSES = ['completed', 'dismissed', 'reset'] as const;
+
+export interface ActionCheckoffRequest {
+  report_id: string;
+  recommendation_id: string;
+  status: ActionCheckoffStatus;
+}
+
+export interface ActionCheckoff {
+  id: string;
+  user_id: string;
+  report_id: string;
+  recommendation_id: string;
+  completed_at: string | null;
+  dismissed_at: string | null;
+  created_at: string;
+}
+
+export interface ActionCheckoffListResponse {
+  checkoffs: ActionCheckoff[];
+}
