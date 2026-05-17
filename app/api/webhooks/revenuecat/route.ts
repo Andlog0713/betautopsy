@@ -28,6 +28,13 @@ function createServiceClient() {
 // refund handling is parked for v1.1.
 const PROCESS_TYPES = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 
+// Match /api/analyze:25 — the waitUntil-invoked engine re-run is a Sonnet
+// full-report run, which can take 30-120s on the 5000-bet max-cap. The
+// route's synchronous body completes in <1s, but the Vercel function
+// instance has to stay alive past response close until the waitUntil
+// Promise resolves. maxDuration caps that wait at 300s (Pro plan cap).
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   const auth = request.headers.get('authorization');
   if (!auth || auth !== process.env.REVENUECAT_WEBHOOK_SECRET) {
