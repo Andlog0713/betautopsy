@@ -3412,14 +3412,23 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
   lines.push(`## Emotion Score: ${a.emotion_score}/100`);
   lines.push(`## Bankroll Health: ${a.bankroll_health === 'danger' ? 'At Risk' : a.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}`);
   lines.push('');
+  // Visibility-aware skip: returns true when the field is renderable.
+  // Absent tag (no Spec v2 visibility info, e.g. legacy saved reports) is
+  // treated as visible — preserves rendering of pre-v2 reports unchanged.
+  // Explicit non-"visible" tag (snapshot redaction) skips the line so
+  // markdown doesn't show "$0" / "0%" placeholders where redacted values
+  // used to live.
+  const isVisible = (tag?: VisibilityTag): boolean => tag === undefined || tag === 'visible';
+
   if (a.biases_detected.length > 0) {
     lines.push('## Biases Detected\n');
     for (const bias of a.biases_detected) {
       lines.push(`### ${bias.bias_name} (${bias.severity.toUpperCase()})`);
-      lines.push(bias.description);
-      lines.push(`- **Evidence:** ${bias.evidence}`);
-      lines.push(`- **Estimated Cost:** $${bias.estimated_cost.toFixed(0)}`);
-      lines.push(`- **Fix:** ${bias.fix}\n`);
+      if (isVisible(bias.description_visibility) && bias.description) lines.push(bias.description);
+      if (isVisible(bias.evidence_visibility) && bias.evidence) lines.push(`- **Evidence:** ${bias.evidence}`);
+      if (isVisible(bias.estimated_cost_visibility) && bias.estimated_cost > 0) lines.push(`- **Estimated Cost:** $${bias.estimated_cost.toFixed(0)}`);
+      if (isVisible(bias.fix_visibility) && bias.fix) lines.push(`- **Fix:** ${bias.fix}`);
+      lines.push('');
     }
   }
   if (a.strategic_leaks.length > 0) {
@@ -3435,7 +3444,8 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     lines.push('| Day | Bets | Win Rate | ROI | Profit |');
     lines.push('|-----|------|----------|-----|--------|');
     for (const d of a.timing_analysis.by_day.filter((d) => d.bets > 0)) {
-      lines.push(`| ${d.label} | ${d.bets} | ${d.win_rate.toFixed(0)}% | ${d.roi.toFixed(1)}% | $${d.profit.toFixed(0)} |`);
+      const profitCell = isVisible(d.profit_visibility) ? `$${d.profit.toFixed(0)}` : '—';
+      lines.push(`| ${d.label} | ${d.bets} | ${d.win_rate.toFixed(0)}% | ${d.roi.toFixed(1)}% | ${profitCell} |`);
     }
     lines.push('');
     if (a.timing_analysis.has_time_data) {
@@ -3443,7 +3453,8 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
       lines.push('| Time | Bets | Win Rate | ROI | Profit |');
       lines.push('|------|------|----------|-----|--------|');
       for (const h of a.timing_analysis.by_hour.filter((h) => h.bets > 0)) {
-        lines.push(`| ${h.label} | ${h.bets} | ${h.win_rate.toFixed(0)}% | ${h.roi.toFixed(1)}% | $${h.profit.toFixed(0)} |`);
+        const profitCell = isVisible(h.profit_visibility) ? `$${h.profit.toFixed(0)}` : '—';
+        lines.push(`| ${h.label} | ${h.bets} | ${h.win_rate.toFixed(0)}% | ${h.roi.toFixed(1)}% | ${profitCell} |`);
       }
       lines.push('');
     }
@@ -3457,7 +3468,12 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     lines.push('| Odds Range | Bets | Win Rate | Implied | Edge | ROI | Profit |');
     lines.push('|------------|------|----------|---------|------|-----|--------|');
     for (const b of a.odds_analysis.buckets.filter((b) => b.bets > 0)) {
-      lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${b.win_rate.toFixed(0)}% | ${b.implied_prob.toFixed(0)}% | ${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp | ${b.roi.toFixed(1)}% | $${b.profit.toFixed(0)} |`);
+      const winCell = isVisible(b.win_rate_visibility) ? `${b.win_rate.toFixed(0)}%` : '—';
+      const impCell = isVisible(b.implied_prob_visibility) ? `${b.implied_prob.toFixed(0)}%` : '—';
+      const edgeCell = isVisible(b.edge_visibility) ? `${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp` : '—';
+      const roiCell = isVisible(b.roi_visibility) ? `${b.roi.toFixed(1)}%` : '—';
+      const profitCell = isVisible(b.profit_visibility) ? `$${b.profit.toFixed(0)}` : '—';
+      lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${winCell} | ${impCell} | ${edgeCell} | ${roiCell} | ${profitCell} |`);
     }
     lines.push('');
     lines.push(`- **Luck vs Skill:** ${a.odds_analysis.actual_wins} actual wins vs ${a.odds_analysis.expected_wins.toFixed(1)} expected: ${a.odds_analysis.luck_label}`);
@@ -3467,7 +3483,11 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
   }
   if (a.recommendations.length > 0) {
     lines.push('## Action Plan\n');
-    for (const r of a.recommendations) { lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`); lines.push(`${r.description}\n`); }
+    for (const r of a.recommendations) {
+      lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`);
+      if (isVisible(r.description_visibility) && r.description) lines.push(`${r.description}`);
+      lines.push('');
+    }
   }
   lines.push('---');
   lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
