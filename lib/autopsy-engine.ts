@@ -1,4 +1,4 @@
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
 
@@ -2712,7 +2712,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       const claudeBias = claudeBiases.find(
         (cb: Record<string, unknown>) => (cb.bias_name as string)?.toLowerCase() === jsBias.bias_name.toLowerCase()
       ) as Record<string, unknown> | undefined;
-      return {
+      return withFullModeBiasTags({
         bias_name: jsBias.bias_name,
         severity: jsBias.severity as 'low' | 'medium' | 'high' | 'critical',
         description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
@@ -2720,7 +2720,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
         estimated_cost: (claudeBias?.estimated_cost as number) ?? 0,
         fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
         evidence_bet_ids: jsBias.evidence_bet_ids,
-      };
+      });
     }),
     strategic_leaks: (Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {
       // Try to use JS-calculated ROI if available
@@ -2734,7 +2734,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       };
     }),
     behavioral_patterns: (Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'],
-    recommendations: (Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as AutopsyAnalysis['recommendations'],
+    recommendations: ((Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as Recommendation[]).map(withFullModeRecommendationTags),
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score, // backward compat for old report renders
     emotion_breakdown: metrics.emotion_breakdown,
@@ -2747,18 +2747,27 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       sharp_score: calculateSharpScore(metrics, bets),
     } as AutopsyAnalysis['edge_profile'] : undefined,
     betting_archetype: metrics.betting_archetype,
-    timing_analysis: metrics.timing,
-    odds_analysis: metrics.odds,
+    timing_analysis: withFullModeTimingTags(metrics.timing),
+    odds_analysis: withFullModeOddsTags(metrics.odds),
     dfs_mode: metrics.dfs.isDFS,
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
     betiq: calculateBetIQ(metrics, bets),
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
-    sport_specific_findings: sportFindings.length > 0 ? sportFindings : undefined,
-    session_detection: metrics.sessionDetection ?? undefined,
+    sport_specific_findings: sportFindings.length > 0 ? sportFindings.map(withFullModeFindingTags) : undefined,
+    session_detection: withFullModeSessionTags(metrics.sessionDetection ?? undefined),
     bet_annotations: metrics.annotations ?? undefined,
     executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
+    // Spec v2 dual-emission: ship the new struct alongside the legacy snake
+    // string. iOS V8.5+ reads insightFull; pre-V8.5 reads executive_diagnosis.
+    // insightSnapshot is the same 1-sentence template snapshot mode uses, so
+    // a paid user who hits the same report twice sees consistent prose.
+    executiveDiagnosis: ((): ExecutiveDiagnosis | undefined => {
+      const legacy = (claudeData.executive_diagnosis as string) ?? undefined;
+      if (!legacy) return undefined;
+      return { insightSnapshot: buildInsightSnapshot(metrics), insightFull: legacy };
+    })(),
     pertinent_negatives: generatePertinentNegatives(
       metrics.biases_detected.map(b => b.bias_name),
       Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns as { pattern_name: string; impact: string }[] : [],
@@ -2766,11 +2775,327 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       metrics.odds
     ),
     contradictions: detectContradictions(metrics, bets),
+    // summaryCounts ships in BOTH modes for paywall conversion copy.
+    summaryCounts: {
+      sessionsAnalyzed: metrics.sessionDetection?.totalSessions ?? 0,
+      biasesDetected: metrics.biases_detected.length,
+      patternsIdentified: 0,  // full mode doesn't ship patternsSnapshot; consumers should use the full patterns/sessions
+      leakPatternsFlagged: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
+      sportLevelFindings: sportFindings.length,
+    },
   };
 
   const markdown = generateMarkdownReport(analysis);
 
   return { analysis, markdown, tokensUsed, model };
+}
+
+// ── Snapshot Redaction helpers (Spec v2) ─────────────────────────────
+//
+// Per-field visibility model: every redactable field has a companion
+// `<X>_visibility` (or `<X>Visibility` on DetectedSession to match its
+// existing camelCase) tag. Snapshot mode redacts the value to '' / 0 and
+// sets the tag to one of redacted_dollar / redacted_percent / redacted_text
+// / hidden. Full mode emits the value and sets the tag to "visible".
+//
+// Why empty-string/0 and not null: pre-V8.5 iOS Codable has non-optional
+// String/number types on these fields. Sending null would crash the decoder
+// during the rollout window between this engine PR shipping and iOS-PR-V8.5
+// shipping. The visibility tag is the source of truth iOS V8.5+ reads;
+// older clients see the same shape they see today. A future engine patch
+// can flip '' to literal null after V8.5 deploys widely.
+
+// Maps a severity tier to a 0..1 bar length. Used as severity_bar_ratio for
+// bias entries + topDamages so iOS renders Ch 1 damage bars without ever
+// seeing the underlying dollar costs.
+function severityToBarRatio(severity: string): number {
+  switch (severity) {
+    case 'critical': return 1.0;
+    case 'high':     return 0.75;
+    case 'medium':   return 0.5;
+    case 'low':      return 0.25;
+    default:         return 0.5;
+  }
+}
+
+// Deterministic recommendation title for each detected bias. Map keys are the
+// engine's actual emitted bias_name display strings (see detectBehavioralBiases
+// + DFS bias detection in this file). Unknown biases fall back to a humanized
+// "Address your <bias name>" sentence. Phase 2 ships 4-6 entries per snapshot;
+// no LLM call.
+const BIAS_TO_RECOMMENDATION_TITLE: Record<string, string> = {
+  'Stake Volatility':              'Lock your unit size',
+  'Post-Loss Escalation':          'Stop the chase window',
+  'Late-Night Betting':            'Set a curfew on bets',
+  'Heavy Parlay Tendency':         'Cut your parlay frequency',
+  'Favorite-Heavy Lean':           'Stop paying juice on chalk',
+  'Category Concentration Leak':   'Diversify outside your worst sport',
+  'Emotional Session Pattern':     'Cap stakes during heated sessions',
+  'High-Pick Addiction':           'Cut high-pick entry frequency',
+  'Power Play Preference':         'Shift to Flex entries',
+  'Multiplier Chasing':            'Limit post-loss pick count',
+  'Player Concentration Bias':     'Diversify player exposure',
+};
+
+function biasNameToRecommendationTitle(name: string): string {
+  return BIAS_TO_RECOMMENDATION_TITLE[name] ?? `Address your ${name.toLowerCase()}`;
+}
+
+function severityToDifficulty(severity: string): 'easy' | 'medium' | 'hard' {
+  switch (severity) {
+    case 'critical':
+    case 'high':   return 'hard';
+    case 'medium': return 'medium';
+    case 'low':    return 'easy';
+    default:       return 'medium';
+  }
+}
+
+// Truncate a description to the first sentence (or first 120 chars if no
+// period found). Used for SportSpecificFinding.description_snapshot in
+// snapshot mode — the visible 1-sentence teaser.
+function truncateToOneSentence(text: string): string {
+  if (!text) return '';
+  const m = text.match(/^(.{1,160}?[.!?])(\s|$)/);
+  if (m) return m[1].trim();
+  return text.length <= 120 ? text : text.slice(0, 117).trimEnd() + '…';
+}
+
+// Builds the 1-sentence executive insight shown in snapshot mode. Format
+// locked with Andrew: "Your betting shows {topBiasCategory} patterns. The
+// full report breaks down {betCount} bets across {sessionCount} sessions."
+// Deterministic — no LLM call.
+function buildInsightSnapshot(metrics: ReturnType<typeof calculateMetrics>): string {
+  const topBias = metrics.biases_detected[0];
+  const topBiasCategory = topBias ? topBias.bias_name.toLowerCase() : 'mixed behavioral';
+  const betCount = metrics.summary.total_bets;
+  const sessionCount = metrics.sessionDetection?.totalSessions ?? 0;
+  return `Your betting shows ${topBiasCategory} patterns. The full report breaks down ${betCount} bets across ${sessionCount} sessions.`;
+}
+
+// Builds the 5-entry (or fewer if empty categories) patternsSnapshot array.
+// Loss kinds redact dollarValue → 0 + redacted_dollar; biggest_win ships
+// real dollar + visible per D6. Empty categories are omitted, not null-padded.
+function buildPatternsSnapshot(
+  metrics: ReturnType<typeof calculateMetrics>,
+  bets: Bet[]
+): PatternSnapshotEntry[] {
+  const entries: PatternSnapshotEntry[] = [];
+
+  // Biggest loss: largest abs negative profit bet
+  let biggestLoss: Bet | null = null;
+  let biggestWin: Bet | null = null;
+  for (const b of bets) {
+    if (b.profit < 0 && (!biggestLoss || b.profit < biggestLoss.profit)) biggestLoss = b;
+    if (b.profit > 0 && (!biggestWin || b.profit > biggestWin.profit)) biggestWin = b;
+  }
+  if (biggestLoss) {
+    entries.push({
+      kind: 'biggest_loss',
+      entityLabel: biggestLoss.sport || biggestLoss.description.slice(0, 40) || 'Single bet',
+      betCount: 1,
+      roi: 0,
+      dollarValue: 0,
+      dollarVisibility: 'redacted_dollar',
+    });
+  }
+  // Worst day-of-week from timing.by_day
+  if (metrics.timing && metrics.timing.by_day) {
+    const dayBuckets = metrics.timing.by_day.filter(d => d.bets > 0);
+    if (dayBuckets.length > 0) {
+      const worstDay = dayBuckets.reduce((acc, d) => (d.roi < acc.roi ? d : acc));
+      entries.push({
+        kind: 'worst_day',
+        entityLabel: worstDay.label,
+        betCount: worstDay.bets,
+        roi: worstDay.roi,
+        dollarValue: 0,
+        dollarVisibility: 'redacted_dollar',
+      });
+    }
+  }
+  // Worst hour-of-day from timing.by_hour
+  if (metrics.timing && metrics.timing.has_time_data && metrics.timing.by_hour) {
+    const hourBuckets = metrics.timing.by_hour.filter(h => h.bets > 0);
+    if (hourBuckets.length > 0) {
+      const worstHour = hourBuckets.reduce((acc, h) => (h.roi < acc.roi ? h : acc));
+      entries.push({
+        kind: 'worst_hour',
+        entityLabel: worstHour.label,
+        betCount: worstHour.bets,
+        roi: worstHour.roi,
+        dollarValue: 0,
+        dollarVisibility: 'redacted_dollar',
+      });
+    }
+  }
+  // Longest losing streak: walk bets in chronological order
+  const sortedBets = [...bets].sort((a, b) => {
+    const ta = new Date(a.placed_at).getTime();
+    const tb = new Date(b.placed_at).getTime();
+    return ta - tb;
+  });
+  let longestSkid = 0;
+  let currentSkid = 0;
+  for (const b of sortedBets) {
+    if (b.profit < 0) {
+      currentSkid += 1;
+      if (currentSkid > longestSkid) longestSkid = currentSkid;
+    } else if (b.profit > 0) {
+      currentSkid = 0;
+    }
+  }
+  if (longestSkid >= 2) {
+    entries.push({
+      kind: 'longest_skid',
+      entityLabel: `${longestSkid}-bet losing streak`,
+      betCount: longestSkid,
+      roi: 0,
+      dollarValue: 0,
+      dollarVisibility: 'redacted_dollar',
+    });
+  }
+  // Biggest win: visible per D6
+  if (biggestWin) {
+    entries.push({
+      kind: 'biggest_win',
+      entityLabel: biggestWin.sport || biggestWin.description.slice(0, 40) || 'Single bet',
+      betCount: 1,
+      roi: 0,
+      dollarValue: Math.round(biggestWin.profit),
+      dollarVisibility: 'visible',
+    });
+  }
+  return entries;
+}
+
+// Builds 4-6 deterministic recommendations from the top detected biases.
+// title + difficulty + tied_to_finding visible; description + expected_improvement
+// redacted to '' / 0 + visibility tags. Per D10.
+function buildSnapshotRecommendations(
+  biases: { bias_name: string; severity: string }[]
+): Recommendation[] {
+  const top = biases.slice(0, 6);
+  return top.map((b, i) => ({
+    priority: i + 1,
+    title: biasNameToRecommendationTitle(b.bias_name),
+    description: '',
+    expected_improvement: '',
+    difficulty: severityToDifficulty(b.severity),
+    tied_to_finding: b.bias_name,
+    description_visibility: 'hidden' as VisibilityTag,
+    expected_improvement_visibility: 'hidden' as VisibilityTag,
+  }));
+}
+
+// Redacts a TimingAnalysis for snapshot mode: each cell's profit → 0 +
+// profit_visibility = "redacted_dollar". ROI + win_rate stay visible per
+// D15 (categories/percentages are intentionally revealed).
+function redactTimingForSnapshot(timing: TimingAnalysis | undefined): TimingAnalysis | undefined {
+  if (!timing) return undefined;
+  const redactCell = (b: TimingBucket): TimingBucket => ({
+    ...b,
+    profit: 0,
+    profit_visibility: 'redacted_dollar',
+  });
+  return {
+    ...timing,
+    by_hour: timing.by_hour.map(redactCell),
+    by_day: timing.by_day.map(redactCell),
+  };
+}
+
+// Redacts an OddsAnalysis for snapshot mode: full Q1 lockdown across every
+// bucket. profit/roi/win_rate/implied_prob/actual_win_rate/edge all → 0 with
+// matching visibility tags. Bets/wins/losses/staked/label/range stay visible
+// (sample size is allowed per D12).
+function redactOddsForSnapshot(odds: OddsAnalysis | undefined): OddsAnalysis | undefined {
+  if (!odds) return undefined;
+  const redactBucket = (b: OddsBucket): OddsBucket => ({
+    ...b,
+    profit: 0,
+    roi: 0,
+    win_rate: 0,
+    implied_prob: 0,
+    actual_win_rate: 0,
+    edge: 0,
+    profit_visibility: 'redacted_dollar',
+    roi_visibility: 'redacted_percent',
+    win_rate_visibility: 'redacted_percent',
+    implied_prob_visibility: 'redacted_percent',
+    actual_win_rate_visibility: 'redacted_percent',
+    edge_visibility: 'redacted_percent',
+  });
+  return {
+    ...odds,
+    buckets: odds.buckets.map(redactBucket),
+  };
+}
+
+// Annotates a BiasDetected with full-mode "visible" tags + severity_bar_ratio.
+// Used by runAutopsy when assembling full-mode payloads so iOS V8.5+ (which
+// default-denies on missing tags) renders the field instead of blurring it.
+function withFullModeBiasTags(bias: BiasDetected): BiasDetected {
+  return {
+    ...bias,
+    severity_bar_ratio: severityToBarRatio(bias.severity),
+    description_visibility: 'visible',
+    evidence_visibility: 'visible',
+    fix_visibility: 'visible',
+    estimated_cost_visibility: 'visible',
+  };
+}
+
+function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
+  return {
+    ...rec,
+    description_visibility: 'visible',
+    expected_improvement_visibility: 'visible',
+  };
+}
+
+function withFullModeFindingTags(f: SportSpecificFinding): SportSpecificFinding {
+  return {
+    ...f,
+    evidence_visibility: 'visible',
+    estimated_cost_visibility: 'visible',
+    recommendation_visibility: 'visible',
+  };
+}
+
+function withFullModeTimingTags(timing: TimingAnalysis | undefined): TimingAnalysis | undefined {
+  if (!timing) return undefined;
+  return {
+    ...timing,
+    by_hour: timing.by_hour.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag })),
+    by_day: timing.by_day.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag })),
+  };
+}
+
+function withFullModeOddsTags(odds: OddsAnalysis | undefined): OddsAnalysis | undefined {
+  if (!odds) return undefined;
+  return {
+    ...odds,
+    buckets: odds.buckets.map(b => ({
+      ...b,
+      profit_visibility: 'visible' as VisibilityTag,
+      roi_visibility: 'visible' as VisibilityTag,
+      win_rate_visibility: 'visible' as VisibilityTag,
+      implied_prob_visibility: 'visible' as VisibilityTag,
+      actual_win_rate_visibility: 'visible' as VisibilityTag,
+      edge_visibility: 'visible' as VisibilityTag,
+    })),
+  };
+}
+
+function withFullModeSessionTags(detection: SessionDetectionResult | undefined): SessionDetectionResult | undefined {
+  if (!detection) return undefined;
+  return {
+    ...detection,
+    sessions: detection.sessions.map(s => ({ ...s, profitVisibility: 'visible' as VisibilityTag })),
+    bestSession: detection.bestSession ? { ...detection.bestSession, profitVisibility: 'visible' as VisibilityTag } : null,
+    worstSession: detection.worstSession ? { ...detection.worstSession, profitVisibility: 'visible' as VisibilityTag } : null,
+  };
 }
 
 // ── Run a snapshot (free, cheap) ──
@@ -2791,99 +3116,77 @@ export async function runSnapshot(
   bets: Bet[],
   bankroll?: number | null
 ): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
-  const Anthropic = await loadAnthropic();
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = 'claude-haiku-4-5-20251001';
+  // Snapshot is now pure-compute (Spec v2 Phase 2). The previous Haiku call
+  // generated description/evidence/fix/cost for the top bias — all four are
+  // redacted in snapshot mode now (per spec D5/D10/D14/D16), so the call's
+  // output had no consumer. Removing it cuts ~1-3s of latency per snapshot
+  // and drops the Anthropic API cost for snapshot mode to $0. Analytics
+  // queries on `model_used` should account for 'snapshot-deterministic-v2'
+  // alongside the legacy 'claude-haiku-4-5-20251001' rows.
+  const model = 'snapshot-deterministic-v2';
+  const tokensUsed = 0;
 
   const metrics = calculateMetrics(bets, bankroll);
-  const topBias = metrics.biases_detected.length > 0 ? metrics.biases_detected[0] : null;
+  const sportFindings = detectSportSpecificPatterns(metrics, bets);
+  const leaks = metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3);
 
-  let claudeData: Record<string, unknown> = {};
-  let tokensUsed = 0;
-
-  if (topBias) {
-    const prompt = `=== USER STATS ===
-Record: ${metrics.summary.record} (${metrics.summary.total_bets} bets)
-ROI: ${metrics.summary.roi_percent.toFixed(1)}%
-Net P&L: $${metrics.summary.total_profit.toFixed(2)}
-Overall Grade: ${metrics.summary.overall_grade}
-Archetype: ${metrics.betting_archetype.name}
-Emotion Score: ${metrics.emotion_score}/100
-===
-
-The user's #1 detected bias is: "${topBias.bias_name}" (severity: ${topBias.severity})
-Raw data: ${topBias.data}
-
-Write a JSON object with these fields for this single bias:
-{
-  "description": "3-4 sentence explanation of what this bias is and how it shows up in their betting",
-  "evidence": "2-3 sentences citing their specific numbers",
-  "estimated_cost": <number, estimated quarterly dollar cost>,
-  "fix": "1-2 sentence actionable fix"
-}
-
-Return ONLY the JSON object, nothing else.`;
-
-    const message = await callWithOverloadRetry(() =>
-      client.messages.create({
-        model,
-        max_tokens: 512,
-        temperature: 0,
-        system: [{ type: 'text', text: SNAPSHOT_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: prompt }],
-      }, { timeout: 30000 })
-    );
-
-    const textBlock = message.content.find((block) => block.type === 'text');
-    if (textBlock && textBlock.type === 'text') {
-      claudeData = parseResponseJSON(textBlock.text);
-    }
-    tokensUsed = (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0);
-  }
-
-  // Build snapshot analysis — real data visible, dollar costs and fixes locked
-  const snapshotCounts = {
-    leaks: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
-    patterns: Math.min(metrics.biases_detected.length, 5),
-    sessions: metrics.sessionDetection?.totalSessions ?? 0,
-    sport_findings: detectSportSpecificPatterns(metrics, bets).length,
-    total_biases: metrics.biases_detected.length,
-  };
+  // ── snapshotTeaser + topDamages ────────────────────────────────────
+  // Top-3 biases sorted by severity tier (and stable index for ties) for
+  // Ch 1's damage bars. severityBarRatio is derived from severity tier so
+  // iOS renders bar length without ever seeing the underlying cost.
+  const topDamages: TopDamageEntry[] = [...metrics.biases_detected]
+    .sort((a, b) => severityToBarRatio(b.severity) - severityToBarRatio(a.severity))
+    .slice(0, 3)
+    .map(b => ({
+      biasName: b.bias_name,
+      severity: b.severity,
+      severityBarRatio: severityToBarRatio(b.severity),
+      estimatedCost: 0,
+      estimatedCostVisibility: 'redacted_dollar',
+    }));
 
   const snapshotTeaser = {
     biasNames: metrics.biases_detected.map(b => ({ name: b.bias_name, severity: b.severity })),
-    leakCategories: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).map(c => c.category),
+    leakCategories: leaks.map(c => c.category),
     sessionGrades: Object.fromEntries(
       (metrics.sessionDetection?.sessionGradeDistribution ?? []).map(g => [g.grade, g.count])
     ),
     heatedSessionCount: metrics.sessionDetection?.heatedSessionCount ?? 0,
+    topDamages,
   };
 
-  // All biases visible by name+severity; only top 1 has Claude-generated description/fix
-  const allBiases: AutopsyAnalysis['biases_detected'] = metrics.biases_detected.map((b, i) => {
-    if (i === 0 && topBias) {
-      return {
-        bias_name: topBias.bias_name,
-        severity: topBias.severity as 'low' | 'medium' | 'high' | 'critical',
-        description: (claudeData.description as string) ?? `${topBias.bias_name} detected with ${topBias.severity} severity.`,
-        evidence: (claudeData.evidence as string) ?? topBias.data,
-        estimated_cost: (claudeData.estimated_cost as number) ?? 0,
-        fix: (claudeData.fix as string) ?? '',
-      };
-    }
-    return {
-      bias_name: b.bias_name,
-      severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
-      description: '',
-      evidence: b.data,
-      estimated_cost: 0,
-      fix: '',
-    };
-  });
+  const snapshotCounts = {
+    leaks: leaks.length,
+    patterns: Math.min(metrics.biases_detected.length, 5),
+    sessions: metrics.sessionDetection?.totalSessions ?? 0,
+    sport_findings: sportFindings.length,
+    total_biases: metrics.biases_detected.length,
+  };
 
-  // Strategic leaks from category_roi — category names and ROI visible, suggestions locked
-  const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = metrics.category_roi
-    .filter(c => c.roi < -5 && c.count >= 3 && !isPlatformCategory(c.category))
+  // ── Bias redactions ────────────────────────────────────────────────
+  // Every bias (including #0) ships '' for description/evidence/fix and 0
+  // for estimated_cost in snapshot mode. severity_bar_ratio + 4 visibility
+  // tags shipped so iOS V8.5+ knows the value was redacted; pre-V8.5 sees
+  // the same '' / 0 shape it sees today.
+  const allBiases: AutopsyAnalysis['biases_detected'] = metrics.biases_detected.map((b) => ({
+    bias_name: b.bias_name,
+    severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
+    description: '',
+    evidence: '',
+    estimated_cost: 0,
+    fix: '',
+    evidence_bet_ids: b.evidence_bet_ids,
+    severity_bar_ratio: severityToBarRatio(b.severity),
+    description_visibility: 'hidden',
+    evidence_visibility: 'hidden',
+    fix_visibility: 'hidden',
+    estimated_cost_visibility: 'redacted_dollar',
+  }));
+
+  // Strategic leaks: categories + ROI + sample size visible (D11, D15).
+  // Detail + suggestion already ''-redacted today.
+  const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = leaks
+    .filter(c => !isPlatformCategory(c.category))
     .map(c => ({
       category: c.category,
       detail: '',
@@ -2891,6 +3194,45 @@ Return ONLY the JSON object, nothing else.`;
       sample_size: c.count,
       suggestion: '',
     }));
+
+  // ── SportSpecificFinding (top-1 only, with description_snapshot teaser) ──
+  // Ship as empty array (not undefined) per Andrew's direction so iOS
+  // doesn't have to handle both shapes.
+  const snapshotSportFindings: SportSpecificFinding[] = sportFindings.length > 0
+    ? [{
+        id: sportFindings[0].id,
+        name: sportFindings[0].name,
+        sport: sportFindings[0].sport,
+        severity: sportFindings[0].severity,
+        description: '',
+        description_snapshot: truncateToOneSentence(sportFindings[0].description),
+        evidence: '',
+        estimated_cost: 0,
+        recommendation: '',
+        evidence_visibility: 'hidden',
+        estimated_cost_visibility: 'redacted_dollar',
+        recommendation_visibility: 'hidden',
+      }]
+    : [];
+
+  // patternsSnapshot: 4-5 entries depending on data availability.
+  const patternsSnapshot = buildPatternsSnapshot(metrics, bets);
+
+  // 4-6 recommendations from top biases (deterministic title map).
+  const snapshotRecommendations = buildSnapshotRecommendations(metrics.biases_detected.slice(0, 6));
+
+  const summaryCounts: SummaryCounts = {
+    sessionsAnalyzed: metrics.sessionDetection?.totalSessions ?? 0,
+    biasesDetected: metrics.biases_detected.length,
+    patternsIdentified: patternsSnapshot.length,
+    leakPatternsFlagged: snapshotLeaks.length,
+    sportLevelFindings: sportFindings.length,
+  };
+
+  const executiveDiagnosis: ExecutiveDiagnosis = {
+    insightSnapshot: buildInsightSnapshot(metrics),
+    // insightFull intentionally omitted — snapshot mode hides the full body.
+  };
 
   const analysis: AutopsyAnalysis = {
     summary: {
@@ -2904,28 +3246,33 @@ Return ONLY the JSON object, nothing else.`;
     },
     biases_detected: allBiases,
     strategic_leaks: snapshotLeaks,
-    behavioral_patterns: [], // needs Claude interpretation
-    recommendations: [], // needs Claude interpretation
+    behavioral_patterns: [], // hidden in snapshot mode
+    recommendations: snapshotRecommendations,
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score,
     emotion_breakdown: metrics.emotion_breakdown,
     tilt_breakdown: metrics.emotion_breakdown,
     bankroll_health: metrics.bankroll_health,
     betting_archetype: metrics.betting_archetype,
-    timing_analysis: metrics.timing,
-    odds_analysis: metrics.odds,
+    timing_analysis: redactTimingForSnapshot(metrics.timing),
+    odds_analysis: redactOddsForSnapshot(metrics.odds),
     dfs_mode: metrics.dfs.isDFS,
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
     betiq: calculateBetIQ(metrics, bets),
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    sport_specific_findings: snapshotSportFindings,
     session_detection: metrics.sessionDetection ? {
       ...metrics.sessionDetection,
       sessions: metrics.sessionDetection.sessions.map(s => ({
         ...s,
         gradeReasons: [],
         heatSignals: [],
+        // Spec v2: profit redaction with explicit visibility tag.
         profit: 0,
+        profitVisibility: 'redacted_dollar' as VisibilityTag,
+        // Out-of-spec dollar fields kept at zero (current behavior, parked
+        // for follow-up).
         staked: 0,
         roi: 0,
         avgStake: 0,
@@ -2938,6 +3285,12 @@ Return ONLY the JSON object, nothing else.`;
       worstSession: null,
     } : undefined,
     bet_annotations: metrics.annotations ?? undefined,
+    // executive_diagnosis (legacy snake) intentionally undefined in snapshot
+    // mode — matches today's behavior so pre-V8.5 iOS sees no new content.
+    executiveDiagnosis,
+    patternsSnapshot,
+    summaryCounts,
+    // pertinent_negatives intentionally undefined (D13: hidden in snapshot).
     _snapshot_counts: snapshotCounts,
     _snapshot_teaser: snapshotTeaser,
   };
@@ -3059,14 +3412,23 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
   lines.push(`## Emotion Score: ${a.emotion_score}/100`);
   lines.push(`## Bankroll Health: ${a.bankroll_health === 'danger' ? 'At Risk' : a.bankroll_health === 'caution' ? 'Monitor' : 'Healthy'}`);
   lines.push('');
+  // Visibility-aware skip: returns true when the field is renderable.
+  // Absent tag (no Spec v2 visibility info, e.g. legacy saved reports) is
+  // treated as visible — preserves rendering of pre-v2 reports unchanged.
+  // Explicit non-"visible" tag (snapshot redaction) skips the line so
+  // markdown doesn't show "$0" / "0%" placeholders where redacted values
+  // used to live.
+  const isVisible = (tag?: VisibilityTag): boolean => tag === undefined || tag === 'visible';
+
   if (a.biases_detected.length > 0) {
     lines.push('## Biases Detected\n');
     for (const bias of a.biases_detected) {
       lines.push(`### ${bias.bias_name} (${bias.severity.toUpperCase()})`);
-      lines.push(bias.description);
-      lines.push(`- **Evidence:** ${bias.evidence}`);
-      lines.push(`- **Estimated Cost:** $${bias.estimated_cost.toFixed(0)}`);
-      lines.push(`- **Fix:** ${bias.fix}\n`);
+      if (isVisible(bias.description_visibility) && bias.description) lines.push(bias.description);
+      if (isVisible(bias.evidence_visibility) && bias.evidence) lines.push(`- **Evidence:** ${bias.evidence}`);
+      if (isVisible(bias.estimated_cost_visibility) && bias.estimated_cost > 0) lines.push(`- **Estimated Cost:** $${bias.estimated_cost.toFixed(0)}`);
+      if (isVisible(bias.fix_visibility) && bias.fix) lines.push(`- **Fix:** ${bias.fix}`);
+      lines.push('');
     }
   }
   if (a.strategic_leaks.length > 0) {
@@ -3082,7 +3444,8 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     lines.push('| Day | Bets | Win Rate | ROI | Profit |');
     lines.push('|-----|------|----------|-----|--------|');
     for (const d of a.timing_analysis.by_day.filter((d) => d.bets > 0)) {
-      lines.push(`| ${d.label} | ${d.bets} | ${d.win_rate.toFixed(0)}% | ${d.roi.toFixed(1)}% | $${d.profit.toFixed(0)} |`);
+      const profitCell = isVisible(d.profit_visibility) ? `$${d.profit.toFixed(0)}` : '—';
+      lines.push(`| ${d.label} | ${d.bets} | ${d.win_rate.toFixed(0)}% | ${d.roi.toFixed(1)}% | ${profitCell} |`);
     }
     lines.push('');
     if (a.timing_analysis.has_time_data) {
@@ -3090,7 +3453,8 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
       lines.push('| Time | Bets | Win Rate | ROI | Profit |');
       lines.push('|------|------|----------|-----|--------|');
       for (const h of a.timing_analysis.by_hour.filter((h) => h.bets > 0)) {
-        lines.push(`| ${h.label} | ${h.bets} | ${h.win_rate.toFixed(0)}% | ${h.roi.toFixed(1)}% | $${h.profit.toFixed(0)} |`);
+        const profitCell = isVisible(h.profit_visibility) ? `$${h.profit.toFixed(0)}` : '—';
+        lines.push(`| ${h.label} | ${h.bets} | ${h.win_rate.toFixed(0)}% | ${h.roi.toFixed(1)}% | ${profitCell} |`);
       }
       lines.push('');
     }
@@ -3104,7 +3468,12 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     lines.push('| Odds Range | Bets | Win Rate | Implied | Edge | ROI | Profit |');
     lines.push('|------------|------|----------|---------|------|-----|--------|');
     for (const b of a.odds_analysis.buckets.filter((b) => b.bets > 0)) {
-      lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${b.win_rate.toFixed(0)}% | ${b.implied_prob.toFixed(0)}% | ${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp | ${b.roi.toFixed(1)}% | $${b.profit.toFixed(0)} |`);
+      const winCell = isVisible(b.win_rate_visibility) ? `${b.win_rate.toFixed(0)}%` : '—';
+      const impCell = isVisible(b.implied_prob_visibility) ? `${b.implied_prob.toFixed(0)}%` : '—';
+      const edgeCell = isVisible(b.edge_visibility) ? `${b.edge >= 0 ? '+' : ''}${b.edge.toFixed(1)}pp` : '—';
+      const roiCell = isVisible(b.roi_visibility) ? `${b.roi.toFixed(1)}%` : '—';
+      const profitCell = isVisible(b.profit_visibility) ? `$${b.profit.toFixed(0)}` : '—';
+      lines.push(`| ${b.label} (${b.range}) | ${b.bets} | ${winCell} | ${impCell} | ${edgeCell} | ${roiCell} | ${profitCell} |`);
     }
     lines.push('');
     lines.push(`- **Luck vs Skill:** ${a.odds_analysis.actual_wins} actual wins vs ${a.odds_analysis.expected_wins.toFixed(1)} expected: ${a.odds_analysis.luck_label}`);
@@ -3114,7 +3483,11 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
   }
   if (a.recommendations.length > 0) {
     lines.push('## Action Plan\n');
-    for (const r of a.recommendations) { lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`); lines.push(`${r.description}\n`); }
+    for (const r of a.recommendations) {
+      lines.push(`**${r.priority}. ${r.title}** (${r.difficulty})`);
+      if (isVisible(r.description_visibility) && r.description) lines.push(`${r.description}`);
+      lines.push('');
+    }
   }
   lines.push('---');
   lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
