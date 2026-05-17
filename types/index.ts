@@ -94,6 +94,17 @@ export interface AutopsyReport {
   created_at: string;
 }
 
+// ── Snapshot Redaction (Spec v2) ──
+// Per-field visibility discriminator. When != "visible", the companion field
+// MUST be null in snapshot payloads. iOS V8.5+ reads these to decide blur
+// treatment; older clients ignore unknown fields and degrade gracefully.
+export type VisibilityTag =
+  | 'visible'
+  | 'redacted_dollar'
+  | 'redacted_percent'
+  | 'redacted_text'
+  | 'hidden';
+
 export interface TimingBucket {
   label: string;
   bets: number;
@@ -103,6 +114,10 @@ export interface TimingBucket {
   profit: number;
   roi: number;
   win_rate: number;
+  // Snapshot redaction tag. Snapshot mode: profit nulled + tag = "redacted_dollar".
+  // Full mode: profit visible + tag = "visible". Optional for backward-compat
+  // with historical saved reports.
+  profit_visibility?: VisibilityTag;
 }
 
 export interface TimingAnalysis {
@@ -127,6 +142,15 @@ export interface OddsBucket {
   implied_prob: number;    // avg implied probability for this bucket
   actual_win_rate: number; // actual win rate — compare to implied_prob
   edge: number;            // actual_win_rate - implied_prob (positive = finding value)
+  // Snapshot redaction tags. roi/win_rate/edge are direct leaks of the bucket's
+  // edge; actual_win_rate + implied_prob can back-compute edge; profit + staked
+  // can back-compute roi. All five locked in snapshot mode.
+  profit_visibility?: VisibilityTag;
+  roi_visibility?: VisibilityTag;
+  win_rate_visibility?: VisibilityTag;
+  implied_prob_visibility?: VisibilityTag;
+  actual_win_rate_visibility?: VisibilityTag;
+  edge_visibility?: VisibilityTag;
 }
 
 export interface OddsAnalysis {
@@ -138,6 +162,58 @@ export interface OddsAnalysis {
   total_settled: number;
   best_bucket: { label: string; edge: number; count: number } | null;
   worst_bucket: { label: string; edge: number; count: number } | null;
+}
+
+// ── Snapshot Redaction: new top-level structs (Spec v2) ──
+// All four types are NEW. Existing fields on AutopsyAnalysis are unchanged.
+// Engine emits these alongside legacy fields; iOS V8.5+ consumes them.
+
+// Dual-emission with legacy `executive_diagnosis: string`:
+// - Snapshot mode: only `executiveDiagnosis: { insightSnapshot }` is set.
+//   `executive_diagnosis` (legacy string) stays undefined (no regression for
+//   pre-V8.5 iOS clients).
+// - Full mode: both shipped — `executive_diagnosis` unchanged, and
+//   `executiveDiagnosis = { insightSnapshot: <templated>, insightFull: <same
+//   string as legacy> }`. V8.5 reads insightFull; older clients read legacy.
+export interface ExecutiveDiagnosis {
+  insightSnapshot: string;
+  insightFull?: string;
+}
+
+// One entry per Ch 6 pattern card. Engine pre-computes in snapshot mode so
+// iOS never sees raw sessions / never computes patterns client-side. Five
+// kinds shipped: biggest_loss, worst_day, worst_hour, longest_skid,
+// biggest_win. biggest_win.dollarValue stays visible (D6); the other four
+// have dollarValue=null + dollarVisibility="redacted_dollar".
+export interface PatternSnapshotEntry {
+  kind: 'biggest_loss' | 'worst_day' | 'worst_hour' | 'longest_skid' | 'biggest_win';
+  entityLabel: string;   // e.g. "NBA props", "Tuesday", "11pm-2am"
+  betCount: number;      // sample size — always visible (D12)
+  roi: number;           // ROI percent — always visible (D15)
+  dollarValue: number | null;
+  dollarVisibility: VisibilityTag;
+}
+
+// Pre-aggregated counts shipped in BOTH snapshot and full mode. Drives Ch 6
+// "IN YOUR FULL REPORT" footer + paywall conversion copy. All ints, always
+// visible (counts are not dollars).
+export interface SummaryCounts {
+  sessionsAnalyzed: number;
+  biasesDetected: number;
+  patternsIdentified: number;
+  leakPatternsFlagged: number;
+  sportLevelFindings: number;
+}
+
+// Top-3 biases by abs(estimated_cost). Lives inside _snapshot_teaser.topDamages.
+// Drives Ch 1 damage bars; severity_bar_ratio lets iOS render bar length
+// without ever seeing the underlying cost.
+export interface TopDamageEntry {
+  biasName: string;
+  severity: string;
+  severityBarRatio: number;  // 0..1
+  estimatedCost: number | null;
+  estimatedCostVisibility: VisibilityTag;
 }
 
 export interface AutopsyAnalysis {
@@ -191,8 +267,18 @@ export interface AutopsyAnalysis {
   session_detection?: SessionDetectionResult;
   bet_annotations?: AnnotationSummary;
   executive_diagnosis?: string;
+  // Spec v2 dual-emission: new struct shipped alongside legacy snake string.
+  // See ExecutiveDiagnosis docstring above for snapshot vs full semantics.
+  executiveDiagnosis?: ExecutiveDiagnosis;
   pertinent_negatives?: PertinentNegative[];
   contradictions?: Contradiction[];
+  // Snapshot-only pre-computed pattern cards (Ch 6). Engine produces these so
+  // iOS doesn't compute patterns from raw sessions in snapshot mode.
+  patternsSnapshot?: PatternSnapshotEntry[];
+  // Pre-aggregated section counts. Ships in BOTH modes. Drives Ch 6 footer
+  // copy + paywall conversion. Supersedes _snapshot_counts going forward but
+  // does not replace it (kept for pre-V8.5 iOS).
+  summaryCounts?: SummaryCounts;
   // Snapshot-only: counts for locked sections so paywall UI can show "3 leaks detected" etc.
   _snapshot_counts?: {
     leaks: number;
@@ -206,6 +292,8 @@ export interface AutopsyAnalysis {
     leakCategories: string[];
     sessionGrades: Record<string, number>;
     heatedSessionCount: number;
+    // Spec v2: structured top-3 biases with redaction tags.
+    topDamages?: TopDamageEntry[];
   };
   // Filled by /api/analyze when the user has at least one prior report.
   // Omitted entirely for first reports OR when no archetype / betIQ /
@@ -284,6 +372,12 @@ export interface DetectedSession {
   pushes: number;
   staked: number;
   profit: number;
+  // Snapshot redaction tag for `profit`. camelCase to match DetectedSession's
+  // existing convention. Snapshot: profit nulled + tag = "redacted_dollar".
+  // Spec v2 scope covers session.profit only; other dollar fields on this
+  // struct (staked, avgStake, startingStake, etc.) keep their current
+  // zero-in-snapshot behavior (parked spec-v2 follow-up).
+  profitVisibility?: VisibilityTag;
   roi: number;
   avgStake: number;
   startingStake: number;
@@ -427,6 +521,17 @@ export interface BiasDetected {
   estimated_cost: number;
   fix: string;
   evidence_bet_ids?: string[];
+  // Snapshot redaction tags. Snapshot mode nulls description/evidence/fix +
+  // estimated_cost and sets these to hidden/redacted_dollar accordingly.
+  // Phase 1: optional + additive. Phase 2 widens the value-field types to
+  // nullable in lockstep with the runtime change. iOS V8.5+ reads these.
+  description_visibility?: VisibilityTag;
+  evidence_visibility?: VisibilityTag;
+  fix_visibility?: VisibilityTag;
+  estimated_cost_visibility?: VisibilityTag;
+  // Pre-computed 0..1 ratio = abs(estimated_cost) / max(abs(all costs)).
+  // Lets iOS render the severity bar without ever seeing the cost itself.
+  severity_bar_ratio?: number;
 }
 
 export interface Contradiction {
@@ -468,6 +573,13 @@ export interface Recommendation {
   description: string;
   expected_improvement: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  // Snapshot redaction tags. D10: snapshot ships title + difficulty +
+  // tied-to-finding label visible; expected_improvement + description hidden.
+  description_visibility?: VisibilityTag;
+  expected_improvement_visibility?: VisibilityTag;
+  // Optional link from a snapshot recommendation back to the bias it
+  // addresses (drives "Tied to: [bias]" label in Ch 7).
+  tied_to_finding?: string;
 }
 
 // ── Subscription Tiers ──
@@ -624,6 +736,17 @@ export interface SportSpecificFinding {
   evidence: string;
   estimated_cost: number | null;
   recommendation: string;
+  // 1-sentence truncation of `description`. Visible in snapshot mode so the
+  // teaser conveys topic without leaking the full finding body. Presence of
+  // description_snapshot + null `description` is how snapshot mode signals
+  // "there's more — unlock to read." No separate description_visibility tag.
+  description_snapshot?: string;
+  // Snapshot redaction tags. Snapshot ships sport + name + severity +
+  // description_snapshot visible; evidence + recommendation hidden;
+  // estimated_cost null + redacted_dollar.
+  evidence_visibility?: VisibilityTag;
+  estimated_cost_visibility?: VisibilityTag;
+  recommendation_visibility?: VisibilityTag;
 }
 
 // ── CSV Parser ──
