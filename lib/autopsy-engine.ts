@@ -2878,13 +2878,40 @@ export function firstSentence(s: string): string {
   // NUL byte sentinel: never appears in bias evidence prose, so we can mask
   // every '.' inside a matched abbreviation (handles multi-period cases like
   // "U.S." which has both an internal and a trailing dot) and restore after
-  // the sentence split.
+  // the sentence split. Order matters: abbreviations FIRST (their pattern
+  // includes letter-adjacent dots), then decimal periods between digits, so
+  // "ratio: 1.25, threshold: 1.5." stops splitting at the decimal.
   const SENTINEL = '\0';
   const ABBR_RX = /\b(Mr|Mrs|Ms|Dr|Sr|Jr|St|Mt|U\.S|U\.K|vs)\./g;
-  const masked = s.replace(ABBR_RX, (m) => m.replace(/\./g, SENTINEL));
+  const DECIMAL_RX = /(\d)\.(\d)/g;
+  let masked = s.replace(ABBR_RX, (m) => m.replace(/\./g, SENTINEL));
+  masked = masked.replace(DECIMAL_RX, `$1${SENTINEL}$2`);
   const match = masked.match(/^[^.!?]*[.!?]/);
   if (!match) return s;
   return match[0].split(SENTINEL).join('.');
+}
+
+/**
+ * Replaces every dollar amount in a string with the masked token "$•••".
+ * Used to strip raw dollar amounts from bias evidence and sport finding
+ * evidence in snapshot mode, where dollars are paywalled but the surrounding
+ * prose is loosened (Phase 3 reframing).
+ *
+ * Matches: $1234, $1,234, $1,234.56, $-100, -$100, $.50, $0
+ * Replacement: $••• (dollar glyph + three U+2022 bullets)
+ */
+export function scrubDollarsInSentence(s: string): string {
+  if (!s) return '';
+  // Two alternatives:
+  //   thousands form: 1-3 digits then one+ comma-grouped triplets ("$1,234")
+  //   plain form:     one+ digits, no commas ("$4", "$5000")
+  // The thousands form is listed first so it wins when commas are present;
+  // \d{1,3}(,\d{3})+ requires at least one comma group so it does not falsely
+  // chew partial digit runs out of plain dollars like "$5000". Optional
+  // leading minus (-$100) and optional inner minus ($-100) both supported.
+  // The trailing `|\$\.\d+` catches bare-decimal forms like "$.50".
+  const DOLLAR_RX = /-?\$-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\$\.\d+/g;
+  return s.replace(DOLLAR_RX, '$•••');
 }
 
 
@@ -3207,7 +3234,7 @@ export async function runSnapshot(
       bias_name: b.bias_name,
       severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
       description: '',
-      evidence: evidenceVisible ? firstSentence(b.data) : '',
+      evidence: evidenceVisible ? scrubDollarsInSentence(firstSentence(b.data)) : '',
       estimated_cost: 0,
       fix: '',
       evidence_bet_ids: b.evidence_bet_ids,
@@ -3217,6 +3244,19 @@ export async function runSnapshot(
       fix_visibility: 'hidden',
       estimated_cost_visibility: 'redacted_dollar',
     };
+  });
+
+  // Sort biases_detected by severity descending so iOS, which renders the
+  // array head-first, leads with HIGH/CRITICAL biases instead of LOW. Tie-
+  // break by severity_bar_ratio desc, then by bias_name asc for stable
+  // output. Without this sort the array order was driven by detection
+  // insertion order in calculateMetrics, which interleaves severities.
+  allBiases.sort((a, b) => {
+    const sevDiff = severityToBarRatio(b.severity) - severityToBarRatio(a.severity);
+    if (sevDiff !== 0) return sevDiff;
+    const ratioDiff = (b.severity_bar_ratio ?? 0) - (a.severity_bar_ratio ?? 0);
+    if (ratioDiff !== 0) return ratioDiff;
+    return a.bias_name.localeCompare(b.bias_name);
   });
 
   // Strategic leaks: categories + ROI + sample size visible (D11, D15).
@@ -3231,25 +3271,22 @@ export async function runSnapshot(
       suggestion: '',
     }));
 
-  // ── SportSpecificFinding (top-1 only, with description_snapshot teaser) ──
-  // Ship as empty array (not undefined) per Andrew's direction so iOS
+  // ── SportSpecificFindings (Phase 3 loosen v2) ──
+  // Ship every detected finding with diagnostic content visible (name, sport,
+  // severity, description, evidence prose, recommendation prose) and dollars
+  // redacted (estimated_cost zeroed + redacted_dollar tag, evidence string
+  // dollar amounts replaced with $••• via scrubDollarsInSentence). Mirrors
+  // the bias-evidence un-redaction in PR #43: tease the diagnosis, paywall
+  // the dollars. Ship as empty array (not undefined) when no findings so iOS
   // doesn't have to handle both shapes.
-  const snapshotSportFindings: SportSpecificFinding[] = sportFindings.length > 0
-    ? [{
-        id: sportFindings[0].id,
-        name: sportFindings[0].name,
-        sport: sportFindings[0].sport,
-        severity: sportFindings[0].severity,
-        description: '',
-        description_snapshot: truncateToOneSentence(sportFindings[0].description),
-        evidence: '',
-        estimated_cost: 0,
-        recommendation: '',
-        evidence_visibility: 'hidden',
-        estimated_cost_visibility: 'redacted_dollar',
-        recommendation_visibility: 'hidden',
-      }]
-    : [];
+  const snapshotSportFindings: SportSpecificFinding[] = sportFindings.map((sf) => ({
+    ...sf,
+    estimated_cost: 0,
+    evidence: scrubDollarsInSentence(sf.evidence),
+    evidence_visibility: 'visible',
+    estimated_cost_visibility: 'redacted_dollar',
+    recommendation_visibility: 'visible',
+  }));
 
   // patternsSnapshot: 4-5 entries depending on data availability.
   const patternsSnapshot = buildPatternsSnapshot(metrics, bets);
