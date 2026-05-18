@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { runSnapshot, runAutopsy } from '@/lib/autopsy-engine';
+import { runSnapshot, runAutopsy, firstSentence } from '@/lib/autopsy-engine';
 import type {
   Bet,
   AutopsyAnalysis,
@@ -490,5 +490,34 @@ describe('Snapshot Redaction — Group 5: summaryCounts in BOTH modes', () => {
   it('full mode emits summaryCounts with 5 int fields', async () => {
     const { analysis } = await runAutopsy(makeFixtureBets());
     assertSummaryCountsShape(analysis);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// firstSentence helper — covers the snapshot bias-evidence truncation path
+// (ENGINE-PR-SNAPSHOT-LOOSEN). Used to teaser the first sentence of evidence
+// for top-7 biases while keeping the rest of the prose hidden.
+// ───────────────────────────────────────────────────────────────────────
+
+describe('firstSentence helper', () => {
+  it('returns empty string for empty input', () => {
+    expect(firstSentence('')).toBe('');
+  });
+
+  it('returns whole string when no terminal punctuation is present', () => {
+    expect(firstSentence('no terminal punct here')).toBe('no terminal punct here');
+  });
+
+  it('returns the input unchanged for a single sentence', () => {
+    expect(firstSentence('One complete sentence.')).toBe('One complete sentence.');
+  });
+
+  it('returns only the first sentence for multi-sentence input', () => {
+    expect(firstSentence('First sentence. Second sentence.')).toBe('First sentence.');
+  });
+
+  it('preserves abbreviations (Dr., U.S., etc.) without false sentence breaks', () => {
+    expect(firstSentence('Dr. Smith said something. Then left.')).toBe('Dr. Smith said something.');
+    expect(firstSentence('U.S. sportsbooks vary by state.')).toBe('U.S. sportsbooks vary by state.');
   });
 });

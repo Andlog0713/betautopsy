@@ -2861,6 +2861,33 @@ function truncateToOneSentence(text: string): string {
   return text.length <= 120 ? text : text.slice(0, 117).trimEnd() + '…';
 }
 
+// Returns the first sentence of `s`. Handles common abbreviations (Mr., Dr.,
+// U.S., vs., etc.) by masking their periods before the split so they don't
+// produce false sentence breaks. Used for snapshot-mode bias evidence — iOS
+// shows the first sentence as a teaser while the rest of the evidence stays
+// hidden. Distinct from truncateToOneSentence (which clips at 160 chars and
+// adds ellipsis); firstSentence preserves the original sentence verbatim and
+// returns the whole string when no terminal punctuation is present.
+//   ''                            → ''
+//   'no terminal punct'           → 'no terminal punct'
+//   'One sentence.'               → 'One sentence.'
+//   'First. Second.'              → 'First.'
+//   'Dr. Smith said. Then left.'  → 'Dr. Smith said.'
+export function firstSentence(s: string): string {
+  if (!s) return '';
+  // NUL byte sentinel: never appears in bias evidence prose, so we can mask
+  // every '.' inside a matched abbreviation (handles multi-period cases like
+  // "U.S." which has both an internal and a trailing dot) and restore after
+  // the sentence split.
+  const SENTINEL = '\0';
+  const ABBR_RX = /\b(Mr|Mrs|Ms|Dr|Sr|Jr|St|Mt|U\.S|U\.K|vs)\./g;
+  const masked = s.replace(ABBR_RX, (m) => m.replace(/\./g, SENTINEL));
+  const match = masked.match(/^[^.!?]*[.!?]/);
+  if (!match) return s;
+  return match[0].split(SENTINEL).join('.');
+}
+
+
 // Builds the 1-sentence executive insight shown in snapshot mode. Format
 // locked with Andrew: "Your betting shows {topBiasCategory} patterns. The
 // full report breaks down {betCount} bets across {sessionCount} sessions."
@@ -3164,24 +3191,33 @@ export async function runSnapshot(
   };
 
   // ── Bias redactions ────────────────────────────────────────────────
-  // Every bias (including #0) ships '' for description/evidence/fix and 0
-  // for estimated_cost in snapshot mode. severity_bar_ratio + 4 visibility
-  // tags shipped so iOS V8.5+ knows the value was redacted; pre-V8.5 sees
-  // the same '' / 0 shape it sees today.
-  const allBiases: AutopsyAnalysis['biases_detected'] = metrics.biases_detected.map((b) => ({
-    bias_name: b.bias_name,
-    severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
-    description: '',
-    evidence: '',
-    estimated_cost: 0,
-    fix: '',
-    evidence_bet_ids: b.evidence_bet_ids,
-    severity_bar_ratio: severityToBarRatio(b.severity),
-    description_visibility: 'hidden',
-    evidence_visibility: 'hidden',
-    fix_visibility: 'hidden',
-    estimated_cost_visibility: 'redacted_dollar',
-  }));
+  // Top 7 biases by severity get first-sentence evidence visible (snapshot
+  // reframe Phase 3: tease the diagnosis, paywall the dollars). Other
+  // biases keep description/evidence/fix at '' and estimated_cost at 0.
+  // severity_bar_ratio + 4 visibility tags shipped so iOS V8.5+ knows the
+  // value was redacted; pre-V8.5 sees the same '' / 0 shape it sees today.
+  const topEvidenceBiases = new Set<typeof metrics.biases_detected[number]>(
+    [...metrics.biases_detected]
+      .sort((a, b) => severityToBarRatio(b.severity) - severityToBarRatio(a.severity))
+      .slice(0, 7)
+  );
+  const allBiases: AutopsyAnalysis['biases_detected'] = metrics.biases_detected.map((b) => {
+    const evidenceVisible = topEvidenceBiases.has(b);
+    return {
+      bias_name: b.bias_name,
+      severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
+      description: '',
+      evidence: evidenceVisible ? firstSentence(b.data) : '',
+      estimated_cost: 0,
+      fix: '',
+      evidence_bet_ids: b.evidence_bet_ids,
+      severity_bar_ratio: severityToBarRatio(b.severity),
+      description_visibility: 'hidden',
+      evidence_visibility: evidenceVisible ? 'visible' : 'hidden',
+      fix_visibility: 'hidden',
+      estimated_cost_visibility: 'redacted_dollar',
+    };
+  });
 
   // Strategic leaks: categories + ROI + sample size visible (D11, D15).
   // Detail + suggestion already ''-redacted today.
@@ -3262,28 +3298,50 @@ export async function runSnapshot(
     betiq: calculateBetIQ(metrics, bets),
     emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
     sport_specific_findings: snapshotSportFindings,
-    session_detection: metrics.sessionDetection ? {
-      ...metrics.sessionDetection,
-      sessions: metrics.sessionDetection.sessions.map(s => ({
-        ...s,
-        gradeReasons: [],
-        heatSignals: [],
-        // Spec v2: profit redaction with explicit visibility tag.
-        profit: 0,
-        profitVisibility: 'redacted_dollar' as VisibilityTag,
-        // Out-of-spec dollar fields kept at zero (current behavior, parked
-        // for follow-up).
-        staked: 0,
-        roi: 0,
-        avgStake: 0,
-        startingStake: 0,
-        endingStake: 0,
-        maxStake: 0,
-        minStake: 0,
-      })),
-      bestSession: null,
-      worstSession: null,
-    } : undefined,
+    session_detection: metrics.sessionDetection ? (() => {
+      // Top-3 heated session IDs get visible heatSignals (snapshot reframe
+      // Phase 3: Ch 2 needs deterministic evidence of the user's most
+      // emotional moments without leaking dollars). Ranked by grade severity
+      // (F/D/C/B/A) then by heat-signal count for ties. Other sessions keep
+      // heatSignals empty to preserve the paywall lever on the rest of Ch 2.
+      const gradeOrder: Record<'A'|'B'|'C'|'D'|'F', number> = {
+        F: 4, D: 3, C: 2, B: 1, A: 0,
+      };
+      const heatedTopIds = new Set<string>(
+        metrics.sessionDetection.sessions
+          .filter(s => s.isHeated)
+          .slice()
+          .sort((a, b) => {
+            const g = gradeOrder[b.grade] - gradeOrder[a.grade];
+            if (g !== 0) return g;
+            return b.heatSignals.length - a.heatSignals.length;
+          })
+          .slice(0, 3)
+          .map(s => s.id)
+      );
+      return {
+        ...metrics.sessionDetection,
+        sessions: metrics.sessionDetection.sessions.map(s => ({
+          ...s,
+          gradeReasons: [],
+          heatSignals: heatedTopIds.has(s.id) ? s.heatSignals : [],
+          // Spec v2: profit redaction with explicit visibility tag.
+          profit: 0,
+          profitVisibility: 'redacted_dollar' as VisibilityTag,
+          // Out-of-spec dollar fields kept at zero (current behavior, parked
+          // for follow-up).
+          staked: 0,
+          roi: 0,
+          avgStake: 0,
+          startingStake: 0,
+          endingStake: 0,
+          maxStake: 0,
+          minStake: 0,
+        })),
+        bestSession: null,
+        worstSession: null,
+      };
+    })() : undefined,
     bet_annotations: metrics.annotations ?? undefined,
     // executive_diagnosis (legacy snake) intentionally undefined in snapshot
     // mode — matches today's behavior so pre-V8.5 iOS sees no new content.
