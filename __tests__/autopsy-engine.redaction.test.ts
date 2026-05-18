@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { runSnapshot, runAutopsy, firstSentence } from '@/lib/autopsy-engine';
+import { runSnapshot, runAutopsy, firstSentence, scrubDollarsInSentence } from '@/lib/autopsy-engine';
 import type {
   Bet,
   AutopsyAnalysis,
@@ -519,5 +519,100 @@ describe('firstSentence helper', () => {
   it('preserves abbreviations (Dr., U.S., etc.) without false sentence breaks', () => {
     expect(firstSentence('Dr. Smith said something. Then left.')).toBe('Dr. Smith said something.');
     expect(firstSentence('U.S. sportsbooks vary by state.')).toBe('U.S. sportsbooks vary by state.');
+  });
+
+  it('handles decimal numbers without false sentence breaks', () => {
+    expect(firstSentence('ratio: 1.25, threshold: 1.5.')).toBe('ratio: 1.25, threshold: 1.5.');
+  });
+
+  it('returns only first sentence when multi-sentence with decimals', () => {
+    expect(firstSentence('First number 3.14. Second sentence.')).toBe('First number 3.14.');
+  });
+
+  it('handles dollar amounts with commas and decimals as part of one sentence', () => {
+    expect(firstSentence('Cost $1,234.56 detected. Next sentence.')).toBe('Cost $1,234.56 detected.');
+  });
+
+  it('handles abbreviation immediately followed by decimal', () => {
+    expect(firstSentence('Dr. Smith found ratio 2.5. Then left.')).toBe('Dr. Smith found ratio 2.5.');
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// scrubDollarsInSentence helper — masks every $-amount in a string with
+// "$•••". Used in snapshot mode for bias evidence and sport finding
+// evidence so the diagnostic prose stays visible while raw dollar amounts
+// stay paywalled.
+// ───────────────────────────────────────────────────────────────────────
+describe('scrubDollarsInSentence helper', () => {
+  it('returns empty string for empty input', () => {
+    expect(scrubDollarsInSentence('')).toBe('');
+  });
+
+  it('leaves strings without dollars unchanged', () => {
+    expect(scrubDollarsInSentence('No dollars here.')).toBe('No dollars here.');
+  });
+
+  it('scrubs simple dollars', () => {
+    expect(scrubDollarsInSentence('Bet sizes range from $4 to $5000 (avg $88).'))
+      .toBe('Bet sizes range from $••• to $••• (avg $•••).');
+  });
+
+  it('scrubs dollars with thousands separators and decimals', () => {
+    expect(scrubDollarsInSentence('Lost $1,234.56 on Tuesday.')).toBe('Lost $••• on Tuesday.');
+  });
+
+  it('scrubs negative dollars in both forms', () => {
+    expect(scrubDollarsInSentence('Combined: $-11,635. Net: -$4,200.'))
+      .toBe('Combined: $•••. Net: $•••.');
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// Snapshot loosen v2 — biases_detected sorted by severity descending so
+// iOS renders HIGH/CRITICAL first (array head order matters on iOS).
+// ───────────────────────────────────────────────────────────────────────
+describe('Snapshot loosen v2 — biases_detected severity sort', () => {
+  it('emits biases_detected in monotonic non-increasing severity_bar_ratio order', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const ratios = analysis.biases_detected.map(b => b.severity_bar_ratio ?? 0);
+    for (let i = 1; i < ratios.length; i++) {
+      expect(ratios[i]).toBeLessThanOrEqual(ratios[i - 1]);
+    }
+  });
+
+  it('scrubs dollar amounts from visible bias evidence first sentences', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    for (const bias of analysis.biases_detected) {
+      if (bias.evidence_visibility === 'visible') {
+        expect(/\$\s?-?\d/.test(bias.evidence)).toBe(false);
+      }
+    }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// Snapshot loosen v2 — sport_specific_findings: estimated_cost zeroed +
+// redacted_dollar tag, evidence visible with dollars scrubbed. Mirrors the
+// PR #43 bias-evidence un-redaction: tease the diagnosis, paywall the
+// dollars.
+// ───────────────────────────────────────────────────────────────────────
+describe('Snapshot loosen v2 — sport_specific_findings redaction', () => {
+  it('every sport finding ships estimated_cost: 0 with redacted_dollar visibility', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const findings = analysis.sport_specific_findings ?? [];
+    for (const sf of findings) {
+      expect(sf.estimated_cost).toBe(0);
+      expect(sf.estimated_cost_visibility).toBe('redacted_dollar');
+    }
+  });
+
+  it('every sport finding evidence is visible with dollars scrubbed', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const findings = analysis.sport_specific_findings ?? [];
+    for (const sf of findings) {
+      expect(sf.evidence_visibility).toBe('visible');
+      expect(/\$\s?-?\d/.test(sf.evidence)).toBe(false);
+    }
   });
 });

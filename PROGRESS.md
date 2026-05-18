@@ -42,7 +42,100 @@
 
 ---
 
-## Current branch: `claude/engine-snapshot-loosen`
+## Current branch: `claude/engine-snapshot-loosen-v2`
+
+### Done this session — ENGINE-PR-SNAPSHOT-LOOSEN-V2: sport redact, bias dollar scrub, severity sort, decimal-period fix
+- **Why:** iPhone QA on snapshot `2d5e2936-91f2-40fb-b91e-c28b5fcc0ea9` (5000
+  bets, 2026-05-18 19:44 UTC) surfaced four wire-shape issues against the
+  Phase 3 reframing spec (canonical doc `3605964c-daf2-811b`): bias evidence
+  ships raw dollars ("$4 to $5000 (avg $88)"), `firstSentence` splits
+  "ratio: 1.25" at the decimal period producing "ratio: 1.", `biases_detected`
+  array order is detection-insertion (LOW interleaved before HIGH so iOS
+  rendering top-N from array head leads with LOW), and `sport_specific_findings`
+  ships with raw `estimated_cost: -11635` + raw `$-11635` in evidence prose +
+  `evidence_visibility: null`.
+- **Step 0 findings (Supabase wire query confirmed all four on wire today;
+  read-only code recon for emission paths):**
+  - `runSnapshot` at `lib/autopsy-engine.ts:3142` already produces a
+    snapshot-redacted `snapshotSportFindings` (estimated_cost: 0, evidence:
+    '', visibility tags). The leak is **downstream**: `app/api/analyze/route.ts:401-402`
+    unconditionally OVERWRITES `analysis.sport_specific_findings` with raw
+    `detectSportSpecificPatterns()` output for both report types, clobbering
+    the engine's careful redaction. Fix needed in BOTH files.
+  - A.6 case D (uncovered by brief): `buildSnapshotRecommendations`
+    (lib/autopsy-engine.ts:3002) already ships top-6 deterministic recs with
+    the exact 5 fields iOS Codable expects (priority, title, description,
+    expectedImprovement, difficulty). Brief's observation of "rec=null,
+    cost_savings=null, cost_savings_visibility=null" doesn't match iOS
+    Codable shape (no `cost_savings`/`recommendation_text` fields exist in
+    `ReportModels.swift`). iOS Ch 7 "$0 projected next 90 days" is iOS-side
+    hardcoded copy that needs a follow-up iOS PR (v1.1 row).
+  - A.7 case B per brief: `behavioral_patterns` is LLM-only (filled from
+    `claudeData.behavioral_patterns` at runAutopsy line 2736). Snapshot ships
+    `[]`. No cheap deterministic source in `metrics`. iOS derives Ch 7
+    patterns client-side from `timing_analysis` (per PR #43 canonical-doc
+    reading). Skipped per brief HALT.
+  - iOS `ReportModels.swift` uses defensive `try?` decode on every nested
+    struct (line 631 wraps `[SportSpecificFinding]` in `try?`). New
+    `estimated_cost_visibility` field on sport findings is additive +
+    ignored by iOS Codable (no `CodingKey` for it) — safe to ship.
+- **What shipped (5 atomic changes):**
+  - **A.1 — `firstSentence` decimal-period fix** (`lib/autopsy-engine.ts:2876`):
+    extends the NUL-sentinel masking to digit.digit periods in addition to
+    abbreviation periods. Stops splitting "ratio: 1.25, threshold: 1.5." at
+    the first decimal point.
+  - **A.2 — `scrubDollarsInSentence` helper** (`lib/autopsy-engine.ts`):
+    new exported helper colocated below `firstSentence`. Regex
+    `-?\$-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\$\.\d+` covers plain
+    ($5000), thousands ($1,234.56), bare-decimal ($.50), and both negative
+    forms (-$100 and $-100). Replaces every match with "$•••".
+  - **A.3 — bias evidence dollar scrub at emit** (`runSnapshot` allBiases
+    map): wraps `firstSentence(b.data)` in `scrubDollarsInSentence` before
+    assigning to `evidence` when `evidenceVisible`. Stops "$4 to $5000
+    (avg $88)" reaching iOS.
+  - **A.4 — `biases_detected` severity sort** (`runSnapshot`): sorts
+    `allBiases` descending by `severityToBarRatio(severity)`, tie-break by
+    `severity_bar_ratio` desc then `bias_name` asc for determinism. iOS
+    rendering top-N from array head now leads with CRITICAL/HIGH instead
+    of LOW.
+  - **A.5 — sport_specific_findings redaction** (two files):
+    - `lib/autopsy-engine.ts` `snapshotSportFindings`: maps ALL detected
+      findings (not just top-1), spreads the source `...sf`, then overrides
+      `estimated_cost: 0`, `evidence: scrubDollarsInSentence(sf.evidence)`,
+      `evidence_visibility: 'visible'`, `estimated_cost_visibility:
+      'redacted_dollar'`, `recommendation_visibility: 'visible'`. Mirrors
+      the bias evidence un-redaction shape from PR #43: tease the
+      diagnosis, paywall the dollars.
+    - `app/api/analyze/route.ts:401-402`: gates the
+      `analysis.sport_specific_findings = sportFindings` overwrite on
+      `!isSnapshot`. Snapshot mode now preserves the engine's redacted
+      output; full mode keeps current passthrough.
+- **Verification:**
+  - `npx tsc --noEmit` clean
+  - `npm run build` clean
+  - `__tests__/autopsy-engine.redaction.test.ts`: 25/25 passing (12 prior
+    redaction groups + 6 firstSentence + 5 scrubDollars + 2 severity sort
+    + 2 sport findings = 25 total)
+  - `__tests__/autopsy-engine.test.ts`: 88 failures (matches a2b7b65
+    baseline exactly — zero new failures)
+- **Constraints honored:**
+  - No em dashes anywhere (code comments, commit, PR, this entry)
+  - `model_used` stays `'snapshot-deterministic-v2'` (no Anthropic call in
+    `runSnapshot` under any condition)
+  - Dual-emission contract intact (snapshot ships camel only)
+  - iOS V8.5 wire format: only new optional `estimated_cost_visibility` on
+    sport findings; not in iOS CodingKeys so ignored by older builds
+  - "Heated" not "tilt" in new strings/comments
+- **Follow-up (filed separately by Andrew):**
+  - iOS Ch 7 "$0 projected next 90 days" — iOS-side hardcoded copy; needs
+    iOS PR to either compute from snapshot teaser or hide the copy in
+    snapshot mode
+  - `behavioral_patterns` deterministic derivation — currently iOS-side;
+    parked unless QA shows missing patterns
+
+---
+
+## Previous branch: `claude/engine-snapshot-loosen`
 
 ### Done this session — ENGINE-PR-SNAPSHOT-LOOSEN: un-redact heatSignals + bias evidence
 - **Why:** iOS smoke test on PR #42 found snapshot was "too quiet" vs Phase 3

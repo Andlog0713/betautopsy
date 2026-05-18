@@ -399,7 +399,15 @@ export async function POST(request: Request) {
         analysis.emotion_percentile = estimatePercentile('emotion_score', analysis.emotion_score, true);
         analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
-        if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
+        // Only overwrite for full reports. runSnapshot already assembled a
+        // redacted variant of sport_specific_findings (estimated_cost zeroed,
+        // evidence dollar-scrubbed, visibility tags applied); clobbering it
+        // here with raw findings is the exact wire-shape leak surfaced in
+        // iPhone QA on 2026-05-18 (snapshot 2d5e2936). For snapshot mode the
+        // engine output is authoritative; only full mode falls through.
+        if (!isSnapshot && sportFindings.length > 0) {
+          analysis.sport_specific_findings = sportFindings;
+        }
 
         // Check if user took the quiz — store quiz archetype for comparison
         try {
