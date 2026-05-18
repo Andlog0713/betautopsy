@@ -14,10 +14,10 @@ interface ShareData {
 }
 
 function gradeColor(g: string): string {
-  if (g.startsWith('A')) return '#00C9A7';
-  if (g.startsWith('B')) return '#B8944A';
-  if (g.startsWith('C')) return '#C4463A';
-  return '#C4463A';
+  if (g.startsWith('A')) return '#00DC82';
+  if (g.startsWith('B')) return '#FFCD2C';
+  if (g.startsWith('C')) return '#FF4D4D';
+  return '#FF4D4D';
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -51,7 +51,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const archName = d.archetype?.name ?? '';
   const archDesc = d.archetype?.description ?? '';
   const roiStr = `${d.roi_percent >= 0 ? '+' : ''}${d.roi_percent.toFixed(1)}%`;
-  const roiColor = d.roi_percent >= 0 ? '#00C9A7' : '#C4463A';
+  const roiColor = d.roi_percent >= 0 ? '#00DC82' : '#FF4D4D';
 
   return new ImageResponse(
     (
@@ -59,11 +59,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, paddingRight: 40 }}>
           <div style={{ display: 'flex', fontSize: 28 }}>
             <span style={{ color: '#F0F0F0' }}>Bet</span>
-            <span style={{ color: '#C4463A' }}>Autopsy</span>
+            <span style={{ color: '#FF4D4D' }}>Autopsy</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 14, color: '#A0A3B1', letterSpacing: 3 }}>BET DNA</div>
-            <div style={{ fontSize: 44, color: '#C4463A', marginTop: 8 }}>{archName}</div>
+            <div style={{ fontSize: 44, color: '#FF4D4D', marginTop: 8 }}>{archName}</div>
             <div style={{ fontSize: 16, color: '#A0A3B1', marginTop: 8 }}>{archDesc}</div>
           </div>
           <div style={{ display: 'flex', gap: 32 }}>

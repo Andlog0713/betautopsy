@@ -7,65 +7,57 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Base surfaces — 4-level dark system
-        base: '#0a0a12',
+        base: '#0A0E12',
         surface: {
-          DEFAULT: '#12121c',
-          base: '#0a0a12',
-          1: '#12121c',
-          2: '#1a1a26',
-          3: '#222232',
-          raised: '#1a1a26',
-          elevated: '#222232',
-          overlay: '#222232',
+          DEFAULT: '#131A20',
+          base: '#0A0E12',
+          1: '#131A20',
+          2: 'rgba(255,255,255,0.04)',
+          3: 'rgba(255,255,255,0.06)',
+          raised: 'rgba(255,255,255,0.04)',
+          elevated: 'rgba(255,255,255,0.06)',
+          overlay: 'rgba(255,255,255,0.08)',
         },
-        // Dashboard redesign tier system — background contrast instead of borders
-        // Brand-compliant 5-elevation surface stack
         tier: {
-          0: '#0D1117', // Midnight — page background
-          1: '#111318', // Base — primary cards
-          2: '#161820', // Surface — secondary / nav
-          3: '#1C1F28', // Raised — hover
-          4: '#222530', // Elevated — overlay / pressed
+          0: '#0A0E12',
+          1: '#131A20',
+          2: 'rgba(255,255,255,0.04)',
+          3: 'rgba(255,255,255,0.06)',
+          4: 'rgba(255,255,255,0.08)',
         },
         border: {
           subtle: 'rgba(255, 255, 255, 0.06)',
           DEFAULT: 'rgba(255, 255, 255, 0.08)',
           strong: 'rgba(255, 255, 255, 0.12)',
         },
-        // Text hierarchy — weight/size for hierarchy, not color
         fg: {
-          DEFAULT: '#fbf9ff',
-          bright: '#fbf9ff',
-          muted: '#fbf9ff',
-          dim: '#9ca3af',
+          DEFAULT: '#EDEDF3',
+          bright: '#FFFFFF',
+          muted: 'rgba(255,255,255,0.7)',
+          dim: 'rgba(255,255,255,0.5)',
         },
-        // Brand — unified teal
         scalpel: {
-          DEFAULT: '#00C9A7',
-          dim: '#00A88C',
-          muted: 'rgba(0,201,167,0.12)',
+          DEFAULT: '#FACC15',
+          dim: '#EAB308',
+          muted: 'rgba(250,204,21,0.12)',
         },
-        // Severity — desaturated, clinical
         bleed: {
-          DEFAULT: '#C4463A',
-          dim: '#8B2E25',
-          muted: 'rgba(196,70,58,0.08)',
+          DEFAULT: '#FF4D4D',
+          dim: '#CC3D3D',
+          muted: 'rgba(255,77,77,0.08)',
         },
-        // Semantic
-        win: '#00C9A7',
-        loss: '#C4463A',
-        caution: '#C9A04E',
-        // Legacy aliases
+        win: '#00DC82',
+        loss: '#FF4D4D',
+        caution: '#FFCD2C',
         ink: {
-          900: '#0a0a12',
-          800: '#12121c',
-          700: '#4A5260',
-          600: '#7A8494',
-          500: '#B0B8C4',
+          900: '#0A0E12',
+          800: '#131A20',
+          700: '#3D3F50',
+          600: 'rgba(255,255,255,0.5)',
+          500: 'rgba(255,255,255,0.7)',
         },
-        flame: { 500: '#00C9A7', 600: '#00A88C' },
-        mint: { 500: '#00C9A7' },
+        flame: { 500: '#FACC15', 600: '#EAB308' },
+        mint: { 500: '#00DC82' },
       },
       fontFamily: {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],

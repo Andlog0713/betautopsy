@@ -20,9 +20,9 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
     if (!arch) return null;
 
     // Determine if archetype color is light enough to need dark text
-    const needsDarkText = arch.color === '#C9A04E' || arch.color === '#00C9A7';
-    const leftText = needsDarkText ? '#0D1117' : '#F0F2F5';
-    const leftTextMuted = needsDarkText ? 'rgba(13,17,23,0.85)' : 'rgba(240,242,245,0.85)';
+    const needsDarkText = arch.color === '#FFCD2C' || arch.color === '#00DC82' || arch.color === '#FACC15';
+    const leftText = needsDarkText ? '#0A0E12' : '#F0F2F5';
+    const leftTextMuted = needsDarkText ? 'rgba(10,14,18,0.85)' : 'rgba(240,242,245,0.85)';
 
     return (
       <div
@@ -35,7 +35,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
           fontFamily: FONT_HEADING,
           borderRadius: 2,
           overflow: 'hidden',
-          background: '#0D1117',
+          background: '#0A0E12',
         }}
       >
         {/* Left panel — archetype color */}
@@ -92,7 +92,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
         <div
           style={{
             flex: 1,
-            background: '#0D1117',
+            background: '#0A0E12',
             padding: '72px 56px',
             display: 'flex',
             flexDirection: 'column',
@@ -146,7 +146,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                     fontFamily: FONT_MONO,
                     fontSize: 56,
                     fontWeight: 700,
-                    color: data.emotion_score <= 30 ? '#00C9A7' : data.emotion_score <= 55 ? '#C9A04E' : '#C4463A',
+                    color: data.emotion_score <= 30 ? '#00DC82' : data.emotion_score <= 55 ? '#FFCD2C' : '#FF4D4D',
                     lineHeight: 1,
                   }}
                 >
@@ -184,7 +184,7 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                       fontFamily: FONT_MONO,
                       fontSize: 56,
                       fontWeight: 700,
-                      color: data.discipline_score >= 60 ? '#00C9A7' : data.discipline_score >= 40 ? '#C9A04E' : '#C4463A',
+                      color: data.discipline_score >= 60 ? '#00DC82' : data.discipline_score >= 40 ? '#FFCD2C' : '#FF4D4D',
                       lineHeight: 1,
                     }}
                   >
@@ -215,12 +215,12 @@ const ArchetypeShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(
                 alignItems: 'center',
               }}
             >
-              <div style={{ fontFamily: FONT_MONO, fontSize: 18, color: '#00C9A7', letterSpacing: 1 }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 18, color: '#FACC15', letterSpacing: 1 }}>
                 betautopsy.com
               </div>
               <div style={{ fontFamily: FONT_HEADING, fontSize: 16, letterSpacing: 1 }}>
                 <span style={{ fontWeight: 900, color: '#F0F2F5' }}>BET</span>
-                <span style={{ fontWeight: 300, color: '#00C9A7' }}>AUTOPSY</span>
+                <span style={{ fontWeight: 300, color: '#FACC15' }}>AUTOPSY</span>
               </div>
             </div>
           </div>

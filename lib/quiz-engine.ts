@@ -25,9 +25,9 @@ export interface QuizOption {
 
 // Color progression: cool → warm as questions get more revealing
 export const QUESTION_ACCENTS = [
-  '#60a5fa', '#38bdf8', '#2dd4bf', '#34d399', '#00C9A7',
-  '#a3e635', '#facc15', '#B8944A', '#fb923c', '#C4463A',
-  '#ef4444', '#f43f5e', '#C4463A',
+  '#60A5FA', '#38BDF8', '#2DD4BF', '#34D399', '#00DC82',
+  '#A3E635', '#FACC15', '#FFCD2C', '#FB923C', '#FF4D4D',
+  '#EF4444', '#F43F5E', '#FF4D4D',
 ];
 
 // Questions ordered for emotional escalation: easy → behavioral → revealing → scenario
@@ -304,23 +304,23 @@ export function calculateQuizResult(answers: Record<string, string>): QuizResult
   let archetype: QuizResult['archetype'];
 
   if (avg.discipline >= 7.5 && avg.emotion <= 3.5 && avg.selectivity >= 6) {
-    archetype = { name: 'The Natural', color: '#00C9A7', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
+    archetype = { name: 'The Natural', color: '#00DC82', description: 'Cool, calculated, and data-driven. You treat betting like a business, not a game. Your discipline is your edge. Most bettors would kill for your self-control.' };
   } else if (avg.discipline >= 6 && avg.variance >= 6 && avg.selectivity >= 5) {
-    archetype = { name: 'Sharp Sleeper', color: '#00C9A7', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
+    archetype = { name: 'Sharp Sleeper', color: '#00DC82', description: 'You\'ve got real instincts and some genuine edges, but your sizing is all over the place. Lock in your stake strategy and you could be dangerous.' };
   } else if (avg.emotion >= 6 && avg.chase_tendency >= 6 && avg.discipline <= 4) {
-    archetype = { name: 'Heated Bettor', color: '#C4463A', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
+    archetype = { name: 'Heated Bettor', color: '#FF4D4D', description: 'Your reads aren\'t bad, but your emotions turn winners into losing weeks. The bets after losses are where your bankroll goes to die.' };
   } else if (avg.fav_lean >= 7 && avg.discipline >= 4) {
-    archetype = { name: 'Chalk Grinder', color: '#B8944A', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
+    archetype = { name: 'Chalk Grinder', color: '#FFCD2C', description: 'You play it safe with favorites and that feels smart, but you\'re paying a tax on every bet. The juice is eating you alive.' };
   } else if (avg.parlay_lean >= 7) {
-    archetype = { name: 'Parlay Dreamer', color: '#8b5cf6', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
+    archetype = { name: 'Parlay Dreamer', color: '#8B7DFF', description: 'The big ticket is always calling. Your straight bet game is probably solid. The parlays are where the dream meets reality (and reality usually wins).' };
   } else if (avg.selectivity >= 7 && avg.volume <= 4) {
-    archetype = { name: 'Sniper', color: '#60a5fa', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused. Now it\'s about sharpening the edge on the shots you do take.' };
+    archetype = { name: 'Sniper', color: '#60A5FA', description: 'You pick your spots carefully and don\'t bet just to bet. Selective and focused. Now it\'s about sharpening the edge on the shots you do take.' };
   } else if (avg.volume >= 7 && avg.variance <= 4) {
-    archetype = { name: 'Volume Warrior', color: '#a78bfa', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
+    archetype = { name: 'Volume Warrior', color: '#A78BFA', description: 'You grind it out with consistent sizing across a lot of bets. The approach is sustainable. The question is whether there are leaks hiding in the volume.' };
   } else if (avg.variance >= 7 && avg.parlay_lean >= 5 && avg.emotion >= 5) {
-    archetype = { name: 'Degen King', color: '#C4463A', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
+    archetype = { name: 'Degen King', color: '#FF4D4D', description: 'You\'re here for the ride and you own it. High variance, high energy, high entertainment value. But somewhere in the chaos, there might be real edges, if you can find them.' };
   } else {
-    archetype = { name: 'The Grinder', color: '#94a3b8', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
+    archetype = { name: 'The Grinder', color: '#A8AABF', description: 'Steady and consistent without any extreme tendencies. You\'re not making the big mistakes most bettors make. The question is whether you\'re leaving edges on the table.' };
   }
 
   // ── Emotion estimate (0-100) ──

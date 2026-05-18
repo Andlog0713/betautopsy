@@ -25,7 +25,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Disciplined. Profitable. Data-backed.',
     narrative:
       "Your data tells a rare story. You're betting with discipline most people never develop -- consistent sizing, controlled emotions, and a track record that holds up under the math. The edge you've built is real, and the autopsy confirms it. The work now is protecting it.",
-    color: '#00C9A7', // scalpel teal
+    color: '#00DC82', // success green
   },
   heat_chaser: {
     name: 'The Heat Chaser',
@@ -33,7 +33,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Emotions are running the show.',
     narrative:
       "The pattern is clear: losses don't slow you down. They speed you up. Your stakes climb after bad sessions, your volume spikes when you're down, and the decisions made in those moments are costing you more than the losing bets themselves. The problem isn't your picks -- it's what happens to your process when things go wrong.",
-    color: '#C4463A', // bleed red
+    color: '#FF4D4D', // bleed red
   },
   parlay_dreamer: {
     name: 'The Parlay Dreamer',
@@ -41,7 +41,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Chasing the big hit.',
     narrative:
       "You're betting for the big hit, and the math is working against you every time. Parlays feel like upside; they're actually a tax on optimism. The picks themselves are often defensible. It's the packaging that's killing you.",
-    color: '#C9A04E', // caution gold
+    color: '#FFCD2C', // caution amber
   },
   grinder: {
     name: 'The Grinder',
@@ -57,7 +57,7 @@ export const ARCHETYPES: Record<string, Archetype> = {
     oneLiner: 'Betting on instinct. No clear edge.',
     narrative:
       "Your betting doesn't follow a pattern yet, and without one you can't tell whether your results are skill, variance, or luck. The autopsy gives you a baseline to measure against. Small adjustments to how you pick spots and size bets will tell you fast what's working -- but right now, nothing does.",
-    color: '#9333EA', // vibrant purple — intuition, impulsive, mystical
+    color: '#8B7DFF', // lottery bettor purple (iOS V3)
   },
 };
 

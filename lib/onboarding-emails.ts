@@ -4,7 +4,7 @@
 // app/api/onboarding-emails/route.ts.
 //
 // Voice: forensic case file, clinical, data-driven. Keep monospace accents and
-// the scalpel teal (#00C9A7). No emojis. No hype. Every factual claim must be
+// the brand yellow (#FACC15). No emojis. No hype. Every factual claim must be
 // backed by something in lib/autopsy-engine.ts or the product copy.
 
 function esc(s: string): string {
@@ -21,7 +21,7 @@ export function emailShell(content: string, unsubscribeUrl?: string): string {
 <tr><td align="center" style="padding:24px 16px">
 <table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;overflow:hidden;border:1px solid #e0e0e0"><tbody>
 <tr><td style="background-color:#111318;padding:20px 24px">
-  <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#00C9A7;letter-spacing:1px">AUTOPSY</span>
+  <span style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:1px">BET</span><span style="font-size:18px;font-weight:300;color:#FACC15;letter-spacing:1px">AUTOPSY</span>
 </td></tr>
 ${content}
 <tr><td style="padding:24px 24px">
@@ -60,7 +60,7 @@ export function renderWelcomeEmail(props: EmailProps): { subject: string; html: 
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #FACC15">
     <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">1. Upload your betting history</div>
     <div style="font-size:13px;color:#555;line-height:1.5">Screenshot your settled bets from your sportsbook app, paste them from desktop, or export a CSV. Or sync automatically with <a href="https://links.pikkit.com/invite/surf40498" style="color:#0d9488;text-decoration:none">Pikkit</a>.</div>
   </div>
@@ -75,7 +75,7 @@ export function renderWelcomeEmail(props: EmailProps): { subject: string; html: 
 </td></tr>
 
 <tr><td style="padding:0 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
   <div style="font-size:12px;color:#888;margin-top:8px">Free snapshot report. Full analysis from $9.99.</div>
 </td></tr>
 
@@ -100,7 +100,7 @@ export function renderFirstNudgeEmail(props: EmailProps): { subject: string; htm
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #FACC15">
     <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Option A: Screenshot (fastest from phone)</div>
     <div style="font-size:13px;color:#555;line-height:1.5">Open your sportsbook app → My Bets → Settled → screenshot. Upload to BetAutopsy. Our AI reads it automatically.</div>
   </div>
@@ -125,7 +125,7 @@ export function renderFirstNudgeEmail(props: EmailProps): { subject: string; htm
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Now →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Now →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -166,7 +166,7 @@ export function renderFeatureHighlightEmail(props: EmailProps): { subject: strin
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">See Your Emotion Score →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">See Your Emotion Score →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -186,7 +186,7 @@ export function renderSocialProofEmail(props: EmailProps): { subject: string; ht
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #C4463A">
+  <div style="background:#f8f9fa;padding:14px;border-left:3px solid #FF4D4D">
     <div style="font-size:13px;color:#555;line-height:1.7">
       You lose a $50 bet. Your next bet is $75. You lose that too. Now you put $120 on a parlay to "get it all back." That loses. You're down $245 instead of $50.
     </div>
@@ -203,7 +203,7 @@ export function renderSocialProofEmail(props: EmailProps): { subject: string; ht
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Get Your Report →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Get Your Report →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -246,7 +246,7 @@ export function renderUrgencyEmail(props: EmailProps): { subject: string; html: 
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -272,7 +272,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #00C9A7">
+  <div style="background:#f8f9fa;padding:14px;margin-bottom:8px;border-left:3px solid #FACC15">
     <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Run your free snapshot report</div>
     <div style="font-size:13px;color:#555;line-height:1.5">Takes 2 minutes once your bets are uploaded. No credit card.</div>
   </div>
@@ -289,7 +289,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Snapshot →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Run Your Snapshot →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -317,7 +317,7 @@ export function renderPostReportEmail(props: PostReportProps): { subject: string
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
-  <div style="background:#f8f9fa;padding:16px;border-left:3px solid #00C9A7">
+  <div style="background:#f8f9fa;padding:16px;border-left:3px solid #FACC15">
     <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;letter-spacing:1.5px;margin-bottom:4px">OVERALL GRADE</div>
     <div style="font-family:'Courier New',monospace;font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:12px">${esc(grade)}</div>
     <div style="font-family:'Courier New',monospace;font-size:11px;color:#888;letter-spacing:1.5px;margin-bottom:4px">EMOTION SCORE</div>
@@ -335,7 +335,7 @@ export function renderPostReportEmail(props: PostReportProps): { subject: string
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(reportUrl)}" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Full Report →</a>
+  <a href="${esc(reportUrl)}" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Full Report →</a>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -367,7 +367,7 @@ export function renderReengagementEmail(props: EmailProps): { subject: string; h
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -396,7 +396,7 @@ export function renderMissYouEmail(props: EmailProps): { subject: string; html: 
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -425,7 +425,7 @@ export function renderLastChanceEmail(props: EmailProps): { subject: string; htm
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
+  <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -462,7 +462,7 @@ export function renderStreakEmail(props: StreakEmailProps): { subject: string; h
 </td></tr>
 
 <tr><td style="padding:8px 24px 16px;text-align:center">
-  <a href="${esc(appUrl)}/dashboard" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Your Streak →</a>
+  <a href="${esc(appUrl)}/dashboard" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">View Your Streak →</a>
 </td></tr>`, unsubscribeUrl),
   };
 }
@@ -496,7 +496,7 @@ export function renderPaymentFailedEmail(props: PaymentFailedProps): { subject: 
 </td></tr>
 
 <tr><td style="padding:0 24px 16px;text-align:center">
-  <a href="${esc(portalUrl)}" style="display:inline-block;background:#00C9A7;color:#111318;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Update Payment Method →</a>
+  <a href="${esc(portalUrl)}" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Update Payment Method →</a>
   <div style="font-size:12px;color:#888;margin-top:8px">Opens your secure Stripe billing portal.</div>
 </td></tr>
 

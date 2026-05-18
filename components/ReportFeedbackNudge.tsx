@@ -89,7 +89,7 @@ export default function ReportFeedbackNudge({
         style={{
           transform: visible ? 'translateY(0)' : 'translateY(110%)',
           transition: `transform ${SLIDE_MS}ms ease-out`,
-          backgroundColor: '#0D1117',
+          backgroundColor: '#0A0E12',
         }}
         className="pointer-events-auto mx-4 mb-4 w-full max-w-md border border-scalpel rounded p-3 sm:p-4"
       >

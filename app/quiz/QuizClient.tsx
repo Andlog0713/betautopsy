@@ -9,11 +9,11 @@ import QuizResultCard from '@/components/QuizResultCard';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
 
 function gradeColor(g: string): string {
-  if (g === 'A') return '#00C853';
-  if (g === 'B') return '#2dd4bf';
-  if (g === 'C') return '#B8944A';
-  if (g === 'D') return '#C4463A';
-  return '#ef4444';
+  if (g === 'A') return '#00DC82';
+  if (g === 'B') return '#00DC82';
+  if (g === 'C') return '#FFCD2C';
+  if (g === 'D') return '#FF4D4D';
+  return '#FF4D4D';
 }
 
 const ARCH_PRODUCT_TEASER: Record<string, string> = {
@@ -322,7 +322,7 @@ export default function QuizClient() {
   // ══════════════════════════════
   if (phase === 'reveal' && result) {
     const emotionWord = result.emotion_estimate <= 25 ? 'LOW' : result.emotion_estimate <= 50 ? 'MODERATE' : result.emotion_estimate <= 75 ? 'HIGH' : 'CRITICAL';
-    const emotionColor = result.emotion_estimate <= 25 ? '#00C9A7' : result.emotion_estimate <= 50 ? '#B8944A' : result.emotion_estimate <= 75 ? '#C4463A' : '#C4463A';
+    const emotionColor = result.emotion_estimate <= 25 ? '#00DC82' : result.emotion_estimate <= 50 ? '#FFCD2C' : result.emotion_estimate <= 75 ? '#FF4D4D' : '#FF4D4D';
     const biasCount = result.biases.length;
 
     return (

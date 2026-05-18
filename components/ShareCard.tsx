@@ -49,31 +49,31 @@ const ShareCard = forwardRef<HTMLDivElement, {
         fontFamily: SANS,
       }}
     >
-      {/* Left teal panel */}
+      {/* Left brand-yellow panel */}
       <div style={{
-        width: 475, background: '#00C9A7',
+        width: 475, background: '#FACC15',
         padding: '80px 48px', display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <svg width="36" height="52" viewBox="0 0 40 60" fill="none">
-            <path d="M4,4 Q8.6,11.5 20,19" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
-            <path d="M36,4 Q31.4,11.5 20,19" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
-            <line x1="20" y1="19" x2="20" y2="56" stroke="#0D1117" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
-            <circle cx="20" cy="19" r="4.5" fill="#0D1117"/>
+            <path d="M4,4 Q8.6,11.5 20,19" stroke="#0A0E12" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <path d="M36,4 Q31.4,11.5 20,19" stroke="#0A0E12" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <line x1="20" y1="19" x2="20" y2="56" stroke="#0A0E12" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.6"/>
+            <circle cx="20" cy="19" r="4.5" fill="#0A0E12"/>
           </svg>
-          <span style={{ fontSize: 24, letterSpacing: 4, fontWeight: 800, color: '#0D1117' }}>
+          <span style={{ fontSize: 24, letterSpacing: 4, fontWeight: 800, color: '#0A0E12' }}>
             <span>BET</span><span style={{ fontWeight: 400 }}>AUTOPSY</span>
           </span>
         </div>
         <div style={{ flex: 1 }} />
         <div>
-          <div style={{ fontSize: 26, color: '#0D1117', opacity: 0.7, marginBottom: 24 }}>
+          <div style={{ fontSize: 26, color: '#0A0E12', opacity: 0.7, marginBottom: 24 }}>
             My betting personality
           </div>
-          <div style={{ fontSize: archFontSize, fontWeight: 900, color: '#0D1117', lineHeight: 0.95, letterSpacing: -2 }}>
+          <div style={{ fontSize: archFontSize, fontWeight: 900, color: '#0A0E12', lineHeight: 0.95, letterSpacing: -2 }}>
             {archName}
           </div>
-          <div style={{ fontSize: 28, color: '#0D1117', opacity: 0.7, marginTop: 32, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 28, color: '#0A0E12', opacity: 0.7, marginTop: 32, lineHeight: 1.45 }}>
             {roastLine}
           </div>
         </div>
@@ -82,36 +82,36 @@ const ShareCard = forwardRef<HTMLDivElement, {
 
       {/* Right dark panel */}
       <div style={{
-        flex: 1, background: '#0D1117',
+        flex: 1, background: '#0A0E12',
         padding: '80px 56px', display: 'flex', flexDirection: 'column', color: '#F0F2F5',
       }}>
         {/* Behavioral split or fallback insight */}
         {hasAnnotations ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ marginBottom: 48 }}>
-              <div style={{ fontSize: 22, color: '#00C9A7', marginBottom: 10, fontWeight: 600 }}>{"When you're disciplined"}</div>
+              <div style={{ fontSize: 22, color: '#00DC82', marginBottom: 10, fontWeight: 600 }}>{"When you're disciplined"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.disciplinedRecord!.bets}</div>
                 <div style={{ fontSize: 28, color: '#F0F2F5' }}>bets</div>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: '#00C9A7', marginTop: 4 }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: '#00DC82', marginTop: 4 }}>
                 {data.disciplinedRecord!.roi >= 0 ? '+' : ''}{data.disciplinedRecord!.roi}% ROI
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 22, color: '#C4463A', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
+              <div style={{ fontSize: 22, color: '#FF4D4D', marginBottom: 10, fontWeight: 600 }}>{"When you're emotional"}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <div style={{ fontSize: 80, fontWeight: 900, letterSpacing: -2 }}>{data.emotionalRecord!.bets}</div>
                 <div style={{ fontSize: 28, color: '#F0F2F5' }}>bets</div>
               </div>
-              <div style={{ fontSize: 36, fontWeight: 700, color: '#C4463A', marginTop: 4 }}>
+              <div style={{ fontSize: 36, fontWeight: 700, color: '#FF4D4D', marginTop: 4 }}>
                 {data.emotionalRecord!.roi >= 0 ? '+' : ''}{data.emotionalRecord!.roi}% ROI
               </div>
             </div>
           </div>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 22, color: '#00C9A7', marginBottom: 12, fontWeight: 600 }}>{insight.contextLabel}</div>
+            <div style={{ fontSize: 22, color: '#FACC15', marginBottom: 12, fontWeight: 600 }}>{insight.contextLabel}</div>
             <div style={{ fontSize: 100, fontWeight: 900, lineHeight: 0.9, letterSpacing: -3 }}>{insight.heroStat}</div>
             <div style={{ fontSize: 30, color: '#F0F2F5', marginTop: 16, lineHeight: 1.3, fontWeight: 500 }}>{insight.heroLabel}</div>
           </div>
@@ -132,7 +132,7 @@ const ShareCard = forwardRef<HTMLDivElement, {
         {/* CTA */}
         <div>
           <div style={{ fontSize: 32, fontWeight: 700 }}>Get your autopsy</div>
-          <div style={{ fontSize: 24, color: '#00C9A7', marginTop: 6 }}>betautopsy.com</div>
+          <div style={{ fontSize: 24, color: '#FACC15', marginTop: 6 }}>betautopsy.com</div>
         </div>
       </div>
     </div>

@@ -21,9 +21,9 @@ function scoreColor(score: number): string {
 }
 
 function fillColor(score: number): string {
-  if (score >= 70) return '#00C9A7'; // scalpel
-  if (score >= 40) return '#D29922'; // caution (brand-correct)
-  return '#F85149'; // loss (brand-correct)
+  if (score >= 70) return '#00DC82'; // success green
+  if (score >= 40) return '#FFCD2C'; // caution amber
+  return '#FF4D4D'; // loss
 }
 
 function scoreLabel(score: number): string {
@@ -58,12 +58,12 @@ function Sparkline({ data }: { data: number[] }) {
       <polyline
         points={linePoints}
         fill="none"
-        stroke="#00C9A7"
+        stroke="#00DC82"
         strokeWidth="1.25"
         strokeLinecap="square"
         strokeLinejoin="miter"
       />
-      <circle cx={last[0]} cy={last[1]} r="1.5" fill="#00C9A7" />
+      <circle cx={last[0]} cy={last[1]} r="1.5" fill="#00DC82" />
     </svg>
   );
 }
