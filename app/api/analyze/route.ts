@@ -427,8 +427,17 @@ export async function POST(request: Request) {
         // Longitudinal-memory deltas. Pull the most recent prior report for
         // this user, feed it + the just-computed analysis into the pure
         // computeWhatChanged. The pre-INSERT SELECT naturally excludes the
-        // row we are about to write. whatChanged is optional on the wire —
-        // any failure here is non-blocking.
+        // row we are about to write. Any failure here is non-blocking.
+        //
+        // Wire contract:
+        //   - No prior row (first report)          -> whatChanged: null
+        //   - Prior row, no qualifying deltas      -> key omitted (no-op)
+        //   - Prior row, deltas qualify thresholds -> whatChanged: { ... }
+        // iOS Codable decodes both null and missing-key to nil so the
+        // Chapter 1 "What Changed" card hides cleanly on first reports.
+        // The explicit null on no-prior is shipped instead of key omission
+        // so the wire shape is unambiguous in Supabase queries and easier
+        // to assert against from tests or downstream consumers.
         try {
           const { data: priorRow } = await supabase
             .from('autopsy_reports')
@@ -452,6 +461,8 @@ export async function POST(request: Request) {
               },
             );
             if (whatChanged) analysis.whatChanged = whatChanged;
+          } else {
+            analysis.whatChanged = null;
           }
         } catch (err) {
           console.error('[analyze] whatChanged computation failed:', err);

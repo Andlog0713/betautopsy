@@ -295,12 +295,17 @@ export interface AutopsyAnalysis {
     // Spec v2: structured top-3 biases with redaction tags.
     topDamages?: TopDamageEntry[];
   };
-  // Filled by /api/analyze when the user has at least one prior report.
-  // Omitted entirely for first reports OR when no archetype / betIQ /
-  // impact deltas survive the stability thresholds. iOS Chapter 1
-  // renderer consumes this; web reports surface uses lib/report-comparison
-  // separately.
-  whatChanged?: WhatChanged;
+  // Filled by /api/analyze when the user has at least one prior report
+  // AND substantive archetype / betIQ / impact deltas survive the
+  // stability thresholds. For first reports (no prior row for this user)
+  // the field is shipped as explicit `null` so iOS Codable decodes to nil
+  // and the Chapter 1 "What Changed" card hides cleanly; wire null and
+  // key omission are equivalent for iOS decode but the explicit null is
+  // easier to debug via Supabase wire-shape queries. When a prior row
+  // exists but no deltas qualify, the key stays omitted (existing
+  // behavior). iOS Chapter 1 renderer consumes this; web reports surface
+  // uses lib/report-comparison separately.
+  whatChanged?: WhatChanged | null;
 }
 
 // ── What Changed (longitudinal-memory deltas for Chapter 1) ──
