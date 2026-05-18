@@ -936,7 +936,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             }`}>{emotionScore}</span>
           </div>
           <div className="h-1 bg-surface-2 relative">
-            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00C9A7, #B8944A, #C4463A)' }} />
+            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00DC82, #FFCD2C, #FF4D4D)' }} />
             <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
           </div>
           <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
@@ -953,7 +953,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               }`}>{analysis.discipline_score.total}</span>
             </div>
             <div className="h-1 bg-surface-2 relative">
-              <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #B8944A, #00C9A7)' : 'linear-gradient(90deg, #C4463A, #B8944A)' }} />
+              <div className="h-full" style={{ width: `${analysis.discipline_score.total}%`, background: analysis.discipline_score.total >= 51 ? 'linear-gradient(90deg, #FFCD2C, #00DC82)' : 'linear-gradient(90deg, #FF4D4D, #FFCD2C)' }} />
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
             <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
@@ -1501,7 +1501,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </div>
                   <div className="font-mono text-sm font-bold text-fg-bright">{signal.value}<span className="text-fg-dim text-xs">/{signal.max}</span></div>
                   <div className="h-1 mt-1.5 bg-base overflow-hidden">
-                    <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#C4463A' : signal.value / signal.max >= 0.4 ? '#B8944A' : '#00C9A7' }} />
+                    <div className="h-full" style={{ width: `${(signal.value / signal.max) * 100}%`, backgroundColor: signal.value / signal.max >= 0.7 ? '#FF4D4D' : signal.value / signal.max >= 0.4 ? '#FFCD2C' : '#00DC82' }} />
                   </div>
                 </div>
               ))}
@@ -1636,7 +1636,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <YAxis tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip content={<ChartTooltip />} />
                 <ReferenceLine y={0} stroke="rgba(255,255,255,0.06)" />
-                <Line type="monotone" dataKey="pnl" stroke="#B8944A" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="pnl" stroke="#FFCD2C" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1653,7 +1653,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <p className="text-fg-muted text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
           <p className="text-fg-muted text-xs mb-4">
             <span className="inline-block w-2 h-2 rounded-full bg-white/10 border border-white/20 mr-1 align-middle" /> Normal
-            <span className="inline-block w-2 h-2 rounded-full bg-[#C4463A] mr-1 ml-3 align-middle" /> Within 1hr of a loss
+            <span className="inline-block w-2 h-2 rounded-full bg-loss mr-1 ml-3 align-middle" /> Within 1hr of a loss
           </p>
           <div className="h-40 sm:h-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -1664,7 +1664,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <Tooltip content={<ChartTooltip />} />
                 <Bar dataKey="stake" radius={[2, 2, 0, 0]}>
                   {stakeData.map((entry, i) => (
-                    <Cell key={i} fill={entry.afterLoss ? '#C4463A' : 'rgba(255,255,255,0.1)'} />
+                    <Cell key={i} fill={entry.afterLoss ? '#FF4D4D' : 'rgba(255,255,255,0.1)'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -1691,7 +1691,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     return (
                       <div className="card-tier-2 p-3 text-xs">
                         <p className="text-fg-bright font-medium">{d.category}</p>
-                        <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi}% ROI</p>
+                        <p className={`font-mono ${d.roi >= 0 ? 'text-win' : 'text-loss'}`}>{d.roi}% ROI</p>
                         <p className="text-fg-muted">{d.count} bets</p>
                       </div>
                     );
@@ -1700,7 +1700,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <ReferenceLine x={0} stroke="rgba(255,255,255,0.06)" />
                 <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                   {roiData.map((entry, i) => (
-                    <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#C4463A'} fillOpacity={0.7} />
+                    <Cell key={i} fill={entry.roi >= 0 ? '#00DC82' : '#FF4D4D'} fillOpacity={0.7} />
                   ))}
                 </Bar>
               </BarChart>
@@ -1740,9 +1740,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       return (
                         <div className="card-tier-2 p-3 text-xs">
                           <p className="text-fg-bright font-medium">{d.label}</p>
-                          <p className={`font-mono ${d.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.roi.toFixed(1)}% ROI</p>
+                          <p className={`font-mono ${d.roi >= 0 ? 'text-win' : 'text-loss'}`}>{d.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{d.bets} bets · {d.win_rate.toFixed(0)}% win rate</p>
-                          <p className={`font-mono text-xs ${d.profit >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.profit >= 0 ? '+' : ''}${d.profit.toFixed(0)}</p>
+                          <p className={`font-mono text-xs ${d.profit >= 0 ? 'text-win' : 'text-loss'}`}>{d.profit >= 0 ? '+' : ''}${d.profit.toFixed(0)}</p>
                         </div>
                       );
                     }}
@@ -1750,7 +1750,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <ReferenceLine x={0} stroke="rgba(255,255,255,0.06)" />
                   <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
                     {analysis.timing_analysis.by_day.filter((d) => d.bets > 0).map((entry, i) => (
-                      <Cell key={i} fill={entry.roi >= 0 ? '#00C9A7' : '#C4463A'} fillOpacity={0.7} />
+                      <Cell key={i} fill={entry.roi >= 0 ? '#00DC82' : '#FF4D4D'} fillOpacity={0.7} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -1778,10 +1778,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   const intensity = hasBets ? Math.min(1, h.bets / Math.max(...analysis.timing_analysis!.by_hour.map((x) => x.bets || 1))) : 0;
                   const bgColor = !hasBets
                     ? 'bg-base/50'
-                    : h.roi >= 10 ? 'bg-[#00C9A7]'
-                    : h.roi >= 0 ? 'bg-[#00C9A7]'
-                    : h.roi >= -10 ? 'bg-[#C4463A]'
-                    : 'bg-[#C4463A]';
+                    : h.roi >= 10 ? 'bg-win'
+                    : h.roi >= 0 ? 'bg-win'
+                    : h.roi >= -10 ? 'bg-loss'
+                    : 'bg-loss';
                   const opacity = !hasBets ? '' : h.roi >= 10 || h.roi <= -10 ? `opacity-${Math.round(Math.max(0.4, intensity) * 100) >= 70 ? '90' : '60'}` : `opacity-${Math.round(Math.max(0.3, intensity) * 100) >= 50 ? '50' : '30'}`;
 
                   return (
@@ -1801,9 +1801,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       {hasBets && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 card-tier-2 px-2.5 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
                           <p className="text-fg-bright font-medium">{h.label}</p>
-                          <p className={`font-mono ${h.roi >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{h.roi.toFixed(1)}% ROI</p>
+                          <p className={`font-mono ${h.roi >= 0 ? 'text-win' : 'text-loss'}`}>{h.roi.toFixed(1)}% ROI</p>
                           <p className="text-fg-muted">{h.bets} bets · {h.win_rate.toFixed(0)}% WR</p>
-                          <p className={`font-mono ${h.profit >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{h.profit >= 0 ? '+' : ''}${h.profit.toFixed(0)}</p>
+                          <p className={`font-mono ${h.profit >= 0 ? 'text-win' : 'text-loss'}`}>{h.profit >= 0 ? '+' : ''}${h.profit.toFixed(0)}</p>
                         </div>
                       )}
                     </div>
@@ -1812,11 +1812,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <div className="flex items-center gap-4 mt-3 text-xs text-fg-muted">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm bg-[#00C9A7] opacity-60" />
+                  <div className="w-3 h-3 rounded-sm bg-win opacity-60" />
                   <span>Profitable</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm bg-[#C4463A] opacity-60" />
+                  <div className="w-3 h-3 rounded-sm bg-loss opacity-60" />
                   <span>Unprofitable</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1946,7 +1946,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         return (
                           <div className="card-tier-2 p-3 text-xs">
                             <p className="text-fg-bright font-medium">{d.label}</p>
-                            <p className={`font-mono ${d.edge >= 0 ? 'text-[#00C9A7]' : 'text-[#C4463A]'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
+                            <p className={`font-mono ${d.edge >= 0 ? 'text-win' : 'text-loss'}`}>{d.edge >= 0 ? '+' : ''}{d.edge.toFixed(1)}pp edge</p>
                             <p className="text-fg-muted">{d.win_rate.toFixed(0)}% actual vs {d.implied_prob.toFixed(0)}% implied</p>
                             <p className="text-fg-muted">{d.bets} bets · {d.roi.toFixed(1)}% ROI</p>
                           </div>
@@ -1956,7 +1956,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     <ReferenceLine x={0} stroke="rgba(255,255,255,0.06)" />
                     <Bar dataKey="edge" radius={[0, 4, 4, 0]}>
                       {analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).map((entry, i) => (
-                        <Cell key={i} fill={entry.edge >= 0 ? '#00C9A7' : '#C4463A'} fillOpacity={0.7} />
+                        <Cell key={i} fill={entry.edge >= 0 ? '#00DC82' : '#FF4D4D'} fillOpacity={0.7} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -2901,11 +2901,11 @@ const CLASSIFICATION_COLORS: Record<string, string> = {
 };
 
 const CLASSIFICATION_BAR_COLORS: Record<string, string> = {
-  disciplined: '#00C9A7',
-  neutral: '#515968',
-  emotional: '#B8944A',
-  chasing: '#C4463A',
-  impulsive: '#C4463A',
+  disciplined: '#00DC82',
+  neutral: '#7A7E8B',
+  emotional: '#FFCD2C',
+  chasing: '#FF4D4D',
+  impulsive: '#FF4D4D',
 };
 
 function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSummary }) {
@@ -3138,7 +3138,7 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
   };
 
   const gradeBarColors: Record<string, string> = {
-    A: '#00C9A7', B: '#00C9A790', C: '#B8944A', D: '#C4463A', F: '#C4463A',
+    A: '#00DC82', B: '#00DC8290', C: '#FFCD2C', D: '#FF4D4D', F: '#FF4D4D',
   };
 
   const totalForBar = sessionData.sessionGradeDistribution.reduce((s, g) => s + g.count, 0);

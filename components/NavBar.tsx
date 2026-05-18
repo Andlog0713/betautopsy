@@ -145,7 +145,7 @@ export default function NavBar() {
                   </Link>
                   <Link
                     href="/signup"
-                    className="text-sm font-semibold bg-scalpel text-[#0a0a12] px-5 min-h-[44px] inline-flex items-center justify-center rounded-full hover:brightness-110 transition-all"
+                    className="text-sm font-semibold bg-scalpel text-[#0A0E12] px-5 min-h-[44px] inline-flex items-center justify-center rounded-full hover:brightness-110 transition-all"
                   >
                     Sign Up
                   </Link>

@@ -155,7 +155,7 @@ export default function GoLandingPage() {
       <section className="relative grid-paper overflow-hidden pt-10 pb-12 md:pt-16 md:pb-16">
         {/* Subtle teal glow behind the headline */}
         <div
-          className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00C9A7]/10 rounded-full blur-[120px] pointer-events-none"
+          className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#FACC15]/10 rounded-full blur-[120px] pointer-events-none"
           aria-hidden="true"
         />
         <div className="relative max-w-2xl mx-auto px-4 text-center">
