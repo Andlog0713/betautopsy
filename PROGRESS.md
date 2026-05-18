@@ -42,7 +42,57 @@
 
 ---
 
-## Current branch: `claude/path-a-archetype-rename`
+## Current branch: `claude/engine-snapshot-loosen`
+
+### Done this session — ENGINE-PR-SNAPSHOT-LOOSEN: un-redact heatSignals + bias evidence
+- **Why:** iOS smoke test on PR #42 found snapshot was "too quiet" vs Phase 3
+  reframing intent (canonical doc 3605964c-daf2-811b). The Snapshot Reframing
+  spec says: SHOW evidence ChatGPT can't replicate (BetIQ, heated session
+  signals, bias names + first-sentence evidence), BLUR dollars only.
+- **Step 0 findings (Supabase wire check):** real-user snapshots over the
+  last 7 days ship `betiq.score = 76` with full components populated. BetIQ
+  is not over-redacted engine-side; the iOS smoke test's BetIQ=0 report is
+  downstream (fixture <50 bets, iOS Codable, or wire roundtrip). Flagged for
+  separate investigation.
+- **Scope corrections after recon (per Andrew unblock 2026-05-18):**
+  - `behavioral_impacts` dropped (never existed engine-side; spec'd as new
+    work in Chapter Content Spec PR-V5, separate sprint row).
+  - `behavioral_patterns[0]` dropped (iOS-derived from timing_analysis per
+    canonical doc, not engine-shipped).
+  - Recommendations trim to top-1 dropped (`buildSnapshotRecommendations`
+    already ships top-6 with correct visibility; trimming is worse).
+- **What actually shipped:**
+  - `runSnapshot` session_detection map: top-3 heated sessions (ranked by
+    grade severity then heatSignals count) get visible `heatSignals` array;
+    other sessions keep `heatSignals: []` to preserve paywall lever.
+  - `runSnapshot` biases map: top-7 biases by severity get
+    `evidence_visibility: 'visible'` and `evidence` = first sentence of
+    `metrics.biases_detected[N].data`. Biases 8+ keep prior hidden behavior.
+  - New `firstSentence(s)` helper in `lib/autopsy-engine.ts` — masks
+    abbreviation periods (Mr., Dr., U.S., vs., etc.) with a NUL sentinel
+    before sentence splitting to avoid false breaks.
+  - 5 unit tests added to `__tests__/autopsy-engine.redaction.test.ts`
+    covering empty / no-punct / single-sentence / multi-sentence /
+    abbreviation edges.
+- **Verification:**
+  - `tsc --noEmit` clean
+  - `npm run build` clean
+  - Redaction regression suite: 12/12 passing (5 redaction groups + 5
+    firstSentence + 2 dual-emission)
+  - Full engine test suite: 88 failures pre-exist on main, 88 with my
+    changes — zero new failures
+  - No allowlist update needed (heatSignals descriptors are non-dollar
+    strings, don't trip the dollar-pattern walk)
+- **Constraints honored:**
+  - `model_used` stays `'snapshot-deterministic-v2'` (pure-compute preserved)
+  - No new Anthropic API call inside `runSnapshot`
+  - Dual-emission contract intact (snapshot ships camel only)
+  - Backward-compat values: `''` for redacted strings, `0` for numbers
+  - iOS V8.5 wire format unchanged — only flips which tag a field carries
+
+---
+
+## Previous branch: `claude/path-a-archetype-rename`
 
 ### Done this session — strip `lib/archetypes.ts` override on `/api/analyze`
 - **Root cause:** Engine Phase B (commit `c657565`) emits V3 archetype names
