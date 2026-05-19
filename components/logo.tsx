@@ -13,11 +13,11 @@ interface LogoProps {
 // h = Y-mark display height. wordmarkH = wordmark image display height.
 // gap = flex gap between mark and wordmark.
 const SIZES = {
-  xs:  { h: 22,  wordmarkH: 14, gap: 'gap-2',   tagSize: 'text-[6px]' },
-  sm:  { h: 28,  wordmarkH: 18, gap: 'gap-2.5', tagSize: 'text-[7px]' },
-  md:  { h: 36,  wordmarkH: 22, gap: 'gap-2.5', tagSize: 'text-[7.5px]' },
-  lg:  { h: 60,  wordmarkH: 34, gap: 'gap-3',   tagSize: 'text-[9px]' },
-  xl:  { h: 120, wordmarkH: 56, gap: 'gap-4',   tagSize: 'text-[12px]' },
+  xs:  { h: 24,  wordmarkH: 19, gap: 'gap-2',   tagSize: 'text-[6px]' },
+  sm:  { h: 30,  wordmarkH: 24, gap: 'gap-2.5', tagSize: 'text-[7px]' },
+  md:  { h: 36,  wordmarkH: 30, gap: 'gap-3',   tagSize: 'text-[8px]' },
+  lg:  { h: 56,  wordmarkH: 46, gap: 'gap-5',   tagSize: 'text-[10px]' },
+  xl:  { h: 104, wordmarkH: 84, gap: 'gap-9',   tagSize: 'text-[14px]' },
 };
 
 // Wordmark SVG aspect ratio: 4164 / 720 = 5.78
