@@ -10,10 +10,21 @@ const SIZES = {
 
 type LogoSize = keyof typeof SIZES;
 
-export function Logo({ size = 'md', className }: { size?: LogoSize; className?: string }) {
-  const h = SIZES[size];
-  // Lockup SVG aspect ratio is 2400:600 = 4:1
-  const w = h * 4;
+// Aspect ratio after viewBox trim from 0 0 2400 600 to 0 100 2400 380.
+// 2400 / 380 = 6.32
+const LOCKUP_RATIO = 6.32;
+
+export function Logo({
+  size = 'md',
+  h: heightOverride,
+  className,
+}: {
+  size?: LogoSize;
+  h?: number;
+  className?: string;
+}) {
+  const h = heightOverride ?? SIZES[size];
+  const w = Math.round(h * LOCKUP_RATIO);
   return (
     <Image
       src="/brand/betautopsy-lockup-horizontal-transparent.svg"
