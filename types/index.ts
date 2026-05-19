@@ -402,6 +402,17 @@ export interface DetectedSession {
   heatSignals: string[];
   betIndices: number[];
   betSnapshots?: { placed_at: string; description: string; stake: number; profit: number; result: string }[];
+  // Engine-emitted per-session trigger attribution. Populated only for
+  // heated sessions when one of three signals (recent large loss, late-night
+  // session timing, or large starting stake vs median) explains the heat.
+  // Wire field for iOS Ch 2 rendering; the iOS reader lands in Mega-PR B.
+  // Swift Codable with explicit CodingKeys silently ignores unknown fields,
+  // so existing clients decode this struct unchanged.
+  triggerEvent?: {
+    type: 'loss' | 'late_night' | 'stake_volatility';
+    description: string;
+    triggeringBetId?: string;
+  };
 }
 
 export interface SessionDetectionResult {

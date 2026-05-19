@@ -125,6 +125,14 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+      // Pin the autopsy_reports row to this upload's bets so iOS IAP upgrade
+      // can re-run the engine on the exact cohort the user paid for. Without
+      // this, every iOS-originated snapshot ships with analyzed_upload_ids=[]
+      // and the upgrade handler treats that as manual-recovery. Dedup path
+      // (upload_id=null) is covered by lib/iap-upgrade.ts fallback.
+      if (importResult.upload_id) {
+        uploadIds = [importResult.upload_id];
+      }
     } catch (err) {
       logErrorServer(err, { path: '/api/analyze', metadata: { stage: 'import-bets' } });
       return NextResponse.json({ error: 'Failed to import bets.' }, { status: 500 });

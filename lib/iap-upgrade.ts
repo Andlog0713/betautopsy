@@ -61,10 +61,13 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
       return;
     }
 
-    // 2. Fetch snapshot for the cohort lock (analyzed_upload_ids + sportsbook).
+    // 2. Fetch snapshot for the cohort lock (analyzed_upload_ids + sportsbook
+    // + created_at; the latter is only needed for the fallback path below,
+    // but folding it into the same SELECT avoids a second round-trip in the
+    // happy case where analyzed_upload_ids is non-empty).
     const { data: snapshot, error: snapErr } = await supabase
       .from('autopsy_reports')
-      .select('id, user_id, analyzed_upload_ids, analyzed_sportsbook')
+      .select('id, user_id, analyzed_upload_ids, analyzed_sportsbook, created_at')
       .eq('id', snapshotId)
       .eq('user_id', userId)
       .single();
@@ -73,16 +76,41 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
       throw new Error(`snapshot not found: ${snapshotId} (${snapErr?.message ?? 'no row'})`);
     }
 
-    const analyzedUploadIds = (snapshot.analyzed_upload_ids as string[] | null) ?? [];
+    let analyzedUploadIds = (snapshot.analyzed_upload_ids as string[] | null) ?? [];
     const analyzedSportsbook = (snapshot.analyzed_sportsbook as string | null) ?? null;
 
-    // Legacy pre-migration snapshots have NULL analyzed_upload_ids. The
-    // /api/analyze upgrade path falls through to "all current bets" for
-    // those, but that contract is shaky for paid IAP — the user paid for
-    // a specific snapshot's cohort, and "current" can drift. Bail loudly
-    // so the iap_transactions row stays as a manual-recovery handle.
+    // Resilience fallback: empty analyzed_upload_ids covers two cases.
+    // (1) Legacy snapshots written before the /api/analyze multipart path
+    // captured importBets().upload_id (fixed in companion Phase 1 commit).
+    // (2) Silent re-upload dedup path in lib/import-bets returns
+    // upload_id=null when every parsed bet was already in the user's
+    // history; the snapshot still lands but with an empty cohort lock.
+    //
+    // Read-only fallback: pick the user's most recent upload at or before
+    // the snapshot's created_at. Best non-invasive guess for "what the
+    // user paid for." If no upload exists in that window, the existing
+    // throw stands and iap_transactions remains the manual-recovery handle.
     if (analyzedUploadIds.length === 0) {
-      throw new Error(`snapshot ${snapshotId} has empty analyzed_upload_ids (legacy row?) — manual recovery required`);
+      const snapshotCreatedAt = (snapshot.created_at as string | null) ?? new Date().toISOString();
+      const { data: fallbackUpload } = await supabase
+        .from('uploads')
+        .select('id')
+        .eq('user_id', userId)
+        .lte('created_at', snapshotCreatedAt)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fallbackUpload?.id) {
+        console.log('[iap-upgrade] using fallback upload cohort for legacy snapshot', {
+          snapshotId, fallbackUploadId: fallbackUpload.id,
+        });
+        analyzedUploadIds = [fallbackUpload.id as string];
+      } else {
+        throw new Error(
+          `snapshot ${snapshotId} has empty analyzed_upload_ids and no fallback upload found at or before snapshot creation. iap_transactions row is the manual-recovery handle.`
+        );
+      }
     }
 
     // 3. Fetch the locked bet cohort — paginated, mirrors /api/analyze:215-254.
