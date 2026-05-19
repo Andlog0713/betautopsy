@@ -89,7 +89,7 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-sm text-center space-y-4">
-          <Logo size="md" variant="stacked" theme="dark" />
+          <Logo size="md" />
           <h1 className="font-bold text-2xl text-fg-bright mt-6">Reset link expired</h1>
           <p className="text-fg-muted text-sm">
             This password reset link is invalid or has expired. Please request a new one from the login page.
@@ -118,7 +118,7 @@ function ResetPasswordForm() {
     <div className="min-h-screen bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <Logo size="md" variant="stacked" theme="dark" />
+          <Logo size="md" />
         </div>
         <div className="case-card p-6">
           <div className="case-header mb-4">SET NEW PASSWORD</div>

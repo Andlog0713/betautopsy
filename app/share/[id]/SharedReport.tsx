@@ -44,7 +44,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
         {/* Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-block">
-            <Logo size="md" variant="horizontal" theme="dark" />
+            <Logo size="md" />
           </Link>
           {data.archetype && (
             <div>

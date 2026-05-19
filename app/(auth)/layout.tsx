@@ -11,7 +11,7 @@ export default function AuthLayout({
       {/* Left — brand panel with grid-paper */}
       <div className="hidden lg:flex flex-1 grid-paper border-r border-border-subtle p-12 pt-24 flex-col justify-start">
         <div className="max-w-md">
-          <Link href="/"><Logo size="md" variant="horizontal" theme="dark" /></Link>
+          <Link href="/"><Logo size="md" /></Link>
           <div className="mt-10 mb-2">
             <div className="text-3xl font-bold text-fg-bright tracking-tight leading-[1.15]">
               Stop guessing.
@@ -44,7 +44,7 @@ export default function AuthLayout({
       <div className="flex-1 lg:max-w-[520px] flex flex-col items-center justify-center px-6 py-12">
         {/* Mobile-only logo */}
         <div className="lg:hidden mb-8">
-          <Link href="/"><Logo size="md" variant="stacked" theme="dark" showTagline /></Link>
+          <Link href="/"><Logo size="md" /></Link>
         </div>
 
         <div className="w-full max-w-sm">

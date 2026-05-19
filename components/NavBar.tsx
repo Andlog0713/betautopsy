@@ -75,7 +75,7 @@ export default function NavBar() {
               aria-label="BetAutopsy home"
               className="shrink-0 inline-flex items-center min-h-[44px] -my-2"
             >
-              <Logo size="xs" variant="horizontal" theme="dark" />
+              <Logo size="xs" />
             </Link>
 
             {/* Center links — desktop */}
@@ -172,7 +172,7 @@ export default function NavBar() {
           style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 44px)' }}
         >
           <div className="flex items-center justify-between px-6 h-14 border-b border-border-subtle">
-            <Logo size="xs" variant="horizontal" theme="dark" />
+            <Logo size="xs" />
             <button
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"

@@ -143,7 +143,7 @@ export default function GoLandingPage() {
       <header className="sticky top-0 z-20 bg-base border-b border-border-subtle">
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <Link href="/" aria-label="BetAutopsy home">
-            <Logo size="xs" variant="horizontal" theme="dark" />
+            <Logo size="xs" />
           </Link>
           <GoSignupLink className="btn-primary text-sm !px-5 !py-2 !min-h-0">
             Get Your Free Report
