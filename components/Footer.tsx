@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="border-t border-border-subtle bg-surface-1 py-10">
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
-          <Logo size="xs" variant="horizontal" theme="dark" />
+          <Logo size="xs" />
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             {[
               ...(PRICING_ENABLED ? [{ label: 'Pricing', href: '/#pricing' }] : []),

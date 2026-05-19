@@ -120,7 +120,7 @@ export default function DashboardShell({
               {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <Link href="/dashboard">
-              <Logo size="xs" variant="horizontal" theme="dark" />
+              <Logo size="xs" />
             </Link>
           </div>
           {(profile?.streak_count ?? 0) > 0 && (
@@ -142,7 +142,7 @@ export default function DashboardShell({
           <nav className="fixed inset-y-0 left-0 z-50 w-[280px] max-w-[80vw] bg-base border-r border-border-subtle flex flex-col md:hidden animate-slide-in-left">
             <div className="px-5 pt-5 pb-4 flex items-center justify-between">
               <Link href="/dashboard" onClick={() => setMobileNavOpen(false)}>
-                <Logo size="xs" variant="horizontal" theme="dark" />
+                <Logo size="xs" />
               </Link>
               <button
                 onClick={() => setMobileNavOpen(false)}
@@ -259,8 +259,8 @@ export default function DashboardShell({
       <aside className="hidden md:flex md:flex-col md:w-14 hover:md:w-56 border-r border-border-subtle bg-base sticky top-0 h-screen transition-all duration-200 overflow-hidden group/sidebar">
         <div className="px-3 pt-5 pb-4 flex items-center justify-center group-hover/sidebar:px-5 group-hover/sidebar:justify-start transition-all duration-200">
           <Link href="/dashboard">
-            <span className="group-hover/sidebar:hidden"><Logo size="xs" variant="mark" theme="dark" /></span>
-            <span className="hidden group-hover/sidebar:block"><Logo size="xs" variant="horizontal" theme="dark" /></span>
+            <span className="group-hover/sidebar:hidden"><Logo size="xs" /></span>
+            <span className="hidden group-hover/sidebar:block"><Logo size="xs" /></span>
           </Link>
         </div>
 

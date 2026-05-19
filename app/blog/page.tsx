@@ -37,7 +37,7 @@ export default function BlogIndexPage() {
           <div className="flex items-end justify-between gap-8">
             <div>
               <div className="flex items-center gap-4 mb-4">
-                <Logo size="xs" variant="mark" theme="dark" />
+                <Logo size="xs" />
                 <div className="h-6 w-px bg-border-subtle" />
                 <span className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase">Behavioral Analysis</span>
               </div>

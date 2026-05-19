@@ -6,7 +6,7 @@ export default function NotFound() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="mb-8 flex justify-center">
-          <Logo size="md" variant="horizontal" theme="dark" />
+          <Logo size="md" />
         </div>
         <h1 className="font-bold text-5xl tracking-tight mb-3 text-fg-bright">404</h1>
         <p className="text-fg-muted mb-6">This page doesn&apos;t exist or has been moved.</p>
