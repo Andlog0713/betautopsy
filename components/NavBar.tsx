@@ -67,7 +67,7 @@ export default function NavBar() {
         style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 44px) + 12px)' }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-[72px] flex items-center justify-between">
+          <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-14 md:h-[72px] flex items-center justify-between">
             {/* Logo — wrapper expands to 44pt min-height so the tap zone meets
                 Apple HIG without changing the rendered Logo glyph size. */}
             <Link
@@ -75,7 +75,8 @@ export default function NavBar() {
               aria-label="BetAutopsy home"
               className="shrink-0 inline-flex items-center min-h-[44px] -my-2"
             >
-              <Logo h={44} />
+              <Logo h={32} className="md:hidden" />
+              <Logo h={44} className="hidden md:block" />
             </Link>
 
             {/* Center links — desktop */}
@@ -145,7 +146,7 @@ export default function NavBar() {
                   </Link>
                   <Link
                     href="/signup"
-                    className="text-sm font-semibold bg-scalpel text-[#0A0E12] px-5 min-h-[44px] inline-flex items-center justify-center rounded-full hover:brightness-110 transition-all"
+                    className="text-sm font-semibold bg-scalpel text-[#0A0E12] px-5 min-h-[44px] inline-flex items-center justify-center rounded-full hover:brightness-110 transition-all whitespace-nowrap"
                   >
                     Sign Up
                   </Link>
@@ -171,8 +172,9 @@ export default function NavBar() {
           className="fixed inset-0 z-50 bg-base flex flex-col"
           style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 44px)' }}
         >
-          <div className="flex items-center justify-between px-6 h-[72px] border-b border-border-subtle">
-            <Logo h={44} />
+          <div className="flex items-center justify-between px-6 h-14 md:h-[72px] border-b border-border-subtle">
+            <Logo h={32} className="md:hidden" />
+            <Logo h={44} className="hidden md:block" />
             <button
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
