@@ -939,7 +939,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // small-volume users (<500 settled bets) from over-detection noise; on
   // disciplined 50-100 bet datasets none of these fire by construction.
   if (settled.length >= 500) {
-    // (A) High-Volume Category Leak — catches deeply negative categories with
+    // (A) High-Volume Category Leak: catches deeply negative categories with
     // large samples that the existing -20% ROI gate is too strict for. At
     // count >= 100 bets, a -10% ROI is a reliable signal (variance shrinks
     // with sample size), and the dollar floor at 3% of total staked
@@ -966,7 +966,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       });
     }
 
-    // (B) Sustained Late-Night Concentration — the existing Late-Night
+    // (B) Sustained Late-Night Concentration: the existing Late-Night
     // detector requires lateNight to be >= 25% of total bets, which a
     // high-volume user almost never hits even with hundreds of late-night
     // bets. Absolute-count threshold (>= 100 late-night bets) catches a
@@ -997,7 +997,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       }
     }
 
-    // (C) Chronic Emotional Drag — reads from the bet-by-bet annotations
+    // (C) Chronic Emotional Drag: reads from the bet-by-bet annotations
     // computed above. Annotations classify each bet as disciplined,
     // emotional, chasing, impulsive, or neutral; their summed emotional
     // cost is a robust per-bet signal even when no single session crosses
@@ -1802,6 +1802,17 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
 export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
   const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
 
+  // Median stake across the full bet history. Used for per-session
+  // triggerEvent attribution below; the existing calculateMetrics function
+  // also computes this independently. Local recompute keeps this function
+  // self-contained so callers do not need to pass extra context.
+  const allStakes = sorted.map((b) => Number(b.stake)).sort((a, b) => a - b);
+  const overallMedianStake = allStakes.length > 0
+    ? (allStakes.length % 2 === 0
+        ? (allStakes[allStakes.length / 2 - 1] + allStakes[allStakes.length / 2]) / 2
+        : allStakes[Math.floor(allStakes.length / 2)])
+    : 0;
+
   if (sorted.length === 0) {
     return {
       sessions: [],
@@ -1951,6 +1962,45 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     if (betsPerHour > 5 && longestLossStreak >= 4) heatSignals.push('Rapid-fire betting during a loss streak');
     if (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss) heatSignals.push('Extended session with heavy losses while chasing');
 
+    // Per-session trigger attribution. Only populated for heated sessions
+    // when one of three signals can explain the heat. iOS reads this in
+    // Mega-PR B; emitting it now lets that PR ship without engine work.
+    // Algorithm precedence: recent large loss > late-night timing > large
+    // starting stake. Falls through to undefined when none qualify.
+    let triggerEvent: DetectedSession['triggerEvent'] | undefined;
+    if (isHeated) {
+      const firstIdxInSorted = group.indices[0];
+      let priorSettled: Bet | null = null;
+      for (let pi = firstIdxInSorted - 1; pi >= 0; pi--) {
+        const prev = sorted[pi];
+        if (prev.result === 'win' || prev.result === 'loss') {
+          priorSettled = prev;
+          break;
+        }
+      }
+      if (
+        priorSettled &&
+        priorSettled.result === 'loss' &&
+        Math.abs(Number(priorSettled.profit)) >= 2 * overallMedianStake
+      ) {
+        triggerEvent = {
+          type: 'loss',
+          description: `Triggered after a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} loss on ${new Date(priorSettled.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`,
+          triggeringBetId: priorSettled.id,
+        };
+      } else if (lateNight) {
+        triggerEvent = {
+          type: 'late_night',
+          description: `Late-night session starting at ${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}.`,
+        };
+      } else if (overallMedianStake > 0 && startingStake > 1.5 * overallMedianStake) {
+        triggerEvent = {
+          type: 'stake_volatility',
+          description: `Session opened with a $${startingStake.toFixed(0)} stake vs typical $${overallMedianStake.toFixed(0)} median.`,
+        };
+      }
+    }
+
     return {
       id,
       date: startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
@@ -1982,6 +2032,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       isHeated,
       heatSignals,
       betIndices: group.indices,
+      ...(triggerEvent ? { triggerEvent } : {}),
     };
   });
 
