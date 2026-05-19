@@ -42,7 +42,38 @@
 
 ---
 
-## Current branch: `claude/engine-snapshot-loosen-v2`
+## Current branch: `main` (post Mega-PR A merge)
+
+### Done this session: MEGA-PR A: snapshot fix + bias depth (PR #54, squash `0b776dd`)
+- **Why:** iOS IAP upgrades blocked because every iOS-originated snapshot
+  shipped with `analyzed_upload_ids=[]` (confirmed 4× in sandbox 2026-05-19).
+  Andrew's 5000-bet test set only surfaced 2 biases despite having a $46K+
+  category leak and $289K of annotation-flagged emotional cost.
+- **Phases shipped (5 commits, squashed):**
+  - `7b82742` fix(analyze): capture `importBets().upload_id` on multipart path
+  - `b5d9f79` fix(iap-upgrade): read-only fallback to most-recent upload at/before snapshot `created_at` (single-query SELECT)
+  - `9492fc5` feat(engine): 3 additive bias detectors above 500-bet volume floor (High-Volume Category Leak, Sustained Late-Night Concentration, Chronic Emotional Drag)
+  - `fa2274b` feat(engine): per-session `triggerEvent` attribution on `DetectedSession` (engine emit only; iOS reader in Mega-PR B)
+  - `081612e` chore(verify): `scripts/verify-mega-pr-a.ts` read-only harness
+- **Phase 3 (pricing reconcile) DROPPED** per launch sequencing. Web stays at
+  $9.99 during iOS launch. Will be revisited as a separate web-pricing
+  project after iOS ships.
+- **Verification:** all 8 assertions pass on Andrew's 5000-bet cohort. Bias
+  count 2 → 4 (added High-Volume Category Leak + Chronic Emotional Drag).
+  110 of 250 heated sessions now ship `triggerEvent`. Small-user 50-bet
+  regression guard: 2 biases (unchanged from main). Status file at
+  `/tmp/mega-pr-a-status.md`.
+- **Baseline-failure mismatch noted:** memory referenced 88; reality is 46
+  with worktree excluded (92 with worktree). Vitest has no `exclude:` for
+  `.claude/worktrees/`. Cleanup parked.
+
+## Parked / next branch
+- Mega-PR B (iOS rendering of new engine output, including `triggerEvent` reader)
+- Web pricing reconcile (post-iOS launch, separate project)
+- "23 pages" iOS paywall copy reconcile (separate iOS-repo task)
+- `vitest.config.ts` should add `exclude: ['**/.claude/**', '**/node_modules/**']` to stop the worktree noise
+
+## Previous branch: `claude/engine-snapshot-loosen-v2`
 
 ### Done this session — ENGINE-PR-SNAPSHOT-LOOSEN-V2: sport redact, bias dollar scrub, severity sort, decimal-period fix
 - **Why:** iPhone QA on snapshot `2d5e2936-91f2-40fb-b91e-c28b5fcc0ea9` (5000
