@@ -241,10 +241,16 @@ export interface AutopsyAnalysis {
     session_discipline: number;
   };
   bankroll_health: 'healthy' | 'caution' | 'danger';
+  // Sibling flags for the scalar emotion_score / tilt_score. Set true when
+  // settled bets < BET_COUNT_THRESHOLDS.emotionScore so iOS can suppress the
+  // scalar at render time without the scalar itself changing type (it stays
+  // a number, feeding internal grade/discipline math). Read by IOS-RENDER-AUDIT.
+  emotion_score_insufficient_data?: boolean;
+  tilt_score_insufficient_data?: boolean;
   personal_rules?: PersonalRule[];
   session_analysis?: SessionAnalysis;
   edge_profile?: EdgeProfile;
-  betting_archetype?: { name: string; description: string };
+  betting_archetype?: { name: string; description: string; insufficient_data?: boolean };
   /** Quiz-estimated archetype name (from quiz_leads table, if the user took the quiz). */
   quiz_archetype?: string;
   timing_analysis?: TimingAnalysis;
@@ -259,9 +265,13 @@ export interface AutopsyAnalysis {
     control: number;
     strategy: number;
     percentile?: number;
+    insufficient_data?: boolean;
+    interpretation?: string;
   };
   betiq?: BetIQResult;
-  emotion_percentile?: number;
+  // Nullable: set to null (not omitted) when settled bets are below the
+  // emotion floor, mirroring betiq.percentile. iOS reads it as optional.
+  emotion_percentile?: number | null;
   enhanced_tilt?: EnhancedTiltResult;
   sport_specific_findings?: SportSpecificFinding[];
   session_detection?: SessionDetectionResult;
@@ -427,6 +437,10 @@ export interface SessionDetectionResult {
   bestSession: DetectedSession | null;
   worstSession: DetectedSession | null;
   insight: string;
+  // True when totalSessions < BET_COUNT_THRESHOLDS.heatedSessionsMinSessions:
+  // per-session cards are preserved but the surfaced heated aggregates are
+  // zeroed. iOS (IOS-RENDER-AUDIT) suppresses the aggregate header on this flag.
+  insufficient_data?: boolean;
 }
 
 // ── Bet-by-Bet Annotations ──
@@ -737,8 +751,13 @@ export interface EnhancedTiltResult {
   score: number;                    // Same as emotion_score (backward compat)
   signals: TiltSignals;
   risk_level: 'low' | 'moderate' | 'elevated' | 'high' | 'critical';
+  // Stays a non-optional string (never null) to protect the synthesized iOS
+  // Codable decoder; when sample is insufficient the VALUE is rewritten to a
+  // fixed sentence rather than the type widened.
   worst_trigger: string;
   percentile: number;
+  insufficient_data?: boolean;
+  interpretation?: string;
 }
 
 // ── Sport-Specific Findings ──

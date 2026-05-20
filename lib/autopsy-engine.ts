@@ -1,6 +1,8 @@
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
+import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
+import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
 
 // Lazy-load the Anthropic SDK so it never lands in the client bundle.
 // `lib/autopsy-engine.ts` exports `calculateMetrics` (a pure server-or-client
@@ -85,7 +87,7 @@ export interface CalculatedMetrics {
     profitable_only: { categories: string[]; hypothetical_profit: number };
     actual_profit: number;
   };
-  betting_archetype: { name: string; description: string };
+  betting_archetype: { name: string; description: string; insufficient_data?: boolean };
   timing: TimingAnalysis;
   odds: OddsAnalysis;
   dfs: DFSDetection;
@@ -914,9 +916,21 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
   }
 
+  // Minimum-sample floor: a behavioral fingerprint needs a sample. Below the
+  // archetype floor, override name AND description (stay inside the display
+  // taxonomy: iOS treats archetype.name as a verbatim field with no icon or
+  // color lookups, so "Building Sample" renders without breaking treatment).
+  if (settled.length < BET_COUNT_THRESHOLDS.bettingArchetype) {
+    result.betting_archetype = {
+      name: 'Building Sample',
+      description: 'Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.',
+      insufficient_data: true,
+    };
+  }
+
   // Emotional Session Pattern — promote heatedSessionPercent into a bias
   // once tilt is exceptional (after Fix 2 tightening). Needs sessionDetection.
-  if (result.sessionDetection && result.sessionDetection.totalSessions >= 5) {
+  if (result.sessionDetection && result.sessionDetection.totalSessions >= BET_COUNT_THRESHOLDS.emotionalSessionPatternMinSessions) {
     const heatedPct = result.sessionDetection.heatedSessionPercent;
     if (heatedPct >= 25) {
       const sev = heatedPct >= 50 ? 'critical' : heatedPct >= 40 ? 'high' : heatedPct >= 30 ? 'medium' : 'low';
@@ -938,7 +952,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // a relaxed-threshold signal statistically meaningful. Volume floor protects
   // small-volume users (<500 settled bets) from over-detection noise; on
   // disciplined 50-100 bet datasets none of these fire by construction.
-  if (settled.length >= 500) {
+  if (settled.length >= BET_COUNT_THRESHOLDS.additiveDetectors) {
     // (A) High-Volume Category Leak: catches deeply negative categories with
     // large samples that the existing -20% ROI gate is too strict for. At
     // count >= 100 bets, a -10% ROI is a reliable signal (variance shrinks
@@ -1019,6 +1033,16 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
         });
       }
     }
+  }
+
+  // Minimum-sample floor for bias detection. Bias detection needs comparative
+  // volume; below the floor every detector above is suppressed so the prose
+  // layer has nothing to hedge against. Applied last so it is the single
+  // authority over the final array regardless of which detectors fired. This
+  // also drives the LLM prompt block ("No significant biases detected"),
+  // summaryCounts, and pertinent_negatives, which all read this array.
+  if (settled.length < BET_COUNT_THRESHOLDS.biasesDetected) {
+    result.biases_detected = [];
   }
 
   return result;
@@ -1119,7 +1143,16 @@ export interface DisciplineContext {
 export function calculateDisciplineScore(
   metrics: CalculatedMetrics,
   ctx: DisciplineContext
-): { total: number; tracking: number; sizing: number; control: number; strategy: number } {
+): { total: number; tracking: number; sizing: number; control: number; strategy: number; insufficient_data?: boolean; interpretation?: string } {
+  // Minimum-sample floor: a discipline grade on a handful of bets is noise.
+  // Zero the components (not null) so existing Codable decoders are safe, and
+  // surface the betiq-style insufficient_data flag + interpretation string.
+  const settledCount = metrics.summary.wins + metrics.summary.losses;
+  const disciplineGate = checkSufficiency(settledCount, BET_COUNT_THRESHOLDS.disciplineScore, 'discipline score');
+  if (!disciplineGate.sufficient) {
+    return { total: 0, tracking: 0, sizing: 0, control: 0, strategy: 0, insufficient_data: true, interpretation: disciplineGate.interpretation };
+  }
+
   // TRACKING CONSISTENCY (0-25)
   let tracking = 0;
   if (ctx.hasBankroll) tracking += 3;
@@ -1268,12 +1301,13 @@ function calculateSharpScore(metrics: CalculatedMetrics, bets: Bet[]): number {
 export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQResult {
   const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
 
-  if (settled.length < 50) {
+  const betIQGate = checkSufficiency(settled.length, BET_COUNT_THRESHOLDS.betIQ, 'BetIQ score');
+  if (!betIQGate.sufficient) {
     return {
       score: 0,
       components: { line_value: 0, calibration: 0, sophistication: 0, specialization: 0, timing: 0, confidence: 0 },
       percentile: null,
-      interpretation: `Need at least 50 settled bets for a meaningful BetIQ score. You have ${settled.length}.`,
+      interpretation: betIQGate.interpretation,
       insufficient_data: true,
     };
   }
@@ -1404,6 +1438,24 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
 
 export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): EnhancedTiltResult {
   const settled = bets.filter(b => b.result === 'win' || b.result === 'loss');
+
+  // Minimum-sample floor: trigger detection over time needs comparative
+  // volume. Zero the numerics (betiq pattern) and rewrite worst_trigger to a
+  // fixed sentence rather than null (the synthesized iOS decoder expects a
+  // non-optional String there).
+  const tiltGate = checkSufficiency(settled.length, BET_COUNT_THRESHOLDS.enhancedTilt, 'tilt analysis');
+  if (!tiltGate.sufficient) {
+    return {
+      score: 0,
+      signals: { bet_sizing_volatility: 0, loss_reaction: 0, streak_behavior: 0, session_discipline: 0, session_acceleration: 0, odds_drift_after_loss: 0 },
+      risk_level: 'low',
+      worst_trigger: 'Insufficient sample. Trigger detection requires at least 100 settled bets.',
+      percentile: 0,
+      insufficient_data: true,
+      interpretation: tiltGate.interpretation,
+    };
+  }
+
   const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
 
   // SESSION ACCELERATION (0-25)
@@ -2107,6 +2159,33 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     insight = `Most sessions look disciplined, but ${heatedSessionCount} of ${totalSessions} had heated moments worth reviewing.`;
   }
 
+  // Minimum-sample floor for the session classifier (narrow form): aggregate
+  // heated-session CLAIMS need a session sample, but per-session OBSERVATIONS
+  // are self-contained. Below the floor we keep sessions[] (with triggerEvent,
+  // isHeated, grade, heatSignals per session) and the honest counts/durations,
+  // but zero the surfaced aggregates and flag insufficient_data so iOS can
+  // suppress the aggregate header while still rendering the forensic session
+  // cards. Mega-PR A's Emotional Session Pattern bias keys off totalSessions,
+  // which stays honest here, but that bias is independently suppressed below
+  // 100 settled bets by the biases floor.
+  const belowSessionFloor = totalSessions < BET_COUNT_THRESHOLDS.heatedSessionsMinSessions;
+  if (belowSessionFloor) {
+    return {
+      sessions,
+      totalSessions,
+      avgSessionLength: round2(avgSessionLength),
+      avgSessionDuration: round2(avgSessionDuration),
+      sessionGradeDistribution: [],
+      heatedSessionCount: 0,
+      heatedSessionPercent: 0,
+      avgGradedROI,
+      bestSession,
+      worstSession,
+      insufficient_data: true,
+      insight: `Need at least ${BET_COUNT_THRESHOLDS.heatedSessionsMinSessions} sessions to grade session behavior reliably. You have ${totalSessions}.`,
+    };
+  }
+
   return {
     sessions,
     totalSessions,
@@ -2437,6 +2516,7 @@ export function calculateMetricsOnly(
     uploadedRecently: disciplineCtx?.uploadedRecently ?? false,
     prevSnapshot: disciplineCtx?.prevSnapshot ?? null,
   });
+  const emotionInsufficient = (metrics.summary.wins + metrics.summary.losses) < BET_COUNT_THRESHOLDS.emotionScore;
 
   const partialAnalysis: Partial<AutopsyAnalysis> = {
     summary: {
@@ -2468,9 +2548,13 @@ export function calculateMetricsOnly(
     dfs_mode: metrics.dfs.isDFS,
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
-    discipline_score: disciplineScore ? { ...disciplineScore, percentile: estimatePercentile('discipline_score', disciplineScore.total) } : undefined,
+    discipline_score: disciplineScore
+      ? (disciplineScore.insufficient_data ? { ...disciplineScore } : { ...disciplineScore, percentile: estimatePercentile('discipline_score', disciplineScore.total) })
+      : undefined,
     betiq: calculateBetIQ(metrics, bets),
-    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_percentile: emotionInsufficient ? null : estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_score_insufficient_data: emotionInsufficient,
+    tilt_score_insufficient_data: emotionInsufficient,
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: (() => { const f = detectSportSpecificPatterns(metrics, bets); return f.length > 0 ? f : undefined; })(),
     session_detection: metrics.sessionDetection ?? undefined,
@@ -2836,6 +2920,8 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   // reconciled with BetIQ deterministically. metrics.summary.overall_grade
   // is still computed internally (and passed into Sonnet's prompt for
   // tone-setting) but never surfaced on the user-facing analysis.
+  const settledCount = metrics.summary.wins + metrics.summary.losses;
+  const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
   const analysis: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
@@ -2861,7 +2947,9 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
         evidence_bet_ids: jsBias.evidence_bet_ids,
       });
     }),
-    strategic_leaks: (Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {
+    // Minimum-sample floor: below the total-bet floor the LLM has nothing
+    // reliable to leak-flag (at n=2 it emitted a +46.6% "leak"). Gate to [].
+    strategic_leaks: gateArray((Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {
       // Try to use JS-calculated ROI if available
       const jsCat = metrics.category_roi.find((c) => c.category.toLowerCase() === (leak.category as string)?.toLowerCase());
       return {
@@ -2871,8 +2959,9 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
         sample_size: jsCat ? jsCat.count : (leak.sample_size as number) ?? 0,
         suggestion: (leak.suggestion as string) ?? '',
       };
-    }),
-    behavioral_patterns: (Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'],
+    }), settledCount, BET_COUNT_THRESHOLDS.strategicLeaksFullTotal),
+    // Minimum-sample floor: bet-pattern observations need a bet sample.
+    behavioral_patterns: gateArray((Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'], settledCount, BET_COUNT_THRESHOLDS.behavioralPatterns),
     recommendations: ((Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as Recommendation[]).map(withFullModeRecommendationTags),
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score, // backward compat for old report renders
@@ -2892,7 +2981,9 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
     betiq: calculateBetIQ(metrics, bets),
-    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_percentile: emotionInsufficient ? null : estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_score_insufficient_data: emotionInsufficient,
+    tilt_score_insufficient_data: emotionInsufficient,
     enhanced_tilt: calculateEnhancedTilt(metrics, bets),
     sport_specific_findings: sportFindings.length > 0 ? sportFindings.map(withFullModeFindingTags) : undefined,
     session_detection: withFullModeSessionTags(metrics.sessionDetection ?? undefined),
@@ -3402,6 +3493,9 @@ export async function runSnapshot(
   // Detail + suggestion already ''-redacted today.
   const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = leaks
     .filter(c => !isPlatformCategory(c.category))
+    // Minimum-sample floor per category: a negative ROI on a thin category is
+    // noise. Require the per-category bet floor before flagging it as a leak.
+    .filter(c => c.count >= BET_COUNT_THRESHOLDS.strategicLeaksPerCategory)
     .map(c => ({
       category: c.category,
       detail: '',
@@ -3446,6 +3540,9 @@ export async function runSnapshot(
     // insightFull intentionally omitted — snapshot mode hides the full body.
   };
 
+  const settledCount = metrics.summary.wins + metrics.summary.losses;
+  const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
+
   const analysis: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
@@ -3472,7 +3569,9 @@ export async function runSnapshot(
     dfs_platform: metrics.dfs.primaryPlatform ?? undefined,
     dfs_metrics: metrics.dfs_metrics ?? undefined,
     betiq: calculateBetIQ(metrics, bets),
-    emotion_percentile: estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_percentile: emotionInsufficient ? null : estimatePercentile('emotion_score', metrics.emotion_score, true),
+    emotion_score_insufficient_data: emotionInsufficient,
+    tilt_score_insufficient_data: emotionInsufficient,
     sport_specific_findings: snapshotSportFindings,
     session_detection: metrics.sessionDetection ? (() => {
       // Top-3 heated session IDs get visible heatSignals (snapshot reframe

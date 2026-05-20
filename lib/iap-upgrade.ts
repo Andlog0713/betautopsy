@@ -9,6 +9,7 @@ import {
   calculateEnhancedTilt,
   detectSportSpecificPatterns,
 } from './autopsy-engine';
+import { BET_COUNT_THRESHOLDS } from './engine/constants/thresholds';
 import type { Bet, ProgressSnapshot } from '@/types';
 
 export interface ProcessUpgradeArgs {
@@ -193,16 +194,19 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
         loss_chase_ratio: prevSnap.loss_chase_ratio,
       } : null,
     });
-    analysis.discipline_score = {
-      ...disciplineResult,
-      percentile: estimatePercentile('discipline_score', disciplineResult.total),
-    };
+    const settledCount = metricsForDiscipline.summary.wins + metricsForDiscipline.summary.losses;
+    analysis.discipline_score = disciplineResult.insufficient_data
+      ? { ...disciplineResult }
+      : { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) };
     analysis.betiq = calculateBetIQ(metricsForDiscipline, bets);
-    analysis.emotion_percentile = estimatePercentile('emotion_score', analysis.emotion_score, true);
+    const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
+    analysis.emotion_percentile = emotionInsufficient ? null : estimatePercentile('emotion_score', analysis.emotion_score, true);
+    analysis.emotion_score_insufficient_data = emotionInsufficient;
+    analysis.tilt_score_insufficient_data = emotionInsufficient;
     analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, bets);
     const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, bets);
     if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
-    analysis.schema_version = 1;
+    analysis.schema_version = 2;
 
     // 8. Insert the child full-report row. Mirrors /api/analyze:472-496
     // field-for-field except the hardcodes for our case: report_type,
@@ -235,9 +239,11 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
       throw insertErr ?? new Error('autopsy_reports insert returned no row');
     }
 
-    // 9. Discipline scores ledger — mirror /api/analyze:528-544. Best-effort:
-    // the report itself is durable, this is just the longitudinal track.
-    try {
+    // 9. Discipline scores ledger, mirror /api/analyze. Best-effort: the
+    // report itself is durable, this is just the longitudinal track. Skip the
+    // row when the score is insufficient_data (all-zero components) so the
+    // streak feed never shows a bogus "0 discipline today".
+    if (!disciplineResult.insufficient_data) try {
       await supabase.from('discipline_scores').insert({
         user_id: userId,
         score: disciplineResult.total,
