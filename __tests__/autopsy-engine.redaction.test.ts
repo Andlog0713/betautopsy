@@ -91,7 +91,10 @@ vi.mock('@anthropic-ai/sdk', () => {
 function makeFixtureBets(): Bet[] {
   const bets: Bet[] = [];
   const baseDate = Date.parse('2026-04-15T20:00:00Z');
-  for (let i = 0; i < 60; i++) {
+  // 120 settled bets so the dataset clears the n>=100 bias-detection floor
+  // (lib/engine/constants/thresholds.ts). The redaction suite needs biases to
+  // exist in order to assert full-mode visibility parity on them.
+  for (let i = 0; i < 120; i++) {
     const isWin = i % 3 === 0;
     const isParlay = i % 5 === 0;
     const sport = i % 2 === 0 ? 'NBA' : 'NFL';

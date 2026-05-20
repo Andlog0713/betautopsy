@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
+import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { computeWhatChanged } from '@/lib/what-changed';
 import { maybeSendHeatedPush } from '@/lib/push-heated-send';
 import { waitUntil } from '@vercel/functions';
@@ -400,11 +401,21 @@ export async function POST(request: Request) {
             loss_chase_ratio: prevSnap.loss_chase_ratio,
           } : null,
         });
+        // settled-bet count drives the minimum-sample gates below. The
+        // shared engine functions (calculateBetIQ, calculateEnhancedTilt)
+        // self-gate internally; only the percentile wrappers need handling
+        // here because the route re-derives them after the engine call.
+        const settledCount = metricsForDiscipline.summary.wins + metricsForDiscipline.summary.losses;
         analysis.discipline_score = disciplineResult
-          ? { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) }
+          ? (disciplineResult.insufficient_data
+              ? { ...disciplineResult }
+              : { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) })
           : undefined;
         analysis.betiq = calculateBetIQ(metricsForDiscipline, betsToAnalyze);
-        analysis.emotion_percentile = estimatePercentile('emotion_score', analysis.emotion_score, true);
+        const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
+        analysis.emotion_percentile = emotionInsufficient ? null : estimatePercentile('emotion_score', analysis.emotion_score, true);
+        analysis.emotion_score_insufficient_data = emotionInsufficient;
+        analysis.tilt_score_insufficient_data = emotionInsufficient;
         analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         // Only overwrite for full reports. runSnapshot already assembled a
@@ -430,7 +441,7 @@ export async function POST(request: Request) {
         } catch { /* quiz lookup is best-effort */ }
 
         // Stamp the current saved-report schema version so future readers can branch on shape.
-        analysis.schema_version = 1;
+        analysis.schema_version = 2;
 
         // Longitudinal-memory deltas. Pull the most recent prior report for
         // this user, feed it + the just-computed analysis into the pure
@@ -551,8 +562,12 @@ export async function POST(request: Request) {
           waitUntil(maybeSendHeatedPush(user.id, savedReport.id, analysis));
         }
 
-        // Save discipline score with component breakdown
-        if (disciplineResult && savedReport?.id) {
+        // Save discipline score with component breakdown. Skip the ledger row
+        // entirely when the score is insufficient_data (all-zero components):
+        // writing it would show "0 discipline today" in the streak feed, which
+        // is wrong UX. The autopsy report itself still carries the gated
+        // placeholder; only the longitudinal track is suppressed.
+        if (disciplineResult && !disciplineResult.insufficient_data && savedReport?.id) {
           try {
             await supabase.from('discipline_scores').insert({
               user_id: user.id,
