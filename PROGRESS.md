@@ -42,9 +42,36 @@
 
 ---
 
-## Current branch: `main` (post ENGINE-FLOOR merge)
+## Current branch: `main` (post SNAPSHOT-REDACTION-POLICY merge)
 
-### Done this session: ENGINE-FLOOR: global minimum-sample floor for all detectors (PR #55, squash `c9d9d56`)
+### Done this session: SNAPSHOT-REDACTION-POLICY: unified snapshot redaction (PR #56, squash `b775e8e`)
+- **Why:** the 5000-bet snapshot `690cab1b` shipped six different redaction
+  policies across the wire. Physical-iPhone QA traced dollar leaks the paywall
+  was supposed to hide. Unify on the biases pattern (snake_case
+  `<field>_visibility` flags; first-sentence teaser visible, dollars blurred).
+- **Sprint row:** `3655964c-daf2-81a9`. QA ref: `notion.so/3655964cdaf281879d9ade55cb112cea`.
+- **Five engine wire fixes (`lib/autopsy-engine.ts`, `types/index.ts`):**
+  1. strategic_leaks: deterministic first-sentence detail teaser (category +
+     ROI + count, no dollars) + `detail_visibility: visible`; suggestion `""`
+     + hidden. Was bare `""` with no flags.
+  2. sport_specific_findings: description first-sentence visible, recommendation
+     `""` + hidden, evidence first-sentence with dollars stripped (new
+     `stripDollarsFromSentence` helper, no `$•••` token). Was leaking full LLM
+     description + recommendation prose.
+  3. odds_analysis.buckets[].staked: `0` + `redacted_dollar` (was a $204K leak).
+  4. timing_analysis.by_day[]/by_hour[].staked: `0` + `redacted_dollar`.
+  5. summary.total_profit + avg_stake: `0` + `redacted_dollar`.
+- **Deferred (not an engine fix):** behavioral_patterns Ch 5 emptiness is
+  iOS-side. Snapshot is pure-compute (no LLM) so behavioral_patterns is
+  correctly `[]`; Ch 5 should read `patternsSnapshot` (engine already ships 5
+  entries) per May 13 spec. Filed under IOS-RENDER-AUDIT (`3655964c-daf2-8132`).
+- **Verification:** redaction suite Group 6 added (5 assertions + full-mode
+  regression guard, dedicated leak-heavy fixture); 31/31 redaction, Group 3
+  dollar-walk allowlist tightened. verify-engine-floor 10/10 (golden
+  re-baselined for the intended snapshot delta; zero floor-logic regression).
+  tsc clean, em-dash sweep zero. Full mode keeps real dollars.
+
+### Done previously: ENGINE-FLOOR: global minimum-sample floor for all detectors (PR #55, squash `c9d9d56`)
 - **Why:** a 2-bet upload fired Post-Loss Escalation HIGH, 3 behavioral
   patterns, an archetype, a discipline breakdown, and 3 recs while the LLM
   prose layer wrote "Two bets is nowhere near enough to draw conclusions" in
