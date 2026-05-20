@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { runSnapshot, runAutopsy, firstSentence, scrubDollarsInSentence } from '@/lib/autopsy-engine';
+import { runSnapshot, runAutopsy, firstSentence, scrubDollarsInSentence, stripDollarsFromSentence } from '@/lib/autopsy-engine';
 import type {
   Bet,
   AutopsyAnalysis,
@@ -358,9 +358,9 @@ describe('Snapshot Redaction — Group 3: no-dollar-leak walk', () => {
   const DOLLAR_PATTERN_STR = /\$\s?[\d,]+(\.\d+)?/;
 
   function isAllowlisted(path: string, key: string, payload: AutopsyAnalysis): boolean {
-    // ── Top-level summary (visible by spec) ──
-    if (path === 'summary.total_profit') return true;
-    if (path === 'summary.avg_stake') return true;
+    // ── Top-level summary ──
+    // total_profit + avg_stake are now redacted to 0 in snapshot mode
+    // (SNAPSHOT-REDACTION-POLICY), so they no longer need allowlisting.
     // total_bets / roi_percent / record / date_range / overall_grade don't
     // hit the regex but list anyway for documentation parity with directive
     if (path === 'summary.total_bets') return true;
@@ -387,9 +387,10 @@ describe('Snapshot Redaction — Group 3: no-dollar-leak walk', () => {
       if (payload.patternsSnapshot?.[idx]?.kind === 'biggest_win') return true;
     }
 
-    // ── Bucket-level staked sums (Spec v2 scope gap — flagged) ──
-    if (/^timing_analysis\.(by_hour|by_day)\[\d+\]\.staked$/.test(path)) return true;
-    if (/^odds_analysis\.buckets\[\d+\]\.staked$/.test(path)) return true;
+    // ── Bucket-level staked sums ──
+    // timing_analysis + odds_analysis staked are now redacted to 0 in snapshot
+    // (SNAPSHOT-REDACTION-POLICY), so they no longer need allowlisting.
+    // session_detection.sessions[].staked stays visible (out of this PR scope).
     if (/^session_detection\.sessions\[\d+\]\.staked$/.test(path)) return true;
 
     // ── Sub-scores keyed with "stake" (false positives — these are 0..25
@@ -493,6 +494,128 @@ describe('Snapshot Redaction — Group 5: summaryCounts in BOTH modes', () => {
   it('full mode emits summaryCounts with 5 int fields', async () => {
     const { analysis } = await runAutopsy(makeFixtureBets());
     assertSummaryCountsShape(analysis);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// GROUP 6: Unified redaction policy (SNAPSHOT-REDACTION-POLICY)
+// Five wire fixes traced to physical-iPhone QA on 5000-bet snapshot 690cab1b.
+// (behavioral_patterns is intentionally NOT covered: snapshot is pure-compute,
+//  so behavioral_patterns is correctly [] until iOS Ch 5 reads patternsSnapshot
+//  per IOS-RENDER-AUDIT.)
+// ───────────────────────────────────────────────────────────────────────
+
+// Leak-heavy fixture: 110 NBA spread bets at a deeply negative ROI so a
+// non-platform category clears the per-category strategic-leak floor (n>=100).
+// The shared makeFixtureBets() splits across NBA/NFL + a platform sportsbook,
+// so no single non-platform category reaches 100 there.
+function leakHeavyBets(): Bet[] {
+  const base = Date.parse('2026-01-01T18:00:00Z');
+  return Array.from({ length: 110 }, (_, i) => {
+    const isWin = i % 4 === 0; // 28 wins / 82 losses -> deeply negative ROI
+    const stake = 50;
+    return {
+      id: `leak-${i}`,
+      user_id: 'u',
+      placed_at: new Date(base + i * 3600_000).toISOString(),
+      sport: 'NBA',
+      league: null,
+      bet_type: 'spread',
+      description: `NBA spread #${i}`,
+      odds: -110,
+      stake,
+      result: isWin ? 'win' : 'loss',
+      payout: isWin ? Math.round(stake * 1.91) : 0,
+      profit: isWin ? Math.round(stake * 0.91) : -stake,
+      sportsbook: 'DraftKings',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+describe('Snapshot Redaction - Group 6: unified policy', () => {
+  const NO_DOLLAR = /\$\s?[\d,]/;
+
+  it('strategic_leaks: first-sentence detail visible, suggestion hidden, no dollars', async () => {
+    const { analysis } = await runSnapshot(leakHeavyBets());
+    expect(analysis.strategic_leaks.length).toBeGreaterThan(0);
+    const leak = analysis.strategic_leaks[0];
+    expect(leak.detail.length).toBeGreaterThan(0);
+    expect(leak.detail.length).toBeLessThan(250);
+    expect(leak.detail_visibility).toBe('visible');
+    expect(leak.detail).not.toMatch(NO_DOLLAR);
+    expect(leak.suggestion).toBe('');
+    expect(leak.suggestion_visibility).toBe('hidden');
+    expect(leak.category.length).toBeGreaterThan(0);
+    expect(leak.sample_size).toBeGreaterThanOrEqual(100);
+  });
+
+  it('sport_specific_findings: description first-sentence visible, recommendation hidden, no $ blur', async () => {
+    const full = (await runAutopsy(makeFixtureBets())).analysis;
+    const snap = (await runSnapshot(makeFixtureBets())).analysis;
+    expect((snap.sport_specific_findings ?? []).length).toBeGreaterThan(0);
+    const sf = snap.sport_specific_findings![0];
+    const fullSf = full.sport_specific_findings![0];
+
+    expect(sf.recommendation).toBe('');
+    expect(sf.recommendation_visibility).toBe('hidden');
+
+    expect(sf.description_visibility).toBe('visible');
+    expect(sf.description).toBe(stripDollarsFromSentence(firstSentence(fullSf.description)));
+    expect(sf.description.length).toBeLessThanOrEqual(fullSf.description.length);
+    expect(sf.description).not.toMatch(NO_DOLLAR);
+
+    expect(sf.evidence_visibility).toBe('visible');
+    expect(sf.evidence).not.toContain('$•••');
+    expect(sf.evidence).not.toMatch(NO_DOLLAR);
+
+    expect(sf.estimated_cost).toBe(0);
+    expect(sf.estimated_cost_visibility).toBe('redacted_dollar');
+  });
+
+  it('odds_analysis.buckets[].staked redacted', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const buckets = analysis.odds_analysis?.buckets ?? [];
+    expect(buckets.length).toBeGreaterThan(0);
+    for (const b of buckets) {
+      expect(b.staked).toBe(0);
+      expect(b.staked_visibility).toBe('redacted_dollar');
+    }
+  });
+
+  it('timing_analysis.by_day + by_hour staked redacted', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const days = analysis.timing_analysis?.by_day ?? [];
+    const hours = analysis.timing_analysis?.by_hour ?? [];
+    expect(days.length).toBeGreaterThan(0);
+    for (const d of days) {
+      expect(d.staked).toBe(0);
+      expect(d.staked_visibility).toBe('redacted_dollar');
+    }
+    for (const h of hours) {
+      expect(h.staked).toBe(0);
+      expect(h.staked_visibility).toBe('redacted_dollar');
+    }
+  });
+
+  it('summary.total_profit + avg_stake redacted', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    expect(analysis.summary.total_profit).toBe(0);
+    expect(analysis.summary.total_profit_visibility).toBe('redacted_dollar');
+    expect(analysis.summary.avg_stake).toBe(0);
+    expect(analysis.summary.avg_stake_visibility).toBe('redacted_dollar');
+  });
+
+  it('regression: full mode keeps real dollar values', async () => {
+    const { analysis } = await runAutopsy(makeFixtureBets());
+    expect(analysis.summary.total_profit).not.toBe(0);
+    expect((analysis.odds_analysis?.buckets ?? []).some((b) => b.staked > 0)).toBe(true);
+    expect((analysis.timing_analysis?.by_day ?? []).some((d) => d.staked > 0)).toBe(true);
   });
 });
 

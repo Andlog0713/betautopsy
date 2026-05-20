@@ -118,6 +118,8 @@ export interface TimingBucket {
   // Full mode: profit visible + tag = "visible". Optional for backward-compat
   // with historical saved reports.
   profit_visibility?: VisibilityTag;
+  // staked is a dollar sum; redacted in snapshot mode (was a wire leak).
+  staked_visibility?: VisibilityTag;
 }
 
 export interface TimingAnalysis {
@@ -151,6 +153,9 @@ export interface OddsBucket {
   implied_prob_visibility?: VisibilityTag;
   actual_win_rate_visibility?: VisibilityTag;
   edge_visibility?: VisibilityTag;
+  // staked is a dollar sum; redacted in snapshot mode (was a wire leak,
+  // e.g. $204K on the Slight Favorite bucket).
+  staked_visibility?: VisibilityTag;
 }
 
 export interface OddsAnalysis {
@@ -514,6 +519,11 @@ export interface AutopsySummary {
   // Nullable: engine emits null until grade methodology is reconciled with
   // BetIQ deterministically (Snapshot Redaction Spec amendment, Phase 3).
   overall_grade: string | null;
+  // Snapshot redaction tags: total_profit + avg_stake are dollar headlines
+  // (e.g. -$46,747 loss, $87.74 avg stake) redacted to 0 in snapshot mode.
+  // total_bets / record / roi_percent / date_range stay visible.
+  total_profit_visibility?: VisibilityTag;
+  avg_stake_visibility?: VisibilityTag;
 }
 
 export type DeltaDirection = 'up' | 'down' | 'flat';
@@ -587,6 +597,11 @@ export interface StrategicLeak {
   roi_impact: number;
   sample_size: number;
   suggestion: string;
+  // Snapshot redaction tags (mirror the biases pattern). Snapshot: detail
+  // ships a deterministic first-sentence teaser (visible), suggestion hidden.
+  // Full: both visible.
+  detail_visibility?: VisibilityTag;
+  suggestion_visibility?: VisibilityTag;
 }
 
 export interface BehavioralPattern {
@@ -777,8 +792,9 @@ export interface SportSpecificFinding {
   // "there's more — unlock to read." No separate description_visibility tag.
   description_snapshot?: string;
   // Snapshot redaction tags. Snapshot ships sport + name + severity +
-  // description_snapshot visible; evidence + recommendation hidden;
-  // estimated_cost null + redacted_dollar.
+  // first-sentence description + first-sentence evidence visible;
+  // recommendation hidden; estimated_cost 0 + redacted_dollar.
+  description_visibility?: VisibilityTag;
   evidence_visibility?: VisibilityTag;
   estimated_cost_visibility?: VisibilityTag;
   recommendation_visibility?: VisibilityTag;

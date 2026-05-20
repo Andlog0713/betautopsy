@@ -2955,9 +2955,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       return {
         category: (leak.category as string) ?? '',
         detail: (leak.detail as string) ?? '',
+        detail_visibility: 'visible' as VisibilityTag,
         roi_impact: jsCat ? jsCat.roi : (leak.roi_impact as number) ?? 0,
         sample_size: jsCat ? jsCat.count : (leak.sample_size as number) ?? 0,
         suggestion: (leak.suggestion as string) ?? '',
+        suggestion_visibility: 'visible' as VisibilityTag,
       };
     }), settledCount, BET_COUNT_THRESHOLDS.strategicLeaksFullTotal),
     // Minimum-sample floor: bet-pattern observations need a bet sample.
@@ -3144,6 +3146,28 @@ export function scrubDollarsInSentence(s: string): string {
   return s.replace(DOLLAR_RX, '$•••');
 }
 
+/**
+ * Removes dollar amounts from a string entirely (no "$•••" placeholder) and
+ * tidies the punctuation/whitespace left behind. Used for snapshot-mode sport
+ * finding teasers, where the dollar is paywalled via the locked-cost chip and
+ * the prose should read cleanly without a blur token. Optional leading +/- is
+ * consumed so "+$120" leaves no dangling sign.
+ *   "NFL straight bets: +$120." -> "NFL straight bets."
+ *   "Props ROI: 4%, net $238."  -> "Props ROI: 4%, net."
+ */
+export function stripDollarsFromSentence(s: string): string {
+  if (!s) return '';
+  const DOLLAR_RX = /[-+]?\$-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\$\.\d+/g;
+  return s
+    .replace(DOLLAR_RX, '')
+    .replace(/\(\s*\)/g, '')           // empty parens left behind
+    .replace(/\s*[:+]\s*\./g, '.')      // "bets: ." / "bets +." -> "bets."
+    .replace(/,\s*\./g, '.')            // "net ,." -> "net."
+    .replace(/\s+([.,;:%)])/g, '$1')    // space before punctuation
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 
 // Builds the 1-sentence executive insight shown in snapshot mode. Format
 // locked with Andrew: "Your betting shows {topBiasCategory} patterns. The
@@ -3281,6 +3305,8 @@ function redactTimingForSnapshot(timing: TimingAnalysis | undefined): TimingAnal
     ...b,
     profit: 0,
     profit_visibility: 'redacted_dollar',
+    staked: 0,
+    staked_visibility: 'redacted_dollar',
   });
   return {
     ...timing,
@@ -3290,9 +3316,10 @@ function redactTimingForSnapshot(timing: TimingAnalysis | undefined): TimingAnal
 }
 
 // Redacts an OddsAnalysis for snapshot mode: full Q1 lockdown across every
-// bucket. profit/roi/win_rate/implied_prob/actual_win_rate/edge all → 0 with
-// matching visibility tags. Bets/wins/losses/staked/label/range stay visible
-// (sample size is allowed per D12).
+// bucket. profit/roi/win_rate/implied_prob/actual_win_rate/edge + staked all
+// → 0 with matching visibility tags. Bets/wins/losses (counts) + label/range
+// stay visible (sample size is allowed per D12). staked is a dollar sum and
+// was a wire leak ($204K on Slight Favorite), so it is now redacted.
 function redactOddsForSnapshot(odds: OddsAnalysis | undefined): OddsAnalysis | undefined {
   if (!odds) return undefined;
   const redactBucket = (b: OddsBucket): OddsBucket => ({
@@ -3303,12 +3330,14 @@ function redactOddsForSnapshot(odds: OddsAnalysis | undefined): OddsAnalysis | u
     implied_prob: 0,
     actual_win_rate: 0,
     edge: 0,
+    staked: 0,
     profit_visibility: 'redacted_dollar',
     roi_visibility: 'redacted_percent',
     win_rate_visibility: 'redacted_percent',
     implied_prob_visibility: 'redacted_percent',
     actual_win_rate_visibility: 'redacted_percent',
     edge_visibility: 'redacted_percent',
+    staked_visibility: 'redacted_dollar',
   });
   return {
     ...odds,
@@ -3341,6 +3370,7 @@ function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
 function withFullModeFindingTags(f: SportSpecificFinding): SportSpecificFinding {
   return {
     ...f,
+    description_visibility: 'visible',
     evidence_visibility: 'visible',
     estimated_cost_visibility: 'visible',
     recommendation_visibility: 'visible',
@@ -3351,8 +3381,8 @@ function withFullModeTimingTags(timing: TimingAnalysis | undefined): TimingAnaly
   if (!timing) return undefined;
   return {
     ...timing,
-    by_hour: timing.by_hour.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag })),
-    by_day: timing.by_day.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag })),
+    by_hour: timing.by_hour.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag, staked_visibility: 'visible' as VisibilityTag })),
+    by_day: timing.by_day.map(b => ({ ...b, profit_visibility: 'visible' as VisibilityTag, staked_visibility: 'visible' as VisibilityTag })),
   };
 }
 
@@ -3368,6 +3398,7 @@ function withFullModeOddsTags(odds: OddsAnalysis | undefined): OddsAnalysis | un
       implied_prob_visibility: 'visible' as VisibilityTag,
       actual_win_rate_visibility: 'visible' as VisibilityTag,
       edge_visibility: 'visible' as VisibilityTag,
+      staked_visibility: 'visible' as VisibilityTag,
     })),
   };
 }
@@ -3489,8 +3520,10 @@ export async function runSnapshot(
     return a.bias_name.localeCompare(b.bias_name);
   });
 
-  // Strategic leaks: categories + ROI + sample size visible (D11, D15).
-  // Detail + suggestion already ''-redacted today.
+  // Strategic leaks: category + ROI + sample size visible (D11, D15). detail
+  // ships a deterministic first-sentence teaser (restating the already-visible
+  // roi/count, no dollar amounts) + visible flag; suggestion stays hidden.
+  // Mirrors the biases pattern: tease the diagnosis, paywall the prescription.
   const snapshotLeaks: AutopsyAnalysis['strategic_leaks'] = leaks
     .filter(c => !isPlatformCategory(c.category))
     // Minimum-sample floor per category: a negative ROI on a thin category is
@@ -3498,27 +3531,32 @@ export async function runSnapshot(
     .filter(c => c.count >= BET_COUNT_THRESHOLDS.strategicLeaksPerCategory)
     .map(c => ({
       category: c.category,
-      detail: '',
+      detail: firstSentence(`${c.category} is running ${c.roi.toFixed(1)}% ROI across ${c.count} settled bets.`),
+      detail_visibility: 'visible' as VisibilityTag,
       roi_impact: c.roi,
       sample_size: c.count,
       suggestion: '',
+      suggestion_visibility: 'hidden' as VisibilityTag,
     }));
 
-  // ── SportSpecificFindings (Phase 3 loosen v2) ──
-  // Ship every detected finding with diagnostic content visible (name, sport,
-  // severity, description, evidence prose, recommendation prose) and dollars
-  // redacted (estimated_cost zeroed + redacted_dollar tag, evidence string
-  // dollar amounts replaced with $••• via scrubDollarsInSentence). Mirrors
-  // the bias-evidence un-redaction in PR #43: tease the diagnosis, paywall
-  // the dollars. Ship as empty array (not undefined) when no findings so iOS
-  // doesn't have to handle both shapes.
+  // ── SportSpecificFindings (unified redaction policy) ──
+  // Ship name + sport + severity + first-sentence description + first-sentence
+  // evidence visible; recommendation hidden; estimated_cost 0 + redacted_dollar.
+  // Dollars are stripped from the description/evidence teasers entirely (no
+  // "$•••" blur token) and surfaced via the locked-cost chip instead. Mirrors
+  // the bias-evidence pattern: tease the diagnosis, paywall the prescription.
+  // Ship as empty array (not undefined) when no findings so iOS doesn't have
+  // to handle both shapes.
   const snapshotSportFindings: SportSpecificFinding[] = sportFindings.map((sf) => ({
     ...sf,
-    estimated_cost: 0,
-    evidence: scrubDollarsInSentence(sf.evidence),
+    description: stripDollarsFromSentence(firstSentence(sf.description)),
+    description_visibility: 'visible',
+    evidence: stripDollarsFromSentence(firstSentence(sf.evidence)),
     evidence_visibility: 'visible',
+    recommendation: '',
+    recommendation_visibility: 'hidden',
+    estimated_cost: 0,
     estimated_cost_visibility: 'redacted_dollar',
-    recommendation_visibility: 'visible',
   }));
 
   // patternsSnapshot: 4-5 entries depending on data availability.
@@ -3547,9 +3585,13 @@ export async function runSnapshot(
     summary: {
       total_bets: metrics.summary.total_bets,
       record: metrics.summary.record,
-      total_profit: metrics.summary.total_profit,
+      // total_profit + avg_stake are dollar headlines, redacted in snapshot.
+      // total_bets / record / roi_percent / date_range stay visible.
+      total_profit: 0,
+      total_profit_visibility: 'redacted_dollar',
       roi_percent: metrics.summary.roi_percent,
-      avg_stake: metrics.summary.avg_stake,
+      avg_stake: 0,
+      avg_stake_visibility: 'redacted_dollar',
       date_range: metrics.summary.date_range,
       overall_grade: null,
     },
