@@ -42,9 +42,44 @@
 
 ---
 
-## Current branch: `main` (post Mega-PR A merge)
+## Current branch: `main` (post ENGINE-FLOOR merge)
 
-### Done this session: MEGA-PR A: snapshot fix + bias depth (PR #54, squash `0b776dd`)
+### Done this session: ENGINE-FLOOR: global minimum-sample floor for all detectors (PR #55, squash `c9d9d56`)
+- **Why:** a 2-bet upload fired Post-Loss Escalation HIGH, 3 behavioral
+  patterns, an archetype, a discipline breakdown, and 3 recs while the LLM
+  prose layer wrote "Two bets is nowhere near enough to draw conclusions" in
+  the same report. Deterministic detectors did not gate on sample size; the
+  prose hedged. Fix gates the detectors so the prose has nothing to hedge.
+- **Sprint row:** `3655964c-daf2-8138`. Visual QA: `notion.so/3655964cdaf281879d9ade55cb112cea`.
+- **Pattern:** extended BetIQ's existing `insufficient_data` shape to every
+  other detector. Single source of truth: `lib/engine/constants/thresholds.ts`
+  (`BET_COUNT_THRESHOLDS`) + `lib/engine/helpers/sufficiencyGate.ts`
+  (`checkSufficiency`, `gateArray`).
+- **Thresholds (settled bets unless noted):** biases 100, behavioral_patterns
+  100 (full mode), betting_archetype 50 ("Building Sample"), betiq 50
+  (unchanged), discipline 50, enhanced_tilt 100 (zeroed + fixed worst_trigger
+  string), emotion_score scalar 50 (sibling flags +
+  `emotion_percentile` null), strategic_leaks per-category 100 (snapshot) /
+  total 100 (full), contradictions 30 (unchanged), detectAndGradeSessions 20
+  sessions (NARROW gate: per-session cards kept, heated aggregates zeroed,
+  `insufficient_data` set), additive 500 (unchanged), Emotional Session
+  Pattern 5 sessions (unchanged).
+- **Wire contract:** object detectors zero numerics (never null); arrays → `[]`;
+  `worst_trigger` rewritten not nulled; `emotion_percentile` widened to
+  `number | null`. `schema_version` 1 → 2 (route.ts + iap-upgrade.ts).
+  `discipline_scores` ledger INSERT skipped when insufficient (both files) so
+  the streak feed never shows "0 discipline today".
+- **Verification:** `scripts/verify-engine-floor.ts` 10/10 (2/50/100/500/5000
+  cases + golden deep-diff). Redaction fixture enlarged to 120 bets (clears
+  the 100 bias floor): 25/25; 6 other unit suites green (92/92 total).
+  Fixtures + golden gitignored (real user bet data + regenerable baseline);
+  build/capture/verify scripts committed.
+- **Parked cleanup done:** `vitest.config.ts` now excludes `**/.claude/**`.
+- **Pre-existing, unrelated:** `autopsy-engine.test.ts` snapshot failures are
+  TZ-dependent on the commit machine (88 local TZ / 58 UTC on clean main).
+  Filed as a v1.1 test-infra row; not addressed here.
+
+### Done previously: MEGA-PR A: snapshot fix + bias depth (PR #54, squash `0b776dd`)
 - **Why:** iOS IAP upgrades blocked because every iOS-originated snapshot
   shipped with `analyzed_upload_ids=[]` (confirmed 4× in sandbox 2026-05-19).
   Andrew's 5000-bet test set only surfaced 2 biases despite having a $46K+
@@ -71,7 +106,8 @@
 - Mega-PR B (iOS rendering of new engine output, including `triggerEvent` reader)
 - Web pricing reconcile (post-iOS launch, separate project)
 - "23 pages" iOS paywall copy reconcile (separate iOS-repo task)
-- `vitest.config.ts` should add `exclude: ['**/.claude/**', '**/node_modules/**']` to stop the worktree noise
+- DONE (ENGINE-FLOOR): `vitest.config.ts` now excludes `**/.claude/**`
+- v1.1 test-infra: `autopsy-engine.test.ts` snapshots are TZ-dependent on the commit machine (88 local TZ / 58 UTC on clean main); pin TZ or switch to UTC formatting
 
 ## Previous branch: `claude/engine-snapshot-loosen-v2`
 
