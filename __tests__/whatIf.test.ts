@@ -1,25 +1,23 @@
 /**
  * ENGINE-WHATIF — what_if_scenarios regression test
  *
- * Locks the verbatim port of web's buildWhatIfs (lib/engine/whatIf.ts, from
- * components/AutopsyReport.tsx 195-237) and its wiring into the AutopsyAnalysis
- * output:
- *   - pure-function behavior: 1-3 scenarios, conditional inclusion, exact
- *     label strings, exact actual/hypothetical values
+ * Locks buildWhatIfScenarios (lib/engine/whatIf.ts), which transforms the
+ * engine's internal metrics.what_ifs into the wire array, and its wiring:
+ *   - pure transform: 1-3 scenarios, web-style conditional inclusion, exact
+ *     label strings, values taken straight from metrics.what_ifs
+ *   - scenario 3 dual guard: mixed-profitability partition AND hypothetical != actual
  *   - runAutopsy (full report) ships what_if_scenarios
  *   - runSnapshot (separate path) does NOT ship it
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { buildWhatIfs } from '@/lib/engine/whatIf';
+import { buildWhatIfScenarios, type MetricsWhatIfsShape } from '@/lib/engine/whatIf';
 import { runAutopsy, runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
 
 // ── Anthropic SDK mock ─────────────────────────────────────────────────
-// runAutopsy dynamically imports @anthropic-ai/sdk and calls .messages.create;
-// runSnapshot is pure-compute and never touches it. Canned response lets
-// runAutopsy assemble a full payload without a network call. (Mirrors the
-// pattern in autopsy-engine.redaction.test.ts.)
+// runAutopsy dynamically imports @anthropic-ai/sdk; runSnapshot is pure-compute.
+// (Mirrors the pattern in autopsy-engine.redaction.test.ts.)
 vi.mock('@anthropic-ai/sdk', () => {
   const mockResponse = {
     biases_detected: [],
@@ -39,7 +37,7 @@ vi.mock('@anthropic-ai/sdk', () => {
   return { default: MockAnthropic };
 });
 
-// ── Fixture helper ─────────────────────────────────────────────────────
+// ── Fixture helpers ────────────────────────────────────────────────────
 let seq = 0;
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   seq++;
@@ -67,74 +65,96 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
   };
 }
 
-// Fixture that triggers all three scenarios.
-// Categories: NBA-spread (profitable +200), NFL-moneyline (unprofitable -100),
-// MLB-parlay (unprofitable -50, parlay_legs 4 -> triggers scenario 2).
-// stakes [50,100,100,100] -> median 100. actualPnL = 100+100-100-50 = 50.
-function makeAllThreeFixture(): Bet[] {
-  return [
-    makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', odds: 100, stake: 100, profit: 100 }),
-    makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', odds: 100, stake: 100, profit: 100 }),
-    makeBet({ sport: 'NFL', bet_type: 'moneyline', result: 'loss', odds: -110, stake: 100, profit: -100 }),
-    makeBet({ sport: 'MLB', bet_type: 'parlay', result: 'loss', odds: 400, stake: 50, profit: -50, parlay_legs: 4 }),
-  ];
+function makeWhatIfs(overrides: Partial<MetricsWhatIfsShape> = {}): MetricsWhatIfsShape {
+  return {
+    flat_stake: { median_stake: 100, hypothetical_profit: 0 },
+    no_long_parlays: { hypothetical_profit: 0 },
+    profitable_only: { hypothetical_profit: 0 },
+    actual_profit: 0,
+    ...overrides,
+  };
 }
 
-describe('buildWhatIfs (verbatim port)', () => {
-  it('returns exactly 3 scenarios with exact labels + values when all conditions met', () => {
-    const result = buildWhatIfs(makeAllThreeFixture());
-    expect(result).toHaveLength(3);
-
-    // 1. flat stake at median ($100): wins +100 each, losses -100 each -> 0
-    expect(result[0]).toEqual({ label: 'Flat-staked at $100 on every bet', actual: 50, hypothetical: 0 });
-    // 2. drop the 4-leg parlay: 100+100-100 = 100
-    expect(result[1]).toEqual({ label: 'Eliminated all parlays over 3 legs', actual: 50, hypothetical: 100 });
-    // 3. only NBA-spread (profitable): 100+100 = 200
-    expect(result[2]).toEqual({ label: 'Only bet your profitable sports/types', actual: 50, hypothetical: 200 });
+describe('buildWhatIfScenarios (metrics.what_ifs transform)', () => {
+  it('always includes scenario 1 with rounded median stake + engine numbers verbatim', () => {
+    const result = buildWhatIfScenarios(
+      makeWhatIfs({ flat_stake: { median_stake: 50.7, hypothetical_profit: 1200 }, actual_profit: -300 }),
+      [makeBet({ result: 'win', stake: 50, parlay_legs: 1, sport: 'NFL', bet_type: 'spread', profit: 45 })],
+    );
+    expect(result[0]).toEqual({ label: 'Flat-staked at $51 on every bet', actual: -300, hypothetical: 1200 });
   });
 
-  it('omits scenario 2 when no parlays over 3 legs exist', () => {
-    // No long parlays; mixed profitability keeps scenario 3 in.
-    const bets = [
-      makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', profit: 100, stake: 100 }),
-      makeBet({ sport: 'NFL', bet_type: 'moneyline', result: 'loss', profit: -100, stake: 100 }),
-      makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', profit: 100, stake: 100, parlay_legs: 3 }),
-    ];
-    const result = buildWhatIfs(bets);
+  it('omits scenario 2 when no parlays over 3 legs', () => {
+    const result = buildWhatIfScenarios(makeWhatIfs(), [
+      makeBet({ parlay_legs: 2, result: 'win' }),
+      makeBet({ parlay_legs: 3, result: 'loss', profit: -100 }),
+    ]);
     expect(result.some((s) => s.label === 'Eliminated all parlays over 3 legs')).toBe(false);
-    expect(result.length).toBeGreaterThanOrEqual(1);
-    expect(result.length).toBeLessThanOrEqual(2);
   });
 
-  it('omits scenario 3 when profitability is uniform (all profitable)', () => {
-    // Single profitable category, no long parlays -> only scenario 1.
-    const bets = [
-      makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', profit: 100, stake: 100 }),
-      makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', profit: 100, stake: 100 }),
-    ];
-    const result = buildWhatIfs(bets);
+  it('includes scenario 2 (with engine number) when any settled bet has >3 parlay legs', () => {
+    const result = buildWhatIfScenarios(
+      makeWhatIfs({ no_long_parlays: { hypothetical_profit: 800 }, actual_profit: -200 }),
+      [makeBet({ parlay_legs: 5, result: 'loss', profit: -100 }), makeBet({ parlay_legs: 1, result: 'win' })],
+    );
+    const s2 = result.find((s) => s.label === 'Eliminated all parlays over 3 legs');
+    expect(s2).toEqual({ label: 'Eliminated all parlays over 3 legs', actual: -200, hypothetical: 800 });
+  });
+
+  it('omits scenario 3 when all categories are uniformly profitable', () => {
+    const result = buildWhatIfScenarios(makeWhatIfs({ profitable_only: { hypothetical_profit: 130 }, actual_profit: 130 }), [
+      makeBet({ sport: 'NFL', bet_type: 'spread', stake: 100, profit: 50, result: 'win' }),
+      makeBet({ sport: 'NBA', bet_type: 'ml', stake: 100, profit: 80, result: 'win' }),
+    ]);
     expect(result.some((s) => s.label === 'Only bet your profitable sports/types')).toBe(false);
-    expect(result).toHaveLength(1);
-    expect(result[0].label).toMatch(/^Flat-staked at \$\d+ on every bet$/);
   });
 
-  it('always returns scenario 1 for a simple settled set', () => {
-    const result = buildWhatIfs([makeBet({ result: 'win', profit: 100, stake: 100 })]);
+  it('omits scenario 3 when all categories are uniformly unprofitable', () => {
+    const result = buildWhatIfScenarios(makeWhatIfs({ profitable_only: { hypothetical_profit: 0 }, actual_profit: -190 }), [
+      makeBet({ sport: 'NFL', bet_type: 'spread', stake: 100, profit: -90, result: 'loss' }),
+      makeBet({ sport: 'NBA', bet_type: 'ml', stake: 100, profit: -100, result: 'loss' }),
+    ]);
+    expect(result.some((s) => s.label === 'Only bet your profitable sports/types')).toBe(false);
+  });
+
+  it('includes scenario 3 with mixed profitability AND meaningful hypothetical diff', () => {
+    const result = buildWhatIfScenarios(
+      makeWhatIfs({ profitable_only: { hypothetical_profit: 50 }, actual_profit: -40 }),
+      [
+        makeBet({ sport: 'NFL', bet_type: 'spread', stake: 100, profit: 50, result: 'win' }),
+        makeBet({ sport: 'NBA', bet_type: 'ml', stake: 100, profit: -90, result: 'loss' }),
+      ],
+    );
+    const s3 = result.find((s) => s.label === 'Only bet your profitable sports/types');
+    expect(s3).toEqual({ label: 'Only bet your profitable sports/types', actual: -40, hypothetical: 50 });
+  });
+
+  it('omits scenario 3 when partition is mixed but hypothetical equals actual (dual guard)', () => {
+    const result = buildWhatIfScenarios(
+      makeWhatIfs({ profitable_only: { hypothetical_profit: -40 }, actual_profit: -40 }),
+      [
+        makeBet({ sport: 'NFL', bet_type: 'spread', stake: 100, profit: 50, result: 'win' }),
+        makeBet({ sport: 'NBA', bet_type: 'ml', stake: 100, profit: -90, result: 'loss' }),
+      ],
+    );
+    expect(result.some((s) => s.label === 'Only bet your profitable sports/types')).toBe(false);
+  });
+
+  it('returns between 1 and 3 scenarios', () => {
+    const result = buildWhatIfScenarios(makeWhatIfs(), [makeBet({ result: 'win' })]);
     expect(result.length).toBeGreaterThanOrEqual(1);
-    expect(result[0].label).toMatch(/^Flat-staked at/);
-    expect(typeof result[0].actual).toBe('number');
-    expect(typeof result[0].hypothetical).toBe('number');
-  });
-
-  it('returns [] when no settled bets (inherited web behavior, no NaN)', () => {
-    const result = buildWhatIfs([makeBet({ result: 'pending', profit: 0 })]);
-    expect(result).toEqual([]);
+    expect(result.length).toBeLessThanOrEqual(3);
   });
 });
 
 describe('what_if_scenarios wiring', () => {
   it('runAutopsy ships what_if_scenarios on the full-report output', async () => {
-    const { analysis } = await runAutopsy(makeAllThreeFixture());
+    const bets = [
+      makeBet({ sport: 'NBA', bet_type: 'spread', result: 'win', profit: 100, stake: 100 }),
+      makeBet({ sport: 'NFL', bet_type: 'ml', result: 'loss', profit: -100, stake: 100 }),
+      makeBet({ sport: 'MLB', bet_type: 'parlay', result: 'loss', profit: -50, stake: 50, parlay_legs: 4 }),
+    ];
+    const { analysis } = await runAutopsy(bets);
     expect(Array.isArray(analysis.what_if_scenarios)).toBe(true);
     expect(analysis.what_if_scenarios!.length).toBeGreaterThanOrEqual(1);
     analysis.what_if_scenarios!.forEach((s) => {
@@ -145,7 +165,8 @@ describe('what_if_scenarios wiring', () => {
   });
 
   it('runSnapshot does NOT ship what_if_scenarios', async () => {
-    const { analysis } = await runSnapshot(makeAllThreeFixture());
+    const { analysis } = await runSnapshot([makeBet({ result: 'win' })]);
+    expect('what_if_scenarios' in analysis).toBe(false);
     expect(analysis.what_if_scenarios).toBeUndefined();
   });
 });
