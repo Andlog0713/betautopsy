@@ -44,6 +44,33 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-PERSISTENCE-PERF-HOTFIX — remove non-existent updated_at column (PR #65, squash `7d27234`)
+- **Why:** `a28b056` added `'updated_at'` to `LIST_COLUMNS`, but `autopsy_reports`
+  has no such column (only `created_at`; confirmed via Supabase MCP —
+  `information_schema.columns` for the table lists id, user_id, report_type,
+  bet_count_analyzed, date_range_start/end, report_json, report_markdown,
+  model_used, tokens_used, cost_cents, created_at, is_paid,
+  stripe_payment_intent_id, upgraded_from_snapshot_id, analyzed_upload_ids,
+  analyzed_sportsbook — and nothing else). PostgREST rejected the unknown
+  column, so every list-mode `/api/reports` request 500'd (Vercel logs: 13
+  consecutive 500s in 5 min). Andrew saw "Couldn't load reports" in <1s.
+- **What shipped:** dropped `'updated_at'` from `LIST_COLUMNS` and added a
+  comment documenting that the column doesn't exist and must stay out. iOS Row
+  decoder never consumed it (pre-`a28b056` `select('*')` didn't return it
+  either), so no iOS change needed. Only `LIST_COLUMNS` + the corresponding test
+  mocks/assertions touched; `[list_perf]` timing log and the rest of the route
+  untouched.
+- **Why CI missed it:** the Supabase client is mocked in
+  `__tests__/api-reports-list.test.ts` and doesn't validate columns against the
+  real schema. Gap to close with an integration test in v1.1.
+- **Tests:** removed `updated_at` from `LIST_COLUMNS_STR` and the column-trim
+  mock row; the DESC+cap select-projection assertion now matches the shorter
+  list.
+- **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
+- **Files:** `app/api/reports/route.ts` (+5/-2), `__tests__/api-reports-list.test.ts` (-2). 5 insertions / 3 deletions.
+- **Merge ts (Vercel deploy verify, ~2-3 min lag):** 2026-05-21 17:14:41 -0400.
+  Sprint umbrella 3675964c-daf2-812d.
+
 ### Done this session: P0-PERSISTENCE-PERF-WEB-V2 — column trim + server timing diagnostic (PR #64, squash `a28b056`)
 - **Why:** Andrew retested `6185efa` (slim transform) on 5G AND fast wifi —
   still 7-15s per cold launch with intermittent failures. Network is NOT the
