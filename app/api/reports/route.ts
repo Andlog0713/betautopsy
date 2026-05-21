@@ -24,6 +24,27 @@ const LIST_LIMIT = 100;
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// List mode returns only columns the iOS Row decoder consumes (per Phase 1
+// recon: id, report_type, bet_count_analyzed, date_range_start/end,
+// created_at, report_json, plus upgraded_from_snapshot_id for D14 swap).
+// Dropped from select: user_id (iOS knows it), report_markdown (~5 KB/row
+// avg, 269 KB total for 58-report user), model_used, tokens_used,
+// cost_cents, stripe_payment_intent_id, analyzed_upload_ids. Adding a
+// column here requires confirming iOS Row consumes it.
+const LIST_COLUMNS = [
+  'id',
+  'report_type',
+  'bet_count_analyzed',
+  'date_range_start',
+  'date_range_end',
+  'created_at',
+  'updated_at',
+  'report_json',
+  'upgraded_from_snapshot_id',
+  'is_paid',
+  'analyzed_sportsbook',
+].join(',');
+
 // Vercel function timeout safety. Default is 10s; the list query + slim
 // transform should complete in <2s but cellular-slow Supabase responses
 // could push us higher. 30s ceiling matches iOS URLRequest's 15s with
@@ -118,11 +139,21 @@ export async function GET(request: NextRequest) {
 
   // List-by-user (cold-launch) mode. Empty array (not 404) when the user has
   // no reports — an empty store is a valid hydrated state.
+  //
+  // Diagnostic timing instrumentation (P0-PERSISTENCE-PERF-WEB-V2). After
+  // this PR ships, Vercel logs show per-phase timing so we can localize the
+  // 7-15s cold-launch cost (was: select '*' returning 433 KB after slim;
+  // now: column trim + slim should return ~140 KB). performance.now() is a
+  // Node 18+ global (no import needed).
+  const t0 = performance.now();
+
   const { data, error: dbError } = await supabase
     .from('autopsy_reports')
-    .select('*')
+    .select(LIST_COLUMNS)
     .order('created_at', { ascending: false })
     .limit(LIST_LIMIT);
+
+  const tDbDone = performance.now();
 
   if (dbError) {
     await logErrorServer(dbError, {
@@ -136,28 +167,36 @@ export async function GET(request: NextRequest) {
   // Slim each row's report_json to the card-essential whitelist. The heavy
   // fields (bet_annotations ~2.5 MB, session_detection ~260 KB) are stripped;
   // iOS lazy-fetches the full report via /api/reports/:id on detail-view tap.
-  const slimmedReports = (data ?? []).map((row) => ({
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  const slimmedReports = rows.map((row) => ({
     ...row,
     report_json: slimReportJson(row.report_json),
   }));
 
-  // Observability: log the byte savings for the first row of each response.
-  // Lands in Vercel function logs (NOT Sentry — logErrorServer is strictly
-  // an error path and would spam captureException on every cold start). Helps
-  // debug if iOS reports decode failures post-deploy.
-  if (slimmedReports.length > 0 && data && data.length > 0) {
-    const originalBytes = JSON.stringify(data[0].report_json ?? {}).length;
-    const slimBytes = JSON.stringify(slimmedReports[0].report_json).length;
-    console.log('[slim_transform_metrics]', {
-      path: '/api/reports',
-      userId: user.id,
-      stage: 'list_by_user_slim',
-      row_count: slimmedReports.length,
-      sample_original_bytes: originalBytes,
-      sample_slim_bytes: slimBytes,
-      reduction_pct: Math.round((1 - slimBytes / Math.max(originalBytes, 1)) * 100),
-    });
-  }
+  const tSlimDone = performance.now();
 
-  return NextResponse.json({ reports: slimmedReports });
+  // Pre-serialize so we can measure serialize_ms accurately and emit the
+  // response as a raw string (avoids NextResponse.json double-serialization).
+  const responseJson = JSON.stringify({ reports: slimmedReports });
+  const tSerializeDone = performance.now();
+
+  // Per-phase diagnostic log. Lands in Vercel function logs (NOT Sentry —
+  // logErrorServer is strictly an error path and would spam captureException
+  // on every cold start). response_bytes is the TOTAL response size, not a
+  // sample row. Replaces the prior [slim_transform_metrics] block.
+  console.log('[list_perf]', {
+    path: '/api/reports',
+    userId: user.id,
+    row_count: slimmedReports.length,
+    response_bytes: responseJson.length,
+    db_query_ms: Math.round(tDbDone - t0),
+    slim_transform_ms: Math.round(tSlimDone - tDbDone),
+    serialize_ms: Math.round(tSerializeDone - tSlimDone),
+    total_ms: Math.round(tSerializeDone - t0),
+  });
+
+  return new NextResponse(responseJson, {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
