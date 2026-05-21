@@ -1,4 +1,12 @@
 {
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Alt-Svc", "value": "clear" }
+      ]
+    }
+  ],
   "crons": [
     {
       "path": "/api/digest",
