@@ -44,6 +44,32 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-PERSISTENCE-WEB — GET /api/reports list-by-user (PR #62, squash `5cc8356`)
+- **Why:** iOS reports disappear on cold launch (P0). `ReportStore` is in-memory
+  only with no list-fetch path; on relaunch `reports=[]`. 69 reports across 6 users
+  exist in Supabase but no API exposed them. Authorized fix: Path A (server-fetch,
+  no cache); this PR ships the web side.
+- **Recon HALT/divergence from brief:** a `GET` already existed at
+  `app/api/reports/route.ts` but only served `?upgraded_from=` IAP polling (400 w/o
+  param) — could not hydrate a list, and a 2nd `GET` export collides. Resolved
+  (user-confirmed) by **extending the one handler**: `?upgraded_from=X` → unchanged
+  filtered polling; bare `GET /api/reports` → full user list. Backward-compatible
+  since the only caller (iOS polling) always sends the param.
+- **Auth:** used `getAuthenticatedClient` (sibling pattern, `lib/supabase-from-request`),
+  NOT the brief's `createServerClient`+`getUser()` — the latter would break iOS's
+  `Authorization: Bearer` path. RLS (`auth.uid() = user_id`) scopes ownership at the
+  DB; no explicit `user_id` filter, matching `/api/reports/[id]`.
+- **Contract:** `{ reports: AutopsyReport[] }`, `created_at DESC`, `limit 100`; empty
+  array (not 404) when the user has no reports.
+- **Tests:** `__tests__/api-reports-list.test.ts` mocks Supabase (mirrors
+  `whatIf.test.ts`, NOT prod-hitting `p0-iap-webhook`). 401 / DESC+cap / RLS-scoping /
+  empty / 500, plus regression guards for unchanged polling mode + malformed-UUID 400.
+- **Gates:** `tsc` clean · `vitest` 289 pass (11 files) · `next build` ok.
+- **Files:** `app/api/reports/route.ts` (+72/-22), `__tests__/api-reports-list.test.ts` (+152). 202 insertions / 22 deletions.
+- **Merge ts (Vercel deploy verify):** 2026-05-21 15:12:06 -0400. Sprint row 3675964c-daf2-812d.
+- **iOS unblock:** chat-layer verifies via Supabase MCP post-deploy, then opens iOS
+  CC session for PR 2 (`ReportStore` hydration + `.refreshable`) in `/Users/Andrew/betautopsy-ios`.
+
 ### Done this session: ENGINE-WHATIF (revised, Option 3) — ship what_if_scenarios via metrics.what_ifs transform
 - **Why:** iOS Phase 2.5 needs the What-If counterfactual surface. Web computes
   it client-side from `bets[]` (`components/AutopsyReport.tsx` 195-237); iOS
