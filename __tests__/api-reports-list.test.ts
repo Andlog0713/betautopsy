@@ -109,6 +109,9 @@ describe('GET /api/reports — list-by-user', () => {
     const res = await GET(req());
 
     expect(res.status).toBe(200);
+    // Alt-Svc: clear disables HTTP/3 advertisement so iOS stays on HTTP/2
+    // (P0-PERSISTENCE-PERF-WEB-V3 — QUIC hangs on certain networks).
+    expect(res.headers.get('Alt-Svc')).toBe('clear');
     // List mode always emits a (slimmed) report_json. These rows carry no
     // report_json, so the slim transform yields an empty object per row;
     // ordering, scoping, and cap assertions below are the focus here.
@@ -316,6 +319,8 @@ describe('GET /api/reports?upgraded_from — IAP polling (unchanged)', () => {
     const res = await GET(req(`?upgraded_from=${VALID_UUID}`));
 
     expect(res.status).toBe(200);
+    // Polling mode also disables HTTP/3 — iOS hits this branch during IAP.
+    expect(res.headers.get('Alt-Svc')).toBe('clear');
     expect(await res.json()).toEqual({ reports: rows });
     expect(supabase.calls.eq).toEqual([['upgraded_from_snapshot_id', VALID_UUID]]);
     expect(supabase.calls.order).toEqual([['created_at', { ascending: false }]]);

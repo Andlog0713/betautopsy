@@ -138,7 +138,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 
-    return NextResponse.json({ reports: data ?? [] });
+    // Alt-Svc: clear disables the HTTP/3 (QUIC) advertisement. iOS was caching
+    // Vercel's Alt-Svc HTTP/3 hint and preferring QUIC over UDP, which hangs on
+    // certain ISP/NAT networks (quic_conn_keepalive timeouts) — first launch
+    // fast, subsequent launches hang. Clearing the hint forces iOS back to
+    // HTTP/2. Both branches set it; iOS hits this polling branch during IAP.
+    return NextResponse.json(
+      { reports: data ?? [] },
+      { headers: { 'Alt-Svc': 'clear' } },
+    );
   }
 
   // List-by-user (cold-launch) mode. Empty array (not 404) when the user has
@@ -199,8 +207,14 @@ export async function GET(request: NextRequest) {
     total_ms: Math.round(tSerializeDone - t0),
   });
 
+  // Alt-Svc: clear — see polling-branch note above. Belt + suspenders with
+  // the vercel.json /api/* edge rule, so the header lands even if vercel.json
+  // isn't picked up.
   return new NextResponse(responseJson, {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Alt-Svc': 'clear',
+    },
   });
 }
