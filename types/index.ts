@@ -321,6 +321,19 @@ export interface AutopsyAnalysis {
   // behavior). iOS Chapter 1 renderer consumes this; web reports surface
   // uses lib/report-comparison separately.
   whatChanged?: WhatChanged | null;
+  // What-If counterfactuals (full reports only; ported verbatim from web's
+  // buildWhatIfs). 1-3 scenarios depending on the bettor's data. Optional for
+  // back-compat with pre-deploy reports and absent in snapshot payloads
+  // (runSnapshot is a separate assembly path that does not populate it). iOS
+  // Phase 2.5 consumes via a WhatIfScenario Codable in a follow-up PR.
+  what_if_scenarios?: WhatIfScenario[];
+}
+
+// ── What-If counterfactuals ──
+export interface WhatIfScenario {
+  label: string;
+  actual: number;
+  hypothetical: number;
 }
 
 // ── What Changed (longitudinal-memory deltas for Chapter 1) ──

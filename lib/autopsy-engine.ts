@@ -3,6 +3,7 @@ import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
+import { buildWhatIfs } from '@/lib/engine/whatIf';
 
 // Lazy-load the Anthropic SDK so it never lands in the client bundle.
 // `lib/autopsy-engine.ts` exports `calculateMetrics` (a pure server-or-client
@@ -2932,6 +2933,10 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       date_range: metrics.summary.date_range,
       overall_grade: null,
     },
+    // What-If counterfactuals, ported verbatim from web (lib/engine/whatIf.ts).
+    // Full reports only — runSnapshot is a separate assembly path and never
+    // populates this, keeping snapshots What-If-less per the redaction policy.
+    what_if_scenarios: buildWhatIfs(bets),
     biases_detected: metrics.biases_detected.map((jsBias) => {
       const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
       const claudeBias = claudeBiases.find(
