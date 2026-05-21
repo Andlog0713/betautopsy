@@ -44,6 +44,45 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-PERSISTENCE-PERF-WEB-V3 — disable HTTP/3 advertisement (Alt-Svc: clear) (PR #66, squash `ed2023b`)
+- **Why:** After the V3 Sentry-disable (`4b6077c`) made the *first* cold launch
+  fast, Andrew's subsequent launches/refreshes hung again. Definitive cause in
+  the iOS logs: `quic_conn_keepalive_handler … exceeding 2 outstanding
+  keep-alives` + `nw_read_request_report … Receive failed "Operation timed
+  out"`. iOS speaks HTTP/3 (QUIC over UDP) to api.betautopsy.com; after the
+  first response carrying Vercel's `Alt-Svc` HTTP/3 advertisement, iOS caches
+  the hint and prefers QUIC on later requests. QUIC to Vercel's edge hangs on
+  Andrew's network (ISP/NAT dropping UDP keepalives). Web/curl/Safari were
+  unaffected.
+- **What shipped (belt + suspenders, server-side only):**
+  - `vercel.json`: new `headers` rule sets `Alt-Svc: clear` on `/api/(.*)` at
+    the edge. Existing `crons` (4) and `redirects` (mysharpscore→quiz) preserved
+    intact; file remains valid JSON (keys: headers, crons, redirects).
+  - `app/api/reports/route.ts`: both branches set `Alt-Svc: clear` on their
+    response — list mode via `new NextResponse(…, { headers })`, polling mode
+    via `NextResponse.json(obj, { headers })`. Same envelope + status codes;
+    only headers added. Redundant with the edge rule so the header lands even if
+    vercel.json isn't picked up.
+- **Divergence from brief:** brief suggested a "comment" field in the
+  vercel.json header rule. vercel.json header rules are strict-schema (unknown
+  keys risk a deploy validation failure), so the explanation lives in inline
+  route comments + this PROGRESS note instead — same intent, no deploy risk.
+  **Reassess in v1.1** once the iOS connection stack is more robust (HTTP/3
+  would be a modest perf win for mobile if QUIC stops hanging).
+- **`/api/reports/[id]` detail endpoint NOT touched** in code, but it benefits
+  from the vercel.json `/api/*` edge rule.
+- **Tests:** augmented existing assertions (no new cases) — list-mode DESC+cap
+  test and polling-mode filter test now assert `res.headers.get('Alt-Svc') ===
+  'clear'`.
+- **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
+- **Files:** `vercel.json` (+8), `app/api/reports/route.ts` (+15/-2), `__tests__/api-reports-list.test.ts` (+6). 29 insertions / 2 deletions.
+- **Merge ts (Vercel deploy verify, ~2-3 min lag):** 2026-05-21 19:11:15 -0400.
+  Sprint umbrella 3675964c-daf2-812d.
+- **For Andrew (NO iOS rebuild):** wait ~3 min for deploy, then retest cold
+  launch. iOS may need ONE more launch to see the new `Alt-Svc: clear` header
+  and drop its cached HTTP/3 hint; every launch after that should be
+  sub-second.
+
 ### Done this session: P0-PERSISTENCE-PERF-HOTFIX — remove non-existent updated_at column (PR #65, squash `7d27234`)
 - **Why:** `a28b056` added `'updated_at'` to `LIST_COLUMNS`, but `autopsy_reports`
   has no such column (only `created_at`; confirmed via Supabase MCP —
