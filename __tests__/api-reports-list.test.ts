@@ -52,6 +52,35 @@ function makeSupabase(result: { data: unknown; error: unknown }) {
 
 const USER = { id: '11111111-1111-1111-1111-111111111111' } as any;
 
+// Mirror of the route's LIST_COLUMNS projection (P0-PERSISTENCE-PERF-WEB-V2).
+// List mode trims select('*') to this explicit column list; the dropped
+// columns (report_markdown, model_used, tokens_used, cost_cents,
+// stripe_payment_intent_id, analyzed_upload_ids, user_id) must never appear
+// in the projection or the response.
+const LIST_COLUMNS_STR = [
+  'id',
+  'report_type',
+  'bet_count_analyzed',
+  'date_range_start',
+  'date_range_end',
+  'created_at',
+  'updated_at',
+  'report_json',
+  'upgraded_from_snapshot_id',
+  'is_paid',
+  'analyzed_sportsbook',
+].join(',');
+
+const DROPPED_COLUMNS = [
+  'report_markdown',
+  'model_used',
+  'tokens_used',
+  'cost_cents',
+  'stripe_payment_intent_id',
+  'analyzed_upload_ids',
+  'user_id',
+];
+
 function req(query = '') {
   return new NextRequest(`https://app.test/api/reports${query}`);
 }
@@ -89,8 +118,10 @@ describe('GET /api/reports — list-by-user', () => {
     });
 
     // Scoped by RLS via the authed client: no explicit user_id filter added,
-    // sorted DESC, capped.
+    // sorted DESC, capped. The projection is the trimmed LIST_COLUMNS list
+    // (not select('*')), so report_markdown et al. never leave the DB.
     expect(supabase.calls.from).toEqual([['autopsy_reports']]);
+    expect(supabase.calls.select).toEqual([[LIST_COLUMNS_STR]]);
     expect(supabase.calls.eq).toEqual([]); // no scope-widening / no upgraded_from
     expect(supabase.calls.order).toEqual([['created_at', { ascending: false }]]);
     expect(supabase.calls.limit).toEqual([[100]]);
@@ -172,6 +203,57 @@ describe('GET /api/reports — list-by-user', () => {
     // Top-level row columns are preserved alongside the slimmed report_json.
     expect(body.reports[0].id).toBe('r1');
     expect(body.reports[0].created_at).toBe('2026-05-20T00:00:00Z');
+  });
+
+  it('list mode select does NOT return report_markdown or other unused columns', async () => {
+    // The .select() narrows the projection, so Supabase returns only the
+    // LIST_COLUMNS. The mock reflects that: rows carry the kept columns and
+    // none of the dropped ones. We assert (1) the query asked for exactly the
+    // trimmed projection, and (2) the dropped columns are absent from the
+    // response shape.
+    const rows = [
+      {
+        id: 'r1',
+        report_type: 'full',
+        bet_count_analyzed: 120,
+        date_range_start: '2026-04-01',
+        date_range_end: '2026-05-01',
+        created_at: '2026-05-20T00:00:00Z',
+        updated_at: '2026-05-20T00:00:00Z',
+        report_json: { betiq: { score: 76 } },
+        upgraded_from_snapshot_id: null,
+        is_paid: true,
+        analyzed_sportsbook: 'DraftKings',
+      },
+    ];
+    const supabase = makeSupabase({ data: rows, error: null });
+    mockedAuth.mockResolvedValue({ supabase, user: USER, error: null });
+
+    const res = await GET(req());
+
+    expect(res.status).toBe(200);
+
+    // The query projection is the trimmed column list — not select('*').
+    expect(supabase.calls.select).toEqual([[LIST_COLUMNS_STR]]);
+
+    // None of the dropped columns appear in the projection string.
+    for (const col of DROPPED_COLUMNS) {
+      expect(LIST_COLUMNS_STR.split(',')).not.toContain(col);
+    }
+
+    // None of the dropped columns appear in the response row.
+    const body = await res.json();
+    const row = body.reports[0];
+    for (const col of DROPPED_COLUMNS) {
+      expect(col in row).toBe(false);
+    }
+
+    // The kept columns survive alongside the slimmed report_json.
+    expect(row.id).toBe('r1');
+    expect(row.report_type).toBe('full');
+    expect(row.bet_count_analyzed).toBe(120);
+    expect(row.analyzed_sportsbook).toBe('DraftKings');
+    expect(row.report_json).toEqual({ betiq: { score: 76 } });
   });
 
   it('list mode response is under 100 KB for 100 typical rows', async () => {
