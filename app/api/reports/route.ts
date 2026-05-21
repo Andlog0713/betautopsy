@@ -31,6 +31,11 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 // avg, 269 KB total for 58-report user), model_used, tokens_used,
 // cost_cents, stripe_payment_intent_id, analyzed_upload_ids. Adding a
 // column here requires confirming iOS Row consumes it.
+//
+// NOTE: there is intentionally NO updated_at — the autopsy_reports table
+// has no such column (only created_at; confirmed via Supabase MCP). The
+// chat-layer brief for a28b056 incorrectly listed it; PostgREST rejects an
+// unknown column and 500s the whole list query, so it must stay out.
 const LIST_COLUMNS = [
   'id',
   'report_type',
@@ -38,7 +43,6 @@ const LIST_COLUMNS = [
   'date_range_start',
   'date_range_end',
   'created_at',
-  'updated_at',
   'report_json',
   'upgraded_from_snapshot_id',
   'is_paid',
