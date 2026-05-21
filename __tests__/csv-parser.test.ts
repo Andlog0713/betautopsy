@@ -20,7 +20,7 @@ describe('parseCSV — basic', () => {
     const { bets, errors } = parseCSV(input);
     expect(errors).toHaveLength(0);
     expect(bets).toHaveLength(1);
-    expect(bets[0].sport).toBe('Nfl');
+    expect(bets[0].sport).toBe('NFL');
     expect(bets[0].bet_type).toBe('spread');
     expect(bets[0].description).toBe('Chiefs -3.5');
     expect(bets[0].odds).toBe(-110);
@@ -323,8 +323,8 @@ describe('parseCSV — sport detection', () => {
       'Some game,MLB,-110,100,win',
     ]);
     const { bets } = parseCSV(input);
-    // Parser lowercases then capitalizes first letter for non-Pikkit sports
-    expect(bets[0].sport).toBe('Mlb');
+    // Parser uppercases short all-letter sport acronyms (lib/csv-parser.ts:359)
+    expect(bets[0].sport).toBe('MLB');
   });
 
   it('maps Pikkit sport names (Basketball → NBA)', () => {

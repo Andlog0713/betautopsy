@@ -955,44 +955,27 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
     },
     "insufficient_data": true,
     "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 20.",
-    "percentile": 50,
+    "percentile": null,
     "score": 0,
   },
   "betting_archetype": {
-    "description": "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll.",
-    "name": "Chalk Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Favorite-Heavy Lean",
-      "description": "",
-      "estimated_cost": 0,
-      "evidence": "100% favorites, fav ROI: -33.5%, dog ROI: 0.0%",
-      "evidence_bet_ids": [
-        "test-2",
-        "test-3",
-        "test-5",
-        "test-6",
-        "test-8",
-        "test-9",
-        "test-11",
-        "test-12",
-      ],
-      "fix": "",
-      "severity": "high",
-    },
-  ],
+  "biases_detected": [],
   "contradictions": [],
   "dfs_metrics": undefined,
   "dfs_mode": false,
   "dfs_platform": undefined,
   "discipline_score": {
-    "control": 20,
-    "percentile": 55,
-    "sizing": 20,
-    "strategy": 5,
-    "total": 62,
-    "tracking": 17,
+    "control": 0,
+    "insufficient_data": true,
+    "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 20.",
+    "sizing": 0,
+    "strategy": 0,
+    "total": 0,
+    "tracking": 0,
   },
   "edge_profile": undefined,
   "emotion_breakdown": {
@@ -1001,10 +984,13 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
     "stake_volatility": 0,
     "streak_behavior": 0,
   },
-  "emotion_percentile": 95,
+  "emotion_percentile": null,
   "emotion_score": 0,
+  "emotion_score_insufficient_data": true,
   "enhanced_tilt": {
-    "percentile": 95,
+    "insufficient_data": true,
+    "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 20.",
+    "percentile": 0,
     "risk_level": "low",
     "score": 0,
     "signals": {
@@ -1015,7 +1001,7 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
       "session_discipline": 0,
       "streak_behavior": 0,
     },
-    "worst_trigger": "Your bet sizes vary wildly. A 0.0x coefficient of variation suggests emotional sizing.",
+    "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
   },
   "odds_analysis": {
     "actual_wins": 7,
@@ -2015,7 +2001,7 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
   "summary": {
     "avg_stake": 50,
     "date_range": "2025-01-01 to 2025-01-04",
-    "overall_grade": "C+",
+    "overall_grade": null,
     "record": "7W-13L-0P",
     "roi_percent": -33.5,
     "total_bets": 20,
@@ -2028,6 +2014,7 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
     "streak_behavior": 0,
   },
   "tilt_score": 0,
+  "tilt_score_insufficient_data": true,
   "timing_analysis": {
     "best_window": {
       "count": 4,
@@ -2398,10 +2385,10 @@ exports[`Edge cases > generatePertinentNegatives 1`] = `
     "populationPercent": 61,
   },
   {
-    "detail": "No significant late-night performance decay detected. 45% of bettors show worse outcomes after 10pm.",
+    "detail": "No systematic over-betting of favorites detected. 52% of bettors lean too heavily on chalk.",
     "finding": "Not detected",
-    "pattern": "Late Night Bias",
-    "populationPercent": 45,
+    "pattern": "Favorite Bias",
+    "populationPercent": 52,
   },
 ]
 `;
@@ -3525,35 +3512,39 @@ exports[`Scenario 1: Standard sportsbook bettor > Standard sportsbook bettor > c
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 28.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 1: Standard sportsbook bettor > Standard sportsbook bettor > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 16,
-  "total": 73,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 28.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 1: Standard sportsbook bettor > Standard sportsbook bettor > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 28.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
     "bet_sizing_volatility": 0,
     "loss_reaction": 0,
-    "odds_drift_after_loss": 15,
+    "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -4666,8 +4657,9 @@ exports[`Scenario 1: Standard sportsbook bettor > Standard sportsbook bettor > c
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Consistent and steady. You've got a foundation. The analysis shows where to build on it.",
-    "name": "The Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
   "biases_detected": [],
   "category_roi": [
@@ -6074,7 +6066,7 @@ exports[`Scenario 1: Standard sportsbook bettor > Standard sportsbook bettor > c
     "max_stake": 100,
     "median_stake": 55,
     "min_stake": 25,
-    "overall_grade": "A",
+    "overall_grade": "A-",
     "pushes": 2,
     "record": "15W-13L-2P",
     "roi_percent": -1.56,
@@ -8722,7 +8714,7 @@ exports[`Scenario 2: DFS user — PrizePicks > DFS user — PrizePicks > calcula
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 25.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
@@ -8778,28 +8770,32 @@ exports[`Scenario 2: DFS user — PrizePicks > DFS user — PrizePicks > calcula
 
 exports[`Scenario 2: DFS user — PrizePicks > DFS user — PrizePicks > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 15,
-  "strategy": 15,
-  "total": 67,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 25.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 2: DFS user — PrizePicks > DFS user — PrizePicks > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 25.",
+  "percentile": 0,
   "risk_level": "low",
-  "score": 3,
+  "score": 0,
   "signals": {
-    "bet_sizing_volatility": 3,
+    "bet_sizing_volatility": 0,
     "loss_reaction": 0,
     "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.7x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -9871,26 +9867,11 @@ exports[`Scenario 2: DFS user — PrizePicks > DFS user — PrizePicks > calcula
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Cool, calculated, and data-driven. You treat pick'em like a business, not a game.",
-    "name": "The Natural",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Stake Volatility",
-      "data": "Bet sizes range from $10 to $25 (avg $17). Noticeably inconsistent sizing",
-      "evidence_bet_ids": [
-        "test-34",
-        "test-38",
-        "test-42",
-        "test-46",
-        "test-50",
-        "test-54",
-        "test-31",
-        "test-33",
-      ],
-      "severity": "low",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "parlay",
@@ -14376,35 +14357,39 @@ exports[`Scenario 3: Heavy parlay bettor > Heavy parlay bettor > calculateBetIQ 
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 40.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 3: Heavy parlay bettor > Heavy parlay bettor > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 7,
-  "strategy": 15,
-  "total": 59,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 40.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 3: Heavy parlay bettor > Heavy parlay bettor > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 40.",
+  "percentile": 0,
   "risk_level": "low",
-  "score": 12,
+  "score": 0,
   "signals": {
-    "bet_sizing_volatility": 12,
+    "bet_sizing_volatility": 0,
     "loss_reaction": 0,
-    "odds_drift_after_loss": 25,
+    "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -16207,41 +16192,11 @@ exports[`Scenario 3: Heavy parlay bettor > Heavy parlay bettor > calculateMetric
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Low emotion, positive ROI, diversified. You're genuinely sharp.",
-    "name": "The Natural",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Heavy Parlay Tendency",
-      "data": "63% parlays, parlay ROI: 100.8% vs straight: -6.3%",
-      "evidence_bet_ids": [
-        "test-66",
-        "test-77",
-        "test-65",
-        "test-76",
-        "test-64",
-        "test-75",
-        "test-74",
-        "test-62",
-      ],
-      "severity": "high",
-    },
-    {
-      "bias_name": "Stake Volatility",
-      "data": "Bet sizes range from $10 to $100 (avg $36). Wildly inconsistent sizing",
-      "evidence_bet_ids": [
-        "test-86",
-        "test-92",
-        "test-85",
-        "test-91",
-        "test-84",
-        "test-90",
-        "test-83",
-        "test-89",
-      ],
-      "severity": "high",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -21621,35 +21576,39 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateBetIQ snapshot 1`] = `
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 35.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 4: Loss chaser > Loss chaser > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 8,
-  "sizing": 15,
-  "strategy": 20,
-  "total": 60,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 35.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 4: Loss chaser > Loss chaser > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 80,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 35.",
+  "percentile": 0,
   "risk_level": "low",
-  "score": 28,
+  "score": 0,
   "signals": {
-    "bet_sizing_volatility": 3,
-    "loss_reaction": 25,
+    "bet_sizing_volatility": 0,
+    "loss_reaction": 0,
     "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your stakes increase 4.0x after losses. Classic loss chasing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -23303,41 +23262,11 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
   "bankroll_health": "caution",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Consistent and steady. You've got a foundation. The analysis shows where to build on it.",
-    "name": "The Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Post-Loss Escalation",
-      "data": "ratio: 4.00x (avg stake after loss: $200 vs after win: $50)",
-      "evidence_bet_ids": [
-        "test-97",
-        "test-98",
-        "test-99",
-        "test-101",
-        "test-102",
-        "test-104",
-        "test-105",
-        "test-106",
-      ],
-      "severity": "critical",
-    },
-    {
-      "bias_name": "Stake Volatility",
-      "data": "Bet sizes range from $50 to $400 (avg $157). Noticeably inconsistent sizing",
-      "evidence_bet_ids": [
-        "test-99",
-        "test-106",
-        "test-113",
-        "test-120",
-        "test-127",
-        "test-98",
-        "test-102",
-        "test-105",
-      ],
-      "severity": "low",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -23832,38 +23761,17 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
       "staked": 5500,
       "startTime": "5:00 PM",
       "startingStake": 50,
+      "triggerEvent": {
+        "description": "Late-night session starting at 5:00 PM.",
+        "type": "late_night",
+      },
       "wins": 10,
     },
-    "heatedSessionCount": 1,
-    "heatedSessionPercent": 100,
-    "insight": "1 of 1 sessions (100%) showed heated behavior. The majority of your betting is happening under emotional pressure.",
-    "sessionGradeDistribution": [
-      {
-        "count": 0,
-        "grade": "A",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "B",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "C",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "D",
-        "percent": 0,
-      },
-      {
-        "count": 1,
-        "grade": "F",
-        "percent": 100,
-      },
-    ],
+    "heatedSessionCount": 0,
+    "heatedSessionPercent": 0,
+    "insight": "Need at least 20 sessions to grade session behavior reliably. You have 1.",
+    "insufficient_data": true,
+    "sessionGradeDistribution": [],
     "sessions": [
       {
         "avgStake": 157.14,
@@ -23938,6 +23846,10 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
         "staked": 5500,
         "startTime": "5:00 PM",
         "startingStake": 50,
+        "triggerEvent": {
+          "description": "Late-night session starting at 5:00 PM.",
+          "type": "late_night",
+        },
         "wins": 10,
       },
     ],
@@ -24262,6 +24174,10 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
       "staked": 5500,
       "startTime": "5:00 PM",
       "startingStake": 50,
+      "triggerEvent": {
+        "description": "Late-night session starting at 5:00 PM.",
+        "type": "late_night",
+      },
       "wins": 10,
     },
   },
@@ -24962,38 +24878,17 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
     "staked": 5500,
     "startTime": "5:00 PM",
     "startingStake": 50,
+    "triggerEvent": {
+      "description": "Late-night session starting at 5:00 PM.",
+      "type": "late_night",
+    },
     "wins": 10,
   },
-  "heatedSessionCount": 1,
-  "heatedSessionPercent": 100,
-  "insight": "1 of 1 sessions (100%) showed heated behavior. The majority of your betting is happening under emotional pressure.",
-  "sessionGradeDistribution": [
-    {
-      "count": 0,
-      "grade": "A",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "B",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "C",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "D",
-      "percent": 0,
-    },
-    {
-      "count": 1,
-      "grade": "F",
-      "percent": 100,
-    },
-  ],
+  "heatedSessionCount": 0,
+  "heatedSessionPercent": 0,
+  "insight": "Need at least 20 sessions to grade session behavior reliably. You have 1.",
+  "insufficient_data": true,
+  "sessionGradeDistribution": [],
   "sessions": [
     {
       "avgStake": 157.14,
@@ -25068,6 +24963,10 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
       "staked": 5500,
       "startTime": "5:00 PM",
       "startingStake": 50,
+      "triggerEvent": {
+        "description": "Late-night session starting at 5:00 PM.",
+        "type": "late_night",
+      },
       "wins": 10,
     },
   ],
@@ -25392,6 +25291,10 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
     "staked": 5500,
     "startTime": "5:00 PM",
     "startingStake": 50,
+    "triggerEvent": {
+      "description": "Late-night session starting at 5:00 PM.",
+      "type": "late_night",
+    },
     "wins": 10,
   },
 }
@@ -26228,35 +26131,39 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 20.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 5: Late night session cluster > Late night session cluster > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 8,
-  "sizing": 15,
-  "strategy": 9,
-  "total": 49,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 20.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 5: Late night session cluster > Late night session cluster > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 55,
-  "risk_level": "moderate",
-  "score": 41,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 20.",
+  "percentile": 0,
+  "risk_level": "low",
+  "score": 0,
   "signals": {
-    "bet_sizing_volatility": 7,
-    "loss_reaction": 9,
+    "bet_sizing_volatility": 0,
+    "loss_reaction": 0,
     "odds_drift_after_loss": 0,
     "session_acceleration": 0,
-    "session_discipline": 25,
+    "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your losing sessions run much longer than your winning ones. You don't know when to stop.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -27079,49 +26986,11 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Consistent and steady. You've got a foundation. The analysis shows where to build on it.",
-    "name": "The Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Post-Loss Escalation",
-      "data": "ratio: 1.60x (avg stake after loss: $144 vs after win: $90)",
-      "evidence_bet_ids": [
-        "test-132",
-        "test-133",
-      ],
-      "severity": "high",
-    },
-    {
-      "bias_name": "Stake Volatility",
-      "data": "Bet sizes range from $50 to $280 (avg $120). Noticeably inconsistent sizing",
-      "evidence_bet_ids": [
-        "test-140",
-        "test-139",
-        "test-138",
-        "test-137",
-        "test-136",
-        "test-135",
-        "test-134",
-        "test-141",
-      ],
-      "severity": "medium",
-    },
-    {
-      "bias_name": "Favorite-Heavy Lean",
-      "data": "75% favorites, fav ROI: -24.9%, dog ROI: 8.9%",
-      "evidence_bet_ids": [
-        "test-140",
-        "test-136",
-        "test-134",
-        "test-132",
-        "test-143",
-        "test-146",
-        "test-149",
-      ],
-      "severity": "medium",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -27348,36 +27217,11 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
       "startingStake": 50,
       "wins": 1,
     },
-    "heatedSessionCount": 1,
-    "heatedSessionPercent": 9.09,
-    "insight": "Most sessions look disciplined, but 1 of 11 had heated moments worth reviewing.",
-    "sessionGradeDistribution": [
-      {
-        "count": 7,
-        "grade": "A",
-        "percent": 63.64,
-      },
-      {
-        "count": 3,
-        "grade": "B",
-        "percent": 27.27,
-      },
-      {
-        "count": 0,
-        "grade": "C",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "D",
-        "percent": 0,
-      },
-      {
-        "count": 1,
-        "grade": "F",
-        "percent": 9.09,
-      },
-    ],
+    "heatedSessionCount": 0,
+    "heatedSessionPercent": 0,
+    "insight": "Need at least 20 sessions to grade session behavior reliably. You have 11.",
+    "insufficient_data": true,
+    "sessionGradeDistribution": [],
     "sessions": [
       {
         "avgStake": 190,
@@ -27427,6 +27271,10 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
         "staked": 1900,
         "startTime": "11:00 PM",
         "startingStake": 100,
+        "triggerEvent": {
+          "description": "Late-night session starting at 11:00 PM.",
+          "type": "late_night",
+        },
         "wins": 2,
       },
       {
@@ -27914,6 +27762,10 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
       "staked": 1900,
       "startTime": "11:00 PM",
       "startingStake": 100,
+      "triggerEvent": {
+        "description": "Late-night session starting at 11:00 PM.",
+        "type": "late_night",
+      },
       "wins": 2,
     },
   },
@@ -28332,36 +28184,11 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > d
     "startingStake": 50,
     "wins": 1,
   },
-  "heatedSessionCount": 1,
-  "heatedSessionPercent": 9.09,
-  "insight": "Most sessions look disciplined, but 1 of 11 had heated moments worth reviewing.",
-  "sessionGradeDistribution": [
-    {
-      "count": 7,
-      "grade": "A",
-      "percent": 63.64,
-    },
-    {
-      "count": 3,
-      "grade": "B",
-      "percent": 27.27,
-    },
-    {
-      "count": 0,
-      "grade": "C",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "D",
-      "percent": 0,
-    },
-    {
-      "count": 1,
-      "grade": "F",
-      "percent": 9.09,
-    },
-  ],
+  "heatedSessionCount": 0,
+  "heatedSessionPercent": 0,
+  "insight": "Need at least 20 sessions to grade session behavior reliably. You have 11.",
+  "insufficient_data": true,
+  "sessionGradeDistribution": [],
   "sessions": [
     {
       "avgStake": 190,
@@ -28411,6 +28238,10 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > d
       "staked": 1900,
       "startTime": "11:00 PM",
       "startingStake": 100,
+      "triggerEvent": {
+        "description": "Late-night session starting at 11:00 PM.",
+        "type": "late_night",
+      },
       "wins": 2,
     },
     {
@@ -28898,6 +28729,10 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > d
     "staked": 1900,
     "startTime": "11:00 PM",
     "startingStake": 100,
+    "triggerEvent": {
+      "description": "Late-night session starting at 11:00 PM.",
+      "type": "late_night",
+    },
     "wins": 2,
   },
 }
@@ -29386,24 +29221,28 @@ exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exa
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 10.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exactly 10 bets > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 5,
-  "total": 62,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 10.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exactly 10 bets > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 10.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
@@ -29414,7 +29253,7 @@ exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exa
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.0x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -29889,23 +29728,11 @@ exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exa
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll.",
-    "name": "Chalk Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Favorite-Heavy Lean",
-      "data": "100% favorites, fav ROI: -4.5%, dog ROI: 0.0%",
-      "evidence_bet_ids": [
-        "test-152",
-        "test-154",
-        "test-156",
-        "test-158",
-        "test-160",
-      ],
-      "severity": "high",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -30119,34 +29946,9 @@ exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exa
     },
     "heatedSessionCount": 0,
     "heatedSessionPercent": 0,
-    "insight": "Across 10 sessions, discipline stayed solid with no heated sessions detected.",
-    "sessionGradeDistribution": [
-      {
-        "count": 5,
-        "grade": "A",
-        "percent": 50,
-      },
-      {
-        "count": 5,
-        "grade": "B",
-        "percent": 50,
-      },
-      {
-        "count": 0,
-        "grade": "C",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "D",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "F",
-        "percent": 0,
-      },
-    ],
+    "insight": "Need at least 20 sessions to grade session behavior reliably. You have 10.",
+    "insufficient_data": true,
+    "sessionGradeDistribution": [],
     "sessions": [
       {
         "avgStake": 50,
@@ -30963,34 +30765,9 @@ exports[`Scenario 6: Minimum viable — exactly 10 bets > Minimum viable — exa
   },
   "heatedSessionCount": 0,
   "heatedSessionPercent": 0,
-  "insight": "Across 10 sessions, discipline stayed solid with no heated sessions detected.",
-  "sessionGradeDistribution": [
-    {
-      "count": 5,
-      "grade": "A",
-      "percent": 50,
-    },
-    {
-      "count": 5,
-      "grade": "B",
-      "percent": 50,
-    },
-    {
-      "count": 0,
-      "grade": "C",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "D",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "F",
-      "percent": 0,
-    },
-  ],
+  "insight": "Need at least 20 sessions to grade session behavior reliably. You have 10.",
+  "insufficient_data": true,
+  "sessionGradeDistribution": [],
   "sessions": [
     {
       "avgStake": 50,
@@ -38592,7 +38369,7 @@ exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > cal
   },
   "insufficient_data": false,
   "interpretation": "Elite-level betting skill. You consistently find value and specialize where you have edge.",
-  "percentile": 95,
+  "percentile": null,
   "score": 87,
 }
 `;
@@ -45806,7 +45583,7 @@ exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > cal
   "bankroll_used": 5000,
   "betting_archetype": {
     "description": "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll.",
-    "name": "Chalk Grinder",
+    "name": "The Grinder",
   },
   "biases_detected": [
     {
@@ -45824,6 +45601,8 @@ exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > cal
       ],
       "severity": "high",
     },
+    [Object],
+    [Object],
   ],
   "category_roi": [Array],
   "dfs": [Object],
@@ -54554,7 +54333,7 @@ exports[`Scenario 8: Mixed sportsbooks > Mixed sportsbooks > calculateBetIQ snap
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 30.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
@@ -54589,28 +54368,32 @@ exports[`Scenario 8: Mixed sportsbooks > Mixed sportsbooks > calculateDFSMetrics
 
 exports[`Scenario 8: Mixed sportsbooks > Mixed sportsbooks > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 20,
-  "total": 77,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 30.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 8: Mixed sportsbooks > Mixed sportsbooks > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 30.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
     "bet_sizing_volatility": 0,
     "loss_reaction": 0,
-    "odds_drift_after_loss": 10,
+    "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -55871,8 +55654,9 @@ exports[`Scenario 8: Mixed sportsbooks > Mixed sportsbooks > calculateMetrics sn
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Low emotion, positive ROI, diversified. You're genuinely sharp.",
-    "name": "The Natural",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
   "biases_detected": [],
   "category_roi": [
@@ -59572,24 +59356,28 @@ exports[`Scenario 9: All wins streak > All wins streak > calculateBetIQ snapshot
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 15.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 9: All wins streak > All wins streak > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 16,
-  "total": 73,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 15.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 9: All wins streak > All wins streak > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 15.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
@@ -59600,7 +59388,7 @@ exports[`Scenario 9: All wins streak > All wins streak > calculateEnhancedTilt s
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.0x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -60258,8 +60046,9 @@ exports[`Scenario 9: All wins streak > All wins streak > calculateMetrics snapsh
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "Low emotion, positive ROI, diversified. You're genuinely sharp.",
-    "name": "The Natural",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
   "biases_detected": [],
   "category_roi": [
@@ -60474,34 +60263,9 @@ exports[`Scenario 9: All wins streak > All wins streak > calculateMetrics snapsh
     },
     "heatedSessionCount": 0,
     "heatedSessionPercent": 0,
-    "insight": "Across 15 sessions, discipline stayed solid with no heated sessions detected.",
-    "sessionGradeDistribution": [
-      {
-        "count": 15,
-        "grade": "A",
-        "percent": 100,
-      },
-      {
-        "count": 0,
-        "grade": "B",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "C",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "D",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "F",
-        "percent": 0,
-      },
-    ],
+    "insight": "Need at least 20 sessions to grade session behavior reliably. You have 15.",
+    "insufficient_data": true,
+    "sessionGradeDistribution": [],
     "sessions": [
       {
         "avgStake": 50,
@@ -61493,34 +61257,9 @@ exports[`Scenario 9: All wins streak > All wins streak > detectAndGradeSessions 
   },
   "heatedSessionCount": 0,
   "heatedSessionPercent": 0,
-  "insight": "Across 15 sessions, discipline stayed solid with no heated sessions detected.",
-  "sessionGradeDistribution": [
-    {
-      "count": 15,
-      "grade": "A",
-      "percent": 100,
-    },
-    {
-      "count": 0,
-      "grade": "B",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "C",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "D",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "F",
-      "percent": 0,
-    },
-  ],
+  "insight": "Need at least 20 sessions to grade session behavior reliably. You have 15.",
+  "insufficient_data": true,
+  "sessionGradeDistribution": [],
   "sessions": [
     {
       "avgStake": 50,
@@ -62851,24 +62590,28 @@ exports[`Scenario 10: All losses streak > All losses streak > calculateBetIQ sna
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 15.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 10: All losses streak > All losses streak > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 5,
-  "total": 62,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 15.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 10: All losses streak > All losses streak > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 15.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
@@ -62879,7 +62622,7 @@ exports[`Scenario 10: All losses streak > All losses streak > calculateEnhancedT
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.3x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -63619,26 +63362,11 @@ exports[`Scenario 10: All losses streak > All losses streak > calculateMetrics s
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll.",
-    "name": "Chalk Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Favorite-Heavy Lean",
-      "data": "100% favorites, fav ROI: -100.0%, dog ROI: 0.0%",
-      "evidence_bet_ids": [
-        "test-420",
-        "test-419",
-        "test-418",
-        "test-417",
-        "test-416",
-        "test-415",
-        "test-414",
-        "test-413",
-      ],
-      "severity": "high",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -63852,34 +63580,9 @@ exports[`Scenario 10: All losses streak > All losses streak > calculateMetrics s
     },
     "heatedSessionCount": 0,
     "heatedSessionPercent": 0,
-    "insight": "Across 15 sessions, discipline stayed solid with no heated sessions detected.",
-    "sessionGradeDistribution": [
-      {
-        "count": 0,
-        "grade": "A",
-        "percent": 0,
-      },
-      {
-        "count": 15,
-        "grade": "B",
-        "percent": 100,
-      },
-      {
-        "count": 0,
-        "grade": "C",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "D",
-        "percent": 0,
-      },
-      {
-        "count": 0,
-        "grade": "F",
-        "percent": 0,
-      },
-    ],
+    "insight": "Need at least 20 sessions to grade session behavior reliably. You have 15.",
+    "insufficient_data": true,
+    "sessionGradeDistribution": [],
     "sessions": [
       {
         "avgStake": 50,
@@ -64484,7 +64187,7 @@ exports[`Scenario 10: All losses streak > All losses streak > calculateMetrics s
     "max_stake": 120,
     "median_stake": 85,
     "min_stake": 50,
-    "overall_grade": "C+",
+    "overall_grade": "C-",
     "pushes": 0,
     "record": "0W-15L-0P",
     "roi_percent": -100,
@@ -64886,34 +64589,9 @@ exports[`Scenario 10: All losses streak > All losses streak > detectAndGradeSess
   },
   "heatedSessionCount": 0,
   "heatedSessionPercent": 0,
-  "insight": "Across 15 sessions, discipline stayed solid with no heated sessions detected.",
-  "sessionGradeDistribution": [
-    {
-      "count": 0,
-      "grade": "A",
-      "percent": 0,
-    },
-    {
-      "count": 15,
-      "grade": "B",
-      "percent": 100,
-    },
-    {
-      "count": 0,
-      "grade": "C",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "D",
-      "percent": 0,
-    },
-    {
-      "count": 0,
-      "grade": "F",
-      "percent": 0,
-    },
-  ],
+  "insight": "Need at least 20 sessions to grade session behavior reliably. You have 15.",
+  "insufficient_data": true,
+  "sessionGradeDistribution": [],
   "sessions": [
     {
       "avgStake": 50,
@@ -67711,7 +67389,7 @@ exports[`Scenario 11: Profitable sharp bettor > Profitable sharp bettor > calcul
   },
   "insufficient_data": false,
   "interpretation": "Above-average skill. You have identifiable edges. The question is whether you're exploiting them enough.",
-  "percentile": 80,
+  "percentile": null,
   "score": 61,
 }
 `;
@@ -67728,7 +67406,9 @@ exports[`Scenario 11: Profitable sharp bettor > Profitable sharp bettor > calcul
 
 exports[`Scenario 11: Profitable sharp bettor > Profitable sharp bettor > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 50.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
@@ -67739,7 +67419,7 @@ exports[`Scenario 11: Profitable sharp bettor > Profitable sharp bettor > calcul
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.0x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -69931,7 +69611,7 @@ exports[`Scenario 11: Profitable sharp bettor > Profitable sharp bettor > calcul
   "bankroll_used": 5000,
   "betting_archetype": {
     "description": "Low emotion, positive ROI, diversified. You're genuinely sharp.",
-    "name": "The Natural",
+    "name": "The Sharp",
   },
   "biases_detected": [],
   "category_roi": [
@@ -75294,35 +74974,39 @@ exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > calculateBetIQ snapsho
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 20.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 13,
-  "sizing": 15,
-  "strategy": 11,
-  "total": 56,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 20.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 80,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 20.",
+  "percentile": 0,
   "risk_level": "low",
-  "score": 23,
+  "score": 0,
   "signals": {
-    "bet_sizing_volatility": 3,
-    "loss_reaction": 20,
+    "bet_sizing_volatility": 0,
+    "loss_reaction": 0,
     "odds_drift_after_loss": 0,
     "session_acceleration": 0,
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your stakes increase 2.8x after losses. Classic loss chasing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -76273,56 +75957,11 @@ exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > calculateMetrics snaps
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "The big ticket is always calling. Your straight bet game is probably better than you think.",
-    "name": "Parlay Dreamer",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Post-Loss Escalation",
-      "data": "ratio: 2.76x (avg stake after loss: $43 vs after win: $16)",
-      "evidence_bet_ids": [
-        "test-473",
-        "test-475",
-        "test-477",
-        "test-480",
-        "test-482",
-        "test-485",
-        "test-488",
-        "test-490",
-      ],
-      "severity": "critical",
-    },
-    {
-      "bias_name": "Heavy Parlay Tendency",
-      "data": "40% parlays, parlay ROI: -100.0% vs straight: 11.4%",
-      "evidence_bet_ids": [
-        "test-472",
-        "test-474",
-        "test-476",
-        "test-479",
-        "test-481",
-        "test-484",
-        "test-487",
-        "test-489",
-      ],
-      "severity": "medium",
-    },
-    {
-      "bias_name": "Stake Volatility",
-      "data": "Bet sizes range from $10 to $50 (avg $34). Noticeably inconsistent sizing",
-      "evidence_bet_ids": [
-        "test-472",
-        "test-474",
-        "test-476",
-        "test-479",
-        "test-481",
-        "test-484",
-        "test-487",
-        "test-489",
-      ],
-      "severity": "low",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NFL",
@@ -79712,24 +79351,28 @@ exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NB
   },
   "insufficient_data": true,
   "interpretation": "Need at least 50 settled bets for a meaningful BetIQ score. You have 30.",
-  "percentile": 50,
+  "percentile": null,
   "score": 0,
 }
 `;
 
 exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NBA props > calculateDisciplineScore snapshot 1`] = `
 {
-  "control": 20,
-  "sizing": 20,
-  "strategy": 5,
-  "total": 62,
-  "tracking": 17,
+  "control": 0,
+  "insufficient_data": true,
+  "interpretation": "Need at least 50 settled bets for a meaningful discipline score. You have 30.",
+  "sizing": 0,
+  "strategy": 0,
+  "total": 0,
+  "tracking": 0,
 }
 `;
 
 exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NBA props > calculateEnhancedTilt snapshot 1`] = `
 {
-  "percentile": 95,
+  "insufficient_data": true,
+  "interpretation": "Need at least 100 settled bets for a meaningful tilt analysis. You have 30.",
+  "percentile": 0,
   "risk_level": "low",
   "score": 0,
   "signals": {
@@ -79740,7 +79383,7 @@ exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NB
     "session_discipline": 0,
     "streak_behavior": 0,
   },
-  "worst_trigger": "Your bet sizes vary wildly. A 0.4x coefficient of variation suggests emotional sizing.",
+  "worst_trigger": "Insufficient sample. Trigger detection requires at least 100 settled bets.",
 }
 `;
 
@@ -80863,41 +80506,11 @@ exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NB
   "bankroll_health": "healthy",
   "bankroll_used": 5000,
   "betting_archetype": {
-    "description": "You're laying juice on favorites and it's costing you. The safe picks aren't safe for your bankroll.",
-    "name": "Chalk Grinder",
+    "description": "Not enough bet history to determine an archetype. Upload at least 50 settled bets for a meaningful behavioral fingerprint.",
+    "insufficient_data": true,
+    "name": "Building Sample",
   },
-  "biases_detected": [
-    {
-      "bias_name": "Post-Loss Escalation",
-      "data": "ratio: 1.13x (avg stake after loss: $50 vs after win: $44)",
-      "evidence_bet_ids": [
-        "test-508",
-        "test-512",
-        "test-516",
-        "test-493",
-        "test-497",
-        "test-501",
-        "test-505",
-        "test-517",
-      ],
-      "severity": "low",
-    },
-    {
-      "bias_name": "Favorite-Heavy Lean",
-      "data": "80% favorites, fav ROI: -9.1%, dog ROI: -15.8%",
-      "evidence_bet_ids": [
-        "test-502",
-        "test-518",
-        "test-497",
-        "test-505",
-        "test-513",
-        "test-492",
-        "test-496",
-        "test-500",
-      ],
-      "severity": "low",
-    },
-  ],
+  "biases_detected": [],
   "category_roi": [
     {
       "category": "NBA",
