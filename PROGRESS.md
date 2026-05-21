@@ -42,9 +42,74 @@
 
 ---
 
-## Current branch: `main` (post SNAPSHOT-REDACTION-POLICY merge)
+## Current branch: `claude/engine-whatif` (PR-A baseline merged; PR-B ENGINE-WHATIF shipped)
 
-### Done this session: SNAPSHOT-REDACTION-POLICY: unified snapshot redaction (PR #56, squash `b775e8e`)
+### Done this session: PR-B ENGINE-WHATIF — port buildWhatIfs server-side, ship what_if_scenarios
+- **Why:** iOS Phase 2.5 needs the What-If counterfactual surface. Web computes
+  it client-side from `bets[]` (`components/AutopsyReport.tsx` 195-237); iOS
+  never receives `bets[]`, so the computation moves server-side onto the wire.
+- **Recon finding (premise correction):** the engine ALREADY computes the same
+  what-if math internally as `metrics.what_ifs` (lib/autopsy-engine.ts:835-872,
+  via `calcWhatIfProfit` which is byte-identical to web's `calcProfit`) to feed
+  the LLM prompt — but it is NOT on the wire and is shaped as a named object,
+  not the `{label,actual,hypothetical}[]` array web/iOS render. Decision
+  (authorized Option 1): verbatim-port web's logic into a new file rather than
+  reuse `metrics.what_ifs`, because web's scenario-3 category set is built
+  differently (inline `${sport}-${bet_type}` profit/staked>0 vs precomputed
+  `categoryRoi` roi>0) and could diverge from what web shows users.
+- **Premise correction:** scenario count is 1-3, NOT always 3 (scenario 2 only
+  if parlays >3 legs exist; scenario 3 only if profitable-category subset is
+  non-empty and non-total). Verbatim port inherits these conditionals.
+- **What shipped (3 files + 1 test):**
+  - `lib/engine/whatIf.ts` (new): `buildWhatIfs(bets): WhatIfScenario[]` +
+    local `calcProfit`, verbatim from web. Imports `Bet`/`WhatIfScenario` from
+    `@/types`.
+  - `lib/autopsy-engine.ts`: import `buildWhatIfs`; add
+    `what_if_scenarios: buildWhatIfs(bets)` to the runAutopsy `analysis` object
+    (line ~2929). runSnapshot (separate path) untouched — snapshots stay
+    What-If-less per redaction policy.
+  - `types/index.ts`: new `WhatIfScenario` interface + optional
+    `what_if_scenarios?: WhatIfScenario[]` on `AutopsyAnalysis` (back-compat).
+  - `__tests__/whatIf.test.ts` (new): 7 tests — exact-value/label verbatim
+    assertions for the all-3 case, conditional-omission for scenarios 2 and 3,
+    scenario-1-always, []-on-no-settled (no NaN), runAutopsy-presence +
+    runSnapshot-absence (reusing the redaction suite's Anthropic mock).
+- **Verification:** `tsc --noEmit` 0, `vitest run` 0 (10 files / 279 tests,
+  +7), `next build` 0. No inherited bugs surfaced (empty-bets returns [] cleanly,
+  no div-by-zero — scenario 3 guards `staked > 0`).
+- **iOS unblock:** chat-layer verifies via Supabase MCP post-deploy, then
+  signals "ENGINE READY: What-If" to the iOS Phase 2.5 session.
+
+### Done previously: PR-A BASELINE-TEST-GREENS — green the vitest baseline before ENGINE-WHATIF (PR #59, squash `53d10f3`)
+- **Why:** ENGINE-WHATIF pre-flight caught `npx vitest run` red on main (70 test
+  failures + 2 silent suite-collection failures). Step 5's "test must exit 0"
+  gate was unsatisfiable. Split into a prerequisite PR-A (green baseline) +
+  PR-B (the actual What-If port).
+- **Root-cause decomposition (the "stale snapshots, just regen" premise was wrong):**
+  the 68 engine-snapshot failures were TWO entangled classes — 56 genuine
+  ENGINE-FLOOR schema changes (insufficient_data field, "Building Sample"
+  archetype, biases_detected:[], discipline.total:0, percentile:null) that
+  fail regardless of TZ, PLUS ~12 timezone-dependent hour-label shifts
+  (4am->11pm) because the engine buckets hours with local `getHours()` /
+  `toLocaleTimeString` (lib/autopsy-engine.ts:2298 etc.) and vitest pinned no
+  TZ. Authoring machine was UTC; this machine is EDT. A naive `vitest -u`
+  would bake EDT into the snapshots and re-break on UTC CI.
+- **Five changes shipped:**
+  1. Pin `process.env.TZ = 'UTC'` at top of `vitest.config.ts` (prod runs on
+     Vercel-UTC, so this matches prod AND is deterministic across machines).
+  2. Regenerate 56 engine snapshots under the pin (verified 0 hour-label noise).
+  3. Fix 2 stale csv-parser assertions 'Nfl'->'NFL', 'Mlb'->'MLB' (parser
+     deliberately uppercases short acronyms, lib/csv-parser.ts:359).
+  4. Exclude `tests/e2e/**` from vitest (Playwright owns those specs).
+  5. Exclude `__tests__/p0-iap-webhook.test.ts` from default vitest — it's a
+     production-Supabase integration suite (added 0e9282e) needing service-role
+     creds + mutating prod data; preserved on disk, runnable manually.
+- **Verification:** `tsc --noEmit` 0, `vitest run` 0 (9 files / 272 tests, no
+  failed suites, confirmed green on main post-merge), `next build` 0. Config
+  pin proven self-sufficient (passes with shell TZ unset).
+- **Two production bugs discovered, filed as v1.1 backlog (out of PR-A scope).**
+
+### Done previously: SNAPSHOT-REDACTION-POLICY: unified snapshot redaction (PR #56, squash `b775e8e`)
 - **Why:** the 5000-bet snapshot `690cab1b` shipped six different redaction
   policies across the wire. Physical-iPhone QA traced dollar leaks the paywall
   was supposed to hide. Unify on the biases pattern (snake_case
@@ -134,7 +199,10 @@
 - Web pricing reconcile (post-iOS launch, separate project)
 - "23 pages" iOS paywall copy reconcile (separate iOS-repo task)
 - DONE (ENGINE-FLOOR): `vitest.config.ts` now excludes `**/.claude/**`
-- v1.1 test-infra: `autopsy-engine.test.ts` snapshots are TZ-dependent on the commit machine (88 local TZ / 58 UTC on clean main); pin TZ or switch to UTC formatting
+- DONE (PR-A `53d10f3`): `autopsy-engine.test.ts` TZ-dependent snapshots — pinned `TZ=UTC` in vitest.config.ts + regenerated under the pin
+- **v1.1 PROD BUG (discovered in PR-A): engine late-night/timing uses local `getHours()`.** `lib/autopsy-engine.ts` buckets hour-of-day with `new Date(b.placed_at).getHours()` / `toLocaleTimeString` (lines ~388, 400, 774, 991, 1962, 2236, 2298, 2046, 2060). On Vercel (UTC) this classifies "late night (11pm-4am)" in UTC, NOT the user's actual timezone — timing analytics + late_night signals are tz-wrong for non-UTC users. Needs userTimezone on the Bet/upload shape + tz-aware hour bucketing. Est ~12h; blocks on user-timezone architecture.
+- **v1.1 test-infra (from PR-A): wire `p0-iap-webhook.test.ts` properly.** Currently excluded from default `npm test` (production-Supabase integration suite, needs service-role creds + mutates prod data). Re-integrate against a staging Supabase project with env injection in CI, then remove the vitest exclude.
+- **v1.1 dedup (from PR-B, ticket `3675964c-daf2-8157`): collapse the two what-if paths.** `metrics.what_ifs` (lib/autopsy-engine.ts:835-872, feeds LLM prompt) and `lib/engine/whatIf.ts` (wire-shipped) compute the same scenarios. Audit equivalence (esp. scenario-3 category source: inline `${sport}-${bet_type}` profit/staked>0 vs `categoryRoi` roi>0), add an LLM-prompt regression test, then unify on one source. Out of scope for PR-B (verbatim-port chosen for guaranteed web parity).
 
 ## Previous branch: `claude/engine-snapshot-loosen-v2`
 
