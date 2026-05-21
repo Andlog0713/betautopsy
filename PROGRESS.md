@@ -44,6 +44,52 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-PERSISTENCE-PERF-WEB — slim list endpoint to card-essential keys (PR #63, squash `6185efa`)
+- **Why:** Andrew's device test on P0-PERSISTENCE-IOS (`bf9f21c`) showed a 15s
+  URLRequest timeout on cold launch. Supabase MCP diagnosis confirmed the wire
+  payload is the bug — the list endpoint returned the full `report_json`
+  (multi-MB/row, dominated by `bet_annotations` 2.5 MB avg + `session_detection`
+  260 KB avg). 58 reports × ~5 MB = unmanageable cellular transfer. Standard
+  mobile split: list returns card metadata; detail endpoint fetches full data
+  on tap.
+- **What shipped (`app/api/reports/route.ts`):** list-by-user mode now maps each
+  row's `report_json` through `slimReportJson()`, keeping only a 12-key
+  card-essential whitelist (betting_archetype, betiq, summary, summaryCounts,
+  discipline_score, emotion_score, emotion_percentile, tilt_score,
+  bankroll_health, schema_version, _snapshot_counts, _snapshot_teaser). Heavy
+  fields stripped. Added `export const maxDuration = 30` for Vercel timeout
+  safety. Response envelope `{ reports: [...] }` unchanged; top-level columns
+  preserved. Absent whitelist keys are NOT nulled in.
+- **Polling mode (`?upgraded_from=X`) INTENTIONALLY untouched** — serves IAP
+  materialization; iOS needs the complete report. Reaffirming "DO NOT slim"
+  comment added above that branch.
+- **Observability divergence from brief:** the brief proposed a
+  `logErrorServer` breadcrumb. Recon of `lib/log-error-server.ts` showed it is
+  strictly an error path (unconditional `Sentry.captureException` + `error_logs`
+  insert) — a synthetic `new Error('slim_transform_metrics')` would spam Sentry
+  on every cold start. Per the brief's own fallback instruction, switched to a
+  `console.log('[slim_transform_metrics]', {...})` line that lands in Vercel
+  function logs (row_count + sample original/slim bytes + reduction_pct).
+- **Tests:** `__tests__/api-reports-list.test.ts` +3 cases — (1) list mode
+  strips report_json to the whitelist (keeps present whitelist keys, drops
+  bet_annotations/executive_diagnosis/session_detection, never invents absent
+  keys); (2) 100 typical rows (heavy bet_annotations + session_detection)
+  serialize to <100 KB on the wire; (3) polling mode preserves full
+  report_json (regression guard, unchanged from `5cc8356`). Existing DESC+cap
+  test updated for the always-present slimmed report_json key.
+- **Gates:** `tsc --noEmit` 0 · `vitest run` 292 pass (11 files; was 289, +3) ·
+  `next build` 0.
+- **Files:** `app/api/reports/route.ts` (+80/-2), `__tests__/api-reports-list.test.ts` (+133). 211 insertions / 2 deletions.
+- **Merge ts (Vercel deploy verify, ~2-3 min lag):** 2026-05-21 16:42:53 -0400. Sprint umbrella 3675964c-daf2-812d.
+- **Follow-up (NEXT BLOCKER for end-to-end):** the coordinated iOS PR must
+  lazy-fetch the full report via existing `/api/reports/:id` in ReportScrollView
+  on detail-view present. Until it ships, iOS detail view (heated sessions,
+  exec diagnosis, recommendations) renders empty — DO NOT test detail view on
+  this web PR alone; test only list load time + card render. Decoder risk: iOS
+  `AutopsyAnalysis` Codable must tolerate the now-missing keys; if hydrate
+  decode fails post-deploy, the iOS PR makes fields optional OR the whitelist
+  expands here.
+
 ### Done this session: P0-PERSISTENCE-WEB — GET /api/reports list-by-user (PR #62, squash `5cc8356`)
 - **Why:** iOS reports disappear on cold launch (P0). `ReportStore` is in-memory
   only with no list-fetch path; on relaunch `reports=[]`. 69 reports across 6 users
