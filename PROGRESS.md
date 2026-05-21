@@ -44,6 +44,52 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-PERSISTENCE-PERF-WEB-V2 — column trim + server timing diagnostic (PR #64, squash `a28b056`)
+- **Why:** Andrew retested `6185efa` (slim transform) on 5G AND fast wifi —
+  still 7-15s per cold launch with intermittent failures. Network is NOT the
+  bottleneck. Slim shrank `report_json` 90% but speed improved only ~50%;
+  measured response for the 58-report user was still ~433 KB because `6185efa`
+  kept `select('*')`, so `report_markdown` (~5 KB/row, 269 KB total) plus other
+  unused columns still shipped. There's a 5-10s fixed cost somewhere (server
+  execution, iOS Codable, or token/keychain path) and we need diagnostic data
+  to localize it before guessing at iOS-side fixes.
+- **What shipped (`app/api/reports/route.ts`), two things:**
+  1. **Column trim:** list-mode `select('*')` → explicit `LIST_COLUMNS`
+     projection (id, report_type, bet_count_analyzed, date_range_start/end,
+     created_at, updated_at, report_json, upgraded_from_snapshot_id, is_paid,
+     analyzed_sportsbook). Drops `report_markdown`, `user_id`, `model_used`,
+     `tokens_used`, `cost_cents`, `stripe_payment_intent_id`,
+     `analyzed_upload_ids`. Expected response ~140 KB from 433 KB.
+  2. **Server timing log:** new `console.log('[list_perf]', …)` emitting
+     `db_query_ms`, `slim_transform_ms`, `serialize_ms`, `total_ms`, and
+     `response_bytes` (TOTAL response size, not a sample row). Lands in Vercel
+     runtime logs — after deploy these localize the remaining 7-15s cost as
+     server-side vs iOS-side.
+- **Emit change:** list mode switched from `NextResponse.json(obj)` to
+  `new NextResponse(responseJson, …)` so the JSON is pre-serialized once,
+  enabling accurate `serialize_ms` measurement and avoiding double-serialization.
+- **Removed:** the `[slim_transform_metrics]` console.log block from `6185efa`
+  is now redundant (response_bytes supersedes sample bytes) — consolidated into
+  `[list_perf]`.
+- **Polling mode (`?upgraded_from=X`) INTENTIONALLY untouched** — keeps
+  `select('*')` and full `report_json`. `/api/reports/[id]` detail endpoint also
+  untouched.
+- **Tests:** `__tests__/api-reports-list.test.ts` +1 case — list-mode select
+  does NOT return `report_markdown` or the other dropped columns (asserts the
+  `.select()` projection is exactly `LIST_COLUMNS` and the dropped columns are
+  absent from both the projection string and the response row). DESC+cap test
+  updated to assert the trimmed projection. Existing <100 KB lock-in test still
+  passes unchanged.
+- **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files; was 292, +1) ·
+  `next build` 0.
+- **Files:** `app/api/reports/route.ts` (+81/-22), `__tests__/api-reports-list.test.ts` (+84). 143 insertions / 22 deletions.
+- **Merge ts (Vercel deploy verify, ~2-3 min lag):** 2026-05-21 17:04:20 -0400.
+  Sprint umbrella 3675964c-daf2-812d.
+- **Next signal:** if Andrew still sees 7-15s after this deploy, `[list_perf]`
+  in Vercel logs is the deciding datum — high `total_ms` → server-side culprit;
+  low `total_ms` with big `response_bytes` already trimmed → iOS-side
+  (Codable/keychain/token) culprit.
+
 ### Done this session: P0-PERSISTENCE-PERF-WEB — slim list endpoint to card-essential keys (PR #63, squash `6185efa`)
 - **Why:** Andrew's device test on P0-PERSISTENCE-IOS (`bf9f21c`) showed a 15s
   URLRequest timeout on cold launch. Supabase MCP diagnosis confirmed the wire
