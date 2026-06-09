@@ -44,6 +44,35 @@
 
 ## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
+### Done this session: P0-SQL-JSON-PROJECTION — recon HALT, no code change (already shipped)
+- **Outcome:** NO-OP. The brief asked to strip `bet_annotations` +
+  `session_detection` from the list endpoint via a new `report_json_lite()`
+  Postgres function (keeping the other 31 `report_json` keys). Step 1 recon
+  found the brief's premise is stale: the iOS/web LIST route
+  (`app/api/reports/route.ts:74-97`) already slims `report_json` to a 12-key
+  card whitelist via `slimReportJson()` — shipped across PRs #63 (`6185efa`),
+  #64 (`a28b056`), #65, #66. Both target keys (and ~19 more) are already
+  dropped. Applying the brief verbatim would REGRESS payload (add back
+  `timing_analysis`, `biases_detected`, `odds_analysis`, etc., growing rows
+  from ~3 KB toward ~40 KB+) and add a needless DB migration.
+- **Route inventory (LIST vs DETAIL):**
+  - LIST: `app/api/reports/route.ts` list-by-user (RLS, limit 100) — already
+    slimmed. `app/api/recent-activity/route.ts` (service-role ticker, limit 30)
+    — pulls full json from DB but ships only 3 digested fields, no raw json.
+    `app/api/admin/reports/route.ts` — admin-gated, full json (acceptable).
+  - DETAIL (full json, untouched by design): `app/api/reports/[id]/route.ts`,
+    `app/api/reports/route.ts?upgraded_from=` polling, `app/api/share/route.ts`,
+    `app/api/admin/reports/[id]/route.ts`, `app/api/ask-report/route.ts`.
+  - iOS mapping: `GET /api/reports` → `ReportListClient` (slimmed) ·
+    `GET /api/reports/:id` → `ReportFetchClient` (full) · `?upgraded_from=` →
+    `RevenueCatStore` polling (full). iOS shares the web API.
+- **Decision (Andrew, this session):** Halt — already done. No branch, no PR,
+  no migration. Sprint row to be closed as already-shipped.
+- **Minor follow-up noted (not actioned):** `recent-activity` pulls 30× full
+  `report_json` over the DB→server wire to extract 3 small fields; a column/
+  jsonb projection there would cut server-side DB transfer (no client-payload
+  impact). Parked, not in this brief's scope.
+
 ### Done this session: P0-PERSISTENCE-PERF-WEB-V3 — disable HTTP/3 advertisement (Alt-Svc: clear) (PR #66, squash `ed2023b`)
 - **Why:** After the V3 Sentry-disable (`4b6077c`) made the *first* cold launch
   fast, Andrew's subsequent launches/refreshes hung again. Definitive cause in
@@ -381,6 +410,33 @@
 - **Baseline-failure mismatch noted:** memory referenced 88; reality is 46
   with worktree excluded (92 with worktree). Vitest has no `exclude:` for
   `.claude/worktrees/`. Cleanup parked.
+
+### Done this session: WEB-AUTH-REDIRECT — returning OAuth logins land on `/dashboard` (pushed direct to main)
+- **Why (reported by Andrew 2026-06-09):** signing in with Google on
+  betautopsy.com bounced him back to the landing page showing Login/Sign Up
+  as if logged out, even though the session was live (clicking Sign In again
+  went straight to the dashboard via middleware's auth-route redirect).
+- **Two stacked causes, one fix:**
+  1. `app/auth/callback/route.ts:198` sent returning OAuth users (account
+     >30 min old, no `?next=`) to `/` — only first-logins got
+     `/dashboard?welcome=true`. Vestige of an unfinished "returning-user
+     redirect": the `increment_login_count` RPC is incremented but never read
+     anywhere in the codebase.
+  2. The landing page then showed logged-out nav because `AuthProvider`
+     (components/AuthProvider.tsx) never revalidates on mount by design —
+     it only reads the `ba-auth-cache-v1` localStorage cache, and the OAuth
+     flow (full-page round-trip through Google → server route) never calls
+     `revalidate()`, unlike the email/password path
+     (`app/(auth)/login/page.tsx:100`). Cache miss → 'anon' → Login/Sign Up.
+- **What shipped:** callback fallback target `'/'` → `'/dashboard'` (one
+  line + comment). Fixes both symptoms: lands on dashboard, and dashboard's
+  AuthGuard revalidates + repopulates the cache so the marketing nav shows
+  signed-in state on later visits. `?next=` behavior and first-login
+  `/dashboard?welcome=true` (+ Meta CAPI / welcome-email logic) untouched.
+- **No tests existed for the callback route; none added** (route is all
+  side-effects + redirect; an integration harness is v1.1 territory).
+- **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
+- **Files:** `app/auth/callback/route.ts` (+4/-2).
 
 ## Parked / next branch
 - Mega-PR B (iOS rendering of new engine output, including `triggerEvent` reader)

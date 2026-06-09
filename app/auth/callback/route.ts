@@ -194,8 +194,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // First-login users: respect ?next= if set (e.g. /pricing), otherwise dashboard.
-      const target = next && next !== '/' ? next : (wasFirstLogin ? '/dashboard?welcome=true' : '/');
+      // Respect ?next= if set (e.g. /pricing), otherwise dashboard. Returning
+      // users go to /dashboard too — its AuthGuard revalidates AuthProvider's
+      // ba-auth-cache-v1, so the marketing nav reflects the session afterward.
+      const target = next && next !== '/' ? next : (wasFirstLogin ? '/dashboard?welcome=true' : '/dashboard');
       return NextResponse.redirect(`${origin}${target}`);
     }
   }
