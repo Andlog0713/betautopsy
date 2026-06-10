@@ -19,6 +19,7 @@ import type {
   Profile,
   RecoveryModeState,
   ReportControlSystem,
+  ReportRiskTier,
   ReportRiskSummary,
   RiskEvent,
   RiskEventSeverity,
@@ -432,21 +433,77 @@ function buildCooldownSuggestions(analysis: AutopsyAnalysis, rules: ControlRuleS
   return suggestions.slice(0, 3);
 }
 
-function recoveryRecommendedFromAnalysis(analysis: AutopsyAnalysis): boolean {
+// ── Recovery-mode risk thresholds (INTERIM, conservative) ──────────────────
+//
+// Calibration query (2026-06-10): prod had n=6 full reports with emotion_score,
+// degenerate (all ~73, test data) — too sparse to set a real percentile cutoff.
+// At interim 80, zero current reports reach the recovery tier, which is the
+// intended conservative posture (err toward UNDER-flagging; the safer-gambling
+// messaging literature says false positives are costly — reactance, self-stigma,
+// message fatigue). codex's old 70 cutoff landed at ~p33 (over-flagging).
+//
+// DO NOT market the recovery feature until the calibration query is re-run on a
+// real population and RECOVERY_EMOTION_CUTOFF is moved to roughly p90-p95.
+//
+// HARD DEPENDENCY: emotion_score and heatedSessionPercent are computed partly
+// from the vig-mislabeled "luck" component and the timezone-broken late-night /
+// heated-session signal (WS-NUMERIC / WS-TEMPORAL). When those engine fixes
+// land, these cutoffs MUST be re-tuned in the same change — a user can cross or
+// un-cross the recovery line from the math changing, not their behavior.
+const RECOVERY_EMOTION_CUTOFF = 80; // Tier 2 gate (raised from codex's 70)
+const RECOVERY_HEATED_PCT = 35;     // Tier 2 corroboration floor
+const ELEVATED_EMOTION_MIN = 60;    // Tier 1 lower bound
+const ELEVATED_HEATED_PCT = 20;     // Tier 1 lower bound
+
+// Three-tier report classification (PGSI-style: confident clinical framing only
+// at the top). Evaluated top-down.
+export function classifyReportRiskTier(analysis: AutopsyAnalysis): ReportRiskTier {
   const criticalBiases = analysis.biases_detected.filter((bias) => bias.severity === 'critical').length;
   const severeBiases = analysis.biases_detected.filter((bias) => bias.severity === 'high' || bias.severity === 'critical').length;
+  const emotion = analysis.emotion_score;
   const heatedPct = analysis.session_detection?.heatedSessionPercent ?? 0;
-  return criticalBiases > 0 || severeBiases >= 2 || analysis.emotion_score >= 70 || heatedPct >= 30;
+
+  // Tier 2 (recovery): the emotion signal AND corroboration, never either alone.
+  // The conjunction is the single most important guard — it stops one bad
+  // weekend from tripping the clinical tier. Check-in corroboration is only
+  // available in the live deriveRecoveryModeState, not at report-generation time.
+  if (emotion >= RECOVERY_EMOTION_CUTOFF && (criticalBiases > 0 || heatedPct >= RECOVERY_HEATED_PCT)) {
+    return 'recovery';
+  }
+
+  // Tier 1 (elevated): anything elevated that did NOT meet the recovery
+  // conjunction. This tier is benign (a single light-touch note, no clinical
+  // framing, no helpline), so it is intentionally generous — a high emotion
+  // score WITHOUT corroboration, or a single critical bias, still earns a
+  // heads-up rather than falling through to no-flag. The over-flagging concern
+  // applies to the clinical tier (Tier 2) above, which stays tightly gated.
+  // NOTE: spec said "exactly 2 severe biases"; implemented as >= 2 (so 3+ also
+  // qualifies) plus a single critical bias. Flagged for review.
+  if (
+    emotion >= ELEVATED_EMOTION_MIN
+    || criticalBiases >= 1
+    || severeBiases >= 2
+    || heatedPct >= ELEVATED_HEATED_PCT
+  ) {
+    return 'elevated';
+  }
+
+  return 'none';
+}
+
+function recoveryRecommendedFromAnalysis(analysis: AutopsyAnalysis): boolean {
+  return classifyReportRiskTier(analysis) === 'recovery';
 }
 
 export function buildReportControlSystem(analysis: AutopsyAnalysis): ReportControlSystem {
   const rules = buildSuggestedRulesFromAnalysis(analysis);
   const hardRules = rules.filter((rule) => rule.enforcement === 'hard');
   const softRules = rules.filter((rule) => rule.enforcement === 'soft');
-  const recoveryModeRecommended = recoveryRecommendedFromAnalysis(analysis);
-  const status = recoveryModeRecommended
+  const riskTier = classifyReportRiskTier(analysis);
+  const recoveryModeRecommended = riskTier === 'recovery';
+  const status = riskTier === 'recovery'
     ? 'recovery_mode'
-    : analysis.emotion_score >= 50
+    : riskTier === 'elevated'
     ? 'watch_mode'
     : 'support_mode';
 
@@ -469,6 +526,7 @@ export function buildReportControlSystem(analysis: AutopsyAnalysis): ReportContr
       ?? 'Pick one live rule and make it the easiest behavior to follow this week.',
     planTemplate: buildPlanSettings(analysis, rules),
     recoveryModeRecommended,
+    riskTier,
     supportResources: SUPPORT_RESOURCES,
   };
 }
@@ -505,27 +563,37 @@ export function deriveRecoveryModeState(params: {
 
   const triggerLabels: string[] = [];
   if (activeCooldown) triggerLabels.push('An active cooldown is still running');
-  if (heatedPct >= 25) triggerLabels.push(`Heated sessions make up ${Math.round(heatedPct)}% of tracked sessions`);
+  if (heatedPct >= ELEVATED_HEATED_PCT) triggerLabels.push(`Heated sessions make up ${Math.round(heatedPct)}% of tracked sessions`);
   if (repeatedOverrides >= 2) triggerLabels.push('Cooldown overrides have become a repeat pattern');
   if (repeatedViolations >= 3) triggerLabels.push('Rule violations are stacking up');
   if (lowScores >= 2) triggerLabels.push('Recent check-ins are repeatedly landing in the danger zone');
   if (severeBiases >= 2) triggerLabels.push('Multiple high-risk report findings are still active');
-  if (emotionScore >= 70) triggerLabels.push('Emotion score remains in the elevated range');
+  if (emotionScore >= RECOVERY_EMOTION_CUTOFF) triggerLabels.push('Emotion score is in the high range');
 
-  const active = triggerLabels.length > 0;
-  const level = !active
-    ? 'watch'
-    : repeatedOverrides >= 2 || severeBiases >= 2 || heatedPct >= 30 || emotionScore >= 70
+  // Auto Recovery Mode requires SUSTAINED, CORROBORATED signal, never a single
+  // threshold cross. Each branch pairs a repeated behavioral signal with a
+  // current risk context, so one noisy week cannot trip the clinical tier.
+  // (The manual toggle above always wins.) Single signals below only raise the
+  // level to 'elevated' — which keeps rules visible but uses no clinical framing.
+  const autoRecovery =
+    (repeatedViolations >= 3 && (activeCooldown !== null || heatedPct >= RECOVERY_HEATED_PCT))
+    || (repeatedOverrides >= 2 && severeBiases >= 2)
+    || (lowScores >= 3 && (heatedPct >= ELEVATED_HEATED_PCT || severeBiases >= 2));
+
+  const active = autoRecovery;
+  const level: RecoveryModeState['level'] = autoRecovery
     ? 'recovery'
-    : 'elevated';
+    : triggerLabels.length > 0
+    ? 'elevated'
+    : 'watch';
 
-  const summary = !active
-    ? 'No active Recovery Mode. Control rules should stay visible, but the product can use a normal support tone.'
-    : level === 'recovery'
-    ? 'Recovery Mode is active because the same harm pattern is reappearing, not because of one noisy result.'
-    : 'Risk is elevated. The product should slow the user down before pressure becomes another heated session.';
+  const summary = level === 'recovery'
+    ? 'Recovery Mode is active because the same harm pattern is reappearing across multiple signals, not because of one noisy result.'
+    : level === 'elevated'
+    ? 'Risk is elevated. Keep control rules visible and slow things down, but no clinical framing yet.'
+    : 'No active Recovery Mode. Control rules stay visible; the product uses a normal support tone.';
 
-  const supportMessage = active
+  const supportMessage = level === 'recovery'
     ? 'Foreground plan adherence, current cooldowns, recent risk events, and support resources. De-emphasize hype.'
     : 'Keep rules visible and reinforce process discipline without using streak hype as the primary motivator.';
 
