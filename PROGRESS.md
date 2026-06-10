@@ -533,9 +533,37 @@
 - **A8 (report-only):** live Stripe list prices 2× displayed (Pro $39.99/mo, $299.99/yr; Full Report $19.99); `AUTOPSY50` 50%-off auto-applied via `STRIPE_LAUNCH_PROMO` reconciles them — only if that env var is set in prod (unverified). Legacy "Sharp" prices active on inactive product.
 - **A9:** added `__tests__/check-in-enforcement.test.ts` (7 cases). **A10:** added `.github/workflows/ci.yml` (tsc + vitest), opened PR #67, squash-merged as `d16a7d6`. **Branch protection BLOCKED** — GitHub Free disallows protection/rulesets on private repos (A2 made it private). Decision (Andrew, 2026-06-10): stay private, defer enforcement; CI runs on every PR/push but isn't blocking. Re-enable after a GitHub Pro upgrade (Tracker row filed, Blocked).
 - e2e (mobile-regression) is **pre-existing red on main** (failing on every commit incl. yesterday's `e0e378c` and May's `c5a9ae0`) — `/login`+`/signup` tap-target check, unrelated to this backend/SQL work. Merged via `--admin`; not a regression.
-- The PR also carried the parallel engine-hardening run's commit `5200d03` (ENGINE_HARDENING_OUTLINES + ingestion fixtures, docs/fixtures only) — absorbed into the squash per the single-PR plan.
+- The PR also carried the parallel engine-hardening run's commit `eca0a2f` (ENGINE_HARDENING_OUTLINES + ingestion fixtures, docs/fixtures only; pre-rewrite hash was `5200d03`) — absorbed into the squash per the single-PR plan.
 - Codex predecessors logged: control-system `8948bb6`, check-in/redaction hardening `761bbe6`. Notion: 4 Tracker rows (3 sprint + 1 blocked) + Command Center update.
 - **POST-MERGE manual steps (NOT yet done — need prod DB/env access):** (1) apply `20260610_lock_token_tables.sql` AFTER the `d16a7d6` deploy goes live (else live share pages break in the gap); (2) create the 4 control tables / reload PostgREST schema cache (control-system GET 500s until then); (3) set `RESEND_INBOUND_SECRET` in prod (inbound email fails closed without it); (4) confirm `STRIPE_LAUNCH_PROMO` set in prod (else Pro/Full Report charge 2× the displayed price); (5) enable branch protection if/when on GitHub Pro.
+
+### Done this session (Claude, 2026-06-10, follow-up pass): commit re-author + production verification of PR #67
+- **Vercel Hobby author-gate:** all 9 branch commits re-authored `hocho99
+  <and.hochh@aol.com>` → `Andlog0713 <129010573+Andlog0713@users.noreply.github.com>`
+  (`git rebase -r origin/main --exec 'git commit --amend --reset-author'` +
+  lease force-push). Preview built READY on `1628b8c` where the three prior
+  hocho99-authored deploys sat BLOCKED — gate confirmed as the blocker.
+  **NOT permanently solved:** unblocked per-commit via repo-local
+  `git config user.name/email` in this clone only; any commit from another
+  identity (Codex, other machines) re-trips it. Vercel Pro before TestFlight
+  removes the gate entirely.
+- **Production verified on the squash sha:** `dpl_6o56ejr8…` READY on
+  `d16a7d6`, aliased to betautopsy.com / www / api / mysharpscore.com.
+  Live probes: `/auth/callback?next=https://evil.com` → 307 to own
+  `/login?error=auth` (open redirect closed) · `/api/send-email` unauthed →
+  405 (fail-closed) · `/api/inbound-email` unsigned → 503 (fails closed,
+  `RESEND_INBOUND_SECRET` still unset = step 3 above) · `/api/export`
+  unauthed → 401.
+- **A1 NOT yet truly closed:** anon key STILL dumps `share_tokens` (full
+  report_json + user_id) and `email_unsubscribe_tokens` — verified live
+  post-deploy. The deploy carries the service-role routes, so applying
+  `20260610_lock_token_tables.sql` is now SAFE and is the only remaining
+  step; no Supabase CLI/token on this machine, needs dashboard SQL editor.
+- Superseded pre-rewrite hashes for the record: `5200d03→eca0a2f`,
+  `83f8881→1628b8c`, `7a36cc8→5d67727`, `8766997→f4fda5c`. Notion tracker
+  row bodies updated to match.
+- Remote URL normalized to `https://github.com/Andlog0713/betautopsy.git`
+  (was lowercase, redirecting).
 
 ## Parked / next branch
 - **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
@@ -558,6 +586,13 @@
   - QUALITY: ~20 un-awaited `logErrorServer` calls in API routes (lambda freeze may drop error logs); 6 inline service-role client re-implementations; buildWhatIfs duplication (filed); 3 orphaned components; lib/autopsy-engine.ts 3,877 lines.
   - SEO/A11Y: landing page has no `<h1>`; /terms no metadata; /sample + /terms + /quiz/quick missing from sitemap; no prefers-reduced-motion handling.
   - Tooling note: Supabase MCP (claude.ai connector) cannot reach prod project `eekubnadizmtuhnxzcig` (different org) — advisors unavailable; schema audited from local supabase/ files instead (RLS enabled on all tables).
+- **e2e (mobile-regression) pre-existing red — culprit identified:** the bare
+  logo link `<Link href="/"><Logo size="md" /></Link>` in
+  `app/(auth)/layout.tsx:15` and `:48` renders an anonymous inline `<a>`
+  228×36 — below the 44pt tap-target floor — failing `/login` + `/signup`
+  on all 3 viewports since at least May 21 (`c5a9ae0`). Fix with the
+  established `w-11 h-11 -m-2`-style padding pattern (or block+min-height);
+  unblocks the suite repo-wide.
 - Mega-PR B (iOS rendering of new engine output, including `triggerEvent` reader)
 - Web pricing reconcile (post-iOS launch, separate project)
 - "23 pages" iOS paywall copy reconcile (separate iOS-repo task)
