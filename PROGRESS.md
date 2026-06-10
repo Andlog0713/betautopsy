@@ -522,7 +522,7 @@
 - **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
 - **Files:** `app/auth/callback/route.ts` (+4/-2).
 
-### Done this session (Claude, 2026-06-10): SECURITY + PROD INTEGRITY HARDENING (PR #67, branch `hardening/june-10`)
+### Done this session (Claude, 2026-06-10): SECURITY + PROD INTEGRITY HARDENING (PR #67 → squash-merged to main as `d16a7d6`)
 - **A1 (SEC-HIGH/MED):** dropped `using(true)` SELECT on `share_tokens` (anon could read full report_json — 11 rows confirmed exposed live) + `email_unsubscribe_tokens`. Service-role lookups in `/share/[id]` (react `cache()`), `/og/[id]`, `/api/unsubscribe`; UUID validation; per-IP rate limiting. Migration `20260610_lock_token_tables.sql` — **apply AFTER deploy**.
 - **A2:** repo set private; Vercel retained webhook access (deployment created on private repo).
 - **A3:** restored the `progress_snapshots` upsert (app/api/analyze/route.ts) — dead since 2026-05-11.
@@ -531,9 +531,11 @@
 - **A6 (conditional → FAIL path):** 3 new columns live in prod, but the 4 control tables return PGRST205 (CREATE TABLEs didn't land / schema cache stale). **Compat fallbacks KEPT, compat test KEPT.** Control-system GET 500s in prod; check-in degrades gracefully.
 - **A7:** only observable errors were 4× `/api/control-system` GET at 15:45Z, all Andrew's own user, between `8948bb6` and `002a1ec` deploys. Sentry (token upload-scoped) and Supabase API logs (wrong-org MCP) not observable — stated explicitly.
 - **A8 (report-only):** live Stripe list prices 2× displayed (Pro $39.99/mo, $299.99/yr; Full Report $19.99); `AUTOPSY50` 50%-off auto-applied via `STRIPE_LAUNCH_PROMO` reconciles them — only if that env var is set in prod (unverified). Legacy "Sharp" prices active on inactive product.
-- **A9:** added `__tests__/check-in-enforcement.test.ts` (7 cases). **A10:** added `.github/workflows/ci.yml` (tsc + vitest). 304 tests green.
-- Codex predecessors logged: control-system `8948bb6`, check-in/redaction hardening `761bbe6`. Notion: 3 Tracker rows + Command Center update.
-- **POST-MERGE manual steps:** (1) apply `20260610_lock_token_tables.sql` after deploy; (2) create the 4 control tables / reload PostgREST schema cache; (3) set `RESEND_INBOUND_SECRET`; (4) confirm `STRIPE_LAUNCH_PROMO` in prod; (5) branch protection requires the `typecheck-and-test` check (not Vercel — fails on commit-author perms).
+- **A9:** added `__tests__/check-in-enforcement.test.ts` (7 cases). **A10:** added `.github/workflows/ci.yml` (tsc + vitest), opened PR #67, squash-merged as `d16a7d6`. **Branch protection BLOCKED** — GitHub Free disallows protection/rulesets on private repos (A2 made it private). Decision (Andrew, 2026-06-10): stay private, defer enforcement; CI runs on every PR/push but isn't blocking. Re-enable after a GitHub Pro upgrade (Tracker row filed, Blocked).
+- e2e (mobile-regression) is **pre-existing red on main** (failing on every commit incl. yesterday's `e0e378c` and May's `c5a9ae0`) — `/login`+`/signup` tap-target check, unrelated to this backend/SQL work. Merged via `--admin`; not a regression.
+- The PR also carried the parallel engine-hardening run's commit `5200d03` (ENGINE_HARDENING_OUTLINES + ingestion fixtures, docs/fixtures only) — absorbed into the squash per the single-PR plan.
+- Codex predecessors logged: control-system `8948bb6`, check-in/redaction hardening `761bbe6`. Notion: 4 Tracker rows (3 sprint + 1 blocked) + Command Center update.
+- **POST-MERGE manual steps (NOT yet done — need prod DB/env access):** (1) apply `20260610_lock_token_tables.sql` AFTER the `d16a7d6` deploy goes live (else live share pages break in the gap); (2) create the 4 control tables / reload PostgREST schema cache (control-system GET 500s until then); (3) set `RESEND_INBOUND_SECRET` in prod (inbound email fails closed without it); (4) confirm `STRIPE_LAUNCH_PROMO` set in prod (else Pro/Full Report charge 2× the displayed price); (5) enable branch protection if/when on GitHub Pro.
 
 ## Parked / next branch
 - **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
