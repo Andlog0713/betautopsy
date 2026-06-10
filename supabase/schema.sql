@@ -468,7 +468,11 @@ create policy "Users can insert own snapshots" on progress_snapshots for insert 
 
 -- Share Tokens (public read for shared report cards)
 alter table share_tokens enable row level security;
-create policy "Anyone can view share tokens" on share_tokens for select using (true);
+-- SELECT deliberately NOT public: share_tokens.data embeds the full report
+-- json. Public share-page lookups go through service-role server code only
+-- (see 20260610_lock_token_tables.sql). Owners can read their own rows for
+-- the /api/share dedupe check.
+create policy "Users can view own share tokens" on share_tokens for select to authenticated using (auth.uid() = user_id);
 create policy "Users can insert own share tokens" on share_tokens for insert with check (auth.uid() = user_id);
 create policy "Users can update own share tokens" on share_tokens for update using (auth.uid() = user_id);
 
@@ -487,7 +491,8 @@ alter table quiz_leads enable row level security;
 
 -- Email Unsubscribe Tokens
 alter table email_unsubscribe_tokens enable row level security;
-create policy "Anyone can view unsubscribe tokens" on email_unsubscribe_tokens for select using (true);
+-- SELECT deliberately NOT public: token id -> user_id mapping. The
+-- unsubscribe route reads via service role (see 20260610_lock_token_tables.sql).
 create policy "Users can insert own unsubscribe tokens" on email_unsubscribe_tokens for insert with check (auth.uid() = user_id);
 
 -- Behavioral Journal

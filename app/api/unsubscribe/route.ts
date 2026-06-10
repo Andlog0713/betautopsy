@@ -1,5 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function htmlPage(title: string, body: string): Response {
   const html = `<!DOCTYPE html>
@@ -15,10 +18,24 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const token = searchParams.get('token');
 
-  if (!token) {
+  if (!token || !UUID_RE.test(token)) {
     return htmlPage('Error', `
       <h1 style="font-size:24px;font-weight:700;margin-bottom:12px">Missing token</h1>
       <p style="color:#A0A3B1;font-size:14px">This unsubscribe link appears to be invalid.</p>
+    `);
+  }
+
+  // Tokens are unauthenticated by design (email links), so throttle lookups
+  // per IP to block enumeration sweeps. checkRateLimit fails open on DB
+  // errors, so a real unsubscribe never breaks on a blip.
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')
+    || 'unknown';
+  const allowed = await checkRateLimit(`unsubscribe:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return htmlPage('Too Many Requests', `
+      <h1 style="font-size:24px;font-weight:700;margin-bottom:12px">Too many requests</h1>
+      <p style="color:#A0A3B1;font-size:14px">Please try again in a minute.</p>
     `);
   }
 

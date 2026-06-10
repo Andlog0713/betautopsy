@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cache } from 'react';
+import { headers } from 'next/headers';
+import { createServiceRoleClient } from '@/lib/supabase-server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import SharedReport from './SharedReport';
 import ShareRedirectMobile from './ShareRedirectMobile';
 
@@ -54,22 +56,34 @@ interface ShareData {
   report_json?: Record<string, unknown>;
 }
 
-async function getShareData(id: string): Promise<ShareData | null> {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
-  );
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Service-role lookup: share_tokens has no public SELECT policy (the data
+// column embeds the full report json — see 20260610_lock_token_tables.sql),
+// so anonymous share views resolve the single requested row server-side.
+// react `cache()` dedupes the generateMetadata + page-body calls into one
+// query per request (and one rate-limit hit).
+const getShareData = cache(async (id: string): Promise<ShareData | null> => {
+  if (!UUID_RE.test(id)) return null;
+
+  // Basic per-IP rate limit on anonymous share lookups. Fail-open inside
+  // checkRateLimit on DB errors, so legit traffic never breaks on a blip.
+  const hdrs = await headers();
+  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || hdrs.get('x-real-ip')
+    || 'unknown';
+  const allowed = await checkRateLimit(`share-view:${ip}`, 30, 60_000);
+  if (!allowed) return null;
+
+  const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from('share_tokens')
     .select('data')
     .eq('id', id)
     .single();
 
-  return data?.data as ShareData | null;
-}
+  return (data?.data as ShareData | undefined) ?? null;
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
