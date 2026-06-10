@@ -8,24 +8,6 @@ import {
 } from '@/lib/control-system';
 import type { RiskEvent } from '@/types';
 
-type ErrorLike = { code?: string; message?: string };
-
-function isErrorLike(value: unknown): value is ErrorLike {
-  return Boolean(value) && typeof value === 'object';
-}
-
-function isMissingPreBetCheckinsColumnError(error: unknown, column: string): boolean {
-  if (!isErrorLike(error)) return false;
-  const code = typeof error.code === 'string' ? error.code : '';
-  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
-  const normalizedColumn = column.toLowerCase();
-
-  return code === '42703' && message.includes(normalizedColumn)
-    || message.includes(`pre_bet_checkins.${normalizedColumn}`)
-    || message.includes(`column "${normalizedColumn}"`)
-    || message.includes(`${normalizedColumn} does not exist`);
-}
-
 // Deterministic pre-bet gate. Reads the latest report + live control-system
 // state, writes a persisted check-in record, and logs follow-on risk context
 // when the user is entering a risky window. Existing iOS clients rely on the
@@ -105,7 +87,7 @@ export async function POST(request: Request) {
       reflection: validated.value.reflection ?? null,
     };
 
-    let insertResult = await supabase
+    const insertResult = await supabase
       .from('pre_bet_checkins')
       .insert({
         ...insertPayload,
@@ -113,14 +95,6 @@ export async function POST(request: Request) {
       })
       .select('id')
       .single();
-
-    if (isMissingPreBetCheckinsColumnError(insertResult.error, 'context')) {
-      insertResult = await supabase
-        .from('pre_bet_checkins')
-        .insert(insertPayload)
-        .select('id')
-        .single();
-    }
 
     const { data: inserted, error: insertError } = insertResult;
 
