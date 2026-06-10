@@ -59,7 +59,7 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
     contextLabel: 'EMOTION SCORE',
     heroStat: `${emotionScore ?? 50}`,
     heroLabel: emotionScore !== undefined && emotionScore <= 30 ? 'Cool under pressure' : emotionScore !== undefined && emotionScore >= 70 ? 'Emotions run the show' : 'Room to improve',
-    verdict: 'Your emotion score measures how much tilt, chasing, and impulsive sizing affect your decisions. Lower is better.',
+    verdict: 'Your emotion score measures how much heat, chasing, and impulsive sizing affect your decisions. Lower is better.',
   };
 
   if (!bets || bets.length < 20) return fallback;

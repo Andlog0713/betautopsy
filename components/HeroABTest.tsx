@@ -52,16 +52,16 @@ export default function HeroABTest() {
     return (
       <>
         <h1 className="font-extrabold text-4xl md:text-6xl leading-[1.08] tracking-tight mb-2 text-fg-bright">
-          Turn your <span className="text-scalpel">betting data</span> into rules you can actually follow.
+          See what your <span className="text-scalpel">betting data</span> is trying to tell you.
         </h1>
         <p className="font-mono text-base md:text-lg text-fg-muted font-light tracking-wide mt-4 mb-8">
-          47 behavioral signals. One control plan. Zero picks.
+          47 behavioral signals. 60 seconds. One forensic report.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
-          <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3">Start Your Free Snapshot</SmartCTALink>
+          <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</SmartCTALink>
         </div>
         <span className="text-fg-muted text-xs mt-3">
-          Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 — 50% off.
+          Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
         </span>
       </>
     );
@@ -72,36 +72,36 @@ export default function HeroABTest() {
       {variant === 'A' ? (
         <>
           <TextGenerateEffect
-            words="Turn your betting data into rules you can actually follow."
+            words="See what your betting data is trying to tell you."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
             highlight="betting data"
           />
           <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d2">
-            47 behavioral signals. One control plan. Zero picks.
+            47 behavioral signals. 60 seconds. One forensic report.
           </p>
         </>
       ) : (
         <>
           <TextGenerateEffect
-            words="47 behavioral signals. One control plan. Zero picks."
+            words="47 behavioral signals. 60 seconds. One upload."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
             highlight="47"
           />
           <p className="text-fg text-base md:text-lg max-w-2xl mt-4 mb-8 leading-relaxed animate-fade-in-d2">
-            Find the patterns costing you money and put live guardrails around them before the next bad session compounds.
+            Find the patterns costing you money and get a plan to fix them.
           </p>
         </>
       )}
 
       <div className="flex flex-col sm:flex-row gap-3 animate-slide-up-d2">
         <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3" onClick={trackClick}>
-          Start Your Free Snapshot
+          Get Your Autopsy Report
         </SmartCTALink>
       </div>
       <span className="text-fg-muted text-xs mt-3 animate-slide-up-d2">
-        Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99 — 50% off.
+        Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
       </span>
     </>
   );

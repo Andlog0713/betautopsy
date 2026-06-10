@@ -302,7 +302,7 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
   if (analysis.emotion_score >= 55 && !hasRuleLike(suggestions, 'emotion_block')) {
     suggestions.push({
       title: 'Block angry or revenge-bet states',
-      description: 'If you are angry, tilted, or trying to win losses back, do not place the bet.',
+      description: 'If you are angry, heated, or trying to win losses back, do not place the bet.',
       rationale: 'High emotion-score stretches should trigger a hard pause, not a softer pep talk.',
       rule_type: 'emotion_block',
       scope: 'emotion_state',
