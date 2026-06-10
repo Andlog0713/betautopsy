@@ -13,7 +13,9 @@ interface ShareData {
   archetype: { name: string; description: string } | null;
 }
 
-function gradeColor(g: string): string {
+function gradeColor(g: string | null | undefined): string {
+  // Snapshot shares have a null grade — don't call .startsWith on null.
+  if (!g) return '#A0A3B1';
   if (g.startsWith('A')) return '#00DC82';
   if (g.startsWith('B')) return '#FFCD2C';
   if (g.startsWith('C')) return '#FF4D4D';

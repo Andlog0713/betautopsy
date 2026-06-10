@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
-import { headers } from 'next/headers';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { checkRateLimit } from '@/lib/rate-limit';
 import SharedReport from './SharedReport';
 import ShareRedirectMobile from './ShareRedirectMobile';
 
@@ -60,28 +58,25 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // Service-role lookup: share_tokens has no public SELECT policy (the data
 // column embeds the full report json — see 20260610_lock_token_tables.sql),
-// so anonymous share views resolve the single requested row server-side.
-// react `cache()` dedupes the generateMetadata + page-body calls into one
-// query per request (and one rate-limit hit).
+// so anonymous share views resolve the single requested row server-side by id.
+// Pure + react `cache()`d: dedupes the generateMetadata + page-body calls into
+// one query per request.
+//
+// No request-time rate limiting here: this route exports generateStaticParams
+// for the mobile static export, which makes any dynamic API (headers()/
+// cookies()) at request time throw DYNAMIC_SERVER_USAGE in the prod build. The
+// real exposure (anon-key table dump) is closed by RLS, and share ids are
+// unguessable v4 UUIDs, so per-IP throttling here was defense-in-depth only.
+// If we want it back, add it in middleware.ts (web-only, no static-export
+// conflict), not in this Server Component.
 const getShareData = cache(async (id: string): Promise<ShareData | null> => {
   if (!UUID_RE.test(id)) return null;
-
-  // Basic per-IP rate limit on anonymous share lookups. Fail-open inside
-  // checkRateLimit on DB errors, so legit traffic never breaks on a blip.
-  const hdrs = await headers();
-  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || hdrs.get('x-real-ip')
-    || 'unknown';
-  const allowed = await checkRateLimit(`share-view:${ip}`, 30, 60_000);
-  if (!allowed) return null;
-
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from('share_tokens')
     .select('data')
     .eq('id', id)
     .single();
-
   return (data?.data as ShareData | undefined) ?? null;
 });
 
