@@ -18,6 +18,12 @@ import { logErrorServer } from '@/lib/log-error-server';
  *   - Most user data (`bets`, `autopsy_reports`, `progress_snapshots`,
  *     `bet_journal_entries`, `discipline_scores`, `uploads`) is FK'd
  *     to `profiles(id)` ON DELETE CASCADE — gone with the user.
+ *   - The control-system tables (`control_plans`, `control_rules`,
+ *     `risk_events`, `cooldowns`) and `pre_bet_checkins` are all FK'd
+ *     to `profiles(id)` ON DELETE CASCADE too (migration
+ *     20260609_control_system.sql), so behavioral control/recovery data
+ *     is deleted with the user. Recovery-mode fields live on `profiles`
+ *     itself and vanish with that row.
  *   - `feedback`, `share_tokens`, `error_logs`,
  *     `stripe_idempotency_keys` use ON DELETE SET NULL — those rows
  *     stay, anonymized.

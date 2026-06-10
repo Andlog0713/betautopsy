@@ -415,12 +415,18 @@ function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: Au
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
+  // recoveryModeRecommended: report-intrinsic (this report's risk findings).
+  // Drives the apparent-edge caution + sharp-score interpretation copy, which
+  // describe THIS report and stay stable with it.
   const recoveryModeRecommended = analysis.control_system?.recoveryModeRecommended ?? false;
+  // recoveryModeActive: the user's LIVE recovery state, passed in at render
+  // (never baked into report_json). Drives tone reframing — session relabels,
+  // recovery banner — so leaving Recovery Mode reverts old reports to neutral.
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [controlRuleBusy, setControlRuleBusy] = useState<string | null>(null);
@@ -2219,7 +2225,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {analysis.session_analysis.best_session && (
               <div className="pl-5 border-l border-l-win/60">
                 <div className="flex items-baseline justify-between mb-2">
-                  <p className="data-label-sm">{recoveryModeRecommended ? 'Most Controlled Session' : 'Best Session'}</p>
+                  <p className="data-label-sm">{recoveryModeActive ? 'Most Controlled Session' : 'Best Session'}</p>
                   <span className="data-number text-[11px] text-fg-dim">{analysis.session_analysis.best_session.date}</span>
                 </div>
                 <p className="data-number text-3xl text-win mb-2 leading-none">
@@ -2231,7 +2237,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <span>{analysis.session_analysis.best_session.duration}</span>
                 </div>
                 <p className="text-sm text-fg-bright leading-relaxed">{analysis.session_analysis.best_session.description}</p>
-                {recoveryModeRecommended && (
+                {recoveryModeActive && (
                   <p className="text-xs text-fg-dim mt-3">
                     Use this as a model for pace and restraint, not as a green light to scale action.
                   </p>
@@ -2275,7 +2281,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <SessionAnalysisSection
               sessionData={analysis.session_detection}
               bets={bets}
-              recoveryModeRecommended={recoveryModeRecommended}
+              recoveryModeActive={recoveryModeActive}
             />
           )}
 
@@ -2303,7 +2309,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-fg-muted text-sm">
-                {recoveryModeRecommended ? 'Selection Score' : 'Sharp Score'} <span className="text-fg-muted italic">{recoveryModeRecommended ? '(how stable your selection quality looks on paper)' : '(how skilled your betting is overall)'}</span>
+                Sharp Score <span className="text-fg-muted italic">{recoveryModeRecommended ? '(how stable your selection looks on paper, not a signal to add action)' : '(how skilled your betting is overall)'}</span>
               </span>
               <span className="font-mono text-2xl font-bold text-scalpel">
                 {analysis.edge_profile.sharp_score}/100
@@ -2543,6 +2549,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       ) : (
       <>
+      {recoveryModeRecommended && !recoveryModeActive && !readOnly && (
+        <RecoveryRecommendationCard reportId={reportId} />
+      )}
       {analysis.control_system && (
         <div className="card p-6 space-y-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -3338,14 +3347,59 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
 
 // ── Session Analysis Section ──
 
+// Recovery-mode recommendation: a SUGGESTION the user manually opts into
+// (never auto-applied), with dismissal persisted per-report in localStorage.
+// Shown only when this report recommends recovery AND the user is not already
+// in Recovery Mode. Opting in happens in the Control Center, not here.
+function RecoveryRecommendationCard({ reportId }: { reportId?: string }) {
+  const storageKey = reportId ? `ba-recovery-rec-dismissed-${reportId}` : null;
+  const [dismissed, setDismissed] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!storageKey) { setReady(true); return; }
+    try {
+      setDismissed(window.localStorage.getItem(storageKey) === '1');
+    } catch { /* private mode — treat as not dismissed */ }
+    setReady(true);
+  }, [storageKey]);
+
+  function dismiss() {
+    setDismissed(true);
+    if (storageKey) {
+      try { window.localStorage.setItem(storageKey, '1'); } catch { /* ignore */ }
+    }
+  }
+
+  if (!ready || dismissed) return null;
+
+  return (
+    <div className="card-tier-1 border-l-2 border-l-loss/70 p-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div className="max-w-2xl">
+        <p className="case-header mb-2 text-loss">SUGGESTED</p>
+        <p className="text-fg-bright font-medium">This report shows elevated behavioral risk. Recovery Mode is a suggestion, not a switch we flip for you.</p>
+        <p className="text-fg-muted text-sm mt-2">
+          Turning it on foregrounds your rules, cooldowns, and support resources and de-emphasizes streak language. You can turn it off anytime, and your reports return to normal framing.
+        </p>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <Link href="/control" className="btn-secondary text-sm">Turn on Recovery Mode</Link>
+        <button onClick={dismiss} aria-label="Dismiss recommendation" className="text-fg-dim hover:text-fg-muted text-sm min-h-[44px] px-2">
+          Not now
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SessionAnalysisSection({
   sessionData,
   bets,
-  recoveryModeRecommended,
+  recoveryModeActive,
 }: {
   sessionData: import('@/types').SessionDetectionResult;
   bets: Bet[];
-  recoveryModeRecommended: boolean;
+  recoveryModeActive: boolean;
 }) {
   const [showAll, setShowAll] = useState(false);
   const [showHeated, setShowHeated] = useState(false);
@@ -3442,13 +3496,13 @@ function SessionAnalysisSection({
               <span className="data-number text-[11px] text-fg-dim">{sessionData.bestSession.id}</span>
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.bestSession.grade]}`}>{sessionData.bestSession.grade}</span>
             </div>
-            <p className="data-label-sm mb-2">{recoveryModeRecommended ? 'Most Controlled Session' : 'Best Session'}</p>
+            <p className="data-label-sm mb-2">{recoveryModeActive ? 'Most Controlled Session' : 'Best Session'}</p>
             <p className="data-number text-2xl text-win leading-none">+${sessionData.bestSession.profit.toLocaleString()}</p>
             <p className="data-number text-[11px] text-fg-dim mt-2">{sessionData.bestSession.dayOfWeek} · {sessionData.bestSession.bets} bets · {sessionData.bestSession.startTime}–{sessionData.bestSession.endTime}</p>
             {sessionData.bestSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
             ))}
-            {recoveryModeRecommended && (
+            {recoveryModeActive && (
               <p className="text-fg-dim text-xs mt-2">
                 Treat this as a blueprint for restraint, not a reason to add volume.
               </p>
