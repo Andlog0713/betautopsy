@@ -29,16 +29,16 @@ const FALLBACK_BETS = '15,004';
 const FALLBACK_REPORTS = '105';
 
 export const metadata: Metadata = {
-  title: 'BetAutopsy (Bet Autopsy): Sports Betting Behavioral Analysis Tool',
+  title: 'BetAutopsy (Bet Autopsy): Sports Betting Control Plan and Behavioral Analysis Tool',
   description:
-    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook and we scan for 47 behavioral signals, including cognitive biases, loss chasing, parlay overuse, and emotional patterns, then give you a personalized action plan to fix the leaks.',
+    'BetAutopsy (also known as Bet Autopsy) reads your sports betting history like a case file, then turns the findings into live rules, cooldowns, and a control plan. Upload from DraftKings, FanDuel, PrizePicks, or any sportsbook to scan for loss chasing, late-night betting, parlay overuse, and emotional patterns before they get expensive.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'BetAutopsy: Sports Betting Behavioral Analysis Tool',
     description:
-      'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks. Free to start.',
+      'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report, live betting rules, and a control plan built to interrupt bad patterns before they compound. Free to start.',
     url: 'https://www.betautopsy.com',
     images: [{ url: '/og', width: 1200, height: 630 }],
     type: 'website',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'BetAutopsy: Sports Betting Behavioral Analysis Tool',
     description:
-      'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report: cognitive biases, emotional patterns, and a plan to stop the leaks.',
+      'BetAutopsy (Bet Autopsy) reads your betting history like a case file. Get a forensic report, a control plan, and betting rules built to stop the leaks.',
     images: ['/og'],
   },
 };
@@ -65,7 +65,7 @@ export default function LandingPage() {
         url: 'https://www.betautopsy.com',
         logo: 'https://www.betautopsy.com/icon.svg',
         description:
-          'BetAutopsy provides behavioral analysis tools for sports bettors. Upload your betting history and get a forensic report on cognitive biases, emotional patterns, and strategic leaks.',
+          'BetAutopsy provides behavioral analysis and control-plan tools for sports bettors. Upload your betting history and get a forensic report, live rules, cooldowns, and support-oriented guardrails.',
       },
       {
         '@type': 'WebSite',
@@ -90,7 +90,7 @@ export default function LandingPage() {
           description: 'Free behavioral snapshot. Full reports from $9.99.',
         },
         description:
-          'Upload your sports betting history and get a full behavioral analysis. Identifies cognitive biases, emotional patterns, loss chasing, and parlay overuse across 47 behavioral metrics.',
+          'Upload your sports betting history and get a full behavioral analysis plus a live control plan. Identifies cognitive biases, emotional patterns, loss chasing, and parlay overuse across 47 behavioral metrics.',
       },
     ],
   };
@@ -185,7 +185,7 @@ export default function LandingPage() {
               <span className="text-scalpel">case file.</span>
             </h2>
             <p className="text-fg text-sm leading-relaxed">
-              Your Tuesday night parlays cost $340 last quarter. Your stakes jump 1.8x after a loss. Specific patterns, specific dollars, specific fixes.
+              Your Tuesday night parlays cost $340 last quarter. Your stakes jump 1.8x after a loss. Specific patterns, specific dollars, and live guardrails that stay with you.
             </p>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="case-header mb-2">PRICING // ACCESS LEVELS</div>
           <p className="text-fg-muted mb-6 max-w-md text-sm">
-            Start free. Upgrade for the full report with dollar costs and action plans.
+            Start free. Upgrade for the full report, control-plan rules, cooldown suggestions, and deeper behavior tracking.
           </p>
           <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 mb-8 max-w-sm mx-auto">
             <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>

@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
 import { useReportsSummary } from '@/hooks/useReports';
 import { useSnapshots } from '@/hooks/useSnapshots';
+import { useControlSystem } from '@/hooks/useControlSystem';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
 
@@ -17,7 +17,8 @@ const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
 import DisciplineScoreCard from '@/components/DisciplineScoreCard';
 import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import JournalEntryModal from '@/components/JournalEntryModal';
-import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Lock, Snowflake, AlertTriangle } from 'lucide-react';
+import ControlSystemPanel from '@/components/control/ControlSystemPanel';
+import { FlaskConical, Brain, Flame, Dice5, DollarSign, Eye, Upload, PenLine, Target, Calendar, Clock3, Lock, Snowflake, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { getEffectiveTier } from '@/lib/feature-flags';
@@ -56,13 +57,13 @@ function gradeColor(grade: string): string {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { user, profile, isLoading: userLoading } = useUser();
   const { reports, isLoading: reportsLoading } = useReportsSummary();
   const { snapshots, isLoading: snapshotsLoading } = useSnapshots();
+  const { controlState } = useControlSystem();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [, setStatsLoading] = useState(true);
   const [bankroll, setBankroll] = useState('');
   const [newBetsSinceReport, setNewBetsSinceReport] = useState(0);
   const [daysSinceReport, setDaysSinceReport] = useState<number | null>(null);
@@ -219,6 +220,9 @@ export default function DashboardPage() {
   const isPaid = getEffectiveTier(tier) === 'pro';
   const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const prev = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
+  const recoveryModeActive = controlState?.recoveryMode.active ?? false;
+  const activeCooldown = controlState?.activeCooldown ?? null;
+  const activeCooldownHoursRemaining = controlState?.summary.activeCooldownHoursRemaining ?? null;
 
   // Milestones
   const milestones: Milestone[] = [
@@ -278,6 +282,24 @@ export default function DashboardPage() {
   // ── Priority nudge: pick exactly one ──
   const nudge = (() => {
     if (!hasBets || !stats) return null;
+    if (recoveryModeActive) {
+      return {
+        icon: <AlertTriangle size={16} className="text-loss shrink-0" />,
+        message: activeCooldownHoursRemaining != null
+          ? `Recovery mode is active. Your cooldown still has about ${activeCooldownHoursRemaining} hour${activeCooldownHoursRemaining === 1 ? '' : 's'} left. Keep the pause intact and use support if you need it.`
+          : controlState?.summary.topMessage ?? 'Recovery mode is active. Slow the session down and use support before placing anything else.',
+        action: 'Open Support',
+        href: '/support',
+      };
+    }
+    if (activeCooldown) {
+      return {
+        icon: <Clock3 size={16} className="text-loss shrink-0" />,
+        message: activeCooldown.trigger_reason,
+        action: 'Open Control Center',
+        href: '/control',
+      };
+    }
     // 1. Bankroll warning
     if (!bankroll) return {
       icon: <AlertTriangle size={16} className="text-caution shrink-0" />,
@@ -338,10 +360,17 @@ export default function DashboardPage() {
     <div className="animate-fade-in">
       {/* ── Forensic case header ── */}
       <div className="mb-10">
-        <p className="case-header case-header-teal mb-2">CASE FILE // SUBJECT INTAKE</p>
+        <p className={`case-header mb-2 ${recoveryModeActive ? 'text-loss' : 'case-header-teal'}`}>
+          {recoveryModeActive ? 'RECOVERY MODE // DAILY CHECK' : 'CASE FILE // SUBJECT INTAKE'}
+        </p>
         <h1 className="text-3xl font-bold tracking-tight text-fg-bright leading-tight">
-          Your behavior, on record.
+          {recoveryModeActive ? 'Slow the session down. Protect the next decision.' : 'Your behavior, on record.'}
         </h1>
+        {recoveryModeActive && (
+          <p className="data-body mt-3 max-w-2xl">
+            {controlState?.recoveryMode.supportMessage}
+          </p>
+        )}
       </div>
 
       {/* Stats-dependent content: render an inline skeleton while the
@@ -490,6 +519,8 @@ export default function DashboardPage() {
             </div>
           )}
 
+          <ControlSystemPanel />
+
           {/* ── SECTION: VITALS ── Net P&L hero, then numbers strip ── */}
           <section className="mb-12 relative">
             <div className="absolute -top-1 right-0"><EyeToggle /></div>
@@ -590,19 +621,50 @@ export default function DashboardPage() {
 
                       {isPaid && snapshots.length > 0 && (
                         <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
-                            {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
-                            {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
-                          </div>
-                          <p className="text-2xl data-number text-fg-bright leading-none">
-                            {streakCount > 0 ? `${streakCount}w` : '—'}
-                          </p>
-                          <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
-                            <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
-                            {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
-                            {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
-                          </div>
+                          {recoveryModeActive ? (
+                            <>
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className="case-header text-loss">RECOVERY MODE</p>
+                                <AlertTriangle size={11} className="text-loss" />
+                              </div>
+                              <p className="text-lg text-fg-bright leading-snug">
+                                {controlState?.recoveryMode.summary ?? 'Protection mode is active.'}
+                              </p>
+                              <div className="text-[10px] text-fg-dim data-number mt-2 tracking-wider space-y-1">
+                                <p>{controlState?.summary.activeRuleCount ?? 0} LIVE RULES</p>
+                                <p>
+                                  {activeCooldownHoursRemaining != null
+                                    ? `${activeCooldownHoursRemaining}H COOLDOWN REMAINING`
+                                    : 'NO ACTIVE COOLDOWN'}
+                                </p>
+                                <p>{controlState?.summary.recentHighRiskEvents ?? 0} RECENT HIGH-RISK EVENTS</p>
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-3">
+                                <Link href="/control" className="case-header case-header-teal link-underline inline-block">
+                                  OPEN CONTROL CENTER →
+                                </Link>
+                                <Link href="/support" className="case-header text-loss link-underline inline-block">
+                                  SUPPORT OPTIONS →
+                                </Link>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
+                                {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
+                                {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
+                              </div>
+                              <p className="text-2xl data-number text-fg-bright leading-none">
+                                {streakCount > 0 ? `${streakCount}w` : '—'}
+                              </p>
+                              <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
+                                <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
+                                {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
+                                {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
 
@@ -629,7 +691,7 @@ export default function DashboardPage() {
               )}
 
               {/* Progress chart */}
-              {snapshots.length >= 2 && isPaid && (
+              {snapshots.length >= 2 && isPaid && !recoveryModeActive && (
                 <div className="min-h-[320px]">
                   <ProgressChart snapshots={snapshots} />
                 </div>
@@ -638,7 +700,7 @@ export default function DashboardPage() {
               {/* First autopsy CTA — uses examination surface */}
               {stats.reportCount === 0 && (
                 <div className="card-hero py-12 px-8">
-                  <p className="case-header case-header-teal mb-4">PROTOCOL // FIRST PASS</p>
+                  <p className="case-header case-header-teal mb-4">PROTOCOL // FIRST REPORT</p>
                   <h2 className="font-bold text-3xl text-fg-bright tracking-tight mb-3">
                     {stats.totalBets} bets loaded. Run the autopsy.
                   </h2>
@@ -716,7 +778,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── SECTION: MILESTONES ── */}
-          {isPaid && snapshots.length > 0 && (
+          {isPaid && snapshots.length > 0 && !recoveryModeActive && (
             <section className="border-t border-white/[0.04] pt-10 mb-12">
               <p className="case-header mb-6">MARKERS // MILESTONES</p>
               <div className="flex flex-wrap gap-x-10 gap-y-6">
@@ -740,7 +802,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── SECTION: PROTOCOL ── Free tier upgrade ── */}
-          {!isPaid && (
+          {!isPaid && !recoveryModeActive && (
             <section className="border-t border-white/[0.04] pt-10 mb-12">
               <p className="case-header case-header-teal mb-3">PROTOCOL // PRO UPGRADE</p>
               <h3 className="font-bold text-xl text-fg-bright mb-2 tracking-tight">Track if you&apos;re actually changing.</h3>
@@ -751,10 +813,27 @@ export default function DashboardPage() {
             </section>
           )}
 
+          {!isPaid && recoveryModeActive && (
+            <section className="border-t border-white/[0.04] pt-10 mb-12">
+              <p className="case-header text-loss mb-3">SUPPORT // RECOVERY MODE</p>
+              <h3 className="font-bold text-xl text-fg-bright mb-2 tracking-tight">The priority is friction and support, not upgrade prompts.</h3>
+              <p className="data-body max-w-2xl mb-5">
+                Use the Control Center to keep the current pause intact, review live rules, and reach support resources if the urge to bet is climbing.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/control" className="btn-primary inline-block text-sm font-mono">Open Control Center</Link>
+                <Link href="/support" className="btn-secondary inline-block text-sm font-mono">Support Resources</Link>
+              </div>
+            </section>
+          )}
+
           {/* ── SECTION: ACTIONS ── ── */}
           <section className="border-t border-white/[0.04] pt-10">
             <p className="case-header mb-6">PROTOCOL // QUICK ACTIONS</p>
             <div className="max-w-md">
+              <Link href="/control" className="interactive-row flex items-center gap-3 text-sm text-fg-muted hover:text-fg-bright py-3">
+                <ShieldCheck size={14} /> <span>Open control center</span>
+              </Link>
               <Link href="/upload" className="interactive-row flex items-center gap-3 text-sm text-fg-muted hover:text-fg-bright py-3">
                 <Upload size={14} /> <span>Upload new bets</span>
               </Link>
@@ -780,4 +859,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

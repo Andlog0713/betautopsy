@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 export default function AuthLayout({
   children,
@@ -54,7 +55,7 @@ export default function AuthLayout({
 
         <p className="text-fg-dim text-[10px] font-mono text-center mt-8 max-w-sm leading-relaxed tracking-wider">
           BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS. NOT GAMBLING
-          OR FINANCIAL ADVICE. 18+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
+          OR FINANCIAL ADVICE. 18+. IF YOU OR SOMEONE YOU KNOW MAY HAVE A GAMBLING PROBLEM, CALL OR TEXT {PROBLEM_GAMBLING_HELPLINE}.
         </p>
       </div>
     </div>

@@ -21,9 +21,10 @@ import RedactedValue from './RedactedValue';
 import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint, ShieldCheck, Ban, Clock, DollarSign, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
-import type { AutopsyAnalysis, Bet, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
+import type { AutopsyAnalysis, Bet, ControlRuleSuggestion, CooldownSuggestion, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { isPlatformCategory } from '@/lib/platform-filter';
+import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
 import PercentileGauge from './report/PercentileGauge';
@@ -419,8 +420,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
+  const recoveryModeRecommended = analysis.control_system?.recoveryModeRecommended ?? false;
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [controlRuleBusy, setControlRuleBusy] = useState<string | null>(null);
+  const [cooldownBusy, setCooldownBusy] = useState<string | null>(null);
 
   // Fire one heavy-impact haptic on first render so the grade
   // "reveal" lands with weight on mobile. `readOnly` reports (e.g.
@@ -454,6 +458,57 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     })();
     return () => { cancelled = true; };
   }, [reportId, readOnly]);
+
+  async function adoptControlRule(rule: ControlRuleSuggestion) {
+    if (readOnly) return;
+    setControlRuleBusy(rule.title);
+    try {
+      const res = await apiPost('/api/control-system', {
+        action: 'create_rule',
+        rule: {
+          title: rule.title,
+          description: rule.description,
+          rationale: rule.rationale,
+          rule_type: rule.rule_type,
+          scope: rule.scope,
+          scope_value: rule.scope_value,
+          severity: rule.severity,
+          enforcement: rule.enforcement,
+          provenance: rule.provenance,
+          trigger: rule.trigger,
+          source_report_id: reportId ?? null,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to adopt rule');
+      toast.success('Rule added to your Control Center');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to adopt rule');
+    } finally {
+      setControlRuleBusy(null);
+    }
+  }
+
+  async function startReportCooldown(suggestion: CooldownSuggestion) {
+    if (readOnly) return;
+    setCooldownBusy(suggestion.label);
+    try {
+      const res = await apiPost('/api/control-system', {
+        action: 'start_cooldown',
+        trigger_type: 'user_choice',
+        trigger_reason: suggestion.trigger,
+        user_explanation: suggestion.reason,
+        duration_hours: suggestion.durationHours ?? 24,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to start cooldown');
+      toast.success(`${suggestion.durationLabel} cooldown started`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start cooldown');
+    } finally {
+      setCooldownBusy(null);
+    }
+  }
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
@@ -1109,7 +1164,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </p>
               {analysis.bankroll_health === 'danger' && (
                 <p className="text-fg-muted text-xs mt-3">
-                  If you feel your gambling is out of control, call <span className="text-fg-bright">1-800-GAMBLER</span> or visit <span className="text-fg-bright">ncpgambling.org</span> for self-exclusion resources.
+                  If betting feels out of control, call or text <span className="text-fg-bright">{PROBLEM_GAMBLING_HELPLINE}</span> and open the{' '}
+                  <Link href={SUPPORT_PAGE_PATH} className="text-scalpel hover:underline">
+                    support resources
+                  </Link>
+                  .
                 </p>
               )}
             </div>
@@ -2160,7 +2219,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             {analysis.session_analysis.best_session && (
               <div className="pl-5 border-l border-l-win/60">
                 <div className="flex items-baseline justify-between mb-2">
-                  <p className="data-label-sm">Best Session</p>
+                  <p className="data-label-sm">{recoveryModeRecommended ? 'Most Controlled Session' : 'Best Session'}</p>
                   <span className="data-number text-[11px] text-fg-dim">{analysis.session_analysis.best_session.date}</span>
                 </div>
                 <p className="data-number text-3xl text-win mb-2 leading-none">
@@ -2172,6 +2231,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <span>{analysis.session_analysis.best_session.duration}</span>
                 </div>
                 <p className="text-sm text-fg-bright leading-relaxed">{analysis.session_analysis.best_session.description}</p>
+                {recoveryModeRecommended && (
+                  <p className="text-xs text-fg-dim mt-3">
+                    Use this as a model for pace and restraint, not as a green light to scale action.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -2208,7 +2272,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       ) : (
         <>
           {analysis.session_detection && analysis.session_detection.totalSessions > 0 && (
-            <SessionAnalysisSection sessionData={analysis.session_detection} bets={bets} />
+            <SessionAnalysisSection
+              sessionData={analysis.session_detection}
+              bets={bets}
+              recoveryModeRecommended={recoveryModeRecommended}
+            />
           )}
 
           {/* ── Bet-by-Bet Annotations ── */}
@@ -2224,10 +2292,19 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="space-y-4">
           <h2 className="font-bold text-2xl">Edge Profile</h2>
           <p className="text-fg-muted text-xs italic -mt-2">Where you have a statistical advantage (edges) vs where you&apos;re losing money (leaks).</p>
+          {recoveryModeRecommended && (
+            <div className="card-tier-1 border-l-2 border-l-loss/70 px-5 py-4">
+              <p className="text-sm text-fg-muted">
+                Even if some categories look stronger than others, the behavioral risk in this report still takes priority. Do not treat any apparent edge as permission to increase action.
+              </p>
+            </div>
+          )}
           {/* Sharp Score */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-fg-muted text-sm">Sharp Score <span className="text-fg-muted italic">(how skilled your betting is overall)</span></span>
+              <span className="text-fg-muted text-sm">
+                {recoveryModeRecommended ? 'Selection Score' : 'Sharp Score'} <span className="text-fg-muted italic">{recoveryModeRecommended ? '(how stable your selection quality looks on paper)' : '(how skilled your betting is overall)'}</span>
+              </span>
               <span className="font-mono text-2xl font-bold text-scalpel">
                 {analysis.edge_profile.sharp_score}/100
               </span>
@@ -2239,7 +2316,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               />
             </div>
             <p className="text-fg-muted text-xs">
-              {analysis.edge_profile.sharp_score >= 75
+              {recoveryModeRecommended
+                ? 'This can show where your selection process is less damaging, but it does not override the behavioral risk signals above.'
+                : analysis.edge_profile.sharp_score >= 75
                 ? 'Elite-level betting skill. You consistently find value.'
                 : analysis.edge_profile.sharp_score >= 60
                 ? 'Above average. You have real edges in specific areas.'
@@ -2464,6 +2543,142 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       ) : (
       <>
+      {analysis.control_system && (
+        <div className="card p-6 space-y-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <p className={`case-header mb-2 ${recoveryModeRecommended ? 'text-loss' : 'case-header-teal'}`}>
+                CONTROL SYSTEM
+              </p>
+              <h2 className="font-bold text-2xl text-fg-bright">{analysis.control_system.headline}</h2>
+              <p className="text-fg-muted text-sm mt-2">
+                {analysis.control_system.nextWeekFocus}
+              </p>
+            </div>
+            {!readOnly && (
+              <Link href="/control" className="btn-secondary text-sm shrink-0">
+                Open Control Center
+              </Link>
+            )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {analysis.control_system.topRisks.map((risk) => (
+              <div key={risk.title} className="card-tier-1 p-4">
+                <p className="text-fg-bright font-medium">{risk.title}</p>
+                <p className="text-fg-muted text-sm mt-2">{risk.detail}</p>
+                <p className="text-fg-dim text-xs mt-3">{risk.evidence}</p>
+              </div>
+            ))}
+          </div>
+
+          {analysis.control_system.hardRules.length > 0 && (
+            <div className="space-y-3">
+              <p className="case-header text-loss">HARD RULES</p>
+              {analysis.control_system.hardRules.map((rule) => (
+                <div key={rule.title} className="card-tier-2 p-4 border-l-2 border-l-loss/70 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-fg-bright font-medium">{rule.description}</p>
+                    <p className="text-fg-muted text-sm mt-1">{rule.rationale}</p>
+                    <p className="text-fg-dim text-xs font-mono mt-2 uppercase tracking-[1.5px]">{rule.source}</p>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      onClick={() => void adoptControlRule(rule)}
+                      disabled={controlRuleBusy === rule.title}
+                      className="btn-secondary text-sm shrink-0"
+                    >
+                      {controlRuleBusy === rule.title ? 'Adding...' : 'Adopt Rule'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {analysis.control_system.softRules.length > 0 && (
+            <div className="space-y-3">
+              <p className="case-header">SOFT FRICTION</p>
+              {analysis.control_system.softRules.map((rule) => (
+                <div key={rule.title} className="card-tier-2 p-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-fg-bright font-medium">{rule.description}</p>
+                    <p className="text-fg-muted text-sm mt-1">{rule.rationale}</p>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      onClick={() => void adoptControlRule(rule)}
+                      disabled={controlRuleBusy === rule.title}
+                      className="btn-secondary text-sm shrink-0"
+                    >
+                      {controlRuleBusy === rule.title ? 'Adding...' : 'Adopt Rule'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {analysis.control_system.cooldownSuggestions.length > 0 && (
+            <div className="space-y-3">
+              <p className="case-header">COOLDOWNS</p>
+              {analysis.control_system.cooldownSuggestions.map((suggestion) => (
+                <div key={suggestion.label} className="card-tier-2 p-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-fg-bright font-medium">{suggestion.label}</p>
+                    <p className="text-fg-muted text-sm mt-1">{suggestion.reason}</p>
+                    <p className="text-fg-dim text-xs font-mono mt-2 uppercase tracking-[1.5px]">{suggestion.durationLabel}</p>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      onClick={() => void startReportCooldown(suggestion)}
+                      disabled={cooldownBusy === suggestion.label}
+                      className="btn-secondary text-sm shrink-0"
+                    >
+                      {cooldownBusy === suggestion.label ? 'Starting...' : 'Start Cooldown'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="card-tier-1 p-4">
+              <p className="case-header mb-2">RELAPSE TRIGGERS</p>
+              <div className="space-y-2">
+                {analysis.control_system.relapseTriggers.map((trigger) => (
+                  <p key={trigger} className="text-sm text-fg-muted">{trigger}</p>
+                ))}
+              </div>
+            </div>
+            <div className="card-tier-1 p-4">
+              <p className="case-header mb-2">SUPPORT</p>
+              <div className="space-y-2">
+                {analysis.control_system.supportResources.map((resource) => (
+                  <div key={resource.label} className="text-sm text-fg-muted">
+                    <span className="text-fg-bright">{resource.label}:</span> {resource.value}{' '}
+                    {resource.href && (
+                      <a
+                        href={resource.href}
+                        target={resource.href.startsWith('http') ? '_blank' : undefined}
+                        rel={resource.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="text-scalpel hover:underline"
+                      >
+                        Open
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Link href={SUPPORT_PAGE_PATH} className="inline-block text-sm text-scalpel hover:underline mt-3">
+                View all support options
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Plan */}
       {isPartialReport && !snapshotLocked && <SkeletonSection label="Generating your personalized action plan..." />}
       {!isPartialReport && recommendations.length > 0 && (
@@ -2536,10 +2751,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             ];
             const weakest = scores.sort((a, b) => a.val - b.val)[0];
             const tips: Record<string, string> = {
-              Tracking: 'Set your bankroll, upload bets regularly, and keep your autopsy streak alive.',
+              Tracking: 'Set your bankroll and keep your review habit consistent so the control system has current data to work with.',
               Sizing: 'Flatten your bet sizing. Big swings in stake amounts signal emotional decisions.',
               Control: 'Your emotion score is high. Focus on the post-loss escalation pattern.',
-              Strategy: 'Too much volume in losing categories. Check your Edge Profile and shift bets to what works.',
+              Strategy: 'Too much volume is flowing into losing categories. Reduce exposure before you worry about pressing any apparent edge.',
             };
             return (
               <p className="text-fg-muted text-xs">
@@ -3123,7 +3338,15 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
 
 // ── Session Analysis Section ──
 
-function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/types').SessionDetectionResult; bets: Bet[] }) {
+function SessionAnalysisSection({
+  sessionData,
+  bets,
+  recoveryModeRecommended,
+}: {
+  sessionData: import('@/types').SessionDetectionResult;
+  bets: Bet[];
+  recoveryModeRecommended: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   const [showHeated, setShowHeated] = useState(false);
   const [showBestBets, setShowBestBets] = useState(false);
@@ -3219,11 +3442,17 @@ function SessionAnalysisSection({ sessionData, bets }: { sessionData: import('@/
               <span className="data-number text-[11px] text-fg-dim">{sessionData.bestSession.id}</span>
               <span className={`font-mono text-[10px] px-2 py-0.5 rounded-sm font-bold ${gradeColors[sessionData.bestSession.grade]}`}>{sessionData.bestSession.grade}</span>
             </div>
+            <p className="data-label-sm mb-2">{recoveryModeRecommended ? 'Most Controlled Session' : 'Best Session'}</p>
             <p className="data-number text-2xl text-win leading-none">+${sessionData.bestSession.profit.toLocaleString()}</p>
             <p className="data-number text-[11px] text-fg-dim mt-2">{sessionData.bestSession.dayOfWeek} · {sessionData.bestSession.bets} bets · {sessionData.bestSession.startTime}–{sessionData.bestSession.endTime}</p>
             {sessionData.bestSession.gradeReasons.map((r, i) => (
               <p key={i} className="text-fg-muted text-xs mt-1">+ {r}</p>
             ))}
+            {recoveryModeRecommended && (
+              <p className="text-fg-dim text-xs mt-2">
+                Treat this as a blueprint for restraint, not a reason to add volume.
+              </p>
+            )}
             {(sessionData.bestSession.betIndices.length >= 2 && bets.length > 0 || (sessionData.bestSession.betSnapshots?.length ?? 0) >= 2) && (
               <SessionBetTimeline session={sessionData.bestSession} bets={bets} show={showBestBets} setShow={setShowBestBets} />
             )}

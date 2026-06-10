@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isResendConfigured, getResend } from '@/lib/resend';
+import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +104,7 @@ export async function GET(request: Request) {
 <!-- Footer -->
 <tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5">
   <p style="font-size:11px;color:#999;line-height:1.6;text-align:center;margin:0">
-    BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+    BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}
   </p>
 </td></tr>
 

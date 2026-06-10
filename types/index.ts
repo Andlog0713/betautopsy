@@ -46,6 +46,9 @@ export interface Profile {
   is_admin: boolean;
   email_digest_enabled: boolean;
   last_digest_sent_at: string | null;
+  manual_recovery_mode: boolean;
+  recovery_mode_reason: string | null;
+  recovery_mode_started_at: string | null;
   reports_used_this_period: number;
   current_period_start: string | null;
   created_at: string;
@@ -327,6 +330,7 @@ export interface AutopsyAnalysis {
   // (runSnapshot is a separate assembly path that does not populate it). iOS
   // Phase 2.5 consumes via a WhatIfScenario Codable in a follow-up PR.
   what_if_scenarios?: WhatIfScenario[];
+  control_system?: ReportControlSystem;
 }
 
 // ── What-If counterfactuals ──
@@ -365,10 +369,263 @@ export interface WhatChanged {
   topImpactDeltas?: ImpactDelta[];
 }
 
+export type ControlRuleType =
+  | 'loss_streak_stop'
+  | 'late_night_cutoff'
+  | 'ban_category'
+  | 'stake_cap'
+  | 'session_limit'
+  | 'cooldown_after_loss'
+  | 'emotion_block'
+  | 'post_heated_session_pause'
+  | 'rapid_fire_limit'
+  | 'custom';
+
+export type ControlRuleScope =
+  | 'global'
+  | 'sport'
+  | 'bet_type'
+  | 'session'
+  | 'time_window'
+  | 'emotion_state';
+
+export type ControlRuleSeverity = 'supportive' | 'guardrail' | 'critical';
+export type ControlRuleEnforcement = 'soft' | 'hard';
+export type ControlRuleStatus = 'active' | 'inactive' | 'paused' | 'expired';
+export type ControlRuleProvenance =
+  | 'engine_recommended'
+  | 'user_authored'
+  | 'manual_override'
+  | 'recovery_plan_rule';
+
+export interface ControlRuleTrigger {
+  threshold?: number;
+  unit?: string;
+  maxStake?: number;
+  maxStakeMultiplier?: number;
+  category?: string;
+  sessionLimit?: number;
+  waitMinutes?: number;
+  cooldownHours?: number;
+  startHour?: number;
+  endHour?: number;
+  blockedEmotions?: string[];
+  recurrenceWindowDays?: number;
+}
+
+export interface ControlRule {
+  id: string;
+  user_id: string;
+  plan_id: string | null;
+  source_report_id: string | null;
+  title: string;
+  description: string;
+  rationale: string;
+  rule_type: ControlRuleType;
+  scope: ControlRuleScope;
+  scope_value: string | null;
+  severity: ControlRuleSeverity;
+  enforcement: ControlRuleEnforcement;
+  status: ControlRuleStatus;
+  provenance: ControlRuleProvenance;
+  trigger: ControlRuleTrigger;
+  start_at: string;
+  end_at: string | null;
+  last_triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ControlRuleSuggestion {
+  title: string;
+  description: string;
+  rationale: string;
+  rule_type: ControlRuleType;
+  scope: ControlRuleScope;
+  scope_value: string | null;
+  severity: ControlRuleSeverity;
+  enforcement: ControlRuleEnforcement;
+  provenance: ControlRuleProvenance;
+  trigger: ControlRuleTrigger;
+  source: string;
+}
+
+export interface ControlPlanSettings {
+  bettingHours: {
+    startHour: number | null;
+    endHour: number | null;
+    timezoneLabel: string | null;
+  };
+  maximumUnitSize: number | null;
+  bannedBetCategories: string[];
+  sessionLimit: number | null;
+  lossStreakStop: number | null;
+  lateNightCutoffHour: number | null;
+  postLossWaitingPeriodMinutes: number | null;
+  reflectionQuestion: string | null;
+}
+
+export interface ControlPlanDecision {
+  key: string;
+  label: string;
+  recommendation: string;
+  decision: 'accepted' | 'modified' | 'rejected';
+  finalValue: string;
+}
+
+export interface ControlPlan {
+  id: string;
+  user_id: string;
+  name: string;
+  status: 'draft' | 'active' | 'archived';
+  source_report_id: string | null;
+  settings: ControlPlanSettings;
+  accountability_message: string | null;
+  why_this_matters: string | null;
+  decisions: ControlPlanDecision[];
+  activated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CooldownTriggerType =
+  | 'check_in_flag'
+  | 'heated_session'
+  | 'post_loss_escalation'
+  | 'late_night_pattern'
+  | 'user_choice'
+  | 'rule_violation'
+  | 'cooldown_override'
+  | 'manual_recovery';
+
+export type CooldownStatus = 'active' | 'honored' | 'broken' | 'expired' | 'canceled';
+
+export interface Cooldown {
+  id: string;
+  user_id: string;
+  rule_id: string | null;
+  risk_event_id: string | null;
+  trigger_type: CooldownTriggerType;
+  trigger_reason: string;
+  user_explanation: string;
+  triggered_at: string;
+  expires_at: string;
+  status: CooldownStatus;
+  override_reason: string | null;
+  broken_at: string | null;
+  created_at: string;
+}
+
+export interface CooldownSuggestion {
+  trigger: string;
+  label: string;
+  durationLabel: string;
+  durationHours: number | null;
+  reason: string;
+}
+
+export type RiskEventType =
+  | 'late_night_bet'
+  | 'oversized_stake'
+  | 'post_loss_escalation'
+  | 'heated_session'
+  | 'rapid_fire_session'
+  | 'rule_violation'
+  | 'cooldown_override'
+  | 'bet_type_relapse'
+  | 'loss_streak_breach'
+  | 'emotion_trigger'
+  | 'recovery_mode_trigger';
+
+export type RiskEventSeverity = 'info' | 'warning' | 'high' | 'critical';
+
+export interface RiskEvent {
+  id: string;
+  user_id: string;
+  source_report_id: string | null;
+  rule_id: string | null;
+  cooldown_id: string | null;
+  check_in_id: string | null;
+  event_type: RiskEventType;
+  severity: RiskEventSeverity;
+  summary: string;
+  detail: string;
+  recurrence_count: number;
+  window_days: number;
+  event_at: string;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface RecoveryModeState {
+  active: boolean;
+  level: 'watch' | 'elevated' | 'recovery';
+  manual: boolean;
+  startedAt: string | null;
+  summary: string;
+  supportMessage: string;
+  triggers: string[];
+}
+
+export interface SupportResource {
+  label: string;
+  value: string;
+  href?: string;
+}
+
+export interface ControlSystemSummary {
+  topMessage: string;
+  activeRuleCount: number;
+  hardRuleCount: number;
+  softRuleCount: number;
+  activeCooldownHoursRemaining: number | null;
+  recentHighRiskEvents: number;
+  repeatPatternMessage: string | null;
+}
+
+export interface ControlSystemState {
+  activePlan: ControlPlan | null;
+  suggestedPlan: ControlPlan | null;
+  rules: ControlRule[];
+  suggestedRules: ControlRuleSuggestion[];
+  activeCooldown: Cooldown | null;
+  cooldowns: Cooldown[];
+  riskEvents: RiskEvent[];
+  recoveryMode: RecoveryModeState;
+  summary: ControlSystemSummary;
+  supportResources: SupportResource[];
+}
+
+export interface ReportRiskSummary {
+  title: string;
+  detail: string;
+  evidence: string;
+}
+
+export interface ReportControlSystem {
+  controlStatus: 'support_mode' | 'watch_mode' | 'recovery_mode';
+  headline: string;
+  topRisks: ReportRiskSummary[];
+  hardRules: ControlRuleSuggestion[];
+  softRules: ControlRuleSuggestion[];
+  cooldownSuggestions: CooldownSuggestion[];
+  relapseTriggers: string[];
+  nextWeekFocus: string;
+  planTemplate: ControlPlanSettings;
+  recoveryModeRecommended: boolean;
+  supportResources: SupportResource[];
+}
+
 export interface PersonalRule {
   rule: string;
   reason: string;
   based_on: string;
+  rule_type?: ControlRuleType;
+  scope?: ControlRuleScope;
+  scope_value?: string | null;
+  severity?: ControlRuleSeverity;
+  enforcement?: ControlRuleEnforcement;
+  provenance?: ControlRuleProvenance;
+  trigger?: ControlRuleTrigger;
 }
 
 export interface SessionAnalysis {
@@ -962,6 +1219,12 @@ export interface PreBetCheckInRequest {
   // computes this via Calendar.current and sends it on every request.
   // Backend falls back to UTC parsing of placedAt when absent.
   localHour?: number;
+  reflection?: {
+    whyNow?: string;
+    tryingToWinBackLosses?: boolean;
+    wouldBetIfLastBetWon?: boolean;
+    emotionalState?: 'calm' | 'focused' | 'angry' | 'tilted' | 'anxious' | 'bored' | 'confident';
+  };
 }
 
 export interface PreBetCheckInFlag {
@@ -969,6 +1232,46 @@ export interface PreBetCheckInFlag {
   severity: CheckInSeverity;
   title: string;
   detail: string;
+}
+
+export type CheckInActionGate = 'clear' | 'reflection_required' | 'blocked';
+
+export interface CheckInRuleViolation {
+  ruleId: string;
+  ruleType: ControlRuleType;
+  title: string;
+  ruleText: string;
+  enforcement: ControlRuleEnforcement;
+  severity: ControlRuleSeverity;
+  reason: string;
+}
+
+export interface CheckInCooldownContext {
+  active: boolean;
+  cooldownId: string | null;
+  expiresAt: string | null;
+  summary: string | null;
+  triggerType: CooldownTriggerType | null;
+}
+
+export interface CheckInRiskContext {
+  eventType: RiskEventType;
+  severity: RiskEventSeverity;
+  summary: string;
+  recurrenceCount: number;
+  windowDays: number;
+}
+
+export interface CheckInPlanContext {
+  planName: string | null;
+  adherenceSummary: string;
+  referencedRules: string[];
+}
+
+export interface CheckInReflectionPrompt {
+  id: 'purpose' | 'chasing' | 'counterfactual';
+  question: string;
+  responseType: 'text' | 'boolean';
 }
 
 // Pure scorer output. lib/check-in-scorer.ts produces this; the route
@@ -979,6 +1282,13 @@ export interface CheckInScoreResult {
   flags: PreBetCheckInFlag[];
   recommendation: CheckInRecommendation;
   summary: string;
+  actionGate?: CheckInActionGate;
+  ruleViolations?: CheckInRuleViolation[];
+  cooldown?: CheckInCooldownContext | null;
+  recentRiskContext?: CheckInRiskContext[];
+  planContext?: CheckInPlanContext | null;
+  reflectionPrompts?: CheckInReflectionPrompt[];
+  overrideRequired?: boolean;
 }
 
 export interface PreBetCheckInResponse {
@@ -991,6 +1301,13 @@ export interface PreBetCheckInResponse {
   flags: PreBetCheckInFlag[];
   recommendation: CheckInRecommendation;
   summary: string;
+  actionGate?: CheckInActionGate;
+  ruleViolations?: CheckInRuleViolation[];
+  cooldown?: CheckInCooldownContext | null;
+  recentRiskContext?: CheckInRiskContext[];
+  planContext?: CheckInPlanContext | null;
+  reflectionPrompts?: CheckInReflectionPrompt[];
+  overrideRequired?: boolean;
 }
 
 export type CheckInOutcome = 'placed_anyway' | 'waited' | 'placed_bet';
@@ -1000,6 +1317,7 @@ export const CHECK_IN_OUTCOMES = ['placed_anyway', 'waited', 'placed_bet'] as co
 export interface CheckInOutcomeRequest {
   checkInId: string;
   outcome: CheckInOutcome;
+  overrideReason?: string;
 }
 
 // ── Action item check-offs (Chapter 7 → dashboard progress ring) ──

@@ -1,4 +1,5 @@
 import type { AutopsyAnalysis, Bet } from '@/types';
+import { buildReportControlSystem } from '@/lib/control-system';
 
 // ── Demo Bets ──
 // ~35 representative bets for charts. Tells a story: decent NFL bettor,
@@ -750,3 +751,6 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     pickCountAfterWin: 2.8,
   },
 };
+
+DEMO_ANALYSIS.control_system = buildReportControlSystem(DEMO_ANALYSIS);
+DEMO_DFS_ANALYSIS.control_system = buildReportControlSystem(DEMO_DFS_ANALYSIS);

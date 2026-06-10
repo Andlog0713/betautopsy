@@ -1,4 +1,11 @@
 import Link from 'next/link';
+import {
+  CRISIS_LIFELINE,
+  CRISIS_LIFELINE_URL,
+  PROBLEM_GAMBLING_HELPLINE,
+  PROBLEM_GAMBLING_HELPLINE_TEL,
+  SUPPORT_PAGE_PATH,
+} from '@/lib/support-resources';
 
 export default function ResponsibleGambling() {
   return (
@@ -16,10 +23,13 @@ export default function ResponsibleGambling() {
           We are not affiliated with, endorsed by, or officially connected to any sportsbook, DFS platform, prediction market, or sports league. Any third-party names, logos, or trademarks are property of their respective owners.
         </p>
         <p className="text-xs text-fg-muted">
-          Gambling Problem? Call{' '}
-          <a href="tel:18009426886" className="text-scalpel font-medium">1-800-GAMBLER</a>
+          Need support? Call or text{' '}
+          <a href={`tel:${PROBLEM_GAMBLING_HELPLINE_TEL}`} className="text-scalpel font-medium">{PROBLEM_GAMBLING_HELPLINE}</a>
           {' // '}
-          <Link href="https://www.ncpgambling.org" className="text-scalpel hover:underline" target="_blank" rel="noopener noreferrer">ncpgambling.org</Link>
+          <Link href={SUPPORT_PAGE_PATH} className="text-scalpel hover:underline">support resources</Link>
+          {' // '}
+          crisis support{' '}
+          <Link href={CRISIS_LIFELINE_URL} className="text-scalpel hover:underline" target="_blank" rel="noopener noreferrer">{CRISIS_LIFELINE}</Link>
         </p>
       </div>
     </div>

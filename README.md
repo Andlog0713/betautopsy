@@ -1,6 +1,6 @@
 # BetAutopsy
 
-AI-powered behavioral analysis for sports bettors. Not a bet tracker, not a picks service — a sports psychologist for your betting data.
+AI-powered behavioral analysis and control-plan tooling for sports bettors. Not a bet tracker, not a picks service — a self-control operating system for your betting data.
 
 Upload your betting history (CSV from Pikkit, DraftKings, FanDuel, or any sportsbook) and get a forensic breakdown: cognitive bias detection with dollar costs, emotion score, discipline score, BetIQ skill assessment, sport-specific pattern detection, and a personalized action plan.
 
@@ -87,6 +87,7 @@ Use test card `4242 4242 4242 4242` for payments.
 - **Sport-Specific Detection**: NFL key number awareness, NBA prop overexposure, MLB moneyline tunnel vision, DFS multiplier chasing
 - **Bet DNA Quiz**: 13-question personality quiz with Spotify Wrapped-style reveal sequence
 - **Behavioral Journal**: Pre-bet mental state logging for future correlation analysis
+- **Recovery and Control System**: Personal rules, cooldowns, risk-event logging, recovery mode, and live control plans built from report findings
 - **Weekly Digest**: Automated email with personalized insights (Tuesdays via Vercel cron)
 - **Progress Tracking**: Longitudinal snapshots, streak system, milestone badges
 - **Share Cards**: Stories-format (1080x1920) share cards with bet-slip aesthetic

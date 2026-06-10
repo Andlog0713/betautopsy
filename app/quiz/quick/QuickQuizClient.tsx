@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import { apiPost } from '@/lib/api-client';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 // 5 questions that cover all scoring dimensions with minimal overlap
 const QUICK_QUESTION_IDS = ['q3', 'q1', 'q5', 'q6', 'q14'];
@@ -360,7 +361,7 @@ export default function QuickQuizClient() {
 
           <p className="text-fg-muted text-xs text-center mt-8">
             For entertainment and educational purposes only. Not gambling advice. 18+.
-            If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+            If you or someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
           </p>
           <div className="text-center">
             <Link href="/" className="text-fg-muted text-xs hover:text-fg transition-colors">← Back to BetAutopsy</Link>

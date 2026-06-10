@@ -13,6 +13,7 @@ import FeedbackButton from '@/components/FeedbackButton';
 import AuthGuard from '@/components/AuthGuard';
 import NativeTabBar from '@/components/native/NativeTabBar';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 import {
   LayoutDashboard, Upload, Clock, FolderOpen, FileText,
   Settings, Gem, LogOut, Menu, X, ArrowUpRight, Shield, Flame, MessageSquare,
@@ -393,7 +394,7 @@ export default function DashboardShell({
           <p className="font-mono text-[9px] text-fg-dim tracking-wider max-w-xl mx-auto leading-relaxed">
             BETAUTOPSY PROVIDES BEHAVIORAL ANALYSIS AND EDUCATIONAL INSIGHTS. NOT
             GAMBLING OR FINANCIAL ADVICE. PAST RESULTS DON&apos;T GUARANTEE FUTURE OUTCOMES.
-            18+. IF YOU OR SOMEONE YOU KNOW HAS A GAMBLING PROBLEM, CALL 1-800-GAMBLER.
+            18+. IF YOU OR SOMEONE YOU KNOW MAY HAVE A GAMBLING PROBLEM, CALL OR TEXT {PROBLEM_GAMBLING_HELPLINE}.
           </p>
           <p className="font-mono text-[9px] text-fg-dim tracking-wider mt-1">
             © {new Date().getFullYear()} DIAGNOSTIC SPORTS, LLC D/B/A BETAUTOPSY

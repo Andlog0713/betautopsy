@@ -164,7 +164,7 @@ export function generateInsight(stats: DigestStats): Insight {
     const pct = Math.round((stats.parlayCount / stats.totalBets) * 100);
     return {
       headline: `${pct}% of your bets were parlays`,
-      detail: `Your parlay ROI this week: ${stats.parlayRoi >= 0 ? '+' : ''}${stats.parlayRoi}%. Your straight bet ROI: ${stats.straightBetRoi >= 0 ? '+' : ''}${stats.straightBetRoi}%. ${stats.straightBetRoi > stats.parlayRoi ? 'Your straight bets are outperforming. Consider shifting volume.' : 'Keep an eye on this. Parlays carry significantly higher sportsbook edge.'}`,
+      detail: `Your parlay ROI this week: ${stats.parlayRoi >= 0 ? '+' : ''}${stats.parlayRoi}%. Your straight bet ROI: ${stats.straightBetRoi >= 0 ? '+' : ''}${stats.straightBetRoi}%. ${stats.straightBetRoi > stats.parlayRoi ? 'Your straight bets are holding up better. A temporary no-parlay rule would reduce relapse risk.' : 'This is worth tightening now. Parlays carry significantly higher sportsbook edge and tend to show up in reactive sessions.'}`,
     };
   }
 
@@ -180,7 +180,7 @@ export function generateInsight(stats: DigestStats): Insight {
   if (stats.longestWinStreak >= 4) {
     return {
       headline: `${stats.longestWinStreak}-bet win streak`,
-      detail: 'Nice run. The real question: did your bet sizing stay flat during it, or did you start pressing? Streaks feel like skill in the moment, but keeping your process consistent is what separates long-term winners.',
+      detail: 'The question is not whether the streak felt good. It is whether your size and pace stayed controlled while it was happening. Winning runs are where a lot of discipline quietly slips.',
     };
   }
 
@@ -188,7 +188,7 @@ export function generateInsight(stats: DigestStats): Insight {
   if (stats.roi > 5 && stats.totalBets >= 5) {
     return {
       headline: `+${stats.roi}% ROI this week`,
-      detail: `Strong week. ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. Was this edge or variance? A full autopsy on your bet history would tell you which categories are genuinely profitable vs running hot.`,
+      detail: `Strong week. ${stats.wins}-${stats.losses} with $${Math.abs(Math.round(stats.netPnL)).toLocaleString()} in profit. The real win is keeping the same rules next week instead of loosening them because results cooperated.`,
     };
   }
 
@@ -203,7 +203,7 @@ export function generateInsight(stats: DigestStats): Insight {
   // 7. Default
   return {
     headline: `${stats.totalBets} bets, ${stats.wins}-${stats.losses} record`,
-    detail: `You wagered $${Math.round(stats.totalStaked).toLocaleString()} this week for ${stats.netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. ${stats.mostBetSport ? `Most of your action was on ${stats.mostBetSport}.` : ''} Run an autopsy to see what patterns are hiding in the data.`,
+    detail: `You wagered $${Math.round(stats.totalStaked).toLocaleString()} this week for ${stats.netPnL >= 0 ? '+' : ''}$${Math.abs(Math.round(stats.netPnL)).toLocaleString()}. ${stats.mostBetSport ? `Most of your action was on ${stats.mostBetSport}.` : ''} The useful question now is which part of your process needs a firmer rule before next week starts.`,
   };
 }
 
@@ -212,15 +212,18 @@ export interface PositiveLead {
 }
 
 export function generatePositiveLead(stats: DigestStats): PositiveLead {
-  if (stats.biggestWin && stats.biggestWin.profit > 100) {
-    return { text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit.toLocaleString()}` };
+  if (stats.straightBetRoi > 0) {
+    return { text: `Your straight bets went +${stats.straightBetRoi}% this week` };
+  }
+  if (stats.lateNightBets === 0 && stats.totalBets > 0) {
+    return { text: 'No late-night bets logged this week' };
   }
   if (stats.mostProfitableSport) {
     const sport = stats.mostProfitableSport;
     return { text: `Your ${sport} bets are in the green this week` };
   }
-  if (stats.straightBetRoi > 0) {
-    return { text: `Your straight bets went +${stats.straightBetRoi}% this week` };
+  if (stats.biggestWin && stats.biggestWin.profit > 100) {
+    return { text: `Biggest hit: ${stats.biggestWin.description} for +$${stats.biggestWin.profit.toLocaleString()}` };
   }
   if (stats.longestWinStreak >= 3) {
     return { text: `${stats.longestWinStreak}-bet win streak this week` };

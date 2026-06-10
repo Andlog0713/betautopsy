@@ -6,6 +6,7 @@
 // Voice: forensic case file, clinical, data-driven. Keep monospace accents and
 // the brand yellow (#FACC15). No emojis. No hype. Every factual claim must be
 // backed by something in lib/autopsy-engine.ts or the product copy.
+import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -28,7 +29,7 @@ ${content}
   <div style="border-top:1px solid #e5e5e5;padding-top:16px">
     <div style="font-family:'Courier New',monospace;font-size:10px;color:#999;line-height:1.7;text-align:center">
       BetAutopsy // Behavioral Analysis for Sports Bettors<br/>
-      Behavioral analysis and educational insights, not gambling or financial advice. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+      Behavioral analysis and educational insights, not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}
     </div>
     ${unsubscribeUrl ? `<div style="text-align:center;margin-top:10px"><a href="${esc(unsubscribeUrl)}" style="font-size:10px;color:#999;text-decoration:underline">Unsubscribe</a></div>` : ''}
   </div>

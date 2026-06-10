@@ -25,6 +25,9 @@ create table if not exists profiles (
   is_admin boolean default false,
   email_digest_enabled boolean default true,
   last_digest_sent_at timestamptz,
+  manual_recovery_mode boolean default false,
+  recovery_mode_reason text,
+  recovery_mode_started_at timestamptz,
   reports_used_this_period integer default 0,
   current_period_start timestamptz,
   created_at timestamptz default now(),
@@ -219,6 +222,185 @@ create table if not exists bet_journal_entries (
 
 create index if not exists idx_journal_user_id on bet_journal_entries(user_id, created_at desc);
 
+-- ── Discipline Scores ──
+
+create table if not exists discipline_scores (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  score integer not null check (score >= 0 and score <= 100),
+  components jsonb not null default '{}',
+  report_id uuid references autopsy_reports(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- ── Pre-bet Check-ins ──
+
+create table if not exists pre_bet_checkins (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  sport text not null,
+  stake numeric not null,
+  odds integer not null,
+  bet_type text not null,
+  placed_at timestamptz not null,
+  local_hour integer,
+  bet_quality_score integer not null,
+  flag_count integer not null,
+  recommendation text not null,
+  flags jsonb not null default '[]'::jsonb,
+  summary text not null,
+  context jsonb not null default '{}'::jsonb,
+  outcome text,
+  outcome_at timestamptz,
+  override_reason text,
+  created_at timestamptz not null default now()
+);
+
+-- ── Control Plans ──
+
+create table if not exists control_plans (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  name text not null default 'My Control Plan',
+  status text not null default 'draft' check (status in ('draft', 'active', 'archived')),
+  source_report_id uuid references autopsy_reports(id) on delete set null,
+  settings jsonb not null default '{}'::jsonb,
+  accountability_message text,
+  why_this_matters text,
+  decisions jsonb not null default '[]'::jsonb,
+  activated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ── Control Rules ──
+
+create table if not exists control_rules (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  plan_id uuid references control_plans(id) on delete set null,
+  source_report_id uuid references autopsy_reports(id) on delete set null,
+  title text not null,
+  description text not null,
+  rationale text not null,
+  rule_type text not null check (
+    rule_type in (
+      'loss_streak_stop',
+      'late_night_cutoff',
+      'ban_category',
+      'stake_cap',
+      'session_limit',
+      'cooldown_after_loss',
+      'emotion_block',
+      'post_heated_session_pause',
+      'rapid_fire_limit',
+      'custom'
+    )
+  ),
+  scope text not null default 'global' check (
+    scope in ('global', 'sport', 'bet_type', 'session', 'time_window', 'emotion_state')
+  ),
+  scope_value text,
+  severity text not null default 'guardrail' check (
+    severity in ('supportive', 'guardrail', 'critical')
+  ),
+  enforcement text not null default 'soft' check (
+    enforcement in ('soft', 'hard')
+  ),
+  status text not null default 'active' check (
+    status in ('active', 'inactive', 'paused', 'expired')
+  ),
+  provenance text not null default 'engine_recommended' check (
+    provenance in ('engine_recommended', 'user_authored', 'manual_override', 'recovery_plan_rule')
+  ),
+  trigger_json jsonb not null default '{}'::jsonb,
+  start_at timestamptz not null default now(),
+  end_at timestamptz,
+  last_triggered_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ── Risk Events ──
+
+create table if not exists risk_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  source_report_id uuid references autopsy_reports(id) on delete set null,
+  rule_id uuid references control_rules(id) on delete set null,
+  cooldown_id uuid,
+  check_in_id uuid references pre_bet_checkins(id) on delete set null,
+  event_type text not null check (
+    event_type in (
+      'late_night_bet',
+      'oversized_stake',
+      'post_loss_escalation',
+      'heated_session',
+      'rapid_fire_session',
+      'rule_violation',
+      'cooldown_override',
+      'bet_type_relapse',
+      'loss_streak_breach',
+      'emotion_trigger',
+      'recovery_mode_trigger'
+    )
+  ),
+  severity text not null default 'warning' check (
+    severity in ('info', 'warning', 'high', 'critical')
+  ),
+  summary text not null,
+  detail text not null,
+  recurrence_count integer not null default 1,
+  window_days integer not null default 14,
+  metadata jsonb not null default '{}'::jsonb,
+  event_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+-- ── Cooldowns ──
+
+create table if not exists cooldowns (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  rule_id uuid references control_rules(id) on delete set null,
+  risk_event_id uuid references risk_events(id) on delete set null,
+  trigger_type text not null check (
+    trigger_type in (
+      'check_in_flag',
+      'heated_session',
+      'post_loss_escalation',
+      'late_night_pattern',
+      'user_choice',
+      'rule_violation',
+      'cooldown_override',
+      'manual_recovery'
+    )
+  ),
+  trigger_reason text not null,
+  user_explanation text not null,
+  triggered_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  status text not null default 'active' check (
+    status in ('active', 'honored', 'broken', 'expired', 'canceled')
+  ),
+  override_reason text,
+  broken_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'risk_events_cooldown_id_fkey'
+      and conrelid = 'public.risk_events'::regclass
+  ) then
+    alter table risk_events
+      add constraint risk_events_cooldown_id_fkey
+      foreign key (cooldown_id) references cooldowns(id) on delete set null;
+  end if;
+end $$;
+
 -- ── Rate Limits ──
 
 create table if not exists rate_limits (
@@ -242,6 +424,14 @@ create index if not exists idx_snapshots_user on progress_snapshots(user_id, sna
 create index if not exists idx_feedback_type on feedback(type, created_at desc);
 create index if not exists idx_error_logs_created on error_logs(created_at desc);
 create index if not exists idx_error_logs_source on error_logs(source, created_at desc);
+create index if not exists idx_discipline_scores_user on discipline_scores(user_id, created_at desc);
+create index if not exists idx_pre_bet_checkins_user_recent on pre_bet_checkins(user_id, created_at desc);
+create index if not exists idx_pre_bet_checkins_pending on pre_bet_checkins(user_id, created_at desc) where outcome is null;
+create index if not exists idx_control_plans_user_active on control_plans(user_id, status, updated_at desc);
+create index if not exists idx_control_rules_user_status on control_rules(user_id, status, created_at desc);
+create index if not exists idx_risk_events_user_recent on risk_events(user_id, event_at desc);
+create index if not exists idx_risk_events_type_recent on risk_events(user_id, event_type, event_at desc);
+create index if not exists idx_cooldowns_user_status on cooldowns(user_id, status, expires_at desc);
 
 -- ============================================
 -- Row Level Security
@@ -306,6 +496,42 @@ create policy "Users can view own journal entries" on bet_journal_entries for se
 create policy "Users can insert own journal entries" on bet_journal_entries for insert with check (auth.uid() = user_id);
 create policy "Users can update own journal entries" on bet_journal_entries for update using (auth.uid() = user_id);
 create policy "Users can delete own journal entries" on bet_journal_entries for delete using (auth.uid() = user_id);
+
+-- Discipline Scores
+alter table discipline_scores enable row level security;
+create policy "Users can read own discipline scores" on discipline_scores for select using (auth.uid() = user_id);
+create policy "Service role can insert discipline scores" on discipline_scores for insert with check (true);
+
+-- Pre-bet Check-ins
+alter table pre_bet_checkins enable row level security;
+create policy "Users insert own check-ins" on pre_bet_checkins for insert with check (auth.uid() = user_id);
+create policy "Users read own check-ins" on pre_bet_checkins for select using (auth.uid() = user_id);
+create policy "Users update own check-ins" on pre_bet_checkins for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Control Plans
+alter table control_plans enable row level security;
+create policy "Users view own control plans" on control_plans for select using (auth.uid() = user_id);
+create policy "Users insert own control plans" on control_plans for insert with check (auth.uid() = user_id);
+create policy "Users update own control plans" on control_plans for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Control Rules
+alter table control_rules enable row level security;
+create policy "Users view own control rules" on control_rules for select using (auth.uid() = user_id);
+create policy "Users insert own control rules" on control_rules for insert with check (auth.uid() = user_id);
+create policy "Users update own control rules" on control_rules for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users delete own control rules" on control_rules for delete using (auth.uid() = user_id);
+
+-- Risk Events
+alter table risk_events enable row level security;
+create policy "Users view own risk events" on risk_events for select using (auth.uid() = user_id);
+create policy "Users insert own risk events" on risk_events for insert with check (auth.uid() = user_id);
+create policy "Users update own risk events" on risk_events for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Cooldowns
+alter table cooldowns enable row level security;
+create policy "Users view own cooldowns" on cooldowns for select using (auth.uid() = user_id);
+create policy "Users insert own cooldowns" on cooldowns for insert with check (auth.uid() = user_id);
+create policy "Users update own cooldowns" on cooldowns for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Rate Limits (service role only — accessed from API routes, not directly by users)
 alter table rate_limits enable row level security;

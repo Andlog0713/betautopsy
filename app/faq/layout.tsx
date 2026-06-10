@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 export const metadata: Metadata = {
   title: 'FAQ | BetAutopsy',
@@ -25,7 +26,7 @@ export default function FAQLayout({ children }: { children: React.ReactNode }) {
           </div>
           <p className="text-fg-dim text-xs text-center">
             For entertainment and educational purposes only. Not gambling advice. 18+.
-            If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+            If you or someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
           </p>
           <p className="text-fg-dim text-[10px] text-center mt-2">
             © {new Date().getFullYear()} Diagnostic Sports, LLC

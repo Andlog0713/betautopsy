@@ -1,4 +1,5 @@
 import NavBar from '@/components/NavBar';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +19,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           <p className="text-fg-dim text-xs text-center">
             BetAutopsy provides behavioral analysis and educational insights, not
             gambling or financial advice. Past results don&apos;t guarantee future outcomes.
-            18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+            18+. If you or someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
           </p>
           <p className="text-fg-dim text-[10px] text-center mt-2">
             © {new Date().getFullYear()} Diagnostic Sports, LLC

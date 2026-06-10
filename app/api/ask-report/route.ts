@@ -27,6 +27,7 @@ function trimReportContext(analysis: AutopsyAnalysis): Record<string, unknown> {
   if (analysis.session_detection?.sessionGradeDistribution) {
     trimmed.session_grade_distribution = analysis.session_detection.sessionGradeDistribution;
   }
+  if (analysis.control_system) trimmed.control_system = analysis.control_system;
 
   for (const key of Object.keys(trimmed)) {
     if (key.startsWith('_')) delete trimmed[key];

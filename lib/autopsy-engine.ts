@@ -4,6 +4,8 @@ import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
 import { buildWhatIfScenarios } from '@/lib/engine/whatIf';
+import { buildReportControlSystem } from '@/lib/control-system';
+import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
 // Lazy-load the Anthropic SDK so it never lands in the client bundle.
 // `lib/autopsy-engine.ts` exports `calculateMetrics` (a pure server-or-client
@@ -2923,7 +2925,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   // tone-setting) but never surfaced on the user-facing analysis.
   const settledCount = metrics.summary.wins + metrics.summary.losses;
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
-  const analysis: AutopsyAnalysis = {
+  const analysisBase: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
       record: metrics.summary.record,
@@ -3022,6 +3024,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       leakPatternsFlagged: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
       sportLevelFindings: sportFindings.length,
     },
+  };
+
+  const analysis: AutopsyAnalysis = {
+    ...analysisBase,
+    control_system: buildReportControlSystem(analysisBase),
   };
 
   const markdown = generateMarkdownReport(analysis);
@@ -3588,7 +3595,7 @@ export async function runSnapshot(
   const settledCount = metrics.summary.wins + metrics.summary.losses;
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
 
-  const analysis: AutopsyAnalysis = {
+  const analysisBase: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
       record: metrics.summary.record,
@@ -3675,6 +3682,11 @@ export async function runSnapshot(
     // pertinent_negatives intentionally undefined (D13: hidden in snapshot).
     _snapshot_counts: snapshotCounts,
     _snapshot_teaser: snapshotTeaser,
+  };
+
+  const analysis: AutopsyAnalysis = {
+    ...analysisBase,
+    control_system: buildReportControlSystem(analysisBase),
   };
 
   const markdown = generateMarkdownReport(analysis);
@@ -3872,6 +3884,6 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     }
   }
   lines.push('---');
-  lines.push('*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don\'t guarantee future outcomes. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.*');
+  lines.push(`*BetAutopsy provides behavioral analysis and educational insights. not gambling or financial advice. Past results don't guarantee future outcomes. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}*`);
   return lines.join('\n');
 }

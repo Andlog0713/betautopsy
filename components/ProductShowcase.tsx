@@ -92,11 +92,11 @@ export function ProductShowcase() {
           <div className="flex items-center gap-3 mb-4">
             <span className="w-7 h-7 rounded-full bg-scalpel/10 text-scalpel flex items-center justify-center text-xs font-bold font-mono">3</span>
             <p className="text-lg md:text-2xl font-semibold text-fg-bright tracking-tight">
-              Your personalized action plan
+              Your control plan goes live
             </p>
           </div>
           <p className="text-sm text-fg-muted mb-5">
-            Not just what&apos;s wrong. Exactly how to fix it, ranked by dollar impact.
+            Not just what&apos;s wrong. The rules, pauses, and friction that should exist before your next risky session.
           </p>
           {/* Mini report preview */}
           <div className="space-y-3">
@@ -115,7 +115,7 @@ export function ProductShowcase() {
               <p className="text-sm text-fg-bright">Cap parlays at 15% of weekly volume. You&apos;re at 41%. Your 4+ leg parlays are 2-for-31.</p>
             </div>
             <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
-              <span className="text-sm text-fg-muted">If you follow these rules:</span>
+              <span className="text-sm text-fg-muted">If these rules become live behavior:</span>
               <span className="text-lg font-bold font-mono text-scalpel">+$1,920/year</span>
             </div>
           </div>

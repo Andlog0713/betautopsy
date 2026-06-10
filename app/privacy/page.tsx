@@ -1,4 +1,5 @@
 import NavBar from '@/components/NavBar';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -186,7 +187,7 @@ export default function PrivacyPolicyPage() {
         <p className="text-ink-700 text-xs text-center mt-16">
           BetAutopsy provides behavioral analysis and educational insights, not gambling or
           financial advice. Past results don&apos;t guarantee future outcomes. 18+. If you or
-          someone you know has a gambling problem, call 1-800-GAMBLER.
+          someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
         </p>
       </div>
     </main>

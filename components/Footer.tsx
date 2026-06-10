@@ -14,6 +14,7 @@ export default function Footer() {
               ...(PRICING_ENABLED ? [{ label: 'Pricing', href: '/#pricing' }] : []),
               { label: 'Blog', href: '/blog' },
               { label: 'FAQ', href: '/faq' },
+              { label: 'Support', href: '/support' },
               { label: 'Privacy', href: '/privacy' },
               { label: 'Terms', href: '/terms' },
               { label: 'Log in', href: '/login' },

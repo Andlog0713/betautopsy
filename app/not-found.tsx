@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 export default function NotFound() {
   return (
@@ -20,7 +21,7 @@ export default function NotFound() {
         </div>
       </div>
       <p className="text-fg-dim text-xs text-center mt-16 max-w-sm">
-        BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+        BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+. If you or someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
       </p>
     </div>
   );

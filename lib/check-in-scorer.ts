@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  type Bet,
   CHECK_IN_SPORTS,
   CHECK_IN_BET_TYPES,
   CHECK_IN_OUTCOMES,
@@ -10,9 +11,14 @@ import {
   type CheckInRecommendation,
   type CheckInScoreResult,
   type CheckInSeverity,
+  type ControlPlan,
+  type ControlRule,
+  type Cooldown,
   type PreBetCheckInFlag,
   type PreBetCheckInRequest,
+  type RiskEvent,
 } from '@/types';
+import { evaluateCheckInAgainstControlState } from '@/lib/control-system';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OUTCOME_SET: ReadonlySet<string> = new Set(CHECK_IN_OUTCOMES);
@@ -44,7 +50,19 @@ export function validateOutcomeRequest(
     return { ok: false, error: 'outcome must be one of: ' + CHECK_IN_OUTCOMES.join(', ') };
   }
 
-  return { ok: true, value: { checkInId, outcome: outcome as CheckInOutcomeRequest['outcome'] } };
+  const overrideReason = r.overrideReason;
+  if (overrideReason !== undefined && (typeof overrideReason !== 'string' || overrideReason.length > 300)) {
+    return { ok: false, error: 'overrideReason must be a string up to 300 characters' };
+  }
+
+  return {
+    ok: true,
+    value: {
+      checkInId,
+      outcome: outcome as CheckInOutcomeRequest['outcome'],
+      ...(typeof overrideReason === 'string' ? { overrideReason } : {}),
+    },
+  };
 }
 
 export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationErr {
@@ -85,11 +103,37 @@ export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationE
     }
   }
 
+  const reflection = r.reflection;
+  if (reflection !== undefined) {
+    if (reflection === null || typeof reflection !== 'object' || Array.isArray(reflection)) {
+      return { ok: false, error: 'reflection must be an object' };
+    }
+    const ref = reflection as Record<string, unknown>;
+    if (ref.whyNow !== undefined && typeof ref.whyNow !== 'string') {
+      return { ok: false, error: 'reflection.whyNow must be a string' };
+    }
+    if (ref.tryingToWinBackLosses !== undefined && typeof ref.tryingToWinBackLosses !== 'boolean') {
+      return { ok: false, error: 'reflection.tryingToWinBackLosses must be a boolean' };
+    }
+    if (ref.wouldBetIfLastBetWon !== undefined && typeof ref.wouldBetIfLastBetWon !== 'boolean') {
+      return { ok: false, error: 'reflection.wouldBetIfLastBetWon must be a boolean' };
+    }
+    const emotionalState = ref.emotionalState;
+    if (
+      emotionalState !== undefined
+      && (typeof emotionalState !== 'string'
+        || !['calm', 'focused', 'angry', 'tilted', 'anxious', 'bored', 'confident'].includes(emotionalState))
+    ) {
+      return { ok: false, error: 'reflection.emotionalState is invalid' };
+    }
+  }
+
   return {
     ok: true,
     value: {
       sport, stake, odds, betType, placedAt,
       ...(localHour !== undefined && { localHour }),
+      ...(reflection !== undefined && { reflection: reflection as PreBetCheckInRequest['reflection'] }),
     },
   };
 }
@@ -160,12 +204,34 @@ function computeScore(flags: PreBetCheckInFlag[]): number {
   return Math.max(0, Math.min(100, score));
 }
 
-function computeRecommendation(flags: PreBetCheckInFlag[], score: number): CheckInRecommendation {
+function computeRecommendation(
+  flags: PreBetCheckInFlag[],
+  score: number,
+  actionGate: CheckInScoreResult['actionGate'],
+): CheckInRecommendation {
+  if (actionGate === 'blocked' || actionGate === 'reflection_required') return 'wait_thirty';
   if (flags.length === 0 && score >= 70) return 'place_bet';
   return 'wait_thirty';
 }
 
-function computeSummary(flags: PreBetCheckInFlag[], noHistory: boolean): string {
+function computeSummary(
+  flags: PreBetCheckInFlag[],
+  noHistory: boolean,
+  control: {
+    actionGate?: CheckInScoreResult['actionGate'];
+    cooldownSummary?: string | null;
+    ruleViolationCount?: number;
+    riskContextCount?: number;
+  },
+): string {
+  if (control.actionGate === 'blocked') {
+    if (control.cooldownSummary) return `Cooldown active. ${control.cooldownSummary}`;
+    if ((control.ruleViolationCount ?? 0) > 0) return 'A live control rule is being hit. Pause this bet.';
+    return 'Control system blocked this check-in. Pause and reset.';
+  }
+  if (control.actionGate === 'reflection_required') {
+    return 'This is a live risk moment. Slow down and answer the reflection prompts before placing anything.';
+  }
   if (noHistory) {
     return flags.length === 0
       ? 'No flags fire from this request alone. Upload your bet history for personalized analysis.'
@@ -203,6 +269,47 @@ export async function scoreCheckIn(
     ...b,
     stake: Number(b.stake),
     profit: b.profit === null ? null : Number(b.profit),
+  }));
+
+  const [{ data: activePlanRow }, { data: rulesRaw }, { data: cooldownsRaw }, { data: riskEventsRaw }] = await Promise.all([
+    supabase
+      .from('control_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('control_rules')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('cooldowns')
+      .select('*')
+      .eq('user_id', userId)
+      .order('triggered_at', { ascending: false })
+      .limit(12),
+    supabase
+      .from('risk_events')
+      .select('*')
+      .eq('user_id', userId)
+      .order('event_at', { ascending: false })
+      .limit(20),
+  ]);
+
+  const activePlan = activePlanRow
+    ? {
+        ...(activePlanRow as Record<string, unknown>),
+        settings: ((activePlanRow as Record<string, unknown>).settings ?? {}) as ControlPlan['settings'],
+        decisions: ((activePlanRow as Record<string, unknown>).decisions ?? []) as ControlPlan['decisions'],
+      } as unknown as ControlPlan
+    : null;
+  const activeRules = ((rulesRaw ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    ...(row as unknown as ControlRule),
+    trigger: (row.trigger_json as ControlRule['trigger']) ?? {},
   }));
 
   const noHistory = !report && recentBets.length === 0;
@@ -318,11 +425,32 @@ export async function scoreCheckIn(
     }
   }
 
+  const controlEvaluation = evaluateCheckInAgainstControlState({
+    request,
+    rules: activeRules,
+    cooldowns: ((cooldownsRaw ?? []) as Cooldown[]),
+    riskEvents: ((riskEventsRaw ?? []) as RiskEvent[]),
+    recentBets: recentBets as unknown as Bet[],
+    activePlan,
+  });
+
   const score = computeScore(flags);
   return {
     betQualityScore: score,
     flags,
-    recommendation: computeRecommendation(flags, score),
-    summary: computeSummary(flags, noHistory),
+    recommendation: computeRecommendation(flags, score, controlEvaluation.actionGate),
+    summary: computeSummary(flags, noHistory, {
+      actionGate: controlEvaluation.actionGate,
+      cooldownSummary: controlEvaluation.cooldown?.summary ?? null,
+      ruleViolationCount: controlEvaluation.ruleViolations.length,
+      riskContextCount: controlEvaluation.recentRiskContext.length,
+    }),
+    actionGate: controlEvaluation.actionGate,
+    ruleViolations: controlEvaluation.ruleViolations,
+    cooldown: controlEvaluation.cooldown,
+    recentRiskContext: controlEvaluation.recentRiskContext,
+    planContext: controlEvaluation.planContext,
+    reflectionPrompts: controlEvaluation.reflectionPrompts,
+    overrideRequired: controlEvaluation.overrideRequired,
   };
 }

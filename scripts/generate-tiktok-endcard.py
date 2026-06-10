@@ -232,7 +232,7 @@ def build():
 
     # ── Disclaimer (small, sits above the URL + button) ──
     disc_y = 1220
-    disc = "For entertainment only  ·  18+  ·  1-800-GAMBLER"
+    disc = "For entertainment only  ·  18+  ·  1-800-MY-RESET"
     disc_w = tw(d, disc, light(22))
     safe_cx = (SAFE_L + SAFE_R) // 2
     d.text((safe_cx - disc_w // 2, disc_y), disc, font=light(22), fill=FG_DIM)

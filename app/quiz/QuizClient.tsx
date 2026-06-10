@@ -7,6 +7,7 @@ import { apiPost } from '@/lib/api-client';
 import { QUIZ_QUESTIONS, QUESTION_ACCENTS, calculateQuizResult, generateQuizRoasts, getSliderInterpretation, type QuizResult } from '@/lib/quiz-engine';
 import QuizResultCard from '@/components/QuizResultCard';
 import { trackQuizComplete as trackQuizCompleteMeta } from '@/lib/meta-events';
+import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
 
 function gradeColor(g: string): string {
   if (g === 'A') return '#00DC82';
@@ -172,7 +173,7 @@ export default function QuizClient() {
   const gamblingFooter = (
     <p className="text-fg-muted text-xs text-center mt-12">
       For entertainment and educational purposes only. Not gambling advice. 18+.
-      If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+      If you or someone you know may have a gambling problem, call or text {PROBLEM_GAMBLING_HELPLINE}.
     </p>
   );
 
@@ -595,7 +596,7 @@ export default function QuizClient() {
               <p className="text-caution text-sm">
                 Your responses suggest emotions play a significant role in your betting.
                 If gambling is causing stress or financial difficulty, help is available at{' '}
-                <span className="text-fg-bright">1-800-GAMBLER</span>.
+                <span className="text-fg-bright">{PROBLEM_GAMBLING_HELPLINE}</span>.
               </p>
             </div>
           )}
