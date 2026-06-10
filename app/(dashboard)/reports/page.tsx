@@ -521,7 +521,7 @@ export default function ReportsPage() {
             #310. The back button + snapshot-upgrade card above the
             boundary stay accessible so the user can always escape. */}
         <ErrorBoundary>
-          <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} />
+          <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} recoveryModeActive={profile?.manual_recovery_mode ?? false} />
           {/* Post-first-report prompt */}
           {isFirstReport && (
             <div className="card p-5 text-center space-y-2">

@@ -64,6 +64,6 @@ export async function GET(request: Request) {
     <h1 style="font-size:24px;font-weight:700;margin-bottom:12px">You've been unsubscribed.</h1>
     <p style="color:#A0A3B1;font-size:14px;margin-bottom:24px">You won't receive weekly digests anymore.<br>Re-enable anytime in <a href="/settings">Settings</a>.</p>
     <a href="/" style="font-size:14px">← Back to BetAutopsy</a>
-    <div class="f">BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}</div>
+    <div class="f">BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}</div>
   `);
 }

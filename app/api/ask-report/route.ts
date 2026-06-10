@@ -3,9 +3,15 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logErrorServer } from '@/lib/log-error-server';
+import { RECOVERY_SUPPORT_FOOTER } from '@/lib/support-resources';
 import type { AutopsyAnalysis, Bet } from '@/types';
 
 const SYSTEM_PROMPT = `You are BetAutopsy's report analyst. You answer questions about this specific user's betting behavioral analysis report and their underlying bet data. Be specific and reference their actual numbers. Keep answers under 200 words. Never give betting picks, tout services, or financial advice. Never recommend specific bets. If asked something outside the scope of this report, say so. Always defer to the grades, scores, and classifications already in this report. Do not re-evaluate or contradict them.`;
+
+// Appended to the system prompt only when this report carries a control_system
+// (live rules/cooldowns). Hardens the analyst against being talked into
+// coaching a rule or cooldown override, regardless of how the user phrases it.
+const CONTROL_SYSTEM_GUARDRAIL = ` This report includes the user's live control system: their own rules and cooldowns. If the user asks you to help override, bypass, justify breaking, or talk them through ignoring an active rule or cooldown, do NOT coach the override. Acknowledge the urge, restate that the rule or cooldown exists to protect them at exactly this moment, and encourage them to honor it. Never argue that a perceived edge, hot streak, or "sure thing" justifies overriding a rule or cooldown.`;
 
 /** Strip internal fields, keep curated analysis fields. */
 function trimReportContext(analysis: AutopsyAnalysis): Record<string, unknown> {
@@ -138,6 +144,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Live recovery-mode state (read at request time, never from report_json)
+    // so footer + tone reflect the user's CURRENT state, not the report's.
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('manual_recovery_mode')
+      .eq('id', user.id)
+      .maybeSingle();
+    const recoveryActive = Boolean(profileRow?.manual_recovery_mode);
+
     const { data: report, error: reportError } = await supabase
       .from('autopsy_reports')
       .select('id, report_json, is_paid, date_range_start, date_range_end')
@@ -176,12 +191,18 @@ export async function POST(request: Request) {
 
     const trimmedContext = trimReportContext(analysis);
 
+    // When this report carries a live control system, harden the system prompt
+    // against being coached into overriding an active rule or cooldown.
+    const systemPromptText = trimmedContext.control_system
+      ? SYSTEM_PROMPT + CONTROL_SYSTEM_GUARDRAIL
+      : SYSTEM_PROMPT;
+
     const anthropic = new Anthropic();
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
       temperature: 0.3,
-      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      system: [{ type: 'text', text: systemPromptText, cache_control: { type: 'ephemeral' } }],
       messages: [
         {
           role: 'user',
@@ -190,10 +211,14 @@ export async function POST(request: Request) {
       ],
     });
 
-    const answer = message.content
+    const llmAnswer = message.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('');
+
+    // Recovery-mode support footer is appended deterministically server-side,
+    // AFTER the model output, so no prompt-injection can strip it.
+    const answer = recoveryActive ? llmAnswer + RECOVERY_SUPPORT_FOOTER : llmAnswer;
 
     return NextResponse.json({ answer });
   } catch (error) {

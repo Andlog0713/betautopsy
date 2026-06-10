@@ -14,6 +14,11 @@ export const CRISIS_LIFELINE_URL = 'https://988lifeline.org/';
 export const RESPONSIBLE_GAMBLING_DISCLAIMER = `If you or someone you know may have a gambling problem, call or text ${PROBLEM_GAMBLING_HELPLINE}.`;
 export const CRISIS_SUPPORT_DISCLAIMER = `If this feels urgent or unsafe, call or text ${CRISIS_LIFELINE} right now.`;
 
+// Deterministic support footer appended server-side (never LLM-generated) to
+// AI responses while a user is in Recovery Mode, so it cannot be jailbroken
+// away by adversarial prompting. Plain text; safe to concatenate to any answer.
+export const RECOVERY_SUPPORT_FOOTER = `\n\nRECOVERY MODE\nYou have Recovery Mode on. The control rules and cooldowns in your plan take priority over any single result. ${RESPONSIBLE_GAMBLING_DISCLAIMER} Free and confidential, 24/7. ${CRISIS_SUPPORT_DISCLAIMER}`;
+
 export const SUPPORT_RESOURCES: SupportResource[] = [
   {
     label: 'National Problem Gambling Helpline',

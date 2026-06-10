@@ -33,7 +33,11 @@ export async function GET(request: Request) {
   if (testEmail) {
     profileQuery = profileQuery.eq('email', testEmail.toLowerCase().trim());
   } else {
-    profileQuery = profileQuery.eq('email_digest_enabled', true);
+    // Suppress engagement email in Recovery Mode (transactional always sends).
+    // Matches the dashboard email_digest_enabled suppression.
+    profileQuery = profileQuery
+      .eq('email_digest_enabled', true)
+      .eq('manual_recovery_mode', false);
   }
 
   const { data: profiles } = await profileQuery;

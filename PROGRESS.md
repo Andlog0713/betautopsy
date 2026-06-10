@@ -570,6 +570,19 @@
 - Remote URL normalized to `https://github.com/Andlog0713/betautopsy.git`
   (was lowercase, redirecting).
 
+### Done this session (Claude, 2026-06-10): PRODUCT/COPY/POLICY RECONCILIATION post-codex (PR #70, branch `reconcile/product-copy-policy`)
+- **B4 (MUST):** ask-report adds an override-refusal clause to the system prompt when control_system is present; deterministic recovery support footer appended server-side (live profile read) so it can't be jailbroken away. Adversarial test included (4 cases).
+- **B3 (MUST):** recovery REFRAMING (session relabels) keys on a live `recoveryModeActive` prop (profile.manual_recovery_mode at render), never report_json — leaving Recovery Mode reverts old reports to neutral. Sharp Score label reverted to stable name (interpretation state-dependent). Apparent-edge caution stays scoped to recovery-recommended. Recovery recommendation is now a dismissible opt-in card (persisted per-report).
+- **B6 (MUST):** privacy policy Behavioral-control-data category + effective-date bump; account-deletion cascade-covers all 4 control tables (documented). **Data-export GAP reported** (no personal-data export flow exists, only bets CSV) — nothing built per scope.
+- **B1:** marketing reverted to pre-8948bb6 forensic positioning (landing/hero/README/tiktok scripts via checkout, FAQ hand-reverted); helpline modernization (1-800-MY-RESET) re-applied (it shipped inside 8948bb6); variant keys A/B preserved; 47 metrics->signals.
+- **B2:** em dashes out of email/UI copy; tilt->heated in product strings. FLAGGED (scope): 'The Tilter' archetype rename (wire + golden snapshots), 'unlock' paywall copy. Blocked-state API copy iOS-safe.
+- **B5:** digest/weekend/onboarding gated on manual_recovery_mode at send time; transactional untouched.
+- **B7:** documented runSnapshot must NOT attach control_system (already locked by redaction test Group 6).
+- **B8:** 'High-Pick Addiction'->'High-Pick Reliance'; web Emotion Score respects emotion_score_insufficient_data (BetIQ-parity); sample wrapper drops inflated '280 bets' claim; engine max_tokens 8192->16384 + SSE-heartbeat follow-up comment.
+- **B9:** codex-invented recovery-mode derivation + suggested-rule/plan thresholds printed verbatim for Andrew review (no change).
+- Gates: tsc 0 · vitest 306 · build 0. Notion: sprint row + (pending) command-center note.
+- **Follow-up flagged (not done, would balloon scope):** 'The Tilter' archetype rename (engine + iOS wire + golden snapshots); demo-data total_bets:280 vs 35 shipped rows internal inconsistency; SSE heartbeat IMPLEMENTATION in analyze route (only commented).
+
 ## Parked / next branch
 - **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
   - **Replicability:** ~30-35% of perceived value is commodity LLM prose, ~40-45% deterministic math ChatGPT can't reliably do, ~25% scaffolding. COGS $0.15-0.75/report vs $9.99 (1.5-7%) — headroom for Opus-class model. Main call: claude-sonnet-4-6, 8192 max_tokens (documented truncation cause; 64K available). Shape-only JSON validation — adopt structured outputs.

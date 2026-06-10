@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Privacy Policy</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: April 8, 2026</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: June 10, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
@@ -37,6 +37,18 @@ export default function PrivacyPolicyPage() {
                   When you upload CSV files or manually enter bets, we store your bet history
                   including dates, sports, odds, stakes, results, and sportsbook names. This data
                   is used solely to generate your analytics and reports.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-fg-bright mb-1">Behavioral control data</h3>
+                <p>
+                  If you use Recovery Mode, control rules, cooldowns, or pre-bet check-ins, we
+                  store the related behavioral data so the product can support you. This includes
+                  the rules and plans you create, cooldown records, logged risk events (such as
+                  late-night or post-loss patterns derived from your bet data), your Recovery Mode
+                  status and reason, and any free-text reflections you write during a check-in or
+                  cooldown. This data is used solely to power your control system and support
+                  features, and is deleted with your account.
                 </p>
               </div>
               <div>

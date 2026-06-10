@@ -47,14 +47,14 @@ export async function GET(request: Request) {
 
 <!-- Content -->
 <tr><td style="padding:32px">
-  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Pro — for life.</h1>
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;margin:0 0 16px">You've been upgraded to Pro, for life.</h1>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
     Hey ${name},
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 16px">
-    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Pro subscription</strong> — our top tier.
+    As a thank you for being one of our earliest users, we're giving you a <strong style="color:#1a1a1a">free lifetime Pro subscription</strong>, our top tier.
   </p>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px">
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       <span style="color:#00DC82;font-weight:600">✓</span>&nbsp;&nbsp;What-If Simulator
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
-      <span style="color:#00DC82;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer — ranked by $ impact
+      <span style="color:#00DC82;font-weight:600">✓</span>&nbsp;&nbsp;Leak Prioritizer: ranked by $ impact
     </td></tr>
     <tr><td style="padding:8px 0;font-size:15px;color:#1a1a1a">
       <span style="color:#00DC82;font-weight:600">✓</span>&nbsp;&nbsp;Progress tracking &amp; weekly digests
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
   </tbody></table>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 24px">
-    No credit card. No catch. No expiration. You believed in us early — this is our way of saying thanks.
+    No credit card. No catch. No expiration. You believed in us early. This is our way of saying thanks.
   </p>
 
   <!-- CTA -->
@@ -96,14 +96,14 @@ export async function GET(request: Request) {
   </p>
 
   <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:24px 0 0">
-    — The BetAutopsy Team
+    The BetAutopsy Team
   </p>
 </td></tr>
 
 <!-- Footer -->
 <tr><td style="padding:20px 32px;border-top:1px solid #e5e5e5">
   <p style="font-size:11px;color:#999;line-height:1.6;text-align:center;margin:0">
-    BetAutopsy provides behavioral analysis and educational insights — not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}
+    BetAutopsy provides behavioral analysis and educational insights, not gambling or financial advice. 18+. ${RESPONSIBLE_GAMBLING_DISCLAIMER}
   </p>
 </td></tr>
 
