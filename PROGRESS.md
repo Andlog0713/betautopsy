@@ -73,8 +73,33 @@
   session_analysis/edge_profile reconciliation DEFERRED to structured-outputs;
   schema_version 2→3 cross-version diffs: ANNOTATE (forced pick);
   sequencing LOOSEN → TEMPORAL, NUMERIC independent.
-- **HALT:** no product code changed, no Notion rows created. Awaiting
-  approval on the four items listed in the report's Halt section.
+- **APPROVED (Andrew, 2026-06-10):** WS-TEMPORAL, WS-NUMERIC, ANNOTATE for
+  schema_version 2→3, sequencing LOOSEN→TEMPORAL with NUMERIC independent.
+  Still outline-gated: LOOSEN is the iOS critical-path item and lands first;
+  temporal/numeric gate App Store submission, NOT TestFlight.
+- **Constraints attached to the approval:**
+  1. Each workstream and any concurrent run gets its OWN branch off main
+     (ws-temporal/*, ws-numeric/*); no two sessions share a working branch
+     (this run's concurrent-write with the security session on
+     hardening/june-10 must not repeat).
+  2. Deterministic per-bias costs ship as their own PR (PR-N3), gated on the
+     redaction 31-assert suite AND the WhatChanged cost-delta annotation both
+     green — the change feeds snapshot blur + longitudinal diff, not just
+     the report body.
+  3. The date-only backfill heuristic is validated against a hand-checked
+     sample before ANY historical row is reclassified.
+  4. Pikkit settlement-timestamp capture filed as v1.1 (unlocks real
+     post-loss sequencing later); today's reframe is rapid-fire everywhere.
+- **Notion tracker rows created (BetAutopsy Tracker):**
+  - WS-TEMPORAL (3 PRs) — `37b5964c-daf2-8123` (P1, L, blocked by LOOSEN +
+    backfill-sample validation)
+  - WS-NUMERIC PR-N1/N2 — `37b5964c-daf2-81ba-b790` (P1, M, iOS result-enum
+    pre-check before N2)
+  - WS-NUMERIC PR-N3 deterministic costs — `37b5964c-daf2-81ba-9f7f`
+    (Blocked, gate per constraint 2)
+  - schema_version ANNOTATE machinery — `37b5964c-daf2-815f` (P1, S, lands
+    before/with first value-changing PR)
+  - v1.1 Pikkit settlement capture — `37b5964c-daf2-817b` (P3)
 
 ## Previous branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
