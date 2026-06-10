@@ -286,7 +286,7 @@ export async function GET(request: Request) {
     const state = await loadControlState(user.id, supabase);
     return NextResponse.json(state);
   } catch (error) {
-    logErrorServer(error, { path: '/api/control-system', userId: user.id, metadata: { method: 'GET' } });
+    await logErrorServer(error, { path: '/api/control-system', userId: user.id, metadata: { method: 'GET' } });
     return NextResponse.json({ error: 'Failed to load control system' }, { status: 500 });
   }
 }
@@ -437,7 +437,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    logErrorServer(error, {
+    await logErrorServer(error, {
       path: '/api/control-system',
       userId: user.id,
       metadata: { method: 'POST', action },

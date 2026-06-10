@@ -1,0 +1,8 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+not a date,NBA,moneyline,Celtics ML vs Heat,-120,50,win,41.67,DraftKings
+13/45/2026,NFL,spread,Chiefs -3.5 vs Raiders,-110,100,loss,-100,FanDuel
+,NBA,prop,Tatum points over 26.5,-115,60,win,52.17,DraftKings
+Yesterday 7pm,MLB,moneyline,Yankees ML vs Orioles,+130,40,loss,-40,BetMGM
+2026-02-30,NHL,moneyline,Avalanche ML vs Stars,-140,70,win,50,Caesars
+03-15-2026 25:99,NBA,total,Suns/Kings over 230.5,-105,55,loss,-55,FanDuel
+2026-03-15T19:30:00Z,NBA,moneyline,Warriors ML vs Clippers (valid control row),-118,80,win,67.80,DraftKings

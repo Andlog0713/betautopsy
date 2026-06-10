@@ -1,0 +1,7 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-03-02T18:00:00Z,NFL,parlay,3-leg parlay Chiefs/Eagles/Bills,+550,50,cashed_out,32.50,DraftKings
+2026-03-02T18:30:00Z,NBA,moneyline,Celtics ML vs Heat,-130,100,cashed out,-41.00,FanDuel
+2026-03-02T19:00:00Z,NBA,spread,Nuggets -3.5 vs Suns,-110,80,cashedout,12.75,BetMGM
+2026-03-02T19:30:00Z,MLB,moneyline,Dodgers ML vs Padres,+120,60,cashout,-22.40,Caesars
+2026-03-02T20:00:00Z,NFL,prop,Allen rushing yards over 32.5,-115,45,win,39.13,DraftKings
+2026-03-02T20:30:00Z,NBA,moneyline,Knicks ML vs Bulls,+105,55,loss,-55,FanDuel
