@@ -30,6 +30,7 @@ import type {
 } from '@/types';
 
 type RawJson = Record<string, unknown>;
+type ErrorLike = { code?: string; message?: string };
 
 function asObject(value: unknown): RawJson {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as RawJson : {};
@@ -37,6 +38,30 @@ function asObject(value: unknown): RawJson {
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
+}
+
+function isErrorLike(value: unknown): value is ErrorLike {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function isMissingControlSchemaError(error: unknown): boolean {
+  if (!isErrorLike(error)) return false;
+  const code = typeof error.code === 'string' ? error.code : '';
+  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+
+  return code === '42P01'
+    || code === '42703'
+    || code === 'PGRST205'
+    || message.includes('does not exist')
+    || message.includes('could not find the table')
+    || message.includes('could not find the relation');
+}
+
+function missingControlSchemaResponse() {
+  return NextResponse.json(
+    { error: 'Control system storage is not ready yet. Run the latest Supabase migration and try again.' },
+    { status: 503 },
+  );
 }
 
 function normalizePlan(row: Record<string, unknown>): ControlPlan {
@@ -170,10 +195,10 @@ async function loadControlState(userId: string, supabase: NonNullable<Awaited<Re
   ]);
 
   if (profileRes.error) throw profileRes.error;
-  if (plansRes.error) throw plansRes.error;
-  if (rulesRes.error) throw rulesRes.error;
-  if (cooldownsRes.error) throw cooldownsRes.error;
-  if (riskEventsRes.error) throw riskEventsRes.error;
+  if (plansRes.error && !isMissingControlSchemaError(plansRes.error)) throw plansRes.error;
+  if (rulesRes.error && !isMissingControlSchemaError(rulesRes.error)) throw rulesRes.error;
+  if (cooldownsRes.error && !isMissingControlSchemaError(cooldownsRes.error)) throw cooldownsRes.error;
+  if (riskEventsRes.error && !isMissingControlSchemaError(riskEventsRes.error)) throw riskEventsRes.error;
   if (checkInsRes.error) throw checkInsRes.error;
   if (reportRes.error) throw reportRes.error;
 
@@ -184,10 +209,15 @@ async function loadControlState(userId: string, supabase: NonNullable<Awaited<Re
         analysis: reportRes.data.report_json as AutopsyAnalysis,
       }
     : null;
-  const activePlan = plansRes.data?.[0] ? normalizePlan(plansRes.data[0] as Record<string, unknown>) : null;
-  const rules = (rulesRes.data ?? []).map((row) => normalizeRule(row as Record<string, unknown>));
-  const cooldowns = (cooldownsRes.data ?? []).map((row) => normalizeCooldown(row as Record<string, unknown>));
-  const riskEvents = (riskEventsRes.data ?? []).map((row) => normalizeRiskEvent(row as Record<string, unknown>));
+  const planRows = isMissingControlSchemaError(plansRes.error) ? [] : (plansRes.data ?? []);
+  const ruleRows = isMissingControlSchemaError(rulesRes.error) ? [] : (rulesRes.data ?? []);
+  const cooldownRows = isMissingControlSchemaError(cooldownsRes.error) ? [] : (cooldownsRes.data ?? []);
+  const riskEventRows = isMissingControlSchemaError(riskEventsRes.error) ? [] : (riskEventsRes.data ?? []);
+
+  const activePlan = planRows[0] ? normalizePlan(planRows[0] as Record<string, unknown>) : null;
+  const rules = ruleRows.map((row) => normalizeRule(row as Record<string, unknown>));
+  const cooldowns = cooldownRows.map((row) => normalizeCooldown(row as Record<string, unknown>));
+  const riskEvents = riskEventRows.map((row) => normalizeRiskEvent(row as Record<string, unknown>));
 
   const recoveryMode = deriveRecoveryModeState({
     profile,
@@ -305,6 +335,9 @@ export async function POST(request: Request) {
         ? await supabase.from('control_plans').update(payload).eq('id', body.plan_id).select('*').single()
         : await supabase.from('control_plans').insert(payload).select('*').single();
 
+      if (isMissingControlSchemaError(error)) {
+        return missingControlSchemaResponse();
+      }
       if (error || !data) throw error ?? new Error('No plan row returned');
       return NextResponse.json({ plan: normalizePlan(data as Record<string, unknown>) });
     }
@@ -335,6 +368,9 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       };
       const { data, error } = await supabase.from('control_rules').insert(payload).select('*').single();
+      if (isMissingControlSchemaError(error)) {
+        return missingControlSchemaResponse();
+      }
       if (error || !data) throw error ?? new Error('No rule row returned');
       return NextResponse.json({ rule: normalizeRule(data as Record<string, unknown>) });
     }
@@ -349,6 +385,9 @@ export async function POST(request: Request) {
         .eq('id', body.rule_id)
         .select('*')
         .single();
+      if (isMissingControlSchemaError(error)) {
+        return missingControlSchemaResponse();
+      }
       if (error || !data) throw error ?? new Error('No rule row returned');
       return NextResponse.json({ rule: normalizeRule(data as Record<string, unknown>) });
     }
@@ -370,6 +409,9 @@ export async function POST(request: Request) {
         status: 'active',
       };
       const { data, error } = await supabase.from('cooldowns').insert(payload).select('*').single();
+      if (isMissingControlSchemaError(error)) {
+        return missingControlSchemaResponse();
+      }
       if (error || !data) throw error ?? new Error('No cooldown row returned');
       return NextResponse.json({ cooldown: normalizeCooldown(data as Record<string, unknown>) });
     }
@@ -386,6 +428,9 @@ export async function POST(request: Request) {
           recovery_mode_started_at: body.enabled ? new Date().toISOString() : null,
         })
         .eq('id', user.id);
+      if (isMissingControlSchemaError(error)) {
+        return missingControlSchemaResponse();
+      }
       if (error) throw error;
       return NextResponse.json({ ok: true });
     }
