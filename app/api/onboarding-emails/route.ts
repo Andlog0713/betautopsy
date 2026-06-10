@@ -90,7 +90,10 @@ export async function GET(request: Request) {
       const p = profile as Profile;
       const emailsSent = (profile.onboarding_emails_sent as Record<string, boolean>) ?? {};
 
-      if (p.email_digest_enabled === false) { skipped++; continue; }
+      // Recovery Mode suppresses the marketing/engagement drip (transactional
+      // welcome still fires via the auth-callback path). Matches dashboard
+      // email_digest_enabled suppression.
+      if (p.email_digest_enabled === false || p.manual_recovery_mode) { skipped++; continue; }
 
       const daysSinceSignup = Math.floor(
         (now.getTime() - new Date(p.created_at).getTime()) / 86400000

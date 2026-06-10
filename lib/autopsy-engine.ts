@@ -895,7 +895,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     const highPickPct = totalBets > 0 ? (highPickTotal / totalBets) * 100 : 0;
     if (highPickPct >= 50) {
       const sev = highPickPct >= 60 ? 'critical' : 'high';
-      result.biases_detected.push({ bias_name: 'High-Pick Addiction', severity: sev, data: `${highPickTotal} entries at 5-6 picks (${Math.round(highPickPct)}%) with ${dm.highPickROI}% ROI vs ${dm.lowPickROI}% ROI on 2-3 pick entries` });
+      result.biases_detected.push({ bias_name: 'High-Pick Reliance', severity: sev, data: `${highPickTotal} entries at 5-6 picks (${Math.round(highPickPct)}%) with ${dm.highPickROI}% ROI vs ${dm.lowPickROI}% ROI on 2-3 pick entries` });
     }
     if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
       const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
@@ -2900,10 +2900,19 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   // Wrapped in callWithOverloadRetry so a single transient 529/overloaded
   // response doesn't immediately fail; everything else (timeout, auth, parse)
   // throws on first attempt.
+  // max_tokens raised 8192 -> 16384: the 8192 ceiling was the documented cause
+  // of truncated JSON on large datasets (see parseResponseJSON note below). No
+  // downstream code assumes an 8192 cap; the response is parsed by length, not a
+  // fixed buffer, and the SSE 'complete' payload is size-agnostic.
+  //
+  // SSE HEARTBEAT (follow-up for app/api/analyze): this create() call can run
+  // 100-240s with no bytes on the wire. The analyze route should enqueue a
+  // `: ping\n\n` comment every ~15s while awaiting this promise so proxies and
+  // mobile carriers don't drop the idle stream mid-analysis.
   const message = await callWithOverloadRetry(() =>
     client.messages.create({
       model,
-      max_tokens: 8192,
+      max_tokens: 16384,
       temperature: 0,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userMessage }],
@@ -3077,7 +3086,7 @@ const BIAS_TO_RECOMMENDATION_TITLE: Record<string, string> = {
   'Favorite-Heavy Lean':           'Stop paying juice on chalk',
   'Category Concentration Leak':   'Diversify outside your worst sport',
   'Emotional Session Pattern':     'Cap stakes during heated sessions',
-  'High-Pick Addiction':           'Cut high-pick entry frequency',
+  'High-Pick Reliance':            'Cut high-pick entry frequency',
   'Power Play Preference':         'Shift to Flex entries',
   'Multiplier Chasing':            'Limit post-loss pick count',
   'Player Concentration Bias':     'Diversify player exposure',
@@ -3684,6 +3693,13 @@ export async function runSnapshot(
     _snapshot_teaser: snapshotTeaser,
   };
 
+  // REDACTION INVARIANT — control_system is intentionally NOT attached to the
+  // free snapshot. The control system (live rules, cooldowns, recovery framing,
+  // support resources) is a paid/full-report surface; only runAutopsy attaches
+  // it (see the buildReportControlSystem call in runAutopsy). Do NOT "fix" a
+  // missing control_system on snapshots by adding the attach here — that would
+  // leak the paid surface into the free tier. Locked by a test in
+  // __tests__/autopsy-engine.redaction.test.ts. (Notion: Snapshot Redaction Spec.)
   const analysis: AutopsyAnalysis = analysisBase;
 
   const markdown = generateMarkdownReport(analysis);

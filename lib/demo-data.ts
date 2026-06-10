@@ -463,7 +463,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
 
   biases_detected: [
     {
-      bias_name: 'High-Pick Addiction',
+      bias_name: 'High-Pick Reliance',
       severity: 'critical',
       description: '51% of your entries are 5-6 picks. Those hit at under 12%. Your 2-3 pick entries hit at 48%, but those are only 45% of your volume.',
       evidence: '22 entries at 5-6 picks (51%) with -34% ROI vs 17 entries at 2-3 picks with +6% ROI.',

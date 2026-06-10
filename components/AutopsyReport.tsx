@@ -518,6 +518,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
   // Backward compat: read new field first, fall back to deprecated tilt_ fields for old saved reports
   const emotionScore = analysis.emotion_score ?? analysis.tilt_score ?? 0;
+  // Same insufficient-data treatment BetIQ uses: below the settled-bet floor the
+  // engine sets emotion_score_insufficient_data; don't render a confident score
+  // computed on noise.
+  const emotionInsufficient = analysis.emotion_score_insufficient_data ?? false;
   const emotionBreakdown = analysis.emotion_breakdown ?? analysis.tilt_breakdown;
 
   // Detect if this is a partial (metrics-only) report still waiting for Claude
@@ -991,18 +995,24 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] mb-6 rounded-md overflow-hidden">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better — under 25 is excellent, over 50 signals frequent heated sessions." /></span>
+            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better: under 25 is excellent, over 50 signals frequent heated sessions." /></span>
             <span className={`font-mono text-[22px] font-bold ${
-              emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
-            }`}>{emotionScore}</span>
+              emotionInsufficient ? 'text-fg-dim' : emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
+            }`}>{emotionInsufficient ? '??' : emotionScore}</span>
           </div>
-          <div className="h-1 bg-surface-2 relative">
-            <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00DC82, #FFCD2C, #FF4D4D)' }} />
-            <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
-          </div>
-          <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
-          {analysis.emotion_percentile && (
-            <PercentileGauge percentile={analysis.emotion_percentile} invertedScale label={`More controlled than ${analysis.emotion_percentile}% of bettors`} />
+          {emotionInsufficient ? (
+            <p className="font-mono text-xs text-fg-dim mt-2">Not enough settled bets to score reliably yet.</p>
+          ) : (
+            <>
+              <div className="h-1 bg-surface-2 relative">
+                <div className="h-full" style={{ width: `${emotionScore}%`, background: 'linear-gradient(90deg, #00DC82, #FFCD2C, #FF4D4D)' }} />
+                <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
+              </div>
+              <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
+              {analysis.emotion_percentile && (
+                <PercentileGauge percentile={analysis.emotion_percentile} invertedScale label={`More controlled than ${analysis.emotion_percentile}% of bettors`} />
+              )}
+            </>
           )}
         </div>
         {analysis.discipline_score ? (
