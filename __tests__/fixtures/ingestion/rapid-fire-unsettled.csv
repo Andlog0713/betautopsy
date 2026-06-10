@@ -1,0 +1,8 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-03-08T19:00:00Z,NBA,moneyline,Celtics ML vs Knicks 8pm tip (settles ~10:30pm),-125,50,loss,-50,DraftKings
+2026-03-08T19:05:00Z,NBA,spread,Bucks -4.5 vs Heat 8pm tip (prior bet NOT settled yet),-110,75,loss,-75,DraftKings
+2026-03-08T19:10:00Z,NBA,prop,Jokic points over 27.5 8:30pm tip (prior bets NOT settled yet),-115,120,loss,-120,DraftKings
+2026-03-08T19:14:00Z,NBA,total,Suns/Kings over 228 9pm tip (prior bets NOT settled yet),-105,180,win,171.43,DraftKings
+2026-03-08T22:45:00Z,NBA,moneyline,Lakers ML live 4th quarter (placed AFTER first three games settled),-140,260,loss,-260,DraftKings
+2026-03-08T22:52:00Z,NBA,prop,LeBron assists over 7.5 live (genuine post-settlement escalation),-120,300,loss,-300,DraftKings
+2026-03-09T18:00:00Z,NFL,moneyline,Chiefs ML vs Chargers (next day control row),-150,60,win,40,DraftKings

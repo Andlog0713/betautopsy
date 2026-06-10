@@ -42,7 +42,41 @@
 
 ---
 
-## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
+## Current branch: `hardening/june-10`
+
+### Done this session: ENGINE-HARDENING R0 recon + WS-TEMPORAL / WS-NUMERIC outlines (outline-only, no product code)
+- **Deliverables:** `ENGINE_HARDENING_OUTLINES_2026-06-10.md` (R0 findings +
+  both workstream outlines) + 7 synthetic golden fixtures under
+  `__tests__/fixtures/ingestion/` (odds=0, cash-outs, unparseable dates,
+  cross-tz ISO, naive/date-only, pushes/pending/void, rapid-fire-unsettled).
+  NOTE: `test/fixtures/` is gitignored (real user data); the new dir is
+  separate and committed.
+- **R0 headline findings:**
+  - No source captures any settlement timestamp — no `settled_at` in
+    ParsedBet, bets table, or any column alias. All "after-a-loss" signals
+    are placement-order only (confirmed engine:1956-1962).
+  - Prod (7,647 bets, full PostgREST sample via .env.local service key —
+    Supabase MCP still can't reach the project): 65.4% of rows are exactly
+    midnight UTC (date-only parses) and hour 00 sits INSIDE the late-night
+    window, so ~2/3 of bets read as "late night" artifactually. Timed cohort
+    is naive-local-stored-as-UTC (hour trough 01-09 UTC proves it); only
+    ~1% true-UTC ISO (Pikkit-style `Draftkings Sportsbook` rows, millis).
+  - `profiles` has NO timezone column; only tz seam is check-in `localHour`.
+  - schema_version (2) is write-only — zero readers gate on it; differs
+    (what-changed.ts, report-comparison.ts) mix versions silently.
+- **Key outline calls (pending Andrew approval):** device-tz capture at
+  upload + per-row `timestamp_quality` + date-only rows excluded from hour
+  analytics; post-loss reframed to rapid-fire escalation where settlement
+  data absent (everywhere, today); date-parse failures reject not default;
+  `cashed_out` first-class result (check-constraint migration);
+  deterministic per-bias costs from evidence_bet_ids IN SCOPE;
+  session_analysis/edge_profile reconciliation DEFERRED to structured-outputs;
+  schema_version 2→3 cross-version diffs: ANNOTATE (forced pick);
+  sequencing LOOSEN → TEMPORAL, NUMERIC independent.
+- **HALT:** no product code changed, no Notion rows created. Awaiting
+  approval on the four items listed in the report's Halt section.
+
+## Previous branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
 ### Done this session: P0-SQL-JSON-PROJECTION — recon HALT, no code change (already shipped)
 - **Outcome:** NO-OP. The brief asked to strip `bet_annotations` +
