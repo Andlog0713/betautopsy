@@ -497,6 +497,19 @@
 - **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
 - **Files:** `app/auth/callback/route.ts` (+4/-2).
 
+### Done this session (Claude, 2026-06-10): SECURITY + PROD INTEGRITY HARDENING (PR #67, branch `hardening/june-10`)
+- **A1 (SEC-HIGH/MED):** dropped `using(true)` SELECT on `share_tokens` (anon could read full report_json — 11 rows confirmed exposed live) + `email_unsubscribe_tokens`. Service-role lookups in `/share/[id]` (react `cache()`), `/og/[id]`, `/api/unsubscribe`; UUID validation; per-IP rate limiting. Migration `20260610_lock_token_tables.sql` — **apply AFTER deploy**.
+- **A2:** repo set private; Vercel retained webhook access (deployment created on private repo).
+- **A3:** restored the `progress_snapshots` upsert (app/api/analyze/route.ts) — dead since 2026-05-11.
+- **A4:** RLS audit of the 4 control tables (all `auth.uid()=user_id`, user-scoped, no `using(true)`) + awaited the 2 un-awaited `logErrorServer` calls in control-system route.
+- **A5:** `/api/export` paginated + CSV-injection neutralized; `/auth/callback` `?next=` open-redirect closed; `/api/send-email` fail-closed; `/api/inbound-email` Svix signature + HTML sanitize (needs `RESEND_INBOUND_SECRET` in prod).
+- **A6 (conditional → FAIL path):** 3 new columns live in prod, but the 4 control tables return PGRST205 (CREATE TABLEs didn't land / schema cache stale). **Compat fallbacks KEPT, compat test KEPT.** Control-system GET 500s in prod; check-in degrades gracefully.
+- **A7:** only observable errors were 4× `/api/control-system` GET at 15:45Z, all Andrew's own user, between `8948bb6` and `002a1ec` deploys. Sentry (token upload-scoped) and Supabase API logs (wrong-org MCP) not observable — stated explicitly.
+- **A8 (report-only):** live Stripe list prices 2× displayed (Pro $39.99/mo, $299.99/yr; Full Report $19.99); `AUTOPSY50` 50%-off auto-applied via `STRIPE_LAUNCH_PROMO` reconciles them — only if that env var is set in prod (unverified). Legacy "Sharp" prices active on inactive product.
+- **A9:** added `__tests__/check-in-enforcement.test.ts` (7 cases). **A10:** added `.github/workflows/ci.yml` (tsc + vitest). 304 tests green.
+- Codex predecessors logged: control-system `8948bb6`, check-in/redaction hardening `761bbe6`. Notion: 3 Tracker rows + Command Center update.
+- **POST-MERGE manual steps:** (1) apply `20260610_lock_token_tables.sql` after deploy; (2) create the 4 control tables / reload PostgREST schema cache; (3) set `RESEND_INBOUND_SECRET`; (4) confirm `STRIPE_LAUNCH_PROMO` in prod; (5) branch protection requires the `typecheck-and-test` check (not Vercel — fails on commit-author perms).
+
 ## Parked / next branch
 - **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
   - **Replicability:** ~30-35% of perceived value is commodity LLM prose, ~40-45% deterministic math ChatGPT can't reliably do, ~25% scaffolding. COGS $0.15-0.75/report vs $9.99 (1.5-7%) — headroom for Opus-class model. Main call: claude-sonnet-4-6, 8192 max_tokens (documented truncation cause; 64K available). Shape-only JSON validation — adopt structured outputs.
