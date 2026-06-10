@@ -583,6 +583,17 @@
 - Gates: tsc 0 · vitest 306 · build 0. Notion: sprint row + (pending) command-center note.
 - **Follow-up flagged (not done, would balloon scope):** 'The Tilter' archetype rename (engine + iOS wire + golden snapshots); demo-data total_bets:280 vs 35 shipped rows internal inconsistency; SSE heartbeat IMPLEMENTATION in analyze route (only commented).
 
+### Done this session (Claude, 2026-06-10): RECOVERY-MODE THRESHOLD RECALIBRATION (PR pending, branch `recalibrate/recovery-tiers`)
+- **Why:** codex's recovery triggers were round numbers with zero calibration and a binary structure that over-flags (any single threshold trips the clinical tier). Clinical (PGSI) + safer-gambling-messaging literature: tier it, gate the clinical band tightly, err toward under-flagging.
+- **Structure:** binary `recoveryModeRecommended` → PGSI-style three tiers (`riskTier` on ReportControlSystem). Tier 0 none (normal); Tier 1 elevated (single dismissible NON-clinical note, no helpline/renaming/recovery framing); Tier 2 recovery (full opt-in card + helplines + clinical framing).
+- **Tier 2 (recovery) = conjunction:** `emotion_score >= 80 AND (critical bias OR heatedPct >= 35)`. Never either alone. Live `deriveRecoveryModeState` similarly requires manual toggle OR a sustained conjunction (e.g. 3+ rule violations AND active cooldown/heated); single signal → elevated only.
+- **Helplines/support resources surface ONLY at Tier 2** in the report UI (message-fatigue avoidance).
+- **CALIBRATION QUERY (run, recorded):** prod n=6 full reports with emotion_score, degenerate (all ~73, test data). Too sparse for a real percentile. codex's 70 = ~p33 (over-flagging); interim 80 = p100 (0 reports reach recovery, intended). **Held at conservative interim.**
+- **⚠️ HARD DEPENDENCY (must re-tune in the same PR):** emotion_score + heatedSessionPercent feed off the vig-mislabeled "luck" component and the timezone-broken heated-session signal (WS-NUMERIC / WS-TEMPORAL). When those engine fixes land, these cutoffs MUST be re-tuned — a user can cross/un-cross the recovery line from the math changing, not behavior.
+- **⚠️ DO NOT MARKET the recovery feature** until the calibration query is re-run on a real (non-test) population and `RECOVERY_EMOTION_CUTOFF` is moved to ~p90-p95. Code ships safely meanwhile (interim under-flags).
+- **Interpretation deviations from spec (flagged):** "exactly 2 severe biases" implemented as `>= 2` + a single critical bias → elevated (so strong single findings get the benign note rather than no flag); Tier 1 emotion band is `>= 60` (no upper cap), so emotion >= 80 WITHOUT corroboration is elevated, not recovery. Both keep the clinical tier tight while not under-serving the benign tier.
+- **Tests:** `__tests__/recovery-tiers.test.ts` (12) — tier boundaries, AND-corroboration, single-signal-not-recovery, manual-wins. tsc 0, vitest 318.
+
 ## Parked / next branch
 - **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
   - **Replicability:** ~30-35% of perceived value is commodity LLM prose, ~40-45% deterministic math ChatGPT can't reliably do, ~25% scaffolding. COGS $0.15-0.75/report vs $9.99 (1.5-7%) — headroom for Opus-class model. Main call: claude-sonnet-4-6, 8192 max_tokens (documented truncation cause; 64K available). Shape-only JSON validation — adopt structured outputs.
