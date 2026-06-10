@@ -8,6 +8,24 @@ import {
 } from '@/lib/control-system';
 import type { RiskEvent } from '@/types';
 
+type ErrorLike = { code?: string; message?: string };
+
+function isErrorLike(value: unknown): value is ErrorLike {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function isMissingPreBetCheckinsColumnError(error: unknown, column: string): boolean {
+  if (!isErrorLike(error)) return false;
+  const code = typeof error.code === 'string' ? error.code : '';
+  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+  const normalizedColumn = column.toLowerCase();
+
+  return code === '42703' && message.includes(normalizedColumn)
+    || message.includes(`pre_bet_checkins.${normalizedColumn}`)
+    || message.includes(`column "${normalizedColumn}"`)
+    || message.includes(`${normalizedColumn} does not exist`);
+}
+
 // Deterministic pre-bet gate. Reads the latest report + live control-system
 // state, writes a persisted check-in record, and logs follow-on risk context
 // when the user is entering a risky window. Existing iOS clients rely on the
@@ -62,34 +80,49 @@ export async function POST(request: Request) {
       },
     });
 
-    const { data: inserted, error: insertError } = await supabase
+    const insertPayload = {
+      user_id: user.id,
+      sport: validated.value.sport,
+      stake: validated.value.stake,
+      odds: validated.value.odds,
+      bet_type: validated.value.betType,
+      placed_at: validated.value.placedAt,
+      local_hour: validated.value.localHour ?? null,
+      bet_quality_score: response.betQualityScore,
+      flag_count: response.flags.length,
+      recommendation: response.recommendation,
+      flags: response.flags,
+      summary: response.summary,
+    };
+    const contextPayload = {
+      actionGate: response.actionGate ?? null,
+      ruleViolations: response.ruleViolations ?? [],
+      cooldown: response.cooldown ?? null,
+      recentRiskContext: response.recentRiskContext ?? [],
+      planContext: response.planContext ?? null,
+      reflectionPrompts: response.reflectionPrompts ?? [],
+      overrideRequired: response.overrideRequired ?? false,
+      reflection: validated.value.reflection ?? null,
+    };
+
+    let insertResult = await supabase
       .from('pre_bet_checkins')
       .insert({
-        user_id: user.id,
-        sport: validated.value.sport,
-        stake: validated.value.stake,
-        odds: validated.value.odds,
-        bet_type: validated.value.betType,
-        placed_at: validated.value.placedAt,
-        local_hour: validated.value.localHour ?? null,
-        bet_quality_score: response.betQualityScore,
-        flag_count: response.flags.length,
-        recommendation: response.recommendation,
-        flags: response.flags,
-        summary: response.summary,
-        context: {
-          actionGate: response.actionGate ?? null,
-          ruleViolations: response.ruleViolations ?? [],
-          cooldown: response.cooldown ?? null,
-          recentRiskContext: response.recentRiskContext ?? [],
-          planContext: response.planContext ?? null,
-          reflectionPrompts: response.reflectionPrompts ?? [],
-          overrideRequired: response.overrideRequired ?? false,
-          reflection: validated.value.reflection ?? null,
-        },
+        ...insertPayload,
+        context: contextPayload,
       })
       .select('id')
       .single();
+
+    if (isMissingPreBetCheckinsColumnError(insertResult.error, 'context')) {
+      insertResult = await supabase
+        .from('pre_bet_checkins')
+        .insert(insertPayload)
+        .select('id')
+        .single();
+    }
+
+    const { data: inserted, error: insertError } = insertResult;
 
     if (insertError || !inserted) {
       console.error('[check-in] INSERT failed:', insertError);

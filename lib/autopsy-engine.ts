@@ -3684,10 +3684,7 @@ export async function runSnapshot(
     _snapshot_teaser: snapshotTeaser,
   };
 
-  const analysis: AutopsyAnalysis = {
-    ...analysisBase,
-    control_system: buildReportControlSystem(analysisBase),
-  };
+  const analysis: AutopsyAnalysis = analysisBase;
 
   const markdown = generateMarkdownReport(analysis);
 

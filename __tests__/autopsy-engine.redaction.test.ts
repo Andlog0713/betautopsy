@@ -541,6 +541,17 @@ function leakHeavyBets(): Bet[] {
 describe('Snapshot Redaction - Group 6: unified policy', () => {
   const NO_DOLLAR = /\$\s?[\d,]/;
 
+  it('snapshot payload omits control_system entirely', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    expect('control_system' in analysis).toBe(false);
+    expect(analysis.control_system).toBeUndefined();
+  });
+
+  it('full payload still ships control_system', async () => {
+    const { analysis } = await runAutopsy(makeFixtureBets());
+    expect(analysis.control_system).toBeDefined();
+  });
+
   it('strategic_leaks: first-sentence detail visible, suggestion hidden, no dollars', async () => {
     const { analysis } = await runSnapshot(leakHeavyBets());
     expect(analysis.strategic_leaks.length).toBeGreaterThan(0);

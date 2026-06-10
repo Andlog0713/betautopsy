@@ -4,6 +4,23 @@ import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { validateOutcomeRequest } from '@/lib/check-in-scorer';
 import type { RiskEvent } from '@/types';
 
+type ErrorLike = { code?: string; message?: string };
+
+function isErrorLike(value: unknown): value is ErrorLike {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function isMissingPreBetCheckinsColumnError(error: unknown, columns: string[]): boolean {
+  if (!isErrorLike(error)) return false;
+  const code = typeof error.code === 'string' ? error.code : '';
+  const message = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+
+  return code === '42703' && columns.some((column) => message.includes(column.toLowerCase()))
+    || columns.some((column) => message.includes(`pre_bet_checkins.${column.toLowerCase()}`))
+    || columns.some((column) => message.includes(`column "${column.toLowerCase()}"`))
+    || columns.some((column) => message.includes(`${column.toLowerCase()} does not exist`));
+}
+
 // Outcome endpoint. iOS/web POST the user's actual decision
 // (placed_anyway / waited / placed_bet) after a /api/check-in response.
 // We select the updated row back so override handling can inspect the saved
@@ -47,18 +64,40 @@ export async function POST(request: Request) {
   });
 
   try {
-    const { data: updatedRow, error: updateError } = await supabase
+    const baseUpdate = {
+      outcome: validated.value.outcome,
+      outcome_at: new Date().toISOString(),
+    };
+
+    let updateResult = await supabase
       .from('pre_bet_checkins')
-      .update(
-        {
-          outcome: validated.value.outcome,
-          outcome_at: new Date().toISOString(),
-          override_reason: validated.value.overrideReason ?? null,
-        },
-      )
+      .update({
+        ...baseUpdate,
+        override_reason: validated.value.overrideReason ?? null,
+      })
       .eq('id', validated.value.checkInId)
       .select('id, context')
       .maybeSingle();
+
+    if (isMissingPreBetCheckinsColumnError(updateResult.error, ['override_reason'])) {
+      updateResult = await supabase
+        .from('pre_bet_checkins')
+        .update(baseUpdate)
+        .eq('id', validated.value.checkInId)
+        .select('id, context')
+        .maybeSingle();
+    }
+
+    if (isMissingPreBetCheckinsColumnError(updateResult.error, ['context'])) {
+      updateResult = await supabase
+        .from('pre_bet_checkins')
+        .update(baseUpdate)
+        .eq('id', validated.value.checkInId)
+        .select('id')
+        .maybeSingle();
+    }
+
+    const { data: updatedRow, error: updateError } = updateResult;
 
     if (updateError) {
       console.error('[check-in/outcome] UPDATE failed:', updateError);
