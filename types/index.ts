@@ -601,6 +601,14 @@ export interface ReportRiskSummary {
   evidence: string;
 }
 
+// Three-tier risk classification (replaces the binary recoveryModeRecommended).
+// PGSI-style banding: confident clinical framing only at the top tier.
+//   'none'     — no flag, normal product.
+//   'elevated' — light-touch, non-clinical note only. No helpline, no metric
+//                renaming, no recovery framing.
+//   'recovery' — full opt-in recovery card, support resources, clinical framing.
+export type ReportRiskTier = 'none' | 'elevated' | 'recovery';
+
 export interface ReportControlSystem {
   controlStatus: 'support_mode' | 'watch_mode' | 'recovery_mode';
   headline: string;
@@ -611,7 +619,10 @@ export interface ReportControlSystem {
   relapseTriggers: string[];
   nextWeekFocus: string;
   planTemplate: ControlPlanSettings;
+  /** Top-tier flag. True only at riskTier === 'recovery'. Kept for back-compat
+   *  with reports generated before riskTier existed. */
   recoveryModeRecommended: boolean;
+  riskTier: ReportRiskTier;
   supportResources: SupportResource[];
 }
 

@@ -424,6 +424,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   // Drives the apparent-edge caution + sharp-score interpretation copy, which
   // describe THIS report and stay stable with it.
   const recoveryModeRecommended = analysis.control_system?.recoveryModeRecommended ?? false;
+  // Three-tier risk band. Fall back to the old binary for reports generated
+  // before riskTier existed. 'recovery' = full clinical framing + helplines;
+  // 'elevated' = a single light-touch note only; 'none' = normal product.
+  const riskTier = analysis.control_system?.riskTier
+    ?? (recoveryModeRecommended ? 'recovery' : 'none');
   // recoveryModeActive: the user's LIVE recovery state, passed in at render
   // (never baked into report_json). Drives tone reframing — session relabels,
   // recovery banner — so leaving Recovery Mode reverts old reports to neutral.
@@ -2562,6 +2567,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {recoveryModeRecommended && !recoveryModeActive && !readOnly && (
         <RecoveryRecommendationCard reportId={reportId} />
       )}
+      {riskTier === 'elevated' && !recoveryModeActive && !readOnly && (
+        <ElevatedRiskNote reportId={reportId} />
+      )}
       {analysis.control_system && (
         <div className="card p-6 space-y-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -2671,6 +2679,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 ))}
               </div>
             </div>
+            {/* Helplines / clinical support resources surface ONLY at the
+                recovery tier. Over-surfacing them on every report causes
+                message fatigue that blunts efficacy for users who actually
+                need them (safer-gambling messaging literature). */}
+            {riskTier === 'recovery' && (
             <div className="card-tier-1 p-4">
               <p className="case-header mb-2">SUPPORT</p>
               <div className="space-y-2">
@@ -2694,6 +2707,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 View all support options
               </Link>
             </div>
+            )}
           </div>
         </div>
       )}
@@ -3361,6 +3375,43 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
 // (never auto-applied), with dismissal persisted per-report in localStorage.
 // Shown only when this report recommends recovery AND the user is not already
 // in Recovery Mode. Opting in happens in the Control Center, not here.
+// Tier 1 (elevated) light-touch note. Deliberately NON-clinical: no helpline,
+// no metric renaming, no recovery framing. A single dismissible line that names
+// the elevated-risk patterns and points at the report. Persisted dismissal.
+function ElevatedRiskNote({ reportId }: { reportId?: string }) {
+  const storageKey = reportId ? `ba-elevated-note-dismissed-${reportId}` : null;
+  const [dismissed, setDismissed] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!storageKey) { setReady(true); return; }
+    try {
+      setDismissed(window.localStorage.getItem(storageKey) === '1');
+    } catch { /* private mode */ }
+    setReady(true);
+  }, [storageKey]);
+
+  function dismiss() {
+    setDismissed(true);
+    if (storageKey) {
+      try { window.localStorage.setItem(storageKey, '1'); } catch { /* ignore */ }
+    }
+  }
+
+  if (!ready || dismissed) return null;
+
+  return (
+    <div className="card-tier-1 border-l-2 border-l-caution/60 p-4 flex items-start justify-between gap-4">
+      <p className="text-fg-muted text-sm max-w-2xl">
+        This report shows a few elevated-risk patterns worth a look. They are flagged in the findings below. Nothing here is a diagnosis, just a heads-up so you can decide what to adjust.
+      </p>
+      <button onClick={dismiss} aria-label="Dismiss note" className="text-fg-dim hover:text-fg-muted text-sm min-h-[44px] px-2 shrink-0">
+        Got it
+      </button>
+    </div>
+  );
+}
+
 function RecoveryRecommendationCard({ reportId }: { reportId?: string }) {
   const storageKey = reportId ? `ba-recovery-rec-dismissed-${reportId}` : null;
   const [dismissed, setDismissed] = useState(false);
