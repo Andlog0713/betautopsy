@@ -1,0 +1,11 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-03-03T17:00:00Z,NFL,spread,Eagles -3 vs Cowboys (landed on 3),-110,100,push,0,DraftKings
+2026-03-03T17:10:00Z,NBA,total,Lakers/Warriors over 224 (landed 224),-105,50,push,17.50,FanDuel
+2026-03-03T17:20:00Z,NFL,spread,Ravens -7 vs Steelers (landed on 7),-110,75,tie,0,BetMGM
+2026-03-03T17:30:00Z,NBA,moneyline,Celtics ML vs Nets,-150,150,win,100,DraftKings
+2026-03-03T17:40:00Z,NBA,spread,Bucks -5.5 vs Pacers,-110,110,loss,-110,DraftKings
+2026-03-03T17:50:00Z,MLB,moneyline,Braves ML vs Mets,+110,40,pending,0,Caesars
+2026-03-03T18:00:00Z,MLB,total,Astros/Rangers over 8.5,-115,60,open,0,Caesars
+2026-03-03T18:10:00Z,NHL,moneyline,Bruins ML vs Rangers (game postponed),-120,90,void,0,FanDuel
+2026-03-03T18:20:00Z,NHL,puck line,Oilers -1.5 vs Flames (cancelled),+160,30,cancelled,0,BetMGM
+2026-03-03T18:30:00Z,NBA,prop,Curry threes over 4.5,-125,80,win,64,FanDuel

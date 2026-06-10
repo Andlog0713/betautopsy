@@ -197,7 +197,19 @@ export async function GET(request: NextRequest) {
       // Respect ?next= if set (e.g. /pricing), otherwise dashboard. Returning
       // users go to /dashboard too — its AuthGuard revalidates AuthProvider's
       // ba-auth-cache-v1, so the marketing nav reflects the session afterward.
-      const target = next && next !== '/' ? next : (wasFirstLogin ? '/dashboard?welcome=true' : '/dashboard');
+      //
+      // Validate next exactly like middleware.ts:104 — relative path only, no
+      // protocol-relative (//) or backslash tricks, and the resolved origin
+      // must match. Without this, next=@evil.com / next=//evil.com is an open
+      // redirect off the trusted origin.
+      let safeNext: string | null = null;
+      if (next && next !== '/' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\')) {
+        try {
+          const dest = new URL(next, origin);
+          if (dest.origin === origin) safeNext = `${dest.pathname}${dest.search}${dest.hash}`;
+        } catch { /* malformed next — fall through to default */ }
+      }
+      const target = safeNext ?? (wasFirstLogin ? '/dashboard?welcome=true' : '/dashboard');
       return NextResponse.redirect(`${origin}${target}`);
     }
   }

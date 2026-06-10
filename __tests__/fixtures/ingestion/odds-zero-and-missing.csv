@@ -1,0 +1,8 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-03-01T19:05:00Z,NBA,moneyline,Celtics ML vs Knicks,0,100,win,90.91,DraftKings
+2026-03-01T19:10:00Z,NBA,spread,Lakers -4.5 vs Warriors,0,50,loss,-50,DraftKings
+2026-03-01T19:15:00Z,NFL,moneyline,Chiefs ML vs Bills,,75,win,68.18,FanDuel
+2026-03-01T19:20:00Z,NFL,prop,Mahomes passing yards over 285.5,N/A,25,loss,-25,FanDuel
+2026-03-01T19:25:00Z,NBA,prop,Jokic points over 27.5,-110,110,win,100,DraftKings
+2026-03-01T19:30:00Z,MLB,moneyline,Yankees ML vs Red Sox,+145,40,loss,-40,BetMGM
+2026-03-01T19:35:00Z,NBA,spread,Bucks -6 vs Heat,0,200,win,181.82,BetMGM

@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
 import { isResendConfigured, getResend } from '@/lib/resend';
+import { requireCronSecret } from '@/lib/cron-auth';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // Fail closed: requireCronSecret 500s when CRON_SECRET is unset and 401s on
+  // a bad header. The previous `if (cronSecret)` guard skipped auth entirely
+  // when the env var was missing, leaving this Resend-send route open.
+  const authFailure = requireCronSecret(request, '/api/send-email');
+  if (authFailure) return authFailure;
 
   if (!isResendConfigured()) {
     return NextResponse.json({ error: 'Resend not configured' }, { status: 500 });

@@ -1,0 +1,8 @@
+date,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-02-10,NBA,moneyline,Celtics ML vs Cavs (date-only — becomes midnight UTC),-130,100,win,76.92,PointsBet
+2026-02-10,NBA,spread,Lakers -2.5 vs Jazz (date-only),-110,50,loss,-50,PointsBet
+2/10/2026,NFL,moneyline,Lions ML vs Bears (US date-only),-145,80,win,55.17,bet365
+2/10/2026 7:30 PM,NBA,prop,Giannis points over 30.5 (naive local datetime),-118,60,win,50.85,FanDuel
+2026-02-10 21:45,NBA,moneyline,Heat ML vs Magic (naive 24h datetime),+102,45,loss,-45,BetMGM
+2026-02-11,MLB,moneyline,Phillies ML vs Nationals (date-only next day),-160,90,win,56.25,PointsBet
+2/11/2026 11:50 PM,NBA,total,Nuggets/Wolves under 219.5 (naive — genuinely late local),-110,70,loss,-70,FanDuel

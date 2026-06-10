@@ -42,7 +42,66 @@
 
 ---
 
-## Current branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
+## Current branch: `hardening/june-10`
+
+### Done this session: ENGINE-HARDENING R0 recon + WS-TEMPORAL / WS-NUMERIC outlines (outline-only, no product code)
+- **Deliverables:** `ENGINE_HARDENING_OUTLINES_2026-06-10.md` (R0 findings +
+  both workstream outlines) + 7 synthetic golden fixtures under
+  `__tests__/fixtures/ingestion/` (odds=0, cash-outs, unparseable dates,
+  cross-tz ISO, naive/date-only, pushes/pending/void, rapid-fire-unsettled).
+  NOTE: `test/fixtures/` is gitignored (real user data); the new dir is
+  separate and committed.
+- **R0 headline findings:**
+  - No source captures any settlement timestamp — no `settled_at` in
+    ParsedBet, bets table, or any column alias. All "after-a-loss" signals
+    are placement-order only (confirmed engine:1956-1962).
+  - Prod (7,647 bets, full PostgREST sample via .env.local service key —
+    Supabase MCP still can't reach the project): 65.4% of rows are exactly
+    midnight UTC (date-only parses) and hour 00 sits INSIDE the late-night
+    window, so ~2/3 of bets read as "late night" artifactually. Timed cohort
+    is naive-local-stored-as-UTC (hour trough 01-09 UTC proves it); only
+    ~1% true-UTC ISO (Pikkit-style `Draftkings Sportsbook` rows, millis).
+  - `profiles` has NO timezone column; only tz seam is check-in `localHour`.
+  - schema_version (2) is write-only — zero readers gate on it; differs
+    (what-changed.ts, report-comparison.ts) mix versions silently.
+- **Key outline calls (pending Andrew approval):** device-tz capture at
+  upload + per-row `timestamp_quality` + date-only rows excluded from hour
+  analytics; post-loss reframed to rapid-fire escalation where settlement
+  data absent (everywhere, today); date-parse failures reject not default;
+  `cashed_out` first-class result (check-constraint migration);
+  deterministic per-bias costs from evidence_bet_ids IN SCOPE;
+  session_analysis/edge_profile reconciliation DEFERRED to structured-outputs;
+  schema_version 2→3 cross-version diffs: ANNOTATE (forced pick);
+  sequencing LOOSEN → TEMPORAL, NUMERIC independent.
+- **APPROVED (Andrew, 2026-06-10):** WS-TEMPORAL, WS-NUMERIC, ANNOTATE for
+  schema_version 2→3, sequencing LOOSEN→TEMPORAL with NUMERIC independent.
+  Still outline-gated: LOOSEN is the iOS critical-path item and lands first;
+  temporal/numeric gate App Store submission, NOT TestFlight.
+- **Constraints attached to the approval:**
+  1. Each workstream and any concurrent run gets its OWN branch off main
+     (ws-temporal/*, ws-numeric/*); no two sessions share a working branch
+     (this run's concurrent-write with the security session on
+     hardening/june-10 must not repeat).
+  2. Deterministic per-bias costs ship as their own PR (PR-N3), gated on the
+     redaction 31-assert suite AND the WhatChanged cost-delta annotation both
+     green — the change feeds snapshot blur + longitudinal diff, not just
+     the report body.
+  3. The date-only backfill heuristic is validated against a hand-checked
+     sample before ANY historical row is reclassified.
+  4. Pikkit settlement-timestamp capture filed as v1.1 (unlocks real
+     post-loss sequencing later); today's reframe is rapid-fire everywhere.
+- **Notion tracker rows created (BetAutopsy Tracker):**
+  - WS-TEMPORAL (3 PRs) — `37b5964c-daf2-8123` (P1, L, blocked by LOOSEN +
+    backfill-sample validation)
+  - WS-NUMERIC PR-N1/N2 — `37b5964c-daf2-81ba-b790` (P1, M, iOS result-enum
+    pre-check before N2)
+  - WS-NUMERIC PR-N3 deterministic costs — `37b5964c-daf2-81ba-9f7f`
+    (Blocked, gate per constraint 2)
+  - schema_version ANNOTATE machinery — `37b5964c-daf2-815f` (P1, S, lands
+    before/with first value-changing PR)
+  - v1.1 Pikkit settlement capture — `37b5964c-daf2-817b` (P3)
+
+## Previous branch: `claude/engine-whatif-transform` (PR-A baseline merged; ENGINE-WHATIF shipped then revised)
 
 ### Done this session: P0-SQL-JSON-PROJECTION — recon HALT, no code change (already shipped)
 - **Outcome:** NO-OP. The brief asked to strip `bet_annotations` +
@@ -411,6 +470,31 @@
   with worktree excluded (92 with worktree). Vitest has no `exclude:` for
   `.claude/worktrees/`. Cleanup parked.
 
+### Done this session (external — Codex, 2026-06-10): CONTROL-SYSTEM web surface + repositioning (3 commits direct to main: `8948bb6`, `002a1ec`, `761bbe6`; all deployed, `761bbe6` live)
+- **What shipped:** `lib/control-system.ts` (985 lines, deterministic `control_system`
+  built from the full-report analysis — rules/cooldowns/recovery mode);
+  `/api/control-system` (447 lines, getAuthenticatedClient-authed); web Control
+  Center (`app/(dashboard)/control` + `ControlPageClient` 577 lines +
+  `ControlSystemPanel` + `useControlSystem`); dashboard integration (+126);
+  AutopsyReport Ch5 integration (+247); expanded check-in routes + scorer;
+  migration `20260609_control_system.sql` (control_plans, control_rules,
+  risk_events, cooldowns — RLS `auth.uid() = user_id` on all four, verified);
+  new `/support` page + centralized `RESPONSIBLE_GAMBLING_DISCLAIMER`
+  (`lib/support-resources.ts`) reused across emails/unsubscribe/engine markdown;
+  landing repositioned around "control plan / live guardrails / Zero picks"
+  (metadata + hero + JSON-LD). `control_system` added to FULL reports only —
+  snapshot path unchanged (paywall preserved); ask-report context includes it.
+- **Verified by Claude session 2026-06-10:** `tsc --noEmit` 0 · `vitest run`
+  297 pass (was 293; +`api-check-in-compat.test.ts`, +redaction cases) ·
+  prod runtime logs clean over 20h (one benign image-size warning).
+- **OPEN VERIFICATION ITEM: confirm `20260609_control_system.sql` was applied
+  to prod Supabase** (`eekubnadizmtuhnxzcig`) — builds/tests pass without it,
+  but first `/api/control-system` or check-in write fails at runtime if the
+  tables don't exist. Claude's Supabase MCP can't reach this project (different
+  org); check the dashboard or `supabase migration list`.
+- This closes product-audit item "web control-system surface" (was: built
+  server-side, iOS-only, zero web UI).
+
 ### Done this session: WEB-AUTH-REDIRECT — returning OAuth logins land on `/dashboard` (pushed direct to main)
 - **Why (reported by Andrew 2026-06-09):** signing in with Google on
   betautopsy.com bounced him back to the landing page showing Login/Sign Up
@@ -438,7 +522,40 @@
 - **Gates:** `tsc --noEmit` 0 · `vitest run` 293 pass (11 files) · `next build` 0.
 - **Files:** `app/auth/callback/route.ts` (+4/-2).
 
+### Done this session (Claude, 2026-06-10): SECURITY + PROD INTEGRITY HARDENING (PR #67, branch `hardening/june-10`)
+- **A1 (SEC-HIGH/MED):** dropped `using(true)` SELECT on `share_tokens` (anon could read full report_json — 11 rows confirmed exposed live) + `email_unsubscribe_tokens`. Service-role lookups in `/share/[id]` (react `cache()`), `/og/[id]`, `/api/unsubscribe`; UUID validation; per-IP rate limiting. Migration `20260610_lock_token_tables.sql` — **apply AFTER deploy**.
+- **A2:** repo set private; Vercel retained webhook access (deployment created on private repo).
+- **A3:** restored the `progress_snapshots` upsert (app/api/analyze/route.ts) — dead since 2026-05-11.
+- **A4:** RLS audit of the 4 control tables (all `auth.uid()=user_id`, user-scoped, no `using(true)`) + awaited the 2 un-awaited `logErrorServer` calls in control-system route.
+- **A5:** `/api/export` paginated + CSV-injection neutralized; `/auth/callback` `?next=` open-redirect closed; `/api/send-email` fail-closed; `/api/inbound-email` Svix signature + HTML sanitize (needs `RESEND_INBOUND_SECRET` in prod).
+- **A6 (conditional → FAIL path):** 3 new columns live in prod, but the 4 control tables return PGRST205 (CREATE TABLEs didn't land / schema cache stale). **Compat fallbacks KEPT, compat test KEPT.** Control-system GET 500s in prod; check-in degrades gracefully.
+- **A7:** only observable errors were 4× `/api/control-system` GET at 15:45Z, all Andrew's own user, between `8948bb6` and `002a1ec` deploys. Sentry (token upload-scoped) and Supabase API logs (wrong-org MCP) not observable — stated explicitly.
+- **A8 (report-only):** live Stripe list prices 2× displayed (Pro $39.99/mo, $299.99/yr; Full Report $19.99); `AUTOPSY50` 50%-off auto-applied via `STRIPE_LAUNCH_PROMO` reconciles them — only if that env var is set in prod (unverified). Legacy "Sharp" prices active on inactive product.
+- **A9:** added `__tests__/check-in-enforcement.test.ts` (7 cases). **A10:** added `.github/workflows/ci.yml` (tsc + vitest). 304 tests green.
+- Codex predecessors logged: control-system `8948bb6`, check-in/redaction hardening `761bbe6`. Notion: 3 Tracker rows + Command Center update.
+- **POST-MERGE manual steps:** (1) apply `20260610_lock_token_tables.sql` after deploy; (2) create the 4 control tables / reload PostgREST schema cache; (3) set `RESEND_INBOUND_SECRET`; (4) confirm `STRIPE_LAUNCH_PROMO` in prod; (5) branch protection requires the `typecheck-and-test` check (not Vercel — fails on commit-author perms).
+
 ## Parked / next branch
+- **PRODUCT AUDIT (2026-06-09/10, 5-agent sweep: engine depth, LLM replicability, consumer UX, ecosystem/pricing, competitive research; findings reported to Andrew, fixes not yet authorized).** Highlights:
+  - **Replicability:** ~30-35% of perceived value is commodity LLM prose, ~40-45% deterministic math ChatGPT can't reliably do, ~25% scaffolding. COGS $0.15-0.75/report vs $9.99 (1.5-7%) — headroom for Opus-class model. Main call: claude-sonnet-4-6, 8192 max_tokens (documented truncation cause; 64K available). Shape-only JSON validation — adopt structured outputs.
+  - **Engine math bugs found:** odds=0 → Infinity in whatIf calcProfit (lib/autopsy-engine.ts:830-834) + impliedProb(0)=1.0 poisons luck/calibration/BetIQ; "luck" rating counts vig as cold variance; ALL "after-a-loss" signals key on placement order not settlement (causal confound on flagship chase signal); cash-outs erased to $0 profit (csv-parser.ts:330-333); unparseable dates default to TODAY (csv-parser.ts:314-317) corrupting timing; ROI denominator includes pending/void; win rate counts pushes; category ROI triple-counts dollars across overlapping keys; emotion_score insufficient_data flag ignored by web UI (only BetIQ checks).
+  - **Honesty exposures:** all percentiles are 6 hardcoded values from literature stubs (engine:1228-1256; BetIQ percentile already nulled for this reason — emotion/discipline still ship); "73% of bettors" pertinent-negative stats uncited constants; per-bias estimated_cost is LLM-invented and can contradict deterministic leak total; RedactedValue blurs FABRICATED $180-$4,200 numbers; progress bars fake (92% cap + deliberate 6s delay); "47 behavioral signals" ≈ 22-28 deduplicated; sample report says "280 bets" ships 73; "High-Pick Addiction" bias name violates own no-addiction-language rule.
+  - **Consumer UX:** paid report 8/10, free snapshot 4/10 for <100-bet users — 100-settled-bet bias floor zeroes ALL findings for majority segment so paywall counts nothing. Fix: small-sample deterministic finding tier at ~20-30 bets. Recommended upload path is a 6-step third-party Pikkit trial (affiliate). progress_snapshots outage guts vs-last-report + ProgressChart for all post-May-11 users while Pro still sells "track progress".
+  - **Ecosystem:** Pro $19.99/mo gates almost nothing recurring (digest/streaks/progress free in code) — metering plan not membership; one-and-done is rational. Web $9.99 vs iOS $19.99 same artifact. Control system (pre-bet check-ins, cooldowns, recovery mode, lib/control-system.ts) fully built server-side, iOS-only, ZERO web UI. No cross-user data flywheel — cohort percentiles unbuilt while data accumulates. quiz_leads captured then abandoned (no nurture). action_checkoffs API has no web consumer.
+  - **Competitive:** empty quadrant (behavioral-first + one-time + book-independent). Threats: Pikkit (600K MAU, BookSync, could ship behavioral tab in a quarter), FD My Spend/DK Stat Sheet (3.5M engaged, free, perfect data), ChatGPT improving free. SportBot AI only direct behavioral rival (tiny, manual, sells picks). Biggest weakness: no auto-sync (SharpSports licensing = obvious mitigation). Positioning: "the only one not selling you picks."
+  - **Top product moves (synthesis):** (1) restore progress_snapshots + make report N reference N-1 in prompt — longitudinal memory is the unreplicable moat AND the Pro justification; (2) real cohort percentiles from own data; (3) small-sample finding tier; (4) deterministic per-bias costs + structured outputs + session_analysis/edge_profile reconciliation; (5) web control-system surface to give Pro recurring value; (6) fix engine math/timezone/cash-out bugs; (7) replace fabricated blur/progress numbers with honest variants; (8) reconcile web/iOS pricing.
+- **FULL-SITE AUDIT (2026-06-09, 5-agent sweep + live Vercel/GitHub/Supabase checks; findings reported to Andrew, fixes not yet authorized).** Top items by severity:
+  - **SEC-HIGH: `share_tokens` SELECT policy is `using (true)`** (supabase/schema.sql:280) — anon key can dump every shared report's full paid `report_json` via PostgREST. Scope to per-row lookup (RPC or service-role route).
+  - **DATA-HIGH: `progress_snapshots` upsert commented out since 2026-05-11** as a "DIAGNOSTIC … restore after confirming" (app/api/analyze/route.ts:622-644) — web report runs have written NO progress snapshots for ~4 weeks; ProgressChart + comparison reads are silently stale.
+  - **DATA-HIGH: `/api/export` truncates at the 1000-row PostgREST cap** (no `.range()` loop) — incomplete CSV for big users, no error.
+  - **REPO-HIGH: GitHub repo is PUBLIC with no branch protection** and Vercel auto-deploys main with no vitest/tsc CI gate (only design-system lint + mobile-regression e2e run in CI).
+  - SEC-MED: `email_unsubscribe_tokens` world-readable; `/api/inbound-email` unauthenticated + HTML injection; `/api/send-email` fails open if CRON_SECRET unset; open redirect via `?next=` in /auth/callback (middleware validates, callback doesn't).
+  - PERF-HIGH: middleware does blocking `auth.getUser()` on `/`, `/sample`, `/go`, `/terms`, `/share/*` and ALL `/api/*` (double-auth; pure waste for iOS Bearer calls). PERF-HIGH: `/api/recent-activity` reads 30 full `report_json` blobs (~10-15 MB) for a 2 KB ticker. PERF-MED: no SSE heartbeat during 100-240s LLM phase; analyze SSE ships full bet array twice; TTF fonts (~440 KB, should be WOFF2) + 1.8 MB unused fonts in public/; ~2 MB stray junk in public/ (Archive.zip etc.).
+  - ENGINE-HIGH (already filed): UTC hour-bucketing bug confirmed still present.
+  - DESIGN: 80+ violations of the design system across 8/10 rules incl. systemic palette mismatch (spec #0D1117/#00C9A7/#C4463A vs implemented #0A0E12/#FACC15/#FF4D4D), glassmorphism on NavBar/ChapterNav, hamburger menus, Inter font in 4 share-card components.
+  - QUALITY: ~20 un-awaited `logErrorServer` calls in API routes (lambda freeze may drop error logs); 6 inline service-role client re-implementations; buildWhatIfs duplication (filed); 3 orphaned components; lib/autopsy-engine.ts 3,877 lines.
+  - SEO/A11Y: landing page has no `<h1>`; /terms no metadata; /sample + /terms + /quiz/quick missing from sitemap; no prefers-reduced-motion handling.
+  - Tooling note: Supabase MCP (claude.ai connector) cannot reach prod project `eekubnadizmtuhnxzcig` (different org) — advisors unavailable; schema audited from local supabase/ files instead (RLS enabled on all tables).
 - Mega-PR B (iOS rendering of new engine output, including `triggerEvent` reader)
 - Web pricing reconcile (post-iOS launch, separate project)
 - "23 pages" iOS paywall copy reconcile (separate iOS-repo task)

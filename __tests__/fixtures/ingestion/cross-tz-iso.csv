@@ -1,0 +1,7 @@
+time_placed_iso,sport,bet_type,description,odds,stake,result,profit,sportsbook
+2026-03-05T22:15:00-05:00,NBA,moneyline,Knicks ML vs Sixers (10:15pm ET as offset ISO),-125,100,win,80,Draftkings Sportsbook
+2026-03-06T03:15:00.123Z,NBA,moneyline,Knicks ML vs Sixers (same instant as Z+millis Pikkit-style),-125,100,win,80,Draftkings Sportsbook
+2026-03-05 22:15,NBA,moneyline,Knicks ML vs Sixers (same wall clock naive — parses as UTC on server),-125,100,win,80,DraftKings
+2026-03-05T23:45:00-08:00,NHL,moneyline,Kings ML vs Sharks (11:45pm PT — late night locally then morning UTC),-135,60,loss,-60,Draftkings Sportsbook
+2026-03-06T07:45:00.000Z,NHL,moneyline,Kings ML vs Sharks (same instant in Z form),-135,60,loss,-60,Draftkings Sportsbook
+2026-03-05T14:00:00+01:00,EPL,moneyline,Arsenal ML vs Spurs (CET offset),+150,40,win,60,bet365

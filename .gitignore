@@ -65,3 +65,5 @@ scripts/audit-output.json
 # itself are excluded from the repo for the same reason.
 scripts/audit-engine.ts
 scripts/test-check-in.ts
+
+.claude/worktrees/

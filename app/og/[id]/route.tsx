@@ -20,17 +20,28 @@ function gradeColor(g: string): string {
   return '#FF4D4D';
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Fetch share data via Supabase REST API
+  // Reject anything that isn't a UUID before it reaches the PostgREST URL —
+  // the raw param previously interpolated unescaped, letting `&`/operator
+  // payloads append query parameters.
+  if (!UUID_RE.test(id)) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  // Fetch share data via Supabase REST API. share_tokens has no public
+  // SELECT policy (see 20260610_lock_token_tables.sql), so this lookup needs
+  // the service role; anon fallback only covers the pre-migration window.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eekubnadizmtuhnxzcig.supabase.co';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   let d: ShareData;
   try {
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/share_tokens?select=data&id=eq.${id}&limit=1`,
+      `${supabaseUrl}/rest/v1/share_tokens?select=data&id=eq.${encodeURIComponent(id)}&limit=1`,
       {
         headers: {
           apikey: supabaseKey,
