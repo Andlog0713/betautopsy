@@ -13,7 +13,7 @@ const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
 });
 
 interface ShareData {
-  grade: string;
+  grade: string | null;
   emotion_score: number;
   roi_percent: number;
   total_bets: number;
@@ -27,7 +27,10 @@ interface ShareData {
   tier?: string;
 }
 
-function gradeColor(grade: string): string {
+function gradeColor(grade: string | null | undefined): string {
+  // Snapshot (free) shares suppress overall_grade → null. Render a neutral
+  // color instead of throwing on null.startsWith.
+  if (!grade) return 'text-fg-muted';
   if (grade.startsWith('A')) return 'text-win';
   if (grade.startsWith('B')) return 'text-win/70';
   if (grade.startsWith('C')) return 'text-caution';
