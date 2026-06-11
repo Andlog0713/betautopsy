@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from './supabase-server';
 import { logErrorServer } from './log-error-server';
+import { maybeSendReportReadyPush } from './push-report-ready';
 import {
   runAutopsy,
   calculateMetrics,
@@ -268,6 +269,15 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
         },
       });
     }
+
+    // 10. Report-ready push. ORDERING INVARIANT: the full report row was
+    // committed by step 8's INSERT (.select('id').single() above, guarded
+    // for insertErr), so it is now readable by GET /api/reports?upgraded_from=
+    // and GET /api/reports/:id. The push fires only here, AFTER that commit,
+    // so the iOS deep-link tap can always fetch the row. Best-effort and
+    // self-contained (never throws); a push failure cannot affect the
+    // already-committed report.
+    await maybeSendReportReadyPush(userId, newReport.id);
 
     console.log('[iap-upgrade] upgrade complete', {
       snapshotId, transactionId, newReportId: newReport.id, bets: bets.length, tokensUsed,
