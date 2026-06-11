@@ -9,20 +9,8 @@
   ],
   "crons": [
     {
-      "path": "/api/digest",
-      "schedule": "0 14 * * 2"
-    },
-    {
       "path": "/api/freeze-refill",
       "schedule": "0 5 1 * *"
-    },
-    {
-      "path": "/api/onboarding-emails",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/weekend-autopsy",
-      "schedule": "0 14 * * 1"
     }
   ],
   "redirects": [

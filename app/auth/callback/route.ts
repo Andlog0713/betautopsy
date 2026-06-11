@@ -142,18 +142,20 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Fire welcome email as a side effect. Its own first-send guard
-      // (onboarding_emails_sent.welcome) prevents double-sends across
-      // retries / cron fallback. The return value is intentionally
-      // ignored here — wasFirstLogin above is the authoritative signal.
-      if (data.session?.user) {
-        try {
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
-          await maybeFireWelcomeEmail(data.session.user.id, appUrl);
-        } catch (emailErr) {
-          console.error('Welcome email dispatch failed:', emailErr);
-        }
-      }
+      // Welcome email DISABLED (2026-06-11, Andrew): retention/engagement
+      // emails are turned off. Only essential transactional mail (Supabase
+      // password reset + email verification, Stripe payment-failed) sends now.
+      // The first-login redirect + Meta CAPI below do NOT depend on this —
+      // wasFirstLogin is computed from auth.users.created_at. To re-enable the
+      // welcome, restore the maybeFireWelcomeEmail call here.
+      // if (data.session?.user) {
+      //   try {
+      //     const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+      //     await maybeFireWelcomeEmail(data.session.user.id, appUrl);
+      //   } catch (emailErr) {
+      //     console.error('Welcome email dispatch failed:', emailErr);
+      //   }
+      // }
 
       // Fire Meta CAPI CompleteRegistration on first-login only. Additive
       // to the client-side pixel trackSignup() that fires when the form
