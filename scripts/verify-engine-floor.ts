@@ -25,6 +25,7 @@ import {
 } from '../lib/autopsy-engine';
 import { BET_COUNT_THRESHOLDS } from '../lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '../lib/engine/helpers/sufficiencyGate';
+import { SMALL_SAMPLE_BIAS_ALLOWLIST } from '../lib/engine/sufficiency';
 import { buildDeterministicSnapshot, GOLDEN_DISCIPLINE_CTX } from './capture-golden';
 import type { Bet } from '../types';
 
@@ -140,15 +141,25 @@ async function main() {
     const betiq = calculateBetIQ(m, bets);
     const disc = calculateDisciplineScore(m, GOLDEN_DISCIPLINE_CTX);
     const tilt = calculateEnhancedTilt(m, bets);
+    // SNAPSHOT-LOOSEN (schema_version 4): 50 settled sits in the 30-99
+    // limited band — biases are no longer force-emptied; only allowlist
+    // detectors may fire, severity capped at medium. The floor contract is
+    // now "allowlist-only + capped", not "empty".
+    const bandOk = m.biases_detected.every(
+      (b) =>
+        SMALL_SAMPLE_BIAS_ALLOWLIST.has(b.bias_name) &&
+        (b.severity === 'low' || b.severity === 'medium') &&
+        (b.sample_size ?? 0) >= 10,
+    );
     const ok =
-      m.biases_detected.length === 0 &&            // 50 < biasesDetected(100)
+      bandOk &&                                    // 30 <= 50 < biasesDetected(100): allowlist-only, capped
       betiq.insufficient_data === false &&         // 50 >= betIQ(50)
       disc.insufficient_data !== true &&           // 50 >= disciplineScore(50) (key omitted on sufficient path)
       !m.betting_archetype.insufficient_data &&    // 50 >= bettingArchetype(50)
       tilt.insufficient_data === true &&           // 50 < enhancedTilt(100)
       tilt.worst_trigger === TILT_INSUFFICIENT_TRIGGER;
-    assert('50-bet: biases gated, betiq/discipline/archetype OK, enhanced_tilt still insufficient', ok,
-      `biases=${m.biases_detected.length} betiq.insuf=${betiq.insufficient_data} disc.insuf=${disc.insufficient_data} archetype.insuf=${!!m.betting_archetype.insufficient_data} tilt.insuf=${tilt.insufficient_data}`);
+    assert('50-bet: limited-band biases (allowlist-only, severity<=medium), betiq/discipline/archetype OK, enhanced_tilt still insufficient', ok,
+      `biases=${m.biases_detected.length} [${m.biases_detected.map(b => `${b.bias_name}:${b.severity}`).join(', ')}] betiq.insuf=${betiq.insufficient_data} disc.insuf=${disc.insufficient_data} archetype.insuf=${!!m.betting_archetype.insufficient_data} tilt.insuf=${tilt.insufficient_data}`);
   }
 
   // ── Case 3: 100 settled bets ──

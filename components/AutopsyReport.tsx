@@ -26,6 +26,7 @@ import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { isPlatformCategory } from '@/lib/platform-filter';
 import { formatApproxUSD } from '@/lib/utils';
 import { roundRecoveryRange } from '@/lib/engine/recovery';
+import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
@@ -1271,7 +1272,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ═══ SNAPSHOT CTA: shown between chapters for free snapshots ═══ */}
       {snapshotLocked && (
-        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} />
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} sufficiency={analysis.sufficiency} />
       )}
 
       {/* Chapters 2-5: always rendered, with field-level redaction for snapshots */}
@@ -1280,6 +1281,25 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       {/* ═══ CHAPTER 2: FINDINGS ═══ */}
       <section id="chapter-findings">
       <ChapterHeader number={2} title="Findings" subtitle="Behavioral analysis and pattern detection" />
+
+      {/* Sufficiency: small-sample states (schema_version 4). An empty
+          findings array on a gated report is "not enough data yet", never
+          "none detected". Absent on pre-v4 reports — block hidden. */}
+      {biases_detected.length === 0 && analysis.sufficiency && analysis.sufficiency.tier !== 'full' && (
+        <div className="card-tier-2 p-4">
+          <p className="font-mono text-[9px] text-fg-dim tracking-[3px] mb-1.5">BUILDING YOUR PROFILE</p>
+          <p className="text-sm text-fg-muted">
+            {analysis.sufficiency.tier === 'building'
+              ? `${analysis.sufficiency.settledBets} of ${BET_COUNT_THRESHOLDS.smallSampleBiases} settled bets toward your first findings. Upload more history to unlock behavioral analysis.`
+              : `No conclusive findings yet at ${analysis.sufficiency.settledBets} settled bets. The deeper detectors unlock at ${BET_COUNT_THRESHOLDS.biasesDetected} settled bets.`}
+          </p>
+        </div>
+      )}
+      {biases_detected.length > 0 && analysis.sufficiency?.tier === 'limited' && (
+        <p className="text-[11px] text-fg-muted mb-2">
+          Early signals from {analysis.sufficiency.settledBets} settled bets. Confidence is limited until {BET_COUNT_THRESHOLDS.biasesDetected} settled bets.
+        </p>
+      )}
 
       {/* FINDINGS — collapsible progressive disclosure */}
       {biases_detected.length > 0 && (
@@ -1587,7 +1607,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* ── Emotional Triggers — Pro only, collapsed by default ── */}
-      {(effectiveTier === 'pro') && analysis.enhanced_tilt && (
+      {/* N9 reader fix: the engine zeroes enhanced_tilt signals below 100
+          settled and flags insufficient_data — rendering a "low risk" panel
+          off zeroed data was a false signal. Suppress the panel instead. */}
+      {(effectiveTier === 'pro') && analysis.enhanced_tilt && !analysis.enhanced_tilt.insufficient_data && (
         <div className="case-card p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -3003,7 +3026,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Second CTA banner at the end of chapters for snapshots */}
       {snapshotLocked && (
-        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} />
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} sufficiency={analysis.sufficiency} />
       )}
       </>
 

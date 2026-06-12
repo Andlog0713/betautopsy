@@ -42,7 +42,38 @@
 
 ---
 
-## Current branch: `cleanup/cross-version-and-copy` — web v1 cleanup batch (2026-06-12)
+## Current branch: `loosen/small-sample-tier` — SNAPSHOT-LOOSEN sufficiency floors (approved + built 2026-06-12; gates TestFlight)
+
+### Done this session: small-sample bias tier + sufficiency wire state + reader fixes (schema_version 4)
+- **Band replaces the 100-settled cliff:** <30 settled no biases; 30-99
+  "limited" — allowlist only (Stake Volatility, Heavy Parlay Tendency,
+  Favorite-Heavy Lean, Post-Loss Escalation), per-bias sample guard >= 10,
+  severity capped medium, confidence forced 'low' in both assembly paths;
+  >=100 unchanged. Band edge 30 (Andrew: aligns with confidenceFor medium
+  edge + contradictions floor; 20 considered-and-rejected, documented in
+  thresholds.ts). Leaks stay at 100 (category ROI <100 settled is variance);
+  heated-aggregates floor untouched (session-touching → T8 follow-up).
+- **`sufficiency?: { settledBets, tier, gated }`** on AutopsyAnalysis, BOTH
+  modes — resolves the gateArray->[] "none detected" ambiguity. Additive-
+  optional; iOS consumption is follow-up (graceful absence is the contract).
+- **schema_version 3→4** both writers; compareReports now also suppresses
+  cross-version 'new' bias claims (mirror of the false-resolved bug — v4
+  surfaces biases for small users where v3 had none).
+- **T8/hero parity: zero session code touched**; regression test asserts
+  teaser worstSessionDate === selectHeroSession date.
+- **Web reader:** Findings building/limited states (empty-but-gated renders
+  "Building your profile: N of 30 settled bets", limited caption on early
+  signals); SnapshotPaywall building copy at zero findings; enhanced_tilt
+  panel suppressed on insufficient_data (N9 reader fix).
+- **LLM prompt:** limited-band reports carry "frame as early signals, not
+  established patterns" in the pre-classified biases block.
+- **verify-engine-floor:** 50-bet assertion updated to the band contract
+  (allowlist-only + capped, not empty); golden re-baselined locally.
+- **Deploy-verify (Andrew):** post-deploy ~75-settled CSV upload + SQL check
+  (query in PR body): schema_version=4, sufficiency.tier='limited', biases
+  nonempty with severity<=medium + confidence='low', teaser total_biases>0.
+
+## Previous branch: `cleanup/cross-version-and-copy` — web v1 cleanup batch (2026-06-12)
 
 ### Done this session: PR #73 rebase+merge, e2e un-red, cross-version comparison fix, marketing copy sweep
 - **PR #73 (report_ready push):** rebased onto post-#74 main — #74's

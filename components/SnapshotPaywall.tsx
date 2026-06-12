@@ -5,6 +5,7 @@ import { Lock, ChevronRight } from 'lucide-react';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
+import type { SufficiencyState } from '@/types';
 
 interface SnapshotPaywallProps {
   reportId?: string;
@@ -16,10 +17,14 @@ interface SnapshotPaywallProps {
     sport_findings: number;
     total_biases: number;
   };
+  // Sufficiency state (schema_version 4): lets the zero-findings paywall say
+  // "your profile is building" instead of the generic line. Optional —
+  // absent on pre-v4 reports, copy falls back to today's behavior.
+  sufficiency?: SufficiencyState;
   children?: React.ReactNode;
 }
 
-export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPaywallProps) {
+export default function SnapshotPaywall({ reportId, isPro, counts, sufficiency }: SnapshotPaywallProps) {
   const [loading, setLoading] = useState(false);
 
   if (!PRICING_ENABLED) return null;
@@ -57,10 +62,14 @@ export default function SnapshotPaywall({ reportId, isPro, counts }: SnapshotPay
             <p className="text-fg-bright text-sm font-medium mb-0.5">
               {totalFindings > 0
                 ? `We found ${totalFindings} findings in your data`
-                : 'Your full analysis is ready'}
+                : sufficiency && sufficiency.tier !== 'full'
+                  ? 'Your profile is building'
+                  : 'Your full analysis is ready'}
             </p>
             <p className="text-fg-muted text-xs">
-              See every dollar cost, fix, and personal rule.
+              {totalFindings === 0 && sufficiency && sufficiency.tier !== 'full'
+                ? `${sufficiency.settledBets} settled bets analyzed so far. Findings sharpen as your history grows.`
+                : 'See every dollar cost, fix, and personal rule.'}
             </p>
             {counts && (
               <div className="flex flex-wrap gap-1.5 mt-2">
