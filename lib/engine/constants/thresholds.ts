@@ -23,6 +23,11 @@ export const BET_COUNT_THRESHOLDS = {
   heatedSessionsMinSessions: 20, // detectAndGradeSessions classifier floor
   additiveDetectors: 500, // Mega-PR A high-volume detectors, unchanged
   emotionalSessionPatternMinSessions: 5, // Mega-PR A, unchanged
+  // Minimum SETTLED bets a session needs to form a meaningful hero-timeline
+  // curve (charts.sessionTimeline / snapshot silhouette). Sessions below
+  // this are skipped in hero selection; with no qualifying session the
+  // timeline ships [] + heroSession null (report-trust, schema_version 3).
+  heroTimelineMinBets: 4,
 } as const;
 
 export type BetCountThresholds = typeof BET_COUNT_THRESHOLDS;

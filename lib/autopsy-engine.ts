@@ -7,6 +7,7 @@ import { buildWhatIfScenarios } from '@/lib/engine/whatIf';
 import { buildRecoveryModel } from '@/lib/engine/recovery';
 import { dedupeBiases } from '@/lib/engine/dedupeBiases';
 import { confidenceFor, leakSeverityFromRoi } from '@/lib/engine/confidence';
+import { buildReportCharts, buildSessionTimelineSilhouette } from '@/lib/engine/charts';
 import { buildReportControlSystem } from '@/lib/control-system';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
@@ -2199,6 +2200,10 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       grade,
       gradeReasons,
       isHeated,
+      // Heated-session framing (report-trust, schema_version 3): a session
+      // that WON despite risky escalation must never be labeled "worst"
+      // without context. Set only on heated sessions.
+      ...(isHeated ? { framing: (profit >= 0 ? 'win-but-risky' : 'loss') as DetectedSession['framing'] } : {}),
       heatSignals,
       betIndices: group.indices,
       ...(triggerEvent ? { triggerEvent } : {}),
@@ -2242,9 +2247,16 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     bestSession = sessions.reduce((best, s) => s.profit > best.profit ? s : best, sessions[0]);
   }
 
-  // Worst session: lowest profit that's heated, fallback lowest profit
+  // Worst session (report-trust, schema_version 3): prefer LOSING heated
+  // sessions. Only when every heated session finished positive does a
+  // win-but-risky session take the slot — and it carries
+  // framing='win-but-risky' so no surface labels it "worst" without context
+  // (the old logic ranked a +$3,174 winner #1 "worst").
   let worstSession: DetectedSession | null = null;
-  if (heatedSessions.length > 0) {
+  const losingHeated = heatedSessions.filter(s => s.profit < 0);
+  if (losingHeated.length > 0) {
+    worstSession = losingHeated.reduce((worst, s) => s.profit < worst.profit ? s : worst, losingHeated[0]);
+  } else if (heatedSessions.length > 0) {
     worstSession = heatedSessions.reduce((worst, s) => s.profit < worst.profit ? s : worst, heatedSessions[0]);
   } else if (sessions.length > 0) {
     worstSession = sessions.reduce((worst, s) => s.profit < worst.profit ? s : worst, sessions[0]);
@@ -3069,6 +3081,10 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     // never a sum of overlapping counterfactuals. Full reports only;
     // runSnapshot never attaches it (dollar surface).
     recovery: buildRecoveryModel(metrics.what_ifs, metrics.category_roi) ?? undefined,
+    // Chart-ready typed arrays (lib/engine/charts.ts). Raw numbers from the
+    // deterministic metrics; full reports only — stakeUSD/netUSD are
+    // paywalled dollars, so runSnapshot never attaches charts.
+    charts: buildReportCharts(metrics.timing, metrics.odds, metrics.annotations, metrics.sessionDetection, bets),
     biases_detected: metrics.biases_detected.map((jsBias) => {
       const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
       const claudeBias = claudeBiases.find(
@@ -3614,6 +3630,12 @@ export async function runSnapshot(
       estimatedCostVisibility: 'redacted_dollar',
     }));
 
+  // Snapshot teaser -> full-report payoff handoff: the hero session's date
+  // and its stake curve with values redacted (normalized 0..1). Uses the
+  // SAME hero selection as the full report's charts.sessionTimeline, so the
+  // paid hero timeline is the literal reveal of this teased shape.
+  const silhouetteData = buildSessionTimelineSilhouette(metrics.sessionDetection, bets);
+
   const snapshotTeaser = {
     biasNames: metrics.biases_detected.map(b => ({ name: b.bias_name, severity: b.severity })),
     leakCategories: leaks.map(c => c.category),
@@ -3622,6 +3644,10 @@ export async function runSnapshot(
     ),
     heatedSessionCount: metrics.sessionDetection?.heatedSessionCount ?? 0,
     topDamages,
+    ...(silhouetteData ? {
+      worstSessionDate: silhouetteData.worstSessionDate,
+      sessionTimelineSilhouette: silhouetteData.silhouette,
+    } : {}),
   };
 
   const snapshotCounts = {

@@ -141,6 +141,53 @@ export interface RecoveryModel {
   netUSD: number;
 }
 
+// One point of the hero-session stake timeline (the heated-session hero
+// chart's entire data source — iOS draws the stake-escalation curve, chase
+// markers, and win/loss coloring from this). Raw numbers only.
+// CONTRACT (deliberate, not best-effort):
+//  - Points cover the hero session's SETTLED (win/loss) bets in placement
+//    order; push/void/pending bets are dropped from the curve.
+//  - isChaseMarker uses the engine's exact session chase rule (previous bet
+//    in the original session sequence was a loss AND this stake exceeds it),
+//    so marker count matches the session's chaseCount.
+//  - A session needs >= 4 settled bets to form a meaningful curve
+//    (BET_COUNT_THRESHOLDS.heroTimelineMinBets); thinner sessions are
+//    skipped in hero selection. When no session qualifies, sessionTimeline
+//    is [] and heroSession is null — renderers check that, never a missing
+//    key inside an otherwise-present charts object.
+export interface SessionTimelinePoint {
+  tOffsetMin: number;            // minutes since the session's first bet
+  stakeUSD: number;
+  outcome: 'win' | 'loss';
+  isChaseMarker: boolean;
+}
+
+// Chart-ready typed arrays (schema_version 3). All values raw numbers —
+// never formatted strings, never currency symbols; the renderer formats.
+// Deterministic from the engine's existing metrics. Full reports only:
+// stakeUSD/netUSD are paywalled dollars, so runSnapshot never attaches
+// charts (the snapshot gets only the redacted sessionTimelineSilhouette).
+// Optional on AutopsyAnalysis — absent on snapshots and all pre-v3 reports.
+// KNOWN CAVEAT: hour/day buckets inherit the engine's UTC bucketing bug
+// exactly as timing_analysis does; corrected when WS-TEMPORAL lands.
+export interface ReportCharts {
+  /** 24 rows, hour 0-23 (index = hour). */
+  timeOfDayPnl: { hour: number; netUSD: number; bets: number }[];
+  /** 7 rows, day 0-6 with 0 = Sunday (JS getDay convention). */
+  dayOfWeekPnl: { day: number; netUSD: number; bets: number }[];
+  /** One row per engine odds bucket (all 7, including empty ones). */
+  oddsBuckets: { bucket: string; roiPct: number; bets: number; winPct: number; edgePP: number }[];
+  /** From bet annotations' streak influence; null when annotations absent. */
+  stakeByStreak: { after3WinsUSD: number; neutralUSD: number; after3LossesUSD: number } | null;
+  /** Hero (worst/heated) session per-bet stake curve. See SessionTimelinePoint. */
+  sessionTimeline: SessionTimelinePoint[];
+  /** Identifies the session sessionTimeline was built from; null when no
+   *  session has enough settled bets for a curve. */
+  heroSession: { sessionId: string; date: string; framing: 'loss' | 'win-but-risky'; bets: number } | null;
+  /** Bet-class mix: parlay/moneyline/spread/total/prop/futures/other. */
+  betTypeMix: { class: string; count: number; pct: number }[];
+}
+
 // ── Snapshot Redaction (Spec v2) ──
 // Per-field visibility discriminator. When != "visible", the companion field
 // MUST be null in snapshot payloads. iOS V8.5+ reads these to decide blur
@@ -356,6 +403,14 @@ export interface AutopsyAnalysis {
     heatedSessionCount: number;
     // Spec v2: structured top-3 biases with redaction tags.
     topDamages?: TopDamageEntry[];
+    // Snapshot teaser -> full-report payoff handoff (schema_version 3).
+    // worstSessionDate is the HERO session's date (same selection the full
+    // report's charts.sessionTimeline uses, so the paid hero timeline is
+    // the literal reveal of this teased shape). The silhouette is the
+    // hero session's stake curve with values redacted: stakeNorm is each
+    // stake divided by the session max (0..1) — no dollars, no outcomes.
+    worstSessionDate?: string;
+    sessionTimelineSilhouette?: { tOffsetMin: number; stakeNorm: number }[];
   };
   // Filled by /api/analyze when the user has at least one prior report
   // AND substantive archetype / betIQ / impact deltas survive the
@@ -378,6 +433,9 @@ export interface AutopsyAnalysis {
   // omitted on snapshots (dollar surface) and absent on all pre-v3 saved
   // reports — readers must treat it as optional and fall back gracefully.
   recovery?: RecoveryModel;
+  // Chart-ready typed arrays (schema_version 3). Full reports only; absent
+  // on snapshots and pre-v3 reports. See ReportCharts.
+  charts?: ReportCharts;
   control_system?: ReportControlSystem;
 }
 
@@ -743,6 +801,15 @@ export interface DetectedSession {
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   gradeReasons: string[];
   isHeated: boolean;
+  // Heated-session framing (schema_version 3). Set on every HEATED session:
+  // 'win-but-risky' when the session finished positive despite risky
+  // escalation (e.g. a +$3,174 winner), 'loss' otherwise. A winning session
+  // must never be labeled the top "worst" session without this context —
+  // worst-session selection prefers LOSING heated sessions and only falls
+  // back to a win-but-risky one when every heated session won. Omitted on
+  // non-heated sessions and all pre-v3 saved reports (legacy renders label
+  // generically).
+  framing?: 'loss' | 'win-but-risky';
   heatSignals: string[];
   betIndices: number[];
   betSnapshots?: { placed_at: string; description: string; stake: number; profit: number; result: string }[];
