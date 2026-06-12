@@ -98,7 +98,7 @@ function http2Request(
   });
 }
 
-export type ApnsKind = 'heated_session';
+export type ApnsKind = 'heated_session' | 'report_ready';
 
 export interface ApnsPayload {
   title: string;
