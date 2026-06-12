@@ -15,7 +15,18 @@ export const BET_COUNT_THRESHOLDS = {
   bettingArchetype: 50,
   emotionScore: 50, // scalar: drives the sibling insufficient_data flags only
   enhancedTilt: 100, // object gate + worst_trigger string rewrite
+  // FULL-tier bias floor (SNAPSHOT-LOOSEN reframed this from a cliff to a
+  // band): >= 100 settled runs every detector uncapped; 30-99 settled runs
+  // only the small-sample allowlist (share/ratio detectors) with severity
+  // capped at medium and confidence forced low; < 30 emits no biases.
   biasesDetected: 100,
+  // Lower edge of the small-sample band, in settled bets. 30 aligns the
+  // tier boundary with confidenceFor's medium edge and the contradictions
+  // floor so the confidence math and the tier always agree. 20 (the product
+  // audit's lower bound) was considered and rejected: it would ship
+  // findings the confidence machinery itself rates below its own floor;
+  // the building-state progress copy covers the 20-29 gap instead.
+  smallSampleBiases: 30,
   behavioralPatterns: 100, // bet-floor, not session-floor
   strategicLeaksPerCategory: 100,
   strategicLeaksFullTotal: 100,

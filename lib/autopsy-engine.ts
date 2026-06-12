@@ -8,6 +8,7 @@ import { buildRecoveryModel } from '@/lib/engine/recovery';
 import { dedupeBiases } from '@/lib/engine/dedupeBiases';
 import { confidenceFor, leakSeverityFromRoi } from '@/lib/engine/confidence';
 import { buildReportCharts, buildSessionTimelineSilhouette } from '@/lib/engine/charts';
+import { applySmallSampleBiasTier, buildSufficiencyState, isLimitedSample } from '@/lib/engine/sufficiency';
 import { buildReportControlSystem } from '@/lib/control-system';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
@@ -1111,15 +1112,15 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // summaryCounts see the deduped array.
   result.biases_detected = dedupeBiases(result.biases_detected);
 
-  // Minimum-sample floor for bias detection. Bias detection needs comparative
-  // volume; below the floor every detector above is suppressed so the prose
-  // layer has nothing to hedge against. Applied last so it is the single
-  // authority over the final array regardless of which detectors fired. This
-  // also drives the LLM prompt block ("No significant biases detected"),
-  // summaryCounts, and pertinent_negatives, which all read this array.
-  if (settled.length < BET_COUNT_THRESHOLDS.biasesDetected) {
-    result.biases_detected = [];
-  }
+  // Minimum-sample BAND for bias detection (SNAPSHOT-LOOSEN, schema_version
+  // 4 — was a cliff at 100). >= 100 settled: every detector, uncapped.
+  // 30-99: small-sample allowlist only (share/ratio detectors), severity
+  // capped at medium; assembly forces confidence 'low'. < 30: empty. Applied
+  // last so it is the single authority over the final array regardless of
+  // which detectors fired. This also drives the LLM prompt block,
+  // summaryCounts, snapshot teaser/recommendations, and pertinent_negatives,
+  // which all read this array.
+  result.biases_detected = applySmallSampleBiasTier(result.biases_detected, settled.length);
 
   return result;
 }
@@ -2947,7 +2948,9 @@ ${metrics.odds.worst_bucket ? `Worst Odds Range: ${metrics.odds.worst_bucket.lab
 === PRE-CLASSIFIED BIASES (do not change bias names or severity levels. write descriptions and evidence for each) ===
 ${metrics.biases_detected.length > 0
     ? metrics.biases_detected.map((b) => `- ${b.bias_name}: ${b.severity.toUpperCase()} (${b.data})`).join('\n')
-    : 'No significant biases detected at current thresholds.'}
+    : 'No significant biases detected at current thresholds.'}${isLimitedSample(metrics.summary.wins + metrics.summary.losses)
+    ? '\n(limited sample: under 100 settled bets. Frame these findings as early signals, not established patterns.)'
+    : ''}
 ===${metrics.sessionDetection ? `
 
 === SESSION DETECTION (${metrics.sessionDetection.totalSessions} sessions detected) ===
@@ -3098,9 +3101,13 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
         fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
         evidence_bet_ids: jsBias.evidence_bet_ids,
         // Report-trust metadata: deterministic, from the JS detector — never
-        // the LLM. Full mode ships sub_splits dollars raw.
+        // the LLM. Full mode ships sub_splits dollars raw. Limited-sample
+        // band (30-99 settled) forces confidence 'low' regardless of the
+        // detector's own denominator (SNAPSHOT-LOOSEN).
         sample_size: jsBias.sample_size,
-        confidence: jsBias.sample_size != null ? confidenceFor(jsBias.sample_size, jsBias.severity) : undefined,
+        confidence: jsBias.sample_size != null
+          ? (isLimitedSample(settledCount) ? 'low' : confidenceFor(jsBias.sample_size, jsBias.severity))
+          : undefined,
         sub_splits: jsBias.sub_splits,
       });
     }),
@@ -3179,6 +3186,9 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       leakPatternsFlagged: metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3).length,
       sportLevelFindings: sportFindings.length,
     },
+    // Sufficiency state (schema_version 4): which surfaces sit below their
+    // full floor, so "no findings yet" never renders as "none detected".
+    sufficiency: buildSufficiencyState(settledCount, metrics.sessionDetection?.totalSessions ?? 0),
   };
 
   const analysis: AutopsyAnalysis = {
@@ -3611,6 +3621,7 @@ export async function runSnapshot(
   const tokensUsed = 0;
 
   const metrics = calculateMetrics(bets, bankroll);
+  const settledCount = metrics.summary.wins + metrics.summary.losses;
   const sportFindings = detectSportSpecificPatterns(metrics, bets);
   const leaks = metrics.category_roi.filter(c => c.roi < -5 && c.count >= 3);
 
@@ -3688,7 +3699,9 @@ export async function runSnapshot(
       // (net_usd nulled) per the snapshot dollar policy; roi_pct stays
       // (ROI is already a visible snapshot surface on leaks).
       sample_size: b.sample_size,
-      confidence: b.sample_size != null ? confidenceFor(b.sample_size, b.severity) : undefined,
+      confidence: b.sample_size != null
+        ? (isLimitedSample(settledCount) ? 'low' : confidenceFor(b.sample_size, b.severity))
+        : undefined,
       sub_splits: b.sub_splits?.map((s) => ({ ...s, net_usd: null })),
     };
   });
@@ -3773,7 +3786,6 @@ export async function runSnapshot(
     // insightFull intentionally omitted — snapshot mode hides the full body.
   };
 
-  const settledCount = metrics.summary.wins + metrics.summary.losses;
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
 
   const analysisBase: AutopsyAnalysis = {
@@ -3860,6 +3872,10 @@ export async function runSnapshot(
     executiveDiagnosis,
     patternsSnapshot,
     summaryCounts,
+    // Sufficiency state (schema_version 4) — counts, not dollars; safe in
+    // snapshot mode and required so the free tier can render building-state
+    // copy instead of "none detected".
+    sufficiency: buildSufficiencyState(settledCount, metrics.sessionDetection?.totalSessions ?? 0),
     // pertinent_negatives intentionally undefined (D13: hidden in snapshot).
     _snapshot_counts: snapshotCounts,
     _snapshot_teaser: snapshotTeaser,

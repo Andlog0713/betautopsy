@@ -2385,10 +2385,10 @@ exports[`Edge cases > generatePertinentNegatives 1`] = `
     "populationPercent": 61,
   },
   {
-    "detail": "No systematic over-betting of favorites detected. 52% of bettors lean too heavily on chalk.",
+    "detail": "No significant late-night performance decay detected. 45% of bettors show worse outcomes after 10pm.",
     "finding": "Not detected",
-    "pattern": "Favorite Bias",
-    "populationPercent": 52,
+    "pattern": "Late Night Bias",
+    "populationPercent": 45,
   },
 ]
 `;
@@ -16196,7 +16196,54 @@ exports[`Scenario 3: Heavy parlay bettor > Heavy parlay bettor > calculateMetric
     "insufficient_data": true,
     "name": "Building Sample",
   },
-  "biases_detected": [],
+  "biases_detected": [
+    {
+      "bias_name": "Heavy Parlay Tendency",
+      "data": "63% parlays, parlay ROI: 100.8% vs straight: -6.3%",
+      "evidence_bet_ids": [
+        "test-66",
+        "test-77",
+        "test-65",
+        "test-76",
+        "test-64",
+        "test-75",
+        "test-74",
+        "test-62",
+      ],
+      "sample_size": 25,
+      "severity": "medium",
+      "sub_splits": [
+        {
+          "bets": 25,
+          "label": "Parlays",
+          "net_usd": 366,
+          "roi_pct": 100.83,
+        },
+        {
+          "bets": 15,
+          "label": "Straight bets",
+          "net_usd": -68.18,
+          "roi_pct": -6.31,
+        },
+      ],
+    },
+    {
+      "bias_name": "Stake Volatility",
+      "data": "Bet sizes range from $10 to $100 (avg $36). Wildly inconsistent sizing",
+      "evidence_bet_ids": [
+        "test-86",
+        "test-92",
+        "test-85",
+        "test-91",
+        "test-84",
+        "test-90",
+        "test-83",
+        "test-89",
+      ],
+      "sample_size": 40,
+      "severity": "medium",
+    },
+  ],
   "category_roi": [
     {
       "category": "NFL",
@@ -23266,7 +23313,54 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
     "insufficient_data": true,
     "name": "Building Sample",
   },
-  "biases_detected": [],
+  "biases_detected": [
+    {
+      "bias_name": "Post-Loss Escalation",
+      "data": "ratio: 4.00x (avg stake after loss: $200 vs after win: $50)",
+      "evidence_bet_ids": [
+        "test-97",
+        "test-98",
+        "test-99",
+        "test-101",
+        "test-102",
+        "test-104",
+        "test-105",
+        "test-106",
+      ],
+      "sample_size": 25,
+      "severity": "medium",
+      "sub_splits": [
+        {
+          "bets": 25,
+          "label": "Bets after a loss",
+          "net_usd": 727.3,
+          "roi_pct": 14.55,
+        },
+        {
+          "bets": 9,
+          "label": "Bets after a win",
+          "net_usd": -450,
+          "roi_pct": -100,
+        },
+      ],
+    },
+    {
+      "bias_name": "Stake Volatility",
+      "data": "Bet sizes range from $50 to $400 (avg $157). Noticeably inconsistent sizing",
+      "evidence_bet_ids": [
+        "test-99",
+        "test-106",
+        "test-113",
+        "test-120",
+        "test-127",
+        "test-98",
+        "test-102",
+        "test-105",
+      ],
+      "sample_size": 35,
+      "severity": "low",
+    },
+  ],
   "category_roi": [
     {
       "category": "NFL",
@@ -80548,7 +80642,68 @@ exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NB
     "insufficient_data": true,
     "name": "Building Sample",
   },
-  "biases_detected": [],
+  "biases_detected": [
+    {
+      "bias_name": "Post-Loss Escalation",
+      "data": "ratio: 1.13x (avg stake after loss: $50 vs after win: $44)",
+      "evidence_bet_ids": [
+        "test-508",
+        "test-512",
+        "test-516",
+        "test-493",
+        "test-497",
+        "test-501",
+        "test-505",
+        "test-517",
+      ],
+      "sample_size": 15,
+      "severity": "low",
+      "sub_splits": [
+        {
+          "bets": 15,
+          "label": "Bets after a loss",
+          "net_usd": 401.37,
+          "roi_pct": 53.52,
+        },
+        {
+          "bets": 14,
+          "label": "Bets after a win",
+          "net_usd": -570,
+          "roi_pct": -91.94,
+        },
+      ],
+    },
+    {
+      "bias_name": "Favorite-Heavy Lean",
+      "data": "80% favorites, fav ROI: -9.1%, dog ROI: -15.8%",
+      "evidence_bet_ids": [
+        "test-502",
+        "test-518",
+        "test-497",
+        "test-505",
+        "test-513",
+        "test-492",
+        "test-496",
+        "test-500",
+      ],
+      "sample_size": 24,
+      "severity": "low",
+      "sub_splits": [
+        {
+          "bets": 24,
+          "label": "Favorites",
+          "net_usd": -100.9,
+          "roi_pct": -9.09,
+        },
+        {
+          "bets": 6,
+          "label": "Underdogs",
+          "net_usd": -45,
+          "roi_pct": -15.79,
+        },
+      ],
+    },
+  ],
   "category_roi": [
     {
       "category": "NBA",
