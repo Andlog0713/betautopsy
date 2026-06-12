@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 const CHAPTERS = [
-  { num: '01', title: 'Summary',      subtitle: 'The verdict, up front — grade, emotion score, archetype, recoverable dollars.', icon: ClipboardList },
+  { num: '01', title: 'Summary',      subtitle: 'The verdict, up front: grade, emotion score, archetype, and your single biggest recoverable leak.', icon: ClipboardList },
   { num: '02', title: 'Findings',     subtitle: 'Every cognitive bias detected in your data, ranked by severity and dollar cost.', icon: AlertTriangle },
   { num: '03', title: 'Your Data',    subtitle: 'P&L, stake sizing, ROI by category, session grades, bet-by-bet annotations.',    icon: BarChart3 },
   { num: '04', title: 'What It Costs', subtitle: 'Dollar amounts on every bad habit and "what if" simulations for each leak.',    icon: DollarSign },

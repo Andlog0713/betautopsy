@@ -63,11 +63,26 @@ export function compareReports(current: AutopsyAnalysis, previous: AutopsyAnalys
       }
     }
   });
-  Object.entries(prevBiasMap).forEach(([key, prev]) => {
-    if (!currBiasMap[key]) {
-      biasChanges.push({ name: prev.bias_name, previousSeverity: prev.severity, currentSeverity: null, direction: 'resolved' });
-    }
-  });
+  // Cross-version guard (report-trust, schema_version 3): a bias that
+  // disappears across a schema_version boundary (absent = 1) may reflect the
+  // engine's shape change, not the user's behavior — e.g. v3's
+  // identical-evidence dedup collapses High-Volume Category Leak into the
+  // Category Concentration finding, which a v2-vs-v3 comparison would
+  // otherwise celebrate as "resolved". Suppress rather than annotate:
+  // BiasChange has no annotation slot, WhatChangedSection renders direction
+  // chips verbatim, and topImprovement would headline the false claim at
+  // magnitude 20. Same-named comparisons (improved/worsened/new) stay —
+  // they reference biases present in the current report. Mirrors
+  // computeWhatChanged.crossSchemaVersion, which annotates instead because
+  // its wire type has a field for it.
+  const crossSchemaVersion = (current.schema_version ?? 1) !== (previous.schema_version ?? 1);
+  if (!crossSchemaVersion) {
+    Object.entries(prevBiasMap).forEach(([key, prev]) => {
+      if (!currBiasMap[key]) {
+        biasChanges.push({ name: prev.bias_name, previousSeverity: prev.severity, currentSeverity: null, direction: 'resolved' });
+      }
+    });
+  }
 
   // Session grade shift
   const currDist = current.session_detection?.sessionGradeDistribution ?? current._snapshot_teaser?.sessionGrades

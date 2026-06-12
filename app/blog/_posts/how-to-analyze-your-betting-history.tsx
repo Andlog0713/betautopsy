@@ -325,12 +325,14 @@ export default function HowToAnalyzeYourBettingHistory() {
         positive without changing a single pick.
       </p>
 
-      <h3>Step 4: Identify Your Top 3 Leaks</h3>
+      <h3>Step 4: Identify Your Biggest Leak</h3>
 
       <p>
-        You&apos;ll find multiple issues. Don&apos;t try to fix everything at once. Rank your leaks
-        by dollar impact and focus on the top three. For most bettors, the top three leaks account
-        for <strong>80-90% of total losses</strong>. Fix those and the math changes dramatically.
+        You&apos;ll find multiple issues. Don&apos;t try to fix everything at once, and don&apos;t
+        add your leaks together: they overlap. The same chased bet shows up in your loss-chasing
+        leak, your late-night leak, and your worst-category leak. Rank your leaks by dollar impact
+        and put all your effort into <strong>the single biggest one</strong>. One fixed habit
+        changes the math more than three half-fixed ones.
       </p>
 
       <p>

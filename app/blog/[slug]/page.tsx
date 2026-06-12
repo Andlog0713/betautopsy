@@ -125,8 +125,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {
               '@type': 'HowToStep',
               position: 4,
-              name: 'Identify Your Top 3 Leaks',
-              text: 'Rank your leaks by dollar impact and focus on the top three. For most bettors, the top three leaks account for 80 to 90 percent of total losses. Common high-impact leaks include parlay overallocation, loss chasing, and late-night impulsive betting.',
+              name: 'Identify Your Biggest Leak',
+              text: 'Rank your leaks by dollar impact and start with the single biggest one. Leaks overlap, so fixing the largest first beats trying to add them all up. Common high-impact leaks include parlay overallocation, loss chasing, and late-night impulsive betting.',
             },
           ],
         }

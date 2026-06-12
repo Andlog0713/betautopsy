@@ -42,7 +42,44 @@
 
 ---
 
-## Current branch: `report-trust/recovery-model` — REPORT-TRUST wire-format PR (built 2026-06-12, approved by Andrew with corrections; PR open, Andrew deploys deliberately)
+## Current branch: `cleanup/cross-version-and-copy` — web v1 cleanup batch (2026-06-12)
+
+### Done this session: PR #73 rebase+merge, e2e un-red, cross-version comparison fix, marketing copy sweep
+- **PR #73 (report_ready push):** rebased onto post-#74 main — #74's
+  `schema_version = 3` stamp survived in lib/iap-upgrade.ts alongside the new
+  `maybeSendReportReadyPush` call (verified both present). Squash-merged as
+  `cb4aa73`; Vercel deploy green.
+- **e2e UN-RED (the pre-existing red since May):** sole offender was the bare
+  inline logo `<a>` (228x36 < 44pt) in `app/(auth)/layout.tsx` on /login +
+  /signup. `min-h-[44px] inline-flex` on both logo Links; verified locally 6/6
+  across 3 iPhone viewports, then green in CI. e2e is now a meaningful gate
+  again.
+- **Cross-version comparison fix (report-comparison.ts):** when
+  `schema_version` differs between compared reports (absent = 1), disappeared-
+  bias "resolved" claims are SUPPRESSED (not annotated — BiasChange has no
+  annotation slot, WhatChangedSection renders chips verbatim, and
+  topImprovement would headline the false claim at magnitude 20). Same-named
+  improved/worsened/new comparisons survive cross-version. 5 tests.
+- **Marketing copy sweep (additive-total language → single-biggest-leak):**
+  app/page.tsx:219 ($480/quarter claim dropped), app/sample/page.tsx:44
+  (em dash also removed), blog how-to post JSON-LD + body (fabricated
+  "80-90% of total losses" stat removed, step renamed "Identify Your Biggest
+  Leak" with explicit leaks-overlap explanation), lib/demo-data.ts DFS insight
+  ("recoverable profit" → engine-voice "lost edge"). Email templates +
+  OG/metadata grepped clean.
+- **SNAPSHOT-LOOSEN recon (report-only):** the shipped ENGINE-PR-SNAPSHOT-
+  LOOSEN/-V2 (May, redaction loosening) are DONE and distinct from the
+  2026-06-10-approved "LOOSEN" sufficiency-floor workstream, which remains
+  OPEN and outline-gated: #74's snapshot changes (silhouette, teaser,
+  sample_size/confidence metadata) COMPLEMENT it (the metadata is exactly the
+  input its evidence-disclosure UI needs) but do not supersede the core scope
+  — floor thresholds for small samples, the structurally-unreadable
+  `gateArray → []` ambiguity (T9), and the small-sample finding tier.
+- **verify-engine-floor (local-only maintenance):** re-run + golden
+  re-baseline against gitignored fixtures post-#73/#74 — result reported in
+  chat (not committed; golden is gitignored).
+
+## Previous branch: `report-trust/recovery-model` — REPORT-TRUST wire-format PR (built 2026-06-12; merged as `0e0f617` via PR #74, deployed)
 - **5 commits, build/tsc/vitest green between each:** (1) engine-core —
   `recovery` (non-additive: single largest counterfactual as rounded range +
   verified net; lib/engine/recovery.ts), bias dedup (lib/engine/dedupeBiases.ts,
