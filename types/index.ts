@@ -97,6 +97,97 @@ export interface AutopsyReport {
   created_at: string;
 }
 
+// ── Report-trust metadata (schema_version 3) ──
+// Shared severity tier for every deterministic impact/leak. Values are
+// lowercase ON THE WIRE (saved reports, web reader, and iOS all read
+// lowercase; display casing is a render concern). Severity is computed by
+// JS detectors from dollar/ROI thresholds — never LLM-chosen.
+export type SeverityTier = 'low' | 'medium' | 'high' | 'critical';
+
+// Deterministic confidence from sample size + effect size (severity as the
+// effect-size proxy). See lib/engine/confidence.ts. Never LLM-chosen.
+export type ConfidenceTier = 'low' | 'medium' | 'high';
+
+// One evidence-disclosure row for a finding (iOS renders these data-driven
+// instead of parsing prose). `bets` is the split's sample count (bets unless
+// the label says sessions). roi_pct/net_usd are raw numbers, null when not
+// applicable — and net_usd is always null in snapshot payloads (dollar
+// redaction policy).
+export interface SubSplit {
+  label: string;
+  bets: number;
+  roi_pct: number | null;
+  net_usd: number | null;
+}
+
+// Non-additive recovery model (replaces the web reader's client-side
+// summed-counterfactual "Total Recoverable", which double-counted
+// overlapping leaks). The single largest recoverable leak shown alone as a
+// rounded range, plus the verified net result. Full reports only — never
+// attached to snapshots (dollar surface). Deterministic from
+// metrics.what_ifs + category_roi; see lib/engine/recovery.ts.
+export interface RecoveryModel {
+  /** Raw engine value for the single largest counterfactual improvement. */
+  biggestSingleLeakUSD: number;
+  /** Which counterfactual produced the figure. */
+  method: 'flat_staking' | 'no_long_parlays' | 'profitable_categories_only' | 'exit_worst_category';
+  /** Always true: other detected leaks overlap this one and must never be
+   *  summed with it. Renderers must not display an additive total. */
+  overlapsExist: true;
+  /** Rounded presentation range (raw numbers; renderer adds formatting). */
+  rangeLow: number;
+  rangeHigh: number;
+  /** Verified actual net result over the analyzed sample (= what_ifs.actual_profit). */
+  netUSD: number;
+}
+
+// One point of the hero-session stake timeline (the heated-session hero
+// chart's entire data source — iOS draws the stake-escalation curve, chase
+// markers, and win/loss coloring from this). Raw numbers only.
+// CONTRACT (deliberate, not best-effort):
+//  - Points cover the hero session's SETTLED (win/loss) bets in placement
+//    order; push/void/pending bets are dropped from the curve.
+//  - isChaseMarker uses the engine's exact session chase rule (previous bet
+//    in the original session sequence was a loss AND this stake exceeds it),
+//    so marker count matches the session's chaseCount.
+//  - A session needs >= 4 settled bets to form a meaningful curve
+//    (BET_COUNT_THRESHOLDS.heroTimelineMinBets); thinner sessions are
+//    skipped in hero selection. When no session qualifies, sessionTimeline
+//    is [] and heroSession is null — renderers check that, never a missing
+//    key inside an otherwise-present charts object.
+export interface SessionTimelinePoint {
+  tOffsetMin: number;            // minutes since the session's first bet
+  stakeUSD: number;
+  outcome: 'win' | 'loss';
+  isChaseMarker: boolean;
+}
+
+// Chart-ready typed arrays (schema_version 3). All values raw numbers —
+// never formatted strings, never currency symbols; the renderer formats.
+// Deterministic from the engine's existing metrics. Full reports only:
+// stakeUSD/netUSD are paywalled dollars, so runSnapshot never attaches
+// charts (the snapshot gets only the redacted sessionTimelineSilhouette).
+// Optional on AutopsyAnalysis — absent on snapshots and all pre-v3 reports.
+// KNOWN CAVEAT: hour/day buckets inherit the engine's UTC bucketing bug
+// exactly as timing_analysis does; corrected when WS-TEMPORAL lands.
+export interface ReportCharts {
+  /** 24 rows, hour 0-23 (index = hour). */
+  timeOfDayPnl: { hour: number; netUSD: number; bets: number }[];
+  /** 7 rows, day 0-6 with 0 = Sunday (JS getDay convention). */
+  dayOfWeekPnl: { day: number; netUSD: number; bets: number }[];
+  /** One row per engine odds bucket (all 7, including empty ones). */
+  oddsBuckets: { bucket: string; roiPct: number; bets: number; winPct: number; edgePP: number }[];
+  /** From bet annotations' streak influence; null when annotations absent. */
+  stakeByStreak: { after3WinsUSD: number; neutralUSD: number; after3LossesUSD: number } | null;
+  /** Hero (worst/heated) session per-bet stake curve. See SessionTimelinePoint. */
+  sessionTimeline: SessionTimelinePoint[];
+  /** Identifies the session sessionTimeline was built from; null when no
+   *  session has enough settled bets for a curve. */
+  heroSession: { sessionId: string; date: string; framing: 'loss' | 'win-but-risky'; bets: number } | null;
+  /** Bet-class mix: parlay/moneyline/spread/total/prop/futures/other. */
+  betTypeMix: { class: string; count: number; pct: number }[];
+}
+
 // ── Snapshot Redaction (Spec v2) ──
 // Per-field visibility discriminator. When != "visible", the companion field
 // MUST be null in snapshot payloads. iOS V8.5+ reads these to decide blur
@@ -218,7 +309,7 @@ export interface SummaryCounts {
 // without ever seeing the underlying cost.
 export interface TopDamageEntry {
   biasName: string;
-  severity: string;
+  severity: SeverityTier;
   severityBarRatio: number;  // 0..1
   estimatedCost: number | null;
   estimatedCostVisibility: VisibilityTag;
@@ -306,12 +397,20 @@ export interface AutopsyAnalysis {
     total_biases: number;
   };
   _snapshot_teaser?: {
-    biasNames: { name: string; severity: string }[];
+    biasNames: { name: string; severity: SeverityTier }[];
     leakCategories: string[];
     sessionGrades: Record<string, number>;
     heatedSessionCount: number;
     // Spec v2: structured top-3 biases with redaction tags.
     topDamages?: TopDamageEntry[];
+    // Snapshot teaser -> full-report payoff handoff (schema_version 3).
+    // worstSessionDate is the HERO session's date (same selection the full
+    // report's charts.sessionTimeline uses, so the paid hero timeline is
+    // the literal reveal of this teased shape). The silhouette is the
+    // hero session's stake curve with values redacted: stakeNorm is each
+    // stake divided by the session max (0..1) — no dollars, no outcomes.
+    worstSessionDate?: string;
+    sessionTimelineSilhouette?: { tOffsetMin: number; stakeNorm: number }[];
   };
   // Filled by /api/analyze when the user has at least one prior report
   // AND substantive archetype / betIQ / impact deltas survive the
@@ -330,6 +429,13 @@ export interface AutopsyAnalysis {
   // (runSnapshot is a separate assembly path that does not populate it). iOS
   // Phase 2.5 consumes via a WhatIfScenario Codable in a follow-up PR.
   what_if_scenarios?: WhatIfScenario[];
+  // Non-additive recovery model (schema_version 3). Full reports only;
+  // omitted on snapshots (dollar surface) and absent on all pre-v3 saved
+  // reports — readers must treat it as optional and fall back gracefully.
+  recovery?: RecoveryModel;
+  // Chart-ready typed arrays (schema_version 3). Full reports only; absent
+  // on snapshots and pre-v3 reports. See ReportCharts.
+  charts?: ReportCharts;
   control_system?: ReportControlSystem;
 }
 
@@ -367,6 +473,13 @@ export interface WhatChanged {
   archetypeChange?: ArchetypeChange;
   betIQDelta?: BetIQDelta;
   topImpactDeltas?: ImpactDelta[];
+  // True when the compared reports were generated under different
+  // report_json schema_versions (absent version = 1). A delta across the
+  // boundary can reflect the engine's shape change (e.g. v3's bias dedup)
+  // rather than the user's behavior — renderers should soften delta copy.
+  // This is the first actual READ of schema_version; all other back-compat
+  // is carried by tolerant optional decoding, not by version gates.
+  crossSchemaVersion?: boolean;
 }
 
 export type ControlRuleType =
@@ -695,6 +808,15 @@ export interface DetectedSession {
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   gradeReasons: string[];
   isHeated: boolean;
+  // Heated-session framing (schema_version 3). Set on every HEATED session:
+  // 'win-but-risky' when the session finished positive despite risky
+  // escalation (e.g. a +$3,174 winner), 'loss' otherwise. A winning session
+  // must never be labeled the top "worst" session without this context —
+  // worst-session selection prefers LOSING heated sessions and only falls
+  // back to a win-but-risky one when every heated session won. Omitted on
+  // non-heated sessions and all pre-v3 saved reports (legacy renders label
+  // generically).
+  framing?: 'loss' | 'win-but-risky';
   heatSignals: string[];
   betIndices: number[];
   betSnapshots?: { placed_at: string; description: string; stake: number; profit: number; result: string }[];
@@ -836,12 +958,18 @@ export interface ReportComparison {
 
 export interface BiasDetected {
   bias_name: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: SeverityTier;
   description: string;
   evidence: string;
   estimated_cost: number;
   fix: string;
   evidence_bet_ids?: string[];
+  // Report-trust metadata (schema_version 3): deterministic sample size,
+  // confidence, and evidence-disclosure splits. Optional — absent on all
+  // pre-v3 saved reports. sub_splits net_usd is nulled in snapshot mode.
+  sample_size?: number;
+  confidence?: ConfidenceTier;
+  sub_splits?: SubSplit[];
   // Snapshot redaction tags. Snapshot mode nulls description/evidence/fix +
   // estimated_cost and sets these to hidden/redacted_dollar accordingly.
   // Phase 1: optional + additive. Phase 2 widens the value-field types to
@@ -878,6 +1006,13 @@ export interface StrategicLeak {
   roi_impact: number;
   sample_size: number;
   suggestion: string;
+  // Report-trust metadata (schema_version 3): deterministic severity from
+  // roi_impact (lib/engine/confidence.ts leakSeverityFromRoi — never
+  // LLM-chosen), confidence from sample size + severity, and optional
+  // evidence-disclosure splits. Absent on pre-v3 saved reports.
+  severity?: SeverityTier;
+  confidence?: ConfidenceTier;
+  sub_splits?: SubSplit[];
   // Snapshot redaction tags (mirror the biases pattern). Snapshot: detail
   // ships a deterministic first-sentence teaser (visible), suggestion hidden.
   // Full: both visible.
@@ -1067,6 +1202,11 @@ export interface SportSpecificFinding {
   evidence: string;
   estimated_cost: number | null;
   recommendation: string;
+  // Report-trust metadata (schema_version 3). Optional — absent on pre-v3
+  // saved reports. sub_splits net_usd is nulled in snapshot mode.
+  sample_size?: number;
+  confidence?: ConfidenceTier;
+  sub_splits?: SubSplit[];
   // 1-sentence truncation of `description`. Visible in snapshot mode so the
   // teaser conveys topic without leaking the full finding body. Presence of
   // description_snapshot + null `description` is how snapshot mode signals

@@ -42,6 +42,48 @@
 
 ---
 
+## Current branch: `report-trust/recovery-model` — REPORT-TRUST wire-format PR (built 2026-06-12, approved by Andrew with corrections; PR open, Andrew deploys deliberately)
+- **5 commits, build/tsc/vitest green between each:** (1) engine-core —
+  `recovery` (non-additive: single largest counterfactual as rounded range +
+  verified net; lib/engine/recovery.ts), bias dedup (lib/engine/dedupeBiases.ts,
+  SAME-DIMENSION signal groups only: category pair + late-night pair; reverses
+  engine:964's no-dedupe comment while preserving what it protected —
+  different-category findings both survive because dedup keys on evidence not
+  name; cross-dimension collapses explicitly excluded), severity tightened
+  lowercase (Andrew overruled the brief's uppercase), per-finding
+  sample_size/confidence/sub_splits; (2) `charts?: ReportCharts` (full mode
+  only) + DetectedSession.framing + worst-session prefers losing heated +
+  snapshot teaser worstSessionDate/sessionTimelineSilhouette (same hero
+  selection as the full timeline — tease/reveal parity); (3) SYSTEM_PROMPT:
+  executive_diagnosis ≤32 words, fix ≤18, no-summing rule, raw-numeric-fields
+  rule (prose keeps dollar citations); archetype ≤40 enforced as source-lint
+  test; (4) web reader: 3 Total Recoverable surfaces → recovery display,
+  pre-v3 fallback = largest single leak as rounded range (the SUM never
+  renders again for any vintage), LLM bias chips → formatApproxUSD; (5)
+  schema_version 2→3 (analyze route + iap-upgrade, kept in lockstep) +
+  WhatChanged.crossSchemaVersion.
+- **ADDITION 1 answer (stated explicitly):** schema_version remains
+  read-ungated for rendering — tolerant optional decoding carries all
+  back-compat. The bump is informational EXCEPT for its now-first programmatic
+  reader: computeWhatChanged sets `crossSchemaVersion: true` across the
+  boundary (absent version = 1) so delta copy can be softened. Satisfies the
+  parked ANNOTATE constraint minimally.
+- **ADDITION 2 answer (hero-timeline contract):** (a) built from the
+  worst/heated session specifically (losing heated > win-but-risky heated >
+  any, profit asc); (b) isChaseMarker = exact engine session chase rule, so
+  marker count === chaseCount; (c) sessions <4 settled bets skipped
+  (BET_COUNT_THRESHOLDS.heroTimelineMinBets); none qualifying → timeline []
+  + heroSession null (explicit renderer check).
+- **Residuals (flagged, not done):** lib/report-comparison.ts biasChanges can
+  show the dedup-collapsed bias as 'resolved' across the v2→v3 boundary (web
+  "vs last report" strip; no cross-version annotation there yet);
+  verify-engine-floor golden needs a manual re-baseline (fixtures gitignored,
+  real user data); marketing copy still says "recoverable dollars"
+  (app/page.tsx:219, app/sample/page.tsx:44); charts hour/day buckets inherit
+  the WS-TEMPORAL UTC bug (documented on the type, fixed by WS-TEMPORAL).
+- **iOS gating:** iOS hero-chart work gated on this deploy being live;
+  verification steps in the PR body.
+
 ## Current branch: `hardening/june-10`
 
 ### Done this session: ENGINE-HARDENING R0 recon + WS-TEMPORAL / WS-NUMERIC outlines (outline-only, no product code)

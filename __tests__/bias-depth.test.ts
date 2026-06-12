@@ -141,11 +141,16 @@ describe('Phase 4 additive detectors (volume floor)', () => {
       };
     });
     const metrics = calculateMetrics(bets);
-    const fired = metrics.biases_detected.find(
-      (b) => b.bias_name === 'Sustained Late-Night Concentration'
+    // Report-trust dedup: Late-Night Betting (25%+ share) and Sustained
+    // Late-Night Concentration (100+ bets) both fire on this cohort and
+    // measure the same window, so exactly ONE late-night impact survives
+    // (tie on severity -> the established detector wins). The signal the
+    // additive detector exists to catch is still surfaced.
+    const lateNightBiases = metrics.biases_detected.filter(
+      (b) => b.bias_name === 'Sustained Late-Night Concentration' || b.bias_name === 'Late-Night Betting'
     );
-    expect(fired).toBeDefined();
-    expect(fired?.data).toMatch(/\$/);
+    expect(lateNightBiases).toHaveLength(1);
+    expect(lateNightBiases[0].data).toMatch(/\$/);
   });
 
   it('FIRES Chronic Emotional Drag on a 600-bet user with dense loss-chasing bursts', () => {

@@ -440,8 +440,12 @@ export async function POST(request: Request) {
           }
         } catch { /* quiz lookup is best-effort */ }
 
-        // Stamp the current saved-report schema version so future readers can branch on shape.
-        analysis.schema_version = 2;
+        // Stamp the saved-report schema version. v3 = report-trust shape
+        // (recovery, charts, framing, per-finding metadata, bias dedup).
+        // The version has ONE programmatic reader — computeWhatChanged's
+        // crossSchemaVersion annotation; every other consumer tolerates old
+        // shapes via optional fields, not version gates.
+        analysis.schema_version = 3;
 
         // Longitudinal-memory deltas. Pull the most recent prior report for
         // this user, feed it + the just-computed analysis into the pure

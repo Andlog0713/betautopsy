@@ -23736,6 +23736,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
       "durationMinutes": 4080,
       "endTime": "1:00 PM",
       "endingStake": 200,
+      "framing": "win-but-risky",
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
@@ -23821,6 +23822,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
         "durationMinutes": 4080,
         "endTime": "1:00 PM",
         "endingStake": 200,
+        "framing": "win-but-risky",
         "grade": "F",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
@@ -24149,6 +24151,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > calculateMetrics snapshot 1`] =
       "durationMinutes": 4080,
       "endTime": "1:00 PM",
       "endingStake": 200,
+      "framing": "win-but-risky",
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
@@ -24853,6 +24856,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
     "durationMinutes": 4080,
     "endTime": "1:00 PM",
     "endingStake": 200,
+    "framing": "win-but-risky",
     "grade": "F",
     "gradeReasons": [
       "Stakes escalated more than 2x from start to finish",
@@ -24938,6 +24942,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
       "durationMinutes": 4080,
       "endTime": "1:00 PM",
       "endingStake": 200,
+      "framing": "win-but-risky",
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
@@ -25266,6 +25271,7 @@ exports[`Scenario 4: Loss chaser > Loss chaser > detectAndGradeSessions snapshot
     "durationMinutes": 4080,
     "endTime": "1:00 PM",
     "endingStake": 200,
+    "framing": "win-but-risky",
     "grade": "F",
     "gradeReasons": [
       "Stakes escalated more than 2x from start to finish",
@@ -27246,6 +27252,7 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
         "durationMinutes": 270,
         "endTime": "3:30 AM",
         "endingStake": 280,
+        "framing": "loss",
         "grade": "F",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
@@ -27737,6 +27744,7 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
       "durationMinutes": 270,
       "endTime": "3:30 AM",
       "endingStake": 280,
+      "framing": "loss",
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
@@ -28213,6 +28221,7 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > d
       "durationMinutes": 270,
       "endTime": "3:30 AM",
       "endingStake": 280,
+      "framing": "loss",
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
@@ -28704,6 +28713,7 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > d
     "durationMinutes": 270,
     "endTime": "3:30 AM",
     "endingStake": 280,
+    "framing": "loss",
     "grade": "F",
     "gradeReasons": [
       "Stakes escalated more than 2x from start to finish",
@@ -45599,7 +45609,9 @@ exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > cal
         "test-325",
         "test-312",
       ],
+      "sample_size": 200,
       "severity": "high",
+      "sub_splits": [Array],
     },
     [Object],
     [Object],
@@ -53054,14 +53066,24 @@ exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > det
 exports[`Scenario 7: Large volume — 200 bets > Large volume — 200 bets > detectSportSpecificPatterns snapshot 1`] = `
 [
   {
+    "confidence": "medium",
     "description": "You're consistently paying premium juice (-115 or worse) on NFL spreads, likely buying through key numbers 3 and 7.",
     "estimated_cost": -197,
     "evidence": "42% of NFL spread bets at -115 or worse (15/36). Net: $-197.",
     "id": "NFL-KEY-NUMBERS",
     "name": "Key number juice overpay",
     "recommendation": "Shop for better lines instead of paying extra juice. A -110 line costs $4.55 less per $100 staked than -115.",
+    "sample_size": 36,
     "severity": "medium",
     "sport": "NFL",
+    "sub_splits": [
+      {
+        "bets": 15,
+        "label": "NFL spreads at -115 or worse",
+        "net_usd": -197,
+        "roi_pct": null,
+      },
+    ],
   },
 ]
 `;
@@ -78210,14 +78232,30 @@ exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > detectAndGradeSessions
 exports[`Scenario 12: Bonus bet heavy > Bonus bet heavy > detectSportSpecificPatterns snapshot 1`] = `
 [
   {
+    "confidence": "low",
     "description": "Your NFL straight bets are profitable, but NFL parlays are dragging your overall NFL ROI down.",
     "estimated_cost": -80,
     "evidence": "NFL straight bets: +$68. NFL parlays (40%): $-80.",
     "id": "NFL-PARLAY-DRAG",
     "name": "NFL parlay drag",
     "recommendation": "Take your NFL reads and make them singles. Your NFL edge is in straight bets. Parlays are erasing it.",
+    "sample_size": 20,
     "severity": "medium",
     "sport": "NFL",
+    "sub_splits": [
+      {
+        "bets": 8,
+        "label": "NFL parlays",
+        "net_usd": -80,
+        "roi_pct": null,
+      },
+      {
+        "bets": 12,
+        "label": "NFL straight bets",
+        "net_usd": 68,
+        "roi_pct": null,
+      },
+    ],
   },
 ]
 `;
@@ -83469,14 +83507,24 @@ exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NB
 exports[`Scenario 13: Single sport deep — NBA props > Single sport deep — NBA props > detectSportSpecificPatterns snapshot 1`] = `
 [
   {
+    "confidence": "medium",
     "description": "Heavy NBA player prop volume with negative returns. The prop market is sharp and the juice is high.",
     "estimated_cost": -146,
     "evidence": "100% of NBA bets are props (30). Props ROI: -10.5%, net $-146.",
     "id": "NBA-PROP-OVEREXPOSURE",
     "name": "NBA player prop overexposure",
     "recommendation": "Cut NBA prop volume by at least 50%. Focus on spreads and totals where inefficiency is greater.",
+    "sample_size": 30,
     "severity": "high",
     "sport": "NBA",
+    "sub_splits": [
+      {
+        "bets": 30,
+        "label": "NBA props",
+        "net_usd": -146,
+        "roi_pct": -10.46,
+      },
+    ],
   },
 ]
 `;
