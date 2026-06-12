@@ -205,7 +205,9 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
     analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, bets);
     const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, bets);
     if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
-    analysis.schema_version = 2;
+    // Keep in lockstep with /api/analyze's stamp — this path re-runs the
+    // same engine, so the emitted shape is identical (v3 = report-trust).
+    analysis.schema_version = 3;
 
     // 8. Insert the child full-report row. Mirrors /api/analyze:472-496
     // field-for-field except the hardcodes for our case: report_type,

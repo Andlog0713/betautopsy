@@ -262,4 +262,36 @@ describe('computeWhatChanged', () => {
       expect(names).toEqual(['B', 'C', 'A']);
     });
   });
+
+  describe('W8 — crossSchemaVersion annotation', () => {
+    it('flags deltas that span a schema_version boundary (absent = 1)', () => {
+      const prev = makeInput(makeAnalysis({
+        schema_version: 2,
+        biases_detected: [makeBias({ bias_name: 'A', estimated_cost: 1000 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        schema_version: 3,
+        biases_detected: [makeBias({ bias_name: 'A', estimated_cost: 3000 })],
+      }));
+      expect(computeWhatChanged(prev, curr)?.crossSchemaVersion).toBe(true);
+
+      // pre-versioned prior (absent schema_version) vs v3 also flags
+      const legacy = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'A', estimated_cost: 1000 })],
+      }));
+      expect(computeWhatChanged(legacy, curr)?.crossSchemaVersion).toBe(true);
+    });
+
+    it('omits the flag for same-version comparisons', () => {
+      const prev = makeInput(makeAnalysis({
+        schema_version: 3,
+        biases_detected: [makeBias({ bias_name: 'A', estimated_cost: 1000 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        schema_version: 3,
+        biases_detected: [makeBias({ bias_name: 'A', estimated_cost: 3000 })],
+      }));
+      expect(computeWhatChanged(prev, curr)?.crossSchemaVersion).toBeUndefined();
+    });
+  });
 });

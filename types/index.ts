@@ -473,6 +473,13 @@ export interface WhatChanged {
   archetypeChange?: ArchetypeChange;
   betIQDelta?: BetIQDelta;
   topImpactDeltas?: ImpactDelta[];
+  // True when the compared reports were generated under different
+  // report_json schema_versions (absent version = 1). A delta across the
+  // boundary can reflect the engine's shape change (e.g. v3's bias dedup)
+  // rather than the user's behavior — renderers should soften delta copy.
+  // This is the first actual READ of schema_version; all other back-compat
+  // is carried by tolerant optional decoding, not by version gates.
+  crossSchemaVersion?: boolean;
 }
 
 export type ControlRuleType =

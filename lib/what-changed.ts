@@ -133,5 +133,13 @@ export function computeWhatChanged(
   if (betIQDelta) result.betIQDelta = betIQDelta;
   if (topImpactDeltas.length > 0) result.topImpactDeltas = topImpactDeltas;
 
+  // Cross-version annotation: deltas spanning a schema_version boundary can
+  // reflect the engine's shape change (e.g. v3 bias dedup collapsing a
+  // finding) rather than user behavior. Absent version = 1 (pre-versioned
+  // saved reports). This is schema_version's first actual reader.
+  const prevVersion = previous.analysis.schema_version ?? 1;
+  const currVersion = current.analysis.schema_version ?? 1;
+  if (prevVersion !== currVersion) result.crossSchemaVersion = true;
+
   return result;
 }
