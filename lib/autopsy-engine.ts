@@ -1,9 +1,12 @@
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
 import { buildWhatIfScenarios } from '@/lib/engine/whatIf';
+import { buildRecoveryModel } from '@/lib/engine/recovery';
+import { dedupeBiases } from '@/lib/engine/dedupeBiases';
+import { confidenceFor, leakSeverityFromRoi } from '@/lib/engine/confidence';
 import { buildReportControlSystem } from '@/lib/control-system';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
@@ -82,7 +85,7 @@ export interface CalculatedMetrics {
   loss_chase_ratio: number;
   stake_cv: number;
   category_roi: { category: string; roi: number; count: number; profit: number; staked: number }[];
-  biases_detected: { bias_name: string; severity: string; data: string; evidence_bet_ids?: string[] }[];
+  biases_detected: { bias_name: string; severity: SeverityTier; data: string; evidence_bet_ids?: string[]; sample_size?: number; sub_splits?: SubSplit[] }[];
   bankroll_used: number | null;
   what_ifs: {
     flat_stake: { median_stake: number; hypothetical_profit: number };
@@ -525,12 +528,13 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const stdDev = Math.sqrt(variance);
   const stakeCv = normMean > 0 ? stdDev / normMean : 0;
 
-  // Loss chase ratio
+  // Loss chase ratio (profit sums feed the Post-Loss Escalation sub_splits)
   let stakeAfterLoss = 0, countAfterLoss = 0, stakeAfterWin = 0, countAfterWin = 0;
+  let profitAfterLoss = 0, profitAfterWin = 0;
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
-    if (prev.result === 'loss') { stakeAfterLoss += Number(sorted[i].stake); countAfterLoss++; }
-    else if (prev.result === 'win') { stakeAfterWin += Number(sorted[i].stake); countAfterWin++; }
+    if (prev.result === 'loss') { stakeAfterLoss += Number(sorted[i].stake); countAfterLoss++; profitAfterLoss += Number(sorted[i].profit); }
+    else if (prev.result === 'win') { stakeAfterWin += Number(sorted[i].stake); countAfterWin++; profitAfterWin += Number(sorted[i].profit); }
   }
   const avgAfterLoss = countAfterLoss > 0 ? stakeAfterLoss / countAfterLoss : avgStake;
   const avgAfterWin = countAfterWin > 0 ? stakeAfterWin / countAfterWin : avgStake;
@@ -687,13 +691,22 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       }
     }
     chaseEvidence.sort((a, b) => b.ratio - a.ratio);
-    biases.push({ bias_name: 'Post-Loss Escalation', severity: sev, data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake after loss: $${avgAfterLoss.toFixed(0)} vs after win: $${avgAfterWin.toFixed(0)})`, evidence_bet_ids: chaseEvidence.slice(0, 8).map(e => e.id) });
+    biases.push({
+      bias_name: 'Post-Loss Escalation', severity: sev,
+      data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake after loss: $${avgAfterLoss.toFixed(0)} vs after win: $${avgAfterWin.toFixed(0)})`,
+      evidence_bet_ids: chaseEvidence.slice(0, 8).map(e => e.id),
+      sample_size: countAfterLoss,
+      sub_splits: [
+        { label: 'Bets after a loss', bets: countAfterLoss, roi_pct: stakeAfterLoss > 0 ? round2((profitAfterLoss / stakeAfterLoss) * 100) : null, net_usd: round2(profitAfterLoss) },
+        { label: 'Bets after a win', bets: countAfterWin, roi_pct: stakeAfterWin > 0 ? round2((profitAfterWin / stakeAfterWin) * 100) : null, net_usd: round2(profitAfterWin) },
+      ],
+    });
   }
 
   // Parlay addiction
   if (parlayPercent >= 20 && parlays.length >= 3) {
     const roiDiff = straightRoi - parlayRoi;
-    let sev = '';
+    let sev: SeverityTier | '' = '';
     if (parlayPercent >= 80) sev = 'critical';
     else if (parlayPercent >= 60) sev = 'high';
     else if (parlayPercent >= 40 && roiDiff > 10) sev = 'medium';
@@ -704,7 +717,16 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
         .sort((a, b) => Number(b.stake) - Number(a.stake))
         .slice(0, 8)
         .map(b => b.id);
-      biases.push({ bias_name: 'Heavy Parlay Tendency', severity: sev, data: `${parlayPercent.toFixed(0)}% parlays, parlay ROI: ${parlayRoi.toFixed(1)}% vs straight: ${straightRoi.toFixed(1)}%`, evidence_bet_ids: losingParlays });
+      biases.push({
+        bias_name: 'Heavy Parlay Tendency', severity: sev,
+        data: `${parlayPercent.toFixed(0)}% parlays, parlay ROI: ${parlayRoi.toFixed(1)}% vs straight: ${straightRoi.toFixed(1)}%`,
+        evidence_bet_ids: losingParlays,
+        sample_size: parlays.length,
+        sub_splits: [
+          { label: 'Parlays', bets: parlays.length, roi_pct: round2(parlayRoi), net_usd: round2(parlayProfit) },
+          { label: 'Straight bets', bets: straights.length, roi_pct: round2(straightRoi), net_usd: round2(straightProfit) },
+        ],
+      });
     }
   }
 
@@ -717,7 +739,12 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       .sort((a, b) => b.dev - a.dev)
       .slice(0, 8)
       .map(b => b.id);
-    biases.push({ bias_name: 'Stake Volatility', severity: sev, data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}). ${stakeCv >= 1.0 ? 'Wildly' : 'Noticeably'} inconsistent sizing`, evidence_bet_ids: stakeOutliers });
+    biases.push({
+      bias_name: 'Stake Volatility', severity: sev,
+      data: `Bet sizes range from $${minStake.toFixed(0)} to $${maxStake.toFixed(0)} (avg $${avgStake.toFixed(0)}). ${stakeCv >= 1.0 ? 'Wildly' : 'Noticeably'} inconsistent sizing`,
+      evidence_bet_ids: stakeOutliers,
+      sample_size: sorted.length,
+    });
   }
 
   // Favorite bias
@@ -738,7 +765,16 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       .sort((a, b) => Number(b.stake) - Number(a.stake))
       .slice(0, 8)
       .map(b => b.id);
-    biases.push({ bias_name: 'Favorite-Heavy Lean', severity: sev, data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%`, evidence_bet_ids: losingFavs });
+    biases.push({
+      bias_name: 'Favorite-Heavy Lean', severity: sev,
+      data: `${favPct.toFixed(0)}% favorites, fav ROI: ${favRoi.toFixed(1)}%, dog ROI: ${dogRoi.toFixed(1)}%`,
+      evidence_bet_ids: losingFavs,
+      sample_size: favBets.length,
+      sub_splits: [
+        { label: 'Favorites', bets: favBets.length, roi_pct: round2(favRoi), net_usd: round2(favProfit) },
+        { label: 'Underdogs', bets: dogBets.length, roi_pct: round2(dogRoi), net_usd: round2(dogProfit) },
+      ],
+    });
   }
 
   // Category Concentration Leak — promote a deeply negative category into a bias.
@@ -761,6 +797,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
         severity: sev,
         data: `${worst.category}: ${worst.count} bets at ${worst.roi.toFixed(1)}% ROI ($${worst.profit.toFixed(0)})`,
         evidence_bet_ids: leakEvidence,
+        sample_size: worst.count,
+        sub_splits: [
+          { label: worst.category, bets: worst.count, roi_pct: round2(worst.roi), net_usd: round2(worst.profit) },
+        ],
       });
     }
   }
@@ -794,6 +834,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
           severity: sev,
           data: `${lateNightPct.toFixed(0)}% of bets after 11pm, ROI ${lateNightRoi.toFixed(1)}% ($${lateNightProfit.toFixed(0)})`,
           evidence_bet_ids: lateNightLosingIds,
+          sample_size: lateNightBets.length,
+          sub_splits: [
+            { label: 'Bets 11pm-5am', bets: lateNightBets.length, roi_pct: round2(lateNightRoi), net_usd: round2(lateNightProfit) },
+          ],
         });
       }
     }
@@ -895,25 +939,25 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     const highPickPct = totalBets > 0 ? (highPickTotal / totalBets) * 100 : 0;
     if (highPickPct >= 50) {
       const sev = highPickPct >= 60 ? 'critical' : 'high';
-      result.biases_detected.push({ bias_name: 'High-Pick Reliance', severity: sev, data: `${highPickTotal} entries at 5-6 picks (${Math.round(highPickPct)}%) with ${dm.highPickROI}% ROI vs ${dm.lowPickROI}% ROI on 2-3 pick entries` });
+      result.biases_detected.push({ bias_name: 'High-Pick Reliance', severity: sev, data: `${highPickTotal} entries at 5-6 picks (${Math.round(highPickPct)}%) with ${dm.highPickROI}% ROI vs ${dm.lowPickROI}% ROI on 2-3 pick entries`, sample_size: highPickTotal });
     }
     if (dm.powerVsFlex && dm.powerVsFlex.powerCount > 0) {
       const totalPF = dm.powerVsFlex.powerCount + dm.powerVsFlex.flexCount;
       const powerPct = totalPF > 0 ? (dm.powerVsFlex.powerCount / totalPF) * 100 : 0;
       if (powerPct > 55 && dm.powerVsFlex.powerROI < dm.powerVsFlex.flexROI) {
         const sev = powerPct > 65 ? 'high' : 'medium';
-        result.biases_detected.push({ bias_name: 'Power Play Preference', severity: sev, data: `${dm.powerVsFlex.powerCount} Power entries (${Math.round(powerPct)}%) at ${dm.powerVsFlex.powerROI}% ROI vs ${dm.powerVsFlex.flexCount} Flex entries at ${dm.powerVsFlex.flexROI}% ROI` });
+        result.biases_detected.push({ bias_name: 'Power Play Preference', severity: sev, data: `${dm.powerVsFlex.powerCount} Power entries (${Math.round(powerPct)}%) at ${dm.powerVsFlex.powerROI}% ROI vs ${dm.powerVsFlex.flexCount} Flex entries at ${dm.powerVsFlex.flexROI}% ROI`, sample_size: totalPF });
       }
     }
     if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2 && countAfterLoss > 2) {
       const sev = dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.4 ? 'high' : 'medium';
-      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win. Chasing bigger multipliers to recover` });
+      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win. Chasing bigger multipliers to recover`, sample_size: countAfterLoss });
     }
     const topPlayer = dm.playerConcentration[0];
     if (topPlayer && topPlayer.percent >= 25) {
       const sev = topPlayer.percent >= 30 ? 'high' : 'medium';
       const top2 = dm.playerConcentration.slice(0, 2).map((p) => `${p.player} in ${p.percent}% of entries`).join(', ');
-      result.biases_detected.push({ bias_name: 'Player Concentration Bias', severity: sev, data: `Top picks: ${top2}. Overexposure to individual player performance.` });
+      result.biases_detected.push({ bias_name: 'Player Concentration Bias', severity: sev, data: `Top picks: ${top2}. Overexposure to individual player performance.`, sample_size: topPlayer.count });
     }
   } else {
     result.betting_archetype = determineArchetype(roiPercent, emotionScore, lossChaseRatio, stakeCv, parlayPercent, favPct, totalBets, categoryRoi);
@@ -941,6 +985,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
         bias_name: 'Emotional Session Pattern',
         severity: sev,
         data: `${heatedPct.toFixed(0)}% of ${result.sessionDetection.totalSessions} sessions classified as heated`,
+        sample_size: result.sessionDetection.totalSessions,
+        sub_splits: [
+          { label: 'Heated sessions (of all sessions)', bets: result.sessionDetection.heatedSessionCount, roi_pct: null, net_usd: null },
+        ],
       });
     }
   }
@@ -980,6 +1028,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
         severity: sev,
         data: `${worst.category}: ${worst.count} bets at ${worst.roi.toFixed(1)}% ROI ($${worst.profit.toFixed(0)} lost). At this sample size, a sustained negative ROI signals a structural edge problem in this category.`,
         evidence_bet_ids: leakEvidence,
+        sample_size: worst.count,
+        sub_splits: [
+          { label: worst.category, bets: worst.count, roi_pct: round2(worst.roi), net_usd: round2(worst.profit) },
+        ],
       });
     }
 
@@ -1010,6 +1062,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
           severity: sev,
           data: `${lateNightBets.length} bets placed after 11pm or before 5am at ${lnRoi.toFixed(1)}% ROI ($${lnProfit.toFixed(0)}). A recurring late-night cluster with this sample size is rarely a coincidence.`,
           evidence_bet_ids: lnEvidence,
+          sample_size: lateNightBets.length,
+          sub_splits: [
+            { label: 'Bets 11pm-5am', bets: lateNightBets.length, roi_pct: round2(lnRoi), net_usd: round2(lnProfit) },
+          ],
         });
       }
     }
@@ -1033,10 +1089,26 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
           bias_name: 'Chronic Emotional Drag',
           severity: sev,
           data: `${emoChaseCount} of ${settled.length} settled bets (${(emoChaseShare * 100).toFixed(0)}%) classified as emotional or chasing. Estimated emotional cost $${ann.emotionalCost.toFixed(0)} (${(dragRatio * 100).toFixed(1)}% of total staked $${totalStaked.toFixed(0)}). Persistent drag across the full bet history rather than isolated to a few bad sessions.`,
+          sample_size: settled.length,
+          sub_splits: [
+            { label: 'Emotional or chasing bets', bets: emoChaseCount, roi_pct: null, net_usd: round2(ann.emotionalCost) },
+          ],
         });
       }
     }
   }
+
+  // Identical-evidence dedup (report-trust, schema_version 3). Collapses
+  // biases that present the same underlying evidence as two impacts with two
+  // near-identical dollar figures — the visible double-count was Category
+  // Concentration Leak + High-Volume Category Leak both naming the same
+  // category. This intentionally reverses the "Distinct bias_name ... so it
+  // does not dedupe" comment above: that comment protected the relaxed-
+  // threshold detector from NAME-keyed suppression, and evidence-keyed dedup
+  // preserves the protection — when the two detectors flag DIFFERENT
+  // categories, both survive. Runs before the floor so teaser counts and
+  // summaryCounts see the deduped array.
+  result.biases_detected = dedupeBiases(result.biases_detected);
 
   // Minimum-sample floor for bias detection. Bias detection needs comparative
   // volume; below the floor every detector above is suppressed so the prose
@@ -1732,13 +1804,19 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       const heavyJuicePct = (heavyJuice.length / nflSpreads.length) * 100;
       const heavyJuiceProfit = heavyJuice.reduce((s, b) => s + Number(b.profit), 0);
       if (heavyJuicePct >= 40 && heavyJuiceProfit < 0) {
+        const sev = heavyJuicePct >= 60 ? 'high' as const : 'medium' as const;
         findings.push({
           id: 'NFL-KEY-NUMBERS', name: 'Key number juice overpay', sport: 'NFL',
-          severity: heavyJuicePct >= 60 ? 'high' : 'medium',
+          severity: sev,
           description: 'You\'re consistently paying premium juice (-115 or worse) on NFL spreads, likely buying through key numbers 3 and 7.',
           evidence: `${heavyJuicePct.toFixed(0)}% of NFL spread bets at -115 or worse (${heavyJuice.length}/${nflSpreads.length}). Net: $${Math.round(heavyJuiceProfit)}.`,
           estimated_cost: heavyJuiceProfit < 0 ? Math.round(heavyJuiceProfit) : null,
           recommendation: 'Shop for better lines instead of paying extra juice. A -110 line costs $4.55 less per $100 staked than -115.',
+          sample_size: nflSpreads.length,
+          confidence: confidenceFor(nflSpreads.length, sev),
+          sub_splits: [
+            { label: 'NFL spreads at -115 or worse', bets: heavyJuice.length, roi_pct: null, net_usd: Math.round(heavyJuiceProfit) },
+          ],
         });
       }
     }
@@ -1747,13 +1825,20 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
     const nflParlayProfit = nflParlays.reduce((s, b) => s + Number(b.profit), 0);
     const nflStraightProfit = nflBets.filter(b => b.bet_type !== 'parlay' && (!b.parlay_legs || b.parlay_legs <= 1)).reduce((s, b) => s + Number(b.profit), 0);
     if (nflParlayPct >= 30 && nflParlayProfit < 0 && nflStraightProfit > 0) {
+      const sev = nflParlayPct >= 50 ? 'high' as const : 'medium' as const;
       findings.push({
         id: 'NFL-PARLAY-DRAG', name: 'NFL parlay drag', sport: 'NFL',
-        severity: nflParlayPct >= 50 ? 'high' : 'medium',
+        severity: sev,
         description: 'Your NFL straight bets are profitable, but NFL parlays are dragging your overall NFL ROI down.',
         evidence: `NFL straight bets: +$${Math.round(nflStraightProfit)}. NFL parlays (${nflParlayPct.toFixed(0)}%): $${Math.round(nflParlayProfit)}.`,
         estimated_cost: nflParlayProfit < 0 ? Math.round(nflParlayProfit) : null,
         recommendation: 'Take your NFL reads and make them singles. Your NFL edge is in straight bets. Parlays are erasing it.',
+        sample_size: nflBets.length,
+        confidence: confidenceFor(nflBets.length, sev),
+        sub_splits: [
+          { label: 'NFL parlays', bets: nflParlays.length, roi_pct: null, net_usd: Math.round(nflParlayProfit) },
+          { label: 'NFL straight bets', bets: nflBets.length - nflParlays.length, roi_pct: null, net_usd: Math.round(nflStraightProfit) },
+        ],
       });
     }
   }
@@ -1768,13 +1853,19 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       const nbaPropsROI = nbaPropsStaked > 0 ? (nbaPropsProfit / nbaPropsStaked) * 100 : 0;
       const nbaPropPct = (nbaProps.length / nbaBets.length) * 100;
       if (nbaPropPct >= 30 && nbaPropsROI < -5) {
+        const sev = nbaPropsROI < -15 ? 'high' as const : nbaPropPct >= 50 ? 'high' as const : 'medium' as const;
         findings.push({
           id: 'NBA-PROP-OVEREXPOSURE', name: 'NBA player prop overexposure', sport: 'NBA',
-          severity: nbaPropsROI < -15 ? 'high' : nbaPropPct >= 50 ? 'high' : 'medium',
+          severity: sev,
           description: 'Heavy NBA player prop volume with negative returns. The prop market is sharp and the juice is high.',
           evidence: `${nbaPropPct.toFixed(0)}% of NBA bets are props (${nbaProps.length}). Props ROI: ${nbaPropsROI.toFixed(1)}%, net $${Math.round(nbaPropsProfit)}.`,
           estimated_cost: nbaPropsProfit < 0 ? Math.round(nbaPropsProfit) : null,
           recommendation: 'Cut NBA prop volume by at least 50%. Focus on spreads and totals where inefficiency is greater.',
+          sample_size: nbaProps.length,
+          confidence: confidenceFor(nbaProps.length, sev),
+          sub_splits: [
+            { label: 'NBA props', bets: nbaProps.length, roi_pct: round2(nbaPropsROI), net_usd: Math.round(nbaPropsProfit) },
+          ],
         });
       }
     }
@@ -1791,13 +1882,19 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       const rapidDayBets = Array.from(nbaDayGroups.values()).filter(d => d.length >= 4).flat();
       const rapidProfit = rapidDayBets.reduce((s, b) => s + Number(b.profit), 0);
       if (rapidProfit < 0) {
+        const sev = rapidNBADays >= 6 ? 'high' as const : 'medium' as const;
         findings.push({
           id: 'NBA-RAPID-BETTING', name: 'NBA rapid-fire sessions', sport: 'NBA',
-          severity: rapidNBADays >= 6 ? 'high' : 'medium',
+          severity: sev,
           description: 'Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.',
           evidence: `${rapidNBADays} days with 4+ NBA bets. Combined: $${Math.round(rapidProfit)}.`,
           estimated_cost: rapidProfit < 0 ? Math.round(rapidProfit) : null,
           recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where emotional decisions get expensive.',
+          sample_size: rapidDayBets.length,
+          confidence: confidenceFor(rapidDayBets.length, sev),
+          sub_splits: [
+            { label: `Bets on ${rapidNBADays} rapid-fire days (4+ NBA bets/day)`, bets: rapidDayBets.length, roi_pct: null, net_usd: Math.round(rapidProfit) },
+          ],
         });
       }
     }
@@ -1812,13 +1909,19 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       const mlbMLStaked = mlbML.reduce((s, b) => s + Number(b.stake), 0);
       const mlbMLProfit = mlbML.reduce((s, b) => s + Number(b.profit), 0);
       const mlbMLROI = mlbMLStaked > 0 ? (mlbMLProfit / mlbMLStaked) * 100 : 0;
+      const sev = mlbMLROI < -8 ? 'medium' as const : 'low' as const;
       findings.push({
         id: 'MLB-ML-ONLY', name: 'MLB moneyline tunnel vision', sport: 'MLB',
-        severity: mlbMLROI < -8 ? 'medium' : 'low',
+        severity: sev,
         description: 'Almost all your MLB bets are moneylines. Run lines and totals often offer better value in baseball.',
         evidence: `${mlbMLPct.toFixed(0)}% of MLB bets are moneylines (${mlbML.length}/${mlbBets.length}). ML ROI: ${mlbMLROI.toFixed(1)}%.`,
         estimated_cost: null,
         recommendation: 'Explore run lines. The +1.5 on underdogs with good pitching matchups is often where MLB value hides.',
+        sample_size: mlbML.length,
+        confidence: confidenceFor(mlbML.length, sev),
+        sub_splits: [
+          { label: 'MLB moneylines', bets: mlbML.length, roi_pct: round2(mlbMLROI), net_usd: Math.round(mlbMLProfit) },
+        ],
       });
     }
   }
@@ -1826,25 +1929,36 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
   // DFS
   if (metrics.dfs.isDFS && metrics.dfs_metrics) {
     const dm = metrics.dfs_metrics;
+    const dfsEntryCount = dm.pickCountDistribution.reduce((s, d) => s + d.count, 0);
     if (dm.avgPickCount > 4 && dm.highPickROI < -10) {
+      const sev = dm.avgPickCount > 5 ? 'high' as const : 'medium' as const;
       findings.push({
         id: 'DFS-HIGH-PICK-CHASE', name: 'Multiplier chasing', sport: 'DFS',
-        severity: dm.avgPickCount > 5 ? 'high' : 'medium',
+        severity: sev,
         description: 'You\'re averaging 5+ picks per entry chasing large multipliers, but expected value drops sharply above 3 picks.',
         evidence: `Avg ${dm.avgPickCount.toFixed(1)} picks/entry. 4+ pick ROI: ${dm.highPickROI.toFixed(1)}%. 2-3 pick ROI: ${dm.lowPickROI.toFixed(1)}%.`,
         estimated_cost: null,
         recommendation: 'Shift to 2-3 pick entries. Your hit rate is almost certainly better at lower pick counts.',
+        sample_size: dfsEntryCount,
+        confidence: confidenceFor(dfsEntryCount, sev),
+        sub_splits: [
+          { label: '4+ pick entries', bets: dm.pickCountDistribution.filter(d => d.picks >= 4).reduce((s, d) => s + d.count, 0), roi_pct: round2(dm.highPickROI), net_usd: null },
+          { label: '2-3 pick entries', bets: dm.pickCountDistribution.filter(d => d.picks <= 3).reduce((s, d) => s + d.count, 0), roi_pct: round2(dm.lowPickROI), net_usd: null },
+        ],
       });
     }
     if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.15) {
       const ratio = dm.pickCountAfterLoss / dm.pickCountAfterWin;
+      const sev = ratio > 1.4 ? 'high' as const : 'medium' as const;
       findings.push({
         id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation after loss', sport: 'DFS',
-        severity: ratio > 1.4 ? 'high' : 'medium',
+        severity: sev,
         description: 'After losses, you increase your pick count. Going for bigger multipliers to recover.',
         evidence: `Avg picks after loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
         estimated_cost: null,
         recommendation: 'Set a rule: your pick count should never change based on your last result.',
+        sample_size: dfsEntryCount,
+        confidence: confidenceFor(dfsEntryCount, sev),
       });
     }
   }
@@ -2950,6 +3064,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     // is a separate assembly path and never populates this, keeping snapshots
     // What-If-less per the redaction policy.
     what_if_scenarios: buildWhatIfScenarios(metrics.what_ifs, bets),
+    // Non-additive recovery model (lib/engine/recovery.ts). The single
+    // largest counterfactual improvement shown alone as a rounded range —
+    // never a sum of overlapping counterfactuals. Full reports only;
+    // runSnapshot never attaches it (dollar surface).
+    recovery: buildRecoveryModel(metrics.what_ifs, metrics.category_roi) ?? undefined,
     biases_detected: metrics.biases_detected.map((jsBias) => {
       const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
       const claudeBias = claudeBiases.find(
@@ -2957,12 +3076,17 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       ) as Record<string, unknown> | undefined;
       return withFullModeBiasTags({
         bias_name: jsBias.bias_name,
-        severity: jsBias.severity as 'low' | 'medium' | 'high' | 'critical',
+        severity: jsBias.severity,
         description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
         evidence: (claudeBias?.evidence as string) ?? jsBias.data,
         estimated_cost: (claudeBias?.estimated_cost as number) ?? 0,
         fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
         evidence_bet_ids: jsBias.evidence_bet_ids,
+        // Report-trust metadata: deterministic, from the JS detector — never
+        // the LLM. Full mode ships sub_splits dollars raw.
+        sample_size: jsBias.sample_size,
+        confidence: jsBias.sample_size != null ? confidenceFor(jsBias.sample_size, jsBias.severity) : undefined,
+        sub_splits: jsBias.sub_splits,
       });
     }),
     // Minimum-sample floor: below the total-bet floor the LLM has nothing
@@ -2970,14 +3094,21 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     strategic_leaks: gateArray((Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {
       // Try to use JS-calculated ROI if available
       const jsCat = metrics.category_roi.find((c) => c.category.toLowerCase() === (leak.category as string)?.toLowerCase());
+      const roiImpact = jsCat ? jsCat.roi : (leak.roi_impact as number) ?? 0;
+      const sampleSize = jsCat ? jsCat.count : (leak.sample_size as number) ?? 0;
+      const leakSeverity = leakSeverityFromRoi(roiImpact);
       return {
         category: (leak.category as string) ?? '',
         detail: (leak.detail as string) ?? '',
         detail_visibility: 'visible' as VisibilityTag,
-        roi_impact: jsCat ? jsCat.roi : (leak.roi_impact as number) ?? 0,
-        sample_size: jsCat ? jsCat.count : (leak.sample_size as number) ?? 0,
+        roi_impact: roiImpact,
+        sample_size: sampleSize,
         suggestion: (leak.suggestion as string) ?? '',
         suggestion_visibility: 'visible' as VisibilityTag,
+        // Report-trust metadata: severity/confidence are deterministic from
+        // the JS-side ROI + sample, never LLM-chosen.
+        severity: leakSeverity,
+        confidence: confidenceFor(sampleSize, leakSeverity),
       };
     }), settledCount, BET_COUNT_THRESHOLDS.strategicLeaksFullTotal),
     // Minimum-sample floor: bet-pattern observations need a bet sample.
@@ -3516,7 +3647,7 @@ export async function runSnapshot(
     const evidenceVisible = topEvidenceBiases.has(b);
     return {
       bias_name: b.bias_name,
-      severity: b.severity as 'low' | 'medium' | 'high' | 'critical',
+      severity: b.severity,
       description: '',
       evidence: evidenceVisible ? scrubDollarsInSentence(firstSentence(b.data)) : '',
       estimated_cost: 0,
@@ -3527,6 +3658,13 @@ export async function runSnapshot(
       evidence_visibility: evidenceVisible ? 'visible' : 'hidden',
       fix_visibility: 'hidden',
       estimated_cost_visibility: 'redacted_dollar',
+      // Report-trust metadata. sample_size/confidence are counts, not
+      // dollars — visible in snapshot. sub_splits dollars are redacted
+      // (net_usd nulled) per the snapshot dollar policy; roi_pct stays
+      // (ROI is already a visible snapshot surface on leaks).
+      sample_size: b.sample_size,
+      confidence: b.sample_size != null ? confidenceFor(b.sample_size, b.severity) : undefined,
+      sub_splits: b.sub_splits?.map((s) => ({ ...s, net_usd: null })),
     };
   });
 
@@ -3552,15 +3690,22 @@ export async function runSnapshot(
     // Minimum-sample floor per category: a negative ROI on a thin category is
     // noise. Require the per-category bet floor before flagging it as a leak.
     .filter(c => c.count >= BET_COUNT_THRESHOLDS.strategicLeaksPerCategory)
-    .map(c => ({
-      category: c.category,
-      detail: firstSentence(`${c.category} is running ${c.roi.toFixed(1)}% ROI across ${c.count} settled bets.`),
-      detail_visibility: 'visible' as VisibilityTag,
-      roi_impact: c.roi,
-      sample_size: c.count,
-      suggestion: '',
-      suggestion_visibility: 'hidden' as VisibilityTag,
-    }));
+    .map(c => {
+      const leakSeverity = leakSeverityFromRoi(c.roi);
+      return {
+        category: c.category,
+        detail: firstSentence(`${c.category} is running ${c.roi.toFixed(1)}% ROI across ${c.count} settled bets.`),
+        detail_visibility: 'visible' as VisibilityTag,
+        roi_impact: c.roi,
+        sample_size: c.count,
+        suggestion: '',
+        suggestion_visibility: 'hidden' as VisibilityTag,
+        // Deterministic severity/confidence (counts + ROI are already
+        // visible snapshot surfaces; no new dollar exposure).
+        severity: leakSeverity,
+        confidence: confidenceFor(c.count, leakSeverity),
+      };
+    });
 
   // ── SportSpecificFindings (unified redaction policy) ──
   // Ship name + sport + severity + first-sentence description + first-sentence
@@ -3580,6 +3725,8 @@ export async function runSnapshot(
     recommendation_visibility: 'hidden',
     estimated_cost: 0,
     estimated_cost_visibility: 'redacted_dollar',
+    // sub_splits dollars redacted in snapshot mode (counts/ROI stay).
+    sub_splits: sf.sub_splits?.map((s) => ({ ...s, net_usd: null })),
   }));
 
   // patternsSnapshot: 4-5 entries depending on data availability.
