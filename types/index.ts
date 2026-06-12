@@ -188,6 +188,37 @@ export interface ReportCharts {
   betTypeMix: { class: string; count: number; pct: number }[];
 }
 
+// ── Sufficiency (schema_version 4, SNAPSHOT-LOOSEN) ──
+// Resolves the gateArray -> [] ambiguity: an empty findings array was
+// structurally indistinguishable from "no findings", so small-sample users
+// saw "none detected" instead of "not enough data yet". Every surface
+// currently below its full floor is listed in `gated`; renderers check
+// membership before claiming absence. Ships in BOTH modes (counts, not
+// dollars). Additive-optional: absent on all pre-v4 saved reports and
+// tolerant-decoded by iOS — graceful absence is the contract; iOS
+// consumption (building-state empty-states, "N of 100 settled bets"
+// progress copy) is a follow-up, not required for v4 to ship.
+export type GatedSurface =
+  | 'biases'             // settled < smallSampleBiases (30): no biases at all
+  | 'biases_full_tier'   // settled < biasesDetected (100): only the small-sample allowlist fires
+  | 'strategic_leaks'
+  | 'behavioral_patterns'
+  | 'enhanced_tilt'
+  | 'betiq'
+  | 'betting_archetype'
+  | 'emotion_score'
+  | 'discipline_score'
+  | 'heated_aggregates'; // totalSessions < heatedSessionsMinSessions (20)
+
+export interface SufficiencyState {
+  /** wins + losses in the analyzed cohort. */
+  settledBets: number;
+  /** building: < 30 settled (no findings) · limited: 30-99 (small-sample
+   *  allowlist, severity capped, confidence forced low) · full: >= 100. */
+  tier: 'building' | 'limited' | 'full';
+  gated: GatedSurface[];
+}
+
 // ── Snapshot Redaction (Spec v2) ──
 // Per-field visibility discriminator. When != "visible", the companion field
 // MUST be null in snapshot payloads. iOS V8.5+ reads these to decide blur
@@ -436,6 +467,8 @@ export interface AutopsyAnalysis {
   // Chart-ready typed arrays (schema_version 3). Full reports only; absent
   // on snapshots and pre-v3 reports. See ReportCharts.
   charts?: ReportCharts;
+  // Sufficiency state (schema_version 4). BOTH modes; absent pre-v4.
+  sufficiency?: SufficiencyState;
   control_system?: ReportControlSystem;
 }
 

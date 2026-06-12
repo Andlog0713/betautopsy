@@ -207,8 +207,8 @@ export async function processUpgrade(args: ProcessUpgradeArgs): Promise<void> {
     const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, bets);
     if (sportFindings.length > 0) analysis.sport_specific_findings = sportFindings;
     // Keep in lockstep with /api/analyze's stamp — this path re-runs the
-    // same engine, so the emitted shape is identical (v3 = report-trust).
-    analysis.schema_version = 3;
+    // same engine, so the emitted shape is identical (v4 = SNAPSHOT-LOOSEN).
+    analysis.schema_version = 4;
 
     // 8. Insert the child full-report row. Mirrors /api/analyze:472-496
     // field-for-field except the hardcodes for our case: report_type,

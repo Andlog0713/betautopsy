@@ -440,12 +440,14 @@ export async function POST(request: Request) {
           }
         } catch { /* quiz lookup is best-effort */ }
 
-        // Stamp the saved-report schema version. v3 = report-trust shape
-        // (recovery, charts, framing, per-finding metadata, bias dedup).
-        // The version has ONE programmatic reader — computeWhatChanged's
-        // crossSchemaVersion annotation; every other consumer tolerates old
+        // Stamp the saved-report schema version. v4 = SNAPSHOT-LOOSEN
+        // (small-sample bias tier + sufficiency state); v3 = report-trust
+        // shape (recovery, charts, framing, per-finding metadata, dedup).
+        // Programmatic readers: computeWhatChanged's crossSchemaVersion
+        // annotation and compareReports' cross-version suppression of
+        // resolved/new bias claims; every other consumer tolerates old
         // shapes via optional fields, not version gates.
-        analysis.schema_version = 3;
+        analysis.schema_version = 4;
 
         // Longitudinal-memory deltas. Pull the most recent prior report for
         // this user, feed it + the just-computed analysis into the pure
