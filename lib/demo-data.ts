@@ -67,6 +67,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     overall_grade: 'C-',
   },
 
+  // Non-additive recovery model (schema_version 3): the single largest
+  // recoverable leak as a rounded range — never a sum of overlapping leaks.
+  recovery: {
+    biggestSingleLeakUSD: 820,
+    method: 'flat_staking',
+    overlapsExist: true,
+    rangeLow: 600,
+    rangeHigh: 1000,
+    netUSD: -1247,
+  },
+
   emotion_score: 64,
   tilt_score: 64,
   emotion_breakdown: {

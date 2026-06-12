@@ -24,6 +24,8 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import type { AutopsyAnalysis, Bet, ControlRuleSuggestion, CooldownSuggestion, PersonalRule, ProgressSnapshot, TimingBucket, OddsBucket, ReportComparison } from '@/types';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { isPlatformCategory } from '@/lib/platform-filter';
+import { formatApproxUSD } from '@/lib/utils';
+import { roundRecoveryRange } from '@/lib/engine/recovery';
 import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
@@ -746,7 +748,46 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     return items;
   }, [biases_detected, filteredLeaks, bets]);
 
-  const totalRecoverable = prioritizedLeaks.reduce((s, l) => s + l.cost, 0);
+  // Non-additive recovery display (report-trust, schema_version 3). The old
+  // additive sum over prioritizedLeaks double-counted overlapping
+  // counterfactuals (it read $43K against a real ~$7.9K net loss) and must
+  // never render again — for ANY report vintage. v3 reports carry the
+  // engine's deterministic `recovery`; older reports fall back to the single
+  // largest prioritized leak presented as the same rounded range.
+  const RECOVERY_METHOD_LABELS: Record<string, string> = {
+    flat_staking: 'flat staking at your median bet size',
+    no_long_parlays: 'cutting 4+ leg parlays',
+    profitable_categories_only: 'sticking to your profitable categories',
+    exit_worst_category: 'exiting your worst category',
+  };
+  const recoveryDisplay = useMemo(() => {
+    if (analysis.recovery) {
+      return {
+        rangeLow: analysis.recovery.rangeLow,
+        rangeHigh: analysis.recovery.rangeHigh,
+        methodLabel: RECOVERY_METHOD_LABELS[analysis.recovery.method] ?? analysis.recovery.method,
+        netUSD: analysis.recovery.netUSD as number | null,
+      };
+    }
+    if (prioritizedLeaks.length === 0) return null;
+    const biggest = prioritizedLeaks[0]; // sorted desc by cost
+    if (biggest.cost <= 0) return null;
+    const { rangeLow, rangeHigh } = roundRecoveryRange(biggest.cost);
+    return {
+      rangeLow,
+      rangeHigh,
+      methodLabel: `fixing "${biggest.name}"`,
+      // Old snapshots redact total_profit to 0; suppress the net line there.
+      netUSD: analysis.summary.total_profit_visibility === 'redacted_dollar'
+        ? null
+        : analysis.summary.total_profit,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis, prioritizedLeaks]);
+  const largestLeakCost = prioritizedLeaks[0]?.cost ?? 0;
+  const recoveryRangeLabel = recoveryDisplay
+    ? `~$${Math.round(recoveryDisplay.rangeLow).toLocaleString()}-$${Math.round(recoveryDisplay.rangeHigh).toLocaleString()}`
+    : '';
 
   const hasBets = bets.length > 0;
 
@@ -1197,7 +1238,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
       )}
 
-      {!isPartialReport && totalRecoverable > 0 && (
+      {!isPartialReport && recoveryDisplay && (
         <div
           className="card-tier-1 p-5 cursor-pointer"
           onClick={() => {
@@ -1210,9 +1251,14 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">TOTAL RECOVERABLE</p>
-              <p className="font-mono text-2xl font-bold text-bleed">{'$'}{Math.round(totalRecoverable).toLocaleString()}</p>
-              <p className="text-[11px] text-fg-muted mt-1">Estimated money left on the table from all detected leaks and biases. Some leaks may overlap.</p>
+              <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">BIGGEST RECOVERABLE LEAK</p>
+              <p className="font-mono text-2xl font-bold text-bleed">{recoveryRangeLabel}</p>
+              <p className="text-[11px] text-fg-muted mt-1">
+                Estimated from your single largest leak, via {recoveryDisplay?.methodLabel}. Other leaks overlap it and are not additive.
+                {recoveryDisplay?.netUSD != null && recoveryDisplay.netUSD !== 0 && (
+                  <> Verified net result: <span className="font-mono">{recoveryDisplay.netUSD < 0 ? '-' : '+'}${Math.abs(Math.round(recoveryDisplay.netUSD)).toLocaleString()}</span>.</>
+                )}
+              </p>
             </div>
             <span className="font-mono text-[10px] text-fg-dim">See details →</span>
           </div>
@@ -1295,7 +1341,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {(bias.estimated_cost > 0 || snapshotLocked) && (
                       snapshotLocked
                         ? <RedactedValue type="dollar" seed={reportId} index={i} />
-                        : <span className="text-sm font-mono text-bleed">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                        : <span className="text-sm font-mono text-bleed">{formatApproxUSD(bias.estimated_cost)}/qtr</span>
                     )}
                     <ChevronDown
                       size={14}
@@ -1370,7 +1416,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                           <p className="text-xs text-fg-dim font-mono">
                             est. cost: {snapshotLocked
                               ? <RedactedValue type="dollar" seed={reportId} index={i + 100} />
-                              : <span className="text-bleed font-medium">-${Math.abs(bias.estimated_cost).toLocaleString()}/qtr</span>
+                              : <span className="text-bleed font-medium">{formatApproxUSD(bias.estimated_cost)}/qtr</span>
                             }
                           </p>
                         )}
@@ -2447,17 +2493,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       <DollarSign size={20} className="text-scalpel" />
                     </div>
                     <div>
-                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Total Recoverable</p>
-                      <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Biggest Recoverable Leak</p>
+                      <p className="font-mono text-3xl font-bold text-scalpel">{recoveryRangeLabel}</p>
                     </div>
                   </div>
-                  <p className="text-sm font-light mt-2">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-dim text-xs font-light mt-1">Estimated. Some leaks may overlap.</p>
+                  <p className="text-sm font-light mt-2">Your single largest recoverable leak{recoveryDisplay ? `, via ${recoveryDisplay.methodLabel}` : ''}. Leaks below are ranked by impact.</p>
+                  <p className="text-fg-dim text-xs font-light mt-1">Estimates. Leaks overlap each other and are not additive.</p>
                 </div>
 
                 <div className="space-y-2">
                   {prioritizedLeaks.map((item, i) => {
-                    const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    const pct = largestLeakCost > 0 ? (item.cost / largestLeakCost) * 100 : 0;
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
@@ -2474,7 +2520,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                             </span>
                           </div>
                           <div className="flex items-center gap-4 shrink-0 ml-4">
-                            <span className="text-sm font-mono font-bold text-loss">-${Math.round(item.cost).toLocaleString()}</span>
+                            <span className="text-sm font-mono font-bold text-loss">{formatApproxUSD(item.cost)}</span>
                             <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </div>
@@ -2482,7 +2528,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                           <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
                             {item.detail && <p className="text-sm text-fg leading-relaxed">{item.detail}</p>}
                             <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Share of total leaks</span>
+                              <span className="text-fg-muted">Relative to your biggest leak</span>
                               <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
                             <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
@@ -3029,17 +3075,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       <DollarSign size={20} className="text-scalpel" />
                     </div>
                     <div>
-                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Total Recoverable</p>
-                      <p className="font-mono text-3xl font-bold text-scalpel">${Math.round(totalRecoverable).toLocaleString()}</p>
+                      <p className="font-mono text-[10px] text-fg-dim tracking-[2px] uppercase">Biggest Recoverable Leak</p>
+                      <p className="font-mono text-3xl font-bold text-scalpel">{recoveryRangeLabel}</p>
                     </div>
                   </div>
-                  <p className="text-sm font-light mt-2">Estimated money left on the table from all detected leaks and biases, ranked by impact.</p>
-                  <p className="text-fg-dim text-xs font-light mt-1">Estimated. Some leaks may overlap.</p>
+                  <p className="text-sm font-light mt-2">Your single largest recoverable leak{recoveryDisplay ? `, via ${recoveryDisplay.methodLabel}` : ''}. Leaks below are ranked by impact.</p>
+                  <p className="text-fg-dim text-xs font-light mt-1">Estimates. Leaks overlap each other and are not additive.</p>
                 </div>
 
                 <div className="space-y-2">
                   {prioritizedLeaks.map((item, i) => {
-                    const pct = totalRecoverable > 0 ? (item.cost / totalRecoverable) * 100 : 0;
+                    const pct = largestLeakCost > 0 ? (item.cost / largestLeakCost) * 100 : 0;
                     const leakId = `priority-${i}`;
                     const isExpanded = expandedFindings.has(leakId);
                     return (
@@ -3056,7 +3102,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                             </span>
                           </div>
                           <div className="flex items-center gap-4 shrink-0 ml-4">
-                            <span className="text-sm font-mono font-bold text-loss">-${Math.round(item.cost).toLocaleString()}</span>
+                            <span className="text-sm font-mono font-bold text-loss">{formatApproxUSD(item.cost)}</span>
                             <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </div>
@@ -3064,7 +3110,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                           <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
                             {item.detail && <p className="text-sm text-fg leading-relaxed">{item.detail}</p>}
                             <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-fg-muted">Share of total leaks</span>
+                              <span className="text-fg-muted">Relative to your biggest leak</span>
                               <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
                             <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
