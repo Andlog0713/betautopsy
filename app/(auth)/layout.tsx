@@ -12,7 +12,9 @@ export default function AuthLayout({
       {/* Left — brand panel with grid-paper */}
       <div className="hidden lg:flex flex-1 grid-paper border-r border-border-subtle p-12 pt-24 flex-col justify-start">
         <div className="max-w-md">
-          <Link href="/"><Logo size="md" /></Link>
+          {/* min-h-[44px] inline-flex: the bare inline anchor measured 228x36,
+              under the 44pt tap-target floor the mobile-regression e2e enforces. */}
+          <Link href="/" className="inline-flex items-center min-h-[44px]"><Logo size="md" /></Link>
           <div className="mt-10 mb-2">
             <div className="text-3xl font-bold text-fg-bright tracking-tight leading-[1.15]">
               Stop guessing.
@@ -43,9 +45,11 @@ export default function AuthLayout({
 
       {/* Right — form */}
       <div className="flex-1 lg:max-w-[520px] flex flex-col items-center justify-center px-6 py-12">
-        {/* Mobile-only logo */}
+        {/* Mobile-only logo. min-h-[44px] keeps the anchor at the 44pt
+            tap-target floor (was 228x36 — the long-standing e2e red on
+            /login + /signup). */}
         <div className="lg:hidden mb-8">
-          <Link href="/"><Logo size="md" /></Link>
+          <Link href="/" className="inline-flex items-center min-h-[44px]"><Logo size="md" /></Link>
         </div>
 
         <div className="w-full max-w-sm">
