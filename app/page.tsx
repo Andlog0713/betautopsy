@@ -216,7 +216,7 @@ export default function LandingPage() {
             See a real autopsy report
           </h2>
           <p className="text-fg-muted text-sm font-light mb-8 max-w-xl">
-            280 bets. 3 months. 3 biases found. $480/quarter in recoverable losses.
+            280 bets. 3 months. 3 biases found. One change that could have stopped the biggest leak.
           </p>
           <div className="border border-border-subtle rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle bg-surface-1">

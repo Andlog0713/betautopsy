@@ -735,7 +735,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       avgStakeAfterLossStreak3: 32,
       avgStakeNeutral: 15,
     },
-    insight: '34% of your entries show emotional or chasing behavior, costing you an estimated $280 in recoverable profit. Your disciplined entries return +13.6% ROI vs -60%+ on chasing entries.',
+    insight: '34% of your entries show emotional or chasing behavior, costing an estimated $280 in lost edge. Your disciplined entries return +13.6% ROI vs -60%+ on chasing entries.',
   },
 
   dfs_metrics: {
