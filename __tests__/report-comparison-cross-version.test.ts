@@ -84,13 +84,16 @@ describe('compareReports cross-version resolved suppression', () => {
     expect(result.biasChanges.filter((b) => b.direction === 'resolved')).toHaveLength(1);
   });
 
-  it('cross-version keeps same-named severity comparisons (improved/worsened/new)', () => {
+  it('cross-version keeps same-named severity comparisons but suppresses new-bias claims', () => {
+    // v4's small-sample tier surfaces biases for 30-99-settled users where
+    // v3 emitted none — "New bias detected" across the boundary would be a
+    // false regression, the mirror image of the false "resolved".
     const previous = makeAnalysis({
-      schema_version: 2,
+      schema_version: 3,
       biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', severity: 'critical' })],
     });
     const current = makeAnalysis({
-      schema_version: 3,
+      schema_version: 4,
       biases_detected: [
         makeBias({ bias_name: 'Post-Loss Escalation', severity: 'medium' }),
         makeBias({ bias_name: 'Stake Volatility', severity: 'low' }),
@@ -98,6 +101,25 @@ describe('compareReports cross-version resolved suppression', () => {
     });
     const result = compareReports(current, previous);
     const directions = result.biasChanges.map((b) => b.direction).sort();
-    expect(directions).toEqual(['improved', 'new']);
+    expect(directions).toEqual(['improved']);
+    expect(result.topRegression ?? '').not.toContain('New bias');
+  });
+
+  it('same-version new-bias claims still report', () => {
+    const previous = makeAnalysis({
+      schema_version: 4,
+      biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', severity: 'medium' })],
+    });
+    const current = makeAnalysis({
+      schema_version: 4,
+      biases_detected: [
+        makeBias({ bias_name: 'Post-Loss Escalation', severity: 'medium' }),
+        makeBias({ bias_name: 'Stake Volatility', severity: 'low' }),
+      ],
+    });
+    const result = compareReports(current, previous);
+    const news = result.biasChanges.filter((b) => b.direction === 'new');
+    expect(news).toHaveLength(1);
+    expect(news[0].name).toBe('Stake Volatility');
   });
 });

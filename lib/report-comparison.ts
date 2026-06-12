@@ -49,10 +49,28 @@ export function compareReports(current: AutopsyAnalysis, previous: AutopsyAnalys
   current.biases_detected.forEach(b => { currBiasMap[b.bias_name.toLowerCase()] = b; });
   const biasChanges: BiasChange[] = [];
 
+  // Cross-version guard (schema_version 3/4): a bias that appears or
+  // disappears across a schema_version boundary (absent = 1) may reflect
+  // the engine's shape change, not the user's behavior — v3's
+  // identical-evidence dedup collapses a finding ("resolved" would be a
+  // false improvement), and v4's small-sample tier surfaces biases for
+  // 30-99-settled users where v3 emitted none ("new bias detected" would
+  // be a false regression). Both presence/absence directions are
+  // suppressed cross-version; same-named severity comparisons
+  // (improved/worsened) stay — they reference biases present in BOTH
+  // reports. Suppress rather than annotate: BiasChange has no annotation
+  // slot, WhatChangedSection renders direction chips verbatim, and
+  // topImprovement/topRegression would headline the false claim. Mirrors
+  // computeWhatChanged.crossSchemaVersion, which annotates instead
+  // because its wire type has a field for it.
+  const crossSchemaVersion = (current.schema_version ?? 1) !== (previous.schema_version ?? 1);
+
   Object.entries(currBiasMap).forEach(([key, curr]) => {
     const prev = prevBiasMap[key];
     if (!prev) {
-      biasChanges.push({ name: curr.bias_name, previousSeverity: null, currentSeverity: curr.severity, direction: 'new' });
+      if (!crossSchemaVersion) {
+        biasChanges.push({ name: curr.bias_name, previousSeverity: null, currentSeverity: curr.severity, direction: 'new' });
+      }
     } else {
       const prevSev = SEVERITY_ORDER[prev.severity] ?? 0;
       const currSev = SEVERITY_ORDER[curr.severity] ?? 0;
@@ -63,19 +81,6 @@ export function compareReports(current: AutopsyAnalysis, previous: AutopsyAnalys
       }
     }
   });
-  // Cross-version guard (report-trust, schema_version 3): a bias that
-  // disappears across a schema_version boundary (absent = 1) may reflect the
-  // engine's shape change, not the user's behavior — e.g. v3's
-  // identical-evidence dedup collapses High-Volume Category Leak into the
-  // Category Concentration finding, which a v2-vs-v3 comparison would
-  // otherwise celebrate as "resolved". Suppress rather than annotate:
-  // BiasChange has no annotation slot, WhatChangedSection renders direction
-  // chips verbatim, and topImprovement would headline the false claim at
-  // magnitude 20. Same-named comparisons (improved/worsened/new) stay —
-  // they reference biases present in the current report. Mirrors
-  // computeWhatChanged.crossSchemaVersion, which annotates instead because
-  // its wire type has a field for it.
-  const crossSchemaVersion = (current.schema_version ?? 1) !== (previous.schema_version ?? 1);
   if (!crossSchemaVersion) {
     Object.entries(prevBiasMap).forEach(([key, prev]) => {
       if (!currBiasMap[key]) {
