@@ -42,7 +42,45 @@
 
 ---
 
-## Current branch: `loosen/small-sample-tier` — SNAPSHOT-LOOSEN sufficiency floors (approved + built 2026-06-12; gates TestFlight)
+## Current branch: `copy/check-in-gate` — COPY_SYSTEM gate on server check-in copy (2026-06-15)
+
+### Sprint tracker row (Category: Analysis pipeline)
+- **Row:** "Route PreBetCheckIn summary + flag strings through COPY_SYSTEM gate"
+  · Category: Analysis pipeline · Status: Done (PR open, squash) · Surface:
+  check-in scorer → iOS wire. Recorded here (PROGRESS = source of truth); no
+  Notion write per the standing "Notion stays in the chat layer" convention.
+
+### Done this session: deterministic COPY_SYSTEM gate for server-generated check-in copy
+- **Step 0 finding:** check-in `summary` + `flags[].title`/`detail` are
+  generated deterministically in `lib/check-in-scorer.ts` (pure JS, no LLM),
+  serialized by `app/api/check-in/route.ts` to iOS AND persisted to
+  `pre_bet_checkins`. They ran through NO banned-phrase filter — the existing
+  em-dash/no-tilt/no-exclamation rules are LLM-prompt-only (autopsy
+  SYSTEM_PROMPT), which never touch this path. Confirmed real leak, not just a
+  guardrail: `control-system.ts:913` sets the check-in `cooldown.summary` to
+  the raw DB `trigger_reason`, which `computeSummary` embeds into the summary
+  (`Cooldown active. ${reason}`) and ships unfiltered.
+- **New `lib/copy-system.ts` · `enforceCopySystem(text)`:** deterministic,
+  idempotent, digit-preserving. Mechanical rules: em/en-dash separators →
+  sentence breaks (numeric ranges like 5–10 preserved); "tilt" family →
+  "chasing"; "!" → ".". "No fabricated stats" is enforced by construction
+  (every check-in number derives from the user's own bets) + a test scanning
+  output with the exported `FABRICATED_POPULATION_STAT_RX`, NOT a runtime strip
+  (a regex can't tell a computed stat from an invented one).
+- **Wiring:** gate applied at two chokepoints in the scorer — `flag()` (every
+  title/detail) and the assembled `summary` return (covers all branches + the
+  embedded cooldown reason). No-op on today's clean copy (em-dashes in the file
+  were comment-only), so zero wire change for compliant strings.
+- **Out of scope (flagged):** standalone control-system strings that also ship
+  (`cooldown.summary` as its own field, `ruleViolations` text,
+  `reflectionPrompts`, `planContext.adherenceSummary`) — adjacent, follow-up.
+- **Tests:** `__tests__/copy-system.test.ts` (10) — pure-gate transforms +
+  idempotence + digit-preservation + fabricated-stat regex, plus scorer
+  integration (all shipped strings are fixed-points of the gate; a dirty
+  upstream cooldown `trigger_reason` with em-dash + "tilt" + "!" is cleaned
+  end-to-end). tsc 0 · vitest 378 · build 0.
+
+## Previous branch: `loosen/small-sample-tier` — SNAPSHOT-LOOSEN sufficiency floors (approved + built 2026-06-12; gates TestFlight)
 
 ### Done this session: small-sample bias tier + sufficiency wire state + reader fixes (schema_version 4)
 - **Band replaces the 100-settled cliff:** <30 settled no biases; 30-99

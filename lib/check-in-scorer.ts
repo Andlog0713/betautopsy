@@ -19,6 +19,7 @@ import {
   type RiskEvent,
 } from '@/types';
 import { evaluateCheckInAgainstControlState } from '@/lib/control-system';
+import { enforceCopySystem } from '@/lib/copy-system';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OUTCOME_SET: ReadonlySet<string> = new Set(CHECK_IN_OUTCOMES);
@@ -162,7 +163,15 @@ const MIN_BETS_FOR_STAKE_MEDIAN = 10;
 const MIN_PARLAYS_FOR_ROI_FLAG = 5;
 
 function flag(severity: CheckInSeverity, title: string, detail: string): PreBetCheckInFlag {
-  return { id: randomUUID(), severity, title, detail };
+  // COPY_SYSTEM gate: every flag title/detail ships to iOS over the wire,
+  // bypassing the native copy layer. Gate at construction so no flag site can
+  // forget it. enforceCopySystem is a no-op on already-clean copy.
+  return {
+    id: randomUUID(),
+    severity,
+    title: enforceCopySystem(title),
+    detail: enforceCopySystem(detail),
+  };
 }
 
 function median(values: number[]): number {
@@ -439,12 +448,16 @@ export async function scoreCheckIn(
     betQualityScore: score,
     flags,
     recommendation: computeRecommendation(flags, score, controlEvaluation.actionGate),
-    summary: computeSummary(flags, noHistory, {
+    // COPY_SYSTEM gate: the summary ships to iOS over the wire. It embeds the
+    // upstream control-system cooldown `trigger_reason` (control-system.ts
+    // surfaces the raw DB string as cooldown.summary), which otherwise reaches
+    // native unfiltered. Gate the assembled string here.
+    summary: enforceCopySystem(computeSummary(flags, noHistory, {
       actionGate: controlEvaluation.actionGate,
       cooldownSummary: controlEvaluation.cooldown?.summary ?? null,
       ruleViolationCount: controlEvaluation.ruleViolations.length,
       riskContextCount: controlEvaluation.recentRiskContext.length,
-    }),
+    })),
     actionGate: controlEvaluation.actionGate,
     ruleViolations: controlEvaluation.ruleViolations,
     cooldown: controlEvaluation.cooldown,
