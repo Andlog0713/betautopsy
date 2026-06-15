@@ -19,7 +19,7 @@ import {
   type RiskEvent,
 } from '@/types';
 import { evaluateCheckInAgainstControlState } from '@/lib/control-system';
-import { enforceCopySystem } from '@/lib/copy-system';
+import { normalizeWireText } from '@/lib/copy-system';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OUTCOME_SET: ReadonlySet<string> = new Set(CHECK_IN_OUTCOMES);
@@ -163,14 +163,16 @@ const MIN_BETS_FOR_STAKE_MEDIAN = 10;
 const MIN_PARLAYS_FOR_ROI_FLAG = 5;
 
 function flag(severity: CheckInSeverity, title: string, detail: string): PreBetCheckInFlag {
-  // COPY_SYSTEM gate: every flag title/detail ships to iOS over the wire,
-  // bypassing the native copy layer. Gate at construction so no flag site can
-  // forget it. enforceCopySystem is a no-op on already-clean copy.
+  // Flag titles/details are author-controlled copy (the numbers are
+  // user-derived, the prose is authored here). They are NOT mutated at
+  // runtime — kept clean at source and guarded by the COPY_SYSTEM CI test in
+  // __tests__/copy-system.test.ts. If that test ever fails, fix the offending
+  // string literal by hand.
   return {
     id: randomUUID(),
     severity,
-    title: enforceCopySystem(title),
-    detail: enforceCopySystem(detail),
+    title,
+    detail,
   };
 }
 
@@ -448,16 +450,21 @@ export async function scoreCheckIn(
     betQualityScore: score,
     flags,
     recommendation: computeRecommendation(flags, score, controlEvaluation.actionGate),
-    // COPY_SYSTEM gate: the summary ships to iOS over the wire. It embeds the
-    // upstream control-system cooldown `trigger_reason` (control-system.ts
-    // surfaces the raw DB string as cooldown.summary), which otherwise reaches
-    // native unfiltered. Gate the assembled string here.
-    summary: enforceCopySystem(computeSummary(flags, noHistory, {
+    // computeSummary's own branches are author-controlled and clean by
+    // construction (CI-guarded). The ONE untrusted value it embeds is the
+    // cooldown summary, which is the raw DB `trigger_reason` — surfaced
+    // verbatim by control-system and originating from a write site that
+    // accepts client-supplied free text. Mechanically normalize only that
+    // embedded value (dashes, exclamations) before it is interpolated; do not
+    // mutate the author copy around it.
+    summary: computeSummary(flags, noHistory, {
       actionGate: controlEvaluation.actionGate,
-      cooldownSummary: controlEvaluation.cooldown?.summary ?? null,
+      cooldownSummary: controlEvaluation.cooldown?.summary
+        ? normalizeWireText(controlEvaluation.cooldown.summary)
+        : null,
       ruleViolationCount: controlEvaluation.ruleViolations.length,
       riskContextCount: controlEvaluation.recentRiskContext.length,
-    })),
+    }),
     actionGate: controlEvaluation.actionGate,
     ruleViolations: controlEvaluation.ruleViolations,
     cooldown: controlEvaluation.cooldown,

@@ -1,19 +1,27 @@
 /**
- * COPY_SYSTEM gate for server-generated copy that ships to native (iOS).
+ * Mechanical normalizer for UNTRUSTED dynamic text the server embeds in copy
+ * shipped to native (iOS).
  *
- * Native surfaces run the COPY_SYSTEM.md rules in the iOS layer. But some
- * strings are generated on the SERVER and handed straight to iOS over the
- * wire, bypassing that layer entirely — most notably the pre-bet check-in
- * `summary` and `flags[].title` / `flags[].detail`. Those strings (and the
- * upstream control-system `trigger_reason` that flows into the summary) never
- * pass through COPY_SYSTEM. This module re-implements the deterministic,
- * value-preserving subset of those rules so server copy meets the same bar
- * before it crosses the wire.
+ * The one such value today is the control-system cooldown `trigger_reason`.
+ * It originates at a manual-cooldown write site (POST /api/control-system,
+ * action `start_cooldown`) that accepts client-supplied free text with no
+ * whitelist, so it can carry em/en-dashes, exclamation marks, and off-brand
+ * vocabulary a user typed. control-system surfaces it verbatim as
+ * `cooldown.summary`, which the check-in scorer interpolates into `summary`
+ * and ships over the wire — bypassing the iOS COPY_SYSTEM layer.
  *
- * Rules enforced at runtime (mechanical, safe to apply to any string):
- *   1. Em-dash / en-dash separators  -> sentence breaks (no dash on the wire).
- *   2. "tilt" family                 -> brand vocabulary ("chasing").
- *   3. Exclamation marks             -> periods.
+ * This applies ONLY the deterministic, value-preserving subset of COPY_SYSTEM
+ * that is safe to run on arbitrary text:
+ *   1. Em-dash / en-dash separators -> sentence breaks (no dash on the wire).
+ *   2. Exclamation marks            -> periods.
+ *
+ * It deliberately does NOT substitute vocabulary. The old tilt->chasing swap
+ * was wrong on both ends: rewriting words a user typed corrupts the record of
+ * what they actually wrote, and the brand-vocabulary rule governs
+ * BetAutopsy-authored copy, not user input. Author-controlled scorer strings
+ * (flag titles/details, computeSummary's own branches) are kept clean at
+ * source and guarded by a CI test (see __tests__/copy-system.test.ts), never
+ * mutated at runtime.
  *
  * "No fabricated stats" is intentionally NOT a runtime transform: a regex
  * cannot distinguish a computed stat from an invented one, and stripping real
@@ -30,11 +38,12 @@ export const FABRICATED_POPULATION_STAT_RX =
   /\b\d{1,3}(?:\.\d+)?\s*%\s+of\s+(?:bettors|sports\s+bettors|people|players|users|gamblers)\b/i;
 
 /**
- * Routes a server-generated string through the COPY_SYSTEM gate. Idempotent
- * and digit-preserving: clean copy passes through unchanged, and no rule ever
- * introduces or alters a number.
+ * Mechanically normalizes a piece of untrusted dynamic text before it crosses
+ * the wire. Idempotent and digit-preserving: clean copy passes through
+ * unchanged, and no rule ever introduces, alters, or substitutes a word or a
+ * number — only dash separators and exclamation marks are rewritten.
  */
-export function enforceCopySystem(text: string): string {
+export function normalizeWireText(text: string): string {
   if (!text) return text;
   let out = text;
 
@@ -49,12 +58,7 @@ export function enforceCopySystem(text: string): string {
     `${p}. ${c.toUpperCase()}`,
   );
 
-  // 2. No "tilt" family. Preserves leading capitalization.
-  out = out.replace(/\btilt(?:ing|ed|s)?\b/gi, (m) =>
-    /^[A-Z]/.test(m) ? 'Chasing' : 'chasing',
-  );
-
-  // 3. No exclamation marks.
+  // 2. No exclamation marks.
   out = out.replace(/!/g, '.');
 
   // Tidy doubled sentence punctuation / whitespace the transforms can create.
