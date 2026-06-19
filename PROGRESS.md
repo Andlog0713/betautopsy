@@ -42,7 +42,41 @@
 
 ---
 
-## Current branch: `copy/check-in-gate` — COPY_SYSTEM gate on server check-in copy (2026-06-15)
+## Current branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
+
+### Sprint tracker row (Category: Analysis pipeline)
+- **Row:** "Behavioral-framing rule on report advice fields (5.3 App Store hedge)"
+  · Category: Analysis pipeline · Status: PR open, NOT merged (Andrew regenerates
+  one report + eyeballs fix lines first) · Surface: full-report SYSTEM_PROMPT →
+  bias `fix`, `recommendations`, `personal_rules`, `edge_profile.reallocation_advice`.
+  Recorded here (PROGRESS = source of truth); no Notion write per standing convention.
+
+### Done this session: behavioral-framing constraint on LLM advice fields
+- **Step 0 finding (reported, no edit):** the two FIX lines flagged (parlay "+EV /
+  stop at 2", NFL-spread "key number / line movement / take the alternate") are
+  NOT hardcoded — they're LLM-authored at generation time. Bias `fix` =
+  `claudeBias?.fix` (autopsy-engine.ts:3101), `recommendations` =
+  `claudeData.recommendations` (3138), `personal_rules` = `claudeData.personal_rules`
+  (3144). None of the exact phrases exist as literals anywhere in lib/app/components
+  (only blog posts + an explainer keyword array). So the fix is prompt guidance, not
+  a string swap. Andrew chose Option 1 (prompt guidance only).
+- **Change:** one `BEHAVIORAL FRAMING RULE` added to the full-report SYSTEM_PROMPT
+  (after SPORTSBOOK RULE, before Critical Rules). Scoped to the PRESCRIPTIVE ADVICE
+  FIELDS only (fix / recommendations / personal_rules / edge_profile.reallocation_advice);
+  explicitly NOT descriptions/evidence/diagnosis (those keep factual latitude — e.g.
+  "losses pushed through margins" stays sayable). Forbids in advice: expected-value
+  language, "key number(s)", "line movement"/"wait for the line to move",
+  "take the alternate"/"alternate line", and staking-system prescriptions
+  ("1% of bankroll", "unit size", "set your unit", "X units"). Instructs behavioral
+  reframes (stop-doing + why-it-cost + pre-bet checkpoint) and keeps the existing
+  voice. Two worked examples (parlay stop-at-2, NFL pre-bet checkpoint).
+- **Snapshot path untouched:** runSnapshot is pure-compute (no LLM, fix=''), so the
+  full-report SYSTEM_PROMPT is the only generation surface.
+- **Gates:** tsc 0 · vitest 378/378 · (LLM output not unit-tested; prompt is a const
+  string, deterministic suites unaffected). Verification is Andrew regenerating a
+  real report before merge.
+
+## Previous branch: `copy/check-in-gate` — COPY_SYSTEM gate on server check-in copy (2026-06-15)
 
 ### Sprint tracker row (Category: Analysis pipeline)
 - **Row:** "Route PreBetCheckIn summary + flag strings through COPY_SYSTEM gate"
