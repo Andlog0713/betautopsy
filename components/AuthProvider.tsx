@@ -241,16 +241,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // No mount-time fetch. AuthGuard triggers revalidate() on dashboard
-  // mount; login/signup pages trigger it after a successful auth call.
-  // Marketing pages have neither — without the flip below, a visitor
-  // whose cache is missing or expired (>24h) would be stuck on the
-  // 'loading' seed forever, leaving SmartCTALink rendered as
-  // <button disabled> and NavBar showing the loading placeholder
-  // (no Login/Signup links). Flip 'loading' → 'anon' once on mount;
-  // explicit revalidate() callers overwrite this when they fire.
+  // Cache-hit cold start: state was seeded synchronously from a fresh
+  // (<24h) cache, so trust it and fire no network — this is the common
+  // marketing-page case and stays zero-traffic.
+  //
+  // Cache-MISS cold start (no cache, or >24h stale): the synchronous
+  // seed is 'loading', and we cannot tell a logged-in user from a
+  // logged-out one without asking. The old code assumed 'anon', which
+  // rendered the Login/Sign Up nav (and disabled SmartCTALink) for
+  // users who actually hold a live Supabase session — e.g. they logged
+  // in, then returned to the landing page a day later without reopening
+  // the dashboard. Resolve it for real with a single getUser()
+  // revalidate: logged-out users still settle on 'anon' (same outcome,
+  // one cheap round-trip), logged-in users correctly show their avatar.
+  // AuthGuard / login flows that also call revalidate() are deduped via
+  // inFlight, so this never double-fetches.
   useEffect(() => {
-    setState((prev) => (prev.status === 'loading' ? { status: 'anon' } : prev));
+    if (state.status === 'loading') void revalidate();
+    // Mount-only: the seeded status at first commit is the signal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
