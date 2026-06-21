@@ -190,7 +190,7 @@ export default function PricingPage() {
 
       <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 max-w-sm mx-auto">
         <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>
-        <span className="text-fg-muted text-xs font-mono">for the next 100 customers</span>
+        <span className="text-fg-muted text-xs font-mono">for a limited time</span>
       </div>
 
       {isLaunchPromoActive() && (
