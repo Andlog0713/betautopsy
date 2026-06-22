@@ -695,12 +695,12 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     chaseEvidence.sort((a, b) => b.ratio - a.ratio);
     biases.push({
       bias_name: 'Post-Loss Escalation', severity: sev,
-      data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake after loss: $${avgAfterLoss.toFixed(0)} vs after win: $${avgAfterWin.toFixed(0)})`,
+      data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake on bets following a losing bet: $${avgAfterLoss.toFixed(0)} vs following a winning bet: $${avgAfterWin.toFixed(0)})`,
       evidence_bet_ids: chaseEvidence.slice(0, 8).map(e => e.id),
       sample_size: countAfterLoss,
       sub_splits: [
-        { label: 'Bets after a loss', bets: countAfterLoss, roi_pct: stakeAfterLoss > 0 ? round2((profitAfterLoss / stakeAfterLoss) * 100) : null, net_usd: round2(profitAfterLoss) },
-        { label: 'Bets after a win', bets: countAfterWin, roi_pct: stakeAfterWin > 0 ? round2((profitAfterWin / stakeAfterWin) * 100) : null, net_usd: round2(profitAfterWin) },
+        { label: 'Bets following a losing bet', bets: countAfterLoss, roi_pct: stakeAfterLoss > 0 ? round2((profitAfterLoss / stakeAfterLoss) * 100) : null, net_usd: round2(profitAfterLoss) },
+        { label: 'Bets following a winning bet', bets: countAfterWin, roi_pct: stakeAfterWin > 0 ? round2((profitAfterWin / stakeAfterWin) * 100) : null, net_usd: round2(profitAfterWin) },
       ],
     });
   }
@@ -816,7 +816,12 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const hasTimeOfDay = settled.length >= 5 && midnightOnlyCount / settled.length < 0.8;
   if (hasTimeOfDay) {
     const lateNightBets = settled.filter((b) => {
-      const h = new Date(b.placed_at).getHours();
+      const d = new Date(b.placed_at);
+      // Date-only CSV values parse to 00:00; on the UTC runtime getHours() is
+      // 0, which would land inside the 11pm-5am window artificially. Exclude
+      // exact midnight so a date-only parse never counts as late-night.
+      if (d.getHours() === 0 && d.getMinutes() === 0) return false;
+      const h = d.getHours();
       return h >= 23 || h < 5;
     });
     if (lateNightBets.length >= 5) {
@@ -953,7 +958,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     }
     if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2 && countAfterLoss > 2) {
       const sev = dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.4 ? 'high' : 'medium';
-      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count after loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} after win. Chasing bigger multipliers to recover`, sample_size: countAfterLoss });
+      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count on entries following a losing entry: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} following a win. Pick counts step up over the prior losing entry, reaching for bigger multipliers`, sample_size: countAfterLoss });
     }
     const topPlayer = dm.playerConcentration[0];
     if (topPlayer && topPlayer.percent >= 25) {
@@ -1045,10 +1050,16 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     // >= 500) prevents false positives on small users who happen to bet
     // at night.
     const lateNightBets = settled.filter((b) => {
-      const h = new Date(b.placed_at).getHours();
+      const d = new Date(b.placed_at);
+      // Same date-only guard as the headline Late-Night detector: exact
+      // midnight is a date-only parse, not a real clock time.
+      if (d.getHours() === 0 && d.getMinutes() === 0) return false;
+      const h = d.getHours();
       return h >= 23 || h < 5;
     });
-    if (lateNightBets.length >= 100) {
+    // Gate on hasTimeOfDay so a date-only history (no real timestamps) never
+    // produces a late-night cluster finding, even above the volume floor.
+    if (hasTimeOfDay && lateNightBets.length >= 100) {
       const lnStaked = lateNightBets.reduce((s, b) => s + Number(b.stake), 0);
       const lnProfit = lateNightBets.reduce((s, b) => s + Number(b.profit), 0);
       const lnRoi = lnStaked > 0 ? (lnProfit / lnStaked) * 100 : 0;
@@ -1738,7 +1749,7 @@ export function detectContradictions(
 // ── Pertinent Negatives ──
 
 const ALL_BIAS_CHECKS: { name: string; matchNames: string[]; populationPercent: number; cleanDetail: string }[] = [
-  { name: 'Loss Chasing', matchNames: ['loss chasing', 'post-loss escalation', 'post loss escalation', 'chase'], populationPercent: 73, cleanDetail: 'Your stake sizing remains consistent after losses. {pct}% of bettors show measurable post-loss escalation.' },
+  { name: 'Loss Chasing', matchNames: ['loss chasing', 'post-loss escalation', 'post loss escalation', 'chase'], populationPercent: 73, cleanDetail: 'Your stake sizing stays steady across the bet sequence. {pct}% of bettors show measurable in-session stake escalation.' },
   { name: 'Parlay Overuse', matchNames: ['parlay', 'multi-leg', 'parlay addiction', 'heavy parlay'], populationPercent: 68, cleanDetail: 'Your parlay volume is within reasonable bounds. {pct}% of bettors over-allocate to parlays.' },
   { name: 'Late Night Bias', matchNames: ['late night', 'late-night', 'overnight', 'midnight', 'disaster'], populationPercent: 45, cleanDetail: 'No significant late-night performance decay detected. {pct}% of bettors show worse outcomes after 10pm.' },
   { name: 'Emotional Betting', matchNames: ['emotional', 'heated', 'tilt'], populationPercent: 61, cleanDetail: 'Session behavior stays disciplined under pressure. {pct}% of bettors show heated sessions exceeding 25% of total.' },
@@ -2093,7 +2104,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     if (stakeCv > 0.8) { score -= 10; deductions.push({ points: 10, reason: 'Highly inconsistent stake sizing within session' }); }
     else if (stakeCv > 0.5) { score -= 5; deductions.push({ points: 5, reason: 'Moderately inconsistent stake sizing within session' }); }
 
-    if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Increased stakes after a loss' }); }
+    if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Stepped up stakes from a prior losing bet' }); }
     if (chaseCount >= 3) { score -= 12; deductions.push({ points: 12, reason: `Chased losses ${chaseCount} times in a single session` }); }
 
     if (sessionBets.length > 10) { score -= 15; deductions.push({ points: 15, reason: `Placed ${sessionBets.length} bets in one session. Marathon session` }); }
@@ -2156,7 +2167,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       ) {
         triggerEvent = {
           type: 'loss',
-          description: `Triggered after a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} loss on ${new Date(priorSettled.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`,
+          description: `Preceded by a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} losing bet on ${new Date(priorSettled.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`,
           triggeringBetId: priorSettled.id,
         };
       } else if (lateNight) {
@@ -2396,19 +2407,19 @@ export function annotateBets(
     if (prevResult === 'loss' && prevStake > 0 && stake > prevStake * 1.3) {
       const ratio = stake / prevStake;
       const weight = Math.min(10, Math.round(6 + (ratio - 1.3) * 4));
-      signals.push({ name: 'post_loss_escalation', weight, description: `Stake increased ${ratio.toFixed(1)}x after a loss`, category: 'chasing' });
+      signals.push({ name: 'post_loss_escalation', weight, description: `Stake stepped up ${ratio.toFixed(1)}x from the prior losing bet`, category: 'chasing' });
     }
 
     if (prevResult === 'loss' && prevBet && bet.sport === prevBet.sport && bet.bet_type === prevBet.bet_type) {
-      signals.push({ name: 'double_down_after_loss', weight: 4, description: `Same sport+type (${bet.sport} ${bet.bet_type}) right after a loss`, category: 'chasing' });
+      signals.push({ name: 'double_down_after_loss', weight: 4, description: `Same sport+type (${bet.sport} ${bet.bet_type}) as the prior losing bet`, category: 'chasing' });
     }
 
     if (prevResult === 'loss' && bet.odds > 200 && prevOdds >= -200 && prevOdds <= 150) {
-      signals.push({ name: 'odds_shift_to_longshot', weight: 5, description: `Shifted to longshot odds (+${bet.odds}) after losing at shorter odds`, category: 'chasing' });
+      signals.push({ name: 'odds_shift_to_longshot', weight: 5, description: `Shifted to longshot odds (+${bet.odds}) from shorter odds on the prior losing bet`, category: 'chasing' });
     }
 
     if (!dfs.isDFS && prevResult === 'loss' && isParlay && !prevIsParlay) {
-      signals.push({ name: 'parlay_after_straight_loss', weight: 5, description: 'Jumped to a parlay after a straight bet loss', category: 'chasing' });
+      signals.push({ name: 'parlay_after_straight_loss', weight: 5, description: 'Jumped to a parlay from a prior losing straight bet', category: 'chasing' });
     }
 
     if (runningStreak <= -3) {
@@ -2416,7 +2427,7 @@ export function annotateBets(
     }
 
     if (dfs.isDFS && prevResult === 'loss' && bet.parlay_legs != null && prevParlayLegs != null && bet.parlay_legs > prevParlayLegs) {
-      signals.push({ name: 'dfs_pick_escalation', weight: 5, description: `Increased picks from ${prevParlayLegs} to ${bet.parlay_legs} after a loss`, category: 'chasing' });
+      signals.push({ name: 'dfs_pick_escalation', weight: 5, description: `Picks stepped up from ${prevParlayLegs} to ${bet.parlay_legs} over the prior losing entry`, category: 'chasing' });
     }
 
     // ── Emotional signals ──
@@ -2425,7 +2436,10 @@ export function annotateBets(
       signals.push({ name: 'oversized_bet', weight, description: `Stake is ${stakeVsMedian.toFixed(1)}x the median`, category: 'emotional' });
     }
 
-    if (hour >= 23 || hour <= 4) {
+    // Date-only parses land at exact midnight; suppress their time-of-day
+    // contribution rather than counting them as late-night.
+    const isMidnightParse = hour === 0 && betDate.getMinutes() === 0;
+    if (!isMidnightParse && (hour >= 23 || hour <= 4)) {
       signals.push({ name: 'late_night', weight: 3, description: `Placed at ${hour <= 4 ? hour : hour - 12}${hour <= 4 ? 'am' : 'pm'}`, category: 'emotional' });
     }
 
@@ -2438,7 +2452,7 @@ export function annotateBets(
     }
 
     if (prevResult === 'loss' && prevProfit < -(medianStake * 2) && timeSinceLastBet !== null && timeSinceLastBet < 30) {
-      signals.push({ name: 'emotional_after_big_loss', weight: 6, description: `Bet within ${timeSinceLastBet.toFixed(0)} min of a $${Math.abs(prevProfit).toFixed(0)} loss`, category: 'emotional' });
+      signals.push({ name: 'emotional_after_big_loss', weight: 6, description: `Bet placed ${timeSinceLastBet.toFixed(0)} min after a $${Math.abs(prevProfit).toFixed(0)} losing bet`, category: 'emotional' });
     }
 
     if ((dayOfWeek === 0 || dayOfWeek === 6) && dailyCount >= 4) {
@@ -2460,7 +2474,7 @@ export function annotateBets(
     }
 
     if (prevResult === 'loss' && stakeVsMedian >= 0.5 && stakeVsMedian <= 1.2) {
-      signals.push({ name: 'consistent_after_loss', weight: -5, description: 'Maintained discipline after a loss', category: 'disciplined' });
+      signals.push({ name: 'consistent_after_loss', weight: -5, description: 'Held stake near the median following a losing bet', category: 'disciplined' });
     }
 
     if (timeSinceLastBet !== null && timeSinceLastBet > 60) {
@@ -2851,6 +2865,10 @@ SPORTSBOOK RULE: Never reference specific sportsbook names (DraftKings, FanDuel,
 BEHAVIORAL FRAMING RULE: This constrains the PRESCRIPTIVE ADVICE FIELDS ONLY (fix, recommendations, personal_rules, and edge_profile.reallocation_advice). It does NOT apply to descriptions, evidence, or the executive diagnosis, which may state facts plainly (for example that losses pushed through certain margins, or that a category runs negative). Keep your usual voice, this is a vocabulary constraint on the advice, not a tone change. In the advice fields, every line is a BEHAVIORAL discipline rule grounded in the user's own pattern: what to stop doing and why it cost them, in plain language, never how to handicap the bet. Do NOT use, in the advice fields: "expected value", "+EV", "positive expected value", "negative expected value", "EV", "key number", "key numbers", "line movement", "wait for the line to move", "take the alternate", "alternate line". Do NOT prescribe a staking system in the advice fields either: no "1% of bankroll", no "unit size", no "set your unit", no "X units". Frame stake fixes behaviorally instead: bet the same amount every time, decided before you sit down, not adjusted for confidence or for your last result.
 - Parlay example: instead of "parlays are negative EV, so cap your legs", say the parlays got worse with each leg the user added, and the rule is to stop at 2 legs.
 - NFL spread example: instead of "buy off the key number, take the alternate, watch the line movement", reframe as a pre-bet checkpoint. Ask whether the user is betting the game in front of them or chasing the last one, and note that NFL spreads are this bettor's weak spot.
+
+PROVABLE-SEQUENCE RULE: The source data has no settlement timestamps, so you cannot establish that a bet settled as a loss before the next bet was placed. Never frame stake escalation as a reaction to a settled result. Do NOT write "after a loss", "within minutes of the result", "right after losing", or any phrasing that asserts a loss triggered the next bet. State only what the bet ordering and the stakes show: stakes rising in close succession within a session (rapid in-session stake escalation). Keep the escalation finding itself; only the unprovable causal-timing claim goes. This applies to every field, not only the advice fields.
+
+TIME-OF-DAY RULE: A large share of timestamps are date-only values that parse to midnight, which is not a real clock time. Do NOT surface a late-night or after-11pm pattern as a headline finding, and never rank or score sessions by a late-night signal, unless real (non-midnight) timestamps are present. When time-of-day data is absent, say so plainly instead of inferring a late-night pattern.
 
 ## Critical Rules
 - NEVER recommend specific bets or picks
