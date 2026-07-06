@@ -67,7 +67,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     overall_grade: 'C-',
   },
 
-  // Non-additive recovery model (schema_version 3): the single largest
+  // Non-additive recovery model (schema_version 4): the single largest
   // recoverable leak as a rounded range — never a sum of overlapping leaks.
   recovery: {
     biggestSingleLeakUSD: 820,
