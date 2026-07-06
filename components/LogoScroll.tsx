@@ -11,7 +11,7 @@ const logos = [
   { src: '/logo/Underdog_idVMdZev2I_1.svg', alt: 'Underdog Fantasy', height: 22 },
   { src: '/logo/Pikkit_idQrBjcYGI_1.svg', alt: 'Pikkit', height: 16 },
   { src: '/logo/kalshi-logo.svg', alt: 'Kalshi', height: 18 },
-  { src: '/logo/Hard_Rock_Bet.svg', alt: 'Hard Rock Bet', height: 22 },
+  { src: '/logo/hard-rock-bet-seeklogo.svg', alt: 'Hard Rock Bet', height: 22 },
   { src: '/logo/caesars-sportsbook-seeklogo-2.svg', alt: 'Caesars Sportsbook', height: 20 },
 ];
 
