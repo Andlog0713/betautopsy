@@ -1,31 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api-client';
-
 /**
  * Client-side platform metrics display.
  *
- * Previously this lived inline in the hero sections of `/`, `/sample`,
- * and `/go` as a Server Component that called `createServiceRoleClient()`
- * and queried Supabase at render time. That pattern blocks the mobile
- * (`output: 'export'`) build because it reads `SUPABASE_SERVICE_ROLE_KEY`
- * from `process.env` and hits the database during SSG.
+ * Renders the static marketing counts (`fallbackBets` / `fallbackReports`)
+ * in the hero of `/`, `/sample`, and `/go`. Kept as a Client Component so the
+ * same markup renders on both the web and mobile (`output: 'export'`) builds
+ * without reading Supabase at render time.
  *
- * Now it's a Client Component that fetches the public, edge-cached
- * `/api/recent-activity` endpoint on mount purely as a liveness probe.
- * The displayed numbers come from `fallbackBets` / `fallbackReports`
- * props — same defaults as `<RealtimeActivity>` — so the hero reads
- * the same on both builds. When the fetch fails (e.g. offline in the
- * mobile app), the whole block renders nothing rather than showing
- * stale zeros.
+ * The numbers are static display strings and render unconditionally — there is
+ * no liveness probe and no fallback/override path. (Previously this component
+ * gated the whole block on a `/api/recent-activity` fetch and rendered nothing
+ * until it returned; that hid the numbers on first paint and while offline.)
  */
-
-type Activity = {
-  kind: 'archetype' | 'grade' | 'bias' | 'report';
-  text: string;
-  minutes_ago: number;
-};
 
 interface PlatformMetricsProps {
   variant: 'landing' | 'sample';
@@ -40,33 +27,6 @@ export default function PlatformMetrics({
   fallbackBets,
   fallbackReports,
 }: PlatformMetricsProps) {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await apiGet('/api/recent-activity');
-        if (!res.ok) return;
-        // We don't actually need the payload — a 200 is enough to
-        // confirm connectivity. Parse it anyway so the edge cache
-        // counts the hit and we surface any JSON-shape regressions.
-        const data = (await res.json()) as { activities?: Activity[] };
-        if (cancelled) return;
-        if (data && Array.isArray(data.activities)) {
-          setReady(true);
-        }
-      } catch {
-        /* silent — stays hidden on failure */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!ready) return null;
-
   if (variant === 'sample') {
     return (
       <div className="max-w-5xl mx-auto px-6 text-center">
