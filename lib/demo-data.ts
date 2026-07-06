@@ -104,8 +104,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       bias_name: 'Post-Loss Escalation',
       severity: 'high',
-      description: 'Your average stake jumps from $72 to $134 after a loss. That\'s an 86% increase. After losing streaks of 3+, you placed 14 bets over $200. Nine of those lost.',
-      evidence: 'Avg stake after loss: $134 vs $72 after win. 14 bets >$200 following 3+ loss streaks (9 lost, -$1,180).',
+      description: 'Your average stake jumps from $72 to $134 on bets following a loss. That\'s an 86% increase. Across 3+ loss streaks, you placed 14 bets over $200. Nine of those lost.',
+      evidence: 'Avg stake following a loss: $134 vs $72 following a win. 14 bets >$200 across 3+ loss streaks (9 lost, -$1,180).',
       estimated_cost: 480,
       fix: 'Set a hard ceiling: no bet can exceed 1.5x your average stake ($123). After 3 losses in a row, stop for the day.',
     },
@@ -282,7 +282,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       odds_drift_after_loss: 11,
     },
     risk_level: 'elevated',
-    worst_trigger: 'Your stakes increase 1.9x after losses. Classic loss chasing.',
+    worst_trigger: 'Your stakes step up 1.9x from the prior losing bet. Classic loss chasing.',
     percentile: 30,
   },
   sport_specific_findings: [
@@ -310,9 +310,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   session_detection: {
     sessions: [
       { id: 'SESSION-001', date: '2025-11-03', dayOfWeek: 'Sunday', startTime: '12:30 PM', endTime: '5:15 PM', durationMinutes: 285, bets: 6, wins: 4, losses: 2, pushes: 0, staked: 450, profit: 185, roi: 41.1, avgStake: 75, startingStake: 50, endingStake: 75, stakeEscalation: 1.5, maxStake: 100, minStake: 50, stakeCv: 0.3, betsPerHour: 1.3, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent sizing', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [0,1,2,3,4,5] },
-      { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x from start to finish', '4 chase bets after losses', '5-bet losing streak with no cooldown'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses', 'Marathon losing session: 9 bets, -$680'], betIndices: [89,90,91,92,93,94,95,96,97] },
+      { id: 'SESSION-014', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '7:45 PM', endTime: '11:52 PM', durationMinutes: 247, bets: 9, wins: 2, losses: 7, pushes: 0, staked: 1280, profit: -680, roi: -53.1, avgStake: 142, startingStake: 75, endingStake: 300, stakeEscalation: 4.0, maxStake: 300, minStake: 50, stakeCv: 0.72, betsPerHour: 2.2, longestLossStreak: 5, chasedAfterLoss: true, chaseCount: 4, lateNight: true, grade: 'F', gradeReasons: ['Stakes escalated 4x from start to finish', '4 chase bets following losses', '5-bet losing streak with no cooldown'], isHeated: true, heatSignals: ['Stakes quadrupled while chasing losses', 'Marathon losing session: 9 bets, -$680'], betIndices: [89,90,91,92,93,94,95,96,97] },
       { id: 'SESSION-022', date: '2025-12-28', dayOfWeek: 'Saturday', startTime: '1:00 PM', endTime: '3:30 PM', durationMinutes: 150, bets: 4, wins: 2, losses: 2, pushes: 0, staked: 320, profit: 45, roi: 14.1, avgStake: 80, startingStake: 80, endingStake: 80, stakeEscalation: 1.0, maxStake: 80, minStake: 80, stakeCv: 0.0, betsPerHour: 1.6, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Perfectly flat staking', 'No loss chasing'], isHeated: false, heatSignals: [], betIndices: [150,151,152,153] },
-      { id: 'SESSION-035', date: '2026-01-12', dayOfWeek: 'Sunday', startTime: '12:00 PM', endTime: '6:45 PM', durationMinutes: 405, bets: 11, wins: 4, losses: 6, pushes: 1, staked: 920, profit: -340, roi: -37.0, avgStake: 84, startingStake: 50, endingStake: 200, stakeEscalation: 4.0, maxStake: 200, minStake: 50, stakeCv: 0.65, betsPerHour: 1.6, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: false, grade: 'F', gradeReasons: ['11 bets in one session', 'Stakes escalated 4x', '3 chase bets after losses'], isHeated: true, heatSignals: ['Stakes quadrupled during extended losing session', '11 bets over 6.75 hours'], betIndices: [180,181,182,183,184,185,186,187,188,189,190] },
+      { id: 'SESSION-035', date: '2026-01-12', dayOfWeek: 'Sunday', startTime: '12:00 PM', endTime: '6:45 PM', durationMinutes: 405, bets: 11, wins: 4, losses: 6, pushes: 1, staked: 920, profit: -340, roi: -37.0, avgStake: 84, startingStake: 50, endingStake: 200, stakeEscalation: 4.0, maxStake: 200, minStake: 50, stakeCv: 0.65, betsPerHour: 1.6, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: false, grade: 'F', gradeReasons: ['11 bets in one session', 'Stakes escalated 4x', '3 chase bets following losses'], isHeated: true, heatSignals: ['Stakes quadrupled during extended losing session', '11 bets over 6.75 hours'], betIndices: [180,181,182,183,184,185,186,187,188,189,190] },
     ],
     totalSessions: 44,
     avgSessionLength: 6.4,
@@ -455,7 +455,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
 
   betting_archetype: {
     name: 'The Multiplier Chaser',
-    description: 'Bigger payout always calling. Your 2-pick game is actually solid. The 5-6 pick entries are where your bankroll goes to die, and you reach for them more after losses, not less.',
+    description: 'Bigger payout always calling. Your 2-pick game is actually solid. The 5-6 pick entries are where your bankroll goes to die, and you reach for them more on bets following a loss, not less.',
   },
 
   dfs_mode: true,
@@ -484,8 +484,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       bias_name: 'Multiplier Chasing',
       severity: 'high',
-      description: 'Your average pick count jumps from 2.8 after wins to 4.4 after losses. You are not researching more players, you are buying a bigger lottery ticket to recover.',
-      evidence: 'Avg picks after loss: 4.4 vs after win: 2.8 (57% increase). 3 of your worst 5 sessions started with a loss at 2-3 picks followed by 5-6 pick entries.',
+      description: 'Your average pick count jumps from 2.8 on entries following a win to 4.4 on entries following a loss. You are not researching more players, you are buying a bigger lottery ticket.',
+      evidence: 'Avg picks following a loss: 4.4 vs following a win: 2.8 (57% increase). 3 of your worst 5 sessions opened with a 2-3 pick loss and stepped up to 5-6 pick entries.',
       estimated_cost: 490,
       fix: 'Pre-commit to a pick count before your session starts. Losing a 2-pick entry is not a signal to go bigger, it is a signal to stop.',
     },
@@ -530,7 +530,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     },
     {
       category: 'Post-loss entries',
-      detail: 'Pick count escalates after losses. You respond to a 2-pick loss by building a 5-pick entry, not by stopping.',
+      detail: 'Pick count escalates within a losing sequence. A 2-pick loss is followed by a 5-pick entry, not by stopping.',
       roi_impact: -26,
       sample_size: 14,
       suggestion: 'Lock pick count before session starts. Never adjust based on intermediate results.',
@@ -539,10 +539,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
   behavioral_patterns: [
     {
       pattern_name: 'Pick Count Escalation',
-      description: 'Pick count escalates after losses, not wins. Your average pick count jumps from 2.8 after a win to 4.4 after a loss.',
+      description: 'Pick count escalates through losing sequences, not winning ones. Your average pick count jumps from 2.8 on entries following a win to 4.4 following a loss.',
       frequency: '3 of 5 losing sessions',
       impact: 'negative',
-      data_points: 'Avg picks after loss: 4.4 vs after win: 2.8. Dec 14 sequence: 2-pick to 4-pick to 5-pick to 6-pick.',
+      data_points: 'Avg picks following a loss: 4.4 vs following a win: 2.8. Dec 14 sequence: 2-pick to 4-pick to 5-pick to 6-pick.',
     },
     {
       pattern_name: 'Weekend Heavy',
@@ -592,7 +592,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
   personal_rules: [
     { rule: 'Never build an entry with more than 3 picks', reason: 'Your 4+ pick entries are 3-24. That is a 11% hit rate costing you $640.', based_on: 'Pick count analysis' },
     { rule: 'Default to Flex, not Power', reason: 'Your Power entries have -12% ROI. Flex entries have +4% ROI. The math is clear.', based_on: 'Power vs Flex breakdown' },
-    { rule: 'After a loss, do not increase pick count', reason: 'Your pick count jumps 57% after losses. That is chasing with extra steps.', based_on: 'Loss sequence analysis' },
+    { rule: 'Do not raise pick count within a losing session', reason: 'Your pick count jumps 57% on entries following a loss. That is chasing with extra steps.', based_on: 'Loss sequence analysis' },
     { rule: 'No single player in more than 3 entries per week', reason: 'Josh Allen in 29% of entries at -18% ROI. Concentration is killing you.', based_on: 'Player concentration analysis' },
   ],
   sport_specific_findings: [
@@ -680,16 +680,16 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       odds_drift_after_loss: 12,
     },
     risk_level: 'elevated',
-    worst_trigger: 'Pick count jumps from 2.8 to 4.4 after losses. You are not adding research, you are adding lottery tickets.',
+    worst_trigger: 'Pick count jumps from 2.8 to 4.4 on entries following a loss. You are not adding research, you are adding lottery tickets.',
     percentile: 28,
   },
 
   session_detection: {
     sessions: [
-      { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation after loss'], isHeated: false, heatSignals: [], betIndices: [0, 1, 2] },
+      { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [0, 1, 2] },
       { id: 'SESSION-007', date: '2025-11-16', dayOfWeek: 'Saturday', startTime: '1:00 PM', endTime: '4:30 PM', durationMinutes: 210, bets: 4, wins: 1, losses: 3, pushes: 0, staked: 85, profit: -25, roi: -29.4, avgStake: 21, startingStake: 10, endingStake: 30, stakeEscalation: 3.0, maxStake: 30, minStake: 10, stakeCv: 0.45, betsPerHour: 1.1, longestLossStreak: 2, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'C', gradeReasons: ['Moderate stake escalation', 'Mixed pick counts'], isHeated: false, heatSignals: [], betIndices: [38, 39, 40, 41] },
-      { id: 'SESSION-012', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '6:00 PM', endTime: '11:00 PM', durationMinutes: 300, bets: 4, wins: 0, losses: 4, pushes: 0, staked: 110, profit: -110, roi: -100, avgStake: 28, startingStake: 10, endingStake: 50, stakeEscalation: 5.0, maxStake: 50, minStake: 10, stakeCv: 0.68, betsPerHour: 0.8, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: true, grade: 'F', gradeReasons: ['Pick count escalated from 2 to 6', '3 chase entries after losses', 'Stakes increased 5x from start to finish'], isHeated: true, heatSignals: ['Pick count escalated 2 to 4 to 5 to 6 across session', 'Stakes quintupled while chasing losses'], betIndices: [89, 90, 91, 92] },
-      { id: 'SESSION-018', date: '2026-01-11', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '3:00 PM', durationMinutes: 120, bets: 2, wins: 1, losses: 1, pushes: 0, staked: 25, profit: 160, roi: 640, avgStake: 13, startingStake: 15, endingStake: 10, stakeEscalation: 0.67, maxStake: 15, minStake: 10, stakeCv: 0.24, betsPerHour: 1.0, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'B', gradeReasons: ['Controlled pick count', 'No escalation after loss'], isHeated: false, heatSignals: [], betIndices: [155, 156] },
+      { id: 'SESSION-012', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '6:00 PM', endTime: '11:00 PM', durationMinutes: 300, bets: 4, wins: 0, losses: 4, pushes: 0, staked: 110, profit: -110, roi: -100, avgStake: 28, startingStake: 10, endingStake: 50, stakeEscalation: 5.0, maxStake: 50, minStake: 10, stakeCv: 0.68, betsPerHour: 0.8, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: true, grade: 'F', gradeReasons: ['Pick count escalated from 2 to 6', '3 chase entries following losses', 'Stakes increased 5x from start to finish'], isHeated: true, heatSignals: ['Pick count escalated 2 to 4 to 5 to 6 across session', 'Stakes quintupled while chasing losses'], betIndices: [89, 90, 91, 92] },
+      { id: 'SESSION-018', date: '2026-01-11', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '3:00 PM', durationMinutes: 120, bets: 2, wins: 1, losses: 1, pushes: 0, staked: 25, profit: 160, roi: 640, avgStake: 13, startingStake: 15, endingStake: 10, stakeEscalation: 0.67, maxStake: 15, minStake: 10, stakeCv: 0.24, betsPerHour: 1.0, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'B', gradeReasons: ['Controlled pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [155, 156] },
     ],
     totalSessions: 38,
     avgSessionLength: 5.3,
@@ -704,7 +704,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     heatedSessionCount: 7,
     heatedSessionPercent: 18,
     avgGradedROI: { A: 14.2, B: 4.8, C: -5.6, D: -18.2, F: -42.1 },
-    bestSession: { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation after loss'], isHeated: false, heatSignals: [], betIndices: [] },
+    bestSession: { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [] },
     worstSession: { id: 'SESSION-012', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '6:00 PM', endTime: '11:00 PM', durationMinutes: 300, bets: 4, wins: 0, losses: 4, pushes: 0, staked: 110, profit: -110, roi: -100, avgStake: 28, startingStake: 10, endingStake: 50, stakeEscalation: 5.0, maxStake: 50, minStake: 10, stakeCv: 0.68, betsPerHour: 0.8, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: true, grade: 'F', gradeReasons: ['Pick count escalated from 2 to 6', '3 chase entries', 'Stakes 5x'], isHeated: true, heatSignals: ['Pick count escalated while chasing losses'], betIndices: [] },
     insight: 'Your A-graded sessions average +14.2% ROI. Your F sessions average -42.1%. The pattern is clear: low pick count and no escalation pays. Everything else costs you.',
   },
@@ -716,7 +716,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       { betIndex: 8, betId: 'demo-dfs-9', classification: 'disciplined', confidence: 82, signals: [{ name: 'flat_pick_count', weight: -4, description: 'Kept to 3 picks Flex after mixed results', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'Spaced entry with research time', category: 'disciplined' }], primaryReason: 'Kept to 3 picks Flex after mixed results', sessionId: 'SESSION-007', sessionGrade: 'C', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: 90, currentStreak: -1 },
       { betIndex: 89, betId: 'demo-dfs-7', classification: 'neutral', confidence: 60, signals: [{ name: 'session_opener', weight: 0, description: 'First entry of session, no prior context', category: 'neutral' }], primaryReason: 'Session opener at 2 picks, reasonable start', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 0.7, timeSinceLastBet: null, currentStreak: 0 },
       { betIndex: 90, betId: 'demo-dfs-23', classification: 'chasing', confidence: 88, signals: [{ name: 'pick_count_escalation', weight: 8, description: 'Pick count jumped from 2 to 4 after previous loss', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count jumped from 2 to 4 after previous loss', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 1.4, timeSinceLastBet: 90, currentStreak: -1 },
-      { betIndex: 91, betId: 'demo-dfs-29', classification: 'chasing', confidence: 92, signals: [{ name: 'pick_count_escalation', weight: 9, description: 'Pick count jumped from 4 to 5 after previous loss', category: 'chasing' }, { name: 'stake_escalation', weight: 4, description: 'Stake increased from $20 to $30 after loss', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count jumped from 4 to 5 after previous loss', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.1, timeSinceLastBet: 90, currentStreak: -2 },
+      { betIndex: 91, betId: 'demo-dfs-29', classification: 'chasing', confidence: 92, signals: [{ name: 'pick_count_escalation', weight: 9, description: 'Pick count stepped up from 4 to 5 over the prior losing entry', category: 'chasing' }, { name: 'stake_escalation', weight: 4, description: 'Stake stepped up from $20 to $30 over the prior losing bet', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count stepped up from 4 to 5 over the prior losing entry', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.1, timeSinceLastBet: 90, currentStreak: -2 },
       { betIndex: 92, betId: 'demo-dfs-36', classification: 'chasing', confidence: 96, signals: [{ name: 'pick_count_escalation', weight: 10, description: 'Pick count jumped from 5 to 6 after previous loss', category: 'chasing' }, { name: 'stake_escalation', weight: 6, description: 'Stake increased from $30 to $50, largest of session', category: 'chasing' }, { name: 'max_pick_count', weight: 4, description: '6-pick Power Play, maximum multiplier chasing', category: 'emotional' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count jumped from 5 to 6 after previous loss, stake 5x session start', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.5, timeSinceLastBet: 120, currentStreak: -3 },
       { betIndex: 155, betId: 'demo-dfs-33', classification: 'disciplined', confidence: 78, signals: [{ name: 'controlled_sizing', weight: -4, description: 'Minimum stake $10 on a 5-pick entry', category: 'disciplined' }, { name: 'recovery_discipline', weight: -3, description: 'Did not escalate after prior session losses', category: 'disciplined' }], primaryReason: 'Minimum stake on higher pick count, showing restraint', sessionId: 'SESSION-018', sessionGrade: 'B', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: 60, currentStreak: -1 },
     ],
