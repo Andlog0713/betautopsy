@@ -21,7 +21,7 @@ export const revalidate =
 // path blocks the mobile static export — the client fetch inside
 // `<RealtimeActivity>` covers the web UX, so these hardcoded
 // defaults are sufficient.
-const FALLBACK_BETS = '15,004';
+const FALLBACK_BETS = '155,163';
 const FALLBACK_REPORTS = '105';
 
 export const metadata: Metadata = {

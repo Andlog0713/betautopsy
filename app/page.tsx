@@ -25,7 +25,7 @@ export const revalidate =
 
 // The `PlatformMetrics` client component renders these once it
 // confirms connectivity against `/api/recent-activity`.
-const FALLBACK_BETS = '15,004';
+const FALLBACK_BETS = '155,163';
 const FALLBACK_REPORTS = '323';
 
 export const metadata: Metadata = {

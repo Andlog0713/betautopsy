@@ -16,7 +16,7 @@ export const revalidate =
 
 // Same default string `<RealtimeActivity>` uses. `<PlatformMetrics>`
 // renders it after confirming `/api/recent-activity` is reachable.
-const FALLBACK_BETS = '15,004';
+const FALLBACK_BETS = '155,163';
 
 export const metadata: Metadata = {
   title: 'Sample Autopsy Report | BetAutopsy',
