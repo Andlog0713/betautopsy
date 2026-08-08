@@ -42,6 +42,46 @@
 
 ---
 
+## Current branch: `claude/routing-middleware-timeout-yj5wov` — MIDDLEWARE_INVOCATION_TIMEOUT production outage fix (2026-08-08)
+
+### Done this session: bounded timeouts on Supabase calls in `middleware.ts`
+- **Trigger:** production alert — betautopsy.com serving Vercel 504
+  `MIDDLEWARE_INVOCATION_TIMEOUT` on `GET /` (the marketing homepage, no auth
+  needed) since 2026-08-05, still recurring intermittently as of today.
+- **Root cause (confirmed via Vercel `get_runtime_errors`/`get_runtime_logs`
+  on `prj_r0wFxPCTLG4TTtfxq1eLlmd8Rl3X`):** intermittent DNS resolution
+  failure (`getaddrinfo ENOTFOUND` on the Supabase project host) hitting
+  `middleware.ts`'s unbounded `supabase.auth.getUser()` call. `@supabase/ssr`
+  has no built-in timeout, so a DNS blip stalls the whole edge-middleware
+  invocation until Vercel force-kills it at the 25s ceiling ("function was
+  stopped as it did not return an initial response within 25s") — a 504 for
+  every route the matcher covers, including pages that don't need auth at
+  all, since the auth check ran unconditionally before the public-route
+  bypass check for `/`.
+- **Fix (`middleware.ts`):** added a `withTimeout()` helper (5s ceiling) and
+  wrapped both Supabase network calls — `supabase.auth.getUser()` and the
+  `/admin` route's `profiles.is_admin` lookup — in try/catch. On
+  timeout/error: log to console + `Sentry.captureException` (edge runtime;
+  `sentry.edge.config.ts` already covers middleware), then fail closed-but-
+  fast (treat as unauthenticated / non-admin) instead of hanging. Public
+  routes recover immediately; protected routes still redirect to `/login`
+  (no behavior change from today's `user === null` path, just reachable in
+  bounded time now); `/admin` still denies on lookup failure (fail-secure,
+  same as an explicit non-admin profile).
+- **Scope note:** the underlying intermittent DNS failure against Supabase's
+  host is external (Vercel edge network / Supabase infra) and not something
+  this PR can fix directly — this makes the app resilient to it instead of
+  letting one flaky DNS lookup take down the entire site. Root Supabase/
+  Vercel-side DNS flakiness is out of scope for a code fix; flag to Andrew if
+  the `getaddrinfo ENOTFOUND` errors persist or increase in frequency post-deploy
+  (Vercel runtime error groups on the project are the fastest way to check).
+- **Gates:** `npm ci` (node_modules were absent in this session's
+  container) · `tsc --noEmit` 0 · `vitest run` 381/381 (21 files) ·
+  `next build` 0 (middleware bundle 86.7 kB, unchanged route list).
+- **No auth/authorization behavior changed** for the healthy path — only the
+  unhealthy (Supabase-unreachable) path changed from "hang 25s then 504" to
+  "fail in <=5s to the pre-existing unauthenticated/non-admin branch."
+
 ## Current branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
 
 ### Sprint tracker row (Category: Analysis pipeline)
