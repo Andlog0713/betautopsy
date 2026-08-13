@@ -42,7 +42,50 @@
 
 ---
 
-## Current branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
+## Current branch: `claude/supabase-login-outage-5zdt8y` — diagnose "Supabase login is down" (2026-08-13)
+
+### Done this session: root-caused the outage — no code change, needs manual Supabase action
+- **Root cause found:** the production Supabase project (name `betautopsy`,
+  ref `eekubnadizmtuhnxzcig`, org `gcxylcovzsfkljnndtgf`, region us-east-2) is
+  **paused (`status: INACTIVE`)**. Every server/middleware/browser Supabase
+  call reads `NEXT_PUBLIC_SUPABASE_URL` → `eekubnadizmtuhnxzcig.supabase.co`,
+  which stops resolving in DNS while paused → `getaddrinfo ENOTFOUND` on the
+  server, `AuthRetryableFetchError` client-side. This breaks not just login
+  but every DB-backed route (reports, uploads, check-ins, etc.) — not an
+  auth-specific bug.
+- **Diagnostic path:** direct network egress from this session is proxy-
+  blocked (can't curl betautopsy.com or Supabase status directly). Used
+  `mcp__Vercel__get_runtime_errors` on the `betautopsy` project
+  (`prj_r0wFxPCTLG4TTtfxq1eLlmd8Rl3X`, team `andlog0713's projects`) — top
+  error group is 153× `TypeError: fetch failed` / `ENOTFOUND
+  eekubnadizmtuhnxzcig.supabase.co` in `/middleware`, first seen
+  **2026-08-05**, still firing as of **2026-08-13** (today) — an 8+ day
+  outage, not a blip. Confirmed the project's live status via
+  `mcp__Supabase__get_project` with that exact ref (this org isn't in
+  `list_organizations`/`list_projects` under this session's default Supabase
+  org, `hyfwtlohiekmmdxlyexn` — betautopsy's Supabase project lives under a
+  different org, `gcxylcovzsfkljnndtgf`, reachable only by direct ID lookup).
+- **Pre-existing partial mitigation already deployed:** the current
+  production deployment (`dpl_48kmrqUx8BykikEcmDHhSqPxio3F`, promoted
+  2026-08-08 per commit `51efd436`) wraps `middleware.ts`'s
+  `supabase.auth.getUser()` calls in a 5s timeout so a DNS failure fails
+  fast instead of hanging to Vercel's 25s ceiling and 504ing every route
+  (including the homepage). That fix stopped the site-wide 504s but does
+  **not** fix login — sign-in still hits the same dead host client-side and
+  times out (`LoginPage`'s own 15s `AUTH_TIMEOUT_MS` race in
+  `app/(auth)/login/page.tsx`).
+- **Fix is NOT a code change:** un-pausing/restoring the Supabase project
+  (Supabase dashboard, or `mcp__Supabase__restore_project` with
+  `eekubnadizmtuhnxzcig`) is the actual fix. Offered to restore it via MCP
+  this session; **Andrew declined and will restore it himself** from the
+  Supabase dashboard. No further action taken this branch; nothing to
+  commit/push (diagnosis only).
+- **Follow-up worth flagging to Andrew once restored:** confirm why the
+  project paused in the first place (Supabase free/low-tier auto-pause on
+  inactivity is the common cause) — if so, consider upgrading the plan or
+  setting a monitor so this doesn't silently recur.
+
+## Previous branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
 
 ### Sprint tracker row (Category: Analysis pipeline)
 - **Row:** "Behavioral-framing rule on report advice fields (5.3 App Store hedge)"
