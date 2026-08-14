@@ -42,7 +42,75 @@
 
 ---
 
-## Current branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
+## Current branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
+
+### Done this session: full public-surface audit (REVIEW ONLY — no product code changed)
+
+**Gates, all green.** `tsc --noEmit` 0 · `vitest run` 381/381 (21 files) ·
+`next build` 0 · mobile-regression e2e 24/24. Caveat: the e2e suite pins
+WebKit for WKWebView parity and WebKit is not installed in the audit
+container, so it was run under Chromium at the same three iPhone viewports.
+WebKit-specific regressions are therefore NOT covered by this run.
+
+**Browser sweep** (Chromium, 1440x900 + iPhone 13, 11 public pages): zero
+page errors, zero broken images, zero horizontal overflow, zero zero-size
+chart containers, all 12 blog slugs 200, quiz completes end-to-end to the
+Bet DNA result screen, `/sample` charts measure correctly (880x256 desktop /
+278x192 mobile) after scroll. `prefers-reduced-motion: reduce` renders
+0/12 sections invisible — AnimatedSection handles it correctly.
+
+**Findings (ranked by demo impact; none fixed this session):**
+1. **Homepage `<h1>` disappears on hydration.** Verified: SSR HTML has 1
+   `<h1>`, hydrated DOM has 0. `components/HeroABTest.tsx` renders a real
+   `<h1>` only in the `variant === null` pre-hydration branch (:54); both
+   live A/B branches render `<TextGenerateEffect>`, which returns a plain
+   `<div>` (`components/ui/text-generate-effect.tsx:65`). The inline comment
+   at HeroABTest.tsx:47-49 claims this guarantees Googlebot sees a real H1 —
+   Googlebot renders JS, so it sees the `<div>`. SEO + a11y defect on the
+   most important page.
+2. **Price copy contradicts the disabled paywall.** `PRICING_ENABLED` is
+   false (every user is treated as Pro, paywall hidden), but three surfaces
+   still advertise prices ungated: hero subtext under the primary CTA
+   (`HeroABTest.tsx:64` and `:104`, "Full reports $19.99 $9.99, 50% off"),
+   the entire FAQ "Plans & Pricing" category (`app/faq/page.tsx:66` — only
+   the quick-link at :186 is gated), and the JSON-LD `Offer` blocks
+   (`app/layout.tsx:86-87`, `app/page.tsx:90`).
+3. **Internal monetization warning ships to the client console.** The
+   `console.warn` in `lib/feature-flags.ts:17` ("All users are being treated
+   as Pro tier and the paywall is hidden") is bundled into 9 client chunks
+   and prints in every visitor's devtools on the production build.
+4. **`/pricing` renders the login page.** Route returns 200 but lives in the
+   `(dashboard)` group, so signed-out visitors get the login screen;
+   desktop+mobile screenshots are byte-identical to `/login`. The nav link is
+   correctly hidden while pricing is off, so it is unreachable by clicking —
+   but the e2e suite's three `/pricing` cases are really testing `/login`.
+5. **Unreferenced files served publicly** (0 code references): `Archive.zip`
+   + `Archive 2.zip` (656 KB of App Store screenshot dumps — inspected, no
+   secrets), `BetAutopsy-Brand-Guide-2026.pdf`, `BetAutopsy-Voice-Guide.pdf`,
+   `91DC5481-491A-464C-90A8-874C92B1F9FF.png`, `betautopsy app.png` (927 KB).
+6. **Design-system drift: 55 violations** from the repo's own
+   `npm run check:design`, still in warning mode (`STRICT = false`). 41
+   off-palette colors (purple/cyan/orange), 3 `backdrop-blur` (NavBar.tsx:70,
+   ChapterNav.tsx:52), 7 gradients, 3 soft shadows, 1 oversized radius — all
+   banned by the design rules above. `components/AutopsyReport.tsx` (the
+   flagship report) accounts for the purple chips.
+7. **a11y/SEO nits:** `/login` + `/signup` have no `<h1>` and a logo `<Link>`
+   with no accessible name (`app/(auth)/layout.tsx:17`, `:53` — `<Logo>` has
+   no title/aria-label); both inherit the generic root `<title>`. Sitemap
+   omits `/sample` (the flagship demo), `/terms`, `/support`, `/quiz/quick`.
+8. **Build noise:** 2 `react-hooks/exhaustive-deps` warnings
+   (QuizClient.tsx:77, ShareModal.tsx:99), 2 `<img>`-instead-of-`next/image`
+   warnings (LogoScroll.tsx:49, ScreenshotParser.tsx:143), Sentry config
+   deprecation warnings (`sentry.*.config.ts` → `instrumentation`), and a
+   recharts `width(-1)/height(-1)` warning during prerender.
+
+### Parked / next branch
+- Decide fix scope for findings 1-8 above (awaiting Andrew). Findings 1 and 3
+  are unambiguous defects with small diffs; finding 2 is a product/pricing
+  decision, not a code call; finding 6 is a sweep large enough to need its
+  own branch before `STRICT` can flip to true.
+
+## Previous branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
 
 ### Sprint tracker row (Category: Analysis pipeline)
 - **Row:** "Behavioral-framing rule on report advice fields (5.3 App Store hedge)"
