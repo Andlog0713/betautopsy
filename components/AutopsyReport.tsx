@@ -3179,7 +3179,17 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <h2 className="font-bold text-2xl">Analysis Tools</h2>
               <p className="text-fg-muted text-sm mb-4">Every behavioral leak, ranked by dollar cost. See exactly where to fix first and simulate how much you&apos;d save.</p>
-              {PRICING_ENABLED && (<a href="/pricing" className="btn-primary inline-block">Get a Full Report</a>)}
+              {/* `/pricing` lives in the (dashboard) group behind AuthGuard, so
+                  it bounces signed-out visitors to /login. This component also
+                  renders on the public surfaces (/sample, /share/:id, the
+                  homepage demo), which all pass `readOnly` — send those to the
+                  public pricing section on the homepage instead of a login
+                  wall. Signed-in report views keep the real purchase page. */}
+              {PRICING_ENABLED && (
+                <a href={readOnly ? '/#pricing' : '/pricing'} className="btn-primary inline-block">
+                  Get a Full Report
+                </a>
+              )}
             </div>
 
             {!readOnly && (

@@ -155,7 +155,79 @@ leaks, zero page errors, zero 4xx, zero horizontal overflow, zero broken
 images. Deleted assets confirmed 404; sitemap confirmed to carry the four
 new URLs.
 
+### Done this session (part 3): pricing turned LIVE
+
+Andrew: "I want pricing live and the site to function fully with it as if the
+site were completely live for consumers." The gating work above was built as
+conditionals, so flipping the flag restores every price surface intact — but
+turning it on exposed two paths that only break when pricing is ON.
+
+- **`PRICING_ENABLED` default inverted** (`lib/feature-flags.ts`). Was
+  opt-IN (`=== 'true'`), so an unset variable silently served every user the
+  Pro tier free. Now `!== 'false'` — pricing, the paywall, tier enforcement,
+  and price copy are the default production state; set
+  `NEXT_PUBLIC_PRICING_ENABLED=false` to run a free beta or demo build. It is
+  a `NEXT_PUBLIC_*` var, so it inlines at build time and a change needs a
+  redeploy, not a restart.
+- **Two public links dead-ended at a login wall (only reachable with pricing
+  ON).** `/pricing` lives in the `(dashboard)` route group behind
+  `AuthGuard`, which `router.replace('/login')`s signed-out visitors —
+  confirmed earlier by the byte-identical `/pricing` and `/login`
+  screenshots. With the flag on, two PUBLIC surfaces linked straight to it:
+  - `app/faq/page.tsx` quick-link → now `/#pricing`, the public homepage
+    section NavBar and Footer already use.
+  - `components/AutopsyReport.tsx` "Get a Full Report" → now
+    `readOnly ? '/#pricing' : '/pricing'`. `readOnly` is exactly the
+    public-view signal (DemoReportWrapper on `/` and `/sample`, SharedReport
+    on `/share/:id`); signed-in report views keep the real purchase page.
+  Homepage pricing CTAs needed no change — `SmartCTALink` already routes anon
+  users to `/signup?next=…`.
+- **`.env.template` corrected.** It listed three variables the code never
+  reads (`STRIPE_SHARP_PRICE_ID`, `STRIPE_SHARP_ANNUAL_PRICE_ID`,
+  `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`) and omitted the two the $9.99 report
+  checkout actually needs (`STRIPE_REPORT_PRICE_ID`,
+  `STRIPE_EXTRA_REPORT_PRICE_ID`). Provisioning from the old template would
+  have shipped a broken report purchase. Added `NEXT_PUBLIC_PRICING_ENABLED`
+  and notes on the webhook and `NEXT_PUBLIC_APP_URL`.
+
+**Verified with pricing live.** `tsc` 0 · `vitest` 381/381 · `next build` 0
+(the PRICING_ENABLED warning is correctly gone) · e2e 24/24. Public sweep
+over 11 pages × desktop + iPhone 13: one `h1` each, no page errors, no 4xx,
+no overflow, no broken images, and **zero auth-walled `/pricing` links left
+on any public page**. Homepage `#pricing` renders all three tiers
+($0 / $9.99 / $19.99-mo / $149.99-yr) with working CTAs; FAQ "Plans &
+Pricing" section and its JSON-LD are back; `/sample` shows prices again.
+
+**BLOCKER — not code, and not settable from here.** `/api/checkout` returns
+`503 {"error":"Payments are not configured yet."}` because
+`isStripeConfigured()` requires `STRIPE_SECRET_KEY` + `STRIPE_PRO_PRICE_ID`.
+Until these are set in Vercel (Production) every upgrade CTA fails:
+`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`,
+`STRIPE_PRO_ANNUAL_PRICE_ID`, `STRIPE_REPORT_PRICE_ID`,
+`STRIPE_EXTRA_REPORT_PRICE_ID`, and `NEXT_PUBLIC_APP_URL` =
+`https://www.betautopsy.com` (checkout success/cancel URLs are built from
+it). The Stripe webhook endpoint must point at
+`https://www.betautopsy.com/api/webhook` and subscribe to the four events the
+route handles: `checkout.session.completed`, `customer.subscription.updated`,
+`customer.subscription.deleted`, `invoice.payment_failed`. Without the
+webhook, payments succeed at Stripe but nobody is ever upgraded — the
+webhook is what flips the tier.
+
+**Note on `isStripeConfigured()`:** it checks only SECRET_KEY +
+PRO_PRICE_ID, so a missing REPORT price passes the gate and fails later with
+the generic "We couldn't start checkout right now." Documented in
+`.env.template`; tightening the check is a follow-up, deliberately not
+changed here because it gates ALL checkout and would block working
+subscription purchases over a missing report price.
+
 ### Parked / next branch
+- **Tighten `isStripeConfigured()`** to cover the report price IDs (see note
+  above), or split it into per-flow checks.
+- **`/pricing` route placement.** Still in `(dashboard)`, so it is
+  signed-in-only. Public links now route to `/#pricing` instead, which works,
+  but moving the page out of the group would give consumers a real
+  standalone pricing URL. Note the e2e suite's three `/pricing` cases are
+  really exercising `/login`.
 - **F6 design-system sweep (55 violations).** Andrew's call this session:
   leave as documented — nothing renders broken, it is internal-rules drift.
   Clearing it and flipping `STRICT = true` in

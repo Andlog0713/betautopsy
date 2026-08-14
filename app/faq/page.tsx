@@ -198,9 +198,13 @@ export default function FAQPage() {
         >
           Take the Quiz
         </Link>
+        {/* `/#pricing` (the public homepage section), not `/pricing` — the
+            latter sits in the (dashboard) group behind AuthGuard and would
+            bounce a signed-out visitor reading the FAQ to /login. Matches the
+            destination NavBar and Footer already use. */}
         {PRICING_ENABLED && (
           <Link
-            href="/pricing"
+            href="/#pricing"
             className="hover:text-scalpel transition-colors min-h-[44px] inline-flex items-center px-2"
           >
             Pricing

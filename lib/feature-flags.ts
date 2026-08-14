@@ -1,11 +1,23 @@
-// Feature flags for beta/launch phases
-// Set NEXT_PUBLIC_PRICING_ENABLED=true in env to re-enable pricing
+// Feature flags for beta/launch phases.
+//
+// Pricing is ON by default — the paywall, the pricing grid, the price copy,
+// and real tier enforcement are the normal production state. It was
+// previously opt-IN (`=== 'true'`), which meant an unset variable silently
+// served every user the Pro tier for free; the launch beta ended, so the
+// default now matches the live product.
+//
+// To turn monetization back off (another free beta, a demo environment, a
+// local run without Stripe keys) set the variable explicitly:
+//
+//   NEXT_PUBLIC_PRICING_ENABLED=false
+//
+// It is a NEXT_PUBLIC_* variable, so it is inlined at build time — changing
+// it in Vercel requires a redeploy to take effect, not just a restart.
+export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING_ENABLED !== 'false';
 
-export const PRICING_ENABLED = process.env.NEXT_PUBLIC_PRICING_ENABLED === 'true';
-
-// Loud warning if we accidentally ship to prod with pricing turned off — every
-// free user would silently get Pro features and we'd never realize until MRR
-// flatlined. Logs once per cold start; no-op outside production.
+// Loud warning if we ship to prod with pricing turned off — every free user
+// would silently get Pro features and we'd never realize until MRR flatlined.
+// Logs once per cold start; no-op outside production.
 //
 // SERVER ONLY (`typeof window === 'undefined'`). This module is imported by
 // client components (NavBar, Footer, AutopsyReport, …), so without the guard
@@ -23,11 +35,11 @@ if (
   console.warn(
     '[feature-flags] PRICING_ENABLED is false in production. ' +
       'All users are being treated as Pro tier and the paywall is hidden. ' +
-      'Set NEXT_PUBLIC_PRICING_ENABLED=true to restore monetization.'
+      'Unset NEXT_PUBLIC_PRICING_ENABLED (or set it to "true") to restore monetization.'
   );
 }
 
-// During beta, treat all users as 'pro' tier for full access
+// With pricing off, every user is treated as 'pro' so nothing is gated.
 export function getEffectiveTier(actualTier: string): string {
   if (!PRICING_ENABLED) return 'pro';
   return actualTier;
