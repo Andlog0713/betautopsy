@@ -106,7 +106,10 @@ export default function LoginPage() {
   return (
     <div className="case-card p-8 animate-fade-in">
       <p className="text-fg-muted text-sm text-center mb-2">Your betting behavior doesn&apos;t lie. Let&apos;s see what&apos;s changed.</p>
-      <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Welcome back</h2>
+      {/* h1, not h2: this is the page's main heading. The auth layout's only
+          other text is the brand panel, so starting at h2 left the page with
+          no h1 and a heading outline that begins one level down. */}
+      <h1 className="font-bold text-2xl mb-6 text-center text-fg-bright">Welcome back</h1>
 
       {/*
        * OAuth flow (Google / Discord) is hidden in the Capacitor

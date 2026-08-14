@@ -59,7 +59,8 @@ Bet DNA result screen, `/sample` charts measure correctly (880x256 desktop /
 278x192 mobile) after scroll. `prefers-reduced-motion: reduce` renders
 0/12 sections invisible — AnimatedSection handles it correctly.
 
-**Findings (ranked by demo impact; none fixed this session):**
+**Findings (ranked by demo impact). 1-5 and 7 FIXED this session; 6 left
+documented by Andrew's call; 8 not actioned.**
 1. **Homepage `<h1>` disappears on hydration.** Verified: SSR HTML has 1
    `<h1>`, hydrated DOM has 0. `components/HeroABTest.tsx` renders a real
    `<h1>` only in the `variant === null` pre-hydration branch (:54); both
@@ -104,11 +105,73 @@ Bet DNA result screen, `/sample` charts measure correctly (880x256 desktop /
    deprecation warnings (`sentry.*.config.ts` → `instrumentation`), and a
    recharts `width(-1)/height(-1)` warning during prerender.
 
+### Fixes applied (second half of session, Andrew approved 1-5 + 7)
+
+- **F1 — hero `h1` survives hydration.** `TextGenerateEffect` takes a new
+  `as` prop (`div` default, typed `div|h1|h2|h3`); both live hero branches
+  pass `as="h1"`. Inner wrapper changed `div` → `span.block` so the markup
+  stays valid inside a heading. The stale "Googlebot always sees a real H1"
+  comment was corrected in place.
+  - **Second defect found while fixing F1:** the words were spaced by
+    `mr-[0.25em]` with no whitespace text node, so the heading's text content
+    read as one run-on token (`"Seewhatyourbettingdata…"`). Cosmetic in a
+    `div`; as an `h1` it is the heading's actual text for crawlers and screen
+    readers. Replaced the margin with a real space between words (adjacent
+    inline-blocks collapse it to a single space — visually identical,
+    verified by screenshot).
+- **F2 — price copy gated on `PRICING_ENABLED`.** Public surfaces now say
+  "Free during beta. No credit card required." instead of quoting a price
+  nobody is charged: `HeroABTest` (new shared `CtaSubtext`, covers both the
+  pre-hydration and hydrated branches), `app/sample/page.tsx`,
+  `components/SampleStickyBar.tsx`, `app/(auth)/signup/page.tsx`. FAQ drops
+  the whole "Plans & Pricing" section via a `VISIBLE_FAQ_DATA` filter that
+  feeds BOTH the accordion and the FAQPage JSON-LD, preserving the text
+  parity Google's rich-result guidelines require. One price outside that
+  section ("Can I run multiple reports?") got its own flag check. JSON-LD
+  offers in `app/layout.tsx` + `app/page.tsx` reduced to the free offer.
+- **F3 — feature-flag warning is server-only.** Added a
+  `typeof window === 'undefined'` guard so the internal "all users treated as
+  Pro" line stops printing in every visitor's devtools; the Vercel-log signal
+  is unchanged. (The string may still sit in a client chunk as dead code —
+  it no longer executes.)
+- **F5 — 1.9 MB of unreferenced files deleted from `public/`:** both Archive
+  zips, the Brand Guide + Voice Guide PDFs, the UUID-named PNG, and
+  `betautopsy app.png`. All verified 0 references repo-wide and now 404.
+- **F7 — a11y/SEO nits.** `Welcome back` / `Create your account` promoted
+  `h2` → `h1`; new `login/layout.tsx` + `signup/layout.tsx` carry
+  page-specific titles and canonicals (client pages can't export metadata).
+  Sitemap gained `/sample`, `/quiz/quick`, `/support`, `/terms`.
+  - **Correction to the finding as first recorded:** the auth logo link is
+    NOT missing an accessible name — it resolves to "BetAutopsy" from the
+    `<Logo>` image alt. The original scan didn't check child `img` alt and
+    reported a false positive. No change was needed or made there.
+
+**Verification.** `tsc` 0 · `vitest` 381/381 · `next build` 0 ·
+mobile-regression e2e 24/24 (Chromium; WebKit still unavailable here) ·
+`check:design` unchanged at 55 (F6 deliberately untouched). Browser sweep
+re-run over 12 public pages × desktop + iPhone 13 (24 loads): exactly one
+`h1` per page, zero price strings in body or JSON-LD, zero console-warn
+leaks, zero page errors, zero 4xx, zero horizontal overflow, zero broken
+images. Deleted assets confirmed 404; sitemap confirmed to carry the four
+new URLs.
+
 ### Parked / next branch
-- Decide fix scope for findings 1-8 above (awaiting Andrew). Findings 1 and 3
-  are unambiguous defects with small diffs; finding 2 is a product/pricing
-  decision, not a code call; finding 6 is a sweep large enough to need its
-  own branch before `STRICT` can flip to true.
+- **F6 design-system sweep (55 violations).** Andrew's call this session:
+  leave as documented — nothing renders broken, it is internal-rules drift.
+  Clearing it and flipping `STRICT = true` in
+  `scripts/check-design-system.mjs` wants its own branch.
+- **F8 build noise:** 2 `react-hooks/exhaustive-deps` warnings
+  (QuizClient.tsx:77, ShareModal.tsx:99), 2 `<img>`-vs-`next/image` warnings
+  (LogoScroll.tsx:49, ScreenshotParser.tsx:143), Sentry `sentry.*.config.ts`
+  → `instrumentation` migration, recharts prerender `width(-1)` warning.
+- **`/pricing` route (F4).** Left in place — it renders the login screen for
+  signed-out visitors and is unlinked while pricing is off, so it is
+  unreachable by clicking. Worth either deleting or moving out of the
+  `(dashboard)` group when pricing comes back. Note the e2e suite's three
+  `/pricing` cases are really exercising `/login`.
+- **iOS parity check.** The `as="h1"` and CTA-subtext changes touch shared
+  web components that the Capacitor build bundles; worth an eyeball on the
+  next mobile build even though no native code was touched.
 
 ## Previous branch: `copy/behavioral-framing-prompt` — behavioral-framing rule on report advice fields (2026-06-19)
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { motion, stagger, useAnimate } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ export const TextGenerateEffect = ({
   startDelay = 0,
   highlight,
   highlightClassName = "text-scalpel",
+  as: Tag = "div",
 }: {
   words: string;
   className?: string;
@@ -19,6 +20,14 @@ export const TextGenerateEffect = ({
   startDelay?: number;
   highlight?: string;
   highlightClassName?: string;
+  /**
+   * Element to render as. Defaults to `div`, but callers that use this as a
+   * page headline MUST pass the real heading level — the animated words are
+   * the only copy at that position, so a `div` leaves the page with no
+   * heading in the hydrated DOM even when the pre-hydration fallback emitted
+   * one. See `HeroABTest`.
+   */
+  as?: "div" | "h1" | "h2" | "h3";
 }) => {
   const [scope, animate] = useAnimate();
   const wordsArray = words.split(" ");
@@ -62,25 +71,38 @@ export const TextGenerateEffect = ({
   }, [scope, animate, useBlur, duration, startDelay]);
 
   return (
-    <div className={cn("font-bold", className)} ref={scope}>
-      <div className="leading-snug tracking-tight">
+    // Inner wrapper is a `span.block` rather than a `div` so the markup stays
+    // valid when `Tag` is a heading (headings take phrasing content only).
+    // `block` reproduces the previous div's layout exactly.
+    <Tag className={cn("font-bold", className)} ref={scope}>
+      <span className="block leading-snug tracking-tight">
         {wordsArray.map((word, idx) => {
           const isHighlighted = idx >= highlightStart && idx < highlightEnd;
           return (
-            <motion.span
-              key={word + idx}
-              className={cn("opacity-0 inline-block mr-[0.25em]", isHighlighted && highlightClassName)}
-              style={{
-                filter: useBlur ? "blur(10px)" : undefined,
-                y: useBlur ? undefined : 12,
-                willChange: "transform, opacity",
-              }}
-            >
-              {word}
-            </motion.span>
+            // A real space text node separates the words instead of the
+            // previous `mr-[0.25em]`. The margin spaced them visually but left
+            // no whitespace in the DOM, so the accessible name and the text a
+            // crawler extracts read as one run-on token
+            // ("Seewhatyourbettingdata…"). That was cosmetic while this
+            // rendered a div; as a page `h1` it is the heading's actual text.
+            // Adjacent inline-blocks collapse the newline to a single space,
+            // which matches the old 0.25em gap.
+            <Fragment key={word + idx}>
+              <motion.span
+                className={cn("opacity-0 inline-block", isHighlighted && highlightClassName)}
+                style={{
+                  filter: useBlur ? "blur(10px)" : undefined,
+                  y: useBlur ? undefined : 12,
+                  willChange: "transform, opacity",
+                }}
+              >
+                {word}
+              </motion.span>
+              {idx < wordsArray.length - 1 ? " " : null}
+            </Fragment>
           );
         })}
-      </div>
-    </div>
+      </span>
+    </Tag>
   );
 };

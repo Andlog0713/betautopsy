@@ -3,6 +3,26 @@
 import { useState, useEffect } from 'react';
 import { TextGenerateEffect } from '@/components/ui/text-generate-effect';
 import SmartCTALink from '@/components/SmartCTALink';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
+
+// Sub-CTA line. While `PRICING_ENABLED` is false every user is served the Pro
+// tier for free, so quoting a price here contradicts what the product
+// actually charges — the paywall, the pricing section, and the nav link are
+// all hidden in that state.
+function CtaSubtext() {
+  return (
+    <span className="text-fg-muted text-xs mt-3 animate-slide-up-d2">
+      {PRICING_ENABLED ? (
+        <>
+          Free snapshot. Full reports{' '}
+          <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
+        </>
+      ) : (
+        <>Free during beta. No credit card required.</>
+      )}
+    </span>
+  );
+}
 
 type Variant = 'A' | 'B';
 
@@ -46,8 +66,12 @@ export default function HeroABTest() {
   };
 
   // During SSR and pre-hydration, render variant A as visible, crawlable
-  // content so Googlebot always sees a real H1 and body text. Once hydrated,
-  // the client-side variant takes over seamlessly.
+  // content so the first paint carries a real H1 and body text. Once
+  // hydrated, the client-side variant takes over seamlessly — and both live
+  // variants pass `as="h1"` to TextGenerateEffect so the heading survives
+  // hydration. It previously did not: TextGenerateEffect defaults to a
+  // `div`, so the hydrated DOM had zero H1s and JS-rendering crawlers
+  // (Googlebot included) saw a headline with no heading semantics.
   if (variant === null) {
     return (
       <>
@@ -60,9 +84,7 @@ export default function HeroABTest() {
         <div className="flex flex-col sm:flex-row gap-3">
           <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</SmartCTALink>
         </div>
-        <span className="text-fg-muted text-xs mt-3">
-          Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
-        </span>
+        <CtaSubtext />
       </>
     );
   }
@@ -72,6 +94,7 @@ export default function HeroABTest() {
       {variant === 'A' ? (
         <>
           <TextGenerateEffect
+            as="h1"
             words="See what your betting data is trying to tell you."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
@@ -84,6 +107,7 @@ export default function HeroABTest() {
       ) : (
         <>
           <TextGenerateEffect
+            as="h1"
             words="47 behavioral signals. 60 seconds. One upload."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
             duration={0.4}
@@ -100,9 +124,7 @@ export default function HeroABTest() {
           Get Your Autopsy Report
         </SmartCTALink>
       </div>
-      <span className="text-fg-muted text-xs mt-3 animate-slide-up-d2">
-        Free snapshot. Full reports <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
-      </span>
+      <CtaSubtext />
     </>
   );
 }

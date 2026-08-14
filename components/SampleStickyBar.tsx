@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import SmartCTALink from '@/components/SmartCTALink';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 
 /**
  * Fixed-bottom CTA bar for the /sample page. Appears after the user scrolls
@@ -96,7 +97,9 @@ export default function SampleStickyBar() {
       {/* Desktop: flex row, value-prop label on left, CTA button on right. */}
       <div className="hidden sm:flex items-center justify-between h-full px-6 max-w-5xl mx-auto">
         <p className="font-mono text-[10px] text-fg-bright tracking-[1.5px] uppercase">
-          FREE SNAPSHOT. FULL REPORTS $9.99 (50% OFF).
+          {PRICING_ENABLED
+            ? 'FREE SNAPSHOT. FULL REPORTS $9.99 (50% OFF).'
+            : 'FREE DURING BETA. NO CREDIT CARD REQUIRED.'}
         </p>
         <SmartCTALink
           intent="snapshot"

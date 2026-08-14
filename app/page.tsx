@@ -87,7 +87,11 @@ export default function LandingPage() {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
-          description: 'Free behavioral snapshot. Full reports from $9.99.',
+          // Matches the CTA subtext in HeroABTest — no price claim while
+          // PRICING_ENABLED is false and every user gets the Pro tier free.
+          description: PRICING_ENABLED
+            ? 'Free behavioral snapshot. Full reports from $9.99.'
+            : 'Free behavioral analysis. No credit card required.',
         },
         description:
           'Upload your sports betting history and get a full behavioral analysis. Identifies cognitive biases, emotional patterns, loss chasing, and parlay overuse across 47 behavioral signals.',

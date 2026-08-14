@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-brow
 import { isMobileApp } from '@/lib/platform';
 import OAuthButtons from '@/components/OAuthButtons';
 import { useAuthRevalidate } from '@/components/AuthProvider';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 
 function SignupForm() {
   const router = useRouter();
@@ -151,12 +152,15 @@ function SignupForm() {
       <div className="case-card p-8 animate-fade-in">
       <div className="pl-3 border-l border-l-scalpel mb-4">
         <p className="text-scalpel text-sm font-medium">
-          {isPricingFlow
+          {!PRICING_ENABLED
+            ? 'Free during beta. No credit card required.'
+            : isPricingFlow
             ? <span>Full behavioral analysis <span className="line-through text-fg-dim">$19.99</span> $9.99 (50% off).</span>
             : 'Free snapshot included. Full reports 50% off.'}
         </p>
       </div>
-      <h2 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h2>
+      {/* h1, not h2 — see the matching note on the login page. */}
+      <h1 className="font-bold text-2xl mb-6 text-center text-fg-bright">Create your account</h1>
 
       {/* Default OAuth signups (no explicit ?next= deep link) need to land
           on /dashboard?welcome=true so the dashboard's first-login useEffect

@@ -48,7 +48,12 @@ const FAQ_DATA: FAQSection[] = [
       { q: 'What biases does BetAutopsy detect?', a: 'We scan for: loss chasing (stake increases after losses), favorite bias (systematically backing favorites regardless of value), recency bias (overweighting recent results in your selections), parlay addiction (heavy parlay volume with poor ROI relative to straight bets), gambler\'s fallacy (expecting streaks to reverse), availability bias (over-betting on memorable outcomes), and sunk cost behavior (returning to the same losing teams or markets). Each bias is backed by specific evidence from your data, not generic advice.' },
       { q: 'What are "strategic leaks"?', a: 'Strategic leaks are the specific markets, sports, or bet types where your ROI is consistently negative in a way that suggests a structural problem, not just bad luck. For example, if you\'re +8% ROI on NFL spreads but -31% ROI on NBA props, the props are a leak. We surface these with ROI, sample size, and a plain-English explanation of what might be driving it.' },
       { q: 'How long does a report take to generate?', a: 'About 20 seconds from upload to finished report.' },
-      { q: 'Can I run multiple reports?', a: 'Free snapshot reports are unlimited. You can run as many snapshots as you want to see your grade, archetype, and top bias. Full reports can be purchased individually for $9.99, or Pro subscribers get 3 full reports per month included (extra reports are $4.99 each).' },
+      // This answer sits outside the "Plans & Pricing" section, so it needs its
+      // own flag check — it was the one place a price survived that section
+      // being filtered out.
+      { q: 'Can I run multiple reports?', a: PRICING_ENABLED
+        ? 'Free snapshot reports are unlimited. You can run as many snapshots as you want to see your grade, archetype, and top bias. Full reports can be purchased individually for $9.99, or Pro subscribers get 3 full reports per month included (extra reports are $4.99 each).'
+        : 'Yes. Snapshot reports are unlimited, and full reports are included free while BetAutopsy is in beta. Run as many as you like to see your grade, archetype, and biases.' },
       { q: 'What is the Leak Prioritizer?', a: 'The Leak Prioritizer takes all your detected leaks and ranks them by estimated dollar impact, so you know exactly which behavior to fix first for the biggest financial improvement. Instead of working on everything at once, you get a ranked action list with the most expensive leaks at the top. Available in full reports.' },
       { q: 'What is the What-If Simulator?', a: 'The What-If Simulator lets you model how your P&L would change if you removed specific behaviors. For example: "What if I had never placed a parlay?" or "What if I had flat-staked every bet?" It runs the calculation against your actual history and shows you the counterfactual result. Available in full reports.' },
       { q: 'What is the Weekly Digest?', a: 'A weekly email that recaps your recent betting activity, flags any new patterns, and tracks whether your behavioral metrics are improving week over week. It\'s a lightweight accountability layer so you don\'t have to remember to log in and check. Available with Pro subscription.' },
@@ -91,6 +96,16 @@ const FAQ_DATA: FAQSection[] = [
   },
 ];
 
+// While `PRICING_ENABLED` is false every user is served the Pro tier for
+// free, so the "Plans & Pricing" answers (one-time $9.99, Pro $19.99/mo,
+// $149.99/yr, billing and cancellation) describe a checkout nobody reaches.
+// Filtering at the source drops the section from BOTH the rendered accordion
+// and the FAQPage JSON-LD below, which keeps the text parity Google's rich
+// result guidelines require.
+const VISIBLE_FAQ_DATA: FAQSection[] = PRICING_ENABLED
+  ? FAQ_DATA
+  : FAQ_DATA.filter((section) => section.title !== 'Plans & Pricing');
+
 function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boolean; onToggle: () => void }) {
   return (
     <div className={`border-l-2 transition-colors ${isOpen ? 'border-scalpel' : 'border-transparent'}`}>
@@ -119,7 +134,7 @@ export default function FAQPage() {
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FAQ_DATA.flatMap((section) =>
+    mainEntity: VISIBLE_FAQ_DATA.flatMap((section) =>
       section.items.map((item) => ({
         '@type': 'Question',
         name: item.q,
@@ -144,7 +159,7 @@ export default function FAQPage() {
         <p className="text-fg-muted font-light">Everything you need to know about BetAutopsy.</p>
       </div>
 
-      {FAQ_DATA.map((section, si) => (
+      {VISIBLE_FAQ_DATA.map((section, si) => (
         <div key={section.title}>
           {si > 0 && <div className="border-t border-border-subtle my-10" />}
           <h2 className="text-xs uppercase tracking-widest text-scalpel mb-4 font-semibold">{section.title}</h2>

@@ -4,6 +4,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
 import { isMobileBuild } from '@/lib/platform';
+import { PRICING_ENABLED } from '@/lib/feature-flags';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
 import { jakarta, ibmPlexMono } from './fonts';
@@ -81,11 +82,17 @@ export default function RootLayout({
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Web',
     description: 'Upload your sports betting, DFS pick\'em, or prediction market history and get a full behavioral analysis: cognitive biases, strategic leaks, emotional patterns, and a personalized action plan.',
-    offers: [
-      { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free Snapshot' },
-      { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Full Report' },
-      { '@type': 'Offer', price: '19.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },
-    ],
+    // Paid offers are advertised only while the paywall is actually live.
+    // With `PRICING_ENABLED` false every user is served the Pro tier for
+    // free, and structured data quoting $9.99/$19.99 would put prices into
+    // search results that nobody is charged.
+    offers: PRICING_ENABLED
+      ? [
+          { '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free Snapshot' },
+          { '@type': 'Offer', price: '9.99', priceCurrency: 'USD', name: 'Full Report' },
+          { '@type': 'Offer', price: '19.99', priceCurrency: 'USD', name: 'Pro', billingIncrement: 'P1M' },
+        ]
+      : [{ '@type': 'Offer', price: '0', priceCurrency: 'USD', name: 'Free Snapshot' }],
   };
 
   const websiteJsonLd = {
