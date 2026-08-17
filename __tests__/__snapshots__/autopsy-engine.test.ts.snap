@@ -1998,11 +1998,7 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
   "tilt_score": 0,
   "tilt_score_insufficient_data": true,
   "timing_analysis": {
-    "best_window": {
-      "count": 4,
-      "label": "12pm",
-      "roi": 90,
-    },
+    "best_window": null,
     "by_day": [
       {
         "bets": 0,
@@ -2317,17 +2313,9 @@ exports[`Edge cases > calculateMetricsOnly returns consistent partial analysis 1
         "wins": 0,
       },
     ],
-    "has_time_data": true,
-    "late_night_stats": {
-      "count": 6,
-      "pct_of_total": 30,
-      "roi": -5,
-    },
-    "worst_window": {
-      "count": 3,
-      "label": "4am",
-      "roi": -100,
-    },
+    "has_time_data": false,
+    "late_night_stats": null,
+    "worst_window": null,
   },
 }
 `;
@@ -28181,9 +28169,9 @@ exports[`Scenario 5: Late night session cluster > Late night session cluster > c
     ],
     "has_time_data": true,
     "late_night_stats": {
-      "count": 12,
-      "pct_of_total": 60,
-      "roi": -23.32,
+      "count": 10,
+      "pct_of_total": 50,
+      "roi": -67.43,
     },
     "worst_window": {
       "count": 4,
