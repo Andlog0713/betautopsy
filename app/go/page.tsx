@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
-import RealtimeActivity from '@/components/RealtimeActivity';
 import GoPageView from './GoPageView';
 import GoSignupLink from './GoSignupLink';
 
@@ -13,20 +12,6 @@ import GoSignupLink from './GoSignupLink';
 // build, which is fine for the native app.
 export const revalidate =
   process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
-
-// Social-proof fallbacks for the activity ticker. `<RealtimeActivity>`
-// is already a client component that fetches `/api/recent-activity`
-// on mount and replaces these once live data arrives. We used to
-// pass counts from a server-side Supabase query here, but that
-// path blocks the mobile static export — the client fetch inside
-// `<RealtimeActivity>` covers the web UX, so these hardcoded
-// defaults are sufficient. Verified against a live DB count on
-// 2026-08-17 (7,888 bets / 38 reports); previously hardcoded to
-// fabricated, inflated figures (155,163 / 105) that neither matched
-// each other nor real usage. Re-verify and bump periodically rather
-// than letting these drift again.
-const FALLBACK_BETS = '7,888';
-const FALLBACK_REPORTS = '38';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy: Find Your Betting Leaks',
@@ -133,12 +118,6 @@ function CheckIcon() {
 export default function GoLandingPage() {
   const caseNum = getCaseFileNumber();
 
-  // `<RealtimeActivity>` fetches live ticker items from
-  // `/api/recent-activity` on mount; these stringified defaults are
-  // shown until that fetch resolves.
-  const betsDisplay = FALLBACK_BETS;
-  const reportsDisplay = FALLBACK_REPORTS;
-
   return (
     <>
       <GoPageView />
@@ -183,9 +162,6 @@ export default function GoLandingPage() {
           </p>
         </div>
       </section>
-
-      {/* ═══ SOCIAL PROOF / LIVE ACTIVITY TICKER ═══ */}
-      <RealtimeActivity fallbackBets={betsDisplay} fallbackReports={reportsDisplay} />
 
       {/* ═══ WHAT WE FIND — anxiety list ═══ */}
       <section className="py-14">
