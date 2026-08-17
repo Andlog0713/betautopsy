@@ -15,6 +15,35 @@ function checkoutDiscountParams(): { discounts: { promotion_code: string }[] } |
   return { allow_promotion_codes: true };
 }
 
+// A misconfigured or expired coupon (e.g. scoped to the wrong product,
+// `coupon_applies_to_nothing`) must not block the purchase itself — the
+// discount is a nice-to-have, the sale is not. Detect that class of error
+// and let the caller retry the same session creation with the discount
+// stripped out.
+function isDiscountRelatedStripeError(err: unknown): boolean {
+  if (err === null || typeof err !== 'object') return false;
+  const e = err as { code?: unknown; param?: unknown };
+  if (e.code === 'coupon_applies_to_nothing') return true;
+  if (typeof e.param === 'string' && e.param.startsWith('discounts')) return true;
+  return false;
+}
+
+// Wraps checkout.sessions.create() so a discount-application failure
+// degrades to a discount-less checkout instead of a hard 500. Any other
+// Stripe error (bad price ID, auth, rate limit) still propagates.
+async function createSessionWithDiscountFallback(
+  baseParams: Stripe.Checkout.SessionCreateParams,
+  discountParams: { discounts: { promotion_code: string }[] } | { allow_promotion_codes: true }
+): Promise<Stripe.Checkout.Session> {
+  try {
+    return await getStripe().checkout.sessions.create({ ...baseParams, ...discountParams });
+  } catch (err) {
+    if (!isDiscountRelatedStripeError(err)) throw err;
+    console.error('[checkout] discount failed to apply, retrying without discount', err);
+    return await getStripe().checkout.sessions.create(baseParams);
+  }
+}
+
 export function isStripeConfigured(): boolean {
   return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID);
 }
@@ -133,15 +162,17 @@ export async function createSubscriptionCheckoutSession(
     ? { discounts: [{ promotion_code: promoCodeId }] }
     : checkoutDiscountParams();
 
-  const session = await getStripe().checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    ...discountParams,
-    success_url: `${appUrl}/dashboard?upgraded=true`,
-    cancel_url: `${appUrl}/pricing`,
-    metadata: { supabase_user_id: userId, tier: 'pro' },
-  });
+  const session = await createSessionWithDiscountFallback(
+    {
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/dashboard?upgraded=true`,
+      cancel_url: `${appUrl}/pricing`,
+      metadata: { supabase_user_id: userId, tier: 'pro' },
+    },
+    discountParams
+  );
 
   return session.url!;
 }
@@ -161,19 +192,21 @@ export async function createReportCheckoutSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  const session = await getStripe().checkout.sessions.create({
-    customer: customerId,
-    mode: 'payment',
-    line_items: [{ price: priceId, quantity: 1 }],
-    ...checkoutDiscountParams(),
-    success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
-    cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
-    metadata: {
-      supabase_user_id: userId,
-      report_id: snapshotReportId,
-      type: 'report_purchase',
+  const session = await createSessionWithDiscountFallback(
+    {
+      customer: customerId,
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
+      cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
+      metadata: {
+        supabase_user_id: userId,
+        report_id: snapshotReportId,
+        type: 'report_purchase',
+      },
     },
-  });
+    checkoutDiscountParams()
+  );
 
   return session.url!;
 }
