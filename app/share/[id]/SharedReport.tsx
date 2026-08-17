@@ -25,6 +25,7 @@ interface ShareData {
   date: string;
   report_json?: unknown;
   tier?: string;
+  report_type?: string;
 }
 
 function gradeColor(grade: string | null | undefined): string {
@@ -40,6 +41,13 @@ function gradeColor(grade: string | null | undefined): string {
 
 export default function SharedReport({ data }: { data: ShareData }) {
   const hasFullReport = !!data.report_json;
+  // Fails closed: locks unless report_type is explicitly 'full'. Mirrors
+  // the working dashboard case (app/(dashboard)/reports/page.tsx:
+  // isSnapshot={activeReport.report_type === 'snapshot'}) for the normal
+  // 'snapshot'/'full' values, but an unrecognized or missing report_type
+  // now locks instead of unlocking - the opposite failure mode of the bug
+  // this component originally had (isSnapshot silently defaulting false).
+  const isSnapshot = data.report_type !== 'full';
 
   return (
     <div className="min-h-screen px-4 py-12">
@@ -65,6 +73,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
           <AutopsyReport
             analysis={data.report_json as AutopsyAnalysis}
             tier={(data.tier as 'free' | 'pro') ?? 'free'}
+            isSnapshot={isSnapshot}
             readOnly
           />
         ) : (

@@ -74,6 +74,11 @@ export async function POST(request: Request) {
       date: report.created_at,
       report_json: analysis,
       tier: 'free' as string,
+      // Lets SharedReport derive isSnapshot the same way the working
+      // dashboard case does (report.report_type === 'snapshot'), so the
+      // read-only view actually locks what the engine locked instead of
+      // silently defaulting to the unlocked full-report rendering path.
+      report_type: report.report_type as string,
     };
 
     // Use service role for admin sharing other users' reports (bypasses RLS)
@@ -91,17 +96,21 @@ export async function POST(request: Request) {
     // Check if share token already exists for this report
     const { data: existing } = await dbClient
       .from('share_tokens')
-      .select('id, data')
+      .select('id, data, revoked')
       .eq('report_id', report_id)
       .single();
 
     if (existing) {
       const existingData = existing.data as Record<string, unknown> | null;
-      // Update old tokens that don't have the full report
-      if (!existingData?.report_json) {
+      const needsDataRefresh = !existingData?.report_json || !existingData?.report_type;
+      // Revoked (either the 2026-08-16 mass-revoke migration, or a user's
+      // own earlier explicit unshare) does not permanently kill the link -
+      // this POST call IS the explicit share action; re-activate rather
+      // than returning a dead id the read path will treat as expired.
+      if (existing.revoked || needsDataRefresh) {
         await dbClient
           .from('share_tokens')
-          .update({ data: shareData })
+          .update({ data: shareData, revoked: false })
           .eq('id', existing.id);
       }
       return NextResponse.json({ share_id: existing.id });
@@ -126,5 +135,40 @@ export async function POST(request: Request) {
     console.error('Share error:', error);
     logErrorServer(error, { path: '/api/share' });
     return NextResponse.json({ error: 'Share failed' }, { status: 500 });
+  }
+}
+
+// Revoke: takes the public link down without deleting the row (the report
+// owner can re-share later via POST, which un-revokes rather than minting
+// a second token). Scoped to the caller's own report_id - RLS on
+// share_tokens (Users can view own share tokens) already limits SELECT to
+// the owner, and this update is scoped the same way.
+export async function DELETE(request: Request) {
+  try {
+    const { supabase, user, error: authError } = await getAuthenticatedClient(request);
+    if (authError || !user || !supabase) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { report_id } = await request.json();
+    if (!report_id) {
+      return NextResponse.json({ error: 'report_id required' }, { status: 400 });
+    }
+
+    const { error: updateErr } = await supabase
+      .from('share_tokens')
+      .update({ revoked: true })
+      .eq('report_id', report_id)
+      .eq('user_id', user.id);
+
+    if (updateErr) {
+      return NextResponse.json({ error: 'Could not revoke share link' }, { status: 500 });
+    }
+
+    return NextResponse.json({ revoked: true });
+  } catch (error) {
+    console.error('Share revoke error:', error);
+    logErrorServer(error, { path: '/api/share', metadata: { method: 'DELETE' } });
+    return NextResponse.json({ error: 'Revoke failed' }, { status: 500 });
   }
 }
