@@ -417,21 +417,14 @@ describe('Snapshot Redaction — Group 3: no-dollar-leak walk', () => {
     // new leak — allowlisting like the sibling stakeEscalation ratio above.
     if (/^_snapshot_teaser\.sessionTimelineSilhouette\[\d+\]\.stakeNorm$/.test(path)) return true;
 
-    // ── bet_annotations.* (Spec v2 scope gap — FLAGGED FOR FOLLOW-UP) ──
-    // Phase 3 surfaced three real dollar leaks in bet_annotations that
-    // ship visible in snapshot mode today because the spec didn't enumerate
-    // bet_annotations:
-    //   - distribution.{disciplined,chasing,neutral}.totalStaked
-    //   - streakInfluence.avgStakeNeutral / avgStakeDisciplined / etc.
-    //   - worstAnnotatedBet / bestAnnotatedBet profit + stake metrics
-    // These are aggregate $ values from raw bets — exactly the kind of
-    // payoff signal Spec v2 is supposed to redact. The structure is
-    // *_visibility-tag-less today; redacting requires a Phase 4-style
-    // engine change (parked, sprint row in Notion).
-    // The stakeVsMedian RATIOS (annotations[].stakeVsMedian) are false
-    // positives — they're 0..2 ratios, not dollars — but the regex catches
-    // them. Both bucketed under bet_annotations.* here.
-    if (path.startsWith('bet_annotations.')) return true;
+    // ── BetAnnotation.stakeVsMedian (false positive — 0..2 ratio, not a
+    // dollar amount, per lib/autopsy-engine.ts). Appears on annotations[]
+    // and on the worstAnnotatedBet/bestAnnotatedBet single-bet picks, which
+    // are BetAnnotation values themselves, not raw Bet objects. Everything
+    // else under bet_annotations.* is a real, unredacted dollar leak — see
+    // Andrew's 2026-08-17 review, not allowlisted. ──
+    if (/^bet_annotations\.annotations\[\d+\]\.stakeVsMedian$/.test(path)) return true;
+    if (/^bet_annotations\.(worst|best)AnnotatedBet\.stakeVsMedian$/.test(path)) return true;
 
     return false;
   }
