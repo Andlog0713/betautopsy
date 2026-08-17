@@ -390,12 +390,28 @@ const HOUR_LABELS = [
 function calculateTiming(bets: Bet[]): TimingAnalysis {
   const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
 
-  // Detect if we actually have time data — if >80% of bets land at exactly midnight, timestamps are date-only
+  // Detect if we actually have time data. Threshold was `< 0.8` (allow up
+  // to 80% midnight-artifact rows) - inverted from what it needed to be.
+  // A user at the population average (65.9% midnight) passed that gate and
+  // got a full late-night finding built mostly out of timestamp noise,
+  // since midnight (hour 0) is also the first hour in the late-night
+  // window below. Tightened to <= 0.05 (require ~95%+ real timestamps) as
+  // a launch stopgap. This ratio is still not the right long-term gate -
+  // it conflates "what fraction is midnight" with "is there enough real
+  // data," which have different denominators (1,000 bets at 65% midnight
+  // leaves 350 real ones, plenty; 20 bets at 5% midnight leaves 19, also
+  // fine; but the ratio alone can't distinguish a large real-but-noisy
+  // sample from a small clean one). v1.1: gate on an absolute count of
+  // real-timestamped settled bets instead, plus a disclosure naming which
+  // sportsbook(s) the real-timestamped subset actually came from, since
+  // date-only rows cluster by sportsbook and a coverage-based partial view
+  // would otherwise describe one book's behavior as the user's overall
+  // pattern.
   const midnightCount = settled.filter((b) => {
     const d = new Date(b.placed_at);
     return d.getHours() === 0 && d.getMinutes() === 0;
   }).length;
-  const hasTimeData = settled.length >= 5 && midnightCount / settled.length < 0.8;
+  const hasTimeData = settled.length >= 5 && midnightCount / settled.length <= 0.05;
 
   // Initialize buckets
   const hourBuckets: { bets: number; wins: number; losses: number; staked: number; profit: number }[] =
@@ -450,8 +466,14 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
   const worstWindow = allBuckets.length > 0 ? { label: allBuckets[0].label, roi: allBuckets[0].roi, count: allBuckets[0].bets } : null;
   const bestWindow = allBuckets.length > 0 ? { label: allBuckets[allBuckets.length - 1].label, roi: allBuckets[allBuckets.length - 1].roi, count: allBuckets[allBuckets.length - 1].bets } : null;
 
-  // Late night stats (11pm-4am)
-  const lateNightHours = [23, 0, 1, 2, 3, 4];
+  // Late night stats (11pm-4am). Hour 0 (exact midnight) is deliberately
+  // excluded from this bucket - it's the one hour date-only CSV rows
+  // parse to, so including it means every midnight-artifact bet counts as
+  // "late night" regardless of the hasTimeData gate above. Same tradeoff
+  // PR #80 already accepted for the qualitative late-night bias detector
+  // (a genuine 00:00:00 bet is the one false negative); this is a
+  // separate computation that PR #80 never touched.
+  const lateNightHours = [23, 1, 2, 3, 4];
   const lateNight = lateNightHours.reduce(
     (acc, h) => {
       acc.count += hourBuckets[h].bets;
@@ -469,7 +491,23 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
       }
     : null;
 
-  return { by_hour: byHour, by_day: byDay, best_window: bestWindow, worst_window: worstWindow, late_night_stats: lateNightStats, has_time_data: hasTimeData };
+  // The gate above must actually gate the wire, not just be checked by
+  // one client render call. best_window/worst_window/late_night_stats
+  // used to ship fully computed even when hasTimeData was false, relying
+  // entirely on a single `has_time_data &&` check in AutopsyReport.tsx to
+  // keep them off screen. Any other consumer of this payload (iOS, an
+  // export, a future surface) that didn't happen to replicate that same
+  // check would render them as fact - the same "value that means do not
+  // use shipped as a value" failure that produced the $0 P&L bug. Null
+  // them here so the gate is structural, not a rendering convention.
+  return {
+    by_hour: byHour,
+    by_day: byDay,
+    best_window: hasTimeData ? bestWindow : null,
+    worst_window: hasTimeData ? worstWindow : null,
+    late_night_stats: hasTimeData ? lateNightStats : null,
+    has_time_data: hasTimeData,
+  };
 }
 
 export function calculateMetrics(bets: Bet[], bankroll?: number | null): CalculatedMetrics {
