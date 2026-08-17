@@ -6,7 +6,6 @@ import Footer from '@/components/Footer';
 import SamplePageClient from '@/components/SamplePageClient';
 import AnimatedSection from '@/components/AnimatedSection';
 import SampleStickyBar from '@/components/SampleStickyBar';
-import PlatformMetrics from '@/components/PlatformMetrics';
 import SmartCTALink from '@/components/SmartCTALink';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from 'lucide-react';
@@ -14,10 +13,6 @@ import { BarChart3, AlertTriangle, DollarSign, ClipboardList, Stethoscope } from
 // Static for mobile builds (no runtime to revalidate on); ISR on web.
 export const revalidate =
   process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
-
-// Same default string `<RealtimeActivity>` uses. `<PlatformMetrics>`
-// renders it after confirming `/api/recent-activity` is reachable.
-const FALLBACK_BETS = '155,163';
 
 export const metadata: Metadata = {
   title: 'Sample Autopsy Report | BetAutopsy',
@@ -84,13 +79,6 @@ export default function SamplePage() {
               })}
             </div>
           </div>
-        </section>
-      </AnimatedSection>
-
-      {/* ═══ SOCIAL PROOF ═══ */}
-      <AnimatedSection delay={0.05}>
-        <section className="py-16">
-          <PlatformMetrics variant="sample" fallbackBets={FALLBACK_BETS} />
         </section>
       </AnimatedSection>
 

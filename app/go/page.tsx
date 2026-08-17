@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
-import RealtimeActivity from '@/components/RealtimeActivity';
 import GoPageView from './GoPageView';
 import GoSignupLink from './GoSignupLink';
 
@@ -13,16 +12,6 @@ import GoSignupLink from './GoSignupLink';
 // build, which is fine for the native app.
 export const revalidate =
   process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
-
-// Social-proof fallbacks for the activity ticker. `<RealtimeActivity>`
-// is already a client component that fetches `/api/recent-activity`
-// on mount and replaces these once live data arrives. We used to
-// pass counts from a server-side Supabase query here, but that
-// path blocks the mobile static export — the client fetch inside
-// `<RealtimeActivity>` covers the web UX, so these hardcoded
-// defaults are sufficient.
-const FALLBACK_BETS = '155,163';
-const FALLBACK_REPORTS = '105';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy: Find Your Betting Leaks',
@@ -129,12 +118,6 @@ function CheckIcon() {
 export default function GoLandingPage() {
   const caseNum = getCaseFileNumber();
 
-  // `<RealtimeActivity>` fetches live ticker items from
-  // `/api/recent-activity` on mount; these stringified defaults are
-  // shown until that fetch resolves.
-  const betsDisplay = FALLBACK_BETS;
-  const reportsDisplay = FALLBACK_REPORTS;
-
   return (
     <>
       <GoPageView />
@@ -179,9 +162,6 @@ export default function GoLandingPage() {
           </p>
         </div>
       </section>
-
-      {/* ═══ SOCIAL PROOF / LIVE ACTIVITY TICKER ═══ */}
-      <RealtimeActivity fallbackBets={betsDisplay} fallbackReports={reportsDisplay} />
 
       {/* ═══ WHAT WE FIND — anxiety list ═══ */}
       <section className="py-14">
