@@ -10,23 +10,14 @@ import SmartCTALink from '@/components/SmartCTALink';
 import { ProductShowcase } from '@/components/ProductShowcase';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
-import PlatformMetrics from '@/components/PlatformMetrics';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
 
-// Platform metric counters in the hero refresh hourly so they stay fresh
-// without hitting Supabase on every public page view.
-//
 // Mobile builds (`output: 'export'`) can't use ISR — there is no
 // runtime to revalidate on — so drop the hint there. Web behavior is
 // unchanged (3600 s ISR).
 export const revalidate =
   process.env.NEXT_PUBLIC_BUILD_TARGET === 'mobile' ? false : 3600;
-
-// The `PlatformMetrics` client component renders these once it
-// confirms connectivity against `/api/recent-activity`.
-const FALLBACK_BETS = '155,163';
-const FALLBACK_REPORTS = '323';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy (Bet Autopsy): Sports Betting Behavioral Analysis Tool',
@@ -127,12 +118,6 @@ export default function LandingPage() {
             </AnimatedShinyText>
           </div>
           <HeroABTest />
-
-          <PlatformMetrics
-            variant="landing"
-            fallbackBets={FALLBACK_BETS}
-            fallbackReports={FALLBACK_REPORTS}
-          />
 
           {/* EKG heartbeat line */}
           <div className="mt-8 animate-fade-in-d4 relative h-10 overflow-hidden">

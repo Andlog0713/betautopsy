@@ -20,9 +20,13 @@ export const revalidate =
 // pass counts from a server-side Supabase query here, but that
 // path blocks the mobile static export — the client fetch inside
 // `<RealtimeActivity>` covers the web UX, so these hardcoded
-// defaults are sufficient.
-const FALLBACK_BETS = '155,163';
-const FALLBACK_REPORTS = '105';
+// defaults are sufficient. Verified against a live DB count on
+// 2026-08-17 (7,888 bets / 38 reports); previously hardcoded to
+// fabricated, inflated figures (155,163 / 105) that neither matched
+// each other nor real usage. Re-verify and bump periodically rather
+// than letting these drift again.
+const FALLBACK_BETS = '7,888';
+const FALLBACK_REPORTS = '38';
 
 export const metadata: Metadata = {
   title: 'BetAutopsy: Find Your Betting Leaks',
