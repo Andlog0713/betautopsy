@@ -99,7 +99,7 @@ export default function SnapshotPaywall({ reportId, isPro, counts, sufficiency }
         >
           {loading ? 'Redirecting...' : (
             <>
-              See your full dollar costs {isPro ? '$4.99' : <><span className="line-through opacity-60">$19.99</span> $9.99</>}
+              See your full dollar costs {isPro ? '$4.99' : '$19.99'}
               <ChevronRight size={14} />
             </>
           )}

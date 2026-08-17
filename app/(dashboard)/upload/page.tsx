@@ -187,7 +187,7 @@ export default function UploadPage() {
           ) : (
             <p className="text-fg-muted text-sm max-w-md mx-auto">
               {initialBetCount === 0
-                ? 'Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports start at $9.99.'
+                ? 'Your free snapshot will show your grade, archetype, and top bias. Want the full 5-chapter breakdown with dollar costs and an action plan? Full reports are $19.99.'
                 : 'Run a new report to include your latest bets in the analysis.'}
             </p>
           )}

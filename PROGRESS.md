@@ -1,10 +1,16 @@
 # BetAutopsy — Claude Code instructions
 
 ## Architecture
-- Capacitor with bundled static export (Next.js `output: 'export'`).
-- iOS uses `iosScheme: 'https'` + `hostname: 'localhost'`.
-- API calls rewrite to `https://www.betautopsy.com` via `lib/api-client.ts`.
-- Do NOT switch to remote-URL or React Native.
+- This repo is the web app (Next.js App Router), serving betautopsy.com and the API
+  the iOS app calls.
+- The SHIPPING iOS app is native SwiftUI (no WebView), maintained in a separate repo
+  (betautopsy-ios), consuming this backend's API over HTTPS. Do not conflate the two
+  repos; do not edit iOS from a web-scoped session.
+- This repo still contains Capacitor build scaffolding (`package.json` build:mobile/
+  ios:build/ios:open scripts, `isMobileApp()`/`isMobileBuild()` checks, a
+  NEXT_PUBLIC_BUILD_TARGET=mobile branch in several files). Whether that path is still
+  actively built/shipped by anyone is UNVERIFIED as of 2026-08-17 — treat as legacy
+  unless told otherwise, and do not assume it is dead without checking with Andrew first.
 - Server Components stay Server Components.
 
 ## Design system — non-negotiable
@@ -14,18 +20,29 @@
 - No bento grids, glassmorphism, shadcn defaults.
 - No emoji in UI strings.
 - No hamburger menus on any viewport.
-- Colors: midnight `#0D1117`, scalpel `#00C9A7`, bleed `#C4463A`, surface tokens only.
+- Colors: yellow `#FACC15`, canvas `#0A0E12`, off-white `#EDEDF3`, surface tokens only.
+  Money red/green (`#FF4D4D` / `#00DC82`) reserved for dollar deltas only. (Retired: an
+  earlier "Luminol" midnight/scalpel/bleed palette — superseded, do not use.)
 - Fonts: Plus Jakarta Sans (sans), IBM Plex Mono (mono). No Inter.
 
 ## Capacitor plugin pattern
+(Applies only if the legacy Capacitor build path above is confirmed still active.)
 - Dynamic-import inside handlers: `const { Browser } = await import('@capacitor/browser')`.
 - Never top-level import — breaks web bundle.
 - Gate native code with `isMobileApp()` (runtime) or `isMobileBuild()` (compile-time).
 
 ## Stripe / payments
-- Stripe stays web-routed. Never IAP.
+- Stripe stays web-routed for THIS repo (web checkout only). The iOS app ships (or
+  shipped) a separate StoreKit consumable via RevenueCat, in the iOS repo — that is
+  correct there, not a violation of any rule here. Do not add IAP to the web app; do
+  not remove Stripe from the web app to "match" iOS.
 - Use `openCheckoutUrl()` in `lib/native.ts` — opens SFSafariViewController on native.
 - Never `window.location.href = data.url` for Stripe URLs.
+- Single report purchase at $19.99 (`STRIPE_REPORT_PRICE_ID`, `REPORT_PURCHASE_LIMITS`
+  in `types/index.ts`) is the only thing marketed on web as of 2026-08-17. No discount/
+  promo mechanism exists (removed same date). Pro exists on the backend only — real
+  subscribers keep working, nothing purchases it from a public surface anymore. See
+  "P0/P1 audit + fixes" below before assuming otherwise.
 
 ## Progress tracking
 - At the end of every response that completes work or proposes new work, update `PROGRESS.md`.
