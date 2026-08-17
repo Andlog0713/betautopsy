@@ -335,11 +335,11 @@ export default function DashboardShell({
           {effectiveTier === 'free' && (
             <Link
               href="/pricing"
-              title="Upgrade to Pro"
+              title="Get Full Report"
               className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-lg px-2 py-2 transition-colors border border-scalpel/20"
             >
               <ArrowUpRight size={14} />
-              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Upgrade to Pro</span>
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Get Full Report</span>
             </Link>
           )}
           <div className="flex items-center gap-2">

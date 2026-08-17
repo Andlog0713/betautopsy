@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         if (session.mode === 'payment') {
-          // One-time report purchase ($9.99 or $4.99 extra)
+          // One-time report purchase ($19.99, or $4.99 extra for existing Pro subscribers)
           const reportId = session.metadata?.report_id;
           const userId = session.metadata?.supabase_user_id;
           const paymentIntentId = typeof session.payment_intent === 'string'

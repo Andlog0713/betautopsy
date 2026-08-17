@@ -155,7 +155,12 @@ export default function DashboardPage() {
         // Post-subscription-checkout conversion pixel. The redirect carries
         // ?upgraded=true; profile.subscription_tier is already cached here.
         if (typeof window !== 'undefined' && window.location.search.includes('upgraded=true')) {
-          const price = tier === 'pro' ? 19.99 : 0;
+          // Not distinguishing monthly ($39.99) vs annual ($299.99) here -
+          // this redirect doesn't carry the interval. Using the monthly
+          // price as the tracked conversion value is an approximation for
+          // annual subscribers; Pro isn't marketed on web (2026-08-17) so
+          // this path is effectively dormant for new conversions now.
+          const price = tier === 'pro' ? 39.99 : 0;
           if (price > 0) {
             trackPurchaseMeta(tier ?? 'pro', price);
           }

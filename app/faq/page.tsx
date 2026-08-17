@@ -52,11 +52,11 @@ const FAQ_DATA: FAQSection[] = [
       // own flag check — it was the one place a price survived that section
       // being filtered out.
       { q: 'Can I run multiple reports?', a: PRICING_ENABLED
-        ? 'Free snapshot reports are unlimited. You can run as many snapshots as you want to see your grade, archetype, and top bias. Full reports can be purchased individually for $9.99, or Pro subscribers get 3 full reports per month included (extra reports are $4.99 each).'
+        ? 'Free snapshot reports are unlimited. You can run as many snapshots as you want to see your grade, archetype, and top bias. Full reports are $19.99 each, purchased individually - one report, one price.'
         : 'Yes. Snapshot reports are unlimited, and full reports are included free while BetAutopsy is in beta. Run as many as you like to see your grade, archetype, and biases.' },
       { q: 'What is the Leak Prioritizer?', a: 'The Leak Prioritizer takes all your detected leaks and ranks them by estimated dollar impact, so you know exactly which behavior to fix first for the biggest financial improvement. Instead of working on everything at once, you get a ranked action list with the most expensive leaks at the top. Available in full reports.' },
       { q: 'What is the What-If Simulator?', a: 'The What-If Simulator lets you model how your P&L would change if you removed specific behaviors. For example: "What if I had never placed a parlay?" or "What if I had flat-staked every bet?" It runs the calculation against your actual history and shows you the counterfactual result. Available in full reports.' },
-      { q: 'What is the Weekly Digest?', a: 'A weekly email that recaps your recent betting activity, flags any new patterns, and tracks whether your behavioral metrics are improving week over week. It\'s a lightweight accountability layer so you don\'t have to remember to log in and check. Available with Pro subscription.' },
+      { q: 'What is the Weekly Digest?', a: 'A weekly email that recaps your recent betting activity, flags any new patterns, and tracks whether your behavioral metrics are improving week over week. It\'s a lightweight accountability layer so you don\'t have to remember to log in and check.' },
     ],
   },
   {
@@ -70,10 +70,8 @@ const FAQ_DATA: FAQSection[] = [
   {
     title: 'Plans & Pricing',
     items: [
-      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports analyzing all your bets, showing your overall grade, archetype, top bias fully explained, and BetIQ score. Full Report ($9.99 one-time): complete 5-chapter analysis going 5,000 bets deep with all biases, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan. Pro ($19.99/month or $149.99/year): 3 full reports per month, weekly email digest, and progress tracking.' },
-      { q: 'Is there a free trial?', a: 'No trial needed. Free snapshots are always free with no credit card required. You can run unlimited snapshots to see your grade, top bias, and BetIQ score. When you want the complete analysis, buy a single report for $9.99 or subscribe to Pro.' },
-      { q: 'Can I cancel anytime?', a: 'Yes. No contracts, no cancellation fees. You can cancel directly from your account settings and you\'ll retain access through the end of your billing period.' },
-      { q: 'Do you offer annual billing?', a: 'Yes. Pro is $149.99/year (vs. $19.99/month), saving you about 37%.' },
+      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports analyzing all your bets, showing your overall grade, archetype, top bias fully explained, and BetIQ score. Full Report ($19.99, one-time): complete 5-chapter analysis going 5,000 bets deep with all biases, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan.' },
+      { q: 'Is there a free trial?', a: 'No trial needed. Free snapshots are always free with no credit card required. You can run unlimited snapshots to see your grade, top bias, and BetIQ score. When you want the complete analysis, buy a single report for $19.99.' },
       { q: 'What payment methods do you accept?', a: 'All major credit and debit cards via Stripe. We never see or store your full card number. Stripe handles all payment processing.' },
     ],
   },
@@ -96,12 +94,11 @@ const FAQ_DATA: FAQSection[] = [
   },
 ];
 
-// While `PRICING_ENABLED` is false every user is served the Pro tier for
-// free, so the "Plans & Pricing" answers (one-time $9.99, Pro $19.99/mo,
-// $149.99/yr, billing and cancellation) describe a checkout nobody reaches.
-// Filtering at the source drops the section from BOTH the rendered accordion
-// and the FAQPage JSON-LD below, which keeps the text parity Google's rich
-// result guidelines require.
+// While `PRICING_ENABLED` is false every user is served the full report for
+// free, so the "Plans & Pricing" answers (one-time $19.99) describe a
+// checkout nobody reaches. Filtering at the source drops the section from
+// BOTH the rendered accordion and the FAQPage JSON-LD below, which keeps
+// the text parity Google's rich result guidelines require.
 const VISIBLE_FAQ_DATA: FAQSection[] = PRICING_ENABLED
   ? FAQ_DATA
   : FAQ_DATA.filter((section) => section.title !== 'Plans & Pricing');

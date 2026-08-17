@@ -22,18 +22,16 @@ import { useAuthState } from '@/components/AuthProvider';
  *     no-snapshot  → /reports?run=true
  *     has-snapshot → /pricing
  *
- *   intent="pro" — "Go Pro" / "Subscribe to Pro"
- *     anon         → /signup?next=/pricing?intent=pro
- *     no-snapshot  → /pricing?intent=pro              (Pro is a sub, not
- *                                                      tied to a snapshot —
- *                                                      skip the funnel)
- *     has-snapshot → /pricing
+ * intent="pro" removed 2026-08-17 (D1): Pro is no longer marketed on web,
+ * so nothing renders a "Go Pro" CTA anymore. Existing Pro subscribers
+ * still manage their subscription from /pricing directly - see
+ * app/(dashboard)/pricing/page.tsx.
  *
  * While the auth check is in flight, we render a disabled
  * placeholder so a fast click during the loading window doesn't
  * ship an authed user to /signup (the safest default href).
  */
-export type CTAIntent = 'snapshot' | 'report' | 'pro';
+export type CTAIntent = 'snapshot' | 'report';
 
 interface SmartCTALinkProps {
   intent: CTAIntent;
@@ -44,14 +42,10 @@ interface SmartCTALinkProps {
 
 function buildHref(intent: CTAIntent, auth: ReturnType<typeof useAuthState>): string {
   if (auth.status === 'anon') {
-    if (intent === 'pro') {
-      return '/signup?next=' + encodeURIComponent('/pricing?intent=pro');
-    }
     return '/signup?next=' + encodeURIComponent('/reports?run=true');
   }
 
   if (auth.status === 'no-snapshot') {
-    if (intent === 'pro') return '/pricing?intent=pro';
     return '/reports?run=true';
   }
 

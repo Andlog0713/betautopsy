@@ -98,7 +98,7 @@ export default function SampleStickyBar() {
       <div className="hidden sm:flex items-center justify-between h-full px-6 max-w-5xl mx-auto">
         <p className="font-mono text-[10px] text-fg-bright tracking-[1.5px] uppercase">
           {PRICING_ENABLED
-            ? 'FREE SNAPSHOT. FULL REPORTS $9.99 (50% OFF).'
+            ? 'FREE SNAPSHOT. FULL REPORTS $19.99.'
             : 'FREE DURING BETA. NO CREDIT CARD REQUIRED.'}
         </p>
         <SmartCTALink

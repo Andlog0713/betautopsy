@@ -1126,10 +1126,15 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
 };
 
-// Limits for one-time $9.99 report purchases (non-Pro users)
+// Limits for one-time full-report purchases. $19.99, matching
+// STRIPE_REPORT_PRICE_ID exactly - no discount, no separate Price object.
+// The 50%-off framing that used to make this $9.99 relied on a coupon
+// (STRIPE_LAUNCH_PROMO / AUTOPSY50) that has been deleted from Stripe
+// (2026-08-17); this constant is now the single source every surface
+// should read from rather than hand-typing the price.
 export const REPORT_PURCHASE_LIMITS = {
   maxBetsPerReport: 5000,
-  price: 9.99,
+  price: 19.99,
 };
 
 // Extra report price for Pro users who exceed their monthly allocation
