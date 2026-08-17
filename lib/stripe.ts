@@ -2,18 +2,15 @@ import Stripe from 'stripe';
 
 let _stripe: Stripe | null = null;
 
-// Launch promo: auto-applied at checkout so users see the strikethrough price.
-// Set STRIPE_LAUNCH_PROMO=promo_xxx (the promotion code API ID). Remove to disable.
-const LAUNCH_PROMO = process.env.STRIPE_LAUNCH_PROMO || null;
-
-// When a promo is active, we use `discounts` instead of `allow_promotion_codes`
-// because Stripe doesn't allow both on the same checkout session.
-function checkoutDiscountParams(): { discounts: { promotion_code: string }[] } | { allow_promotion_codes: true } {
-  if (LAUNCH_PROMO) {
-    return { discounts: [{ promotion_code: LAUNCH_PROMO }] };
-  }
-  return { allow_promotion_codes: true };
-}
+// No discount/promo mechanism exists (removed 2026-08-17: the AUTOPSY50
+// coupon was deleted from Stripe and STRIPE_LAUNCH_PROMO removed from
+// Vercel env, per Andrew's D1 pricing decision - single report purchase
+// at the STRIPE_REPORT_PRICE_ID price, no discount, nothing else marketed
+// on web). Checkout sessions are created at exactly the price the
+// customer was shown; if a discount mechanism is ever reintroduced, keep
+// that invariant - a checkout must never complete at a price different
+// from the one displayed (see the deleted createSessionWithDiscountFallback
+// wrapper in git history, PR #81, for the failure mode that produces).
 
 export function isStripeConfigured(): boolean {
   return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID);
@@ -104,20 +101,16 @@ export async function getOrCreateCustomer(
   return { customerId: customer.id, created: true };
 }
 
-// Pro subscription checkout ($19.99/mo or $149.99/yr)
+// Pro subscription checkout ($39.99/mo or $299.99/yr). Not marketed on web
+// (2026-08-17, D1) - existing Pro subscribers keep working (manage/cancel
+// via createCustomerPortalSession below), but this is no longer reachable
+// from any public-facing CTA. Left in place rather than deleted in case a
+// subscription is ever started manually; do not wire a new public entry
+// point to it without a deliberate pricing decision.
 export async function createSubscriptionCheckoutSession(
   customerId: string,
   userId: string,
-  interval: 'monthly' | 'annual' = 'monthly',
-  /**
-   * Optional Stripe promotion code ID (e.g. 'promo_1Abc...') to auto-apply
-   * to this session. When provided, overrides checkoutDiscountParams() and
-   * the user sees the discount already applied on Stripe's hosted page.
-   * Callers are expected to have already resolved slug -> ID server-side
-   * (e.g. via PROMO_CODE_MAP in /api/checkout) so untrusted client input
-   * never reaches this function directly.
-   */
-  promoCodeId?: string
+  interval: 'monthly' | 'annual' = 'monthly'
 ): Promise<string> {
   const priceId = interval === 'annual'
     ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID!
@@ -127,17 +120,10 @@ export async function createSubscriptionCheckoutSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  // If a specific promo code was resolved for this session, use it.
-  // Otherwise fall back to the global launch promo / allow_promotion_codes.
-  const discountParams = promoCodeId
-    ? { discounts: [{ promotion_code: promoCodeId }] }
-    : checkoutDiscountParams();
-
   const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    ...discountParams,
     success_url: `${appUrl}/dashboard?upgraded=true`,
     cancel_url: `${appUrl}/pricing`,
     metadata: { supabase_user_id: userId, tier: 'pro' },
@@ -146,7 +132,9 @@ export async function createSubscriptionCheckoutSession(
   return session.url!;
 }
 
-// One-time report purchase ($9.99 or $4.99 for Pro extras)
+// One-time report purchase (STRIPE_REPORT_PRICE_ID, $19.99 flat - the only
+// thing marketed on web; STRIPE_EXTRA_REPORT_PRICE_ID for existing Pro
+// subscribers exceeding their monthly allocation, unchanged, backend-only)
 export async function createReportCheckoutSession(
   customerId: string,
   userId: string,
@@ -165,7 +153,6 @@ export async function createReportCheckoutSession(
     customer: customerId,
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
-    ...checkoutDiscountParams(),
     success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
     cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
     metadata: {
