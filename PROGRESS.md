@@ -1,10 +1,16 @@
 # BetAutopsy — Claude Code instructions
 
 ## Architecture
-- Capacitor with bundled static export (Next.js `output: 'export'`).
-- iOS uses `iosScheme: 'https'` + `hostname: 'localhost'`.
-- API calls rewrite to `https://www.betautopsy.com` via `lib/api-client.ts`.
-- Do NOT switch to remote-URL or React Native.
+- This repo is the web app (Next.js App Router), serving betautopsy.com and the API
+  the iOS app calls.
+- The SHIPPING iOS app is native SwiftUI (no WebView), maintained in a separate repo
+  (betautopsy-ios), consuming this backend's API over HTTPS. Do not conflate the two
+  repos; do not edit iOS from a web-scoped session.
+- This repo still contains Capacitor build scaffolding (`package.json` build:mobile/
+  ios:build/ios:open scripts, `isMobileApp()`/`isMobileBuild()` checks, a
+  NEXT_PUBLIC_BUILD_TARGET=mobile branch in several files). Whether that path is still
+  actively built/shipped by anyone is UNVERIFIED as of 2026-08-17 — treat as legacy
+  unless told otherwise, and do not assume it is dead without checking with Andrew first.
 - Server Components stay Server Components.
 
 ## Design system — non-negotiable
@@ -14,18 +20,29 @@
 - No bento grids, glassmorphism, shadcn defaults.
 - No emoji in UI strings.
 - No hamburger menus on any viewport.
-- Colors: midnight `#0D1117`, scalpel `#00C9A7`, bleed `#C4463A`, surface tokens only.
+- Colors: yellow `#FACC15`, canvas `#0A0E12`, off-white `#EDEDF3`, surface tokens only.
+  Money red/green (`#FF4D4D` / `#00DC82`) reserved for dollar deltas only. (Retired: an
+  earlier "Luminol" midnight/scalpel/bleed palette — superseded, do not use.)
 - Fonts: Plus Jakarta Sans (sans), IBM Plex Mono (mono). No Inter.
 
 ## Capacitor plugin pattern
+(Applies only if the legacy Capacitor build path above is confirmed still active.)
 - Dynamic-import inside handlers: `const { Browser } = await import('@capacitor/browser')`.
 - Never top-level import — breaks web bundle.
 - Gate native code with `isMobileApp()` (runtime) or `isMobileBuild()` (compile-time).
 
 ## Stripe / payments
-- Stripe stays web-routed. Never IAP.
+- Stripe stays web-routed for THIS repo (web checkout only). The iOS app ships (or
+  shipped) a separate StoreKit consumable via RevenueCat, in the iOS repo — that is
+  correct there, not a violation of any rule here. Do not add IAP to the web app; do
+  not remove Stripe from the web app to "match" iOS.
 - Use `openCheckoutUrl()` in `lib/native.ts` — opens SFSafariViewController on native.
 - Never `window.location.href = data.url` for Stripe URLs.
+- Single report purchase at $19.99 (`STRIPE_REPORT_PRICE_ID`, `REPORT_PURCHASE_LIMITS`
+  in `types/index.ts`) is the only thing marketed on web as of 2026-08-17. No discount/
+  promo mechanism exists (removed same date). Pro exists on the backend only — real
+  subscribers keep working, nothing purchases it from a public surface anymore. See
+  "P0/P1 audit + fixes" below before assuming otherwise.
 
 ## Progress tracking
 - At the end of every response that completes work or proposes new work, update `PROGRESS.md`.
@@ -42,7 +59,182 @@
 
 ---
 
-## Current branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
+## Current branch: multiple — P0/P1 audit + fixes (2026-08-16 → 2026-08-17)
+
+### Context
+Andrew handed a large pre-launch audit brief (P0-1 through P0-8, P1-1 through P1-6,
+P2 infra/a11y/SEO/hygiene, a golden-fixture spec, a launch gate checklist). Step 0
+was recon-only: verify every claim against live repo/DB/Vercel, then produce a
+staged plan, then halt. Recon found the brief was right in most places, wrong or
+stale in several, and one thing (the `has_time_data` threshold direction) that
+neither the brief nor the first recon pass caught correctly — Andrew caught it on
+a second look and it turned out to be the most consequential single fix of the
+session. Full recon findings + the original staged plan are in this session's
+transcript, not reproduced here; this entry tracks what actually shipped.
+
+### Done this session: 6 branches, 5 merged, 1 DB migration applied directly via
+Supabase MCP once Andrew reconnected it mid-session (was scoped to the wrong
+Supabase org at session start — org `hyfwtlohiekmmdxlyexn` ["Diagnostic Sports,
+LLC"] didn't contain the betautopsy project; Andrew fixed the connector, project
+`eekubnadizmtuhnxzcig` confirmed ACTIVE_HEALTHY after).
+
+- **PR #82 — `fix(marketing): delete fabricated homepage/sample stats, fix /go's
+  real fallback`. MERGED.** Deleted `PlatformMetrics` (hardcoded "155,163 Bets
+  Analyzed" / "323 Reports Generated", ~19.7x the real DB count, no live-data path)
+  from `/` and `/sample` entirely. `/go`'s `RealtimeActivity` ticker deleted too —
+  first attempt bumped its fallback numbers to real counts with a "re-verify
+  periodically" comment, which Andrew correctly called out as the exact mechanism
+  that produced the original bug (git history: "bump Bets Analyzed 15,004 ->
+  155,163"). Deleted `app/api/recent-activity/route.ts`, now fully orphaned.
+
+- **PR #83 — `fix(engine): honest has_time_data gate, exclude midnight from
+  late-night stats`. MERGED.** `calculateTiming`'s gate was `midnightCount /
+  settled.length < 0.8` — backwards-permissive; the population's real midnight
+  rate (65.9%) cleared it easily. Tightened to `<= 0.05` (launch stopgap, not the
+  final design — v1.1 should gate on an absolute real-timestamp count + a
+  per-book disclosure, since date-only rows cluster by sportsbook). Bigger bug:
+  `best_window`/`worst_window`/`late_night_stats` shipped fully computed even when
+  the gate failed, relying on one client-side `&&` check to hide them — verified
+  directly against a live report where the gate correctly read `false` and
+  `late_night_stats` still shipped `{count:197, pct_of_total:100}` in the raw
+  payload. Now `null` at the engine level when the gate fails. Hour 0 also removed
+  from the late-night hour window (mirrors the tradeoff PR #80 already accepted
+  for the separate qualitative bias detector — this is a different computation
+  PR #80 never touched). New test: `__tests__/timing-late-night-gate.test.ts`.
+
+- **PR #84 — `fix(report): stop clobbering snapshot redaction, explicit share
+  consent, remove percentile claims`. MERGED.** Three related fixes: (1)
+  `app/api/analyze/route.ts` unconditionally overwrote `discipline_score`/`betiq`/
+  `emotion_percentile`/both `insufficient_data` flags/`enhanced_tilt` after
+  `runSnapshot()` already correctly redacted them — gated all six on
+  `!isSnapshot`, matching the `sport_specific_findings` fix already in place three
+  lines below (only 3 of the 6 were originally scoped; found the other 3 in the
+  same block, same bug shape, flagged the expansion in the PR). (2) Share tokens
+  were auto-minted on every report view AND on every ShareModal mount — neither
+  gated on an explicit share action. Both removed; minting is now lazy, on Copy
+  Link / Post on X click only. `isSnapshot` threaded into `SharedReport.tsx` (via
+  a new `report_type` field captured at mint time) so a shared snapshot actually
+  renders locked. Migration `20260817_share_token_consent.sql` adds `expires_at`/
+  `revoked` and revokes all 14 pre-fix tokens (confirmed systemic auto-mint across
+  many users, March–August, not just the 2 already deleted during recon). New
+  `DELETE /api/share` revoke endpoint; `POST` un-revokes on next explicit share
+  rather than returning a dead link. (3) Removed percentile rendering sitewide
+  (`PercentileGauge` + all 3 call sites) — no percentile claim on this site has a
+  real cohort behind it, and this closes the retroactive-leak gap from (1) for
+  free (old stored `report_json` with a leaked percentile now renders nothing for
+  that field). Follow-up same day: `SharedReport.tsx`'s `isSnapshot` derivation
+  changed from `=== 'snapshot'` to `!== 'full'` (fails closed on an unrecognized
+  or missing `report_type`, not open). **Migration applied directly via Supabase
+  MCP; verified live — `revoked_count` = 14, columns confirmed via
+  `information_schema`, and a revoked share link confirmed returning "Link
+  expired" on production after this PR deployed.**
+
+- **PR #81 — checkout coupon fallback. CLOSED, NOT MERGED.** First version added a
+  fallback that retried `checkout.sessions.create()` without the discount on
+  `coupon_applies_to_nothing`. Before merge, direct Stripe API query found every
+  price ID is the FULL undiscounted price (`STRIPE_REPORT_PRICE_ID` = $19.99,
+  `STRIPE_PRO_PRICE_ID` = $39.99/mo) — the fallback would have silently charged
+  2x the advertised price. Andrew resolved this at the source instead: deleted
+  the AUTOPSY50 coupon in Stripe and `STRIPE_LAUNCH_PROMO` from Vercel env. PR
+  closed unmerged; the dead code it would have added was never on `main`.
+
+- **PR #85 — `chore: remove dead promo code + D1 pricing decision (flat $19.99,
+  Pro off web)`. OPEN, awaiting review.** Two commits. (1) Removed the now-dead
+  discount mechanism: `checkoutDiscountParams()`/`LAUNCH_PROMO` in
+  `lib/stripe.ts`, `PROMO_CODE_MAP`/`resolvePromoSlug` in
+  `app/api/checkout/route.ts`, stale `.env.template` entries. (2) **D1 final**:
+  web report price stays on `STRIPE_REPORT_PRICE_ID` ($19.99, no new Price object
+  needed); `REPORT_PURCHASE_LIMITS.price` (`types/index.ts`) is now the single
+  source every surface reads from. Removed sitewide: all "$19.99 ~~$9.99~~, 50%
+  off" copy, struck-through anchors, "50% OFF"/"MOST POPULAR"/"BEST VALUE"
+  badges, the homepage and dashboard Pro pricing cards, FAQ's Pro Q&A, the
+  JSON-LD Pro offer, `ProUpsellModal` (deleted entirely), the Settings page's
+  Pro-upsell block (shown previously to every non-pro user), and the sidebar's
+  "Upgrade to Pro" CTA (relabeled "Get Full Report"). Found and fixed one dead
+  end not in the original brief: `uploads/compare` (a real Pro-gated feature) had
+  a "Go Pro — $19.99/mo" CTA pointing at a purchase flow that no longer exists —
+  softened to explain the feature isn't available on the current plan instead of
+  promising a broken upgrade. **Explicitly not touched**: `TIER_LIMITS.pro`,
+  `EXTRA_REPORT_PRICE`, `createSubscriptionCheckoutSession`, every server-side
+  `tier === 'pro'` gate — 4 accounts have `subscription_tier='pro'` and must keep
+  working, 2 of them (comped family accounts) with `stripe_customer_id: null` by
+  design. Verified (not changed, already correct): every `stripe_customer_id`
+  read site already handles `null` gracefully; none assume Pro implies a Stripe
+  customer.
+
+- **Two ad-hoc DB actions (service-role key, read-only + one scoped delete),
+  requested and confirmed explicitly by Andrew, not part of a PR:** deleted the 2
+  non-consensual share tokens flagged during recon; queried void-bet distribution
+  (44 void bets, 4 users, 38 on Andrew's own account, 3 external users with 2
+  void bets / 1 paid report each — small enough for direct emails, not a banner
+  system, per Andrew's call).
+
+### Gates, every PR
+`tsc --noEmit` 0 · `vitest run` green (381 → 390 across the session as tests were
+added) · `next build` 0, each time, before commit.
+
+### Outlined, NOT started (needs a nod before code, per standing rules)
+- **Session/annotation `lateNight` "unknown" state**
+  (`lib/autopsy-engine.ts:2092` session boolean, `:2373-2378` per-bet hour/day
+  annotations). Same principle as PR #83's `has_time_data` fix, different
+  functions — neither currently checks whether a session/bet's timestamp is real
+  before computing a definite true/false. Not currently producing false
+  positives (hour 0 fails the `>= 23` check on its own) but can't distinguish
+  "genuinely not late-night" from "no real timestamp to judge by," and this feeds
+  the heated-session display on the free snapshot — the paywall centerpiece.
+  Outline: add a per-session/per-bet real-timestamp flag, change `lateNight` from
+  `boolean` to `boolean | null`, gate the per-bet hour/day annotation signals the
+  same way, add a third UI state for the heated-session display. Wire change
+  (bool → tri-state) needs the same iOS-tolerance check as Stage 14. Bigger than
+  PR #83 (two separate loops, not one function) — outlined and reported back;
+  waiting on approval before writing code.
+
+### Not started, flagged honestly rather than rushed
+- **Golden fixture suite (Fixtures A–G from the original brief).** Meant to land
+  before Stage 5 (the `ProtectedValue` redaction-component refactor), not
+  necessarily in this same session. This repo has no React-component-rendering
+  test infrastructure yet (no jsdom/happy-dom environment, no
+  `@testing-library/react`, no JSX-transform config for Vitest — confirmed via
+  grep of `vitest.config.ts`/`package.json` before starting anything else this
+  session). Building it means standing up that infrastructure AND getting a
+  ~3,800-line component with heavy dependencies (recharts, several hooks, `next/
+  dynamic`) to render cleanly under it, before the actual fixture-writing even
+  starts. Given the volume already shipped this session (5 merged/closed PRs + 1
+  applied migration + 1 outline), this was deliberately not started rather than
+  rushed at low quality at the end of an already-long session. Next session:
+  stand up the rendering infra first (small, verifiable step on its own — get one
+  trivial component rendering and asserting before touching `AutopsyReport`),
+  then build fixtures A–G against current (pre-Stage-5) behavior and confirm they
+  fail on the known, still-open leak sites from the P0-5-2 inventory before
+  writing any fixing code.
+
+### Parked / next branch
+- Stage 8 (cash-out enum widening) — still blocked on iOS decode-tolerance
+  confirmation, which requires a session against `betautopsy-ios`, out of scope
+  here. Andrew's to route.
+- Stage 12 remainder: FAQ/JSON-LD sweep for the 1-cent hardcoded-vs-computed
+  pricing drift and the "MOST POPULAR"/annual-offer JSON-LD gaps flagged in the
+  original recon — largely subsumed by PR #85's flat-price change, worth a
+  spot-check once #85 is live rather than assumed clean.
+- Stage 13 (sample report internal-consistency reconciliation in
+  `lib/demo-data.ts`), Stage 14 remainder (the `summaryCounts.leakPatternsFlagged`
+  vs `_snapshot_counts.leaks` divergence — P1-6b, not yet touched), Stage 15 (P2
+  a11y/SEO hygiene batch: `/terms` metadata, `/sample` SSR h1, main-content
+  landmarks) — none started this session.
+- `renderTrialEndingEmail` (`lib/onboarding-emails.ts`) appears to be dead code
+  independent of anything this session touched — gated on
+  `userQualifiesForPromo()`, which is hardcoded to always return `false`
+  (a different, already-disabled "free first report" promo, not the one removed
+  this session). Fixed its stale price text for hygiene while in the area; did
+  not investigate further or remove it.
+- The `.claude`-adjacent uncommitted `git stash` from early in this session
+  (historical PR #80 progress notes that were apparently never committed
+  upstream) is still sitting in the stash list, untouched. Flagged, not
+  resolved.
+
+---
+
+## Previous branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
 
 ### Done this session: full public-surface audit (REVIEW ONLY — no product code changed)
 
