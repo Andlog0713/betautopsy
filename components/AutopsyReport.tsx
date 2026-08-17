@@ -1398,7 +1398,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 {/* Expanded content */}
                 <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
-                    {snapshotLocked && i > 0 ? (
+                    {snapshotLocked ? (
                       // Checked before the empty-description branch below.
                       // bias.description is '' (not "not yet arrived") for
                       // every bias on a snapshot report - it's the engine's
@@ -1408,11 +1408,46 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       // first made this lock affordance permanently
                       // unreachable and showed a fake "Generating..." spinner
                       // on every locked bias instead, forever.
-                      <>
+                      //
+                      // Top-severity biases (engine's topEvidenceBiases, up to
+                      // 7) ship evidence_visibility: 'visible' - the free-tier
+                      // teaser, dollars still paywalled. Render that real
+                      // evidence instead of the generic locked blurb when
+                      // it's actually on the wire; fall back to the generic
+                      // blurb for the rest.
+                      bias.evidence_visibility === 'visible' && bias.evidence ? (
+                        <>
+                          <p className="text-sm text-fg leading-relaxed">{bias.evidence}</p>
+                          {bias.sub_splits && bias.sub_splits.length > 0 && (
+                            <div className="space-y-1">
+                              {bias.sub_splits.map((s, si) => (
+                                <p key={si} className="text-sm text-fg-muted">
+                                  <span className="text-fg">{s.label}</span>
+                                  {s.roi_pct != null && (
+                                    <>
+                                      {' '}ROI: <span className={`font-mono ${s.roi_pct >= 0 ? 'text-win' : 'text-loss'}`}>{s.roi_pct >= 0 ? '+' : ''}{s.roi_pct.toFixed(1)}%</span>
+                                    </>
+                                  )}
+                                  {' '}({s.bets} bets)
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-fg-dim font-mono flex items-center gap-1.5">
+                            What it cost you: <RedactedValue type="dollar" seed={reportId} index={i + 100} />
+                          </p>
+                          {(bias.sample_size != null || bias.confidence) && (
+                            <p className="text-xs text-fg-dim">
+                              {bias.sample_size != null && `Based on ${bias.sample_size} qualifying bets.`}
+                              {bias.confidence && ` Confidence: ${bias.confidence}.`}
+                            </p>
+                          )}
+                        </>
+                      ) : (
                         <RedactedValue type="text" preview={0}>
                           {`This bias was detected with ${bias.severity} severity based on your betting patterns. The full analysis includes specific evidence, dollar cost estimates, and a recommended fix.`}
                         </RedactedValue>
-                      </>
+                      )
                     ) : !bias.description ? (
                       <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
                         <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
