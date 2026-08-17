@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks Stripe's `checkout.sessions.create` so we can force a
-// discount-related failure on the first call and assert the retry drops
-// the discount instead of propagating the error.
+// discount-related failure and assert it is NEVER retried at a
+// different (higher, undiscounted) price. Every Stripe Price ID this
+// module uses is the full, undiscounted amount - the coupon is the
+// entire mechanism producing the advertised price - so a "helpful"
+// retry-without-discount would silently double the charge.
 const createSessionMock = vi.fn();
 
 vi.mock('stripe', () => {
@@ -13,7 +16,7 @@ vi.mock('stripe', () => {
   };
 });
 
-describe('checkout coupon fallback', () => {
+describe('checkout coupon failure handling', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.unstubAllEnvs();
@@ -24,34 +27,29 @@ describe('checkout coupon fallback', () => {
     vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://www.betautopsy.com');
   });
 
-  it('retries without a discount when Stripe rejects coupon_applies_to_nothing', async () => {
+  it('does NOT retry at the undiscounted price when Stripe rejects coupon_applies_to_nothing', async () => {
     vi.stubEnv('STRIPE_LAUNCH_PROMO', 'promo_launch');
-    createSessionMock
-      .mockRejectedValueOnce({
-        type: 'StripeInvalidRequestError',
-        code: 'coupon_applies_to_nothing',
-        message: 'This coupon cannot be redeemed because it does not apply to anything in this order.',
-      })
-      .mockResolvedValueOnce({ url: 'https://checkout.stripe.com/session_ok' });
+    createSessionMock.mockRejectedValueOnce({
+      type: 'StripeInvalidRequestError',
+      code: 'coupon_applies_to_nothing',
+      message: 'This coupon cannot be redeemed because it does not apply to anything in this order.',
+    });
 
     const { createReportCheckoutSession } = await import('@/lib/stripe');
-    const url = await createReportCheckoutSession('cus_123', 'user_123', 'report_123', false);
+    await expect(
+      createReportCheckoutSession('cus_123', 'user_123', 'report_123', false)
+    ).rejects.toMatchObject({ code: 'coupon_applies_to_nothing' });
 
-    expect(url).toBe('https://checkout.stripe.com/session_ok');
-    expect(createSessionMock).toHaveBeenCalledTimes(2);
-
-    // First call carried the discount.
+    // Exactly one attempt, with the discount attached. Never a second
+    // call without it - that would charge $19.99 for something shown
+    // to the customer as $9.99.
+    expect(createSessionMock).toHaveBeenCalledTimes(1);
     expect(createSessionMock.mock.calls[0][0]).toMatchObject({
       discounts: [{ promotion_code: 'promo_launch' }],
     });
-    // Retry dropped it entirely (no discounts, no allow_promotion_codes).
-    const retryParams = createSessionMock.mock.calls[1][0];
-    expect(retryParams.discounts).toBeUndefined();
-    expect(retryParams.allow_promotion_codes).toBeUndefined();
-    expect(retryParams.line_items).toEqual([{ price: 'price_report', quantity: 1 }]);
   });
 
-  it('does not retry and propagates non-discount Stripe errors', async () => {
+  it('does not retry and propagates non-discount Stripe errors the same way', async () => {
     vi.stubEnv('STRIPE_LAUNCH_PROMO', 'promo_launch');
     createSessionMock.mockRejectedValueOnce({
       type: 'StripeInvalidRequestError',
@@ -68,20 +66,19 @@ describe('checkout coupon fallback', () => {
     expect(createSessionMock).toHaveBeenCalledTimes(1);
   });
 
-  it('subscription checkout also falls back on a discount failure', async () => {
+  it('subscription checkout also blocks rather than retrying at full price on a discount failure', async () => {
     vi.stubEnv('STRIPE_LAUNCH_PROMO', 'promo_launch');
-    createSessionMock
-      .mockRejectedValueOnce({ code: 'coupon_applies_to_nothing' })
-      .mockResolvedValueOnce({ url: 'https://checkout.stripe.com/sub_ok' });
+    createSessionMock.mockRejectedValueOnce({ code: 'coupon_applies_to_nothing' });
 
     const { createSubscriptionCheckoutSession } = await import('@/lib/stripe');
-    const url = await createSubscriptionCheckoutSession('cus_123', 'user_123', 'monthly');
+    await expect(
+      createSubscriptionCheckoutSession('cus_123', 'user_123', 'monthly')
+    ).rejects.toMatchObject({ code: 'coupon_applies_to_nothing' });
 
-    expect(url).toBe('https://checkout.stripe.com/sub_ok');
-    expect(createSessionMock).toHaveBeenCalledTimes(2);
+    expect(createSessionMock).toHaveBeenCalledTimes(1);
   });
 
-  it('no retry needed when no launch promo is configured', async () => {
+  it('succeeds normally when no discount is configured', async () => {
     createSessionMock.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/session_ok' });
 
     const { createReportCheckoutSession } = await import('@/lib/stripe');
@@ -90,5 +87,16 @@ describe('checkout coupon fallback', () => {
     expect(url).toBe('https://checkout.stripe.com/session_ok');
     expect(createSessionMock).toHaveBeenCalledTimes(1);
     expect(createSessionMock.mock.calls[0][0]).toMatchObject({ allow_promotion_codes: true });
+  });
+
+  it('succeeds normally when the discount applies cleanly', async () => {
+    vi.stubEnv('STRIPE_LAUNCH_PROMO', 'promo_launch');
+    createSessionMock.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/session_ok' });
+
+    const { createReportCheckoutSession } = await import('@/lib/stripe');
+    const url = await createReportCheckoutSession('cus_123', 'user_123', 'report_123', false);
+
+    expect(url).toBe('https://checkout.stripe.com/session_ok');
+    expect(createSessionMock).toHaveBeenCalledTimes(1);
   });
 });

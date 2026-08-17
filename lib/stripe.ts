@@ -16,10 +16,21 @@ function checkoutDiscountParams(): { discounts: { promotion_code: string }[] } |
 }
 
 // A misconfigured or expired coupon (e.g. scoped to the wrong product,
-// `coupon_applies_to_nothing`) must not block the purchase itself — the
-// discount is a nice-to-have, the sale is not. Detect that class of error
-// and let the caller retry the same session creation with the discount
-// stripped out.
+// `coupon_applies_to_nothing`) must not silently change what the customer
+// pays. Every priceId this module uses today is the FULL, undiscounted
+// Stripe price (STRIPE_REPORT_PRICE_ID is $19.99, not the advertised
+// $9.99; STRIPE_PRO_PRICE_ID is $39.99, not $19.99/mo) — the discount
+// coupon is the entire mechanism that produces the advertised numbers.
+// Retrying without the discount would create a checkout session at 2x
+// the price the user was shown, which is worse than the original 500:
+// a failed checkout is a bug the user retries, a session that silently
+// charges double is a chargeback and a consumer-protection problem.
+// Detect the error class so it logs clearly and the caller can surface
+// an honest "try again" message — do NOT retry at a different price.
+// Once Stage 12 removes the coupon-based discount (report price becomes
+// a flat, non-discounted $19.99 that already matches this price ID),
+// this whole class of error goes away and this function can retry safely
+// because there will be nothing left to strip.
 function isDiscountRelatedStripeError(err: unknown): boolean {
   if (err === null || typeof err !== 'object') return false;
   const e = err as { code?: unknown; param?: unknown };
@@ -28,9 +39,11 @@ function isDiscountRelatedStripeError(err: unknown): boolean {
   return false;
 }
 
-// Wraps checkout.sessions.create() so a discount-application failure
-// degrades to a discount-less checkout instead of a hard 500. Any other
-// Stripe error (bad price ID, auth, rate limit) still propagates.
+// Wraps checkout.sessions.create() so a discount-application failure is
+// distinguishable in logs from any other Stripe error, without ever
+// completing the session at an undiscounted price the customer wasn't
+// shown. Re-throws for the route's existing catch block to surface as
+// a "try again" message.
 async function createSessionWithDiscountFallback(
   baseParams: Stripe.Checkout.SessionCreateParams,
   discountParams: { discounts: { promotion_code: string }[] } | { allow_promotion_codes: true }
@@ -39,8 +52,8 @@ async function createSessionWithDiscountFallback(
     return await getStripe().checkout.sessions.create({ ...baseParams, ...discountParams });
   } catch (err) {
     if (!isDiscountRelatedStripeError(err)) throw err;
-    console.error('[checkout] discount failed to apply, retrying without discount', err);
-    return await getStripe().checkout.sessions.create(baseParams);
+    console.error('[checkout] DISCOUNT_FAILED: coupon/promo could not be applied, checkout blocked rather than risking an undiscounted charge', err);
+    throw err;
   }
 }
 
