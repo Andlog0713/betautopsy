@@ -42,7 +42,73 @@
 
 ---
 
-## Current branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
+## Current branch: `fix/session-late-night-known` — additive session field + Stage 8 blocker check (2026-08-17)
+
+### Done this session — SESSION-XXX.lateNightKnown (PR #88, open)
+Andrew's redirect from the P0/P1 audit session (`main` still has open PRs
+#85/#86/#87 ahead of this one): reject the earlier `lateNight: boolean |
+null` outline (breaking wire change, needs iOS decode-tolerance
+confirmation, out of scope) and ship the fix as an **additive sibling
+field** instead.
+
+- `lib/autopsy-engine.ts:2130` — `lateNight` computation unchanged. Added
+  `lateNightKnown: boolean`: true whenever `lateNight` is true (a real
+  `>=23:00` hour can never come from a midnight-artifact timestamp), or
+  when every bet in the session has a non-midnight clock time.
+- Checked the per-bet annotation path (`BetAnnotation`'s `late_night`
+  signal, `:2480`) for the same class of bug — already guarded via
+  `isMidnightParse`, no change needed.
+- `types/index.ts` `DetectedSession.lateNightKnown` added. Existing Swift
+  `Codable` clients with explicit `CodingKeys` ignore unknown fields, so
+  this decodes unchanged on iOS with zero cross-repo coordination.
+- Updated `lib/demo-data.ts` fixtures + two test factories
+  (`push-heated.test.ts`, `report-trust-charts.test.ts`) for the new
+  required field; refreshed 26 golden snapshots in
+  `autopsy-engine.test.ts.snap` (diff verified to be exclusively the new
+  field before running `-u`).
+- Gates: `tsc --noEmit` clean · `vitest run` 390/390 (23 files) ·
+  `next build` clean.
+
+### Checked, not implemented — Stage 8 cash-out enum (report only, per Andrew's ask)
+Question: can Stage 8 dissolve its iOS blocker the same way, via an
+additive `settlement_type` column instead of widening the `result` enum?
+
+**Yes, the wire-shape blocker dissolves the same way** — `Bet.result`
+(`'win' | 'loss' | 'push' | 'void' | 'pending'`, `types/index.ts:68`)
+flows to iOS today through `DetectedSession.betSnapshots[].result`, which
+is why widening it was ever a concern. Keeping `result` confined to its
+existing 5 values and adding a new optional `settlement_type: 'standard' |
+'cash_out'` sibling is additive-only, same pattern as `lateNightKnown`.
+
+**But implementing Stage 8 for real is more than a field addition.**
+`lib/csv-parser.ts:37` currently maps every `cashed_out`/`cashout` variant
+to `result: 'void'`, and `:330-333` then force-zeroes `profit` for every
+`void` row — this is the "cash-outs erased to $0 profit" bug from the
+Engine-math-bugs list. Fixing it properly means reclassifying cash-outs
+by their actual settlement value (profit → `'win'`, loss → `'loss'`,
+breakeven → `'push'`) instead of dumping them all into `'void'`, which
+changes win rate, ROI, streak, and chase-detection math everywhere `bets`
+get filtered by `result`. That's a parse-path change with real
+behavioral effects, not just a wire-shape one — per the standing rule
+(outline-then-approve for anything touching the parse path), it needs its
+own outline before I touch `csv-parser.ts`. Not started.
+
+### Still awaiting Andrew's go-ahead (reported, not touched)
+Items 1-3 from the prior "Next prompt" list — Weekly Digest Pro-gating
+(confirmed never gated, PR #85's FAQ copy removal was correct),
+`app/faq/page.tsx`'s "top bias fully explained" claim (confirmed false
+against the live engine — `description: ''` + `hidden` on every bias;
+surfaced a second, more serious bug as a byproduct: the top bias's
+free-teaser `evidence` field is never rendered in `AutopsyReport.tsx`, so
+the free tier's conversion-moment bias shows "Generating analysis..."
+forever), and `/uploads/compare`'s CTA (confirmed unreachable for
+non-pro — its trigger is gated at `app/(dashboard)/uploads/page.tsx:283`,
+so PR #85's copy softening there was low-stakes, not a regression) — all
+reported in-conversation, no code changed pending Andrew's call.
+
+---
+
+## Previous branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
 
 ### Done this session: full public-surface audit (REVIEW ONLY — no product code changed)
 
