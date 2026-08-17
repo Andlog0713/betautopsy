@@ -63,6 +63,12 @@ export default function DemoReportWrapper({ ungated = false, analysis, bets }: D
             analysis={activeAnalysis}
             bets={activeBets}
             tier="pro"
+            // Explicit, not just the prop's default: this is a showcase of
+            // what a FULL paid report looks like, never locked. Written out
+            // now that isSnapshot is an actively-checked prop elsewhere
+            // (SharedReport.tsx), so the intent here reads as a decision,
+            // not an oversight matching SharedReport's old silent default.
+            isSnapshot={false}
             readOnly
           />
         </div>

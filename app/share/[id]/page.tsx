@@ -52,6 +52,7 @@ interface ShareData {
   archetype: { name: string; description: string } | null;
   date: string;
   report_json?: Record<string, unknown>;
+  report_type?: string;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -74,10 +75,15 @@ const getShareData = cache(async (id: string): Promise<ShareData | null> => {
   const supabase = createServiceRoleClient();
   const { data } = await supabase
     .from('share_tokens')
-    .select('data')
+    .select('data, revoked')
     .eq('id', id)
     .single();
-  return (data?.data as ShareData | undefined) ?? null;
+  // A revoked link renders the same "Link expired" state as a row that
+  // doesn't exist at all - the owner (or the 2026-08-16 consent-fix
+  // migration) took it down; a stranger with the URL shouldn't be able to
+  // tell the difference between "never existed" and "was revoked."
+  if (!data || data.revoked) return null;
+  return (data.data as ShareData | undefined) ?? null;
 });
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

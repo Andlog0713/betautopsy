@@ -30,7 +30,6 @@ import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
-import PercentileGauge from './report/PercentileGauge';
 
 // ── Helpers ──
 
@@ -437,6 +436,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   // recovery banner — so leaving Recovery Mode reverts old reports to neutral.
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [mintingShareUrl, setMintingShareUrl] = useState(false);
   const [controlRuleBusy, setControlRuleBusy] = useState<string | null>(null);
   const [cooldownBusy, setCooldownBusy] = useState<string | null>(null);
 
@@ -456,22 +456,30 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Pre-fetch share URL so quick-share "Copy Link" copies the real /share/<id> URL
-  // instead of window.location.href (which resolves to /reports on the dashboard).
-  useEffect(() => {
-    if (!reportId || readOnly) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await apiPost('/api/share', { report_id: reportId });
-        const result = await res.json();
-        if (!cancelled && result.share_id) {
-          setShareUrl(`${window.location.origin}/share/${result.share_id}`);
-        }
-      } catch { /* silent — button falls back below */ }
-    })();
-    return () => { cancelled = true; };
-  }, [reportId, readOnly]);
+  // Mints (or fetches the already-minted) share token ONLY when the user
+  // clicks "Copy Link" - not on report view. Viewing your own report is
+  // not consent to create a public link for it. Cached in `shareUrl` so
+  // a repeat click doesn't re-mint; /api/share is idempotent per
+  // report_id regardless.
+  async function ensureShareUrl(): Promise<string | null> {
+    if (shareUrl) return shareUrl;
+    if (!reportId) return null;
+    setMintingShareUrl(true);
+    try {
+      const res = await apiPost('/api/share', { report_id: reportId });
+      const result = await res.json();
+      if (result.share_id) {
+        const url = `${window.location.origin}/share/${result.share_id}`;
+        setShareUrl(url);
+        return url;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      setMintingShareUrl(false);
+    }
+  }
 
   async function adoptControlRule(rule: ControlRuleSuggestion) {
     if (readOnly) return;
@@ -893,17 +901,22 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           Share on X
         </button>
         <button
-          onClick={() => {
-            const url = shareUrl ?? window.location.href;
+          onClick={async () => {
+            // readOnly reports (shared links, the demo) are already at
+            // their canonical URL - no minting needed, just copy it.
+            // Otherwise this is the report owner's first explicit share
+            // action; mint (or reuse) the token now.
+            const url = readOnly ? window.location.href : await ensureShareUrl();
+            if (!url) return;
             navigator.clipboard.writeText(url).then(() => {
               setLinkCopied(true);
               setTimeout(() => setLinkCopied(false), 2000);
             });
           }}
-          disabled={!shareUrl && !readOnly}
+          disabled={mintingShareUrl}
           className="btn-secondary font-mono text-xs disabled:opacity-50"
         >
-          {linkCopied ? 'Copied!' : shareUrl || readOnly ? 'Copy Link' : 'Preparing link…'}
+          {linkCopied ? 'Copied!' : mintingShareUrl ? 'Generating link…' : 'Copy Link'}
         </button>
       </div>
 
@@ -1056,9 +1069,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${emotionScore}%` }} />
               </div>
               <p className="font-mono text-xs text-fg mt-2">{emotionLabel(emotionScore).split('.')[0]}</p>
-              {analysis.emotion_percentile && (
-                <PercentileGauge percentile={analysis.emotion_percentile} invertedScale label={`More controlled than ${analysis.emotion_percentile}% of bettors`} />
-              )}
             </>
           )}
         </div>
@@ -1075,9 +1085,6 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               <div className="absolute -top-1 w-0.5 h-3 bg-fg-bright" style={{ left: `${analysis.discipline_score.total}%` }} />
             </div>
             <p className="font-mono text-xs text-fg mt-2">Process consistency {analysis.discipline_score.total >= 51 ? 'moderate' : 'is low'}</p>
-            {analysis.discipline_score.percentile && (
-              <PercentileGauge percentile={analysis.discipline_score.percentile} label={`Better than ${analysis.discipline_score.percentile}% of bettors`} />
-            )}
           </div>
         ) : summary.overall_grade ? (
           <div className="bg-base p-[18px]">
@@ -1097,13 +1104,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4 mb-2">
             <span className="font-mono text-4xl font-bold text-fg-bright">{readOnly ? analysis.betiq.score : <NumberTicker value={analysis.betiq.score} />}</span>
             <span className="font-mono text-sm text-fg-dim">/100</span>
-            {analysis.betiq.percentile != null && (
-              <span className="font-mono text-xs text-scalpel">better than {analysis.betiq.percentile}% of bettors</span>
-            )}
           </div>
-          {analysis.betiq.percentile != null && (
-            <PercentileGauge percentile={analysis.betiq.percentile} label={`Better than ${analysis.betiq.percentile}% of bettors`} />
-          )}
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright mb-4"><p className="text-fg-muted text-sm leading-relaxed">{analysis.betiq.interpretation}</p></div>
           <button onClick={() => setShowBetIQBreakdown(!showBetIQBreakdown)} className="font-mono text-[10px] text-scalpel tracking-[1.5px] hover:text-scalpel/80 transition-colors">
             {showBetIQBreakdown ? 'HIDE' : 'VIEW'} SKILL BREAKDOWN
@@ -1397,17 +1398,26 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 {/* Expanded content */}
                 <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-subtle">
-                    {!bias.description ? (
-                      <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
-                        <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
-                        Generating analysis...
-                      </div>
-                    ) : snapshotLocked && i > 0 ? (
+                    {snapshotLocked && i > 0 ? (
+                      // Checked before the empty-description branch below.
+                      // bias.description is '' (not "not yet arrived") for
+                      // every bias on a snapshot report - it's the engine's
+                      // redaction sentinel (description_visibility: 'hidden'),
+                      // paired with a real, already-persisted analysis object,
+                      // not a value that streams in later. Checking emptiness
+                      // first made this lock affordance permanently
+                      // unreachable and showed a fake "Generating..." spinner
+                      // on every locked bias instead, forever.
                       <>
                         <RedactedValue type="text" preview={0}>
                           {`This bias was detected with ${bias.severity} severity based on your betting patterns. The full analysis includes specific evidence, dollar cost estimates, and a recommended fix.`}
                         </RedactedValue>
                       </>
+                    ) : !bias.description ? (
+                      <div className="flex items-center gap-2 text-fg-muted text-sm py-2">
+                        <span className="inline-block w-3.5 h-3.5 border-2 border-fg-muted border-t-scalpel rounded-full animate-spin" />
+                        Generating analysis...
+                      </div>
                     ) : (
                       <>
                         <p className="text-sm text-fg leading-relaxed">{bias.description}</p>

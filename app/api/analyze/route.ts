@@ -406,17 +406,29 @@ export async function POST(request: Request) {
         // self-gate internally; only the percentile wrappers need handling
         // here because the route re-derives them after the engine call.
         const settledCount = metricsForDiscipline.summary.wins + metricsForDiscipline.summary.losses;
-        analysis.discipline_score = disciplineResult
-          ? (disciplineResult.insufficient_data
-              ? { ...disciplineResult }
-              : { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) })
-          : undefined;
-        analysis.betiq = calculateBetIQ(metricsForDiscipline, betsToAnalyze);
         const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
-        analysis.emotion_percentile = emotionInsufficient ? null : estimatePercentile('emotion_score', analysis.emotion_score, true);
-        analysis.emotion_score_insufficient_data = emotionInsufficient;
-        analysis.tilt_score_insufficient_data = emotionInsufficient;
-        analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
+        // Only overwrite for full reports - same rule as sport_specific_findings
+        // below, and the same bug class. runSnapshot already assembled its
+        // own correctly-redacted discipline_score (omitted entirely by
+        // design), betiq, enhanced_tilt, and insufficient_data flags;
+        // unconditionally recomputing and reassigning them here clobbered
+        // that for every snapshot report, writing a real discipline_score +
+        // percentile (with no isSnapshot gate at all, unlike the fix already
+        // applied to sport_specific_findings three lines below) into every
+        // free user's stored report_json. For snapshot mode the engine
+        // output is authoritative; only full mode falls through.
+        if (!isSnapshot) {
+          analysis.discipline_score = disciplineResult
+            ? (disciplineResult.insufficient_data
+                ? { ...disciplineResult }
+                : { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) })
+            : undefined;
+          analysis.betiq = calculateBetIQ(metricsForDiscipline, betsToAnalyze);
+          analysis.emotion_percentile = emotionInsufficient ? null : estimatePercentile('emotion_score', analysis.emotion_score, true);
+          analysis.emotion_score_insufficient_data = emotionInsufficient;
+          analysis.tilt_score_insufficient_data = emotionInsufficient;
+          analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
+        }
         const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
         // Only overwrite for full reports. runSnapshot already assembled a
         // redacted variant of sport_specific_findings (estimated_cost zeroed,

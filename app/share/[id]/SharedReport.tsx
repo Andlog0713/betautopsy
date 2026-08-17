@@ -25,6 +25,7 @@ interface ShareData {
   date: string;
   report_json?: unknown;
   tier?: string;
+  report_type?: string;
 }
 
 function gradeColor(grade: string | null | undefined): string {
@@ -40,6 +41,15 @@ function gradeColor(grade: string | null | undefined): string {
 
 export default function SharedReport({ data }: { data: ShareData }) {
   const hasFullReport = !!data.report_json;
+  // Mirrors the working dashboard case (app/(dashboard)/reports/page.tsx:
+  // isSnapshot={activeReport.report_type === 'snapshot'}). Tokens minted
+  // before this fix don't carry report_type - those rows were also part
+  // of the 2026-08-16 mass-revoke migration, so they render "Link expired"
+  // via getShareData rather than reaching this component with an unknown
+  // type. Defaulting undefined to false here would silently unlock a
+  // snapshot if that assumption is ever wrong; false is only correct
+  // because absent report_type means the row can't get this far anymore.
+  const isSnapshot = data.report_type === 'snapshot';
 
   return (
     <div className="min-h-screen px-4 py-12">
@@ -65,6 +75,7 @@ export default function SharedReport({ data }: { data: ShareData }) {
           <AutopsyReport
             analysis={data.report_json as AutopsyAnalysis}
             tier={(data.tier as 'free' | 'pro') ?? 'free'}
+            isSnapshot={isSnapshot}
             readOnly
           />
         ) : (

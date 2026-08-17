@@ -37,6 +37,7 @@ export default function ShareModal({
   ];
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [minting, setMinting] = useState(false);
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
   const [activeSlide, setActiveSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -52,19 +53,30 @@ export default function ShareModal({
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Pre-fetch share URL on mount so clipboard write is instant
-  useEffect(() => {
-    if (!reportId) return;
-    (async () => {
-      try {
-        const res = await apiPost('/api/share', { report_id: reportId });
-        const result = await res.json();
-        if (result.share_id) {
-          setShareUrl(`${window.location.origin}/share/${result.share_id}`);
-        }
-      } catch { /* silent */ }
-    })();
-  }, [reportId]);
+  // Mints (or fetches the already-minted) share token ONLY when the user
+  // takes an explicit share action (Copy link / Post on X) - not on modal
+  // mount. Opening the modal to look at share options is not consent to
+  // create a public link. Cached in `shareUrl` so a second click doesn't
+  // re-mint; /api/share is idempotent per report_id regardless.
+  const ensureShareUrl = useCallback(async (): Promise<string | null> => {
+    if (shareUrl) return shareUrl;
+    if (!reportId) return null;
+    setMinting(true);
+    try {
+      const res = await apiPost('/api/share', { report_id: reportId });
+      const result = await res.json();
+      if (result.share_id) {
+        const url = `${window.location.origin}/share/${result.share_id}`;
+        setShareUrl(url);
+        return url;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      setMinting(false);
+    }
+  }, [reportId, shareUrl]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -105,8 +117,8 @@ export default function ShareModal({
     a.click();
   }
 
-  function handleCopyLink() {
-    const url = shareUrl || `${window.location.origin}/reports`;
+  async function handleCopyLink() {
+    const url = (await ensureShareUrl()) || `${window.location.origin}/reports`;
     navigator.clipboard.writeText(url).then(() => {
       toast.success('Link copied');
     }).catch(() => {
@@ -120,8 +132,8 @@ export default function ShareModal({
     });
   }
 
-  function handleShareTwitter() {
-    const url = shareUrl || 'https://betautopsy.com/quiz';
+  async function handleShareTwitter() {
+    const url = (await ensureShareUrl()) || 'https://betautopsy.com/quiz';
     const archName = data.archetype?.name ?? data.grade;
     const text = `I'm "${archName}" — ${roastLine} | What's your betting personality?`;
     const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
@@ -158,9 +170,10 @@ export default function ShareModal({
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
-                  className="flex-1 py-2 rounded-sm text-xs font-mono transition-colors bg-surface-2 border border-border-subtle text-fg hover:border-border-strong"
+                  disabled={minting}
+                  className="flex-1 py-2 rounded-sm text-xs font-mono transition-colors bg-surface-2 border border-border-subtle text-fg hover:border-border-strong disabled:opacity-60"
                 >
-                  {shareUrl ? 'Copy report link' : 'Generating link...'}
+                  {minting ? 'Generating link...' : 'Copy report link'}
                 </button>
                 <button
                   onClick={handleShareTwitter}
