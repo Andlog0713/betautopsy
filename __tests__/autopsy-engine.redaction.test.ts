@@ -401,6 +401,22 @@ describe('Snapshot Redaction — Group 3: no-dollar-leak walk', () => {
     // ── DetectedSession.stakeEscalation (ratio 1.0 = no escalation, not $) ──
     if (/^session_detection\.sessions\[\d+\]\.stakeEscalation$/.test(path)) return true;
 
+    // ── DetectedSession.stakeCv (coefficient of variation: stdDev/mean,
+    // a dimensionless ratio, not a dollar amount — lib/autopsy-engine.ts:569).
+    // Same class as stakeEscalation directly above; surfaced by the
+    // all-wins golden fixture, not the original baseline.
+    if (/^session_detection\.sessions\[\d+\]\.stakeCv$/.test(path)) return true;
+
+    // ── _snapshot_teaser.sessionTimelineSilhouette[N].stakeNorm ──
+    // Each stake divided by the session max (0..1 ratio) — the type's own
+    // comment says it outright: "no dollars, no outcomes." Not surfaced by
+    // the original Group 3 test because makeFixtureBets()'s stake spread
+    // apparently never produced enough qualifying values to trip the
+    // `> 0` check across its silhouette; the golden-fixture archetypes
+    // below (all-wins, cash-out-heavy) do. Genuine false positive, not a
+    // new leak — allowlisting like the sibling stakeEscalation ratio above.
+    if (/^_snapshot_teaser\.sessionTimelineSilhouette\[\d+\]\.stakeNorm$/.test(path)) return true;
+
     // ── bet_annotations.* (Spec v2 scope gap — FLAGGED FOR FOLLOW-UP) ──
     // Phase 3 surfaced three real dollar leaks in bet_annotations that
     // ship visible in snapshot mode today because the spec didn't enumerate
@@ -438,6 +454,38 @@ describe('Snapshot Redaction — Group 3: no-dollar-leak walk', () => {
     if (leaks.length > 0) {
       // eslint-disable-next-line no-console
       console.error('Dollar leaks detected:\n  - ' + leaks.join('\n  - '));
+    }
+    expect(leaks).toEqual([]);
+  });
+
+  // Golden fixture wire assertions (2026-08-17): same walk, across bet-
+  // history archetypes the well-behaved fixture above doesn't exercise.
+  // Fixture builders (noTimestampBets etc.) are defined later in this file
+  // as top-level function declarations — hoisted, safe to reference here.
+  it.each([
+    ['no timestamps (date-only)', () => noTimestampBets(60)],
+    ['tiny sample (8 bets)', () => tinySampleBets()],
+    ['all wins', () => allWinsBets(60)],
+    ['date boundary (year + month)', () => dateBoundaryBets()],
+    ['cash-out heavy', () => cashOutHeavyBets()],
+  ] as const)('[%s] no dollar-pattern leaf > 0 surfaces outside the allowlist', async (_label, buildBets) => {
+    const { analysis } = await runSnapshot(buildBets());
+    const leaves: Leaf[] = [];
+    walkLeaves(analysis, '', leaves);
+
+    const leaks: string[] = [];
+    for (const { path, key, value } of leaves) {
+      if (!DOLLAR_KEY.test(key)) continue;
+      const isLeakyNumber = typeof value === 'number' && value > 0;
+      const isLeakyString = typeof value === 'string' && DOLLAR_PATTERN_STR.test(value);
+      if (!isLeakyNumber && !isLeakyString) continue;
+      if (isAllowlisted(path, key, analysis)) continue;
+      leaks.push(`${path} = ${JSON.stringify(value)}`);
+    }
+
+    if (leaks.length > 0) {
+      // eslint-disable-next-line no-console
+      console.error(`[${_label}] Dollar leaks detected:\n  - ` + leaks.join('\n  - '));
     }
     expect(leaks).toEqual([]);
   });
@@ -750,6 +798,268 @@ describe('Snapshot loosen v2 — sport_specific_findings redaction', () => {
     for (const sf of findings) {
       expect(sf.evidence_visibility).toBe('visible');
       expect(/\$\s?-?\d/.test(sf.evidence)).toBe(false);
+    }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// GOLDEN FIXTURE WIRE ASSERTIONS (2026-08-17)
+//
+// Wire-level half of the golden fixture spec from the original launch-gate
+// brief, built on this file's existing infra rather than new DOM tooling —
+// this repo has no jsdom/testing-library yet, so the rendered-output half
+// (zero literal $ in the DOM, zero "Generating" text, zero lock affordances
+// on a full report) is a second pass once that's stood up. This half runs
+// runSnapshot()/runAutopsy() directly (pure Node) across several bet-history
+// archetypes the single well-behaved makeFixtureBets() fixture above doesn't
+// exercise, and re-asserts the wire invariants on each: no visible dollar
+// leak (reusing the Group 3 walker/allowlist below), every *_visibility tag
+// is one of the 5 valid values, sub_splits[].net_usd is null on snapshots,
+// and timing_analysis.has_time_data / late_night_stats / best_window /
+// worst_window are consistent with each other at the actual wire level
+// (runSnapshot's output, downstream of redactTimingForSnapshot) — PR #83's
+// test suite (timing-late-night-gate.test.ts) covers the same gate at the
+// calculateMetrics() level, one layer below the snapshot wrapper; this
+// re-confirms the wrapper doesn't reintroduce what #83 fixed.
+// ───────────────────────────────────────────────────────────────────────
+
+const ALL_VISIBILITY_TAGS = new Set(['visible', 'redacted_dollar', 'redacted_percent', 'redacted_text', 'hidden']);
+
+// Fixture: every bet at exact UTC midnight — the date-only CSV shape.
+// Should drive has_time_data to false (PR #83's <= 0.05 threshold).
+function noTimestampBets(count: number): Bet[] {
+  const base = Date.parse('2026-02-01T00:00:00Z');
+  return Array.from({ length: count }, (_, i) => {
+    const isWin = i % 3 === 0;
+    const stake = 40 + (i % 5) * 20;
+    return {
+      id: `midnight-${i}`,
+      user_id: 'u',
+      placed_at: new Date(base + i * 86400_000).toISOString(), // always T00:00:00.000Z
+      sport: i % 2 === 0 ? 'NFL' : 'NBA',
+      league: null,
+      bet_type: 'spread',
+      description: `date-only bet #${i}`,
+      odds: -110,
+      stake,
+      result: isWin ? 'win' : 'loss',
+      payout: isWin ? Math.round(stake * 1.91) : 0,
+      profit: isWin ? Math.round(stake * 0.91) : -stake,
+      sportsbook: 'FanDuel',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+// Fixture: 8 bets — below every minimum-sample floor in the engine. Must
+// not fabricate confidence; existing insufficient_data/gating behavior is
+// exercised (not re-litigated) by verify-engine-floor.ts and the loosen-v2
+// suite. Here we only check the wire stays honest (no dollar leak, valid
+// visibility tags) even at this size.
+function tinySampleBets(): Bet[] {
+  const base = Date.parse('2026-05-10T14:00:00Z');
+  const results: Array<'win' | 'loss'> = ['loss', 'loss', 'win', 'loss', 'win', 'loss', 'loss', 'win'];
+  return results.map((result, i) => {
+    const stake = 50;
+    return {
+      id: `tiny-${i}`,
+      user_id: 'u',
+      placed_at: new Date(base + i * 3 * 3600_000).toISOString(),
+      sport: 'NFL',
+      league: null,
+      bet_type: 'moneyline',
+      description: `tiny sample bet #${i}`,
+      odds: -120,
+      stake,
+      result,
+      payout: result === 'win' ? Math.round(stake * 1.83) : 0,
+      profit: result === 'win' ? Math.round(stake * 0.83) : -stake,
+      sportsbook: 'DraftKings',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+// Fixture: every bet a win. Snapshot redaction must hold even when every
+// underlying number is positive — a redaction bug that only manifests on
+// negative values (e.g. an `> 0` check meant to catch "real money" but
+// written backwards) would slip past a mixed fixture and only show here.
+function allWinsBets(count: number): Bet[] {
+  const base = Date.parse('2026-03-01T16:00:00Z');
+  return Array.from({ length: count }, (_, i) => {
+    const stake = 30 + (i % 6) * 15;
+    return {
+      id: `win-${i}`,
+      user_id: 'u',
+      placed_at: new Date(base + i * 5400_000).toISOString(),
+      sport: i % 2 === 0 ? 'NHL' : 'MLB',
+      league: null,
+      bet_type: 'spread',
+      description: `winning bet #${i}`,
+      odds: -110,
+      stake,
+      result: 'win',
+      payout: Math.round(stake * 1.91),
+      profit: Math.round(stake * 0.91),
+      sportsbook: 'DraftKings',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+// Fixture: spans a year boundary (Dec 31 -> Jan 1) and a month boundary
+// (Jan 31 -> Feb 1), real (non-midnight) times throughout.
+function dateBoundaryBets(): Bet[] {
+  const timestamps = [
+    '2025-12-30T19:00:00Z', '2025-12-31T20:15:00Z', '2025-12-31T23:45:00Z',
+    '2026-01-01T00:15:00Z', '2026-01-01T14:00:00Z', '2026-01-02T18:30:00Z',
+    '2026-01-30T21:00:00Z', '2026-01-31T22:10:00Z', '2026-02-01T13:00:00Z',
+    '2026-02-02T15:45:00Z',
+  ];
+  return timestamps.map((ts, i) => {
+    const isWin = i % 2 === 0;
+    const stake = 50;
+    return {
+      id: `boundary-${i}`,
+      user_id: 'u',
+      placed_at: new Date(ts).toISOString(),
+      sport: 'NBA',
+      league: null,
+      bet_type: 'spread',
+      description: `boundary bet #${i}`,
+      odds: -110,
+      stake,
+      result: isWin ? 'win' : 'loss',
+      payout: isWin ? Math.round(stake * 1.91) : 0,
+      profit: isWin ? Math.round(stake * 0.91) : -stake,
+      sportsbook: 'DraftKings',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+// Fixture: cash-out heavy. lib/csv-parser.ts currently maps cashed_out ->
+// 'void' at parse time and force-zeroes profit for void/push rows (P1-5,
+// still open as of this session) — so 'void' with profit: 0 is the actual
+// shape these rows reach the engine in today, real cash-out P&L already
+// discarded upstream of runSnapshot. This fixture documents that contract
+// at the engine boundary; it does not re-assert the parser bug itself
+// (covered separately, __tests__/csv-parser tests).
+function cashOutHeavyBets(): Bet[] {
+  const base = Date.parse('2026-04-01T17:00:00Z');
+  return Array.from({ length: 40 }, (_, i) => {
+    const isVoid = i % 3 === 0; // ~13 of 40 are cash-outs mapped to void
+    const isWin = !isVoid && i % 2 === 0;
+    const stake = 45;
+    return {
+      id: `cashout-${i}`,
+      user_id: 'u',
+      placed_at: new Date(base + i * 2700_000).toISOString(),
+      sport: 'NFL',
+      league: null,
+      bet_type: 'moneyline',
+      description: `cash-out fixture bet #${i}`,
+      odds: -105,
+      stake,
+      result: isVoid ? 'void' : (isWin ? 'win' : 'loss'),
+      payout: isVoid ? stake : (isWin ? Math.round(stake * 1.95) : 0),
+      profit: isVoid ? 0 : (isWin ? Math.round(stake * 0.95) : -stake),
+      sportsbook: 'BetMGM',
+      is_bonus_bet: false,
+      parlay_legs: null,
+      tags: null,
+      notes: null,
+      upload_id: null,
+      created_at: new Date().toISOString(),
+    } as Bet;
+  });
+}
+
+describe('Golden fixture wire assertions — visibility tags valid + sub_splits redacted', () => {
+  const FIXTURES: Array<[string, Bet[]]> = [
+    ['well-behaved (baseline)', makeFixtureBets()],
+    ['no timestamps (date-only)', noTimestampBets(60)],
+    ['tiny sample (8 bets)', tinySampleBets()],
+    ['all wins', allWinsBets(60)],
+    ['date boundary (year + month)', dateBoundaryBets()],
+    ['cash-out heavy', cashOutHeavyBets()],
+  ];
+
+  for (const [label, bets] of FIXTURES) {
+    it(`[${label}] every *_visibility field present is one of the 5 valid tags`, async () => {
+      const { analysis } = await runSnapshot(bets);
+      const leaves: Leaf[] = [];
+      walkLeaves(analysis, '', leaves);
+      const badTags = leaves.filter(
+        (l) => l.key.endsWith('_visibility') || l.key.endsWith('Visibility')
+      ).filter((l) => typeof l.value === 'string' && !ALL_VISIBILITY_TAGS.has(l.value));
+      if (badTags.length > 0) {
+        // eslint-disable-next-line no-console
+        console.error('Invalid visibility tag values:\n  - ' + badTags.map((l) => `${l.path} = ${JSON.stringify(l.value)}`).join('\n  - '));
+      }
+      expect(badTags).toEqual([]);
+    });
+
+    it(`[${label}] sub_splits[].net_usd is null on every bias/leak/finding in snapshot mode`, async () => {
+      const { analysis } = await runSnapshot(bets);
+      const collections: Array<{ sub_splits?: { net_usd: number | null }[] }[] | undefined> = [
+        analysis.biases_detected,
+        analysis.strategic_leaks,
+        analysis.sport_specific_findings,
+      ];
+      for (const collection of collections) {
+        for (const item of collection ?? []) {
+          for (const split of item.sub_splits ?? []) {
+            expect(split.net_usd).toBeNull();
+          }
+        }
+      }
+    });
+  }
+});
+
+describe('Golden fixture wire assertions — timing gate consistency (PR #83, at the snapshot-wire level)', () => {
+  it('date-only-heavy fixture: has_time_data false, and late_night_stats/best_window/worst_window are all null on the wire', async () => {
+    const { analysis } = await runSnapshot(noTimestampBets(60));
+    const timing = analysis.timing_analysis;
+    expect(timing).toBeDefined();
+    expect(timing?.has_time_data).toBe(false);
+    expect(timing?.late_night_stats).toBeNull();
+    expect(timing?.best_window).toBeNull();
+    expect(timing?.worst_window).toBeNull();
+  });
+
+  it('well-behaved fixture (real, varied times): has_time_data true, and the three fields are independently null-or-populated (not forced null by the gate)', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const timing = analysis.timing_analysis;
+    expect(timing).toBeDefined();
+    expect(timing?.has_time_data).toBe(true);
+  });
+
+  it('no fixture ships has_time_data as anything other than a real boolean (never null/undefined on the wire)', async () => {
+    for (const bets of [makeFixtureBets(), noTimestampBets(60), tinySampleBets(), allWinsBets(60), dateBoundaryBets(), cashOutHeavyBets()]) {
+      const { analysis } = await runSnapshot(bets);
+      expect(typeof analysis.timing_analysis?.has_time_data).toBe('boolean');
     }
   });
 });
