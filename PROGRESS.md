@@ -42,7 +42,132 @@
 
 ---
 
-## Current branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
+## Current branch: `fix/snapshot-top-bias-spinner` — top-bias evidence teaser + redaction allowlist audit (2026-08-17)
+
+PRs #85/#86 merged (confirmed via `git fetch` + `gh`). Items 1 (Weekly
+Digest never Pro-gated) and 3 (`/uploads/compare` CTA unreachable, gated
+at `uploads/page.tsx:283`) confirmed correct as shipped in PR #85 — no
+further action, left as-is per Andrew's call.
+
+### Done this session — top-bias evidence teaser (PR #89, open, highest priority)
+The free tier's conversion moment was broken: `bias.description` is
+always `''` on a snapshot (engine's `description_visibility: 'hidden'`
+sentinel), and the render branch order only special-cased `i > 0` for the
+locked teaser (PR #84). The top bias (`i === 0`) fell through to
+`!bias.description` and showed a "Generating analysis..." spinner
+forever, on a fully completed report.
+
+No engine change (P1-1 contract parity - the wire already ships
+`evidence_visibility: 'visible'` + real `evidence`/`sub_splits`/
+`sample_size`/`confidence` for the top ~7 biases by severity, web never
+consumed it). `components/AutopsyReport.tsx`: replaced the
+`snapshotLocked && i > 0` branch with `snapshotLocked` branching on
+`bias.evidence_visibility === 'visible'` instead of index - any
+top-severity bias (not just the first) now renders its real evidence
+teaser, `sub_splits` as label/bets/roi_pct rows (`net_usd` always `null`
+in snapshot payloads, never rendered), a locked `estimated_cost`, and a
+`sample_size`/`confidence` footer. Biases without visible evidence keep
+the generic locked blurb. Snapshot rendering can no longer reach the
+`!bias.description` spinner branch at all, regardless of index.
+
+No jsdom/testing-library infra exists for this component yet, so this
+isn't covered by an automated test - flagged rather than skipped.
+Verified live instead: temporarily wired one demo bias with
+`evidence_visibility`/`sub_splits` and flipped `DemoReportWrapper` to
+`isSnapshot`/unlocked, ran the dev server, confirmed in-browser the
+teaser renders per spec and the other two biases fall back to the locked
+blurb with no spinner anywhere, then reverted both temporary changes
+(not part of the commit). Gates: tsc/vitest (390/390)/build clean.
+
+### Investigated, not fixed — bet_annotations dollar leak (allowlist audit)
+Andrew flagged `__tests__/autopsy-engine.redaction.test.ts:404-418`: a
+blanket `path.startsWith('bet_annotations.')` allowlist entry whose own
+comment admitted 3 real dollar leaks were shipping visible in snapshot
+mode, PR #87's new archetype fixtures inheriting the same blind spot.
+
+Narrowed the allowlist (on `test/golden-fixture-wire-assertions`, PR
+#87's branch - **not** on this branch) to only the genuine false positive:
+`BetAnnotation.stakeVsMedian` (a 0..2 ratio), on both `annotations[]` and
+`worstAnnotatedBet`/`bestAnnotatedBet` (themselves `BetAnnotation`
+values, not raw `Bet` objects - the original comment's claim that those
+two carry "profit + stake metrics" was itself wrong; they only carry the
+same ratio false positive). Ran the full suite (base fixture + all 5
+golden archetypes) to get the true leak surface empirically rather than
+trusting the stale comment:
+- `bet_annotations.distribution.{disciplined,chasing,neutral}.totalStaked`
+- `bet_annotations.distribution.{disciplined,neutral}.totalProfit` -
+  broader than the original comment, which named only `totalStaked`
+- `bet_annotations.emotionalCost`
+- `bet_annotations.streakInfluence.{avgStakeAfterWinStreak3,avgStakeNeutral}`
+  (avgStakeAfterLossStreak3 never populated $0 in these fixtures, same
+  class of leak by construction)
+
+6 of the file's 53 tests now fail (1 base fixture + 5 archetypes).
+Committed **locally only, not pushed** on `test/golden-fixture-wire-assertions`
+(commit `58848c4`, message flagged NOT PUSHED) so the red state doesn't
+hit CI or the open PR before a decision is made.
+
+**Recommendation: fix at the engine level now, not `it.todo`.** Checked
+`BetAnnotationsSection` in `AutopsyReport.tsx:2383` - it only renders
+inside the `!snapshotLocked` branch, so today's UI has zero visual
+exposure. But the raw JSON still ships to the browser on every snapshot
+page load (devtools-inspectable) and iOS may consume the same wire
+payload directly, so the leak is real at the wire level regardless of
+what the current UI happens to render. The fix is small and low-risk:
+`runSnapshot()` (`lib/autopsy-engine.ts:3929`) already redacts
+`session_detection` inline at the exact same wire-assembly point 20
+lines above (`profit: 0` + `profitVisibility` tag, plus zeroed
+out-of-spec dollar fields) - `bet_annotations` gets zero equivalent
+treatment today, it's passed through raw
+(`bet_annotations: metrics.annotations ?? undefined`). Mirroring that
+pattern (zero the 5 fields above at the same spot) needs no new
+`*_visibility` tags (nothing today teases this data on snapshots, unlike
+`biases_detected`, so a flat zero-out suffices) and no type changes.
+Reported to Andrew; not implemented - awaiting go-ahead.
+
+### Outlined, not implemented — Stage 8 cash-out `settlement_type` (approved outline only)
+Full outline delivered in-conversation, not copied here in full (parse-
+path change, needs its own approve-then-build cycle per the standing
+rule). Summary: additive `settlement_type?: 'standard' | 'cash_out'`
+sibling on `Bet` resolves the iOS wire-shape blocker the same way
+`lateNightKnown` did (`result` stays at its existing 5 values - and
+matters doubly here since iOS likely reads the `bets` table's `result`
+column directly via Supabase, not only through the analysis JSON, so a
+DB-column widening has no server-side gate to protect it either).
+`lib/csv-parser.ts:37,330-333` currently maps every cash-out variant to
+`result: 'void'` then force-zeroes profit - reclassifying by actual
+settlement value (win/loss/push) fixes that AND ripples into win rate
+(currently excludes void from both numerator and denominator entirely),
+ROI (stake still counts today, profit doesn't - directionally wrong both
+ways), loss streaks and chase detection (`result === 'loss'` checks -
+void currently breaks streaks/chase-checks it shouldn't), session win/
+loss/push counts, and everything downstream of those (emotion/discipline/
+BetIQ scores). Existing saved reports would score differently on
+re-analysis. Recommended this get its own dedicated outline-and-approve
+cycle with test fixtures before implementation, separate from the now-
+resolved "is the wire shape additive" question.
+
+### Note — lateNightKnown (PR #88) is wire-only, not UI-complete
+The additive field is on the wire (session-level, additive, gates green)
+but nothing renders it yet - the heated-session third UI state (real
+false vs unknown-false) is still open. Per Andrew's explicit instruction,
+PR #88's work is **not** being marked complete; parking the UI
+consumption as its own follow-up.
+
+### Parked / next branch
+- Engine-level `bet_annotations` snapshot redaction (see above) - small,
+  recommended, awaiting go-ahead.
+- Stage 8 cash-out `settlement_type` implementation - outline approved,
+  build not started, needs its own outline-and-approve cycle per the
+  parse-path rule.
+- lateNightKnown UI consumption (heated-session "unknown" state) -
+  wire-only today.
+- The "217 paying web customers" project-notes figure Andrew flagged as
+  needing correction - still not located/fixed.
+
+---
+
+## Previous branch: `claude/website-interview-review-p783e9` — pre-interview website audit (2026-08-14)
 
 ### Done this session: full public-surface audit (REVIEW ONLY — no product code changed)
 
