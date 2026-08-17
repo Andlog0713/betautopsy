@@ -35,6 +35,7 @@ function makeSession(overrides: Partial<DetectedSession> = {}): DetectedSession 
     chasedAfterLoss: true,
     chaseCount: 2,
     lateNight: true,
+    lateNightKnown: true,
     grade: 'F',
     gradeReasons: [],
     isHeated: true,

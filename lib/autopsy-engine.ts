@@ -2129,6 +2129,19 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     // Late night check (any bet after 23:00)
     const lateNight = sessionBets.some(b => new Date(b.placed_at).getHours() >= 23);
 
+    // Additive sibling to `lateNight` (do not widen `lateNight` itself to
+    // boolean | null - that's a breaking wire change for iOS). A `false`
+    // result above is only trustworthy if every bet in the session has a
+    // real clock time; a date-only bet parses to exact midnight and could
+    // be masking an actual late-night placement. `lateNight === true` is
+    // always trustworthy on its own since a midnight artifact can never
+    // satisfy `getHours() >= 23`.
+    const hasRealTimestamp = (b: Bet) => {
+      const d = new Date(b.placed_at);
+      return !(d.getHours() === 0 && d.getMinutes() === 0);
+    };
+    const lateNightKnown = lateNight || sessionBets.every(hasRealTimestamp);
+
     const id = `SESSION-${String(idx + 1).padStart(3, '0')}`;
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -2247,6 +2260,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       chasedAfterLoss,
       chaseCount,
       lateNight,
+      lateNightKnown,
       grade,
       gradeReasons,
       isHeated,
