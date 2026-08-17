@@ -81,7 +81,7 @@ export default function LandingPage() {
           // Matches the CTA subtext in HeroABTest — no price claim while
           // PRICING_ENABLED is false and every user gets the Pro tier free.
           description: PRICING_ENABLED
-            ? 'Free behavioral snapshot. Full reports from $9.99.'
+            ? 'Free behavioral snapshot. Full reports $19.99.'
             : 'Free behavioral analysis. No credit card required.',
         },
         description:
@@ -234,11 +234,7 @@ export default function LandingPage() {
           <p className="text-fg-muted mb-6 max-w-md text-sm">
             Start free. Upgrade for the full report with dollar costs and action plans.
           </p>
-          <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 mb-8 max-w-sm mx-auto">
-            <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>
-            <span className="text-fg-muted text-xs font-mono">for a limited time</span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3 md:gap-px bg-border-subtle md:border border-border-subtle rounded-sm md:overflow-hidden">
+          <div className="grid gap-4 md:grid-cols-2 md:gap-px bg-border-subtle md:border border-border-subtle rounded-sm md:overflow-hidden max-w-2xl mx-auto">
             <div className="bg-base p-6 flex flex-col">
               <span className="case-header block mb-3">Free Snapshot</span>
               <div className="mb-4">
@@ -256,13 +252,10 @@ export default function LandingPage() {
             <div className="bg-base p-6 flex flex-col relative overflow-hidden md:border-x border-scalpel/20 rounded-md" style={{ background: 'linear-gradient(180deg, rgba(250,204,21,0.04) 0%, transparent 40%)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="case-header text-scalpel">Full Report</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">MOST POPULAR</span>
-                <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
               </div>
               <div className="mb-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="line-through text-fg-dim font-mono text-lg">$19.99</span>
-                  <span className="font-mono text-3xl font-bold text-fg-bright">$9.99</span>
+                  <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
                 </div>
                 <p className="text-scalpel text-xs font-medium mt-1">Pay once. No subscription.</p>
               </div>
@@ -282,32 +275,6 @@ export default function LandingPage() {
               </ul>
               <SmartCTALink intent="report" className="btn-primary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Get Your Report</SmartCTALink>
               <BorderBeam colorFrom="#FACC15" colorTo="#FACC15" className="hidden md:block" />
-            </div>
-            <div className="bg-base p-6 flex flex-col">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="case-header">Pro</span>
-                <span className="border border-scalpel/30 px-2 py-0.5 bg-base font-mono text-[9px] text-scalpel tracking-widest font-bold">BEST VALUE</span>
-                <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
-              </div>
-              <div className="mb-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="line-through text-fg-dim font-mono text-lg">$39.99</span>
-                  <span className="font-mono text-3xl font-bold text-fg-bright">$19.99</span>
-                  <span className="text-fg-muted text-sm font-mono">/mo</span>
-                </div>
-                <p className="text-fg-muted text-xs mt-1 font-mono">
-                  or <span className="line-through text-fg-dim">$299.99</span> <span className="text-fg-bright ml-1">$149.99/yr</span>
-                  <span className="text-scalpel"> save 37%</span>
-                </p>
-              </div>
-              <ul className="space-y-2 flex-1 mb-6">
-                {['3 full reports per month', 'Track progress between reports', 'Weekly email digest', 'Streak tracking + milestones'].map((f) => (
-                  <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                    <span className="text-scalpel mt-0.5 shrink-0 font-mono text-xs">&#10003;</span>{f}
-                  </li>
-                ))}
-              </ul>
-              <SmartCTALink intent="pro" className="btn-secondary text-center w-full font-mono text-sm min-h-[44px] flex items-center justify-center">Go Pro</SmartCTALink>
             </div>
           </div>
           {/* Trust block */}

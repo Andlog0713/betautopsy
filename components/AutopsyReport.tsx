@@ -552,7 +552,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
   // "Sharp" features (What-If Simulator, Leak Prioritizer with dollar costs) are
-  // unlocked for Pro tier *and* anyone viewing a non-snapshot report. The $9.99
+  // unlocked for Pro tier *and* anyone viewing a non-snapshot report. The $19.99
   // one-time Full Report explicitly markets these as included; gating them only
   // on Pro tier was hiding them from paying full-report buyers.
   const isSharp = effectiveTier === 'pro' || !isSnapshot;

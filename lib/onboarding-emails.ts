@@ -77,7 +77,7 @@ export function renderWelcomeEmail(props: EmailProps): { subject: string; html: 
 
 <tr><td style="padding:0 24px 16px;text-align:center">
   <a href="${esc(appUrl)}/upload" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:13px;font-weight:700;padding:12px 32px;text-decoration:none">Upload Your Bets →</a>
-  <div style="font-size:12px;color:#888;margin-top:8px">Free snapshot report. Full analysis from $9.99.</div>
+  <div style="font-size:12px;color:#888;margin-top:8px">Free snapshot report. Full analysis $19.99.</div>
 </td></tr>
 
 <tr><td style="padding:0 24px 16px">
@@ -279,7 +279,7 @@ export function renderTrialEndingEmail(props: EmailProps): { subject: string; ht
   </div>
   <div style="background:#f8f9fa;padding:14px;border-left:3px solid #888">
     <div style="font-size:13px;color:#1a1a1a;font-weight:700;margin-bottom:4px">Or upgrade to keep full access</div>
-    <div style="font-size:13px;color:#555;line-height:1.5">Plans start at $9.99 for a single report, or $19.99/month for Pro (3 reports/month + weekly digest + progress tracking).</div>
+    <div style="font-size:13px;color:#555;line-height:1.5">Full reports are $19.99 each, one time, no subscription.</div>
   </div>
 </td></tr>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
@@ -8,18 +8,17 @@ import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
 import { trackCheckout as trackCheckoutMeta } from '@/lib/meta-events';
 import { isLaunchPromoActive } from '@/types';
-import type { Profile, SubscriptionTier } from '@/types';
+import type { Profile } from '@/types';
 import { TIER_LIMITS, REPORT_PURCHASE_LIMITS } from '@/types';
 
 export default function PricingPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [interval, setInterval] = useState<'monthly' | 'annual'>('annual');
   // We track the full snapshot row (not just the id) so the "Get Your
   // Report" CTA can stamp the bet count + date that the buyer is paying
-  // to upgrade. Without this, the user clicks $9.99 with no indication
-  // of which dataset they're getting deep analysis on.
+  // to upgrade. Without this, the user clicks Get Your Report with no
+  // indication of which dataset they're getting deep analysis on.
   type LatestSnapshot = {
     id: string;
     bet_count_analyzed: number | null;
@@ -30,7 +29,6 @@ export default function PricingPage() {
   };
   const [latestSnapshot, setLatestSnapshot] = useState<LatestSnapshot | null>(null);
   const latestSnapshotId = latestSnapshot?.id ?? null;
-  const intentFiredRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -63,62 +61,11 @@ export default function PricingPage() {
     load();
   }, []);
 
-  // Auto-fire Stripe checkout when arriving at /pricing?intent=pro — this is
-  // the post-signup landing for Pro CTAs from the marketing surface, so we
-  // ship the user straight into Stripe instead of forcing another click.
-  useEffect(() => {
-    if (pageLoading || intentFiredRef.current) return;
-    if (typeof window === 'undefined') return;
-    const intent = new URLSearchParams(window.location.search).get('intent');
-    if (intent !== 'pro') return;
-    if (!profile) return;
-    if (profile.subscription_tier === 'pro') return;
-    intentFiredRef.current = true;
-    handleSubscribe();
-    // handleSubscribe is stable for the lifetime of the component
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageLoading, profile]);
-
-  async function handleSubscribe() {
-    if (!profile) {
-      window.location.href = '/signup?next=' + encodeURIComponent('/pricing?intent=pro');
-      return;
-    }
-    // Already Pro — never start a duplicate checkout. The render branch already
-    // hides the button for isPro, but a webhook-state desync could leave us here.
-    if (profile.subscription_tier === 'pro') {
-      handleManage();
-      return;
-    }
-    setLoadingAction('pro');
-    try {
-      // Forward any ?promo=<slug> query param on the current URL so the
-      // /api/checkout route can resolve it against PROMO_CODE_MAP. Only
-      // applies to monthly subscriptions (server guards against annual).
-      const urlPromoSlug =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('promo')
-          : null;
-      const res = await apiPost('/api/checkout', {
-        type: 'subscription',
-        interval,
-        ...(urlPromoSlug ? { promoSlug: urlPromoSlug } : {}),
-      });
-      const data = await res.json();
-      if (data.url) {
-        const value = interval === 'annual' ? 149.99 : 19.99;
-        trackCheckoutMeta('pro', value);
-        window.gtag?.('event', 'begin_checkout', { value, currency: 'USD' });
-        await openCheckoutUrl(data.url);
-      } else {
-        toast.error(data.error || 'Could not start checkout. Please try again.');
-        setLoadingAction(null);
-      }
-    } catch {
-      toast.error('Could not start checkout. Please try again.');
-      setLoadingAction(null);
-    }
-  }
+  // Pro is not marketed on web (2026-08-17, D1) - no public CTA links here
+  // with ?intent=pro anymore, and no new-subscription flow is offered from
+  // this page. handleManage below still lets an existing Pro subscriber
+  // manage/cancel their subscription; that's account management for a
+  // subscription that already exists, not marketing a new one.
 
   async function handleBuyReport() {
     if (!profile) {
@@ -163,7 +110,6 @@ export default function PricingPage() {
 
   const currentTier = profile?.subscription_tier ?? 'free';
   const isPro = currentTier === 'pro';
-  const proConfig = TIER_LIMITS.pro;
 
   if (pageLoading) {
     return (
@@ -188,11 +134,6 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-center gap-2 bg-scalpel/10 border border-scalpel/20 rounded-sm px-4 py-2 max-w-sm mx-auto">
-        <span className="font-mono text-xs text-scalpel font-bold tracking-wider">50% OFF</span>
-        <span className="text-fg-muted text-xs font-mono">for a limited time</span>
-      </div>
-
       {isLaunchPromoActive() && (
         <div className="pl-4 border-l border-l-scalpel max-w-lg mx-auto">
           <p className="data-label-sm text-scalpel/80 mb-1">Launch offer</p>
@@ -202,7 +143,7 @@ export default function PricingPage() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
         {/* Free Snapshot */}
         <div className="card p-6 flex flex-col">
           <h2 className="font-bold text-2xl text-fg-bright">Free Snapshot</h2>
@@ -226,11 +167,9 @@ export default function PricingPage() {
           <div className="flex items-center gap-2 mb-1">
             <h2 className="font-bold text-2xl text-fg-bright">Full Report</h2>
             <span className="border border-scalpel/30 px-2 py-0.5 bg-scalpel/10 font-mono text-[9px] text-scalpel tracking-widest font-bold">ONE-TIME</span>
-            <span className="border border-loss/30 px-2 py-0.5 bg-loss/10 font-mono text-[9px] text-loss tracking-widest font-bold">50% OFF</span>
           </div>
           <div className="mt-2 mb-4">
             <div className="flex items-baseline gap-2">
-              <span className="line-through text-fg-dim font-mono text-lg">$19.99</span>
               <span className="font-mono text-3xl font-bold">${REPORT_PURCHASE_LIMITS.price}</span>
             </div>
             <p className="text-scalpel text-xs font-medium mt-1">Pay once. No subscription.</p>
@@ -281,90 +220,18 @@ export default function PricingPage() {
             <p className="text-fg-dim text-[10px] text-center mt-2">Run a free snapshot, then upgrade to the full report</p>
           )}
         </div>
-
-        {/* Pro */}
-        <div className="card p-6 flex flex-col border-scalpel/30">
-          <span className="text-xs font-medium text-scalpel bg-scalpel-muted rounded-sm px-3 py-1 self-start mb-4">
-            Best Value
-          </span>
-          <h2 className="font-bold text-2xl text-fg-bright">Pro</h2>
-          <div className="mt-2 mb-4">
-            {interval === 'annual' && proConfig.annualPrice ? (
-              <>
-                <div className="flex items-baseline gap-2">
-                  <span className="line-through text-fg-dim font-mono text-lg">${((proConfig.annualPrice / 12) * 2).toFixed(2)}</span>
-                  <span className="font-mono text-3xl font-bold">
-                    ${(proConfig.annualPrice / 12).toFixed(2)}
-                  </span>
-                  <span className="text-fg-muted text-sm">/mo</span>
-                </div>
-                <p className="text-fg-muted text-xs mt-1">
-                  <span className="line-through text-fg-dim">${(proConfig.annualPrice * 2).toFixed(2)}</span> <span className="text-fg-bright ml-1">${proConfig.annualPrice}/yr</span>
-                  <span className="text-scalpel"> save 37%</span>
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="flex items-baseline gap-2">
-                  <span className="line-through text-fg-dim font-mono text-lg">${(proConfig.price * 2).toFixed(2)}</span>
-                  <span className="font-mono text-3xl font-bold">${proConfig.price}</span>
-                  <span className="text-fg-muted text-sm">/mo</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Billing toggle — pill pattern matches ShareModal format toggle */}
-          <div className="mb-4">
-            <div className="flex gap-1 bg-surface-1 p-1 rounded-sm max-w-[260px]">
-              <button
-                onClick={() => setInterval('monthly')}
-                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors ${
-                  interval === 'monthly' ? 'bg-scalpel/15 text-fg-bright border border-scalpel/40' : 'text-fg-muted hover:text-fg border border-transparent'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setInterval('annual')}
-                className={`flex-1 py-1.5 rounded-sm text-xs font-mono text-center transition-colors inline-flex items-center justify-center gap-2 ${
-                  interval === 'annual' ? 'bg-scalpel/15 text-fg-bright border border-scalpel/40' : 'text-fg-muted hover:text-fg border border-transparent'
-                }`}
-              >
-                Annual
-                <span className="font-mono text-[9px] tracking-wider text-scalpel bg-scalpel/10 border border-scalpel/30 rounded-sm px-1.5 py-0.5">
-                  SAVE 37%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <ul className="space-y-2 flex-1 mb-6">
-            {proConfig.features.map((f) => (
-              <li key={f} className="text-sm text-fg-muted flex items-start gap-2">
-                <span className="text-win mt-0.5">&#10003;</span>{f}
-              </li>
-            ))}
-          </ul>
-
-          {isPro ? (
-            <div className="text-center">
-              <span className="inline-block text-sm font-medium text-win bg-win/10 rounded-sm px-4 py-2">
-                &#10003; Active
-              </span>
-            </div>
-          ) : (
-            <button
-              onClick={handleSubscribe}
-              disabled={loadingAction !== null}
-              className="w-full btn-primary mt-auto font-mono text-sm min-h-[44px]"
-            >
-              {loadingAction === 'pro' ? 'Redirecting...' : 'Subscribe to Pro'}
-            </button>
-          )}
-        </div>
       </div>
 
+      {/* Pro is not marketed here (2026-08-17, D1) - no new-subscription
+          card, no pricing, no CTA. Existing Pro subscribers keep their
+          active plan and can still manage/cancel it below; this is the
+          only Pro-related UI left on this page, and it is account
+          management for a subscription that already exists, not a sales
+          surface for a new one. profile?.stripe_customer_id already
+          correctly excludes comped accounts with no Stripe customer
+          (e.g. family accounts granted Pro manually) from seeing a
+          Manage Subscription button they can't use - do not "fix" that
+          by assuming every pro account has a stripe_customer_id. */}
       {isPro && profile?.stripe_customer_id && (
         <div className="text-center">
           <button
