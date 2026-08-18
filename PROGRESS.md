@@ -59,178 +59,215 @@
 
 ---
 
-## Current branch: multiple — P0/P1 audit + fixes (2026-08-16 → 2026-08-17)
+## Current branch: `fix/snapshot-top-bias-spinner` — top-bias evidence teaser + redaction allowlist audit (2026-08-17)
 
-### Context
-Andrew handed a large pre-launch audit brief (P0-1 through P0-8, P1-1 through P1-6,
-P2 infra/a11y/SEO/hygiene, a golden-fixture spec, a launch gate checklist). Step 0
-was recon-only: verify every claim against live repo/DB/Vercel, then produce a
-staged plan, then halt. Recon found the brief was right in most places, wrong or
-stale in several, and one thing (the `has_time_data` threshold direction) that
-neither the brief nor the first recon pass caught correctly — Andrew caught it on
-a second look and it turned out to be the most consequential single fix of the
-session. Full recon findings + the original staged plan are in this session's
-transcript, not reproduced here; this entry tracks what actually shipped.
+PRs #85/#86 merged (confirmed via `git fetch` + `gh`). Items 1 (Weekly
+Digest never Pro-gated) and 3 (`/uploads/compare` CTA unreachable, gated
+at `uploads/page.tsx:283`) confirmed correct as shipped in PR #85 — no
+further action, left as-is per Andrew's call.
 
-### Done this session: 6 branches, 5 merged, 1 DB migration applied directly via
-Supabase MCP once Andrew reconnected it mid-session (was scoped to the wrong
-Supabase org at session start — org `hyfwtlohiekmmdxlyexn` ["Diagnostic Sports,
-LLC"] didn't contain the betautopsy project; Andrew fixed the connector, project
-`eekubnadizmtuhnxzcig` confirmed ACTIVE_HEALTHY after).
+### Done this session — top-bias evidence teaser (PR #89, open, highest priority)
+The free tier's conversion moment was broken: `bias.description` is
+always `''` on a snapshot (engine's `description_visibility: 'hidden'`
+sentinel), and the render branch order only special-cased `i > 0` for the
+locked teaser (PR #84). The top bias (`i === 0`) fell through to
+`!bias.description` and showed a "Generating analysis..." spinner
+forever, on a fully completed report.
 
-- **PR #82 — `fix(marketing): delete fabricated homepage/sample stats, fix /go's
-  real fallback`. MERGED.** Deleted `PlatformMetrics` (hardcoded "155,163 Bets
-  Analyzed" / "323 Reports Generated", ~19.7x the real DB count, no live-data path)
-  from `/` and `/sample` entirely. `/go`'s `RealtimeActivity` ticker deleted too —
-  first attempt bumped its fallback numbers to real counts with a "re-verify
-  periodically" comment, which Andrew correctly called out as the exact mechanism
-  that produced the original bug (git history: "bump Bets Analyzed 15,004 ->
-  155,163"). Deleted `app/api/recent-activity/route.ts`, now fully orphaned.
+No engine change (P1-1 contract parity - the wire already ships
+`evidence_visibility: 'visible'` + real `evidence`/`sub_splits`/
+`sample_size`/`confidence` for the top ~7 biases by severity, web never
+consumed it). `components/AutopsyReport.tsx`: replaced the
+`snapshotLocked && i > 0` branch with `snapshotLocked` branching on
+`bias.evidence_visibility === 'visible'` instead of index - any
+top-severity bias (not just the first) now renders its real evidence
+teaser, `sub_splits` as label/bets/roi_pct rows (`net_usd` always `null`
+in snapshot payloads, never rendered), a locked `estimated_cost`, and a
+`sample_size`/`confidence` footer. Biases without visible evidence keep
+the generic locked blurb. Snapshot rendering can no longer reach the
+`!bias.description` spinner branch at all, regardless of index.
 
-- **PR #83 — `fix(engine): honest has_time_data gate, exclude midnight from
-  late-night stats`. MERGED.** `calculateTiming`'s gate was `midnightCount /
-  settled.length < 0.8` — backwards-permissive; the population's real midnight
-  rate (65.9%) cleared it easily. Tightened to `<= 0.05` (launch stopgap, not the
-  final design — v1.1 should gate on an absolute real-timestamp count + a
-  per-book disclosure, since date-only rows cluster by sportsbook). Bigger bug:
-  `best_window`/`worst_window`/`late_night_stats` shipped fully computed even when
-  the gate failed, relying on one client-side `&&` check to hide them — verified
-  directly against a live report where the gate correctly read `false` and
-  `late_night_stats` still shipped `{count:197, pct_of_total:100}` in the raw
-  payload. Now `null` at the engine level when the gate fails. Hour 0 also removed
-  from the late-night hour window (mirrors the tradeoff PR #80 already accepted
-  for the separate qualitative bias detector — this is a different computation
-  PR #80 never touched). New test: `__tests__/timing-late-night-gate.test.ts`.
+No jsdom/testing-library infra exists for this component yet, so this
+isn't covered by an automated test - flagged rather than skipped.
+Verified live instead: temporarily wired one demo bias with
+`evidence_visibility`/`sub_splits` and flipped `DemoReportWrapper` to
+`isSnapshot`/unlocked, ran the dev server, confirmed in-browser the
+teaser renders per spec and the other two biases fall back to the locked
+blurb with no spinner anywhere, then reverted both temporary changes
+(not part of the commit). Gates: tsc/vitest (390/390)/build clean.
 
-- **PR #84 — `fix(report): stop clobbering snapshot redaction, explicit share
-  consent, remove percentile claims`. MERGED.** Three related fixes: (1)
-  `app/api/analyze/route.ts` unconditionally overwrote `discipline_score`/`betiq`/
-  `emotion_percentile`/both `insufficient_data` flags/`enhanced_tilt` after
-  `runSnapshot()` already correctly redacted them — gated all six on
-  `!isSnapshot`, matching the `sport_specific_findings` fix already in place three
-  lines below (only 3 of the 6 were originally scoped; found the other 3 in the
-  same block, same bug shape, flagged the expansion in the PR). (2) Share tokens
-  were auto-minted on every report view AND on every ShareModal mount — neither
-  gated on an explicit share action. Both removed; minting is now lazy, on Copy
-  Link / Post on X click only. `isSnapshot` threaded into `SharedReport.tsx` (via
-  a new `report_type` field captured at mint time) so a shared snapshot actually
-  renders locked. Migration `20260817_share_token_consent.sql` adds `expires_at`/
-  `revoked` and revokes all 14 pre-fix tokens (confirmed systemic auto-mint across
-  many users, March–August, not just the 2 already deleted during recon). New
-  `DELETE /api/share` revoke endpoint; `POST` un-revokes on next explicit share
-  rather than returning a dead link. (3) Removed percentile rendering sitewide
-  (`PercentileGauge` + all 3 call sites) — no percentile claim on this site has a
-  real cohort behind it, and this closes the retroactive-leak gap from (1) for
-  free (old stored `report_json` with a leaked percentile now renders nothing for
-  that field). Follow-up same day: `SharedReport.tsx`'s `isSnapshot` derivation
-  changed from `=== 'snapshot'` to `!== 'full'` (fails closed on an unrecognized
-  or missing `report_type`, not open). **Migration applied directly via Supabase
-  MCP; verified live — `revoked_count` = 14, columns confirmed via
-  `information_schema`, and a revoked share link confirmed returning "Link
-  expired" on production after this PR deployed.**
+### Investigated, not fixed — bet_annotations dollar leak (allowlist audit)
+Andrew flagged `__tests__/autopsy-engine.redaction.test.ts:404-418`: a
+blanket `path.startsWith('bet_annotations.')` allowlist entry whose own
+comment admitted 3 real dollar leaks were shipping visible in snapshot
+mode, PR #87's new archetype fixtures inheriting the same blind spot.
 
-- **PR #81 — checkout coupon fallback. CLOSED, NOT MERGED.** First version added a
-  fallback that retried `checkout.sessions.create()` without the discount on
-  `coupon_applies_to_nothing`. Before merge, direct Stripe API query found every
-  price ID is the FULL undiscounted price (`STRIPE_REPORT_PRICE_ID` = $19.99,
-  `STRIPE_PRO_PRICE_ID` = $39.99/mo) — the fallback would have silently charged
-  2x the advertised price. Andrew resolved this at the source instead: deleted
-  the AUTOPSY50 coupon in Stripe and `STRIPE_LAUNCH_PROMO` from Vercel env. PR
-  closed unmerged; the dead code it would have added was never on `main`.
+Narrowed the allowlist (on `test/golden-fixture-wire-assertions`, PR
+#87's branch - **not** on this branch) to only the genuine false positive:
+`BetAnnotation.stakeVsMedian` (a 0..2 ratio), on both `annotations[]` and
+`worstAnnotatedBet`/`bestAnnotatedBet` (themselves `BetAnnotation`
+values, not raw `Bet` objects - the original comment's claim that those
+two carry "profit + stake metrics" was itself wrong; they only carry the
+same ratio false positive). Ran the full suite (base fixture + all 5
+golden archetypes) to get the true leak surface empirically rather than
+trusting the stale comment:
+- `bet_annotations.distribution.{disciplined,chasing,neutral}.totalStaked`
+- `bet_annotations.distribution.{disciplined,neutral}.totalProfit` -
+  broader than the original comment, which named only `totalStaked`
+- `bet_annotations.emotionalCost`
+- `bet_annotations.streakInfluence.{avgStakeAfterWinStreak3,avgStakeNeutral}`
+  (avgStakeAfterLossStreak3 never populated $0 in these fixtures, same
+  class of leak by construction)
 
-- **PR #85 — `chore: remove dead promo code + D1 pricing decision (flat $19.99,
-  Pro off web)`. OPEN, awaiting review.** Two commits. (1) Removed the now-dead
-  discount mechanism: `checkoutDiscountParams()`/`LAUNCH_PROMO` in
-  `lib/stripe.ts`, `PROMO_CODE_MAP`/`resolvePromoSlug` in
-  `app/api/checkout/route.ts`, stale `.env.template` entries. (2) **D1 final**:
-  web report price stays on `STRIPE_REPORT_PRICE_ID` ($19.99, no new Price object
-  needed); `REPORT_PURCHASE_LIMITS.price` (`types/index.ts`) is now the single
-  source every surface reads from. Removed sitewide: all "$19.99 ~~$9.99~~, 50%
-  off" copy, struck-through anchors, "50% OFF"/"MOST POPULAR"/"BEST VALUE"
-  badges, the homepage and dashboard Pro pricing cards, FAQ's Pro Q&A, the
-  JSON-LD Pro offer, `ProUpsellModal` (deleted entirely), the Settings page's
-  Pro-upsell block (shown previously to every non-pro user), and the sidebar's
-  "Upgrade to Pro" CTA (relabeled "Get Full Report"). Found and fixed one dead
-  end not in the original brief: `uploads/compare` (a real Pro-gated feature) had
-  a "Go Pro — $19.99/mo" CTA pointing at a purchase flow that no longer exists —
-  softened to explain the feature isn't available on the current plan instead of
-  promising a broken upgrade. **Explicitly not touched**: `TIER_LIMITS.pro`,
-  `EXTRA_REPORT_PRICE`, `createSubscriptionCheckoutSession`, every server-side
-  `tier === 'pro'` gate — 4 accounts have `subscription_tier='pro'` and must keep
-  working, 2 of them (comped family accounts) with `stripe_customer_id: null` by
-  design. Verified (not changed, already correct): every `stripe_customer_id`
-  read site already handles `null` gracefully; none assume Pro implies a Stripe
-  customer.
+6 of the file's 53 tests now fail (1 base fixture + 5 archetypes).
+Committed **locally only, not pushed** on `test/golden-fixture-wire-assertions`
+(commit `58848c4`, message flagged NOT PUSHED) so the red state doesn't
+hit CI or the open PR before a decision is made.
 
-- **Two ad-hoc DB actions (service-role key, read-only + one scoped delete),
-  requested and confirmed explicitly by Andrew, not part of a PR:** deleted the 2
-  non-consensual share tokens flagged during recon; queried void-bet distribution
-  (44 void bets, 4 users, 38 on Andrew's own account, 3 external users with 2
-  void bets / 1 paid report each — small enough for direct emails, not a banner
-  system, per Andrew's call).
+**Recommendation: fix at the engine level now, not `it.todo`.** Checked
+`BetAnnotationsSection` in `AutopsyReport.tsx:2383` - it only renders
+inside the `!snapshotLocked` branch, so today's UI has zero visual
+exposure. But the raw JSON still ships to the browser on every snapshot
+page load (devtools-inspectable) and iOS may consume the same wire
+payload directly, so the leak is real at the wire level regardless of
+what the current UI happens to render. The fix is small and low-risk:
+`runSnapshot()` (`lib/autopsy-engine.ts:3929`) already redacts
+`session_detection` inline at the exact same wire-assembly point 20
+lines above (`profit: 0` + `profitVisibility` tag, plus zeroed
+out-of-spec dollar fields) - `bet_annotations` gets zero equivalent
+treatment today, it's passed through raw
+(`bet_annotations: metrics.annotations ?? undefined`). Mirroring that
+pattern (zero the 5 fields above at the same spot) needs no new
+`*_visibility` tags (nothing today teases this data on snapshots, unlike
+`biases_detected`, so a flat zero-out suffices) and no type changes.
+Reported to Andrew; not implemented - awaiting go-ahead.
 
-### Gates, every PR
-`tsc --noEmit` 0 · `vitest run` green (381 → 390 across the session as tests were
-added) · `next build` 0, each time, before commit.
+### Outlined, not implemented — Stage 8 cash-out `settlement_type` (approved outline only)
+Full outline delivered in-conversation, not copied here in full (parse-
+path change, needs its own approve-then-build cycle per the standing
+rule). Summary: additive `settlement_type?: 'standard' | 'cash_out'`
+sibling on `Bet` resolves the iOS wire-shape blocker the same way
+`lateNightKnown` did (`result` stays at its existing 5 values - and
+matters doubly here since iOS likely reads the `bets` table's `result`
+column directly via Supabase, not only through the analysis JSON, so a
+DB-column widening has no server-side gate to protect it either).
+`lib/csv-parser.ts:37,330-333` currently maps every cash-out variant to
+`result: 'void'` then force-zeroes profit - reclassifying by actual
+settlement value (win/loss/push) fixes that AND ripples into win rate
+(currently excludes void from both numerator and denominator entirely),
+ROI (stake still counts today, profit doesn't - directionally wrong both
+ways), loss streaks and chase detection (`result === 'loss'` checks -
+void currently breaks streaks/chase-checks it shouldn't), session win/
+loss/push counts, and everything downstream of those (emotion/discipline/
+BetIQ scores). Existing saved reports would score differently on
+re-analysis. Recommended this get its own dedicated outline-and-approve
+cycle with test fixtures before implementation, separate from the now-
+resolved "is the wire shape additive" question.
 
-### Outlined, NOT started (needs a nod before code, per standing rules)
-- **Session/annotation `lateNight` "unknown" state**
-  (`lib/autopsy-engine.ts:2092` session boolean, `:2373-2378` per-bet hour/day
-  annotations). Same principle as PR #83's `has_time_data` fix, different
-  functions — neither currently checks whether a session/bet's timestamp is real
-  before computing a definite true/false. Not currently producing false
-  positives (hour 0 fails the `>= 23` check on its own) but can't distinguish
-  "genuinely not late-night" from "no real timestamp to judge by," and this feeds
-  the heated-session display on the free snapshot — the paywall centerpiece.
-  Outline: add a per-session/per-bet real-timestamp flag, change `lateNight` from
-  `boolean` to `boolean | null`, gate the per-bet hour/day annotation signals the
-  same way, add a third UI state for the heated-session display. Wire change
-  (bool → tri-state) needs the same iOS-tolerance check as Stage 14. Bigger than
-  PR #83 (two separate loops, not one function) — outlined and reported back;
-  waiting on approval before writing code.
+### Note — lateNightKnown (PR #88) is wire-only, not UI-complete
+The additive field is on the wire (session-level, additive, gates green)
+but nothing renders it yet - the heated-session third UI state (real
+false vs unknown-false) is still open. Per Andrew's explicit instruction,
+PR #88's work is **not** being marked complete; parking the UI
+consumption as its own follow-up.
 
-### Not started, flagged honestly rather than rushed
-- **Golden fixture suite (Fixtures A–G from the original brief).** Meant to land
-  before Stage 5 (the `ProtectedValue` redaction-component refactor), not
-  necessarily in this same session. This repo has no React-component-rendering
-  test infrastructure yet (no jsdom/happy-dom environment, no
-  `@testing-library/react`, no JSX-transform config for Vitest — confirmed via
-  grep of `vitest.config.ts`/`package.json` before starting anything else this
-  session). Building it means standing up that infrastructure AND getting a
-  ~3,800-line component with heavy dependencies (recharts, several hooks, `next/
-  dynamic`) to render cleanly under it, before the actual fixture-writing even
-  starts. Given the volume already shipped this session (5 merged/closed PRs + 1
-  applied migration + 1 outline), this was deliberately not started rather than
-  rushed at low quality at the end of an already-long session. Next session:
-  stand up the rendering infra first (small, verifiable step on its own — get one
-  trivial component rendering and asserting before touching `AutopsyReport`),
-  then build fixtures A–G against current (pre-Stage-5) behavior and confirm they
-  fail on the known, still-open leak sites from the P0-5-2 inventory before
-  writing any fixing code.
+### Update (same day, later) — bet_annotations fix built, corrected, and shipped as PR #90
+Andrew corrected the recommendation above before approving: **omit the
+fields, don't zero them.** A zeroed dollar with no visibility tag is
+indistinguishable from a real $0 the moment anything renders it - the
+exact pattern behind the $0 P&L bug, and "nothing renders this today" was
+equally true of `late_night_stats` before it wasn't. Built it that way:
+`types/index.ts` makes the 5 fields optional on `AnnotationSummary`;
+new `redactAnnotationsForSnapshot()` in `lib/autopsy-engine.ts` (matching
+the `redactTimingForSnapshot`/`redactOddsForSnapshot` naming convention)
+destructure-omits them entirely rather than setting `0`, wired into
+`runSnapshot()`'s wire assembly. Fixed the resulting `possibly undefined`
+call sites in the engine's own prompt-building text, `lib/engine/charts.ts`,
+and `AutopsyReport.tsx`'s emotional-cost callout - all full-mode-only
+reads, no behavior change, just type-safety fallbacks. Verified the
+actual runtime JSON via a throwaway test: `distribution` entries carry
+only count/percent/roi, `streakInfluence` is `{}`, no leaking key
+anywhere in the payload.
+
+**Discovered mid-work: PR #87 had already been squash-merged** (by the
+time I went to push the narrowed-allowlist + engine-fix commits, which
+had been sitting local-only on that branch per plan). Squash-merging
+replaces the branch's commits with a single new commit on `main`, so my
+two commits landed on a now-dangling branch that was never going to
+reach `main` on its own. Fixed by branching fresh off current `main`,
+cherry-picking both commits (clean, no conflicts), and opening a new PR
+(**#90**) from there instead. The original `test/golden-fixture-wire-assertions`
+branch still exists remotely with the same 2 commits, now redundant -
+left it alone (not mine to delete without asking) rather than force-push
+or rewrite anything.
+
+Gates on PR #90: tsc clean, vitest 410/410, redaction suite 53/53 -
+**green because the leaks are gone, not because they're allowlisted** -
+build clean.
+
+### Update — jsdom render guard added to PR #89
+Andrew's core point: PR #89 fixed the highest-value rendering path in
+the product with zero automated coverage, verified only by a manual
+browser check - the same failure mode that let PR #84's silent
+regression through undetected in the first place. Stood up jsdom +
+`@testing-library/react` for exactly one test (not the broader DOM
+fixture suite, parked as its own follow-up): `vitest.config.ts` needed
+`@vitejs/plugin-react` since `tsconfig.json`'s `"jsx": "preserve"`
+(Next's own SWC pipeline handles the transform app-side) otherwise
+leaves Vite/esbuild with nothing to transform `.tsx` test files with.
+
+`__tests__/autopsy-report.render.test.tsx`: runs a real 120-bet fixture
+through `runSnapshot()`, renders `AutopsyReport` with `isSnapshot={true}`,
+asserts no "Generating" text and no VISIBLE dollar-pattern text inside
+the findings section (tagged `data-testid="findings-section"`, a
+one-line addition to `AutopsyReport.tsx`) - `RedactedValue`'s
+intentional blurred decoy amounts are `aria-hidden` and explicitly
+excluded, since a real leak is visible text, the deliberate paywall blur
+isn't. Confirmed the test actually discriminates: ran it against the
+pre-#89 component (branch without the `evidence_visibility` fix) and it
+failed on the "Generating analysis..." assertion exactly as expected, on
+the top bias specifically - not a vacuous pass.
+
+### Update — Stage 8 backfill/flagging decision (outline, still no code)
+Andrew's question: the 44 existing void-cash-out rows can't be
+backfilled (no Storage buckets, raw uploads aren't retained), so a
+parser fix produces correct new rows sitting alongside permanently-wrong
+historical ones. Does anything flag pre-fix reports?
+
+**Recommendation: no backfill, no in-product flagging.** Old rows stay
+`result: 'void'`, `profit: 0`, and naturally have no `settlement_type`
+(the column doesn't exist retroactively) - a known, permanent, honestly-
+unfixable gap, not something to paper over with an inference. Andrew's
+own numbers make the blast radius the deciding factor: 38 of the 44 rows
+are his own account (already known to him), and the 3 external users
+affected have 2 rows each - against typical bet-history sizes in the
+hundreds, 2 misclassified rows is noise, not something that moves a
+grade or a headline finding. Building a flag (a new column/timestamp
+cutoff on existing rows, comparison logic, UI copy explaining a
+data-quality caveat) is real engineering effort for an impact that
+rounds to zero for real users. Not recommending it. If Andrew wants a
+zero-cost hedge, a one-line FAQ/support note ("cash-outs recorded before
+[date] may show as pushes with $0 profit") covers the honesty bar without
+any code - optional, his call, not scoping it further until asked.
+
+Still unresolved and NOT part of this recommendation: whether re-
+uploading the same CSV after the fix ships would update the existing
+(wrong) `bets` rows or create duplicates - the parser fix as scoped only
+touches ingestion, so already-stored rows don't change unless a user
+re-uploads. Worth confirming before Stage 8 implementation starts, not
+before this decision.
 
 ### Parked / next branch
-- Stage 8 (cash-out enum widening) — still blocked on iOS decode-tolerance
-  confirmation, which requires a session against `betautopsy-ios`, out of scope
-  here. Andrew's to route.
-- Stage 12 remainder: FAQ/JSON-LD sweep for the 1-cent hardcoded-vs-computed
-  pricing drift and the "MOST POPULAR"/annual-offer JSON-LD gaps flagged in the
-  original recon — largely subsumed by PR #85's flat-price change, worth a
-  spot-check once #85 is live rather than assumed clean.
-- Stage 13 (sample report internal-consistency reconciliation in
-  `lib/demo-data.ts`), Stage 14 remainder (the `summaryCounts.leakPatternsFlagged`
-  vs `_snapshot_counts.leaks` divergence — P1-6b, not yet touched), Stage 15 (P2
-  a11y/SEO hygiene batch: `/terms` metadata, `/sample` SSR h1, main-content
-  landmarks) — none started this session.
-- `renderTrialEndingEmail` (`lib/onboarding-emails.ts`) appears to be dead code
-  independent of anything this session touched — gated on
-  `userQualifiesForPromo()`, which is hardcoded to always return `false`
-  (a different, already-disabled "free first report" promo, not the one removed
-  this session). Fixed its stale price text for hygiene while in the area; did
-  not investigate further or remove it.
-- The `.claude`-adjacent uncommitted `git stash` from early in this session
-  (historical PR #80 progress notes that were apparently never committed
-  upstream) is still sitting in the stash list, untouched. Flagged, not
-  resolved.
+- Stage 8 cash-out `settlement_type` implementation - outline approved
+  (including the no-backfill/no-flagging decision above), build not
+  started, needs its own outline-and-approve cycle per the parse-path
+  rule. Confirm CSV re-upload behavior (update vs duplicate existing
+  rows) before starting.
+- lateNightKnown UI consumption (heated-session "unknown" state) -
+  wire-only today.
+- Broader DOM fixture suite (zero rendered `$`, zero lock-affordance
+  regressions, etc.) - one guard test now exists (PR #89); the rest is
+  still future work, not started.
 
 ---
 
