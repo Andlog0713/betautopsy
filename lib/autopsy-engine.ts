@@ -3863,6 +3863,18 @@ function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
 // detected bias, or that bias has no cost) leaves Claude's plain
 // behavioral text untouched - unknown is a valid value, not a reason to
 // fabricate a figure.
+//
+// No "/quarter" (or any other period) on the composed figure. Per review:
+// bias.estimated_cost is the net loss attributable to this bias across
+// WHATEVER period was actually analyzed - could be six weeks, could be
+// two years, and the engine never computes or verifies a quarterly rate
+// against the real date range. A fix whose entire purpose is removing a
+// model-invented number doesn't get to hardcode an unverified temporal
+// claim in its place. The figure is a total over the analyzed sample,
+// stated as exactly that. (The "/qtr" label on the bias card itself,
+// and the same convention in lib/demo-data.ts's hand-authored
+// recommendations, have the identical issue - out of scope for this
+// fix, flagging for awareness, not fixed here.)
 function buildFullModeRecommendations(
   claudeRecommendations: unknown,
   biasesDetected: BiasDetected[]
@@ -3875,7 +3887,7 @@ function buildFullModeRecommendations(
       ? biasesDetected.find((b) => b.bias_name.toLowerCase() === tiedTo.toLowerCase())
       : undefined;
     const expectedImprovement = bias && bias.estimated_cost > 0
-      ? (claudeText ? `${claudeText} Save ${formatApproxUSD(bias.estimated_cost)}/quarter.` : `Save ${formatApproxUSD(bias.estimated_cost)}/quarter.`)
+      ? (claudeText ? `${claudeText} Save ${formatApproxUSD(bias.estimated_cost)}.` : `Save ${formatApproxUSD(bias.estimated_cost)}.`)
       : claudeText;
     return withFullModeRecommendationTags({
       priority: (rec.priority as number) ?? 0,

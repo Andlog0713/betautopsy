@@ -106,7 +106,10 @@ describe('full-mode recommendations.expected_improvement', () => {
     expect(rec.expected_improvement).toContain(
       'You stay in control of your bankroll instead of letting one bad beat set your next stake.'
     );
-    expect(rec.expected_improvement).toMatch(/Save ~\$[\d,]+\/quarter\.$/);
+    // No fabricated period on the figure - estimated_cost is a total over
+    // whatever was actually analyzed, not a verified quarterly rate.
+    expect(rec.expected_improvement).toMatch(/Save ~\$[\d,]+\.$/);
+    expect(rec.expected_improvement).not.toContain('/quarter');
     // Never the raw, unbounded Claude figure - estimatedCostBound caps it.
     expect(rec.expected_improvement).not.toContain('999,999');
     expect(rec.tied_to_finding).toBe('Post-Loss Escalation');
