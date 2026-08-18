@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function SupportPage() {
   return (
-    <main className="min-h-screen">
+    <main id="main-content" className="min-h-screen">
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-12 space-y-10">
         <section className="space-y-4">
           <p className="case-header text-loss">SUPPORT</p>

@@ -58,15 +58,21 @@
     -webkit-touch-callout: none;
   }
 
-  /* Pinch-zoom suppression scoped to actual touch devices. The
-     previous global rule blocked Mac trackpad two-finger scroll
-     because macOS Safari treats Magic-Trackpad multi-touch as
-     touch input. `(hover: none) and (pointer: coarse)` matches
-     phones/tablets/iOS WKWebView and excludes desktops with mice
-     or trackpads. ZoomGate covers the iOS-only `gesturestart`
-     escape hatch. */
+  /* Pinch-zoom suppression scoped to the Capacitor app only, on top of
+     `(hover: none) and (pointer: coarse)` (phones/tablets/iOS WKWebView,
+     excludes desktop trackpads — see below). `touch-action: pan-x pan-y`
+     explicitly excludes pinch-zoom per the CSS Touch Events spec,
+     independent of the viewport <meta> tag's `user-scalable` setting —
+     without the `data-build-target="mobile"` qualifier this blocked
+     pinch-zoom for every mobile WEB visitor too, not just the native app,
+     which is a WCAG 1.4.4 (Resize Text) violation the viewport meta tag
+     fix (app/layout.tsx) alone didn't cover. ZoomGate covers the iOS-only
+     `gesturestart` escape hatch, already scoped to native via isMobileApp().
+     overscroll-behavior-y stays unscoped — it only affects pull-to-refresh/
+     scroll-chaining, not zoom, and is a reasonable default either way. */
   @media (hover: none) and (pointer: coarse) {
-    html, body {
+    html[data-build-target="mobile"],
+    html[data-build-target="mobile"] body {
       touch-action: pan-x pan-y;
     }
     body {

@@ -46,11 +46,29 @@ const CHAPTERS = [
 
 export default function SamplePage() {
   return (
-    <>
+    <main id="main-content">
       <NavBar />
 
-      {/* ═══ HEADER + TOGGLE + REPORT (client component for ?view= param) ═══ */}
-      <Suspense fallback={<div className="max-w-5xl mx-auto px-6 pt-8 pb-16 h-96 animate-pulse" />}>
+      {/* ═══ HEADER EYEBROW + H1 ═══
+          Rendered here (server component, no useSearchParams dependency)
+          rather than inside SamplePageClient so they're guaranteed present
+          in the statically-generated HTML. SamplePageClient uses
+          useSearchParams() for the ?view= param, which forces Next to
+          render the Suspense fallback (an empty pulsing skeleton, no text)
+          during static generation/ISR - previously the h1 lived inside
+          that boundary, so crawlers and pre-hydration first paint saw no
+          h1 on the page at all, only after client-side hydration resolved. */}
+      <div className="max-w-5xl mx-auto px-6 pt-8">
+        <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
+          SAMPLE REPORT // EXHIBIT A
+        </p>
+        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-3">
+          A real autopsy report
+        </h1>
+      </div>
+
+      {/* ═══ TOGGLE + REPORT (client component for ?view= param) ═══ */}
+      <Suspense fallback={<div className="max-w-5xl mx-auto px-6 pb-16 h-96 animate-pulse" />}>
         <SamplePageClient />
       </Suspense>
 
@@ -107,6 +125,6 @@ export default function SamplePage() {
 
       <Footer />
       <SampleStickyBar />
-    </>
+    </main>
   );
 }

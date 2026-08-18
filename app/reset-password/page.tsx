@@ -167,12 +167,14 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-base flex items-center justify-center">
-        <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
-      </div>
-    }>
-      <ResetPasswordForm />
-    </Suspense>
+    <main id="main-content">
+      <Suspense fallback={
+        <div className="min-h-screen bg-base flex items-center justify-center">
+          <div className="text-fg-muted font-mono text-sm animate-pulse">Loading...</div>
+        </div>
+      }>
+        <ResetPasswordForm />
+      </Suspense>
+    </main>
   );
 }

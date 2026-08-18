@@ -119,7 +119,7 @@ export default function GoLandingPage() {
   const caseNum = getCaseFileNumber();
 
   return (
-    <>
+    <main id="main-content">
       <GoPageView />
 
       {/* ═══ STICKY MINI HEADER ═══ */}
@@ -437,6 +437,6 @@ export default function GoLandingPage() {
 
       {/* ═══ DISCLAIMER ═══ */}
       <PaidTrafficDisclaimer />
-    </>
+    </main>
   );
 }

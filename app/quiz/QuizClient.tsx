@@ -182,7 +182,7 @@ export default function QuizClient() {
   // ══════════════════════════════
   if (phase === 'intro') {
     return (
-      <main className="min-h-screen bg-base flex items-center justify-center px-4">
+      <main id="main-content" className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-lg text-center animate-fade-in">
           <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-4">
             What&apos;s Your <span className="text-scalpel">Bet DNA</span>?
@@ -217,7 +217,7 @@ export default function QuizClient() {
     const isScenario = question.style === 'scenario';
 
     return (
-      <main className="min-h-screen bg-base px-4 py-6" style={{ background: `radial-gradient(circle at 50% 30%, ${accent}08 0%, transparent 60%), #111318` }}>
+      <main id="main-content" className="min-h-screen bg-base px-4 py-6" style={{ background: `radial-gradient(circle at 50% 30%, ${accent}08 0%, transparent 60%), #111318` }}>
         <div className="max-w-lg mx-auto">
           {/* Progress bar */}
           <div className="flex items-center justify-between mb-2">
@@ -327,7 +327,7 @@ export default function QuizClient() {
     const biasCount = result.biases.length;
 
     return (
-      <main className="min-h-screen bg-base flex items-center justify-center px-4" onClick={() => revealSlide < 3 && setRevealSlide(revealSlide + 1)}>
+      <main id="main-content" className="min-h-screen bg-base flex items-center justify-center px-4" onClick={() => revealSlide < 3 && setRevealSlide(revealSlide + 1)}>
         {/* Slide 0: Intro */}
         {revealSlide === 0 && (
           <div className="text-center animate-fade-in">
@@ -370,7 +370,7 @@ export default function QuizClient() {
   // ══════════════════════════════
   if (phase === 'result_preview' && result) {
     return (
-      <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
+      <main id="main-content" className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
           {/* Share card. rendered off-screen for download, preview shown as image */}
           <div style={{ position: 'absolute', left: -9999, top: 0 }}>
@@ -461,7 +461,7 @@ export default function QuizClient() {
     const eBarColor = result.emotion_estimate <= 30 ? 'bg-win' : result.emotion_estimate <= 55 ? 'bg-caution' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-loss';
 
     return (
-      <main className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
+      <main id="main-content" className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in overflow-hidden">
 
           {/* 1. Archetype */}

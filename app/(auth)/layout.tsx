@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex">
+    <main id="main-content" className="min-h-screen flex">
       {/* Left — brand panel with grid-paper */}
       <div className="hidden lg:flex flex-1 grid-paper border-r border-border-subtle p-12 pt-24 flex-col justify-start">
         <div className="max-w-md">
@@ -62,6 +62,6 @@ export default function AuthLayout({
           OR FINANCIAL ADVICE. 18+. IF YOU OR SOMEONE YOU KNOW MAY HAVE A GAMBLING PROBLEM, CALL OR TEXT {PROBLEM_GAMBLING_HELPLINE}.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
