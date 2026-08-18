@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Privacy Policy</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: June 10, 2026</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: August 18, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
@@ -124,7 +124,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">7. Cookies</h2>
             <p>
-              We use essential cookies for authentication session management (via Supabase). Google Analytics may set cookies for anonymized usage tracking. We do not use advertising or third-party tracking cookies. You can disable non-essential cookies in your browser settings.
+              We use essential cookies for authentication session management (via Supabase). Google Analytics may set cookies for anonymized usage tracking. For visitors outside the EU/EEA/UK/Switzerland, Meta Pixel sets an advertising/conversion-tracking cookie (see Section 5) — it does not fire for visitors in those regions. You can disable non-essential cookies in your browser settings.
             </p>
           </section>
 
@@ -166,8 +166,8 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">11. Age requirement</h2>
             <p>
-              BetAutopsy is intended for users who are 21 years of age or older. We do not
-              knowingly collect information from anyone under 21. If we learn we have collected data from someone under 21, we will delete it promptly.
+              BetAutopsy is intended for users who are 18 years of age or older. We do not
+              knowingly collect information from anyone under 18. If we learn we have collected data from someone under 18, we will delete it promptly.
             </p>
           </section>
 

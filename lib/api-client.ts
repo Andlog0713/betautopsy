@@ -79,6 +79,23 @@ export async function apiGet(path: string): Promise<Response> {
   return fetch(`${getBaseUrl()}${path}`, { headers });
 }
 
+export async function apiDelete(
+  path: string,
+  body?: unknown,
+  options?: { headers?: HeadersInit }
+): Promise<Response> {
+  const baseHeaders = await getAuthHeaders();
+  return fetch(`${getBaseUrl()}${path}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...baseHeaders,
+      ...options?.headers,
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+}
+
 export async function apiPostFormData(
   path: string,
   formData: FormData

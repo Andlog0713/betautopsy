@@ -7,7 +7,7 @@ import { toPng } from 'html-to-image';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import ArchetypeShareCard from './ArchetypeShareCard';
-import { apiPost } from '@/lib/api-client';
+import { apiPost, apiDelete } from '@/lib/api-client';
 import { getArchetypeByName } from '@/lib/archetypes';
 import {
   StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
@@ -38,6 +38,7 @@ export default function ShareModal({
   const [downloading, setDownloading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [minting, setMinting] = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [format, setFormat] = useState<'stories' | 'card'>('stories');
   const [activeSlide, setActiveSlide] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -132,6 +133,30 @@ export default function ShareModal({
     });
   }
 
+  // Wires Privacy Policy §6's "you can delete shared reports at any time"
+  // claim to an actual control - the DELETE /api/share endpoint has existed
+  // since the share-token-consent migration, but nothing in the UI ever
+  // called it. Only meaningful once a link exists in this session
+  // (shareUrl set via Copy link / Post on X); revoking clears local state
+  // so the button reverts to "Copy report link" for a fresh mint.
+  async function handleRevokeLink() {
+    if (!reportId || !shareUrl) return;
+    setRevoking(true);
+    try {
+      const res = await apiDelete('/api/share', { report_id: reportId });
+      if (res.ok) {
+        setShareUrl(null);
+        toast.success('Share link deleted');
+      } else {
+        toast.error('Could not delete share link');
+      }
+    } catch {
+      toast.error('Could not delete share link');
+    } finally {
+      setRevoking(false);
+    }
+  }
+
   async function handleShareTwitter() {
     const url = (await ensureShareUrl()) || 'https://betautopsy.com/quiz';
     const archName = data.archetype?.name ?? data.grade;
@@ -183,6 +208,15 @@ export default function ShareModal({
                   Post on X
                 </button>
               </div>
+              {shareUrl && (
+                <button
+                  onClick={handleRevokeLink}
+                  disabled={revoking}
+                  className="w-full mt-2 py-2 rounded-sm text-xs font-mono transition-colors text-loss hover:bg-loss/10 disabled:opacity-60"
+                >
+                  {revoking ? 'Deleting...' : 'Delete shared link'}
+                </button>
+              )}
             </div>
 
             {/* Section 2: Download share card */}

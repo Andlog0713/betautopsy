@@ -81,7 +81,7 @@ const FAQ_DATA: FAQSection[] = [
     items: [
       { q: 'Who can see my betting data?', a: 'Only you. Your bet history is stored under your account with row-level security, meaning even at the database level, your data is only accessible when authenticated as you. We do not sell your data, share it with third parties, or use it for advertising.' },
       { q: 'Does BetAutopsy connect to my sportsbook accounts?', a: 'No. We never ask for your sportsbook credentials. You export data from your tracker (like Pikkit) and upload the file here. Your sportsbook login is never involved.' },
-      { q: 'How is my data used to generate reports?', a: 'Your bet history is passed to the Claude AI model to generate your behavioral analysis. That data is used solely for the purpose of generating your report. We do not use your betting data to train AI models or share it with Anthropic or any other third party.' },
+      { q: 'How is my data used to generate reports?', a: "Your bet history is passed to Anthropic's Claude AI model to generate your behavioral analysis. Anthropic processes that data solely to generate your report - it is not stored by Anthropic or used to train their models. See our Privacy Policy for the full list of processors we use." },
       { q: 'Can I delete my data?', a: 'Yes. You can delete your account and all associated data at any time from your account settings. We will permanently remove your bet history, reports, and profile.' },
     ],
   },
