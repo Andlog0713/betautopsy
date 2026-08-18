@@ -1,6 +1,7 @@
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail, EdgeProfile, EdgeArea, EdgeAreaUnprofitable } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { formatApproxUSD } from '@/lib/utils';
+import { getUTCHour, getUTCMinute, getUTCDayOfWeek, isMidnightUTC, formatUTCDate, formatUTCTime, formatUTCMonthDay } from '@/lib/date-utils';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
@@ -408,10 +409,7 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
   // date-only rows cluster by sportsbook and a coverage-based partial view
   // would otherwise describe one book's behavior as the user's overall
   // pattern.
-  const midnightCount = settled.filter((b) => {
-    const d = new Date(b.placed_at);
-    return d.getHours() === 0 && d.getMinutes() === 0;
-  }).length;
+  const midnightCount = settled.filter((b) => isMidnightUTC(b.placed_at)).length;
   const hasTimeData = settled.length >= 5 && midnightCount / settled.length <= 0.05;
 
   // Initialize buckets
@@ -421,9 +419,8 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
     Array.from({ length: 7 }, () => ({ bets: 0, wins: 0, losses: 0, staked: 0, profit: 0 }));
 
   for (const b of settled) {
-    const d = new Date(b.placed_at);
-    const hour = d.getHours();
-    const day = d.getDay(); // 0=Sun
+    const hour = getUTCHour(b.placed_at);
+    const day = getUTCDayOfWeek(b.placed_at); // 0=Sun
 
     const stake = Number(b.stake);
     const profit = Number(b.profit);
@@ -848,19 +845,15 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
 
   // Late-Night Betting — 23:00-04:59 window. Skip if the CSV has no time-of-day data
   // (avoids false positives when all bets land at midnight UTC from date-only timestamps).
-  const midnightOnlyCount = settled.filter((b) => {
-    const d = new Date(b.placed_at);
-    return d.getHours() === 0 && d.getMinutes() === 0;
-  }).length;
+  const midnightOnlyCount = settled.filter((b) => isMidnightUTC(b.placed_at)).length;
   const hasTimeOfDay = settled.length >= 5 && midnightOnlyCount / settled.length < 0.8;
   if (hasTimeOfDay) {
     const lateNightBets = settled.filter((b) => {
-      const d = new Date(b.placed_at);
-      // Date-only CSV values parse to 00:00; on the UTC runtime getHours() is
-      // 0, which would land inside the 11pm-5am window artificially. Exclude
-      // exact midnight so a date-only parse never counts as late-night.
-      if (d.getHours() === 0 && d.getMinutes() === 0) return false;
-      const h = d.getHours();
+      // Date-only CSV values parse to 00:00 UTC, which would land inside
+      // the 11pm-5am window artificially. Exclude exact midnight so a
+      // date-only parse never counts as late-night.
+      if (isMidnightUTC(b.placed_at)) return false;
+      const h = getUTCHour(b.placed_at);
       return h >= 23 || h < 5;
     });
     if (lateNightBets.length >= 5) {
@@ -1089,11 +1082,10 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     // >= 500) prevents false positives on small users who happen to bet
     // at night.
     const lateNightBets = settled.filter((b) => {
-      const d = new Date(b.placed_at);
       // Same date-only guard as the headline Late-Night detector: exact
       // midnight is a date-only parse, not a real clock time.
-      if (d.getHours() === 0 && d.getMinutes() === 0) return false;
-      const h = d.getHours();
+      if (isMidnightUTC(b.placed_at)) return false;
+      const h = getUTCHour(b.placed_at);
       return h >= 23 || h < 5;
     });
     // Gate on hasTimeOfDay so a date-only history (no real timestamps) never
@@ -2291,7 +2283,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     }
 
     // Late night check (any bet after 23:00)
-    const lateNight = sessionBets.some(b => new Date(b.placed_at).getHours() >= 23);
+    const lateNight = sessionBets.some(b => getUTCHour(b.placed_at) >= 23);
 
     // Additive sibling to `lateNight` (do not widen `lateNight` itself to
     // boolean | null - that's a breaking wire change for iOS). A `false`
@@ -2299,11 +2291,8 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     // real clock time; a date-only bet parses to exact midnight and could
     // be masking an actual late-night placement. `lateNight === true` is
     // always trustworthy on its own since a midnight artifact can never
-    // satisfy `getHours() >= 23`.
-    const hasRealTimestamp = (b: Bet) => {
-      const d = new Date(b.placed_at);
-      return !(d.getHours() === 0 && d.getMinutes() === 0);
-    };
+    // satisfy `getUTCHour() >= 23`.
+    const hasRealTimestamp = (b: Bet) => !isMidnightUTC(b.placed_at);
     const lateNightKnown = lateNight || sessionBets.every(hasRealTimestamp);
 
     const id = `SESSION-${String(idx + 1).padStart(3, '0')}`;
@@ -2382,13 +2371,13 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       ) {
         triggerEvent = {
           type: 'loss',
-          description: `Preceded by a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} losing bet on ${new Date(priorSettled.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`,
+          description: `Preceded by a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} losing bet on ${formatUTCMonthDay(priorSettled.placed_at)}.`,
           triggeringBetId: priorSettled.id,
         };
       } else if (lateNight) {
         triggerEvent = {
           type: 'late_night',
-          description: `Late-night session starting at ${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}.`,
+          description: `Late-night session starting at ${formatUTCTime(startDate)}.`,
         };
       } else if (overallMedianStake > 0 && startingStake > 1.5 * overallMedianStake) {
         triggerEvent = {
@@ -2400,10 +2389,10 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
 
     return {
       id,
-      date: startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-      dayOfWeek: dayNames[startDate.getDay()],
-      startTime: startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-      endTime: endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      date: formatUTCDate(startDate),
+      dayOfWeek: dayNames[getUTCDayOfWeek(startDate)],
+      startTime: formatUTCTime(startDate),
+      endTime: formatUTCTime(endDate),
       durationMinutes: round2(durationMinutes),
       bets: sessionBets.length,
       wins,
@@ -2590,8 +2579,8 @@ export function annotateBets(
     const stake = Number(bet.stake);
     const stakeVsMedian = medianStake > 0 ? stake / medianStake : 1;
     const betDate = new Date(bet.placed_at);
-    const hour = betDate.getHours();
-    const dayOfWeek = betDate.getDay(); // 0=Sun, 6=Sat
+    const hour = getUTCHour(betDate);
+    const dayOfWeek = getUTCDayOfWeek(betDate); // 0=Sun, 6=Sat
     const dateKey = betDate.toISOString().split('T')[0];
 
     // Increment daily count
@@ -2654,7 +2643,7 @@ export function annotateBets(
 
     // Date-only parses land at exact midnight; suppress their time-of-day
     // contribution rather than counting them as late-night.
-    const isMidnightParse = hour === 0 && betDate.getMinutes() === 0;
+    const isMidnightParse = hour === 0 && getUTCMinute(betDate) === 0;
     if (!isMidnightParse && (hour >= 23 || hour <= 4)) {
       signals.push({ name: 'late_night', weight: 3, description: `Placed at ${hour <= 4 ? hour : hour - 12}${hour <= 4 ? 'am' : 'pm'}`, category: 'emotional' });
     }
@@ -3167,14 +3156,14 @@ ${metrics.category_roi.map((c) => `${c.category}: ${c.roi.toFixed(1)}% ROI (${c.
 ===
 
 === TIMING ANALYSIS (day-of-week and time-of-day performance) ===
-${metrics.timing.has_time_data ? `By Day of Week:
+By Day of Week:
 ${metrics.timing.by_day.filter((d) => d.bets >= 1).map((d) => `${d.label}: ${d.roi.toFixed(1)}% ROI (${d.bets} bets, ${d.win_rate.toFixed(0)}% win rate, $${d.profit.toFixed(0)} profit)`).join('\n')}
-
+${metrics.timing.has_time_data ? `
 By Time of Day:
 ${metrics.timing.by_hour.filter((h) => h.bets >= 1).map((h) => `${h.label}: ${h.roi.toFixed(1)}% ROI (${h.bets} bets, ${h.win_rate.toFixed(0)}% win rate, $${h.profit.toFixed(0)} profit)`).join('\n')}
 ${metrics.timing.best_window ? `\nBest Window: ${metrics.timing.best_window.label}: ${metrics.timing.best_window.roi.toFixed(1)}% ROI (${metrics.timing.best_window.count} bets)` : ''}
 ${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.label}: ${metrics.timing.worst_window.roi.toFixed(1)}% ROI (${metrics.timing.worst_window.count} bets)` : ''}
-${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : 'No time-of-day data available (timestamps are date-only).'}
+${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : '\nNo time-of-day (hour) data available - timestamps are date-only. Day-of-week data above is still real and usable.'}
 ===
 
 === ODDS INTELLIGENCE ===
