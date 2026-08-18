@@ -1,4 +1,4 @@
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail, EdgeProfile, EdgeArea, EdgeAreaUnprofitable } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
@@ -1432,6 +1432,60 @@ function buildSessionAnalysis(
     worst_session: toDetail(worstSession, claude.worst_session?.description || fallbackDescription(worstSession)),
     best_session: toDetail(bestSession, claude.best_session?.description || fallbackDescription(bestSession)),
     insight: sessionDetection.insight,
+  };
+}
+
+// Deterministic edge_profile.profitable_areas / unprofitable_areas: roi,
+// sample_size, and estimated_loss come from metrics.category_roi, never
+// from the model. Same bug class as session_analysis, confirmed by the
+// mechanism behind a real demo contradiction: edge_profile once showed
+// "All Parlays" at -38.4% / 87 bets while strategic_leaks showed "NFL
+// Parlays" at -38.4% / 44 bets for the same report - identical ROI on a
+// subset and a superset population is not a coincidence, it's the model
+// reusing a number it saw earlier in its own context instead of computing
+// a fresh aggregate for the broader category.
+//
+// Claude's category SELECTION is kept (which areas are worth surfacing is
+// a reasonable judgment call, same as which strategic leaks to surface) -
+// only the numbers behind each selected category are verified. On a miss
+// (no matching category_roi entry, or the deterministic sign disagrees
+// with which bucket Claude put it in - e.g. a "profitable" area that's
+// actually roi <= 0) the area is DROPPED, not kept with an unverified
+// number. Unknown is a valid value.
+function buildEdgeAreas<T extends { category: string; roi: number; sample_size: number }>(
+  claudeAreas: unknown,
+  categoryRoi: CalculatedMetrics['category_roi'],
+  kind: 'profitable' | 'unprofitable'
+): T[] {
+  const list = Array.isArray(claudeAreas) ? claudeAreas as Record<string, unknown>[] : [];
+  const results: T[] = [];
+  for (const area of list) {
+    const categoryName = area.category as string | undefined;
+    if (!categoryName) continue;
+    const match = categoryRoi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase());
+    if (!match) continue;
+    if (kind === 'profitable' && match.roi <= 0) continue;
+    if (kind === 'unprofitable' && match.roi >= 0) continue;
+    const base = { category: match.category, roi: round2(match.roi), sample_size: match.count };
+    results.push((kind === 'profitable'
+      ? { ...base, confidence: confidenceFor(match.count) }
+      : { ...base, estimated_loss: round2(Math.abs(match.profit)) }) as unknown as T);
+  }
+  return results;
+}
+
+function buildEdgeProfile(
+  claudeEdgeProfile: unknown,
+  metrics: CalculatedMetrics,
+  bets: Bet[]
+): EdgeProfile | undefined {
+  if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
+  const claude = claudeEdgeProfile as Record<string, unknown>;
+  return {
+    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable'),
+    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable'),
+    reallocation_advice: (claude.reallocation_advice as string) ?? '',
+    sharp_score: calculateSharpScore(metrics, bets),
   };
 }
 
@@ -2908,8 +2962,8 @@ Respond with valid JSON:
     "best_session": { "description": "1-2 sentence narrative about the best session, referencing the exact numbers already given in SESSION DETECTION above - do not invent different ones" }
   },
   "edge_profile": {
-    "profitable_areas": [{ "category": "string", "roi": number, "sample_size": number, "confidence": "low|medium|high" }],
-    "unprofitable_areas": [{ "category": "string", "roi": number, "sample_size": number, "estimated_loss": number }],
+    "profitable_areas": [{ "category": "exact category name from CATEGORY ROI BREAKDOWN above, must be genuinely profitable there - do not invent one or reuse a category from a different section" }],
+    "unprofitable_areas": [{ "category": "exact category name from CATEGORY ROI BREAKDOWN above, must be genuinely unprofitable there - do not invent one or reuse a category from a different section" }],
     "reallocation_advice": "string",
     "sharp_score": number (0-100)
   }
@@ -3268,10 +3322,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
     session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
-    edge_profile: claudeData.edge_profile ? {
-      ...(claudeData.edge_profile as Record<string, unknown>),
-      sharp_score: calculateSharpScore(metrics, bets),
-    } as AutopsyAnalysis['edge_profile'] : undefined,
+    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets),
     betting_archetype: metrics.betting_archetype,
     timing_analysis: withFullModeTimingTags(metrics.timing),
     odds_analysis: withFullModeOddsTags(metrics.odds),
