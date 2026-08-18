@@ -838,6 +838,14 @@ export interface DetectedSession {
   chasedAfterLoss: boolean;
   chaseCount: number;
   lateNight: boolean;
+  // Additive sibling to `lateNight` (do not widen `lateNight` to
+  // boolean | null - breaking wire change for iOS). `false` when
+  // `lateNight` is false but at least one bet in the session lacks a real
+  // clock time (date-only source data parses to exact midnight), so the
+  // session's late-night status can't actually be determined. Always true
+  // when `lateNight` is true. Swift Codable with explicit CodingKeys
+  // silently ignores unknown fields, so existing clients decode unchanged.
+  lateNightKnown: boolean;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   gradeReasons: string[];
   isHeated: boolean;
