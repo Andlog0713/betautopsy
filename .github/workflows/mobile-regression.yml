@@ -16,8 +16,26 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-webkit-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      # actions/cache restores ~/.cache/ms-playwright's contents (the
+      # browser binary), but runners are ephemeral - system packages
+      # installed via apt in a previous run never persist, so WebKit's OS
+      # deps need reinstalling every run regardless of cache hit. Only the
+      # (slow) browser download itself is skippable.
       - name: Install Playwright (WebKit only)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps webkit
+      - name: Install Playwright OS deps (cache hit - browser already present)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps webkit
       - name: Build Next app
         # Pulled out of `webServer.command` so this step's runtime —
         # dominated by the Sentry sourcemap pipeline on slow runners —
