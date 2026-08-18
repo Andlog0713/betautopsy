@@ -171,16 +171,103 @@ false vs unknown-false) is still open. Per Andrew's explicit instruction,
 PR #88's work is **not** being marked complete; parking the UI
 consumption as its own follow-up.
 
+### Update (same day, later) — bet_annotations fix built, corrected, and shipped as PR #90
+Andrew corrected the recommendation above before approving: **omit the
+fields, don't zero them.** A zeroed dollar with no visibility tag is
+indistinguishable from a real $0 the moment anything renders it - the
+exact pattern behind the $0 P&L bug, and "nothing renders this today" was
+equally true of `late_night_stats` before it wasn't. Built it that way:
+`types/index.ts` makes the 5 fields optional on `AnnotationSummary`;
+new `redactAnnotationsForSnapshot()` in `lib/autopsy-engine.ts` (matching
+the `redactTimingForSnapshot`/`redactOddsForSnapshot` naming convention)
+destructure-omits them entirely rather than setting `0`, wired into
+`runSnapshot()`'s wire assembly. Fixed the resulting `possibly undefined`
+call sites in the engine's own prompt-building text, `lib/engine/charts.ts`,
+and `AutopsyReport.tsx`'s emotional-cost callout - all full-mode-only
+reads, no behavior change, just type-safety fallbacks. Verified the
+actual runtime JSON via a throwaway test: `distribution` entries carry
+only count/percent/roi, `streakInfluence` is `{}`, no leaking key
+anywhere in the payload.
+
+**Discovered mid-work: PR #87 had already been squash-merged** (by the
+time I went to push the narrowed-allowlist + engine-fix commits, which
+had been sitting local-only on that branch per plan). Squash-merging
+replaces the branch's commits with a single new commit on `main`, so my
+two commits landed on a now-dangling branch that was never going to
+reach `main` on its own. Fixed by branching fresh off current `main`,
+cherry-picking both commits (clean, no conflicts), and opening a new PR
+(**#90**) from there instead. The original `test/golden-fixture-wire-assertions`
+branch still exists remotely with the same 2 commits, now redundant -
+left it alone (not mine to delete without asking) rather than force-push
+or rewrite anything.
+
+Gates on PR #90: tsc clean, vitest 410/410, redaction suite 53/53 -
+**green because the leaks are gone, not because they're allowlisted** -
+build clean.
+
+### Update — jsdom render guard added to PR #89
+Andrew's core point: PR #89 fixed the highest-value rendering path in
+the product with zero automated coverage, verified only by a manual
+browser check - the same failure mode that let PR #84's silent
+regression through undetected in the first place. Stood up jsdom +
+`@testing-library/react` for exactly one test (not the broader DOM
+fixture suite, parked as its own follow-up): `vitest.config.ts` needed
+`@vitejs/plugin-react` since `tsconfig.json`'s `"jsx": "preserve"`
+(Next's own SWC pipeline handles the transform app-side) otherwise
+leaves Vite/esbuild with nothing to transform `.tsx` test files with.
+
+`__tests__/autopsy-report.render.test.tsx`: runs a real 120-bet fixture
+through `runSnapshot()`, renders `AutopsyReport` with `isSnapshot={true}`,
+asserts no "Generating" text and no VISIBLE dollar-pattern text inside
+the findings section (tagged `data-testid="findings-section"`, a
+one-line addition to `AutopsyReport.tsx`) - `RedactedValue`'s
+intentional blurred decoy amounts are `aria-hidden` and explicitly
+excluded, since a real leak is visible text, the deliberate paywall blur
+isn't. Confirmed the test actually discriminates: ran it against the
+pre-#89 component (branch without the `evidence_visibility` fix) and it
+failed on the "Generating analysis..." assertion exactly as expected, on
+the top bias specifically - not a vacuous pass.
+
+### Update — Stage 8 backfill/flagging decision (outline, still no code)
+Andrew's question: the 44 existing void-cash-out rows can't be
+backfilled (no Storage buckets, raw uploads aren't retained), so a
+parser fix produces correct new rows sitting alongside permanently-wrong
+historical ones. Does anything flag pre-fix reports?
+
+**Recommendation: no backfill, no in-product flagging.** Old rows stay
+`result: 'void'`, `profit: 0`, and naturally have no `settlement_type`
+(the column doesn't exist retroactively) - a known, permanent, honestly-
+unfixable gap, not something to paper over with an inference. Andrew's
+own numbers make the blast radius the deciding factor: 38 of the 44 rows
+are his own account (already known to him), and the 3 external users
+affected have 2 rows each - against typical bet-history sizes in the
+hundreds, 2 misclassified rows is noise, not something that moves a
+grade or a headline finding. Building a flag (a new column/timestamp
+cutoff on existing rows, comparison logic, UI copy explaining a
+data-quality caveat) is real engineering effort for an impact that
+rounds to zero for real users. Not recommending it. If Andrew wants a
+zero-cost hedge, a one-line FAQ/support note ("cash-outs recorded before
+[date] may show as pushes with $0 profit") covers the honesty bar without
+any code - optional, his call, not scoping it further until asked.
+
+Still unresolved and NOT part of this recommendation: whether re-
+uploading the same CSV after the fix ships would update the existing
+(wrong) `bets` rows or create duplicates - the parser fix as scoped only
+touches ingestion, so already-stored rows don't change unless a user
+re-uploads. Worth confirming before Stage 8 implementation starts, not
+before this decision.
+
 ### Parked / next branch
-- Engine-level `bet_annotations` snapshot redaction (see above) - small,
-  recommended, awaiting go-ahead.
-- Stage 8 cash-out `settlement_type` implementation - outline approved,
-  build not started, needs its own outline-and-approve cycle per the
-  parse-path rule.
+- Stage 8 cash-out `settlement_type` implementation - outline approved
+  (including the no-backfill/no-flagging decision above), build not
+  started, needs its own outline-and-approve cycle per the parse-path
+  rule. Confirm CSV re-upload behavior (update vs duplicate existing
+  rows) before starting.
 - lateNightKnown UI consumption (heated-session "unknown" state) -
   wire-only today.
-- The "217 paying web customers" project-notes figure Andrew flagged as
-  needing correction - still not located/fixed.
+- Broader DOM fixture suite (zero rendered `$`, zero lock-affordance
+  regressions, etc.) - one guard test now exists (PR #89); the rest is
+  still future work, not started.
 
 ---
 
