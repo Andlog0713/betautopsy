@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Script from 'next/script';
+import { GEO_COOKIE_NAME } from '@/lib/consent-region';
 
 /**
  * Meta (Facebook) Pixel loader.
@@ -8,10 +10,31 @@ import Script from 'next/script';
  * Companion to GA4. Only renders when NEXT_PUBLIC_META_PIXEL_ID is set,
  * and only mounted from app/layout.tsx inside the production-env
  * conditional.
+ *
+ * Consent-gated the same way GoogleAnalytics.tsx is: the `ba-geo-eu`
+ * cookie (written by middleware) decides. Meta Pixel has no native
+ * "consent mode" the way gtag does — it either fires or it doesn't — so
+ * unlike GA's inline pre-load init script, this defers rendering entirely
+ * until the client has read the cookie. Fail-closed: EU/EEA/UK/CH or a
+ * missing cookie means no pixel. This intentionally changes EU
+ * ad-conversion data (Meta previously fired for every visitor regardless
+ * of region) — that's the correct outcome of closing the gap, not a
+ * regression to soften.
  */
 export default function MetaPixel() {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  if (!pixelId) return null;
+  const [consentGranted, setConsentGranted] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const cookieMatch = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith(`${GEO_COOKIE_NAME}=`));
+    const cookieValue = cookieMatch ? cookieMatch.split('=')[1] : null;
+    setConsentGranted(cookieValue === '0');
+  }, []);
+
+  if (!pixelId || !consentGranted) return null;
 
   return (
     <>
