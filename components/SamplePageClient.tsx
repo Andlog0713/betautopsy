@@ -50,14 +50,12 @@ export default function SamplePageClient() {
 
   return (
     <>
-      {/* ═══ HEADER ═══ */}
-      <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
-        <p className="font-mono text-[10px] text-fg-dim tracking-[3px] uppercase mb-3">
-          SAMPLE REPORT // EXHIBIT A
-        </p>
-        <h1 className="font-extrabold text-3xl md:text-4xl tracking-tight text-fg-bright mb-3">
-          A real autopsy report
-        </h1>
+      {/* ═══ HEADER (mode-dependent copy + stats only — eyebrow/h1 are
+          static and render server-side in app/sample/page.tsx, outside
+          this useSearchParams-gated Suspense boundary, so they're present
+          in the statically-generated HTML crawlers and pre-hydration
+          visitors get) ═══ */}
+      <div className="max-w-5xl mx-auto px-6 pb-4">
         <p className="text-fg-muted font-light mb-6 max-w-2xl">
           {isDfs
             ? 'This is the full, unredacted sample. 200 PrizePicks entries analyzed across 5 chapters. Scroll through the whole thing — when you\'re ready, upload your own history and get yours.'

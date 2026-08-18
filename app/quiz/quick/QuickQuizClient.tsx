@@ -100,7 +100,7 @@ export default function QuickQuizClient() {
   // ── INTRO ──
   if (phase === 'intro') {
     return (
-      <main className="min-h-screen bg-base flex items-center justify-center px-4">
+      <main id="main-content" className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="max-w-lg text-center animate-fade-in">
           <h1 className="font-extrabold text-4xl md:text-5xl tracking-tight mb-4">
             Quick <span className="text-scalpel">Bet DNA</span>
@@ -136,7 +136,7 @@ export default function QuickQuizClient() {
     const isScenario = question.style === 'scenario';
 
     return (
-      <main className="min-h-screen bg-base px-4 py-6" style={{ background: `radial-gradient(circle at 50% 30%, ${accent}08 0%, transparent 60%), #111318` }}>
+      <main id="main-content" className="min-h-screen bg-base px-4 py-6" style={{ background: `radial-gradient(circle at 50% 30%, ${accent}08 0%, transparent 60%), #111318` }}>
         <div className="max-w-lg mx-auto">
           {/* Progress */}
           <div className="flex items-center justify-between mb-2">
@@ -218,7 +218,7 @@ export default function QuickQuizClient() {
   // ── REVEALING ──
   if (phase === 'revealing' && result) {
     return (
-      <main className="min-h-screen bg-base flex items-center justify-center px-4">
+      <main id="main-content" className="min-h-screen bg-base flex items-center justify-center px-4">
         <div className="text-center animate-fade-in">
           <p className="text-fg-muted text-xl reveal-pulse">Analyzing your answers...</p>
         </div>
@@ -231,7 +231,7 @@ export default function QuickQuizClient() {
     const eColor = result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : 'text-loss';
 
     return (
-      <main className="min-h-screen bg-base px-4 py-12">
+      <main id="main-content" className="min-h-screen bg-base px-4 py-12">
         <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
           {/* Archetype */}
           <div className="case-card p-6 text-center" style={{ borderColor: `${result.archetype.color}20` }}>
