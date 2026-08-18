@@ -497,6 +497,12 @@ export interface ImpactDelta {
   previousImpact: number;
   currentImpact: number;
   deltaPercent: number;
+  // Additive, optional. True when previousImpact was $0 or the bias didn't
+  // exist in the prior report - deltaPercent is a placeholder (100), not a
+  // computed percentage, in that case. Absent/false for a normal delta
+  // between two nonzero costs, where deltaPercent is real. Same additive
+  // pattern as SessionDetail.lateNightKnown.
+  isNew?: boolean;
   confidence: 'high' | 'medium' | 'low';
 }
 

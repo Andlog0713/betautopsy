@@ -69,12 +69,27 @@ function computeTopImpactDeltas(
 ): ImpactDelta[] {
   const prevBiases = previous.analysis.biases_detected ?? [];
   const currBiases = current.analysis.biases_detected ?? [];
-  if (prevBiases.length === 0 || currBiases.length === 0) return [];
+  // Only bail when there's nothing on the current side to evaluate at all.
+  // An empty prevBiases is NOT a reason to bail - a prior report with zero
+  // detected biases, followed by a current report with real ones, is
+  // exactly the "brand new bias" case below, not "nothing to compare."
+  if (currBiases.length === 0) return [];
 
+  // prevByName: bias name -> cost, only when the prior bias carried a real
+  // numeric estimated_cost. prevNames: every bias name that appeared in the
+  // prior report AT ALL, regardless of whether its cost was numeric - used
+  // to tell "genuinely new bias" apart from "existed previously but with
+  // missing/non-numeric cost data" (e.g. older LLM output predating this
+  // field). The latter is a data-quality gap, not novelty, and must keep
+  // being silently skipped rather than mislabeled isNew.
   const prevByName = new Map<string, number>();
+  const prevNames = new Set<string>();
   for (const b of prevBiases) {
-    if (typeof b.estimated_cost === 'number' && b.bias_name) {
-      prevByName.set(b.bias_name.toLowerCase(), b.estimated_cost);
+    if (!b.bias_name) continue;
+    const key = b.bias_name.toLowerCase();
+    prevNames.add(key);
+    if (typeof b.estimated_cost === 'number') {
+      prevByName.set(key, b.estimated_cost);
     }
   }
 
@@ -83,8 +98,37 @@ function computeTopImpactDeltas(
 
   for (const c of currBiases) {
     if (typeof c.estimated_cost !== 'number' || !c.bias_name) continue;
-    const prevImpact = prevByName.get(c.bias_name.toLowerCase());
-    if (typeof prevImpact !== 'number' || prevImpact === 0) continue;
+    const key = c.bias_name.toLowerCase();
+    const prevImpact = prevByName.get(key);
+
+    // Existed previously but with no numeric cost on record (older LLM
+    // output predating this field) - unknown baseline, not a confirmed $0
+    // or absent one. Skip rather than guess; do not mislabel isNew.
+    if (typeof prevImpact !== 'number' && prevNames.has(key)) continue;
+
+    // Zero-baseline case: a bias that either didn't exist last report, or
+    // existed with a confirmed $0 impact, and now costs real money. There's
+    // no meaningful percent to compute against a $0 (or absent) baseline -
+    // the old code's `prevImpact === 0` guard skipped this case entirely to
+    // dodge a division by zero, which silently dropped the single most
+    // notable kind of change a bettor's report can show. isNew: true is a
+    // new, purely additive field (same pattern as lateNightKnown) - iOS
+    // decodes unknown fields as absent and ignores them, so this never
+    // breaks an older client. deltaPercent stays a required number (not
+    // widened to optional) - 100 here is a placeholder, not a computed
+    // percentage; consumers must check isNew before reading it as one.
+    if (typeof prevImpact !== 'number' || prevImpact === 0) {
+      if (c.estimated_cost < IMPACT_ABS_THRESHOLD) continue;
+      candidates.push({
+        biasName: c.bias_name,
+        previousImpact: 0,
+        currentImpact: c.estimated_cost,
+        deltaPercent: 100,
+        isNew: true,
+        confidence,
+      });
+      continue;
+    }
 
     const delta = c.estimated_cost - prevImpact;
     const passesRelative = Math.abs(delta) >= IMPACT_REL_THRESHOLD * Math.abs(prevImpact);

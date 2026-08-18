@@ -263,6 +263,79 @@ describe('computeWhatChanged', () => {
     });
   });
 
+  describe('W9 — zero-baseline new bias (isNew)', () => {
+    it('surfaces a bias that had $0 impact last report and now costs real money, tagged isNew', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Loss Chasing', estimated_cost: 0 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Loss Chasing', estimated_cost: 900 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.topImpactDeltas).toHaveLength(1);
+      expect(result?.topImpactDeltas?.[0]).toMatchObject({
+        biasName: 'Loss Chasing',
+        previousImpact: 0,
+        currentImpact: 900,
+        deltaPercent: 100,
+        isNew: true,
+      });
+    });
+
+    it('surfaces a bias that did not exist at all in the prior report, tagged isNew', () => {
+      const prev = makeInput(makeAnalysis({ biases_detected: [] }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Parlay Addiction', estimated_cost: 1200 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.topImpactDeltas?.[0]).toMatchObject({
+        biasName: 'Parlay Addiction',
+        previousImpact: 0,
+        currentImpact: 1200,
+        isNew: true,
+      });
+    });
+
+    it('does not surface a trivial new bias under the absolute threshold', () => {
+      const prev = makeInput(makeAnalysis({ biases_detected: [] }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Minor Bias', estimated_cost: 50 })],
+      }));
+      expect(computeWhatChanged(prev, curr)).toBeUndefined();
+    });
+
+    it('does not tag isNew on a normal nonzero-to-nonzero delta', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', estimated_cost: 3200 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', estimated_cost: 1800 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.topImpactDeltas?.[0].isNew).toBeUndefined();
+      expect(result?.topImpactDeltas?.[0].deltaPercent).toBe(-44);
+    });
+
+    it('mixes a zero-baseline new bias with a normal delta, sorted by absolute dollar move', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [
+          makeBias({ bias_name: 'Small Existing Delta', estimated_cost: 1000 }),
+        ],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [
+          makeBias({ bias_name: 'Small Existing Delta', estimated_cost: 600 }),  // |Δ|=400
+          makeBias({ bias_name: 'Brand New Bias', estimated_cost: 2000 }),       // |Δ|=2000
+        ],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      const names = result?.topImpactDeltas?.map((d) => d.biasName);
+      expect(names).toEqual(['Brand New Bias', 'Small Existing Delta']);
+      expect(result?.topImpactDeltas?.[0].isNew).toBe(true);
+      expect(result?.topImpactDeltas?.[1].isNew).toBeUndefined();
+    });
+  });
+
   describe('W8 — crossSchemaVersion annotation', () => {
     it('flags deltas that span a schema_version boundary (absent = 1)', () => {
       const prev = makeInput(makeAnalysis({
