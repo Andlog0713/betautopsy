@@ -3286,10 +3286,10 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
       </div>
 
       {/* Emotional cost callout */}
-      {data.emotionalCost > 0 && (
+      {(data.emotionalCost ?? 0) > 0 && (
         <div className="finding-card border-l-2 border-l-scalpel">
           <p className="text-fg-muted text-sm">
-            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${data.emotionalCost.toLocaleString()}</span>.
+            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${(data.emotionalCost ?? 0).toLocaleString()}</span>.
             Disciplined bets returned <span className="font-mono text-win">{disciplinedROI.toFixed(1)}%</span> ROI.
           </p>
         </div>

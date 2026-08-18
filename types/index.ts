@@ -910,16 +910,22 @@ export interface BetAnnotation {
   currentStreak: number;
 }
 
+// totalStaked/totalProfit, emotionalCost, and every streakInfluence average
+// are OMITTED entirely (not zeroed) on snapshot payloads - see
+// redactAnnotationsForSnapshot in lib/autopsy-engine.ts. An absent optional
+// field can't be misread as a real $0 the way a redacted-to-zero sentinel
+// can; full-mode reports always populate them. count/percent/roi (not
+// dollar-shaped) and BetAnnotation.stakeVsMedian (a ratio) stay required.
 export interface AnnotationSummary {
   annotations: BetAnnotation[];
-  distribution: Record<BetClassification, { count: number; percent: number; totalStaked: number; totalProfit: number; roi: number }>;
-  emotionalCost: number;
+  distribution: Record<BetClassification, { count: number; percent: number; totalStaked?: number; totalProfit?: number; roi: number }>;
+  emotionalCost?: number;
   worstAnnotatedBet: BetAnnotation | null;
   bestAnnotatedBet: BetAnnotation | null;
   streakInfluence: {
-    avgStakeAfterWinStreak3: number;
-    avgStakeAfterLossStreak3: number;
-    avgStakeNeutral: number;
+    avgStakeAfterWinStreak3?: number;
+    avgStakeAfterLossStreak3?: number;
+    avgStakeNeutral?: number;
   };
   insight: string;
 }
