@@ -71,7 +71,7 @@ const FAQ_DATA: FAQSection[] = [
   {
     title: 'Plans & Pricing',
     items: [
-      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports analyzing all your bets, showing your overall grade, archetype, top bias fully explained, and BetIQ score. Full Report ($19.99, one-time): complete 5-chapter analysis going 5,000 bets deep with all biases, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan.' },
+      { q: 'What\'s free vs. paid?', a: 'Free: unlimited snapshot reports analyzing all your bets, showing your overall grade, archetype, real evidence behind your top biases, and BetIQ score. Dollar costs and fixes are locked. Full Report ($19.99, one-time): complete 5-chapter analysis going 5,000 bets deep with all biases fully explained, strategic leaks, behavioral patterns, Leak Prioritizer, What-If Simulator, and a personalized action plan.' },
       { q: 'Is there a free trial?', a: 'No trial needed. Free snapshots are always free with no credit card required. You can run unlimited snapshots to see your grade, top bias, and BetIQ score. When you want the complete analysis, buy a single report for $19.99.' },
       { q: 'What payment methods do you accept?', a: 'All major credit and debit cards via Stripe. We never see or store your full card number. Stripe handles all payment processing.' },
     ],
