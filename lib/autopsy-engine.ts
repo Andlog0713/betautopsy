@@ -1,5 +1,6 @@
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail, EdgeProfile, EdgeArea, EdgeAreaUnprofitable } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
+import { formatApproxUSD } from '@/lib/utils';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
@@ -3000,8 +3001,9 @@ Respond with valid JSON:
       "priority": 1,
       "title": "short action title",
       "description": "2-3 sentence explanation",
-      "expected_improvement": "estimated $ or % impact",
-      "difficulty": "easy|medium|hard"
+      "expected_improvement": "one sentence describing the behavioral change and its qualitative benefit - no dollar amounts, no percentages, no numbers of any kind",
+      "difficulty": "easy|medium|hard",
+      "tied_to_finding": "the exact bias_name from biases_detected this recommendation most directly addresses, or empty string if none apply - do not paraphrase or invent a name"
     }
   ],
   "personal_rules": [
@@ -3303,6 +3305,38 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
   // A: collected here, returned from runAutopsy below.
   const drops: EngineDrop[] = [];
+
+  // Extracted out of the analysisBase object literal below (was inline)
+  // so buildFullModeRecommendations can look up each recommendation's
+  // associated bias's already-bounded estimated_cost - an object literal
+  // can't reference its own in-progress properties.
+  const biasesDetectedFull = metrics.biases_detected.map((jsBias) => {
+    const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
+    const claudeBias = claudeBiases.find(
+      (cb: Record<string, unknown>) => (cb.bias_name as string)?.toLowerCase() === jsBias.bias_name.toLowerCase()
+    ) as Record<string, unknown> | undefined;
+    const claudeCost = (claudeBias?.estimated_cost as number) ?? 0;
+    const costBound = estimatedCostBound(jsBias);
+    return withFullModeBiasTags({
+      bias_name: jsBias.bias_name,
+      severity: jsBias.severity,
+      description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
+      evidence: (claudeBias?.evidence as string) ?? jsBias.data,
+      estimated_cost: costBound != null ? Math.min(claudeCost, costBound) : claudeCost,
+      fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
+      evidence_bet_ids: jsBias.evidence_bet_ids,
+      // Report-trust metadata: deterministic, from the JS detector — never
+      // the LLM. Full mode ships sub_splits dollars raw. Limited-sample
+      // band (30-99 settled) forces confidence 'low' regardless of the
+      // detector's own denominator (SNAPSHOT-LOOSEN).
+      sample_size: jsBias.sample_size,
+      confidence: jsBias.sample_size != null
+        ? (isLimitedSample(settledCount) ? 'low' : confidenceFor(jsBias.sample_size, jsBias.severity))
+        : undefined,
+      sub_splits: jsBias.sub_splits,
+    });
+  });
+
   const analysisBase: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
@@ -3328,32 +3362,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     // deterministic metrics; full reports only — stakeUSD/netUSD are
     // paywalled dollars, so runSnapshot never attaches charts.
     charts: buildReportCharts(metrics.timing, metrics.odds, metrics.annotations, metrics.sessionDetection, bets),
-    biases_detected: metrics.biases_detected.map((jsBias) => {
-      const claudeBiases = Array.isArray(claudeData.biases_detected) ? claudeData.biases_detected : [];
-      const claudeBias = claudeBiases.find(
-        (cb: Record<string, unknown>) => (cb.bias_name as string)?.toLowerCase() === jsBias.bias_name.toLowerCase()
-      ) as Record<string, unknown> | undefined;
-      const claudeCost = (claudeBias?.estimated_cost as number) ?? 0;
-      const costBound = estimatedCostBound(jsBias);
-      return withFullModeBiasTags({
-        bias_name: jsBias.bias_name,
-        severity: jsBias.severity,
-        description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
-        evidence: (claudeBias?.evidence as string) ?? jsBias.data,
-        estimated_cost: costBound != null ? Math.min(claudeCost, costBound) : claudeCost,
-        fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
-        evidence_bet_ids: jsBias.evidence_bet_ids,
-        // Report-trust metadata: deterministic, from the JS detector — never
-        // the LLM. Full mode ships sub_splits dollars raw. Limited-sample
-        // band (30-99 settled) forces confidence 'low' regardless of the
-        // detector's own denominator (SNAPSHOT-LOOSEN).
-        sample_size: jsBias.sample_size,
-        confidence: jsBias.sample_size != null
-          ? (isLimitedSample(settledCount) ? 'low' : confidenceFor(jsBias.sample_size, jsBias.severity))
-          : undefined,
-        sub_splits: jsBias.sub_splits,
-      });
-    }),
+    biases_detected: biasesDetectedFull,
     // Minimum-sample floor: below the total-bet floor the LLM has nothing
     // reliable to leak-flag (at n=2 it emitted a +46.6% "leak"). Gate to [].
     strategic_leaks: gateArray(
@@ -3394,7 +3403,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     ),
     // Minimum-sample floor: bet-pattern observations need a bet sample.
     behavioral_patterns: gateArray((Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'], settledCount, BET_COUNT_THRESHOLDS.behavioralPatterns),
-    recommendations: ((Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as Recommendation[]).map(withFullModeRecommendationTags),
+    recommendations: buildFullModeRecommendations(claudeData.recommendations, biasesDetectedFull),
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score, // backward compat for old report renders
     emotion_breakdown: metrics.emotion_breakdown,
@@ -3828,6 +3837,55 @@ function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
     description_visibility: 'visible',
     expected_improvement_visibility: 'visible',
   };
+}
+
+// C: expected_improvement used to be free text with an embedded dollar/
+// percent claim Claude invented (e.g. "Save ~$480/quarter") - the same
+// wire-provenance violation as session_analysis/edge_profile/
+// strategic_leaks, just harder to mechanically repoint since it's prose,
+// not a structured field. Fix taken: constrain the prompt (see the
+// recommendations schema above) to a behavioral description only, no
+// numbers of any kind, and have the engine append the dollar itself here
+// from the recommendation's tied bias - never let Claude write the figure.
+//
+// Considered wiring the client renderer to look up the bias by
+// tied_to_finding and render the dollar itself instead (kept the wire
+// shape exactly as expected_improvement: string either way — no renderer
+// change needed, lower risk, and the field's existing consumers keep
+// working unmodified). Went with composing server-side instead: simpler,
+// zero renderer risk, and the composed string is still exactly what the
+// UI already expects.
+//
+// tied_to_finding is Claude's SELECTION (which finding this recommendation
+// addresses is a reasonable judgment call, same latitude given to
+// edge_profile/strategic_leaks category choice) - only the number behind
+// it is verified. A miss (no tied_to_finding, or it doesn't match any
+// detected bias, or that bias has no cost) leaves Claude's plain
+// behavioral text untouched - unknown is a valid value, not a reason to
+// fabricate a figure.
+function buildFullModeRecommendations(
+  claudeRecommendations: unknown,
+  biasesDetected: BiasDetected[]
+): Recommendation[] {
+  const list = Array.isArray(claudeRecommendations) ? claudeRecommendations as Record<string, unknown>[] : [];
+  return list.map((rec) => {
+    const claudeText = (rec.expected_improvement as string) ?? '';
+    const tiedTo = (rec.tied_to_finding as string) ?? '';
+    const bias = tiedTo
+      ? biasesDetected.find((b) => b.bias_name.toLowerCase() === tiedTo.toLowerCase())
+      : undefined;
+    const expectedImprovement = bias && bias.estimated_cost > 0
+      ? (claudeText ? `${claudeText} Save ${formatApproxUSD(bias.estimated_cost)}/quarter.` : `Save ${formatApproxUSD(bias.estimated_cost)}/quarter.`)
+      : claudeText;
+    return withFullModeRecommendationTags({
+      priority: (rec.priority as number) ?? 0,
+      title: (rec.title as string) ?? '',
+      description: (rec.description as string) ?? '',
+      expected_improvement: expectedImprovement,
+      difficulty: (rec.difficulty as Recommendation['difficulty']) ?? 'medium',
+      tied_to_finding: bias ? bias.bias_name : undefined,
+    });
+  });
 }
 
 function withFullModeFindingTags(f: SportSpecificFinding): SportSpecificFinding {
