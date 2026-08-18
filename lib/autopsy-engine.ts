@@ -2925,7 +2925,7 @@ Respond with valid JSON:
   ],
   "strategic_leaks": [
     {
-      "category": "string",
+      "category": "exact category name from CATEGORY ROI BREAKDOWN above - do not paraphrase, pluralize, or invent a variant",
       "detail": "what the leak is",
       "roi_impact": number (use the pre-calculated ROI),
       "sample_size": number,
@@ -3292,26 +3292,39 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     }),
     // Minimum-sample floor: below the total-bet floor the LLM has nothing
     // reliable to leak-flag (at n=2 it emitted a +46.6% "leak"). Gate to [].
-    strategic_leaks: gateArray((Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : []).map((leak: Record<string, unknown>) => {
-      // Try to use JS-calculated ROI if available
-      const jsCat = metrics.category_roi.find((c) => c.category.toLowerCase() === (leak.category as string)?.toLowerCase());
-      const roiImpact = jsCat ? jsCat.roi : (leak.roi_impact as number) ?? 0;
-      const sampleSize = jsCat ? jsCat.count : (leak.sample_size as number) ?? 0;
-      const leakSeverity = leakSeverityFromRoi(roiImpact);
-      return {
-        category: (leak.category as string) ?? '',
-        detail: (leak.detail as string) ?? '',
-        detail_visibility: 'visible' as VisibilityTag,
-        roi_impact: roiImpact,
-        sample_size: sampleSize,
-        suggestion: (leak.suggestion as string) ?? '',
-        suggestion_visibility: 'visible' as VisibilityTag,
-        // Report-trust metadata: severity/confidence are deterministic from
-        // the JS-side ROI + sample, never LLM-chosen.
-        severity: leakSeverity,
-        confidence: confidenceFor(sampleSize, leakSeverity),
-      };
-    }), settledCount, BET_COUNT_THRESHOLDS.strategicLeaksFullTotal),
+    strategic_leaks: gateArray(
+      (Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks : [])
+        .map((leak: Record<string, unknown>) => {
+          const categoryName = leak.category as string | undefined;
+          const jsCat = categoryName
+            ? metrics.category_roi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase())
+            : undefined;
+          // No deterministic category match: drop the leak entirely rather
+          // than fall back to Claude's own roi_impact/sample_size. The old
+          // behavior was correct when the label matched and silently wrong
+          // when it didn't, with nothing distinguishing the two - the
+          // passing case teaches you to trust a field that isn't always
+          // trustworthy. Unknown is a valid value.
+          if (!jsCat) return null;
+          const leakSeverity = leakSeverityFromRoi(jsCat.roi);
+          return {
+            category: jsCat.category,
+            detail: (leak.detail as string) ?? '',
+            detail_visibility: 'visible' as VisibilityTag,
+            roi_impact: jsCat.roi,
+            sample_size: jsCat.count,
+            suggestion: (leak.suggestion as string) ?? '',
+            suggestion_visibility: 'visible' as VisibilityTag,
+            // Report-trust metadata: severity/confidence are deterministic
+            // from the JS-side ROI + sample, never LLM-chosen.
+            severity: leakSeverity,
+            confidence: confidenceFor(jsCat.count, leakSeverity),
+          };
+        })
+        .filter((leak): leak is NonNullable<typeof leak> => leak !== null),
+      settledCount,
+      BET_COUNT_THRESHOLDS.strategicLeaksFullTotal
+    ),
     // Minimum-sample floor: bet-pattern observations need a bet sample.
     behavioral_patterns: gateArray((Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'], settledCount, BET_COUNT_THRESHOLDS.behavioralPatterns),
     recommendations: ((Array.isArray(claudeData.recommendations) ? claudeData.recommendations : []) as Recommendation[]).map(withFullModeRecommendationTags),
