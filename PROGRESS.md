@@ -52,6 +52,18 @@
 - Treat `PROGRESS.md` as the source of truth for "where are we" — read it at the start of every session.
 - iOS polish work tracked in `IOS_POLISH.md`.
 
+## Install-time warnings
+- `EBADENGINE` and similar warnings from `npm install` get resolved before
+  proceeding, not stepped over because the local environment happens to
+  tolerate them. Local and CI differ by design (different Node versions,
+  different OS) - a warning that's survivable locally can be a hard crash
+  in CI or production. Added 2026-08-17 after `jsdom@30`'s EBADENGINE
+  warning (needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`) was seen and not
+  acted on; it passed on this machine's Node 24.14.0 anyway and then
+  crashed CI's Node 20 outright (`webidl.util.markAsUncloneable is not a
+  function` loading jsdom's CacheStorage). Downgraded to jsdom 26.x, which
+  predates the newer Node-only API usage.
+
 ## Pushback expected
 - Refuse requests that violate the design system.
 - Refuse architecture changes (RN rewrite, remote-URL switch, monorepo restructure) unless explicitly scoped in the user's prompt.
