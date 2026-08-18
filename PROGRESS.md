@@ -226,12 +226,61 @@ Gates: tsc clean, vitest 411/411 (24 files - this branch predates PR
 #91's jsdom pin/render-test-hardening work, so it doesn't carry those 2
 extra tests), build clean.
 
-### Parked / next branch
-- Stage 8 implementation itself (additive `settlement_type`,
-  `lib/csv-parser.ts` reclassification) - outline complete, disclosure
-  decided, dedupe behavior traced and safe. Still needs explicit
-  go-ahead before any code gets written (parse-path change, own
-  outline-and-approve cycle per the standing rule).
+### Done — Stage 8 implementation (PR #109, open) + full A-F batch + review follow-up round (PRs #110-115, open)
+Stage 8 (additive `settlement_type`, `lib/csv-parser.ts` reclassification
+by actual settlement value) shipped as PR #109, plus the FAQ historical-
+disclosure clause added after review (pre-fix cash-out rows stay wrong
+permanently, no backfill path). Needs the checked-in
+`supabase/migrations/20260818_bets_settlement_type.sql` applied before
+merge - not auto-applied this session, additive schema changes to the
+live production DB need explicit go-ahead.
+
+Full detail on the earlier A-F batch (production-break incident and its
+resolution on PR #101, PRs #102-#108, everything flagged) is on PR
+#109's own commit - this file's copy of that summary is on the
+`feat/stage8-cashout-settlement` branch and hasn't merged yet, so it's
+not duplicated here to avoid a guaranteed merge conflict; whichever PR
+merges to `main` first carries the authoritative version, reconcile the
+other into it when merging the rest.
+
+**Review follow-up round, six more PRs, all open:**
+- **#110** — `ShareModal`'s delete-link control now also fetches an
+  already-active share on mount (new `GET /api/share`, read-only, never
+  mints), not just one minted this session.
+- **#111** — the remaining four #105 demo-data contradictions: What-If
+  "Actual" vs Net P&L ($-167 vs $-1,247, root cause: `DEMO_BETS` is a
+  ~35-bet sample the What-If/Leak-Prioritizer functions compute live
+  from, never meant to sum to the fixture's fictional 280-bet
+  aggregate - added 12 more bet rows so it does now), NBA Props $340 vs
+  $140 (same root cause, closed by the same rows), heated-session count
+  8 vs 4 in prose (fixed to 8), and a self-caught correction to #105's
+  own worst-session fix ($300 vs the real $250 stake).
+- **#112** — `whatChanged`'s zero-baseline bug, previously flagged as
+  iOS-blocked - corrected per review, same additive path as
+  `lateNightKnown` (new `isNew` sibling, `deltaPercent` stays required).
+- **#113/#114/#115** — the A/C/D4 rebase chain, unblocked now that #101
+  merged: (A) drop-site logging for `strategic_leaks`/`edge_profile`
+  with a report id threaded through from a pre-generated UUID; (C)
+  `expected_improvement`'s dollar figure no longer Claude-authored -
+  prompt constrained to behavioral description only, engine composes
+  the dollar server-side from the recommendation's tied bias; (D4) new
+  `lib/date-utils.ts` UTC-accessor pattern across ~17 sites (more than
+  the ~10 estimated) plus the `by_day`-not-gated-by-`has_time_data`
+  prompt fix Claude was missing valid day-of-week signal on affected
+  users. Verified this session's own dev machine is NOT UTC
+  (America/New_York) and the swap is a real, demonstrated behavior
+  change; all 431 existing tests still pass unchanged, meaning
+  production (Vercel, UTC-default) was very likely already correct by
+  accident and no currently-live finding "moved" - the fix closes the
+  latent local-dev/future-infra risk and a real prompt-gate bug
+  (Claude missing day-of-week signal), proven with a dedicated
+  timezone-independent test suite rather than this machine's specific
+  TZ.
+
+Merge order: #101 (already merged) → #113 → #114 → #115 for the engine
+chain; #109 → #110/#111/#112 have no ordering dependency on each other
+or on the engine chain, but #109 specifically needs its migration
+applied first.
 
 ## Previous branch: `fix/session-late-night-known` — additive session field + Stage 8 blocker check (2026-08-17)
 
