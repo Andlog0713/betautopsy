@@ -1133,16 +1133,17 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       const emoChaseCount =
         ann.distribution.emotional.count + ann.distribution.chasing.count;
       const emoChaseShare = settled.length > 0 ? emoChaseCount / settled.length : 0;
-      const dragRatio = totalStaked > 0 ? Math.abs(ann.emotionalCost) / totalStaked : 0;
+      const emotionalCost = ann.emotionalCost ?? 0;
+      const dragRatio = totalStaked > 0 ? Math.abs(emotionalCost) / totalStaked : 0;
       if (emoChaseShare >= 0.15 && dragRatio >= 0.05) {
         const sev = dragRatio >= 0.20 ? 'critical' : dragRatio >= 0.12 ? 'high' : dragRatio >= 0.08 ? 'medium' : 'low';
         result.biases_detected.push({
           bias_name: 'Chronic Emotional Drag',
           severity: sev,
-          data: `${emoChaseCount} of ${settled.length} settled bets (${(emoChaseShare * 100).toFixed(0)}%) classified as emotional or chasing. Estimated emotional cost $${ann.emotionalCost.toFixed(0)} (${(dragRatio * 100).toFixed(1)}% of total staked $${totalStaked.toFixed(0)}). Persistent drag across the full bet history rather than isolated to a few bad sessions.`,
+          data: `${emoChaseCount} of ${settled.length} settled bets (${(emoChaseShare * 100).toFixed(0)}%) classified as emotional or chasing. Estimated emotional cost $${emotionalCost.toFixed(0)} (${(dragRatio * 100).toFixed(1)}% of total staked $${totalStaked.toFixed(0)}). Persistent drag across the full bet history rather than isolated to a few bad sessions.`,
           sample_size: settled.length,
           sub_splits: [
-            { label: 'Emotional or chasing bets', bets: emoChaseCount, roi_pct: null, net_usd: round2(ann.emotionalCost) },
+            { label: 'Emotional or chasing bets', bets: emoChaseCount, roi_pct: null, net_usd: round2(emotionalCost) },
           ],
         });
       }
@@ -2611,9 +2612,9 @@ export function annotateBets(
   // Emotional cost: how much worse emotional/chasing/impulsive bets perform vs disciplined baseline
   const disciplinedROI = distribution.disciplined.roi;
   const emotionalClasses: BetClassification[] = ['emotional', 'chasing', 'impulsive'];
-  const emotionalStaked = emotionalClasses.reduce((s, c) => s + distribution[c].totalStaked, 0);
+  const emotionalStaked = emotionalClasses.reduce((s, c) => s + (distribution[c].totalStaked ?? 0), 0);
   const emotionalROI = emotionalStaked > 0
-    ? emotionalClasses.reduce((s, c) => s + distribution[c].totalProfit, 0) / emotionalStaked * 100
+    ? emotionalClasses.reduce((s, c) => s + (distribution[c].totalProfit ?? 0), 0) / emotionalStaked * 100
     : 0;
   const emotionalCost = Math.round(emotionalStaked * (disciplinedROI - emotionalROI) / 100 * 100) / 100;
 
@@ -3027,8 +3028,8 @@ Insight: ${metrics.sessionDetection.insight}
 
 === BET ANNOTATIONS (${metrics.annotations.annotations.length} bets annotated) ===
 Distribution: ${(['disciplined', 'emotional', 'chasing', 'impulsive', 'neutral'] as const).map(c => `${c}: ${metrics.annotations!.distribution[c].count} (${metrics.annotations!.distribution[c].percent}%), ROI: ${metrics.annotations!.distribution[c].roi.toFixed(1)}%`).join(' | ')}
-Emotional Cost: $${metrics.annotations.emotionalCost.toFixed(0)} (estimated profit lost to emotional/chasing/impulsive bets)
-Streak Influence: After 3+ win streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterWinStreak3.toFixed(0)} | After 3+ loss streak avg stake $${metrics.annotations.streakInfluence.avgStakeAfterLossStreak3.toFixed(0)} | Neutral avg stake $${metrics.annotations.streakInfluence.avgStakeNeutral.toFixed(0)}
+Emotional Cost: $${(metrics.annotations.emotionalCost ?? 0).toFixed(0)} (estimated profit lost to emotional/chasing/impulsive bets)
+Streak Influence: After 3+ win streak avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterWinStreak3 ?? 0).toFixed(0)} | After 3+ loss streak avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterLossStreak3 ?? 0).toFixed(0)} | Neutral avg stake $${(metrics.annotations.streakInfluence.avgStakeNeutral ?? 0).toFixed(0)}
 Insight: ${metrics.annotations.insight}
 ===` : ''}
 
@@ -3584,6 +3585,34 @@ function redactOddsForSnapshot(odds: OddsAnalysis | undefined): OddsAnalysis | u
   };
 }
 
+// Redacts an AnnotationSummary for snapshot mode. Unlike the timing/odds
+// redactors above, this OMITS the real-dollar fields entirely rather than
+// zeroing them with a visibility tag: distribution.*.totalStaked/
+// totalProfit, emotionalCost, and every streakInfluence average. A zeroed
+// dollar with no tag is indistinguishable from a real $0 the moment
+// anything renders it - the same pattern that produced the $0 P&L bug
+// elsewhere - and nothing today teases this data on snapshots
+// (BetAnnotationsSection only renders in full mode) to justify the
+// tagged-zero teaser pattern biases_detected uses. An absent key is
+// unambiguous and decodes as nil on iOS with no sentinel to leak.
+// annotations[]/worstAnnotatedBet/bestAnnotatedBet.stakeVsMedian (a ratio,
+// not a dollar) and distribution.*.count/percent/roi stay visible.
+function redactAnnotationsForSnapshot(ann: AnnotationSummary | undefined): AnnotationSummary | undefined {
+  if (!ann) return undefined;
+  const distribution = {} as AnnotationSummary['distribution'];
+  for (const cls of Object.keys(ann.distribution) as BetClassification[]) {
+    const { totalStaked, totalProfit, ...rest } = ann.distribution[cls];
+    distribution[cls] = rest;
+  }
+  const { avgStakeAfterWinStreak3, avgStakeAfterLossStreak3, avgStakeNeutral, ...restStreak } = ann.streakInfluence;
+  const { emotionalCost, ...restAnn } = ann;
+  return {
+    ...restAnn,
+    distribution,
+    streakInfluence: restStreak,
+  };
+}
+
 // Annotates a BiasDetected with full-mode "visible" tags + severity_bar_ratio.
 // Used by runAutopsy when assembling full-mode payloads so iOS V8.5+ (which
 // default-denies on missing tags) renders the field instead of blurring it.
@@ -3926,7 +3955,7 @@ export async function runSnapshot(
         worstSession: null,
       };
     })() : undefined,
-    bet_annotations: metrics.annotations ?? undefined,
+    bet_annotations: redactAnnotationsForSnapshot(metrics.annotations ?? undefined),
     // executive_diagnosis (legacy snake) intentionally undefined in snapshot
     // mode — matches today's behavior so pre-V8.5 iOS sees no new content.
     executiveDiagnosis,

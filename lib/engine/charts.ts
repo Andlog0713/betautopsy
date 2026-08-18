@@ -149,9 +149,9 @@ export function buildReportCharts(
 
   const stakeByStreak = annotations
     ? {
-        after3WinsUSD: annotations.streakInfluence.avgStakeAfterWinStreak3,
-        neutralUSD: annotations.streakInfluence.avgStakeNeutral,
-        after3LossesUSD: annotations.streakInfluence.avgStakeAfterLossStreak3,
+        after3WinsUSD: annotations.streakInfluence.avgStakeAfterWinStreak3 ?? 0,
+        neutralUSD: annotations.streakInfluence.avgStakeNeutral ?? 0,
+        after3LossesUSD: annotations.streakInfluence.avgStakeAfterLossStreak3 ?? 0,
       }
     : null;
 
