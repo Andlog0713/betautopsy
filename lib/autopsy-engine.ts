@@ -1,4 +1,4 @@
-import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit } from '@/types';
+import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
@@ -1379,6 +1379,60 @@ export function estimatePercentile(
     if (value >= b.bottom_10) return 12;
     return 5;
   }
+}
+
+// Deterministic session_analysis: every numeric field comes from
+// sessionDetection (already computed precisely elsewhere in this file),
+// never from the model. Claude was independently regenerating
+// total_sessions / avg_bets_per_*_session / worst_session / best_session's
+// numbers from scratch, with no requirement that they match
+// sessionDetection's real ones - the bug behind session_analysis and
+// session_detection showing different session counts on the same report
+// (62 vs 44 on the sample report; the identical failure mode is available
+// on every real full report, not just the demo). The prompt already gives
+// Claude the exact worst/best session facts (id, date, bets, profit,
+// grade) in the SESSION DETECTION block above, so this only keeps the two
+// fields with no deterministic equivalent: the narrative descriptions.
+// `insight` is also replaced with sessionDetection.insight (itself
+// deterministic) rather than kept from Claude, since asking the model for
+// a second independent narrative over the same numbers reintroduces the
+// same drift risk this function exists to close.
+function buildSessionAnalysis(
+  sessionDetection: SessionDetectionResult,
+  claudeSessionAnalysis: unknown
+): SessionAnalysis | undefined {
+  const { worstSession, bestSession } = sessionDetection;
+  if (!worstSession || !bestSession) return undefined;
+
+  const claude = (claudeSessionAnalysis ?? {}) as {
+    worst_session?: { description?: string };
+    best_session?: { description?: string };
+  };
+
+  const avgBets = (list: DetectedSession[]) =>
+    list.length > 0 ? round2(list.reduce((sum, s) => sum + s.bets, 0) / list.length) : 0;
+
+  const toDetail = (s: DetectedSession, description: string): SessionDetail => ({
+    date: s.date,
+    bets: s.bets,
+    duration: `${s.startTime} - ${s.endTime}`,
+    starting_stake: s.startingStake,
+    ending_stake: s.endingStake,
+    net: s.profit,
+    description,
+  });
+
+  const fallbackDescription = (s: DetectedSession) =>
+    `${s.grade}-graded session on ${s.date}: ${s.bets} bets, ${s.profit >= 0 ? '+' : '-'}$${Math.abs(s.profit).toFixed(0)}.`;
+
+  return {
+    total_sessions: sessionDetection.totalSessions,
+    avg_bets_per_winning_session: avgBets(sessionDetection.sessions.filter(s => s.profit > 0)),
+    avg_bets_per_losing_session: avgBets(sessionDetection.sessions.filter(s => s.profit < 0)),
+    worst_session: toDetail(worstSession, claude.worst_session?.description || fallbackDescription(worstSession)),
+    best_session: toDetail(bestSession, claude.best_session?.description || fallbackDescription(bestSession)),
+    insight: sessionDetection.insight,
+  };
 }
 
 function calculateSharpScore(metrics: CalculatedMetrics, bets: Bet[]): number {
@@ -2850,12 +2904,8 @@ Respond with valid JSON:
     }
   ],
   "session_analysis": {
-    "total_sessions": number,
-    "avg_bets_per_winning_session": number,
-    "avg_bets_per_losing_session": number,
-    "worst_session": { "date": "string", "bets": number, "duration": "string", "net": number, "description": "1-2 sentence narrative" },
-    "best_session": { "date": "string", "bets": number, "duration": "string", "net": number, "description": "1-2 sentence narrative" },
-    "insight": "key takeaway"
+    "worst_session": { "description": "1-2 sentence narrative about the worst session, referencing the exact numbers already given in SESSION DETECTION above - do not invent different ones" },
+    "best_session": { "description": "1-2 sentence narrative about the best session, referencing the exact numbers already given in SESSION DETECTION above - do not invent different ones" }
   },
   "edge_profile": {
     "profitable_areas": [{ "category": "string", "roi": number, "sample_size": number, "confidence": "low|medium|high" }],
@@ -3217,7 +3267,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     tilt_breakdown: metrics.emotion_breakdown, // backward compat
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
-    session_analysis: claudeData.session_analysis as AutopsyAnalysis['session_analysis'],
+    session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
     edge_profile: claudeData.edge_profile ? {
       ...(claudeData.edge_profile as Record<string, unknown>),
       sharp_score: calculateSharpScore(metrics, bets),
