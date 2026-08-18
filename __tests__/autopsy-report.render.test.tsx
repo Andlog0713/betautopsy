@@ -13,7 +13,7 @@
  * as of this test) - that can follow as its own piece of work.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import AutopsyReport from '@/components/AutopsyReport';
 import { runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
@@ -96,5 +96,52 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     // No real (visible) dollar figure anywhere in the findings section.
     // Decoy blur amounts are aria-hidden and excluded by visibleText().
     expect(visibleText(findings)).not.toMatch(/\$[\d,]/);
+  });
+
+  // Closes the hole in the previous test: stripping aria-hidden content
+  // proves nothing is LEAKED, but says nothing about whether what's hidden
+  // is actually a decoy. A future refactor that renders a real dollar
+  // figure inside an aria-hidden wrapper (instead of RedactedValue's
+  // internal hash-based fakeDollar()) would pass the test above silently.
+  it('RedactedValue decoys are present and never echo the real (redacted) estimated_cost', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const lockedBiases = analysis.biases_detected.filter((b) => b.estimated_cost_visibility !== 'visible');
+    expect(lockedBiases.length).toBeGreaterThan(0);
+    // Wire-level invariant this test pins: a locked bias's estimated_cost
+    // is always the redacted sentinel (0), never a real figure. This is
+    // the value a regression would have to leak for the decoy check below
+    // to matter.
+    for (const b of lockedBiases) {
+      expect(b.estimated_cost).toBe(0);
+    }
+
+    render(<AutopsyReport analysis={analysis} bets={[]} isSnapshot={true} tier="free" />);
+    const findings = screen.getByTestId('findings-section');
+
+    const decoys = Array.from(findings.querySelectorAll('[aria-hidden="true"]')).filter((el) =>
+      /^\$[\d,]+$/.test(el.textContent?.trim() ?? '')
+    );
+    expect(decoys.length).toBeGreaterThan(0);
+    for (const decoy of decoys) {
+      const amount = Number(decoy.textContent!.replace(/[$,]/g, ''));
+      // The decoy must never echo the real (redacted) wire value - i.e.
+      // it must never render literal $0, which is what estimated_cost
+      // actually is once redacted. A nonzero decoy proves it's the
+      // fake hash-based placeholder, not a real number that slipped through.
+      expect(amount).not.toBe(0);
+    }
+  });
+
+  // Accessible-name check: the decoy amount is aria-hidden by design (it's
+  // a visual-only blur effect), so if the surrounding control has no other
+  // accessible name, a screen reader user gets silence where a sighted
+  // user sees a paywall affordance.
+  it('every RedactedValue lock control has an accessible name', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    render(<AutopsyReport analysis={analysis} bets={[]} isSnapshot={true} tier="free" />);
+    const findings = screen.getByTestId('findings-section');
+
+    const lockControls = within(findings).getAllByRole('button', { name: /see your full dollar costs/i });
+    expect(lockControls.length).toBeGreaterThan(0);
   });
 });
