@@ -1304,7 +1304,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* FINDINGS — collapsible progressive disclosure */}
       {biases_detected.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="findings-section">
           <div className="flex items-center justify-between mb-2.5">
             <p className="font-mono text-[9px] text-fg-dim tracking-[3px]">FINDINGS</p>
             <button
