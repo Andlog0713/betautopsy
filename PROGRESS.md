@@ -109,11 +109,235 @@
 
 ---
 
-## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes (2026-08-18)
+## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes + Phase 1/2 batch (2026-08-18)
 
-PRs #93-#99 merged/open. This entry covers the audit batch specifically
-(Part 1's security work and the Phase 1 launch-punch-list re-verification
-are logged on earlier branch entries below).
+PRs #93-#108 merged/open. This entry covers the audit batch and the
+lettered A-F batch that followed it (Part 1's security work and the
+Phase 1 launch-punch-list re-verification are logged on earlier branch
+entries below).
+
+### Incident — production broke between PR #99 and PR #101 (resolved)
+PR #97 and PR #99 both branched from the same pre-#97 main and both
+inserted a new function immediately before `calculateSharpScore` in
+`lib/autopsy-engine.ts`. PR #99's merge into main kept its own insertion
+(`estimatedCostBound`) and silently discarded PR #97's
+(`buildEdgeAreas`/`buildEdgeProfile`) — a same-line merge conflict
+resolved wrong, confirmed via `git show b25070c -- lib/autopsy-engine.ts`.
+Main did not compile from that merge until PR #101. Root-caused via the
+real Vercel build log (`get_deployment_build_logs`, `errorsOnly: true`):
+the only error was `Cannot find name 'buildEdgeProfile'` — nothing else
+was wrong. Confirmed PR #99's own branch predated PR #97's merge, so it
+never contained the call in isolation locally — not a stale-local-state
+false green, a genuinely isolated branch that didn't cover the eventual
+merge collision.
+
+**Fixed as PR #101**, shipped alone (per Andrew's explicit correction:
+don't bundle an urgent production fix with unrelated work), restoring
+the exact function bodies from PR #97's original merge commit
+(`b440d5c`). Diffed the restored file against all three PRs' (#97/#98/
+#99) original commits line-by-line to confirm nothing else was silently
+eaten along with the two missing functions — everything else (drop-on-
+miss `strategic_leaks` filter, `estimated_cost: Math.min(...)` bound,
+tightened prompt schemas) survived correctly.
+
+**Standing rule going forward for the rest of this session**: any branch
+touching `lib/autopsy-engine.ts` is rebased on the previous
+engine-touching branch, never independently branched from a common
+stale ancestor. Everything outside that file can still run in parallel.
+This is why PRs #102-#108 form a rebase chain off `fix/restore-edge-
+profile-functions` rather than each branching from `main` independently
+— main stayed broken (pre-#101) for the entire batch, so every branch
+needed a working ancestor to run `tsc`/`vitest`/`build` against; each
+PR's description notes the diff collapses once earlier PRs in the chain
+merge.
+
+### Done — Phase 1 (D), single-item PRs
+- **PR #102 — Meta Pixel consent gate**: `components/MetaPixel.tsx` now
+  gates on the same `ba-geo-eu` cookie `GoogleAnalytics.tsx` already
+  uses (fail-closed: EU/unknown region = no pixel). EU ad-conversion
+  data will change as a result — correct outcome of fixing a real gap,
+  not a regression.
+- **PR #103 — Terms**: 21+ → 18+; removed the "Paid subscriptions"/
+  "Cancellation" subsections (recurring Stripe billing language — no
+  subscription exists on any public surface, single one-time $19.99
+  report purchase is the only thing sold); redated.
+- **PR #104 — Privacy + FAQ + ShareModal + api-client**: 21+ → 18+;
+  §7's blanket "we do not use advertising or tracking cookies" was
+  false given Meta Pixel — replaced with an accurate EU-scoped
+  disclosure matching PR #102's actual gating behavior; FAQ's
+  self-contradicting Anthropic data-use line fixed to match Privacy
+  §5's already-correct framing; wired the existing but UI-orphaned
+  `DELETE /api/share` endpoint into `ShareModal.tsx` (added `apiDelete`
+  to `lib/api-client.ts`, added a "Delete shared link" button) — a real
+  capability with zero caller until now. Known gap not fixed: the
+  button only appears once a share link is minted in the current
+  session; no fetch-on-mount check for a pre-existing token from a past
+  session.
+
+### Done — D5, demo-data + copy fixes (PR #105)
+Targeted reconciliation, not the full "derive everything from one
+fixture" architectural rewrite Andrew's phrasing pointed at — the
+datasets are hand-authored prose fixtures, and a generic derivation-
+function architecture (mirroring `buildSessionAnalysis`/
+`buildEdgeProfile`) is a larger, separate effort, flagged as a possible
+follow-up rather than attempted blind under time pressure. Fixed the
+two specifically-confirmed contradictions in `DEMO_ANALYSIS`
+(`DEMO_DFS_ANALYSIS` was already internally consistent — checked both
+in full):
+- `session_analysis.total_sessions` (62) vs `session_detection.
+  totalSessions` (44) — set to 44; `worst_session`/`best_session` were
+  independently hand-authored and disagreed with `session_detection`'s
+  `worstSession`/`bestSession` on date/bet-count/net for the same
+  session — now copied from the same record.
+- `edge_profile.unprofitable_areas`'s `"All Parlays"` at -38.4%/87 bets
+  showing the identical ROI as `strategic_leaks`' `"NFL Parlays"` at
+  -38.4%/44 bets — the exact number-reuse mechanism already root-caused
+  and fixed in the real engine (PR #97/#98, see the comment above
+  `buildEdgeProfile`). Renamed to `"Parlays"`, gave the broader
+  population its own distinct ROI (-34.1%) instead of a copied one.
+
+Also fixed two product-copy issues in `components/AutopsyReport.tsx`
+that render on every real report, not just the demo: the Sharp Score
+footnote claimed "closing line value" as a methodology input — no CLV
+data exists anywhere in the codebase, rewrote to describe the real
+methodology (ROI + category consistency + odds calibration +
+discipline); the "ABOUT THIS REPORT" section described the product as
+analyzing "psychological patterns, emotional responses, and cognitive
+biases" — clinical/diagnostic language the product isn't licensed to
+use, reworded to behavioral/statistical framing consistent with the
+rest of the report's voice.
+
+### Done — paywall count source + FAQ overclaim (PR #106)
+Found while auditing item B (empty-state rendering): `AutopsyReport`'s
+`SnapshotPaywall` badges ("We found N findings") read from
+`analysis._snapshot_counts`, documented as legacy ("Supersedes
+`_snapshot_counts` going forward but does not replace it (kept for
+pre-V8.5 iOS)" — `types/index.ts`) and computed from different
+intermediate values than its successor `summaryCounts`:
+`_snapshot_counts.leaks` is the raw pre-filter leak count (before the
+platform-category and min-sample filters `strategic_leaks` itself
+applies) and `.patterns` is `biases_detected.length` capped at 5, a
+proxy, not the real `patternsSnapshot` count. Net effect: the paywall
+could promise more findings than the unlocked report actually shows.
+Web has no pre-V8.5 constraint, so it now prefers `summaryCounts`
+(remapped to the shape `SnapshotPaywall` expects) and falls back to
+`_snapshot_counts` only for reports saved before `summaryCounts`
+existed. Also fixed the FAQ's "top bias fully explained" claim — PR #89
+actually ships an evidence-only teaser (cost and fix stay locked);
+moved "fully explained" to describe the paid tier, where it's accurate.
+
+### Done — isPartialReport vacuous-truth bug (PR #107)
+The most severe finding of this pass. `isPartialReport` (gates ~10
+"Generating..." skeletons across nearly every report section) inferred
+"still waiting on Claude" purely from three arrays being empty: every
+bias has blank description/fix AND `strategic_leaks` empty AND
+`recommendations` empty. Vacuous-truth bug: `calculateMetrics`' bias
+detection only pushes a bias when its trigger condition fires, so a
+genuinely disciplined bettor can legitimately finish with all three
+empty — real, reachable, correct output, not "hasn't arrived yet." A
+fully complete report for such a user showed skeletons in nearly every
+section, **permanently, every time the report was viewed** (no
+time-based fallback). Fixed by excluding snapshot mode entirely
+(`runSnapshot` no longer calls Claude at all — Haiku call removed
+since the output had no consumer, per the comment at the top of
+`runSnapshot` — so a snapshot analysis is always fully assembled by
+the time it reaches the component) and anchoring full-report detection
+on `executive_diagnosis`/`executiveDiagnosis.insightFull` presence
+(Claude's required ~32-word summary, generated unconditionally
+regardless of finding count) instead of array emptiness. Added 2 jsdom
+tests; manually verified the fix discriminates by reverting it locally,
+confirming the "clean bettor" test fails against the old code exactly
+as the bug predicts, then restoring and confirming it passes.
+
+### Done — accessibility batch (PR #108)
+- **Viewport zoom (WCAG 1.4.4)**: `maximum-scale=1.0, user-scalable=no`
+  in the viewport `<meta>` and `touch-action: pan-x pan-y` in
+  `globals.css` were both blocking pinch-zoom **site-wide**, not just
+  in the Capacitor app they were built for — the CSS rule in particular
+  had no build-target scope at all, so it blocked pinch-zoom for every
+  mobile web visitor too. Both now gate on `isMobileBuild()`/a new
+  `data-build-target="mobile"` attribute on `<html>`. `ZoomGate`
+  (the iOS `gesturestart` suppressor) was already correctly scoped to
+  `isMobileApp()` — not changed.
+- **Main-content landmarks**: the skip-link only resolved on the
+  homepage — every other route either had a `<main>` missing the
+  matching id, or no `<main>` at all (`/go`, `/sample`,
+  `/reset-password`, the `(auth)` layout covering `/login`+`/signup`).
+  Fixed across 10 routes; live-verified via dev server that every route
+  has exactly one `id="main-content"` and the skip-link's target
+  actually resolves.
+- **`/terms` metadata**: had no `layout.tsx`, inherited the root's
+  generic title — added one matching `/privacy`'s existing pattern.
+- **`/sample` SSR h1**: lived inside a `'use client'` component gated
+  behind Suspense (`useSearchParams()` for `?view=`), so Next rendered
+  an empty skeleton fallback during static generation/ISR — the
+  prerendered HTML crawlers and pre-hydration visitors actually get had
+  no h1 at all. Moved the static/mode-independent eyebrow+h1 to the
+  parent server component; verified present in the actual
+  `.next/server/app/sample.html` build artifact.
+
+### Flagged, not fixed — needs Andrew's call
+- **`whatChanged` zero-baseline bug** (`lib/what-changed.ts`,
+  `computeTopImpactDeltas`): skips any bias delta where the previous
+  impact was `0` (`if (... || prevImpact === 0) continue`), to avoid a
+  div-by-zero in the percent calc. Silently drops the single most
+  notable case — a bias that cost $0 last report and now costs real
+  money. This field is **iOS-only** wire data (`types/index.ts`: "iOS
+  Chapter 1 renderer consumes this; web reports surface uses
+  lib/report-comparison separately" — web's own `WhatChangedSection`
+  already handles new-bias correctly via a different, already-correct
+  code path). A real fix (adding an `isNew` flag, making `deltaPercent`
+  optional for that case) changes what `ImpactDelta` looks like on the
+  wire for iOS's Codable decoder — exactly the "touches iOS" stop
+  condition. Not fixed this pass; needs either Andrew's explicit
+  go-ahead on the wire shape or a coordinated iOS-side change, which is
+  out of scope for a web-only session.
+- **CSP enforcement proposal** (Andrew asked for a proposal, not
+  implementation): `next.config.js` currently ships
+  `Content-Security-Policy-Report-Only` with no `report-uri`/`report-to`
+  directive — meaning it isn't actually collecting violation data
+  anywhere right now, report-only or not. One concrete, verified gap
+  found by reading the code: Meta Pixel (`components/MetaPixel.tsx`)
+  dynamically injects a `<script src="https://connect.facebook.net/
+  en_US/fbevents.js">`, and `connect.facebook.net` is not in
+  `script-src` — enforcing the policy as-is would silently break Meta
+  Pixel entirely. `js.stripe.com`/`challenges.cloudflare.com` are
+  covered in `frame-src` and don't appear as direct script sources
+  anywhere in this app's own code (Stripe looks hosted-checkout-only;
+  Turnstile's actual loading mechanism — possibly via Supabase Auth's
+  own captcha config — wasn't confirmed). Also present: `unsafe-eval`
+  in `script-src`, whose necessity in production (vs. only being needed
+  for dev-mode HMR) wasn't verified. Recommended staged rollout: (1)
+  add a `report-uri`/`report-to` endpoint now, while staying
+  report-only, so real violation data actually gets collected; (2) fix
+  the confirmed Meta Pixel gap and whatever else real traffic surfaces;
+  (3) then flip to enforced. Not implemented.
+- **Leaked-password protection** (Supabase Auth dashboard toggle, not
+  code): confirmed still disabled via `get_advisors` — Supabase Auth →
+  Policies → Password → enable "Leaked password protection" (checks
+  against HaveIBeenPwned.org on signup/password-reset). Remediation
+  doc: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+  Needs Andrew's hand — this is a dashboard click, not something
+  scriptable from this session.
+- **Supabase security advisor still flags `dashboard_stats` and
+  `increment_login_count`** as SECURITY DEFINER functions executable by
+  the `authenticated` role — checked, this is a confirmed false
+  positive, not a regression. Read both migration files
+  (`20260818_close_rpc_idor.sql`, `20260818_close_remaining_definer_
+  grants.sql`): both functions keep `authenticated`'s EXECUTE grant
+  deliberately (revoking it breaks real call sites — login, dashboard
+  stats) but scope themselves internally (`dashboard_stats` requires
+  `p_user_id = auth.uid()`, `increment_login_count` requires `id =
+  auth.uid()`), both documented with the reasoning in the migration
+  comments. The advisor linter can't see inside function bodies, so it
+  flags the SECURITY DEFINER + authenticated-callable pattern
+  regardless of internal checks — this is that limitation, not an open
+  gap. No action needed.
+- Two `rls_enabled_no_policy` INFO-level advisor findings
+  (`quiz_leads`, `stripe_events` — RLS enabled, no policies, so only
+  the service-role key can touch them) — lowest severity, almost
+  certainly intentional (both are server-only write paths), noted for
+  completeness, not investigated further.
 
 ### Done — the Claude-numeric-field audit, four fixes shipped as separate PRs
 Requested after the `session_analysis` fix (below) as a full audit of
@@ -166,6 +390,38 @@ from the model, unknown is a valid value, a redaction sentinel is not a
 value — since all three kept getting violated the same way: quietly, by
 code that looked reasonable in isolation, because the rule was understood
 rather than written down.
+
+### Parked / next branch
+- **Item A — drop instrumentation**: one log line at each
+  `strategic_leaks`/`edge_profile` drop site (category, whether a
+  `category_roi` match existed, report id). Touches
+  `lib/autopsy-engine.ts` — blocked on PR #101 merging, then must be
+  rebased onto whatever's latest in the engine-touching chain per the
+  serial-rebase rule above.
+- **Item C — `recommendations[].expected_improvement`**: remove the
+  dollar/percent claim from Claude's prose, let the renderer pull the
+  real number from the recommendation's associated bias. Same
+  engine-touching blocker as item A. Two candidate approaches outlined
+  above under "`recommendations[].expected_improvement` — investigated,
+  not fixed"; still awaiting a decision on which.
+- **Item D4 — `lib/date-utils.ts` UTC-accessor convention**: new file +
+  ~10 call-site fixes across `lib/autopsy-engine.ts` (including the
+  `by_day` bucketing correctness fix at ~line 425, not gated on
+  `has_time_data`), `lib/digest-helpers.ts`, `components/
+  AutopsyReport.tsx`, and a few dashboard/upload pages. Re-verify
+  day-of-week aggregates after and report which findings moved. Same
+  engine-touching blocker as A and C — all three should land as one
+  rebase chain once #101 merges, not three independently-based
+  branches.
+- **Item F — Stage 8 cash-out parser**: approved to build (this
+  session, earlier) — additive `settlement_type` sibling on `Bet`,
+  reclassify cash-outs by actual settlement value instead of forcing
+  `result: 'void'`, do not widen the `result` enum, fix the push/void
+  profit force-zeroing bug in the same pass
+  (`lib/csv-parser.ts` ~line 330-333). Outline complete, disclosure
+  already shipped (FAQ note, prior session), dedupe behavior already
+  traced and confirmed safe (see "Traced — CSV re-upload dedupe
+  behavior" below). Not started this pass — next up.
 
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
