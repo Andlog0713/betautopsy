@@ -71,69 +71,71 @@
 
 ---
 
-## Current branch: `chore/jsdom-pin-and-render-test-hardening` (2026-08-17, later)
+## Current branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
-PRs #88/#89/#90 merged. Three non-urgent follow-ups from the jsdom fix,
-rolled into one branch per Andrew's instruction.
+PRs #88/#89/#90 merged. This branch is the disclosure half of Stage 8 -
+the parser/`settlement_type` fix itself is still not started.
 
-### Done — jsdom exact pin (Andrew caught a real inconsistency)
-`package.json` had `"jsdom": "^26.1.0"` - the caret survived from the
-original install even though the CI incident that forced the downgrade
-argues for an exact pin (a future `npm install` pulling a newer 26.x
-minor could reintroduce the same local-vs-CI drift). My earlier summary
-said "cleanly pinned to 26.1.0," which was true of the *lockfile's
-resolved version* but not of what `package.json` actually declared -
-conflated the two. Fixed: `"jsdom": "26.1.0"`, no caret.
+### Traced — CSV re-upload dedupe behavior (blocks Stage 8's design until answered; now answered)
+Andrew's question: after the parser fix ships, if a user re-uploads the
+same CSV, does a cash-out row whose `result` changes from `'void'` to
+`'loss'`/`'win'` still match the dedupe key? Two hypothesized outcomes
+were on the table - existing rows update (self-heal) vs. a duplicate row
+gets created (corrupts every metric).
 
-### Reported, not changed — Node version parity (CI vs Vercel vs package.json)
-- CI: all three GitHub Actions workflows (`ci.yml`, `design-system.yml`,
-  `mobile-regression.yml`) pin `node-version: '20'`.
-- Vercel: `.vercel/project.json` → `"nodeVersion": "24.x"`.
-- `package.json`: no `engines` field at all.
+Traced the actual logic in `lib/import-bets.ts`. `dupKey()` (line 11) is
+built from `date (day only) | description.toLowerCase() | odds | stake`
+- **`result` and `profit` are not part of the key at all**. The matching
+logic (`existingCounts`/`uploadGroups`, lines 51-72) is pure
+count-and-skip: for a given key, it inserts `max(0, newCount -
+existingCount)` new rows and skips the rest as duplicates. There is no
+UPDATE or upsert path anywhere in this file - it only ever decides
+whether to INSERT, never to modify an existing row.
 
-This gap is exactly why jsdom 30's `EBADENGINE` warning (needs Node
-`^22.22.2 || ^24.15.0 || >=26.0.0`) was survivable on a local machine
-running Node 24.14 and a hard crash in CI running Node 20.
+**Actual answer is a third outcome, not either of the two hypothesized:**
+a re-uploaded cash-out still matches the existing row's dedupe key (date/
+description/odds/stake are unchanged), so `existingCount >= newCount` and
+the corrected row is silently skipped. **No duplicate gets created (safe
+- re-uploading will not corrupt bet counts or metrics), but nothing
+self-heals either** (the old wrong row is never touched, forever, unless
+a user deletes it and re-imports from scratch - a manual path that
+exists but isn't something to build tooling around). This confirms
+Andrew's original "44 rows stay permanently wrong" framing was already
+exactly right; re-uploading isn't a hidden escape hatch from that, but it
+also isn't a hidden landmine. Adding `settlement_type` doesn't touch
+`dupKey()` at all, so this behavior is unaffected either way by Stage 8
+itself.
 
-**Recommendation (one option, not implemented):** bump the three
-workflows' `node-version` to `'24'` to match Vercel, not the reverse.
-Production is the real target; CI should mirror what actually ships, not
-the other way around. Would also add an `engines` field
-(`{"node": "24.x"}` or similar) as a second layer - so a future
-`npm install` under a mismatched local Node fails loudly via the standing
-rule above instead of installing something that only works by accident.
-Not implemented - awaiting go-ahead per Andrew's "report only" instruction.
+### Done — FAQ cash-out disclosure
+Andrew's call: the FAQ note is not an optional hedge, it's required. A
+cash-out currently renders as $0 profit - a wrong value presented as
+fact, same category as the $0 P&L and `late_night_stats` bugs fixed
+earlier this session, except this one can't be corrected retroactively
+(see the dedupe trace above), which is exactly when disclosure has to
+substitute for correction. Added one Q&A to `app/faq/page.tsx`'s
+"Getting Started & Uploading Data" section, right after the existing
+CSV-cleanup question (same category, same voice as the surrounding
+entries): *"How are cash-outs handled?" - "Cash-outs are currently
+recorded as $0 profit, not your actual cash-out amount, since exported
+data doesn't reliably distinguish a profitable cash-out from a loss. If
+you cash out often, your reported P&L and ROI may not fully reflect
+those bets."* One line, FAQ only - no banner, no per-report flag, no
+promise of a fix timeline (Stage 8 itself isn't approved to build yet).
 
-### Done — render test hardening (closes 2 real gaps in the PR #89 guard)
-1. **Aria-hidden blind spot.** The original test stripped every
-   `[aria-hidden="true"]` subtree before checking for a visible dollar
-   figure - correct for excluding `RedactedValue`'s intentional blur
-   decoys, but it never verified WHAT was inside those wrappers. A future
-   refactor rendering a real dollar figure inside an aria-hidden span
-   would have passed silently. New test: confirms every locked bias's
-   wire-level `estimated_cost` is the redacted sentinel (`0`) - the value
-   a regression would have to leak - then confirms the rendered decoys
-   are present AND none of them render literal `$0` (which is what the
-   real, already-redacted wire value actually is). A decoy that ever
-   echoes `0` would mean the real number is leaking through.
-2. **Accessible name check.** The decoy amount is `aria-hidden` by
-   design; if the surrounding control had no other accessible name, a
-   screen reader user gets silence where a sighted user sees a paywall
-   affordance. Checked empirically rather than assumed: `RedactedValue`
-   relies on a `title` attribute (`role="button"`, no `aria-label`) - ran
-   it through `@testing-library/react`'s `getByRole('button', {name})`,
-   which implements the W3C accname spec (title is a valid fallback when
-   there's no aria-label/text content), and it resolves correctly today.
-   New test locks this in as a regression guard. Caveat worth flagging:
-   `title`-only naming is spec-compliant but has known real-world
-   reliability gaps across screen reader/browser combinations (typically
-   surfaced as a hover tooltip, not guaranteed read on all keyboard-only
-   paths) - an explicit `aria-label` would be more robust in practice.
-   Not changed - this was a "confirm" ask, not a "fix" ask; flagging for
-   Andrew to decide if he wants the belt-and-suspenders `aria-label` too.
+No backfill, no in-product flagging mechanism - both already decided
+against (blast radius: 38 of 44 known-wrong rows are Andrew's own
+account, 3 external users at 2 rows each).
 
-Gates: `tsc --noEmit` clean, `vitest run` 413/413 (24 files, 3 tests now
-in the render-guard file, up from 1), `next build` clean.
+Gates: tsc clean, vitest 411/411 (24 files - this branch predates PR
+#91's jsdom pin/render-test-hardening work, so it doesn't carry those 2
+extra tests), build clean.
+
+### Parked / next branch
+- Stage 8 implementation itself (additive `settlement_type`,
+  `lib/csv-parser.ts` reclassification) - outline complete, disclosure
+  decided, dedupe behavior traced and safe. Still needs explicit
+  go-ahead before any code gets written (parse-path change, own
+  outline-and-approve cycle per the standing rule).
 
 ## Previous branch: `fix/session-late-night-known` — additive session field + Stage 8 blocker check (2026-08-17)
 
