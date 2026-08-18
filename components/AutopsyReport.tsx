@@ -560,11 +560,37 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const emotionInsufficient = analysis.emotion_score_insufficient_data ?? false;
   const emotionBreakdown = analysis.emotion_breakdown ?? analysis.tilt_breakdown;
 
-  // Detect if this is a partial (metrics-only) report still waiting for Claude
+  // Detect if this is a partial (metrics-only) report still waiting for Claude.
+  //
+  // Snapshot mode is pure-compute now (runSnapshot no longer calls Claude -
+  // its Haiku call was removed since the output had no consumer, dropping
+  // snapshot cost to $0) - by the time a snapshot analysis reaches this
+  // component it is always fully assembled, so it's never actually partial.
+  //
+  // For full reports, the old check (every bias has empty description/fix,
+  // AND strategic_leaks is empty, AND recommendations is empty) has a
+  // vacuous-truth bug: a genuinely disciplined bettor can legitimately
+  // finish with zero biases, zero leaks, and zero recommendations - real,
+  // reachable engine output, not "still loading." That combination made the
+  // check indistinguishable from mid-generation, so a fully complete report
+  // for such a user showed "Generating..." skeletons across nearly every
+  // section - permanently, every time the report was viewed, not just
+  // during live generation.
+  //
+  // executive_diagnosis is Claude's required ~32-word summary, generated
+  // unconditionally regardless of how many findings exist - a reliable
+  // "Claude has responded" signal the array-emptiness check isn't. Treated
+  // as the primary signal; hasRealContent stays as a fallback for any
+  // report that somehow has real content but no diagnosis field.
+  const hasRealContent =
+    biases_detected?.some((b) => b.description || b.fix) ||
+    (strategic_leaks && strategic_leaks.length > 0) ||
+    (recommendations && recommendations.length > 0);
   const isPartialReport =
-    biases_detected?.every((b) => !b.description && !b.fix) &&
-    (!strategic_leaks || strategic_leaks.length === 0) &&
-    (!recommendations || recommendations.length === 0);
+    !isSnapshot &&
+    !analysis.executive_diagnosis &&
+    !analysis.executiveDiagnosis?.insightFull &&
+    !hasRealContent;
 
   const pnlData = useMemo(() => buildPnLData(bets), [bets]);
   const stakeData = useMemo(() => buildStakeData(bets), [bets]);

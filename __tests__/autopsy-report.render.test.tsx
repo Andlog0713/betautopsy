@@ -145,3 +145,50 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     expect(lockControls.length).toBeGreaterThan(0);
   });
 });
+
+describe('AutopsyReport — isPartialReport vacuous-truth guard', () => {
+  // isPartialReport used to infer "still waiting on Claude" purely from
+  // biases_detected/strategic_leaks/recommendations all being empty. Those
+  // three are real, reachable engine output for a genuinely disciplined
+  // bettor (no conditions in calculateMetrics' bias detection fired), not
+  // just a "not arrived yet" placeholder shape - so a fully complete full
+  // report for such a user was indistinguishable from mid-generation and
+  // showed "Generating..." skeletons in nearly every section, permanently,
+  // every time the report was viewed.
+  it('does not show a permanent "Generating..." skeleton for a complete full report with zero findings', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+
+    // Simulate a completed FULL report (not snapshot) for a bettor the
+    // engine found nothing to flag on: empty findings arrays, but Claude's
+    // required executive_diagnosis has arrived, same as any other
+    // completed full report regardless of finding count.
+    const cleanBettorAnalysis = {
+      ...analysis,
+      biases_detected: [],
+      strategic_leaks: [],
+      recommendations: [],
+      executive_diagnosis: 'Your betting shows no significant behavioral leaks this period.',
+    };
+
+    render(<AutopsyReport analysis={cleanBettorAnalysis} bets={[]} isSnapshot={false} tier="pro" />);
+
+    expect(screen.queryByText(/Generating/i)).toBeNull();
+  });
+
+  it('still shows the skeleton for a genuinely partial full report (no executive_diagnosis, no real content yet)', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+
+    const partialAnalysis = {
+      ...analysis,
+      biases_detected: analysis.biases_detected.map((b) => ({ ...b, description: '', fix: '' })),
+      strategic_leaks: [],
+      recommendations: [],
+      executive_diagnosis: undefined,
+      executiveDiagnosis: undefined,
+    };
+
+    render(<AutopsyReport analysis={partialAnalysis} bets={[]} isSnapshot={false} tier="pro" />);
+
+    expect(screen.queryAllByText(/Generating/i).length).toBeGreaterThan(0);
+  });
+});
