@@ -422,6 +422,26 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
   const snapshotLocked = PRICING_ENABLED && isSnapshot && !readOnly;
+  // summaryCounts (canonical, ships in both modes) vs _snapshot_counts
+  // (legacy, snapshot-only, kept only for pre-V8.5 iOS per its type
+  // comment): the two are computed from different intermediate arrays in
+  // the engine and can disagree - _snapshot_counts.leaks is the raw
+  // category_roi leak count before the platform-category and min-sample
+  // filters strategic_leaks itself applies, and _snapshot_counts.patterns
+  // is biases_detected.length capped at 5, not the real patternsSnapshot
+  // count. That means the paywall teaser ("We found N findings") can
+  // promise more than the unlocked report actually shows. Web has no
+  // pre-V8.5 constraint, so prefer summaryCounts and only fall back to
+  // the legacy field for reports saved before summaryCounts existed.
+  const paywallCounts = analysis.summaryCounts
+    ? {
+        leaks: analysis.summaryCounts.leakPatternsFlagged,
+        patterns: analysis.summaryCounts.patternsIdentified,
+        sessions: analysis.summaryCounts.sessionsAnalyzed,
+        sport_findings: analysis.summaryCounts.sportLevelFindings,
+        total_biases: analysis.summaryCounts.biasesDetected,
+      }
+    : analysis._snapshot_counts;
   // recoveryModeRecommended: report-intrinsic (this report's risk findings).
   // Drives the apparent-edge caution + sharp-score interpretation copy, which
   // describe THIS report and stay stable with it.
@@ -1273,7 +1293,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* ═══ SNAPSHOT CTA: shown between chapters for free snapshots ═══ */}
       {snapshotLocked && (
-        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} sufficiency={analysis.sufficiency} />
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={paywallCounts} sufficiency={analysis.sufficiency} />
       )}
 
       {/* Chapters 2-5: always rendered, with field-level redaction for snapshots */}
@@ -3071,7 +3091,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Second CTA banner at the end of chapters for snapshots */}
       {snapshotLocked && (
-        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={analysis._snapshot_counts} sufficiency={analysis.sufficiency} />
+        <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={paywallCounts} sufficiency={analysis.sufficiency} />
       )}
       </>
 
