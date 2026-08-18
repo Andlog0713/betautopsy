@@ -951,7 +951,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <span className="text-fg-dim">▸</span> ABOUT THIS REPORT
         </summary>
         <div className="px-4 pb-4 text-xs text-fg-muted leading-relaxed border-t border-border-subtle">
-          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong>: the psychological patterns, emotional responses, and cognitive biases that affect every bet you place.
+          Unlike a bet tracker that shows you numbers, BetAutopsy analyzes your betting <strong className="text-fg-bright">behavior</strong>: the decision patterns, situational triggers, and staking habits behind every bet you place.
         </div>
       </details>
 
@@ -2463,7 +2463,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 ? 'Below average. Focus volume on your 1-2 profitable areas.'
                 : 'Significant room for improvement in bet selection.'}
             </p>
-            <p className="text-fg-muted text-[10px] mt-1 italic">Based on closing line value, category-level ROI consistency, and sample size confidence.</p>
+            <p className="text-fg-muted text-[10px] mt-1 italic">Based on ROI, category-level consistency, odds calibration, and betting discipline.</p>
           </div>
           {/* Profitable / Unprofitable areas — typographic ledger, no boxes */}
           <div className="grid md:grid-cols-2 gap-x-10 gap-y-8">
