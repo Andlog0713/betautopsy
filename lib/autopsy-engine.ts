@@ -1455,17 +1455,30 @@ function buildSessionAnalysis(
 function buildEdgeAreas<T extends { category: string; roi: number; sample_size: number }>(
   claudeAreas: unknown,
   categoryRoi: CalculatedMetrics['category_roi'],
-  kind: 'profitable' | 'unprofitable'
+  kind: 'profitable' | 'unprofitable',
+  reportId?: string
 ): T[] {
   const list = Array.isArray(claudeAreas) ? claudeAreas as Record<string, unknown>[] : [];
   const results: T[] = [];
   for (const area of list) {
     const categoryName = area.category as string | undefined;
-    if (!categoryName) continue;
+    if (!categoryName) {
+      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: false, reason: 'no_category' });
+      continue;
+    }
     const match = categoryRoi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase());
-    if (!match) continue;
-    if (kind === 'profitable' && match.roi <= 0) continue;
-    if (kind === 'unprofitable' && match.roi >= 0) continue;
+    if (!match) {
+      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: false, reason: 'no_match' });
+      continue;
+    }
+    if (kind === 'profitable' && match.roi <= 0) {
+      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
+      continue;
+    }
+    if (kind === 'unprofitable' && match.roi >= 0) {
+      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
+      continue;
+    }
     const base = { category: match.category, roi: round2(match.roi), sample_size: match.count };
     results.push((kind === 'profitable'
       ? { ...base, confidence: confidenceFor(match.count) }
@@ -1477,13 +1490,14 @@ function buildEdgeAreas<T extends { category: string; roi: number; sample_size: 
 function buildEdgeProfile(
   claudeEdgeProfile: unknown,
   metrics: CalculatedMetrics,
-  bets: Bet[]
+  bets: Bet[],
+  reportId?: string
 ): EdgeProfile | undefined {
   if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
   const claude = claudeEdgeProfile as Record<string, unknown>;
   return {
-    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable'),
-    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable'),
+    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable', reportId),
+    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable', reportId),
     reallocation_advice: (claude.reallocation_advice as string) ?? '',
     sharp_score: calculateSharpScore(metrics, bets),
   };
@@ -3083,7 +3097,13 @@ function formatBetTable(bets: Bet[]): string {
 
 export async function runAutopsy(
   bets: Bet[],
-  bankroll?: number | null
+  bankroll?: number | null,
+  // Caller-supplied correlation id for the strategic_leaks/edge_profile
+  // drop-site logs below (A: instrument the drop). Optional so existing
+  // callers/tests are unaffected; the API route generates one up front and
+  // passes it through so the log line's report id matches the row it ends
+  // up saved under.
+  reportId?: string
 ): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
   // `maxRetries: 0` — the SDK's default is 2 retries on timeout, which on
   // a 50s per-call budget could burn 150s before giving up (exactly what
@@ -3327,7 +3347,10 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
           // when it didn't, with nothing distinguishing the two - the
           // passing case teaches you to trust a field that isn't always
           // trustworthy. Unknown is a valid value.
-          if (!jsCat) return null;
+          if (!jsCat) {
+            console.log('[autopsy-engine] strategic_leaks drop', { reportId, category: categoryName, categoryRoiExists: false });
+            return null;
+          }
           const leakSeverity = leakSeverityFromRoi(jsCat.roi);
           return {
             category: jsCat.category,
@@ -3357,7 +3380,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
     session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
-    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets),
+    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, reportId),
     betting_archetype: metrics.betting_archetype,
     timing_analysis: withFullModeTimingTags(metrics.timing),
     odds_analysis: withFullModeOddsTags(metrics.odds),

@@ -378,9 +378,16 @@ export async function POST(request: Request) {
           : reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
         const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
 
+        // Pre-generated so the strategic_leaks/edge_profile drop-site logs
+        // inside runAutopsy (lib/autopsy-engine.ts) can tag each drop with
+        // the report id it belongs to, and so that id matches the actual
+        // saved row below (explicit `id:` on the insert) instead of being a
+        // throwaway correlation value with nothing to look up.
+        const reportId = crypto.randomUUID();
+
         const { analysis, markdown, tokensUsed, model } = isSnapshot
           ? await runSnapshot(betsToAnalyze, userBankroll)
-          : await runAutopsy(betsToAnalyze, userBankroll);
+          : await runAutopsy(betsToAnalyze, userBankroll, reportId);
 
         const costCents = Math.ceil(tokensUsed * 0.001);
         const dateStart = betsToAnalyze[0]?.placed_at ?? null;
@@ -528,6 +535,7 @@ export async function POST(request: Request) {
         const { data: savedReport, error: insertError } = await serviceRole
           .from('autopsy_reports')
           .insert({
+            id: reportId,
             user_id: user.id,
             report_type: effectiveReportType,
             bet_count_analyzed: betsToAnalyze.length,
