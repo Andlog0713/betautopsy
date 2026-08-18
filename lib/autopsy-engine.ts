@@ -1435,6 +1435,60 @@ function buildSessionAnalysis(
   };
 }
 
+// Deterministic edge_profile.profitable_areas / unprofitable_areas: roi,
+// sample_size, and estimated_loss come from metrics.category_roi, never
+// from the model. Same bug class as session_analysis, confirmed by the
+// mechanism behind a real demo contradiction: edge_profile once showed
+// "All Parlays" at -38.4% / 87 bets while strategic_leaks showed "NFL
+// Parlays" at -38.4% / 44 bets for the same report - identical ROI on a
+// subset and a superset population is not a coincidence, it's the model
+// reusing a number it saw earlier in its own context instead of computing
+// a fresh aggregate for the broader category.
+//
+// Claude's category SELECTION is kept (which areas are worth surfacing is
+// a reasonable judgment call, same as which strategic leaks to surface) -
+// only the numbers behind each selected category are verified. On a miss
+// (no matching category_roi entry, or the deterministic sign disagrees
+// with which bucket Claude put it in - e.g. a "profitable" area that's
+// actually roi <= 0) the area is DROPPED, not kept with an unverified
+// number. Unknown is a valid value.
+function buildEdgeAreas<T extends { category: string; roi: number; sample_size: number }>(
+  claudeAreas: unknown,
+  categoryRoi: CalculatedMetrics['category_roi'],
+  kind: 'profitable' | 'unprofitable'
+): T[] {
+  const list = Array.isArray(claudeAreas) ? claudeAreas as Record<string, unknown>[] : [];
+  const results: T[] = [];
+  for (const area of list) {
+    const categoryName = area.category as string | undefined;
+    if (!categoryName) continue;
+    const match = categoryRoi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase());
+    if (!match) continue;
+    if (kind === 'profitable' && match.roi <= 0) continue;
+    if (kind === 'unprofitable' && match.roi >= 0) continue;
+    const base = { category: match.category, roi: round2(match.roi), sample_size: match.count };
+    results.push((kind === 'profitable'
+      ? { ...base, confidence: confidenceFor(match.count) }
+      : { ...base, estimated_loss: round2(Math.abs(match.profit)) }) as unknown as T);
+  }
+  return results;
+}
+
+function buildEdgeProfile(
+  claudeEdgeProfile: unknown,
+  metrics: CalculatedMetrics,
+  bets: Bet[]
+): EdgeProfile | undefined {
+  if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
+  const claude = claudeEdgeProfile as Record<string, unknown>;
+  return {
+    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable'),
+    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable'),
+    reallocation_advice: (claude.reallocation_advice as string) ?? '',
+    sharp_score: calculateSharpScore(metrics, bets),
+  };
+}
+
 // Plausibility bound for biases_detected[].estimated_cost: the model's
 // dollar figure can't exceed the actual net loss across the bets backing
 // this bias's sample_size. Not a full per-bias counterfactual (that's
