@@ -138,6 +138,42 @@ export async function POST(request: Request) {
   }
 }
 
+// Read-only existence check for the caller's own report - does NOT mint or
+// re-activate anything, unlike POST (which IS the explicit share action).
+// Lets ShareModal show "Delete shared link" for a link minted in a past
+// session, not just one minted this session (shareUrl was previously only
+// ever set by ensureShareUrl's own POST response). A revoked token reports
+// as no active share, matching POST's own re-activate-on-next-share
+// semantics - the modal should show "Copy report link" for it, not
+// "Delete," until the user re-shares.
+export async function GET(request: Request) {
+  try {
+    const { supabase, user, error: authError } = await getAuthenticatedClient(request);
+    if (authError || !user || !supabase) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const reportId = searchParams.get('report_id');
+    if (!reportId) {
+      return NextResponse.json({ error: 'report_id required' }, { status: 400 });
+    }
+
+    const { data: existing } = await supabase
+      .from('share_tokens')
+      .select('id, revoked')
+      .eq('report_id', reportId)
+      .eq('user_id', user.id)
+      .single();
+
+    return NextResponse.json({ share_id: existing && !existing.revoked ? existing.id : null });
+  } catch (error) {
+    console.error('Share lookup error:', error);
+    logErrorServer(error, { path: '/api/share', metadata: { method: 'GET' } });
+    return NextResponse.json({ error: 'Lookup failed' }, { status: 500 });
+  }
+}
+
 // Revoke: takes the public link down without deleting the row (the report
 // owner can re-share later via POST, which un-revokes rather than minting
 // a second token). Scoped to the caller's own report_id - RLS on
