@@ -8,7 +8,7 @@ export default function TermsOfUsePage() {
 
       <div className="max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-16">
         <h1 className="font-bold text-4xl tracking-tight mb-3">Terms of Use</h1>
-        <p className="text-ink-600 text-sm mb-12">Last updated: April 8, 2026</p>
+        <p className="text-ink-600 text-sm mb-12">Last updated: August 18, 2026</p>
 
         <div className="space-y-10 text-sm text-ink-600 leading-relaxed">
           <section>
@@ -21,7 +21,7 @@ export default function TermsOfUsePage() {
           <section>
             <h2 className="font-semibold text-lg text-fg-bright mb-3">2. Eligibility</h2>
             <p>
-              You must be at least 21 years of age to use BetAutopsy. By creating an account, you represent and warrant that you meet this age requirement. You are also responsible for ensuring your use of BetAutopsy complies with all laws and regulations applicable to your jurisdiction.
+              You must be at least 18 years of age to use BetAutopsy. By creating an account, you represent and warrant that you meet this age requirement. You are also responsible for ensuring your use of BetAutopsy complies with all laws and regulations applicable to your jurisdiction.
             </p>
           </section>
 
@@ -59,15 +59,7 @@ export default function TermsOfUsePage() {
               </div>
               <div>
                 <h3 className="font-medium text-fg-bright mb-1">One-time purchases</h3>
-                <p>Certain features, such as individual full reports, may be purchased as one-time transactions through Stripe. These purchases are non-recurring and grant access to the specific item purchased. All one-time purchases are final and non-refundable.</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-fg-bright mb-1">Paid subscriptions</h3>
-                <p>Paid plans are billed on a recurring monthly or annual basis through Stripe. By subscribing, you authorize us to charge your payment method at the beginning of each billing cycle. Prices are listed on our pricing page and may change with 30 days notice.</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-fg-bright mb-1">Cancellation</h3>
-                <p>You can cancel your subscription at any time from your account settings. Upon cancellation, you retain access to paid features through the end of your current billing period. We do not offer prorated refunds for partial billing periods.</p>
+                <p>Full reports are purchased as one-time transactions through Stripe. These purchases are non-recurring and grant access to the specific item purchased. All one-time purchases are final and non-refundable.</p>
               </div>
             </div>
           </section>
