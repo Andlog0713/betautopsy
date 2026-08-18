@@ -64,6 +64,44 @@
   function` loading jsdom's CacheStorage). Downgraded to jsdom 26.x, which
   predates the newer Node-only API usage.
 
+## Wire data provenance — no numeric field may originate from the model
+- **No numeric field on the wire may originate from Claude.** If the engine
+  can compute it, the engine computes it and the assembly code overrides
+  whatever Claude returned, regardless of what the prompt asked for. If the
+  engine cannot compute it, the field is omitted, not estimated. Claude
+  writes prose only — descriptions, narratives, advice, category
+  *selection* (which findings are worth surfacing is a reasonable judgment
+  call) — never a number, never a category's underlying stats.
+- Related, same class, name them together: **unknown is a valid value**
+  (an absent/null field is a correct answer, not a defect to paper over
+  with a guess) and **a redaction sentinel is not a value** (a zeroed-out
+  or hidden field must never be read as if it were real data downstream).
+  All three get violated the same way: quietly, by code that looks
+  reasonable in isolation, because the rule was understood rather than
+  written down. Named explicitly here so the next session can check new
+  prompts/fields against it directly instead of re-deriving it from
+  scratch.
+- Added 2026-08-18 after a Claude-numeric-field audit found the rule
+  already violated four separate ways in the Claude response contract,
+  despite `lib/autopsy-engine.ts`'s own merge-site comment already stating
+  the intent ("JS metrics are authoritative, Claude provides text"):
+  `session_analysis` (LLM-generated session stats disagreeing with
+  `session_detection`'s real ones — the mechanism behind a demo report
+  showing 62 sessions in one place and 44 in another), `edge_profile`'s
+  profitable/unprofitable areas (same bug, on the paid report's edge
+  analysis — the mechanism behind "All Parlays -38.4%, 87 bets" sitting
+  next to "NFL Parlays -38.4%, 44 bets", a subset and superset with
+  identical ROI from the model reusing a number), `strategic_leaks`
+  (silently falling back to the model's raw number on a category-name
+  mismatch — correct most of the time, wrong invisibly the rest, with
+  nothing distinguishing the two), and `biases_detected[].estimated_cost`
+  (unbounded on the paid report specifically, since it's already redacted
+  to 0 on snapshots — the customer who paid was the one exposed to the
+  invented number). Fixed in four separate PRs; `recommendations[].
+  expected_improvement` (prose with an embedded dollar/percent claim, no
+  structured field to swap in) reported but not yet fixed — needs a design
+  decision, not a mechanical repoint.
+
 ## Pushback expected
 - Refuse requests that violate the design system.
 - Refuse architecture changes (RN rewrite, remote-URL switch, monorepo restructure) unless explicitly scoped in the user's prompt.
@@ -71,7 +109,65 @@
 
 ---
 
-## Current branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
+## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes (2026-08-18)
+
+PRs #93-#99 merged/open. This entry covers the audit batch specifically
+(Part 1's security work and the Phase 1 launch-punch-list re-verification
+are logged on earlier branch entries below).
+
+### Done — the Claude-numeric-field audit, four fixes shipped as separate PRs
+Requested after the `session_analysis` fix (below) as a full audit of
+every numeric field in the Claude response contract, to find other
+instances of the same bug class before building anything else.
+
+- **PR #97 — `edge_profile`**: same bug as `session_analysis`, confirmed
+  to be the mechanism behind a real, previously-unexplained demo
+  contradiction ("All Parlays -38.4%, 87 bets" vs "NFL Parlays -38.4%, 44
+  bets" — a subset/superset with identical ROI is the model reusing a
+  number). `profitable_areas`/`unprofitable_areas` numerics now repointed
+  at `metrics.category_roi`; category selection kept from Claude, dropped
+  entirely on a miss or a sign mismatch (a "profitable" area whose real
+  roi is <= 0, etc.).
+- **PR #98 — `strategic_leaks`**: the silent-fallback failure mode (correct
+  when the category label matches, invisibly wrong when it doesn't) is
+  now a drop-on-miss instead. Miss-rate measurement: no real production
+  Claude outputs exist to sample from, so no true empirical rate is
+  reportable — a synthetic paraphrase-sensitivity stress test (not a
+  real-world rate) missed 87/126 (69%) of deliberately-varied category
+  name phrasings against a 21-category fixture. Tightened both this and
+  `edge_profile`'s prompt schema to explicitly forbid paraphrasing a
+  category name.
+- **PR #99 — `biases_detected[].estimated_cost`**: bounded (not fully
+  fixed — the real per-bias counterfactual is v1.1, outlined in the PR,
+  not built) to the actual net loss across the bias's full bet population
+  (via the `sub_splits` entry whose `bets` count matches `sample_size`).
+  Priority note from Andrew: this field is already redacted to 0 on
+  snapshots, so it's the customer who PAID for the full report who was
+  exposed to the unbounded invented number, not the free tier — inverts
+  the usual severity assumption.
+- **`recommendations[].expected_improvement`** — investigated, not fixed.
+  Every example across the demo fixtures and the existing test mock
+  carries a specific dollar or percent figure ("Save ~$480/quarter",
+  "+5% ROI", none vague) — confirms this needs the same treatment per
+  Andrew's own stated conditional, but it's prose with an embedded claim,
+  not a structured field with an obvious deterministic swap-in the way
+  the other three had. Two proposed approaches, neither built: (1)
+  prompt-level constraint forbidding invented figures unless echoing an
+  exact pre-calculated number already in context (same tightening pattern
+  used for `edge_profile`/`strategic_leaks`' category fields, lowest
+  engineering cost); (2) post-hoc regex extraction + validation/stripping
+  of embedded dollar figures against a deterministic bound (stronger,
+  more complex). Awaiting Andrew's direction on which, if either.
+
+### Done — Wire data provenance standing rule
+Added to PROGRESS.md (see "Wire data provenance" section above this log).
+Names three same-class rules together — no numeric field may originate
+from the model, unknown is a valid value, a redaction sentinel is not a
+value — since all three kept getting violated the same way: quietly, by
+code that looked reasonable in isolation, because the rule was understood
+rather than written down.
+
+## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
 PRs #88/#89/#90 merged. This branch is the disclosure half of Stage 8 -
 the parser/`settlement_type` fix itself is still not started.
