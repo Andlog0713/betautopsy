@@ -1435,6 +1435,24 @@ function buildSessionAnalysis(
   };
 }
 
+// A: instrument the strategic_leaks/edge_profile drop sites. Collected
+// in-memory during assembly (not written here - the engine module has no
+// DB access by design) and returned from runAutopsy so the caller, which
+// already holds a Supabase client, can persist them to a queryable table.
+// console.log alone (the first version of this fix) doesn't survive:
+// Vercel runtime log retention is limited (already confirmed this
+// session on an unrelated query), and drops are rare enough that they'd
+// age out before enough accumulated to compute a real miss rate - the
+// exact thing this instrumentation exists to make possible.
+export interface EngineDrop {
+  site: 'strategic_leaks' | 'edge_profile';
+  reportId?: string;
+  kind?: 'profitable' | 'unprofitable';
+  category: string | null;
+  categoryRoiExists: boolean;
+  reason: 'no_category' | 'no_match' | 'sign_mismatch';
+}
+
 // Deterministic edge_profile.profitable_areas / unprofitable_areas: roi,
 // sample_size, and estimated_loss come from metrics.category_roi, never
 // from the model. Same bug class as session_analysis, confirmed by the
@@ -1456,6 +1474,7 @@ function buildEdgeAreas<T extends { category: string; roi: number; sample_size: 
   claudeAreas: unknown,
   categoryRoi: CalculatedMetrics['category_roi'],
   kind: 'profitable' | 'unprofitable',
+  drops: EngineDrop[],
   reportId?: string
 ): T[] {
   const list = Array.isArray(claudeAreas) ? claudeAreas as Record<string, unknown>[] : [];
@@ -1463,20 +1482,20 @@ function buildEdgeAreas<T extends { category: string; roi: number; sample_size: 
   for (const area of list) {
     const categoryName = area.category as string | undefined;
     if (!categoryName) {
-      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: false, reason: 'no_category' });
+      drops.push({ site: 'edge_profile', reportId, kind, category: categoryName ?? null, categoryRoiExists: false, reason: 'no_category' });
       continue;
     }
     const match = categoryRoi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase());
     if (!match) {
-      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: false, reason: 'no_match' });
+      drops.push({ site: 'edge_profile', reportId, kind, category: categoryName, categoryRoiExists: false, reason: 'no_match' });
       continue;
     }
     if (kind === 'profitable' && match.roi <= 0) {
-      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
+      drops.push({ site: 'edge_profile', reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
       continue;
     }
     if (kind === 'unprofitable' && match.roi >= 0) {
-      console.log('[autopsy-engine] edge_profile drop', { reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
+      drops.push({ site: 'edge_profile', reportId, kind, category: categoryName, categoryRoiExists: true, reason: 'sign_mismatch' });
       continue;
     }
     const base = { category: match.category, roi: round2(match.roi), sample_size: match.count };
@@ -1491,13 +1510,14 @@ function buildEdgeProfile(
   claudeEdgeProfile: unknown,
   metrics: CalculatedMetrics,
   bets: Bet[],
+  drops: EngineDrop[],
   reportId?: string
 ): EdgeProfile | undefined {
   if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
   const claude = claudeEdgeProfile as Record<string, unknown>;
   return {
-    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable', reportId),
-    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable', reportId),
+    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable', drops, reportId),
+    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable', drops, reportId),
     reallocation_advice: (claude.reallocation_advice as string) ?? '',
     sharp_score: calculateSharpScore(metrics, bets),
   };
@@ -3101,10 +3121,10 @@ export async function runAutopsy(
   // Caller-supplied correlation id for the strategic_leaks/edge_profile
   // drop-site logs below (A: instrument the drop). Optional so existing
   // callers/tests are unaffected; the API route generates one up front and
-  // passes it through so the log line's report id matches the row it ends
-  // up saved under.
+  // passes it through so each drop record's report id matches the row it
+  // ends up saved under.
   reportId?: string
-): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
+): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string; drops: EngineDrop[] }> {
   // `maxRetries: 0` — the SDK's default is 2 retries on timeout, which on
   // a 50s per-call budget could burn 150s before giving up (exactly what
   // we observed in production 2026-05-07 req fm2sl-1778192184146-831325ed0701:
@@ -3281,6 +3301,8 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   // tone-setting) but never surfaced on the user-facing analysis.
   const settledCount = metrics.summary.wins + metrics.summary.losses;
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
+  // A: collected here, returned from runAutopsy below.
+  const drops: EngineDrop[] = [];
   const analysisBase: AutopsyAnalysis = {
     summary: {
       total_bets: metrics.summary.total_bets,
@@ -3348,7 +3370,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
           // passing case teaches you to trust a field that isn't always
           // trustworthy. Unknown is a valid value.
           if (!jsCat) {
-            console.log('[autopsy-engine] strategic_leaks drop', { reportId, category: categoryName, categoryRoiExists: false });
+            drops.push({ site: 'strategic_leaks', reportId, category: categoryName ?? null, categoryRoiExists: false, reason: categoryName ? 'no_match' : 'no_category' });
             return null;
           }
           const leakSeverity = leakSeverityFromRoi(jsCat.roi);
@@ -3380,7 +3402,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     bankroll_health: metrics.bankroll_health,
     personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
     session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
-    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, reportId),
+    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, drops, reportId),
     betting_archetype: metrics.betting_archetype,
     timing_analysis: withFullModeTimingTags(metrics.timing),
     odds_analysis: withFullModeOddsTags(metrics.odds),
@@ -3432,7 +3454,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
 
   const markdown = generateMarkdownReport(analysis);
 
-  return { analysis, markdown, tokensUsed, model };
+  return { analysis, markdown, tokensUsed, model, drops };
 }
 
 // ── Snapshot Redaction helpers (Spec v2) ─────────────────────────────
@@ -3871,7 +3893,7 @@ Rules:
 export async function runSnapshot(
   bets: Bet[],
   bankroll?: number | null
-): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string }> {
+): Promise<{ analysis: AutopsyAnalysis; markdown: string; tokensUsed: number; model: string; drops: EngineDrop[] }> {
   // Snapshot is now pure-compute (Spec v2 Phase 2). The previous Haiku call
   // generated description/evidence/fix/cost for the top bias — all four are
   // redacted in snapshot mode now (per spec D5/D10/D14/D16), so the call's
@@ -4154,7 +4176,11 @@ export async function runSnapshot(
 
   const markdown = generateMarkdownReport(analysis);
 
-  return { analysis, markdown, tokensUsed, model };
+  // Always empty: runSnapshot never calls Claude, so there's no
+  // Claude-vs-category_roi verification step to drop anything from.
+  // Shipped anyway so the caller has one uniform return shape regardless
+  // of isSnapshot, instead of branching on which function was called.
+  return { analysis, markdown, tokensUsed, model, drops: [] };
 }
 
 // ── Parse JSON from response ──

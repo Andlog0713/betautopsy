@@ -6,12 +6,20 @@
  * category_roi verification fails (no matching category, or a sign
  * mismatch for edge_profile specifically) - "unknown is a valid value"
  * rather than trusting an unverified number. Correct, but previously
- * invisible: nothing logged which category dropped, why, or for which
- * report. This locks that each drop site actually logs.
+ * invisible: nothing recorded which category dropped, why, or for which
+ * report.
+ *
+ * First version of this fix used console.log. Per review: Vercel runtime
+ * log retention is limited (confirmed elsewhere this session) and drops
+ * are rare, so console-only logging ages out before enough accumulate to
+ * compute a real miss rate - the whole point of this instrumentation.
+ * runAutopsy now RETURNS a `drops` array instead; the API route persists
+ * it to the queryable error_logs table (see app/api/analyze/route.ts).
+ * This test locks the returned array's shape, not a console call.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { runAutopsy } from '@/lib/autopsy-engine';
+import { describe, it, expect, vi } from 'vitest';
+import { runAutopsy, runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
 
 // ── Anthropic SDK mock ─────────────────────────────────────────────────
@@ -83,39 +91,24 @@ function makeFixtureBets(): Bet[] {
 }
 
 describe('drop-site instrumentation', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
+  it('returns a strategic_leaks drop record with category, categoryRoiExists, and the report id', async () => {
+    const { drops } = await runAutopsy(makeFixtureBets(), null, 'test-report-id');
 
-  beforeEach(() => {
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    logSpy.mockRestore();
-  });
-
-  it('logs the strategic_leaks drop with category, categoryRoiExists, and the report id', async () => {
-    await runAutopsy(makeFixtureBets(), null, 'test-report-id');
-
-    const call = logSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === '[autopsy-engine] strategic_leaks drop'
-    );
-    expect(call).toBeDefined();
-    expect(call?.[1]).toMatchObject({
+    const drop = drops.find((d) => d.site === 'strategic_leaks');
+    expect(drop).toMatchObject({
+      site: 'strategic_leaks',
       reportId: 'test-report-id',
       category: 'NHL Moneyline',
       categoryRoiExists: false,
+      reason: 'no_match',
     });
   });
 
-  it('logs the edge_profile drop for a category with no category_roi match', async () => {
-    await runAutopsy(makeFixtureBets(), null, 'test-report-id');
+  it('returns an edge_profile drop record for a category with no category_roi match', async () => {
+    const { drops } = await runAutopsy(makeFixtureBets(), null, 'test-report-id');
 
-    const call = logSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === '[autopsy-engine] edge_profile drop' &&
-        (c[1] as Record<string, unknown>)?.category === 'MLB Totals'
-    );
-    expect(call).toBeDefined();
-    expect(call?.[1]).toMatchObject({
+    const drop = drops.find((d) => d.site === 'edge_profile' && d.category === 'MLB Totals');
+    expect(drop).toMatchObject({
       reportId: 'test-report-id',
       kind: 'unprofitable',
       category: 'MLB Totals',
@@ -124,15 +117,11 @@ describe('drop-site instrumentation', () => {
     });
   });
 
-  it('logs the edge_profile drop for a sign mismatch (real category, wrong bucket)', async () => {
-    await runAutopsy(makeFixtureBets(), null, 'test-report-id');
+  it('returns an edge_profile drop record for a sign mismatch (real category, wrong bucket)', async () => {
+    const { drops } = await runAutopsy(makeFixtureBets(), null, 'test-report-id');
 
-    const call = logSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === '[autopsy-engine] edge_profile drop' &&
-        (c[1] as Record<string, unknown>)?.category === 'NFL spread'
-    );
-    expect(call).toBeDefined();
-    expect(call?.[1]).toMatchObject({
+    const drop = drops.find((d) => d.site === 'edge_profile' && d.category === 'NFL spread');
+    expect(drop).toMatchObject({
       reportId: 'test-report-id',
       kind: 'profitable',
       category: 'NFL spread',
@@ -142,12 +131,19 @@ describe('drop-site instrumentation', () => {
   });
 
   it('omits reportId (undefined) when the caller does not supply one', async () => {
-    await runAutopsy(makeFixtureBets(), null);
+    const { drops } = await runAutopsy(makeFixtureBets(), null);
 
-    const call = logSpy.mock.calls.find(
-      (c: unknown[]) => c[0] === '[autopsy-engine] strategic_leaks drop'
-    );
-    expect(call).toBeDefined();
-    expect((call?.[1] as Record<string, unknown>)?.reportId).toBeUndefined();
+    const drop = drops.find((d) => d.site === 'strategic_leaks');
+    expect(drop?.reportId).toBeUndefined();
+  });
+
+  it('returns exactly the three expected drops, no more, no fewer', async () => {
+    const { drops } = await runAutopsy(makeFixtureBets(), null, 'test-report-id');
+    expect(drops).toHaveLength(3);
+  });
+
+  it('runSnapshot always returns an empty drops array (no Claude call, nothing to verify)', async () => {
+    const { drops } = await runSnapshot(makeFixtureBets(), null);
+    expect(drops).toEqual([]);
   });
 });
