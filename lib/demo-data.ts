@@ -52,6 +52,26 @@ export const DEMO_BETS: Bet[] = [
   // === A few more mixed ===
   { id: 'demo-28', user_id: 'demo', placed_at: '2025-12-20T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'moneyline', description: 'Thunder ML', odds: -180, stake: 90, result: 'win', profit: 50, payout: 140, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-20T19:00:00Z' },
   { id: 'demo-30', user_id: 'demo', placed_at: '2025-12-28T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'spread', description: 'Cowboys +6.5', odds: -110, stake: 100, result: 'loss', profit: -100, payout: 0, sportsbook: 'Caesars', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-28T13:00:00Z' },
+
+  // === MORE NBA PROPS (closes the gap between this sample's real NBA
+  // Props total and edge_profile/sport_specific_findings' -$340 figure -
+  // the 6 props above alone only sum to -$142) ===
+  { id: 'demo-36', user_id: 'demo', placed_at: '2025-11-20T20:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'prop', description: 'Doncic Over 29.5 pts', odds: -110, stake: 66, result: 'loss', profit: -66, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-11-20T20:00:00Z' },
+  { id: 'demo-37', user_id: 'demo', placed_at: '2025-12-05T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'prop', description: 'Embiid Over 26.5 pts', odds: -110, stake: 66, result: 'loss', profit: -66, payout: 0, sportsbook: 'FanDuel', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-05T19:30:00Z' },
+  { id: 'demo-38', user_id: 'demo', placed_at: '2026-01-08T20:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'prop', description: 'Booker Over 24.5 pts', odds: -110, stake: 66, result: 'loss', profit: -66, payout: 0, sportsbook: 'BetMGM', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2026-01-08T20:00:00Z' },
+
+  // === NHL (closes the remaining gap to summary.total_profit: -1247 -
+  // a category not referenced anywhere else in this fixture, so padding
+  // here doesn't perturb any other named category's figures) ===
+  { id: 'demo-39', user_id: 'demo', placed_at: '2025-11-08T19:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Bruins ML', odds: -125, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-11-08T19:00:00Z' },
+  { id: 'demo-40', user_id: 'demo', placed_at: '2025-11-14T19:30:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Rangers ML', odds: 110, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'FanDuel', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-11-14T19:30:00Z' },
+  { id: 'demo-41', user_id: 'demo', placed_at: '2025-11-21T20:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Oilers ML', odds: -140, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'BetMGM', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-11-21T20:00:00Z' },
+  { id: 'demo-42', user_id: 'demo', placed_at: '2025-11-28T19:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Avalanche ML', odds: -115, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'Caesars', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-11-28T19:00:00Z' },
+  { id: 'demo-43', user_id: 'demo', placed_at: '2025-12-05T19:30:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Panthers ML', odds: 105, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-05T19:30:00Z' },
+  { id: 'demo-44', user_id: 'demo', placed_at: '2025-12-11T20:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Hurricanes ML', odds: -130, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'FanDuel', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-11T20:00:00Z' },
+  { id: 'demo-45', user_id: 'demo', placed_at: '2025-12-18T19:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Devils ML', odds: -110, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'BetMGM', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2025-12-18T19:00:00Z' },
+  { id: 'demo-46', user_id: 'demo', placed_at: '2026-01-03T19:30:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Stars ML', odds: -120, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'Caesars', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2026-01-03T19:30:00Z' },
+  { id: 'demo-47', user_id: 'demo', placed_at: '2026-01-18T20:00:00Z', sport: 'NHL', league: 'NHL', bet_type: 'moneyline', description: 'Lightning ML', odds: 100, stake: 98, result: 'loss', profit: -98, payout: 0, sportsbook: 'DraftKings', is_bonus_bet: false, parlay_legs: null, tags: null, notes: null, upload_id: null, created_at: '2026-01-18T20:00:00Z' },
 ];
 
 // ── Demo Analysis ──
@@ -169,9 +189,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       pattern_name: 'Heated Sequences',
       description: 'After 3+ consecutive losses, your betting frequency doubles and your stake size increases by 86%. You placed 14 bets over $200 in these sequences.',
-      frequency: '4 instances in 3 months',
+      frequency: '8 instances in 3 months',
       impact: 'negative',
-      data_points: '4 heated sequences identified. Combined cost: ~$1,180.',
+      data_points: '8 heated sequences identified. Combined cost: ~$1,180.',
     },
   ],
 
@@ -220,9 +240,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     worst_session: {
       date: '2025-12-14',
       bets: 9,
-      duration: '4 hours',
+      duration: '4 hours 7 minutes',
       net: -680,
-      description: 'Classic heated cascade. Started with a $50 loss, ended with a $300 desperation bet on Warriors -2. Nine bets in four hours, each one bigger than the last.',
+      description: 'Classic heated cascade. Started with a $50 loss, ended with a $250 desperation bet on Warriors -2. Nine bets in four hours, each one bigger than the last.',
     },
     best_session: {
       date: '2025-11-03',
