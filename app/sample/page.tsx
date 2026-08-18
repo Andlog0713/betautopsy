@@ -92,8 +92,7 @@ export default function SamplePage() {
             <p className="text-fg-muted font-light mb-8">
               {PRICING_ENABLED ? (
                 <>
-                  Free snapshot. Full reports{' '}
-                  <span className="line-through opacity-60">$19.99</span> $9.99. 50% off. No credit card to start.
+                  Free snapshot. Full reports $19.99. No credit card to start.
                 </>
               ) : (
                 <>Free during beta. No credit card to start.</>

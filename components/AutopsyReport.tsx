@@ -552,7 +552,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
   const whatIfs = useMemo(() => buildWhatIfs(bets), [bets]);
 
   // "Sharp" features (What-If Simulator, Leak Prioritizer with dollar costs) are
-  // unlocked for Pro tier *and* anyone viewing a non-snapshot report. The $9.99
+  // unlocked for Pro tier *and* anyone viewing a non-snapshot report. The $19.99
   // one-time Full Report explicitly markets these as included; gating them only
   // on Pro tier was hiding them from paying full-report buyers.
   const isSharp = effectiveTier === 'pro' || !isSnapshot;
@@ -3286,10 +3286,10 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
       </div>
 
       {/* Emotional cost callout */}
-      {data.emotionalCost > 0 && (
+      {(data.emotionalCost ?? 0) > 0 && (
         <div className="finding-card border-l-2 border-l-scalpel">
           <p className="text-fg-muted text-sm">
-            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${data.emotionalCost.toLocaleString()}</span>.
+            Your emotional, chasing, and impulsive bets cost you an estimated <span className="font-mono font-bold text-loss">${(data.emotionalCost ?? 0).toLocaleString()}</span>.
             Disciplined bets returned <span className="font-mono text-win">{disciplinedROI.toFixed(1)}%</span> ROI.
           </p>
         </div>

@@ -14,8 +14,7 @@ function CtaSubtext() {
     <span className="text-fg-muted text-xs mt-3 animate-slide-up-d2">
       {PRICING_ENABLED ? (
         <>
-          Free snapshot. Full reports{' '}
-          <span className="line-through text-fg-dim">$19.99</span> $9.99, 50% off.
+          Free snapshot. Full reports $19.99.
         </>
       ) : (
         <>Free during beta. No credit card required.</>

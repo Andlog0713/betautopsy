@@ -155,8 +155,8 @@ function SignupForm() {
           {!PRICING_ENABLED
             ? 'Free during beta. No credit card required.'
             : isPricingFlow
-            ? <span>Full behavioral analysis <span className="line-through text-fg-dim">$19.99</span> $9.99 (50% off).</span>
-            : 'Free snapshot included. Full reports 50% off.'}
+            ? <span>Full behavioral analysis, $19.99.</span>
+            : 'Free snapshot included. Full reports $19.99.'}
         </p>
       </div>
       {/* h1, not h2 — see the matching note on the login page. */}

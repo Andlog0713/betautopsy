@@ -322,8 +322,12 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* ── Subscription ── */}
-      {PRICING_ENABLED && (
+      {/* ── Subscription ──
+          Pro is not marketed on web (2026-08-17, D1) - this card only
+          renders for existing Pro subscribers (account management for a
+          subscription that already exists). Non-pro users have no
+          subscription to manage and see no Pro upsell here anymore. */}
+      {PRICING_ENABLED && isPaid && (
       <div id="settings-subscription" className="card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-fg-bright">Subscription</h2>
         <div className="flex items-center gap-3">
@@ -341,28 +345,14 @@ export default function SettingsPage() {
             </span>
           )}
         </div>
-        {isPaid ? (
-          profile?.stripe_customer_id ? (
-            <button onClick={handleManageSubscription} className="btn-secondary text-sm">
-              Manage Subscription
-            </button>
-          ) : (
-            <p className="text-fg-muted text-sm">
-              Your subscription is managed manually. Contact support to make changes.
-            </p>
-          )
+        {profile?.stripe_customer_id ? (
+          <button onClick={handleManageSubscription} className="btn-secondary text-sm">
+            Manage Subscription
+          </button>
         ) : (
-          <div className="space-y-3">
-            <p className="text-fg-bright text-sm">You ran your free autopsy. Here&apos;s what Pro unlocks:</p>
-            <ul className="text-fg-muted text-sm space-y-1">
-              <li>Unlimited reports as you add bets weekly</li>
-              <li>Progress tracking that shows whether your habits are actually improving</li>
-              <li>Full 5-chapter analysis with dollar costs and action plan</li>
-              <li>Weekly check-ins so you don&apos;t have to remember to log in</li>
-            </ul>
-            <p className="text-fg-muted text-xs">Most users make back the subscription cost from the first leak they plug.</p>
-            <a href="/pricing" className="btn-primary inline-block text-sm">Upgrade to Pro</a>
-          </div>
+          <p className="text-fg-muted text-sm">
+            Your subscription is managed manually. Contact support to make changes.
+          </p>
         )}
       </div>
       )}

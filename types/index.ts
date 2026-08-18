@@ -918,16 +918,22 @@ export interface BetAnnotation {
   currentStreak: number;
 }
 
+// totalStaked/totalProfit, emotionalCost, and every streakInfluence average
+// are OMITTED entirely (not zeroed) on snapshot payloads - see
+// redactAnnotationsForSnapshot in lib/autopsy-engine.ts. An absent optional
+// field can't be misread as a real $0 the way a redacted-to-zero sentinel
+// can; full-mode reports always populate them. count/percent/roi (not
+// dollar-shaped) and BetAnnotation.stakeVsMedian (a ratio) stay required.
 export interface AnnotationSummary {
   annotations: BetAnnotation[];
-  distribution: Record<BetClassification, { count: number; percent: number; totalStaked: number; totalProfit: number; roi: number }>;
-  emotionalCost: number;
+  distribution: Record<BetClassification, { count: number; percent: number; totalStaked?: number; totalProfit?: number; roi: number }>;
+  emotionalCost?: number;
   worstAnnotatedBet: BetAnnotation | null;
   bestAnnotatedBet: BetAnnotation | null;
   streakInfluence: {
-    avgStakeAfterWinStreak3: number;
-    avgStakeAfterLossStreak3: number;
-    avgStakeNeutral: number;
+    avgStakeAfterWinStreak3?: number;
+    avgStakeAfterLossStreak3?: number;
+    avgStakeNeutral?: number;
   };
   insight: string;
 }
@@ -1134,10 +1140,15 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierConfig> = {
   },
 };
 
-// Limits for one-time $9.99 report purchases (non-Pro users)
+// Limits for one-time full-report purchases. $19.99, matching
+// STRIPE_REPORT_PRICE_ID exactly - no discount, no separate Price object.
+// The 50%-off framing that used to make this $9.99 relied on a coupon
+// (STRIPE_LAUNCH_PROMO / AUTOPSY50) that has been deleted from Stripe
+// (2026-08-17); this constant is now the single source every surface
+// should read from rather than hand-typing the price.
 export const REPORT_PURCHASE_LIMITS = {
   maxBetsPerReport: 5000,
-  price: 9.99,
+  price: 19.99,
 };
 
 // Extra report price for Pro users who exceed their monthly allocation

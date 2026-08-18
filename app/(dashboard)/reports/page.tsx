@@ -11,7 +11,6 @@ import { useUploads } from '@/hooks/useUploads';
 import { apiPost } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
-import ProUpsellModal from '@/components/ProUpsellModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
@@ -64,7 +63,6 @@ export default function ReportsPage() {
   const [lastReportDate, setLastReportDate] = useState<string | null>(null);
   const [paidSnapshotId, setPaidSnapshotId] = useState<string | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
-  const [showProUpsell, setShowProUpsell] = useState(false);
 
   useEffect(() => {
     loadReports();
@@ -86,8 +84,8 @@ export default function ReportsPage() {
     // letting the server downgrade to a snapshot. Now we capture
     // straight from `searchParams` synchronously in the run effect.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
-      window.gtag?.('event', 'purchase', { value: 9.99, currency: 'USD' });
-      trackPurchaseMeta('report', 9.99);
+      window.gtag?.('event', 'purchase', { value: 19.99, currency: 'USD' });
+      trackPurchaseMeta('report', 19.99);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -350,23 +348,6 @@ export default function ReportsPage() {
                 });
               }
 
-              // Pro upsell modal: fires once when a non-pro user just paid $9.99
-              // to unlock this report AND the top bias has a pitch-worthy cost
-              // (>= $100/qtr — below that the pitch economics don't land).
-              // This runs inside the completion handler because paidSnapshotId
-              // gets cleared on line 306 below; a later useEffect would miss it.
-              if (
-                paidSnapshotId !== null &&
-                getEffectiveTier(tier) !== 'pro' &&
-                topBias?.bias_name &&
-                typeof topBias.estimated_cost === 'number' &&
-                topBias.estimated_cost >= 100 &&
-                typeof window !== 'undefined' &&
-                !window.localStorage.getItem(`bap_pro_upsell_dismissed_${report.id}`)
-              ) {
-                setShowProUpsell(true);
-              }
-
               setActiveReport(report);
               setReports((prev) => [report, ...prev]);
               mutateReports();
@@ -491,7 +472,7 @@ export default function ReportsPage() {
               with dollar costs, strategic leaks, and a personalized action plan.
             </p>
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
-              Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
+              Get Full Report: $19.99
             </a>
           </div>
         )}
@@ -514,12 +495,12 @@ export default function ReportsPage() {
           </button>
         )}
 
-        {/* Wraps AutopsyReport + dependent UI (post-first-report prompt,
-            ProUpsellModal) so a render-time exception inside AutopsyReport
-            (recharts, hook-order issues, etc.) renders a recoverable
-            fallback instead of unmounting the page and tripping React
-            #310. The back button + snapshot-upgrade card above the
-            boundary stay accessible so the user can always escape. */}
+        {/* Wraps AutopsyReport + dependent UI (post-first-report prompt) so
+            a render-time exception inside AutopsyReport (recharts,
+            hook-order issues, etc.) renders a recoverable fallback instead
+            of unmounting the page and tripping React #310. The back
+            button + snapshot-upgrade card above the boundary stay
+            accessible so the user can always escape. */}
         <ErrorBoundary>
           <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} recoveryModeActive={profile?.manual_recovery_mode ?? false} />
           {/* Post-first-report prompt */}
@@ -532,24 +513,6 @@ export default function ReportsPage() {
                 Go to Dashboard →
               </Link>
             </div>
-          )}
-
-          {/* Pro upsell modal fires once after a paid $9.99 unlock. Parent
-              owns dismissal persistence so the modal stays stateless. */}
-          {showProUpsell && analysis && (
-            <ProUpsellModal
-              analysis={analysis}
-              reportId={activeReport.id}
-              onDismiss={() => {
-                if (typeof window !== 'undefined') {
-                  window.localStorage.setItem(
-                    `bap_pro_upsell_dismissed_${activeReport.id}`,
-                    String(Date.now())
-                  );
-                }
-                setShowProUpsell(false);
-              }}
-            />
           )}
         </ErrorBoundary>
       </div>
@@ -600,7 +563,7 @@ export default function ReportsPage() {
               <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
             </ul>
             <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99
+              Unlock Full Report: $19.99
             </a>
           </div>
 
@@ -630,7 +593,7 @@ export default function ReportsPage() {
                 <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
                 <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
                 <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: <span className="line-through text-fg-dim">$19.99</span> $9.99</a>
+                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: $19.99</a>
               </div>
             </div>
           </div>
@@ -639,7 +602,7 @@ export default function ReportsPage() {
 
       {/* Free tier note */}
       {PRICING_ENABLED && tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
-        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $9.99.</p>
+        <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $19.99.</p>
       )}
 
       {/* Analyze controls */}
