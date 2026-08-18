@@ -7,9 +7,14 @@
 process.env.TZ = 'UTC';
 
 import { defineConfig, configDefaults } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  // tsconfig.json sets "jsx": "preserve" (Next.js's SWC pipeline handles the
+  // transform in the app itself); Vite/esbuild needs this plugin to transform
+  // JSX in .tsx test files, since it won't do so under "preserve" on its own.
+  plugins: [react()],
   test: {
     globals: true,
     exclude: [
