@@ -52,6 +52,18 @@
 - Treat `PROGRESS.md` as the source of truth for "where are we" — read it at the start of every session.
 - iOS polish work tracked in `IOS_POLISH.md`.
 
+## Install-time warnings
+- `EBADENGINE` and similar warnings from `npm install` get resolved before
+  proceeding, not stepped over because the local environment happens to
+  tolerate them. Local and CI differ by design (different Node versions,
+  different OS) - a warning that's survivable locally can be a hard crash
+  in CI or production. Added 2026-08-17 after `jsdom@30`'s EBADENGINE
+  warning (needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`) was seen and not
+  acted on; it passed on this machine's Node 24.14.0 anyway and then
+  crashed CI's Node 20 outright (`webidl.util.markAsUncloneable is not a
+  function` loading jsdom's CacheStorage). Downgraded to jsdom 26.x, which
+  predates the newer Node-only API usage.
+
 ## Pushback expected
 - Refuse requests that violate the design system.
 - Refuse architecture changes (RN rewrite, remote-URL switch, monorepo restructure) unless explicitly scoped in the user's prompt.
@@ -59,7 +71,71 @@
 
 ---
 
-## Current branch: `fix/session-late-night-known` — additive session field + Stage 8 blocker check (2026-08-17)
+## Current branch: `chore/jsdom-pin-and-render-test-hardening` (2026-08-17, later)
+
+PRs #88/#89/#90 merged. Three non-urgent follow-ups from the jsdom fix,
+rolled into one branch per Andrew's instruction.
+
+### Done — jsdom exact pin (Andrew caught a real inconsistency)
+`package.json` had `"jsdom": "^26.1.0"` - the caret survived from the
+original install even though the CI incident that forced the downgrade
+argues for an exact pin (a future `npm install` pulling a newer 26.x
+minor could reintroduce the same local-vs-CI drift). My earlier summary
+said "cleanly pinned to 26.1.0," which was true of the *lockfile's
+resolved version* but not of what `package.json` actually declared -
+conflated the two. Fixed: `"jsdom": "26.1.0"`, no caret.
+
+### Reported, not changed — Node version parity (CI vs Vercel vs package.json)
+- CI: all three GitHub Actions workflows (`ci.yml`, `design-system.yml`,
+  `mobile-regression.yml`) pin `node-version: '20'`.
+- Vercel: `.vercel/project.json` → `"nodeVersion": "24.x"`.
+- `package.json`: no `engines` field at all.
+
+This gap is exactly why jsdom 30's `EBADENGINE` warning (needs Node
+`^22.22.2 || ^24.15.0 || >=26.0.0`) was survivable on a local machine
+running Node 24.14 and a hard crash in CI running Node 20.
+
+**Recommendation (one option, not implemented):** bump the three
+workflows' `node-version` to `'24'` to match Vercel, not the reverse.
+Production is the real target; CI should mirror what actually ships, not
+the other way around. Would also add an `engines` field
+(`{"node": "24.x"}` or similar) as a second layer - so a future
+`npm install` under a mismatched local Node fails loudly via the standing
+rule above instead of installing something that only works by accident.
+Not implemented - awaiting go-ahead per Andrew's "report only" instruction.
+
+### Done — render test hardening (closes 2 real gaps in the PR #89 guard)
+1. **Aria-hidden blind spot.** The original test stripped every
+   `[aria-hidden="true"]` subtree before checking for a visible dollar
+   figure - correct for excluding `RedactedValue`'s intentional blur
+   decoys, but it never verified WHAT was inside those wrappers. A future
+   refactor rendering a real dollar figure inside an aria-hidden span
+   would have passed silently. New test: confirms every locked bias's
+   wire-level `estimated_cost` is the redacted sentinel (`0`) - the value
+   a regression would have to leak - then confirms the rendered decoys
+   are present AND none of them render literal `$0` (which is what the
+   real, already-redacted wire value actually is). A decoy that ever
+   echoes `0` would mean the real number is leaking through.
+2. **Accessible name check.** The decoy amount is `aria-hidden` by
+   design; if the surrounding control had no other accessible name, a
+   screen reader user gets silence where a sighted user sees a paywall
+   affordance. Checked empirically rather than assumed: `RedactedValue`
+   relies on a `title` attribute (`role="button"`, no `aria-label`) - ran
+   it through `@testing-library/react`'s `getByRole('button', {name})`,
+   which implements the W3C accname spec (title is a valid fallback when
+   there's no aria-label/text content), and it resolves correctly today.
+   New test locks this in as a regression guard. Caveat worth flagging:
+   `title`-only naming is spec-compliant but has known real-world
+   reliability gaps across screen reader/browser combinations (typically
+   surfaced as a hover tooltip, not guaranteed read on all keyboard-only
+   paths) - an explicit `aria-label` would be more robust in practice.
+   Not changed - this was a "confirm" ask, not a "fix" ask; flagging for
+   Andrew to decide if he wants the belt-and-suspenders `aria-label` too.
+
+Gates: `tsc --noEmit` clean, `vitest run` 413/413 (24 files, 3 tests now
+in the render-guard file, up from 1), `next build` clean.
+
+## Previous branch: `fix/session-late-night-known` — additive session field + Stage 8 blocker check (2026-08-17)
 
 ### Done this session — SESSION-XXX.lateNightKnown (PR #88, open)
 Andrew's redirect from the P0/P1 audit session (`main` still has open PRs
