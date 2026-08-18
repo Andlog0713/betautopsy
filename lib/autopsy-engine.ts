@@ -1435,58 +1435,24 @@ function buildSessionAnalysis(
   };
 }
 
-// Deterministic edge_profile.profitable_areas / unprofitable_areas: roi,
-// sample_size, and estimated_loss come from metrics.category_roi, never
-// from the model. Same bug class as session_analysis, confirmed by the
-// mechanism behind a real demo contradiction: edge_profile once showed
-// "All Parlays" at -38.4% / 87 bets while strategic_leaks showed "NFL
-// Parlays" at -38.4% / 44 bets for the same report - identical ROI on a
-// subset and a superset population is not a coincidence, it's the model
-// reusing a number it saw earlier in its own context instead of computing
-// a fresh aggregate for the broader category.
+// Plausibility bound for biases_detected[].estimated_cost: the model's
+// dollar figure can't exceed the actual net loss across the bets backing
+// this bias's sample_size. Not a full per-bias counterfactual (that's
+// v1.1 - see PROGRESS.md) - just a ceiling, using data the engine already
+// computed for sub_splits. Priority note: on snapshots this field is
+// already redacted to 0 (estimated_cost_visibility: 'redacted_dollar'),
+// so it's specifically the customer who paid for the full report who was
+// exposed to an unbounded invented number, not the free tier.
 //
-// Claude's category SELECTION is kept (which areas are worth surfacing is
-// a reasonable judgment call, same as which strategic leaks to surface) -
-// only the numbers behind each selected category are verified. On a miss
-// (no matching category_roi entry, or the deterministic sign disagrees
-// with which bucket Claude put it in - e.g. a "profitable" area that's
-// actually roi <= 0) the area is DROPPED, not kept with an unverified
-// number. Unknown is a valid value.
-function buildEdgeAreas<T extends { category: string; roi: number; sample_size: number }>(
-  claudeAreas: unknown,
-  categoryRoi: CalculatedMetrics['category_roi'],
-  kind: 'profitable' | 'unprofitable'
-): T[] {
-  const list = Array.isArray(claudeAreas) ? claudeAreas as Record<string, unknown>[] : [];
-  const results: T[] = [];
-  for (const area of list) {
-    const categoryName = area.category as string | undefined;
-    if (!categoryName) continue;
-    const match = categoryRoi.find((c) => c.category.toLowerCase() === categoryName.toLowerCase());
-    if (!match) continue;
-    if (kind === 'profitable' && match.roi <= 0) continue;
-    if (kind === 'unprofitable' && match.roi >= 0) continue;
-    const base = { category: match.category, roi: round2(match.roi), sample_size: match.count };
-    results.push((kind === 'profitable'
-      ? { ...base, confidence: confidenceFor(match.count) }
-      : { ...base, estimated_loss: round2(Math.abs(match.profit)) }) as unknown as T);
-  }
-  return results;
-}
-
-function buildEdgeProfile(
-  claudeEdgeProfile: unknown,
-  metrics: CalculatedMetrics,
-  bets: Bet[]
-): EdgeProfile | undefined {
-  if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
-  const claude = claudeEdgeProfile as Record<string, unknown>;
-  return {
-    profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable'),
-    unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable'),
-    reallocation_advice: (claude.reallocation_advice as string) ?? '',
-    sharp_score: calculateSharpScore(metrics, bets),
-  };
+// sub_splits[] always includes one entry whose `bets` count matches
+// sample_size exactly - the full population this bias is about, not the
+// evidence_bet_ids sample (capped at 8 examples, too small to bound
+// against). That entry's net_usd is the real, already-computed dollar
+// outcome for that population.
+function estimatedCostBound(jsBias: CalculatedMetrics['biases_detected'][number]): number | undefined {
+  const fullSplit = jsBias.sub_splits?.find((s) => s.bets === jsBias.sample_size);
+  if (!fullSplit || fullSplit.net_usd == null) return undefined;
+  return fullSplit.net_usd < 0 ? Math.abs(fullSplit.net_usd) : 0;
 }
 
 function calculateSharpScore(metrics: CalculatedMetrics, bets: Bet[]): number {
@@ -3271,12 +3237,14 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       const claudeBias = claudeBiases.find(
         (cb: Record<string, unknown>) => (cb.bias_name as string)?.toLowerCase() === jsBias.bias_name.toLowerCase()
       ) as Record<string, unknown> | undefined;
+      const claudeCost = (claudeBias?.estimated_cost as number) ?? 0;
+      const costBound = estimatedCostBound(jsBias);
       return withFullModeBiasTags({
         bias_name: jsBias.bias_name,
         severity: jsBias.severity,
         description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
         evidence: (claudeBias?.evidence as string) ?? jsBias.data,
-        estimated_cost: (claudeBias?.estimated_cost as number) ?? 0,
+        estimated_cost: costBound != null ? Math.min(claudeCost, costBound) : claudeCost,
         fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
         evidence_bet_ids: jsBias.evidence_bet_ids,
         // Report-trust metadata: deterministic, from the JS detector — never
