@@ -240,7 +240,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       { category: 'NBA Underdogs', roi: 6.1, sample_size: 42, confidence: 'medium' },
     ],
     unprofitable_areas: [
-      { category: 'NBA Props', roi: -18.3, sample_size: 52, estimated_loss: 142 },
+      { category: 'NBA Props', roi: -18.3, sample_size: 52, estimated_loss: 340 },
       { category: 'Parlays', roi: -34.1, sample_size: 87, estimated_loss: 620 },
       { category: 'Late Night Bets', roi: -22.7, sample_size: 38, estimated_loss: 180 },
     ],
@@ -292,8 +292,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       sport: 'NBA',
       severity: 'high',
       description: 'Heavy NBA player prop volume with negative returns.',
-      evidence: '38% of NBA bets are props (52 bets). Props ROI: -18.3%, net -$142.',
-      estimated_cost: -142,
+      evidence: '38% of NBA bets are props (52 bets). Props ROI: -18.3%, net -$340.',
+      estimated_cost: -340,
       recommendation: 'Cut NBA prop volume by at least 50%.',
     },
     {
