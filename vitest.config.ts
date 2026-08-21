@@ -1,9 +1,11 @@
-// Pin tests to UTC. Engine code uses local `getHours()` / `toLocaleTimeString`
-// for hour-of-day bucketing (lib/autopsy-engine.ts), which makes test output
-// depend on the runner's machine timezone. Production runs on Vercel (UTC),
-// so pinning here makes snapshots deterministic across dev machines + CI and
-// match production behavior. NOTE: production code still has the local-time
-// bug for non-UTC users (filed as v1.1 backlog item, separate work).
+// Pin tests to UTC to match production (Vercel, see PROGRESS.md) and keep
+// snapshots deterministic across dev machines + CI. lib/autopsy-engine.ts
+// now reads all bet timestamps through lib/date-utils.ts's explicit UTC
+// accessors (D4), not local Date methods, so this pin no longer masks a
+// production bug — but it DOES make `new Date(x).getHours()` and
+// `d.getUTCHours()` indistinguishable inside this process, so any test
+// for UTC-vs-local correctness must assert which method gets called
+// (see __tests__/date-utils.test.ts), not just compare output values.
 process.env.TZ = 'UTC';
 
 import { defineConfig, configDefaults } from 'vitest/config';

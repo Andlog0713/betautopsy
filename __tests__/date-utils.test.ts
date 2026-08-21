@@ -3,17 +3,33 @@
  *
  * Bet timestamps are UTC ISO strings. Reading them with Date.prototype's
  * LOCAL accessors silently reinterprets the instant in whatever timezone
- * the running process happens to be in - correct by accident on Vercel
- * (UTC default) but wrong the moment the process runs anywhere else (this
- * repo's own dev machine included - see the fixed 2am-UTC case below,
- * which lands on a different calendar day AND a different hour bucket in
- * America/New_York). These tests fix a specific instant known to cross
- * both a day and an hour boundary between UTC and several real-world
- * local zones, so they fail if a UTC accessor is ever swapped back for a
- * local one, regardless of which timezone actually runs the suite.
+ * the running process happens to be in. vitest.config.ts pins this test
+ * process's TZ to 'UTC' (to match production and keep snapshots
+ * deterministic), which means `new Date(x).getHours()` and
+ * `d.getUTCHours()` return IDENTICAL values inside this suite — a plain
+ * value comparison (`getUTCHour(x)` toBe some number) cannot tell a UTC
+ * accessor from a local one, because in this process there is no
+ * difference to detect. That made the original version of this file
+ * vacuous: it passed unchanged against the pre-fix local-accessor code
+ * (verified by reverting lib/date-utils.ts and re-running — all 8 tests
+ * stayed green).
+ *
+ * Fix: the "UTC accessors" block below asserts which Date.prototype
+ * method each function calls (getUTCHours vs getHours, via spies on a
+ * single Date instance), not just what value comes back. That's TZ-
+ * independent — it fails if an accessor is ever swapped back to a local
+ * one, regardless of what timezone runs the suite. A source-level guard
+ * (last describe block) backs this up by asserting no raw local accessor
+ * exists in the engine/digest files outside date-utils.ts itself, so a
+ * regression at a call site (not inside date-utils.ts) is also caught.
+ * The value-based assertions are kept alongside as readable
+ * documentation of the actual UTC-vs-local divergence at a real
+ * boundary-crossing instant, not as the discriminating check.
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   getUTCHour,
   getUTCMinute,
@@ -81,6 +97,89 @@ describe('date-utils — UTC accessors', () => {
     expect(formatUTCDate(CROSS_BOUNDARY_UTC)).toBe('Jan 15, 2026');
     expect(formatUTCMonthDay(CROSS_BOUNDARY_UTC)).toBe('Jan 15');
     expect(formatUTCTime(CROSS_BOUNDARY_UTC)).toBe('2:00 AM');
+  });
+});
+
+// TZ-independent: these assert WHICH Date.prototype method gets called,
+// not what value comes back, so they discriminate regardless of the
+// process's ambient timezone (see file header). Each spies on a single
+// Date instance passed directly in, so the same object reference is what
+// the function under test reads from.
+describe('date-utils — UTC accessors call the UTC method, never the local one', () => {
+  it('getUTCHour calls getUTCHours, not getHours', () => {
+    const d = new Date(CROSS_BOUNDARY_UTC);
+    const utcSpy = vi.spyOn(d, 'getUTCHours');
+    const localSpy = vi.spyOn(d, 'getHours');
+    expect(getUTCHour(d)).toBe(2);
+    expect(utcSpy).toHaveBeenCalledTimes(1);
+    expect(localSpy).not.toHaveBeenCalled();
+  });
+
+  it('getUTCMinute calls getUTCMinutes, not getMinutes', () => {
+    const d = new Date(CROSS_BOUNDARY_UTC);
+    const utcSpy = vi.spyOn(d, 'getUTCMinutes');
+    const localSpy = vi.spyOn(d, 'getMinutes');
+    expect(getUTCMinute(d)).toBe(0);
+    expect(utcSpy).toHaveBeenCalledTimes(1);
+    expect(localSpy).not.toHaveBeenCalled();
+  });
+
+  it('getUTCDayOfWeek calls getUTCDay, not getDay', () => {
+    const d = new Date(CROSS_BOUNDARY_UTC);
+    const utcSpy = vi.spyOn(d, 'getUTCDay');
+    const localSpy = vi.spyOn(d, 'getDay');
+    expect(getUTCDayOfWeek(d)).toBe(4);
+    expect(utcSpy).toHaveBeenCalledTimes(1);
+    expect(localSpy).not.toHaveBeenCalled();
+  });
+
+  it('isMidnightUTC reads via the UTC accessors, not the local ones', () => {
+    // Hour must be 0 so the `hour === 0 && minute === 0` short-circuit
+    // actually reaches the minute check (CROSS_BOUNDARY_UTC's hour is 2,
+    // which would short-circuit before getUTCMinutes is ever called).
+    const d = new Date('2026-01-15T00:00:00Z');
+    const utcHourSpy = vi.spyOn(d, 'getUTCHours');
+    const localHourSpy = vi.spyOn(d, 'getHours');
+    const utcMinuteSpy = vi.spyOn(d, 'getUTCMinutes');
+    const localMinuteSpy = vi.spyOn(d, 'getMinutes');
+    expect(isMidnightUTC(d)).toBe(true);
+    expect(utcHourSpy).toHaveBeenCalled();
+    expect(utcMinuteSpy).toHaveBeenCalled();
+    expect(localHourSpy).not.toHaveBeenCalled();
+    expect(localMinuteSpy).not.toHaveBeenCalled();
+  });
+
+  it('formatUTCDate/formatUTCMonthDay/formatUTCTime pass timeZone: "UTC" explicitly, not the ambient zone', () => {
+    const d = new Date(CROSS_BOUNDARY_UTC);
+    const dateSpy = vi.spyOn(d, 'toLocaleDateString');
+    formatUTCDate(d);
+    expect(dateSpy).toHaveBeenLastCalledWith('en-US', expect.objectContaining({ timeZone: 'UTC' }));
+
+    const monthDaySpy = vi.spyOn(d, 'toLocaleDateString');
+    formatUTCMonthDay(d);
+    expect(monthDaySpy).toHaveBeenLastCalledWith('en-US', expect.objectContaining({ timeZone: 'UTC' }));
+
+    const timeSpy = vi.spyOn(d, 'toLocaleTimeString');
+    formatUTCTime(d);
+    expect(timeSpy).toHaveBeenLastCalledWith('en-US', expect.objectContaining({ timeZone: 'UTC' }));
+  });
+});
+
+// Backs up the spy-based tests above by guarding the call sites too: a
+// regression could re-introduce a raw local accessor at a USE site in
+// the engine (bypassing date-utils.ts entirely) without ever touching
+// date-utils.ts itself, which the spy tests above can't see. This is a
+// plain-text source check, so it's inherently TZ-independent.
+describe('source guard — no raw local Date accessor outside date-utils.ts', () => {
+  const RAW_LOCAL_ACCESSOR = /\.(getHours|getDay|getMinutes)\(\)|toLocale(Date|Time)String\((?![^)]*timeZone)/;
+
+  it.each(['lib/autopsy-engine.ts', 'lib/digest-helpers.ts'])('%s contains no raw local Date accessor', (relPath) => {
+    const source = readFileSync(join(process.cwd(), relPath), 'utf-8');
+    const offendingLines = source
+      .split('\n')
+      .map((line, i) => ({ line, num: i + 1 }))
+      .filter(({ line }) => RAW_LOCAL_ACCESSOR.test(line));
+    expect(offendingLines).toEqual([]);
   });
 });
 
