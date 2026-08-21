@@ -391,37 +391,119 @@ value — since all three kept getting violated the same way: quietly, by
 code that looked reasonable in isolation, because the rule was understood
 rather than written down.
 
-### Parked / next branch
-- **Item A — drop instrumentation**: one log line at each
-  `strategic_leaks`/`edge_profile` drop site (category, whether a
-  `category_roi` match existed, report id). Touches
-  `lib/autopsy-engine.ts` — blocked on PR #101 merging, then must be
-  rebased onto whatever's latest in the engine-touching chain per the
-  serial-rebase rule above.
-- **Item C — `recommendations[].expected_improvement`**: remove the
-  dollar/percent claim from Claude's prose, let the renderer pull the
-  real number from the recommendation's associated bias. Same
-  engine-touching blocker as item A. Two candidate approaches outlined
-  above under "`recommendations[].expected_improvement` — investigated,
-  not fixed"; still awaiting a decision on which.
-- **Item D4 — `lib/date-utils.ts` UTC-accessor convention**: new file +
-  ~10 call-site fixes across `lib/autopsy-engine.ts` (including the
-  `by_day` bucketing correctness fix at ~line 425, not gated on
-  `has_time_data`), `lib/digest-helpers.ts`, `components/
-  AutopsyReport.tsx`, and a few dashboard/upload pages. Re-verify
-  day-of-week aggregates after and report which findings moved. Same
-  engine-touching blocker as A and C — all three should land as one
-  rebase chain once #101 merges, not three independently-based
-  branches.
-- **Item F — Stage 8 cash-out parser**: approved to build (this
-  session, earlier) — additive `settlement_type` sibling on `Bet`,
-  reclassify cash-outs by actual settlement value instead of forcing
-  `result: 'void'`, do not widen the `result` enum, fix the push/void
-  profit force-zeroing bug in the same pass
-  (`lib/csv-parser.ts` ~line 330-333). Outline complete, disclosure
-  already shipped (FAQ note, prior session), dedupe behavior already
-  traced and confirmed safe (see "Traced — CSV re-upload dedupe
-  behavior" below). Not started this pass — next up.
+### Done — Item F (Stage 8), PR #109, open
+Additive `settlement_type` sibling on `Bet`, cash-outs reclassified by
+actual settlement value from the CSV's own profit/net column instead of
+force-mapped to `result: 'void'` (which force-zeroed real wins/losses to
+$0). Does not widen the `result` enum. FAQ updated with a historical
+disclosure clause after review: rows imported before this fix stay
+wrong permanently — no backfill path (uploads aren't retained), and
+re-uploading the same history doesn't self-heal (the dedupe key doesn't
+include `result`/`profit`, so a re-upload matches the existing row and
+gets silently skipped, not corrected — traced earlier this session, see
+below).
+
+**Needs Andrew's hand before merging**: the checked-in
+`supabase/migrations/20260818_bets_settlement_type.sql` (a single
+nullable `text` column add) must be applied to production *before*
+this PR merges/deploys, or every CSV upload starts failing with
+`column settlement_type does not exist` the moment `lib/import-bets.ts`'s
+INSERT runs against a database that doesn't have it yet. Not
+auto-applied this session — additive schema changes to the live
+production DB need explicit go-ahead, not just feature-level approval.
+
+### Done — Items A/C/D4, PRs #113/#114/#115, open (rebase chain)
+Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
+#115), each based on the previous, per the serial-rebase rule above.
+
+- **#113 (A)** — `strategic_leaks`/`edge_profile` drop sites now return
+  a `drops: EngineDrop[]` array from `runAutopsy` (category, whether a
+  `category_roi` match existed, reason, a pre-generated report id used
+  for both the log and the actual saved row). First version used
+  `console.log`; per review, Vercel runtime log retention is limited
+  and drops are rare, so console-only logging ages out before enough
+  accumulate to compute a real miss rate — the whole point of this
+  instrumentation. Now persisted to the existing `error_logs` table
+  (`source: 'autopsy-engine-drop'`) by the API route, which already
+  holds a Supabase client — the engine module itself stays DB-free by
+  design.
+- **#114 (C)** — `recommendations[].expected_improvement`'s dollar
+  figure is no longer Claude-authored. Prompt constrained to a
+  behavioral description only (no numbers); engine appends the dollar
+  itself from the recommendation's `tied_to_finding`-linked bias's
+  already-bounded `estimated_cost`. Composed server-side rather than
+  wired to the renderer (no renderer risk; the client-side lookup would
+  need the same fuzzy bias-name matching that's caused problems
+  elsewhere this session). First version appended a hardcoded
+  `/quarter` — per review, `estimated_cost` is a total over whatever
+  period was actually analyzed (six weeks or two years, never
+  verified), so a fix whose purpose was removing an invented number
+  doesn't get to invent a denominator either. Fixed to state the figure
+  as exactly what it is, no period attached. (Flagged, not fixed: the
+  same `/qtr` convention exists on the bias card's own cost display and
+  throughout `lib/demo-data.ts` — pre-existing, out of scope here.)
+- **#115 (D4)** — new `lib/date-utils.ts`, UTC-accessor pattern across
+  ~17 sites (more than the ~10 estimated) in `lib/autopsy-engine.ts` +
+  `lib/digest-helpers.ts`. Confirmed real, not theoretical: this
+  session's own dev machine is `America/New_York`, not UTC, and a bet
+  at `2026-01-15T02:00:00Z` reads as a different calendar day *and* a
+  different hour bucket with local accessors there (verified via
+  `TZ=America/Los_Angeles node -e ...` before writing any fix). Also
+  fixed the `by_day`-bucketing correctness issue at the old line 425:
+  the Claude prompt's entire `TIMING ANALYSIS` block, including "By Day
+  of Week," was gated behind `has_time_data`, so Claude got zero
+  day-of-week signal for any user with the common midnight-artifact CSV
+  pattern (~66% of rows, per the earlier `has_time_data` gate's own
+  history) — even though day-of-week only needs the date portion,
+  which is always valid. Split the prompt so day-of-week always
+  includes real data; hour-of-day stays correctly gated.
+  **Spot-checked per review**: ran a real `runAutopsy` call (real
+  Claude API, not mocked) against a 150-bet, fully date-only fixture
+  with a deliberate weekday-vs-weekend ROI split (+2.0% weekday,
+  -53.4%/-49.1% Sat/Sun). Claude correctly surfaced a "Weekend
+  Collapse" finding whose stated numbers matched the engine's real
+  `by_day` output exactly — sound, not fabricated, and a finding that
+  was structurally invisible to Claude before this fix.
+  **Not independently verified**: Vercel's actual production runtime
+  timezone. Runtime-log queries timed out repeatedly (wide windows) or
+  returned no TZ-revealing evidence (narrow windows); Vercel's own docs
+  search didn't surface an explicit statement either. Log viewer
+  timestamps display in UTC, which is consistent with — but not proof
+  of — the function runtime's own `Date` behavior. All 431+ existing
+  tests passed unchanged before and after the accessor swap on this
+  non-UTC machine, which is not evidence production was already correct
+  (a suite that never covered timezone-sensitive cases would pass
+  either way) — it shows the suite had a gap, which is why this bug
+  could ship unnoticed. A definitive answer needs either a one-line
+  diagnostic deployed to preview or direct confirmation from Vercel
+  support/docs; not done this pass.
+
+### Reverted — #111's total-profit "fix" was itself a fabrication
+Padded `DEMO_BETS` with 12 synthetic rows (9 identical $98 NHL losses, 3
+identical $66 NBA prop losses) sized to make the live-computed What-If/
+Leak-Prioritizer total hit `-1247` exactly, matching the hand-authored
+`summary.total_profit`. Same anti-pattern as everything else this
+session has been fixing — tuning numbers so two displays agree instead
+of deriving both from one source — and didn't even fix the underlying
+contradiction, just moved it (fixture now claims 280 bets, contains 47
+rows). Reverted in full. NBA Props' `$340` vs `$142` mismatch was
+re-fixed honestly instead (corrected the hand-authored `$340` down to
+the real sample's `$142`, no padding needed). Heated-count and
+worst-session fixes were unaffected (no padding involved) and stayed.
+
+**Still open, decision needed, not built**: What-If/Leak-Prioritizer
+compute live from `DEMO_BETS` (a deliberate ~35-row "sample for
+charts," never meant to be the fixture's fictional 280-bet population).
+Two honest fixes: (a) derive `summary` from `DEMO_BETS` directly —
+cheap (~30-60 min) but the demo then honestly reports ~35 bets, not
+280, undercutting the page's own "5,000 bets deep" pitch, and doesn't
+touch the other fields still describing a fictional larger population;
+(b) build a real ~280-row fixture, script-generated with controlled
+per-category distributions preserving the existing narrative, then run
+it through the engine's own `calculateMetrics()` for genuinely derived
+numbers — architecturally correct, keeps the "280 bets deep" claim
+honest, but real work (~3-4 hours). Recommendation is (b) given this is
+the public sales-page demo, but not started — needs a decision.
 
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
