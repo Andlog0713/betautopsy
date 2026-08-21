@@ -426,7 +426,12 @@ Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
   instrumentation. Now persisted to the existing `error_logs` table
   (`source: 'autopsy-engine-drop'`) by the API route, which already
   holds a Supabase client — the engine module itself stays DB-free by
-  design.
+  design. That persistence was itself fire-and-forget (bare `.then()`,
+  no `await`) — Vercel can freeze the execution context once the SSE
+  response completes, killing pending promises; the exact failure mode
+  `maybeSendHeatedPush` hit in prod (its own comment in the same file
+  documents it). Fixed: wrapped in `waitUntil` (`0d2018b`), same pattern
+  already used for that push send in this file.
 - **#114 (C)** — `recommendations[].expected_improvement`'s dollar
   figure is no longer Claude-authored. Prompt constrained to a
   behavioral description only (no numbers); engine appends the dollar
@@ -439,9 +444,13 @@ Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
   period was actually analyzed (six weeks or two years, never
   verified), so a fix whose purpose was removing an invented number
   doesn't get to invent a denominator either. Fixed to state the figure
-  as exactly what it is, no period attached. (Flagged, not fixed: the
-  same `/qtr` convention exists on the bias card's own cost display and
-  throughout `lib/demo-data.ts` — pre-existing, out of scope here.)
+  as exactly what it is, no period attached. First fix left the bias
+  card's own `/qtr` cost display untouched — same `bias.estimated_cost`
+  rendering as a rate in one spot and a total in the other, in the same
+  report. Fixed: stripped `/qtr` from both `components/AutopsyReport.tsx`
+  render sites too (`2d9b86b`). `lib/demo-data.ts`'s hand-authored
+  `/quarter` strings had the identical issue; moot now that the fixture
+  rebuild (below) replaced that file's numbers with real engine output.
 - **#115 (D4)** — new `lib/date-utils.ts`, UTC-accessor pattern across
   ~17 sites (more than the ~10 estimated) in `lib/autopsy-engine.ts` +
   `lib/digest-helpers.ts`. Confirmed real, not theoretical: this
@@ -492,32 +501,69 @@ Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
   `date-utils.ts` itself. Both verified to fail against the reverted
   code and pass against the fix.
 
-### Reverted — #111's total-profit "fix" was itself a fabrication
+### Reverted twice — #111's total-profit "fix" was itself a fabrication
 Padded `DEMO_BETS` with 12 synthetic rows (9 identical $98 NHL losses, 3
 identical $66 NBA prop losses) sized to make the live-computed What-If/
 Leak-Prioritizer total hit `-1247` exactly, matching the hand-authored
 `summary.total_profit`. Same anti-pattern as everything else this
 session has been fixing — tuning numbers so two displays agree instead
 of deriving both from one source — and didn't even fix the underlying
-contradiction, just moved it (fixture now claims 280 bets, contains 47
-rows). Reverted in full. NBA Props' `$340` vs `$142` mismatch was
-re-fixed honestly instead (corrected the hand-authored `$340` down to
-the real sample's `$142`, no padding needed). Heated-count and
-worst-session fixes were unaffected (no padding involved) and stayed.
+contradiction, just moved it (fixture now claims 280 bets, contained 47
+rows). Reverted in full.
 
-**Still open, decision needed, not built**: What-If/Leak-Prioritizer
-compute live from `DEMO_BETS` (a deliberate ~35-row "sample for
-charts," never meant to be the fixture's fictional 280-bet population).
-Two honest fixes: (a) derive `summary` from `DEMO_BETS` directly —
-cheap (~30-60 min) but the demo then honestly reports ~35 bets, not
-280, undercutting the page's own "5,000 bets deep" pitch, and doesn't
-touch the other fields still describing a fictional larger population;
-(b) build a real ~280-row fixture, script-generated with controlled
-per-category distributions preserving the existing narrative, then run
-it through the engine's own `calculateMetrics()` for genuinely derived
-numbers — architecturally correct, keeps the "280 bets deep" claim
-honest, but real work (~3-4 hours). Recommendation is (b) given this is
-the public sales-page demo, but not started — needs a decision.
+First re-fix attempt corrected NBA Props' `$340`/`$142` mismatch by
+changing only `estimated_loss`/`estimated_cost` (340→142) while leaving
+`roi: -18.3` and `sample_size: 52` untouched in the same objects — both
+still describing the fictional 280-bet population. Result: internally
+incoherent on its own terms (52 bets losing $142 at -18.3% implies
+~$776 staked, ~$15/bet — matches nothing else in the fixture). Reverted
+a second time, back to `$340`/`-18.3`/`52` — self-consistent, visibly
+wrong against `DEMO_BETS`'s real sample, left that way on purpose rather
+than partially patched, pending the fixture rebuild below. Heated-count
+and worst-session fixes were unaffected by either revert (no padding
+involved) and stayed.
+
+### Done — demo fixture rebuilt from real engine output (PR #117, open)
+Resolves the decision this section originally left open. Chose option
+(b): `lib/demo-data.ts`'s `DEMO_BETS`/`DEMO_ANALYSIS` replaced wholesale
+with 304 script-generated bets (deliberate per-category win-rate
+targets — NFL spread profitable, NBA prop/parlay/late-night clearly
+unprofitable, one loss-chasing session engineered to trip the *real*
+`detectAndGradeSessions` heated-session criteria rather than asserting
+`isHeated` by hand) run through the actual `calculateMetrics()` + one
+live `runAutopsy()` call against the real Claude API. `DEMO_ANALYSIS` is
+that call's frozen, unedited output (plus `discipline_score`, which
+`runAutopsy` doesn't compute — `app/api/analyze/route.ts` calls
+`calculateDisciplineScore` separately with profile/report-history
+context; used first-report-ish placeholder context for the demo).
+
+First generation attempt used per-bet win *probability* (independent
+Bernoulli draws) for parlay outcomes — a few lucky high-odds hits
+flipped the whole portfolio profitable ("The Sharp," +8.7% ROI),
+undercutting the entire product pitch. Fixed by picking an exact win
+*count* per category batch instead of relying on sampling to land near
+a target — removes the variance entirely.
+
+Every `DEMO_ANALYSIS` figure now traces to `DEMO_BETS` through the same
+code path a real report goes through — no more two populations wearing
+one label; `total_bets`/`biases_detected.length` mismatches with
+`DEMO_BETS`'s real size are now structurally impossible. Also fixed two
+now-stale hardcoded "280 bets" copy sites that directly describe this
+fixture (`components/SamplePageClient.tsx`, `app/page.tsx`'s homepage
+caption) to read live from `DEMO_ANALYSIS` instead. Verified: tsc clean,
+440/440 tests, `npm run build` clean, live dev-server + browser check of
+`/sample` and `/` (bias costs render as plain totals, no `/qtr`;
+findings/evidence/session-analysis/control-system sections internally
+consistent; 304-bet dataset renders without errors throughout).
+
+**Found, flagged, not fixed (out of scope this pass)**:
+`components/ProductShowcase.tsx`'s "From a real user's report with 280
+bets" caption is a fully decorative, hand-illustrated "how it works"
+mockup (invented bias names/dollar figures, `/qtr` included) unconnected
+to `DEMO_ANALYSIS` or any real computation — different in kind, not
+touched. `DEMO_DFS_BETS`/`DEMO_DFS_ANALYSIS` (PrizePicks demo) has the
+*identical* two-populations issue (38 real rows, `DEMO_DFS_ANALYSIS`
+claims 200) but wasn't in scope for this pass.
 
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
