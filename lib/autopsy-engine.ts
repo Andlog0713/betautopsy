@@ -3860,10 +3860,12 @@ function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
 // against the real date range. A fix whose entire purpose is removing a
 // model-invented number doesn't get to hardcode an unverified temporal
 // claim in its place. The figure is a total over the analyzed sample,
-// stated as exactly that. (The "/qtr" label on the bias card itself,
-// and the same convention in lib/demo-data.ts's hand-authored
-// recommendations, have the identical issue - out of scope for this
-// fix, flagging for awareness, not fixed here.)
+// stated as exactly that. (The bias card's own "/qtr" label rendered
+// this exact estimated_cost as a rate right next to this total - fixed
+// to match, components/AutopsyReport.tsx. lib/demo-data.ts's
+// hand-authored "expected_improvement: 'Save ~$X/quarter'" strings still
+// have the identical issue; left alone pending the demo fixture rebuild,
+// which replaces those hand-authored figures with real engine output.)
 function buildFullModeRecommendations(
   claudeRecommendations: unknown,
   biasesDetected: BiasDetected[]
