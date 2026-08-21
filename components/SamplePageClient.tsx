@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SampleModeToggle, { type SampleMode } from '@/components/SampleModeToggle';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
-import { DEMO_DFS_ANALYSIS, DEMO_DFS_BETS } from '@/lib/demo-data';
+import { DEMO_ANALYSIS, DEMO_DFS_ANALYSIS, DEMO_DFS_BETS } from '@/lib/demo-data';
 
 const LS_KEY = 'sample_demo_view';
 
@@ -59,7 +59,7 @@ export default function SamplePageClient() {
         <p className="text-fg-muted font-light mb-6 max-w-2xl">
           {isDfs
             ? 'This is the full, unredacted sample. 200 PrizePicks entries analyzed across 5 chapters. Scroll through the whole thing — when you\'re ready, upload your own history and get yours.'
-            : 'This is the full, unredacted sample. 280 bets analyzed across 5 chapters. Scroll through the whole thing — when you\'re ready, upload your own history and get yours.'}
+            : `This is the full, unredacted sample. ${DEMO_ANALYSIS.summary.total_bets} bets analyzed across 5 chapters. Scroll through the whole thing — when you're ready, upload your own history and get yours.`}
         </p>
         <div className="flex gap-6 md:gap-10 mb-6">
           <div className="border-l-2 border-scalpel pl-4">

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import NavBar from '@/components/NavBar';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
+import { DEMO_ANALYSIS } from '@/lib/demo-data';
 import Footer from '@/components/Footer';
 import AnimatedSection from '@/components/AnimatedSection';
 import HeroABTest from '@/components/HeroABTest';
@@ -205,7 +206,7 @@ export default function LandingPage() {
             See a real autopsy report
           </h2>
           <p className="text-fg-muted text-sm font-light mb-8 max-w-xl">
-            280 bets. 3 months. 3 biases found. One change that could have stopped the biggest leak.
+            {DEMO_ANALYSIS.summary.total_bets} bets. 3 months. {DEMO_ANALYSIS.biases_detected.length} biases found. One change that could have stopped the biggest leak.
           </p>
           <div className="border border-border-subtle rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle bg-surface-1">
