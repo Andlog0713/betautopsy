@@ -80,7 +80,7 @@ export function ProductShowcase() {
               <span className="text-sm font-mono text-bleed shrink-0 ml-3">-$188/qtr</span>
             </div>
           </div>
-          <p className="text-xs text-fg-dim mt-3 font-mono">From a real user&apos;s report with 280 bets</p>
+          <p className="text-xs text-fg-dim mt-3 font-mono">Illustrative example, not an actual user report</p>
         </div>
       ),
     },

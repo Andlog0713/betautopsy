@@ -1,5 +1,4 @@
 import type { AutopsyAnalysis, Bet } from '@/types';
-import { buildReportControlSystem } from '@/lib/control-system';
 
 // -- Demo Bets --
 // 304 bets (Nov 1, 2025 - Jan 31, 2026), script-generated with deliberate
@@ -7,7 +6,15 @@ import { buildReportControlSystem } from '@/lib/control-system';
 // prop/parlay/late-night unprofitable, one loss-chasing session) and run
 // through the REAL engine: lib/autopsy-engine.ts's calculateMetrics() +
 // one live runAutopsy() call against the actual Claude API. DEMO_ANALYSIS
-// below is that call's frozen, unedited output.
+// below is that call's frozen, unedited output - EXCEPT discipline_score,
+// which runAutopsy does not compute (app/api/analyze/route.ts calls
+// calculateDisciplineScore separately, using profile/report-history
+// context - hasBankroll, reportCount, streakCount, a prior snapshot - that
+// doesn't exist for a static fixture). That one field was synthesized with
+// first-report-ish placeholder context (no bankroll, 1st report, no
+// streak, uploaded recently, no prior snapshot) rather than pulled from
+// this call. Every other field on this object is genuine engine/Claude
+// output; this is the one exception, documented so it isn't assumed away.
 //
 // This replaces a prior ~35-row hand-picked "sample for charts" that
 // coexisted with a separately hand-authored DEMO_ANALYSIS describing a
@@ -23639,412 +23646,16845 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
 };
 
 
-// ── DFS Demo Bets (PrizePicks) ──
-// 38 entries telling a PrizePicks story: solid 2-pick game,
-// multiplier chasing problem, Dec 14 pick-count escalation sequence.
+// -- DFS Demo Bets (PrizePicks) --
+// 200 script-generated entries (Nov 2025 - Jan 2026), same approach as the
+// sportsbook fixture above: deliberate per-pick-count/format win-rate
+// targets (2-pick strong, 5-6 pick and Power-format clearly unprofitable,
+// a multiplier-chasing overlay engineered to trip the real
+// pickCountAfterLoss > pickCountAfterWin * 1.2 detector threshold) run
+// through calculateMetrics() + one live runAutopsy() call. DEMO_DFS_ANALYSIS
+// below is that call's frozen, unedited output (plus discipline_score,
+// which runAutopsy doesn't compute - see the same note on DEMO_ANALYSIS
+// above; synthesized first-report-ish context here too).
+//
+// Replaces a prior 38-row hand-picked sample that coexisted with a
+// separately hand-authored DEMO_DFS_ANALYSIS describing a fictional
+// 200-entry population (total_bets: 200, discipline_score, biases_detected,
+// etc. all authored independently of the 38 real rows) - the identical
+// two-populations issue the sportsbook fixture had. DEMO_DFS_BETS is now
+// the only population; every DEMO_DFS_ANALYSIS figure is computed from
+// exactly these entries.
 
-// Part 1: 2-pick (7) + 3-pick (10) entries
-const DEMO_DFS_BETS_PART1: Bet[] = [
-  // === 2-PICK ENTRIES (7 total: 2P + 5F, 4W + 3L) ===
-  { id: 'demo-dfs-1', user_id: 'demo', placed_at: '2025-11-02T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '2-pick Flex: Josh Allen O 245.5 pass yds | Jalen Hurts O 55.5 rush yds', odds: -150, stake: 10, result: 'win', profit: 6.67, payout: 16.67, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-11-02T13:00:00Z' },
-  { id: 'demo-dfs-2', user_id: 'demo', placed_at: '2025-11-03T16:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '2-pick Flex: LeBron James O 25.5 pts | Curry O 24.5 pts', odds: -150, stake: 10, result: 'win', profit: 6.67, payout: 16.67, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-11-03T16:00:00Z' },
-  { id: 'demo-dfs-3', user_id: 'demo', placed_at: '2025-11-08T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '2-pick Flex: Josh Allen O 250.5 pass yds | Jalen Hurts O 1.5 pass TDs', odds: -150, stake: 15, result: 'win', profit: 10, payout: 25, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-11-08T13:00:00Z' },
-  { id: 'demo-dfs-4', user_id: 'demo', placed_at: '2025-11-12T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '2-pick Flex: Doncic O 28.5 pts | Giannis O 30.5 pts', odds: -150, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-11-12T19:30:00Z' },
-  { id: 'demo-dfs-5', user_id: 'demo', placed_at: '2025-11-19T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '2-pick Flex: LeBron James O 7.5 ast | Tatum O 26.5 pts', odds: -150, stake: 25, result: 'loss', profit: -25, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-11-19T19:30:00Z' },
-  { id: 'demo-dfs-6', user_id: 'demo', placed_at: '2025-12-13T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '2-pick Power: Josh Allen O 252.5 pass yds | Jalen Hurts O 57.5 rush yds', odds: 200, stake: 10, result: 'win', profit: 20, payout: 30, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-12-13T13:00:00Z' },
-  { id: 'demo-dfs-7', user_id: 'demo', placed_at: '2025-12-14T18:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '2-pick Power: Josh Allen O 248.5 pass yds | Mahomes O 272.5 pass yds', odds: 200, stake: 10, result: 'loss', profit: -10, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 2, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T18:00:00Z' },
-
-  // === 3-PICK ENTRIES (10 total: 6P + 4F, 3W + 7L) ===
-  { id: 'demo-dfs-8', user_id: 'demo', placed_at: '2025-11-05T19:30:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '3-pick Power: Mahomes O 275.5 pass yds | Lamar Jackson O 65.5 rush yds | Lamb O 74.5 rec yds', odds: 500, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-05T19:30:00Z' },
-  { id: 'demo-dfs-9', user_id: 'demo', placed_at: '2025-11-09T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Flex: LeBron James O 7.5 reb | Jokic O 10.5 reb | Tatum O 25.5 pts', odds: 150, stake: 10, result: 'win', profit: 15, payout: 25, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-09T19:00:00Z' },
-  { id: 'demo-dfs-10', user_id: 'demo', placed_at: '2025-11-10T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '3-pick Power: Jalen Hurts O 60.5 rush yds | Purdy O 240.5 pass yds | Mahomes O 268.5 pass yds', odds: 500, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-10T13:00:00Z' },
-  { id: 'demo-dfs-11', user_id: 'demo', placed_at: '2025-11-16T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Power: LeBron James O 26.5 pts | Curry O 5.5 3pt | Brunson O 22.5 pts', odds: 500, stake: 10, result: 'win', profit: 50, payout: 60, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-16T19:00:00Z' },
-  { id: 'demo-dfs-12', user_id: 'demo', placed_at: '2025-11-22T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '3-pick Power: Josh Allen O 1.5 pass TDs | Jalen Hurts O 225.5 pass yds | Purdy O 1.5 pass TDs', odds: 500, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-22T13:00:00Z' },
-  { id: 'demo-dfs-13', user_id: 'demo', placed_at: '2025-11-26T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Flex: LeBron James O 25.5 pts | Curry O 25.5 pts | Tatum O 4.5 ast', odds: 150, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-11-26T19:00:00Z' },
-  { id: 'demo-dfs-14', user_id: 'demo', placed_at: '2025-12-01T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '3-pick Flex: Mahomes O 272.5 pass yds | Lamar Jackson O 62.5 rush yds | Lamb O 76.5 rec yds', odds: 150, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-12-01T13:00:00Z' },
-  { id: 'demo-dfs-15', user_id: 'demo', placed_at: '2025-12-09T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Flex: LeBron James O 6.5 reb | Doncic O 27.5 pts | Giannis O 29.5 pts', odds: 150, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-12-09T19:30:00Z' },
-  { id: 'demo-dfs-16', user_id: 'demo', placed_at: '2025-12-17T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Flex: Tatum O 25.5 pts | Doncic O 30.5 pts | Jokic O 9.5 ast', odds: 150, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-12-17T19:30:00Z' },
-  { id: 'demo-dfs-17', user_id: 'demo', placed_at: '2025-12-27T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '3-pick Flex: Jokic O 10.5 ast | Giannis O 12.5 reb | Brunson O 24.5 pts', odds: 150, stake: 10, result: 'win', profit: 15, payout: 25, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 3, tags: null, notes: null, upload_id: null, created_at: '2025-12-27T19:30:00Z' },
+export const DEMO_DFS_BETS: Bet[] = [
+  {
+    "id": "demo-dfs-1",
+    "user_id": "demo",
+    "placed_at": "2025-11-01T19:49:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamar Jackson Over 214.5 pass yds | Purdy Over 245.5 pass yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "loss",
+    "payout": 0,
+    "profit": -12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-01T19:49:00.000Z"
+  },
+  {
+    "id": "demo-dfs-2",
+    "user_id": "demo",
+    "placed_at": "2026-01-26T21:51:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamb Over 29.5 pts | Jalen Hurts Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 11,
+    "result": "loss",
+    "payout": 0,
+    "profit": -11,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-26T21:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-3",
+    "user_id": "demo",
+    "placed_at": "2025-11-08T17:31:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Tatum Over 79.5 rush yds | Derrick Henry Over 5.5 3pt",
+    "odds": -150,
+    "stake": 11,
+    "result": "loss",
+    "payout": 0,
+    "profit": -11,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-08T17:31:00.000Z"
+  },
+  {
+    "id": "demo-dfs-4",
+    "user_id": "demo",
+    "placed_at": "2025-11-03T21:23:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jokic Over 66.5 rush yds | Doncic Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 9,
+    "result": "win",
+    "payout": 15,
+    "profit": 6,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-03T21:23:00.000Z"
+  },
+  {
+    "id": "demo-dfs-5",
+    "user_id": "demo",
+    "placed_at": "2025-12-06T20:41:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 7.5 reb | Lamar Jackson Over 10.5 reb",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-06T20:41:00.000Z"
+  },
+  {
+    "id": "demo-dfs-6",
+    "user_id": "demo",
+    "placed_at": "2026-01-25T21:48:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamb Over 249.5 pass yds | Tatum Over 55.5 rush yds",
+    "odds": -150,
+    "stake": 9,
+    "result": "win",
+    "payout": 15,
+    "profit": 6,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-25T21:48:00.000Z"
+  },
+  {
+    "id": "demo-dfs-7",
+    "user_id": "demo",
+    "placed_at": "2025-11-11T18:09:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Josh Allen Over 5.5 3pt | Tatum Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 14,
+    "result": "win",
+    "payout": 23.33,
+    "profit": 9.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-11T18:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-8",
+    "user_id": "demo",
+    "placed_at": "2026-01-09T19:01:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 69.5 rec yds | Derrick Henry Over 209.5 pass yds",
+    "odds": -150,
+    "stake": 8,
+    "result": "loss",
+    "payout": 0,
+    "profit": -8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-09T19:01:00.000Z"
+  },
+  {
+    "id": "demo-dfs-9",
+    "user_id": "demo",
+    "placed_at": "2026-01-27T20:33:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: LeBron James Over 1.5 pass TDs | Saquon Barkley Over 218.5 pass yds",
+    "odds": -150,
+    "stake": 11,
+    "result": "loss",
+    "payout": 0,
+    "profit": -11,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-27T20:33:00.000Z"
+  },
+  {
+    "id": "demo-dfs-10",
+    "user_id": "demo",
+    "placed_at": "2026-01-16T17:18:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Mahomes Over 3.5 3pt | Tatum Over 65.5 rec yds",
+    "odds": -150,
+    "stake": 10,
+    "result": "win",
+    "payout": 16.67,
+    "profit": 6.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-16T17:18:00.000Z"
+  },
+  {
+    "id": "demo-dfs-11",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T21:23:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jokic Over 68.5 rec yds | Giannis Over 7.5 ast",
+    "odds": -150,
+    "stake": 8,
+    "result": "win",
+    "payout": 13.33,
+    "profit": 5.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T21:23:00.000Z"
+  },
+  {
+    "id": "demo-dfs-12",
+    "user_id": "demo",
+    "placed_at": "2026-01-18T22:09:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamb Over 5.5 ast | Curry Over 62.5 rec yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "loss",
+    "payout": 0,
+    "profit": -12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-18T22:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-13",
+    "user_id": "demo",
+    "placed_at": "2025-12-20T19:43:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Josh Allen Over 6.5 ast | Brunson Over 9.5 ast",
+    "odds": -150,
+    "stake": 14,
+    "result": "win",
+    "payout": 23.33,
+    "profit": 9.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-20T19:43:00.000Z"
+  },
+  {
+    "id": "demo-dfs-14",
+    "user_id": "demo",
+    "placed_at": "2026-01-24T18:58:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jokic Over 8.5 ast | Purdy Over 21.5 pts",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-24T18:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-15",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T19:12:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 57.5 rush yds | Mahomes Over 9.5 reb",
+    "odds": -150,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T19:12:00.000Z"
+  },
+  {
+    "id": "demo-dfs-16",
+    "user_id": "demo",
+    "placed_at": "2026-01-28T22:20:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Tatum Over 10.5 reb | Doncic Over 51.5 rec yds",
+    "odds": -150,
+    "stake": 17,
+    "result": "win",
+    "payout": 28.33,
+    "profit": 11.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-28T22:20:00.000Z"
+  },
+  {
+    "id": "demo-dfs-17",
+    "user_id": "demo",
+    "placed_at": "2025-12-24T22:52:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 70.5 rec yds | Jalen Hurts Over 3.5 3pt",
+    "odds": -150,
+    "stake": 18,
+    "result": "win",
+    "payout": 30,
+    "profit": 12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-24T22:52:00.000Z"
+  },
+  {
+    "id": "demo-dfs-18",
+    "user_id": "demo",
+    "placed_at": "2025-12-26T17:58:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamb Over 79.5 rec yds | Mahomes Over 65.5 rush yds",
+    "odds": -150,
+    "stake": 15,
+    "result": "win",
+    "payout": 25,
+    "profit": 10,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-26T17:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-19",
+    "user_id": "demo",
+    "placed_at": "2026-01-12T19:11:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 29.5 pts | Lamb Over 10.5 ast",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-12T19:11:00.000Z"
+  },
+  {
+    "id": "demo-dfs-20",
+    "user_id": "demo",
+    "placed_at": "2026-01-04T20:51:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamar Jackson Over 10.5 reb | Lamar Jackson Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 17,
+    "result": "win",
+    "payout": 28.33,
+    "profit": 11.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-04T20:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-21",
+    "user_id": "demo",
+    "placed_at": "2026-01-18T20:53:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Josh Allen Over 47.5 rush yds | Lamb Over 3.5 3pt",
+    "odds": -150,
+    "stake": 10,
+    "result": "win",
+    "payout": 16.67,
+    "profit": 6.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-18T20:53:00.000Z"
+  },
+  {
+    "id": "demo-dfs-22",
+    "user_id": "demo",
+    "placed_at": "2026-01-01T20:23:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 56.5 rec yds | Doncic Over 46.5 rush yds",
+    "odds": -150,
+    "stake": 11,
+    "result": "loss",
+    "payout": 0,
+    "profit": -11,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-01T20:23:00.000Z"
+  },
+  {
+    "id": "demo-dfs-23",
+    "user_id": "demo",
+    "placed_at": "2025-11-07T19:40:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Giannis Over 19.5 pts | Jalen Hurts Over 6.5 ast",
+    "odds": -150,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-07T19:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-24",
+    "user_id": "demo",
+    "placed_at": "2026-01-21T17:03:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Brunson Over 9.5 reb | Brunson Over 21.5 pts",
+    "odds": -150,
+    "stake": 14,
+    "result": "loss",
+    "payout": 0,
+    "profit": -14,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-21T17:03:00.000Z"
+  },
+  {
+    "id": "demo-dfs-25",
+    "user_id": "demo",
+    "placed_at": "2025-12-09T18:56:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Tatum Over 237.5 pass yds | Brunson Over 10.5 reb",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-09T18:56:00.000Z"
+  },
+  {
+    "id": "demo-dfs-26",
+    "user_id": "demo",
+    "placed_at": "2026-01-10T21:44:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Lamb Over 23.5 pts | Lamar Jackson Over 76.5 rec yds",
+    "odds": -150,
+    "stake": 11,
+    "result": "win",
+    "payout": 18.33,
+    "profit": 7.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-10T21:44:00.000Z"
+  },
+  {
+    "id": "demo-dfs-27",
+    "user_id": "demo",
+    "placed_at": "2026-01-14T22:42:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Tatum Over 5.5 3pt | Saquon Barkley Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-14T22:42:00.000Z"
+  },
+  {
+    "id": "demo-dfs-28",
+    "user_id": "demo",
+    "placed_at": "2026-01-21T22:09:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Tatum Over 8.5 ast | Lamb Over 54.5 rec yds",
+    "odds": -150,
+    "stake": 17,
+    "result": "win",
+    "payout": 28.33,
+    "profit": 11.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-21T22:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-29",
+    "user_id": "demo",
+    "placed_at": "2025-11-24T21:24:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Brunson Over 80.5 rush yds | Lamb Over 267.5 pass yds",
+    "odds": -150,
+    "stake": 14,
+    "result": "win",
+    "payout": 23.33,
+    "profit": 9.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-24T21:24:00.000Z"
+  },
+  {
+    "id": "demo-dfs-30",
+    "user_id": "demo",
+    "placed_at": "2026-01-05T17:30:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Doncic Over 9.5 reb | Purdy Over 65.5 rec yds",
+    "odds": -150,
+    "stake": 14,
+    "result": "win",
+    "payout": 23.33,
+    "profit": 9.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-05T17:30:00.000Z"
+  },
+  {
+    "id": "demo-dfs-31",
+    "user_id": "demo",
+    "placed_at": "2026-01-20T22:51:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Curry Over 27.5 pts | Brunson Over 4.5 3pt",
+    "odds": -150,
+    "stake": 12,
+    "result": "loss",
+    "payout": 0,
+    "profit": -12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-20T22:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-32",
+    "user_id": "demo",
+    "placed_at": "2025-11-12T18:03:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Jalen Hurts Over 1.5 pass TDs | Purdy Over 80.5 rec yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "win",
+    "payout": 20,
+    "profit": 8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-12T18:03:00.000Z"
+  },
+  {
+    "id": "demo-dfs-33",
+    "user_id": "demo",
+    "placed_at": "2026-01-14T17:05:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Josh Allen Over 6.5 3pt | Jalen Hurts Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-14T17:05:00.000Z"
+  },
+  {
+    "id": "demo-dfs-34",
+    "user_id": "demo",
+    "placed_at": "2025-12-13T17:25:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Mahomes Over 18.5 pts | Lamb Over 25.5 pts",
+    "odds": -150,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-13T17:25:00.000Z"
+  },
+  {
+    "id": "demo-dfs-35",
+    "user_id": "demo",
+    "placed_at": "2025-11-21T19:20:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Power: Mahomes Over 21.5 pts | Derrick Henry Over 284.5 pass yds",
+    "odds": -150,
+    "stake": 8,
+    "result": "loss",
+    "payout": 0,
+    "profit": -8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-21T19:20:00.000Z"
+  },
+  {
+    "id": "demo-dfs-36",
+    "user_id": "demo",
+    "placed_at": "2026-01-18T21:45:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Giannis Over 58.5 rec yds | Jokic Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 13,
+    "result": "loss",
+    "payout": 0,
+    "profit": -13,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-18T21:45:00.000Z"
+  },
+  {
+    "id": "demo-dfs-37",
+    "user_id": "demo",
+    "placed_at": "2025-12-19T18:49:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Curry Over 219.5 pass yds | LeBron James Over 3.5 3pt",
+    "odds": -150,
+    "stake": 15,
+    "result": "win",
+    "payout": 25,
+    "profit": 10,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-19T18:49:00.000Z"
+  },
+  {
+    "id": "demo-dfs-38",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T22:07:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Mahomes Over 1.5 pass TDs | Josh Allen Over 6.5 ast",
+    "odds": -150,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T22:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-39",
+    "user_id": "demo",
+    "placed_at": "2025-12-27T20:41:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Derrick Henry Over 80.5 rush yds | Tatum Over 47.5 rush yds",
+    "odds": -150,
+    "stake": 17,
+    "result": "win",
+    "payout": 28.33,
+    "profit": 11.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-27T20:41:00.000Z"
+  },
+  {
+    "id": "demo-dfs-40",
+    "user_id": "demo",
+    "placed_at": "2025-11-16T21:01:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Josh Allen Over 7.5 ast | Giannis Over 24.5 pts",
+    "odds": -150,
+    "stake": 12,
+    "result": "win",
+    "payout": 20,
+    "profit": 8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-16T21:01:00.000Z"
+  },
+  {
+    "id": "demo-dfs-41",
+    "user_id": "demo",
+    "placed_at": "2026-01-21T20:10:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jalen Hurts Over 5.5 reb | Lamb Over 239.5 pass yds",
+    "odds": -150,
+    "stake": 20,
+    "result": "win",
+    "payout": 33.33,
+    "profit": 13.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-21T20:10:00.000Z"
+  },
+  {
+    "id": "demo-dfs-42",
+    "user_id": "demo",
+    "placed_at": "2025-11-24T17:36:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Brunson Over 4.5 3pt | Mahomes Over 201.5 pass yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "win",
+    "payout": 20,
+    "profit": 8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-24T17:36:00.000Z"
+  },
+  {
+    "id": "demo-dfs-43",
+    "user_id": "demo",
+    "placed_at": "2025-12-16T20:57:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jalen Hurts Over 65.5 rec yds | Curry Over 66.5 rec yds",
+    "odds": -150,
+    "stake": 10,
+    "result": "win",
+    "payout": 16.67,
+    "profit": 6.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-16T20:57:00.000Z"
+  },
+  {
+    "id": "demo-dfs-44",
+    "user_id": "demo",
+    "placed_at": "2026-01-05T22:39:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Saquon Barkley Over 6.5 3pt | Tatum Over 81.5 rec yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "loss",
+    "payout": 0,
+    "profit": -12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-05T22:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-45",
+    "user_id": "demo",
+    "placed_at": "2026-01-21T18:39:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Purdy Over 245.5 pass yds | Brunson Over 222.5 pass yds",
+    "odds": -150,
+    "stake": 11,
+    "result": "win",
+    "payout": 18.33,
+    "profit": 7.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-21T18:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-46",
+    "user_id": "demo",
+    "placed_at": "2026-01-25T19:54:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Saquon Barkley Over 85.5 rec yds | Lamb Over 77.5 rec yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "win",
+    "payout": 20,
+    "profit": 8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-25T19:54:00.000Z"
+  },
+  {
+    "id": "demo-dfs-47",
+    "user_id": "demo",
+    "placed_at": "2026-01-29T17:53:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Derrick Henry Over 3.5 3pt | Josh Allen Over 1.5 pass TDs",
+    "odds": -150,
+    "stake": 15,
+    "result": "win",
+    "payout": 25,
+    "profit": 10,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-29T17:53:00.000Z"
+  },
+  {
+    "id": "demo-dfs-48",
+    "user_id": "demo",
+    "placed_at": "2025-12-15T20:52:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Giannis Over 1.5 pass TDs | Doncic Over 87.5 rec yds",
+    "odds": -150,
+    "stake": 13,
+    "result": "win",
+    "payout": 21.67,
+    "profit": 8.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-15T20:52:00.000Z"
+  },
+  {
+    "id": "demo-dfs-49",
+    "user_id": "demo",
+    "placed_at": "2025-12-09T21:08:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Giannis Over 84.5 rush yds | Saquon Barkley Over 5.5 3pt",
+    "odds": -150,
+    "stake": 8,
+    "result": "loss",
+    "payout": 0,
+    "profit": -8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-09T21:08:00.000Z"
+  },
+  {
+    "id": "demo-dfs-50",
+    "user_id": "demo",
+    "placed_at": "2025-11-18T19:52:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Saquon Barkley Over 265.5 pass yds | Lamb Over 76.5 rush yds",
+    "odds": -150,
+    "stake": 12,
+    "result": "win",
+    "payout": 20,
+    "profit": 8,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-18T19:52:00.000Z"
+  },
+  {
+    "id": "demo-dfs-51",
+    "user_id": "demo",
+    "placed_at": "2025-12-20T17:50:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Josh Allen Over 7.5 reb | Saquon Barkley Over 3.5 3pt",
+    "odds": -150,
+    "stake": 16,
+    "result": "win",
+    "payout": 26.67,
+    "profit": 10.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-20T17:50:00.000Z"
+  },
+  {
+    "id": "demo-dfs-52",
+    "user_id": "demo",
+    "placed_at": "2025-11-21T21:20:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: LeBron James Over 267.5 pass yds | Jalen Hurts Over 6.5 ast",
+    "odds": -150,
+    "stake": 19,
+    "result": "win",
+    "payout": 31.67,
+    "profit": 12.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-21T21:20:00.000Z"
+  },
+  {
+    "id": "demo-dfs-53",
+    "user_id": "demo",
+    "placed_at": "2025-11-13T21:34:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jokic Over 10.5 ast | Tatum Over 26.5 pts",
+    "odds": -150,
+    "stake": 9,
+    "result": "loss",
+    "payout": 0,
+    "profit": -9,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-13T21:34:00.000Z"
+  },
+  {
+    "id": "demo-dfs-54",
+    "user_id": "demo",
+    "placed_at": "2026-01-11T17:55:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Derrick Henry Over 1.5 pass TDs | Doncic Over 70.5 rush yds",
+    "odds": -150,
+    "stake": 11,
+    "result": "win",
+    "payout": 18.33,
+    "profit": 7.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-11T17:55:00.000Z"
+  },
+  {
+    "id": "demo-dfs-55",
+    "user_id": "demo",
+    "placed_at": "2025-12-20T22:39:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jalen Hurts Over 1.5 pass TDs | Curry Over 76.5 rush yds",
+    "odds": -150,
+    "stake": 16,
+    "result": "loss",
+    "payout": 0,
+    "profit": -16,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-20T22:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-56",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T17:07:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Tatum Over 4.5 3pt | Jalen Hurts Over 83.5 rec yds",
+    "odds": -150,
+    "stake": 10,
+    "result": "loss",
+    "payout": 0,
+    "profit": -10,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T17:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-57",
+    "user_id": "demo",
+    "placed_at": "2025-11-30T22:05:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Mahomes Over 89.5 rec yds | Jalen Hurts Over 5.5 3pt",
+    "odds": -150,
+    "stake": 15,
+    "result": "win",
+    "payout": 25,
+    "profit": 10,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-30T22:05:00.000Z"
+  },
+  {
+    "id": "demo-dfs-58",
+    "user_id": "demo",
+    "placed_at": "2025-11-09T17:17:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Josh Allen Over 46.5 rush yds | Purdy Over 3.5 3pt",
+    "odds": -150,
+    "stake": 8,
+    "result": "win",
+    "payout": 13.33,
+    "profit": 5.33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-09T17:17:00.000Z"
+  },
+  {
+    "id": "demo-dfs-59",
+    "user_id": "demo",
+    "placed_at": "2025-12-07T22:44:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jalen Hurts Over 53.5 rush yds | Jalen Hurts Over 218.5 pass yds",
+    "odds": -150,
+    "stake": 16,
+    "result": "win",
+    "payout": 26.67,
+    "profit": 10.67,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-07T22:44:00.000Z"
+  },
+  {
+    "id": "demo-dfs-60",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T19:21:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "2-pick Flex: Jalen Hurts Over 6.5 reb | Jalen Hurts Over 19.5 pts",
+    "odds": -150,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 2,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T19:21:00.000Z"
+  },
+  {
+    "id": "demo-dfs-61",
+    "user_id": "demo",
+    "placed_at": "2026-01-19T20:51:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jalen Hurts Over 9.5 reb | Saquon Barkley Over 7.5 reb | Doncic Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 20,
+    "result": "loss",
+    "payout": 0,
+    "profit": -20,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-19T20:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-62",
+    "user_id": "demo",
+    "placed_at": "2026-01-04T20:15:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Doncic Over 18.5 pts | LeBron James Over 58.5 rush yds | Jalen Hurts Over 47.5 rush yds",
+    "odds": 500,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-04T20:15:00.000Z"
+  },
+  {
+    "id": "demo-dfs-63",
+    "user_id": "demo",
+    "placed_at": "2026-01-24T20:39:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Tatum Over 1.5 pass TDs | Jalen Hurts Over 5.5 3pt | Mahomes Over 79.5 rec yds",
+    "odds": 500,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-24T20:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-64",
+    "user_id": "demo",
+    "placed_at": "2025-11-14T22:58:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Josh Allen Over 1.5 pass TDs | Mahomes Over 5.5 reb | Purdy Over 30.5 pts",
+    "odds": 500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-14T22:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-65",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T18:00:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jokic Over 6.5 reb | Doncic Over 81.5 rush yds | Josh Allen Over 6.5 3pt",
+    "odds": 500,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T18:00:00.000Z"
+  },
+  {
+    "id": "demo-dfs-66",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T19:18:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Lamb Over 10.5 reb | Doncic Over 10.5 reb | Josh Allen Over 60.5 rush yds",
+    "odds": 500,
+    "stake": 16,
+    "result": "loss",
+    "payout": 0,
+    "profit": -16,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T19:18:00.000Z"
+  },
+  {
+    "id": "demo-dfs-67",
+    "user_id": "demo",
+    "placed_at": "2025-11-06T22:22:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Giannis Over 1.5 pass TDs | Giannis Over 10.5 reb | Purdy Over 6.5 3pt",
+    "odds": 500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-06T22:22:00.000Z"
+  },
+  {
+    "id": "demo-dfs-68",
+    "user_id": "demo",
+    "placed_at": "2025-11-10T18:31:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Doncic Over 226.5 pass yds | Jokic Over 55.5 rush yds | Derrick Henry Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 26,
+    "result": "loss",
+    "payout": 0,
+    "profit": -26,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-10T18:31:00.000Z"
+  },
+  {
+    "id": "demo-dfs-69",
+    "user_id": "demo",
+    "placed_at": "2026-01-12T17:30:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Josh Allen Over 1.5 pass TDs | Josh Allen Over 49.5 rush yds | Doncic Over 4.5 3pt",
+    "odds": 500,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-12T17:30:00.000Z"
+  },
+  {
+    "id": "demo-dfs-70",
+    "user_id": "demo",
+    "placed_at": "2025-11-11T18:10:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jokic Over 1.5 pass TDs | Derrick Henry Over 25.5 pts | Saquon Barkley Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-11T18:10:00.000Z"
+  },
+  {
+    "id": "demo-dfs-71",
+    "user_id": "demo",
+    "placed_at": "2025-11-14T21:07:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jalen Hurts Over 9.5 reb | Doncic Over 3.5 3pt | Lamb Over 10.5 ast",
+    "odds": 500,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-14T21:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-72",
+    "user_id": "demo",
+    "placed_at": "2025-11-27T21:55:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Lamb Over 6.5 ast | Lamar Jackson Over 7.5 reb | LeBron James Over 61.5 rush yds",
+    "odds": 500,
+    "stake": 26,
+    "result": "win",
+    "payout": 156,
+    "profit": 130,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-27T21:55:00.000Z"
+  },
+  {
+    "id": "demo-dfs-73",
+    "user_id": "demo",
+    "placed_at": "2025-11-18T20:36:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jokic Over 55.5 rec yds | Lamar Jackson Over 31.5 pts | Curry Over 66.5 rec yds",
+    "odds": 500,
+    "stake": 18,
+    "result": "win",
+    "payout": 108,
+    "profit": 90,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-18T20:36:00.000Z"
+  },
+  {
+    "id": "demo-dfs-74",
+    "user_id": "demo",
+    "placed_at": "2026-01-23T18:58:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Saquon Barkley Over 200.5 pass yds | Jokic Over 1.5 pass TDs | LeBron James Over 8.5 reb",
+    "odds": 500,
+    "stake": 20,
+    "result": "loss",
+    "payout": 0,
+    "profit": -20,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-23T18:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-75",
+    "user_id": "demo",
+    "placed_at": "2025-12-30T20:53:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: LeBron James Over 245.5 pass yds | Lamar Jackson Over 87.5 rec yds | Lamar Jackson Over 50.5 rush yds",
+    "odds": 500,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-30T20:53:00.000Z"
+  },
+  {
+    "id": "demo-dfs-76",
+    "user_id": "demo",
+    "placed_at": "2025-11-07T17:16:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Lamar Jackson Over 1.5 pass TDs | Lamar Jackson Over 6.5 3pt | Jalen Hurts Over 3.5 3pt",
+    "odds": 500,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-07T17:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-77",
+    "user_id": "demo",
+    "placed_at": "2025-12-15T17:39:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Brunson Over 8.5 reb | Curry Over 4.5 3pt | Lamb Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 32,
+    "result": "loss",
+    "payout": 0,
+    "profit": -32,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-15T17:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-78",
+    "user_id": "demo",
+    "placed_at": "2025-11-29T19:12:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Mahomes Over 1.5 pass TDs | Lamb Over 48.5 rush yds | Lamar Jackson Over 52.5 rush yds",
+    "odds": 500,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-29T19:12:00.000Z"
+  },
+  {
+    "id": "demo-dfs-79",
+    "user_id": "demo",
+    "placed_at": "2025-12-01T19:01:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Curry Over 71.5 rush yds | Curry Over 9.5 reb | Josh Allen Over 73.5 rush yds",
+    "odds": 500,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-01T19:01:00.000Z"
+  },
+  {
+    "id": "demo-dfs-80",
+    "user_id": "demo",
+    "placed_at": "2026-01-07T17:04:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: LeBron James Over 23.5 pts | Doncic Over 9.5 reb | Lamb Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-07T17:04:00.000Z"
+  },
+  {
+    "id": "demo-dfs-81",
+    "user_id": "demo",
+    "placed_at": "2026-01-28T22:22:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Brunson Over 78.5 rec yds | Jalen Hurts Over 24.5 pts | LeBron James Over 9.5 reb",
+    "odds": 500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-28T22:22:00.000Z"
+  },
+  {
+    "id": "demo-dfs-82",
+    "user_id": "demo",
+    "placed_at": "2026-01-17T22:45:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Josh Allen Over 54.5 rec yds | Tatum Over 6.5 ast | Purdy Over 58.5 rush yds",
+    "odds": 500,
+    "stake": 26,
+    "result": "win",
+    "payout": 156,
+    "profit": 130,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-17T22:45:00.000Z"
+  },
+  {
+    "id": "demo-dfs-83",
+    "user_id": "demo",
+    "placed_at": "2025-11-26T20:58:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: LeBron James Over 6.5 3pt | Derrick Henry Over 77.5 rec yds | Curry Over 65.5 rush yds",
+    "odds": 500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-26T20:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-84",
+    "user_id": "demo",
+    "placed_at": "2025-12-11T19:49:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Josh Allen Over 63.5 rec yds | Jokic Over 71.5 rush yds | Tatum Over 6.5 3pt",
+    "odds": 500,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-11T19:49:00.000Z"
+  },
+  {
+    "id": "demo-dfs-85",
+    "user_id": "demo",
+    "placed_at": "2025-11-27T21:23:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Lamb Over 277.5 pass yds | Lamb Over 206.5 pass yds | Jalen Hurts Over 6.5 ast",
+    "odds": 500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-27T21:23:00.000Z"
+  },
+  {
+    "id": "demo-dfs-86",
+    "user_id": "demo",
+    "placed_at": "2025-12-30T18:17:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Purdy Over 9.5 reb | Doncic Over 30.5 pts | Tatum Over 7.5 reb",
+    "odds": 500,
+    "stake": 32,
+    "result": "loss",
+    "payout": 0,
+    "profit": -32,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-30T18:17:00.000Z"
+  },
+  {
+    "id": "demo-dfs-87",
+    "user_id": "demo",
+    "placed_at": "2025-11-26T18:02:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Jalen Hurts Over 204.5 pass yds | Josh Allen Over 239.5 pass yds | Purdy Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 11,
+    "result": "loss",
+    "payout": 0,
+    "profit": -11,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-26T18:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-88",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T20:15:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Josh Allen Over 77.5 rec yds | Tatum Over 70.5 rec yds | Derrick Henry Over 8.5 ast",
+    "odds": 500,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T20:15:00.000Z"
+  },
+  {
+    "id": "demo-dfs-89",
+    "user_id": "demo",
+    "placed_at": "2026-01-25T18:32:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Purdy Over 210.5 pass yds | Purdy Over 29.5 pts | Tatum Over 9.5 reb",
+    "odds": 500,
+    "stake": 29,
+    "result": "win",
+    "payout": 174,
+    "profit": 145,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-25T18:32:00.000Z"
+  },
+  {
+    "id": "demo-dfs-90",
+    "user_id": "demo",
+    "placed_at": "2025-12-10T19:02:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Power: Derrick Henry Over 286.5 pass yds | Jalen Hurts Over 273.5 pass yds | Giannis Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-10T19:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-91",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T21:42:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Tatum Over 22.5 pts | Jalen Hurts Over 1.5 pass TDs | Jalen Hurts Over 217.5 pass yds",
+    "odds": 500,
+    "stake": 12,
+    "result": "loss",
+    "payout": 0,
+    "profit": -12,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T21:42:00.000Z"
+  },
+  {
+    "id": "demo-dfs-92",
+    "user_id": "demo",
+    "placed_at": "2025-11-23T22:32:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Derrick Henry Over 263.5 pass yds | Curry Over 243.5 pass yds | Tatum Over 7.5 ast",
+    "odds": 500,
+    "stake": 14,
+    "result": "loss",
+    "payout": 0,
+    "profit": -14,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-23T22:32:00.000Z"
+  },
+  {
+    "id": "demo-dfs-93",
+    "user_id": "demo",
+    "placed_at": "2025-12-21T17:46:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Purdy Over 63.5 rec yds | Brunson Over 79.5 rec yds | Saquon Barkley Over 10.5 ast",
+    "odds": 500,
+    "stake": 16,
+    "result": "loss",
+    "payout": 0,
+    "profit": -16,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-21T17:46:00.000Z"
+  },
+  {
+    "id": "demo-dfs-94",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T21:26:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Mahomes Over 77.5 rush yds | Doncic Over 9.5 ast | Purdy Over 8.5 reb",
+    "odds": 500,
+    "stake": 22,
+    "result": "loss",
+    "payout": 0,
+    "profit": -22,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T21:26:00.000Z"
+  },
+  {
+    "id": "demo-dfs-95",
+    "user_id": "demo",
+    "placed_at": "2026-01-14T18:40:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Josh Allen Over 65.5 rec yds | Doncic Over 18.5 pts | LeBron James Over 7.5 ast",
+    "odds": 500,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-14T18:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-96",
+    "user_id": "demo",
+    "placed_at": "2026-01-15T19:57:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Brunson Over 31.5 pts | Saquon Barkley Over 1.5 pass TDs | Tatum Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 19,
+    "result": "win",
+    "payout": 114,
+    "profit": 95,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-15T19:57:00.000Z"
+  },
+  {
+    "id": "demo-dfs-97",
+    "user_id": "demo",
+    "placed_at": "2026-01-23T22:26:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Josh Allen Over 30.5 pts | Doncic Over 8.5 ast | Derrick Henry Over 6.5 3pt",
+    "odds": 500,
+    "stake": 13,
+    "result": "win",
+    "payout": 78,
+    "profit": 65,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-23T22:26:00.000Z"
+  },
+  {
+    "id": "demo-dfs-98",
+    "user_id": "demo",
+    "placed_at": "2025-12-07T20:49:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Derrick Henry Over 220.5 pass yds | Josh Allen Over 5.5 reb | Josh Allen Over 208.5 pass yds",
+    "odds": 500,
+    "stake": 16,
+    "result": "win",
+    "payout": 96,
+    "profit": 80,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-07T20:49:00.000Z"
+  },
+  {
+    "id": "demo-dfs-99",
+    "user_id": "demo",
+    "placed_at": "2026-01-01T21:32:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Jalen Hurts Over 221.5 pass yds | Saquon Barkley Over 57.5 rec yds | Purdy Over 208.5 pass yds",
+    "odds": 500,
+    "stake": 14,
+    "result": "loss",
+    "payout": 0,
+    "profit": -14,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-01T21:32:00.000Z"
+  },
+  {
+    "id": "demo-dfs-100",
+    "user_id": "demo",
+    "placed_at": "2026-01-16T21:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Doncic Over 75.5 rec yds | Jalen Hurts Over 83.5 rec yds | Brunson Over 255.5 pass yds",
+    "odds": 500,
+    "stake": 14,
+    "result": "loss",
+    "payout": 0,
+    "profit": -14,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-16T21:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-101",
+    "user_id": "demo",
+    "placed_at": "2026-01-31T21:07:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Jokic Over 5.5 3pt | Josh Allen Over 262.5 pass yds | Jalen Hurts Over 63.5 rush yds",
+    "odds": 500,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-31T21:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-102",
+    "user_id": "demo",
+    "placed_at": "2025-12-15T17:16:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Saquon Barkley Over 1.5 pass TDs | Derrick Henry Over 29.5 pts | Lamar Jackson Over 63.5 rec yds",
+    "odds": 500,
+    "stake": 34,
+    "result": "win",
+    "payout": 204,
+    "profit": 170,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-15T17:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-103",
+    "user_id": "demo",
+    "placed_at": "2026-01-12T17:31:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Mahomes Over 53.5 rush yds | Derrick Henry Over 20.5 pts | Lamb Over 10.5 reb",
+    "odds": 500,
+    "stake": 14,
+    "result": "loss",
+    "payout": 0,
+    "profit": -14,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-12T17:31:00.000Z"
+  },
+  {
+    "id": "demo-dfs-104",
+    "user_id": "demo",
+    "placed_at": "2026-01-30T17:09:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Tatum Over 4.5 3pt | Saquon Barkley Over 18.5 pts | Giannis Over 1.5 pass TDs",
+    "odds": 500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-30T17:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-105",
+    "user_id": "demo",
+    "placed_at": "2025-12-09T17:36:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Derrick Henry Over 7.5 ast | Tatum Over 58.5 rush yds | Purdy Over 79.5 rec yds",
+    "odds": 500,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-09T17:36:00.000Z"
+  },
+  {
+    "id": "demo-dfs-106",
+    "user_id": "demo",
+    "placed_at": "2026-01-10T18:13:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Lamar Jackson Over 29.5 pts | Jokic Over 9.5 ast | Curry Over 238.5 pass yds",
+    "odds": 500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-10T18:13:00.000Z"
+  },
+  {
+    "id": "demo-dfs-107",
+    "user_id": "demo",
+    "placed_at": "2026-01-22T19:32:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Josh Allen Over 70.5 rush yds | LeBron James Over 20.5 pts | Josh Allen Over 57.5 rush yds",
+    "odds": 500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-22T19:32:00.000Z"
+  },
+  {
+    "id": "demo-dfs-108",
+    "user_id": "demo",
+    "placed_at": "2026-01-09T19:46:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Jokic Over 7.5 reb | Giannis Over 209.5 pass yds | Purdy Over 82.5 rec yds",
+    "odds": 500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-09T19:46:00.000Z"
+  },
+  {
+    "id": "demo-dfs-109",
+    "user_id": "demo",
+    "placed_at": "2025-11-08T22:12:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Jalen Hurts Over 6.5 ast | Saquon Barkley Over 30.5 pts | Derrick Henry Over 9.5 ast",
+    "odds": 500,
+    "stake": 31,
+    "result": "loss",
+    "payout": 0,
+    "profit": -31,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-08T22:12:00.000Z"
+  },
+  {
+    "id": "demo-dfs-110",
+    "user_id": "demo",
+    "placed_at": "2025-12-03T22:08:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "3-pick Flex: Purdy Over 7.5 ast | Saquon Barkley Over 1.5 pass TDs | LeBron James Over 7.5 reb",
+    "odds": 500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 3,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-03T22:08:00.000Z"
+  },
+  {
+    "id": "demo-dfs-111",
+    "user_id": "demo",
+    "placed_at": "2026-01-18T22:09:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Derrick Henry Over 1.5 pass TDs | Saquon Barkley Over 7.5 ast | LeBron James Over 82.5 rush yds | Mahomes Over 61.5 rec yds",
+    "odds": 900,
+    "stake": 22,
+    "result": "loss",
+    "payout": 0,
+    "profit": -22,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-18T22:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-112",
+    "user_id": "demo",
+    "placed_at": "2026-01-10T18:47:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Derrick Henry Over 7.5 reb | LeBron James Over 9.5 reb | Jalen Hurts Over 6.5 3pt | Brunson Over 55.5 rec yds",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-10T18:47:00.000Z"
+  },
+  {
+    "id": "demo-dfs-113",
+    "user_id": "demo",
+    "placed_at": "2025-11-18T17:17:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jokic Over 1.5 pass TDs | Josh Allen Over 9.5 ast | Jalen Hurts Over 1.5 pass TDs | Curry Over 4.5 3pt",
+    "odds": 900,
+    "stake": 35,
+    "result": "loss",
+    "payout": 0,
+    "profit": -35,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-18T17:17:00.000Z"
+  },
+  {
+    "id": "demo-dfs-114",
+    "user_id": "demo",
+    "placed_at": "2025-11-06T21:10:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Curry Over 10.5 reb | Giannis Over 75.5 rec yds | Jokic Over 76.5 rush yds | Josh Allen Over 217.5 pass yds",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-06T21:10:00.000Z"
+  },
+  {
+    "id": "demo-dfs-115",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T20:14:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Curry Over 31.5 pts | Derrick Henry Over 1.5 pass TDs | Jokic Over 6.5 ast | Jokic Over 20.5 pts",
+    "odds": 900,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T20:14:00.000Z"
+  },
+  {
+    "id": "demo-dfs-116",
+    "user_id": "demo",
+    "placed_at": "2026-01-25T22:02:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Doncic Over 7.5 ast | Jokic Over 63.5 rec yds | LeBron James Over 1.5 pass TDs | Josh Allen Over 58.5 rush yds",
+    "odds": 900,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-25T22:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-117",
+    "user_id": "demo",
+    "placed_at": "2026-01-21T17:33:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Purdy Over 70.5 rush yds | Jalen Hurts Over 65.5 rush yds | Derrick Henry Over 25.5 pts | Curry Over 60.5 rush yds",
+    "odds": 900,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-21T17:33:00.000Z"
+  },
+  {
+    "id": "demo-dfs-118",
+    "user_id": "demo",
+    "placed_at": "2025-11-15T19:09:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Mahomes Over 242.5 pass yds | Curry Over 54.5 rush yds | Purdy Over 28.5 pts | Lamb Over 5.5 reb",
+    "odds": 900,
+    "stake": 28,
+    "result": "loss",
+    "payout": 0,
+    "profit": -28,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-15T19:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-119",
+    "user_id": "demo",
+    "placed_at": "2025-11-01T22:09:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Brunson Over 1.5 pass TDs | Giannis Over 9.5 ast | Derrick Henry Over 29.5 pts | Jokic Over 5.5 3pt",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-01T22:09:00.000Z"
+  },
+  {
+    "id": "demo-dfs-120",
+    "user_id": "demo",
+    "placed_at": "2025-11-20T17:33:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Mahomes Over 55.5 rec yds | LeBron James Over 225.5 pass yds | LeBron James Over 7.5 ast | Doncic Over 65.5 rush yds",
+    "odds": 900,
+    "stake": 29,
+    "result": "loss",
+    "payout": 0,
+    "profit": -29,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-20T17:33:00.000Z"
+  },
+  {
+    "id": "demo-dfs-121",
+    "user_id": "demo",
+    "placed_at": "2025-11-18T18:16:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Tatum Over 53.5 rec yds | Curry Over 48.5 rush yds | Derrick Henry Over 74.5 rec yds | Jalen Hurts Over 82.5 rush yds",
+    "odds": 900,
+    "stake": 35,
+    "result": "loss",
+    "payout": 0,
+    "profit": -35,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-18T18:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-122",
+    "user_id": "demo",
+    "placed_at": "2025-12-12T22:48:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jalen Hurts Over 6.5 3pt | Lamar Jackson Over 24.5 pts | Josh Allen Over 10.5 ast | Giannis Over 51.5 rush yds",
+    "odds": 900,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-12T22:48:00.000Z"
+  },
+  {
+    "id": "demo-dfs-123",
+    "user_id": "demo",
+    "placed_at": "2025-11-16T18:16:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jokic Over 75.5 rush yds | Doncic Over 1.5 pass TDs | Curry Over 1.5 pass TDs | LeBron James Over 10.5 ast",
+    "odds": 900,
+    "stake": 25,
+    "result": "loss",
+    "payout": 0,
+    "profit": -25,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-16T18:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-124",
+    "user_id": "demo",
+    "placed_at": "2025-12-15T18:43:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Doncic Over 1.5 pass TDs | Giannis Over 242.5 pass yds | Josh Allen Over 5.5 3pt | Doncic Over 218.5 pass yds",
+    "odds": 900,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-15T18:43:00.000Z"
+  },
+  {
+    "id": "demo-dfs-125",
+    "user_id": "demo",
+    "placed_at": "2025-11-11T21:16:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Lamb Over 10.5 reb | Jalen Hurts Over 5.5 3pt | Curry Over 214.5 pass yds | Saquon Barkley Over 7.5 reb",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-11T21:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-126",
+    "user_id": "demo",
+    "placed_at": "2025-11-26T21:29:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jokic Over 273.5 pass yds | Lamb Over 1.5 pass TDs | Jalen Hurts Over 1.5 pass TDs | Derrick Henry Over 9.5 reb",
+    "odds": 900,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-26T21:29:00.000Z"
+  },
+  {
+    "id": "demo-dfs-127",
+    "user_id": "demo",
+    "placed_at": "2025-12-19T18:01:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Josh Allen Over 74.5 rec yds | Giannis Over 1.5 pass TDs | Josh Allen Over 70.5 rec yds | Jalen Hurts Over 88.5 rec yds",
+    "odds": 900,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-19T18:01:00.000Z"
+  },
+  {
+    "id": "demo-dfs-128",
+    "user_id": "demo",
+    "placed_at": "2026-01-15T18:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jalen Hurts Over 277.5 pass yds | Doncic Over 1.5 pass TDs | LeBron James Over 1.5 pass TDs | Doncic Over 8.5 reb",
+    "odds": 900,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-15T18:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-129",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T17:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jalen Hurts Over 84.5 rush yds | Jalen Hurts Over 9.5 ast | Josh Allen Over 1.5 pass TDs | LeBron James Over 243.5 pass yds",
+    "odds": 900,
+    "stake": 28,
+    "result": "loss",
+    "payout": 0,
+    "profit": -28,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T17:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-130",
+    "user_id": "demo",
+    "placed_at": "2025-11-24T20:05:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jokic Over 80.5 rush yds | Curry Over 7.5 reb | Josh Allen Over 6.5 3pt | Tatum Over 78.5 rec yds",
+    "odds": 900,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-24T20:05:00.000Z"
+  },
+  {
+    "id": "demo-dfs-131",
+    "user_id": "demo",
+    "placed_at": "2025-11-17T19:36:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Josh Allen Over 59.5 rec yds | Giannis Over 1.5 pass TDs | Jalen Hurts Over 269.5 pass yds | Josh Allen Over 285.5 pass yds",
+    "odds": 900,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-17T19:36:00.000Z"
+  },
+  {
+    "id": "demo-dfs-132",
+    "user_id": "demo",
+    "placed_at": "2026-01-19T21:13:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Lamar Jackson Over 1.5 pass TDs | LeBron James Over 10.5 ast | Lamb Over 1.5 pass TDs | Doncic Over 9.5 reb",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-19T21:13:00.000Z"
+  },
+  {
+    "id": "demo-dfs-133",
+    "user_id": "demo",
+    "placed_at": "2025-12-07T22:07:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Tatum Over 289.5 pass yds | Jalen Hurts Over 85.5 rec yds | Curry Over 58.5 rush yds | Jalen Hurts Over 6.5 3pt",
+    "odds": 900,
+    "stake": 18,
+    "result": "win",
+    "payout": 180,
+    "profit": 162,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-07T22:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-134",
+    "user_id": "demo",
+    "placed_at": "2026-01-24T19:02:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Brunson Over 59.5 rush yds | Purdy Over 19.5 pts | LeBron James Over 1.5 pass TDs | Tatum Over 3.5 3pt",
+    "odds": 900,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-24T19:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-135",
+    "user_id": "demo",
+    "placed_at": "2025-11-11T18:38:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Power: Jokic Over 9.5 ast | Lamar Jackson Over 81.5 rush yds | Tatum Over 5.5 reb | Tatum Over 7.5 reb",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-11T18:38:00.000Z"
+  },
+  {
+    "id": "demo-dfs-136",
+    "user_id": "demo",
+    "placed_at": "2025-12-20T17:45:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Saquon Barkley Over 5.5 ast | Josh Allen Over 3.5 3pt | Jalen Hurts Over 57.5 rec yds | Giannis Over 279.5 pass yds",
+    "odds": 900,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-20T17:45:00.000Z"
+  },
+  {
+    "id": "demo-dfs-137",
+    "user_id": "demo",
+    "placed_at": "2025-12-22T19:46:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Lamar Jackson Over 6.5 reb | Purdy Over 6.5 3pt | Giannis Over 267.5 pass yds | Curry Over 5.5 3pt",
+    "odds": 900,
+    "stake": 35,
+    "result": "loss",
+    "payout": 0,
+    "profit": -35,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-22T19:46:00.000Z"
+  },
+  {
+    "id": "demo-dfs-138",
+    "user_id": "demo",
+    "placed_at": "2025-12-28T18:30:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Mahomes Over 70.5 rec yds | Derrick Henry Over 4.5 3pt | Doncic Over 4.5 3pt | Doncic Over 279.5 pass yds",
+    "odds": 900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-28T18:30:00.000Z"
+  },
+  {
+    "id": "demo-dfs-139",
+    "user_id": "demo",
+    "placed_at": "2025-12-15T18:08:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Mahomes Over 6.5 3pt | Lamar Jackson Over 8.5 ast | Lamar Jackson Over 216.5 pass yds | LeBron James Over 66.5 rush yds",
+    "odds": 900,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-15T18:08:00.000Z"
+  },
+  {
+    "id": "demo-dfs-140",
+    "user_id": "demo",
+    "placed_at": "2026-01-18T22:25:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Brunson Over 1.5 pass TDs | Lamb Over 31.5 pts | Jokic Over 76.5 rush yds | Jalen Hurts Over 74.5 rush yds",
+    "odds": 900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-18T22:25:00.000Z"
+  },
+  {
+    "id": "demo-dfs-141",
+    "user_id": "demo",
+    "placed_at": "2026-01-25T21:13:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Josh Allen Over 1.5 pass TDs | Josh Allen Over 6.5 reb | Doncic Over 277.5 pass yds | Jalen Hurts Over 7.5 reb",
+    "odds": 900,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-25T21:13:00.000Z"
+  },
+  {
+    "id": "demo-dfs-142",
+    "user_id": "demo",
+    "placed_at": "2025-12-19T19:33:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Josh Allen Over 23.5 pts | Josh Allen Over 270.5 pass yds | Giannis Over 8.5 ast | Giannis Over 7.5 ast",
+    "odds": 900,
+    "stake": 24,
+    "result": "loss",
+    "payout": 0,
+    "profit": -24,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-19T19:33:00.000Z"
+  },
+  {
+    "id": "demo-dfs-143",
+    "user_id": "demo",
+    "placed_at": "2025-12-14T18:57:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Mahomes Over 5.5 ast | Jalen Hurts Over 73.5 rec yds | Tatum Over 51.5 rush yds | Lamar Jackson Over 4.5 3pt",
+    "odds": 900,
+    "stake": 30,
+    "result": "win",
+    "payout": 300,
+    "profit": 270,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-14T18:57:00.000Z"
+  },
+  {
+    "id": "demo-dfs-144",
+    "user_id": "demo",
+    "placed_at": "2025-12-27T22:16:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Purdy Over 71.5 rush yds | Saquon Barkley Over 30.5 pts | Jalen Hurts Over 10.5 ast | Josh Allen Over 31.5 pts",
+    "odds": 900,
+    "stake": 22,
+    "result": "loss",
+    "payout": 0,
+    "profit": -22,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-27T22:16:00.000Z"
+  },
+  {
+    "id": "demo-dfs-145",
+    "user_id": "demo",
+    "placed_at": "2025-11-01T20:15:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "4-pick Flex: Derrick Henry Over 4.5 3pt | Curry Over 219.5 pass yds | Doncic Over 5.5 reb | Saquon Barkley Over 1.5 pass TDs",
+    "odds": 900,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 4,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-01T20:15:00.000Z"
+  },
+  {
+    "id": "demo-dfs-146",
+    "user_id": "demo",
+    "placed_at": "2026-01-12T17:48:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Derrick Henry Over 6.5 3pt | Doncic Over 6.5 ast | Josh Allen Over 23.5 pts | Doncic Over 74.5 rec yds | Josh Allen Over 6.5 reb",
+    "odds": 1900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-12T17:48:00.000Z"
+  },
+  {
+    "id": "demo-dfs-147",
+    "user_id": "demo",
+    "placed_at": "2025-11-10T19:08:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Tatum Over 8.5 reb | Saquon Barkley Over 3.5 3pt | Lamar Jackson Over 3.5 3pt | Jalen Hurts Over 5.5 reb | Tatum Over 204.5 pass yds",
+    "odds": 1900,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-10T19:08:00.000Z"
+  },
+  {
+    "id": "demo-dfs-148",
+    "user_id": "demo",
+    "placed_at": "2026-01-20T23:31:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Doncic Over 25.5 pts | Josh Allen Over 76.5 rec yds | Doncic Over 81.5 rec yds | Purdy Over 19.5 pts | Brunson Over 237.5 pass yds",
+    "odds": 1900,
+    "stake": 24,
+    "result": "loss",
+    "payout": 0,
+    "profit": -24,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-20T23:31:00.000Z"
+  },
+  {
+    "id": "demo-dfs-149",
+    "user_id": "demo",
+    "placed_at": "2026-01-09T19:29:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jalen Hurts Over 51.5 rush yds | Purdy Over 60.5 rec yds | Tatum Over 3.5 3pt | Purdy Over 55.5 rec yds | Curry Over 77.5 rush yds",
+    "odds": 1900,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-09T19:29:00.000Z"
+  },
+  {
+    "id": "demo-dfs-150",
+    "user_id": "demo",
+    "placed_at": "2026-01-14T19:13:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Tatum Over 5.5 3pt | LeBron James Over 81.5 rush yds | Jokic Over 45.5 rush yds | Brunson Over 5.5 3pt | Brunson Over 65.5 rec yds",
+    "odds": 1900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-14T19:13:00.000Z"
+  },
+  {
+    "id": "demo-dfs-151",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T20:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Lamar Jackson Over 1.5 pass TDs | Tatum Over 57.5 rush yds | Jalen Hurts Over 51.5 rush yds | Doncic Over 1.5 pass TDs | Curry Over 24.5 pts",
+    "odds": 1900,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T20:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-152",
+    "user_id": "demo",
+    "placed_at": "2026-01-22T20:00:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Josh Allen Over 5.5 ast | Lamar Jackson Over 52.5 rush yds | Mahomes Over 28.5 pts | Saquon Barkley Over 4.5 3pt | Brunson Over 6.5 3pt",
+    "odds": 1900,
+    "stake": 29,
+    "result": "loss",
+    "payout": 0,
+    "profit": -29,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-22T20:00:00.000Z"
+  },
+  {
+    "id": "demo-dfs-153",
+    "user_id": "demo",
+    "placed_at": "2026-01-26T22:17:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Brunson Over 5.5 3pt | Giannis Over 1.5 pass TDs | Mahomes Over 51.5 rush yds | Jalen Hurts Over 68.5 rec yds | Saquon Barkley Over 228.5 pass yds",
+    "odds": 1900,
+    "stake": 26,
+    "result": "loss",
+    "payout": 0,
+    "profit": -26,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-26T22:17:00.000Z"
+  },
+  {
+    "id": "demo-dfs-154",
+    "user_id": "demo",
+    "placed_at": "2026-01-31T21:51:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Josh Allen Over 231.5 pass yds | Jokic Over 58.5 rec yds | Josh Allen Over 74.5 rush yds | Mahomes Over 52.5 rush yds | Lamb Over 47.5 rush yds",
+    "odds": 1900,
+    "stake": 35,
+    "result": "loss",
+    "payout": 0,
+    "profit": -35,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-31T21:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-155",
+    "user_id": "demo",
+    "placed_at": "2026-01-01T21:07:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Josh Allen Over 76.5 rush yds | Josh Allen Over 10.5 ast | LeBron James Over 67.5 rush yds | Tatum Over 52.5 rush yds | Josh Allen Over 5.5 3pt",
+    "odds": 1900,
+    "stake": 29,
+    "result": "loss",
+    "payout": 0,
+    "profit": -29,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-01T21:07:00.000Z"
+  },
+  {
+    "id": "demo-dfs-156",
+    "user_id": "demo",
+    "placed_at": "2026-01-16T22:18:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jalen Hurts Over 1.5 pass TDs | Jokic Over 29.5 pts | Purdy Over 256.5 pass yds | Jokic Over 80.5 rec yds | Mahomes Over 19.5 pts",
+    "odds": 1900,
+    "stake": 30,
+    "result": "loss",
+    "payout": 0,
+    "profit": -30,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-16T22:18:00.000Z"
+  },
+  {
+    "id": "demo-dfs-157",
+    "user_id": "demo",
+    "placed_at": "2026-01-04T20:46:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Purdy Over 9.5 reb | Josh Allen Over 1.5 pass TDs | Jokic Over 55.5 rec yds | Josh Allen Over 5.5 ast | Derrick Henry Over 8.5 ast",
+    "odds": 1900,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-04T20:46:00.000Z"
+  },
+  {
+    "id": "demo-dfs-158",
+    "user_id": "demo",
+    "placed_at": "2026-01-28T23:05:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Giannis Over 5.5 reb | Josh Allen Over 1.5 pass TDs | Derrick Henry Over 62.5 rush yds | Giannis Over 223.5 pass yds | Derrick Henry Over 59.5 rec yds",
+    "odds": 1900,
+    "stake": 32,
+    "result": "loss",
+    "payout": 0,
+    "profit": -32,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-28T23:05:00.000Z"
+  },
+  {
+    "id": "demo-dfs-159",
+    "user_id": "demo",
+    "placed_at": "2025-12-03T22:25:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jokic Over 19.5 pts | Derrick Henry Over 7.5 reb | Giannis Over 9.5 reb | Purdy Over 5.5 3pt | Jalen Hurts Over 7.5 ast",
+    "odds": 1900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-03T22:25:00.000Z"
+  },
+  {
+    "id": "demo-dfs-160",
+    "user_id": "demo",
+    "placed_at": "2025-12-09T21:52:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jokic Over 31.5 pts | Lamar Jackson Over 6.5 reb | Jokic Over 238.5 pass yds | Derrick Henry Over 3.5 3pt | Josh Allen Over 286.5 pass yds",
+    "odds": 1900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-09T21:52:00.000Z"
+  },
+  {
+    "id": "demo-dfs-161",
+    "user_id": "demo",
+    "placed_at": "2025-12-09T17:58:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jalen Hurts Over 69.5 rush yds | Jokic Over 80.5 rec yds | Tatum Over 285.5 pass yds | Jalen Hurts Over 66.5 rush yds | Josh Allen Over 73.5 rec yds",
+    "odds": 1900,
+    "stake": 25,
+    "result": "loss",
+    "payout": 0,
+    "profit": -25,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-09T17:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-162",
+    "user_id": "demo",
+    "placed_at": "2026-01-07T17:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Purdy Over 62.5 rush yds | Mahomes Over 56.5 rec yds | Purdy Over 59.5 rush yds | Josh Allen Over 7.5 ast | LeBron James Over 61.5 rush yds",
+    "odds": 1900,
+    "stake": 18,
+    "result": "loss",
+    "payout": 0,
+    "profit": -18,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-07T17:40:00.000Z"
+  },
+  {
+    "id": "demo-dfs-163",
+    "user_id": "demo",
+    "placed_at": "2025-11-08T22:39:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Tatum Over 30.5 pts | Lamb Over 4.5 3pt | Purdy Over 26.5 pts | Mahomes Over 25.5 pts | Derrick Henry Over 5.5 reb",
+    "odds": 1900,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-08T22:39:00.000Z"
+  },
+  {
+    "id": "demo-dfs-164",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T17:44:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Jokic Over 5.5 3pt | Saquon Barkley Over 64.5 rush yds | Josh Allen Over 1.5 pass TDs | Lamb Over 252.5 pass yds | LeBron James Over 9.5 reb",
+    "odds": 1900,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T17:44:00.000Z"
+  },
+  {
+    "id": "demo-dfs-165",
+    "user_id": "demo",
+    "placed_at": "2025-11-07T17:56:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Purdy Over 86.5 rec yds | Saquon Barkley Over 7.5 ast | LeBron James Over 30.5 pts | Purdy Over 6.5 3pt | Purdy Over 26.5 pts",
+    "odds": 1900,
+    "stake": 21,
+    "result": "loss",
+    "payout": 0,
+    "profit": -21,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-07T17:56:00.000Z"
+  },
+  {
+    "id": "demo-dfs-166",
+    "user_id": "demo",
+    "placed_at": "2026-01-09T20:04:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Doncic Over 10.5 reb | Giannis Over 9.5 ast | Jalen Hurts Over 7.5 reb | Doncic Over 7.5 ast | Josh Allen Over 89.5 rec yds",
+    "odds": 1900,
+    "stake": 31,
+    "result": "loss",
+    "payout": 0,
+    "profit": -31,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-09T20:04:00.000Z"
+  },
+  {
+    "id": "demo-dfs-167",
+    "user_id": "demo",
+    "placed_at": "2025-12-30T18:42:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Power: Purdy Over 72.5 rush yds | Mahomes Over 10.5 reb | Josh Allen Over 22.5 pts | Saquon Barkley Over 61.5 rush yds | Tatum Over 81.5 rush yds",
+    "odds": 1900,
+    "stake": 24,
+    "result": "loss",
+    "payout": 0,
+    "profit": -24,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-30T18:42:00.000Z"
+  },
+  {
+    "id": "demo-dfs-168",
+    "user_id": "demo",
+    "placed_at": "2025-11-07T20:00:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Brunson Over 1.5 pass TDs | Tatum Over 1.5 pass TDs | LeBron James Over 1.5 pass TDs | Jalen Hurts Over 4.5 3pt | Doncic Over 232.5 pass yds",
+    "odds": 1900,
+    "stake": 32,
+    "result": "loss",
+    "payout": 0,
+    "profit": -32,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-07T20:00:00.000Z"
+  },
+  {
+    "id": "demo-dfs-169",
+    "user_id": "demo",
+    "placed_at": "2025-12-20T22:59:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Saquon Barkley Over 86.5 rec yds | Tatum Over 267.5 pass yds | Lamb Over 5.5 ast | Mahomes Over 8.5 reb | Jalen Hurts Over 81.5 rush yds",
+    "odds": 1900,
+    "stake": 32,
+    "result": "loss",
+    "payout": 0,
+    "profit": -32,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-20T22:59:00.000Z"
+  },
+  {
+    "id": "demo-dfs-170",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T20:02:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Doncic Over 7.5 reb | Derrick Henry Over 19.5 pts | LeBron James Over 25.5 pts | Brunson Over 82.5 rush yds | Jalen Hurts Over 57.5 rec yds",
+    "odds": 1900,
+    "stake": 17,
+    "result": "loss",
+    "payout": 0,
+    "profit": -17,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T20:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-171",
+    "user_id": "demo",
+    "placed_at": "2025-11-13T21:58:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Jalen Hurts Over 1.5 pass TDs | Giannis Over 10.5 ast | Brunson Over 61.5 rec yds | Jalen Hurts Over 79.5 rec yds | Tatum Over 61.5 rec yds",
+    "odds": 1900,
+    "stake": 24,
+    "result": "loss",
+    "payout": 0,
+    "profit": -24,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-13T21:58:00.000Z"
+  },
+  {
+    "id": "demo-dfs-172",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T22:23:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Tatum Over 7.5 ast | Purdy Over 217.5 pass yds | Giannis Over 57.5 rec yds | Jokic Over 64.5 rush yds | Lamar Jackson Over 74.5 rec yds",
+    "odds": 1900,
+    "stake": 23,
+    "result": "win",
+    "payout": 460,
+    "profit": 437,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T22:23:00.000Z"
+  },
+  {
+    "id": "demo-dfs-173",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T21:57:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Lamar Jackson Over 23.5 pts | Lamar Jackson Over 1.5 pass TDs | Derrick Henry Over 49.5 rush yds | Josh Allen Over 218.5 pass yds | Mahomes Over 26.5 pts",
+    "odds": 1900,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T21:57:00.000Z"
+  },
+  {
+    "id": "demo-dfs-174",
+    "user_id": "demo",
+    "placed_at": "2025-12-21T18:30:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Jokic Over 273.5 pass yds | LeBron James Over 213.5 pass yds | Tatum Over 1.5 pass TDs | Lamb Over 69.5 rush yds | Purdy Over 61.5 rush yds",
+    "odds": 1900,
+    "stake": 31,
+    "result": "loss",
+    "payout": 0,
+    "profit": -31,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-21T18:30:00.000Z"
+  },
+  {
+    "id": "demo-dfs-175",
+    "user_id": "demo",
+    "placed_at": "2025-11-08T17:57:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "5-pick Flex: Saquon Barkley Over 71.5 rec yds | Curry Over 76.5 rec yds | Saquon Barkley Over 65.5 rush yds | Curry Over 54.5 rec yds | Josh Allen Over 7.5 ast",
+    "odds": 1900,
+    "stake": 25,
+    "result": "loss",
+    "payout": 0,
+    "profit": -25,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 5,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-08T17:57:00.000Z"
+  },
+  {
+    "id": "demo-dfs-176",
+    "user_id": "demo",
+    "placed_at": "2025-11-21T19:53:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Curry Over 5.5 3pt | Doncic Over 75.5 rec yds | Lamb Over 7.5 reb | Purdy Over 286.5 pass yds | LeBron James Over 47.5 rush yds | Purdy Over 53.5 rush yds",
+    "odds": 3500,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-21T19:53:00.000Z"
+  },
+  {
+    "id": "demo-dfs-177",
+    "user_id": "demo",
+    "placed_at": "2025-11-26T18:42:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Mahomes Over 10.5 ast | Saquon Barkley Over 3.5 3pt | LeBron James Over 5.5 ast | Purdy Over 31.5 pts | Derrick Henry Over 71.5 rec yds | Brunson Over 8.5 ast",
+    "odds": 3500,
+    "stake": 25,
+    "result": "loss",
+    "payout": 0,
+    "profit": -25,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-26T18:42:00.000Z"
+  },
+  {
+    "id": "demo-dfs-178",
+    "user_id": "demo",
+    "placed_at": "2025-11-14T23:26:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Brunson Over 51.5 rec yds | Brunson Over 48.5 rush yds | Lamb Over 80.5 rec yds | Mahomes Over 81.5 rec yds | Saquon Barkley Over 59.5 rush yds | Purdy Over 89.5 rec yds",
+    "odds": 3500,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-14T23:26:00.000Z"
+  },
+  {
+    "id": "demo-dfs-179",
+    "user_id": "demo",
+    "placed_at": "2025-12-29T19:54:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Purdy Over 20.5 pts | LeBron James Over 75.5 rush yds | Curry Over 6.5 ast | Doncic Over 68.5 rec yds | Tatum Over 253.5 pass yds | Doncic Over 4.5 3pt",
+    "odds": 3500,
+    "stake": 28,
+    "result": "loss",
+    "payout": 0,
+    "profit": -28,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-29T19:54:00.000Z"
+  },
+  {
+    "id": "demo-dfs-180",
+    "user_id": "demo",
+    "placed_at": "2026-01-27T20:59:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Mahomes Over 10.5 reb | Doncic Over 1.5 pass TDs | Jokic Over 1.5 pass TDs | Saquon Barkley Over 5.5 3pt | LeBron James Over 1.5 pass TDs | Josh Allen Over 5.5 3pt",
+    "odds": 3500,
+    "stake": 26,
+    "result": "loss",
+    "payout": 0,
+    "profit": -26,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-27T20:59:00.000Z"
+  },
+  {
+    "id": "demo-dfs-181",
+    "user_id": "demo",
+    "placed_at": "2025-11-27T21:51:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Saquon Barkley Over 31.5 pts | Doncic Over 23.5 pts | Purdy Over 74.5 rush yds | Doncic Over 10.5 reb | LeBron James Over 3.5 3pt | LeBron James Over 213.5 pass yds",
+    "odds": 3500,
+    "stake": 28,
+    "result": "loss",
+    "payout": 0,
+    "profit": -28,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-27T21:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-182",
+    "user_id": "demo",
+    "placed_at": "2025-12-01T19:35:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Doncic Over 205.5 pass yds | Giannis Over 1.5 pass TDs | Lamb Over 265.5 pass yds | Purdy Over 62.5 rec yds | Jalen Hurts Over 1.5 pass TDs | Tatum Over 213.5 pass yds",
+    "odds": 3500,
+    "stake": 20,
+    "result": "loss",
+    "payout": 0,
+    "profit": -20,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-01T19:35:00.000Z"
+  },
+  {
+    "id": "demo-dfs-183",
+    "user_id": "demo",
+    "placed_at": "2025-12-13T18:05:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Purdy Over 8.5 reb | Josh Allen Over 9.5 ast | Josh Allen Over 1.5 pass TDs | LeBron James Over 8.5 ast | Lamar Jackson Over 21.5 pts | Purdy Over 245.5 pass yds",
+    "odds": 3500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-13T18:05:00.000Z"
+  },
+  {
+    "id": "demo-dfs-184",
+    "user_id": "demo",
+    "placed_at": "2025-11-29T19:47:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Saquon Barkley Over 70.5 rec yds | Giannis Over 5.5 3pt | Josh Allen Over 6.5 ast | Mahomes Over 10.5 ast | Josh Allen Over 8.5 reb | Jalen Hurts Over 88.5 rec yds",
+    "odds": 3500,
+    "stake": 38,
+    "result": "loss",
+    "payout": 0,
+    "profit": -38,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-29T19:47:00.000Z"
+  },
+  {
+    "id": "demo-dfs-185",
+    "user_id": "demo",
+    "placed_at": "2025-11-14T21:32:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Josh Allen Over 1.5 pass TDs | Derrick Henry Over 58.5 rec yds | Doncic Over 57.5 rec yds | Mahomes Over 6.5 3pt | Tatum Over 275.5 pass yds | Giannis Over 9.5 ast",
+    "odds": 3500,
+    "stake": 15,
+    "result": "loss",
+    "payout": 0,
+    "profit": -15,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-14T21:32:00.000Z"
+  },
+  {
+    "id": "demo-dfs-186",
+    "user_id": "demo",
+    "placed_at": "2026-01-14T23:14:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Lamar Jackson Over 1.5 pass TDs | Tatum Over 272.5 pass yds | Curry Over 10.5 reb | Curry Over 7.5 ast | Brunson Over 28.5 pts | LeBron James Over 5.5 3pt",
+    "odds": 3500,
+    "stake": 36,
+    "result": "loss",
+    "payout": 0,
+    "profit": -36,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-14T23:14:00.000Z"
+  },
+  {
+    "id": "demo-dfs-187",
+    "user_id": "demo",
+    "placed_at": "2026-01-05T23:20:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Saquon Barkley Over 31.5 pts | Mahomes Over 70.5 rec yds | Jalen Hurts Over 46.5 rush yds | Mahomes Over 1.5 pass TDs | Josh Allen Over 27.5 pts | Tatum Over 86.5 rec yds",
+    "odds": 3500,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-05T23:20:00.000Z"
+  },
+  {
+    "id": "demo-dfs-188",
+    "user_id": "demo",
+    "placed_at": "2025-12-11T20:26:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Curry Over 22.5 pts | Purdy Over 74.5 rush yds | Curry Over 4.5 3pt | Jokic Over 27.5 pts | Purdy Over 27.5 pts | Mahomes Over 6.5 ast",
+    "odds": 3500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-11T20:26:00.000Z"
+  },
+  {
+    "id": "demo-dfs-189",
+    "user_id": "demo",
+    "placed_at": "2026-01-30T17:37:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: LeBron James Over 200.5 pass yds | Josh Allen Over 53.5 rush yds | Curry Over 1.5 pass TDs | Jalen Hurts Over 59.5 rec yds | Jokic Over 66.5 rec yds | Derrick Henry Over 1.5 pass TDs",
+    "odds": 3500,
+    "stake": 36,
+    "result": "loss",
+    "payout": 0,
+    "profit": -36,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-30T17:37:00.000Z"
+  },
+  {
+    "id": "demo-dfs-190",
+    "user_id": "demo",
+    "placed_at": "2026-01-01T22:14:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Curry Over 22.5 pts | Tatum Over 24.5 pts | Saquon Barkley Over 75.5 rec yds | Josh Allen Over 5.5 3pt | Josh Allen Over 51.5 rec yds | Josh Allen Over 275.5 pass yds",
+    "odds": 3500,
+    "stake": 16,
+    "result": "loss",
+    "payout": 0,
+    "profit": -16,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-01T22:14:00.000Z"
+  },
+  {
+    "id": "demo-dfs-191",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T19:31:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Curry Over 19.5 pts | Tatum Over 6.5 reb | Doncic Over 9.5 reb | Tatum Over 1.5 pass TDs | Derrick Henry Over 7.5 ast | Jalen Hurts Over 3.5 3pt",
+    "odds": 3500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T19:31:00.000Z"
+  },
+  {
+    "id": "demo-dfs-192",
+    "user_id": "demo",
+    "placed_at": "2025-12-30T21:33:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Lamb Over 1.5 pass TDs | Derrick Henry Over 226.5 pass yds | Lamb Over 66.5 rush yds | Jalen Hurts Over 75.5 rec yds | Jalen Hurts Over 7.5 ast | Brunson Over 257.5 pass yds",
+    "odds": 3500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-30T21:33:00.000Z"
+  },
+  {
+    "id": "demo-dfs-193",
+    "user_id": "demo",
+    "placed_at": "2025-11-23T22:59:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Derrick Henry Over 9.5 ast | Saquon Barkley Over 5.5 3pt | Curry Over 206.5 pass yds | Lamar Jackson Over 9.5 reb | Tatum Over 5.5 ast | Saquon Barkley Over 1.5 pass TDs",
+    "odds": 3500,
+    "stake": 26,
+    "result": "loss",
+    "payout": 0,
+    "profit": -26,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-23T22:59:00.000Z"
+  },
+  {
+    "id": "demo-dfs-194",
+    "user_id": "demo",
+    "placed_at": "2025-11-22T18:38:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: LeBron James Over 223.5 pass yds | Josh Allen Over 23.5 pts | Saquon Barkley Over 6.5 ast | LeBron James Over 57.5 rec yds | Jalen Hurts Over 80.5 rush yds | Lamar Jackson Over 261.5 pass yds",
+    "odds": 3500,
+    "stake": 34,
+    "result": "loss",
+    "payout": 0,
+    "profit": -34,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-22T18:38:00.000Z"
+  },
+  {
+    "id": "demo-dfs-195",
+    "user_id": "demo",
+    "placed_at": "2026-01-24T21:02:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Power: Brunson Over 271.5 pass yds | Jalen Hurts Over 27.5 pts | Derrick Henry Over 3.5 3pt | Lamar Jackson Over 73.5 rec yds | Curry Over 1.5 pass TDs | Giannis Over 8.5 reb",
+    "odds": 3500,
+    "stake": 33,
+    "result": "loss",
+    "payout": 0,
+    "profit": -33,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-24T21:02:00.000Z"
+  },
+  {
+    "id": "demo-dfs-196",
+    "user_id": "demo",
+    "placed_at": "2026-01-03T22:00:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Flex: Brunson Over 9.5 ast | Josh Allen Over 10.5 ast | Brunson Over 66.5 rush yds | Purdy Over 201.5 pass yds | Mahomes Over 5.5 3pt | Curry Over 4.5 3pt",
+    "odds": 3500,
+    "stake": 19,
+    "result": "loss",
+    "payout": 0,
+    "profit": -19,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-03T22:00:00.000Z"
+  },
+  {
+    "id": "demo-dfs-197",
+    "user_id": "demo",
+    "placed_at": "2025-11-06T22:48:00.000Z",
+    "sport": "NBA",
+    "league": "NBA",
+    "bet_type": "parlay",
+    "description": "6-pick Flex: Josh Allen Over 10.5 reb | Derrick Henry Over 7.5 reb | Purdy Over 27.5 pts | Josh Allen Over 6.5 3pt | Jalen Hurts Over 56.5 rec yds | Brunson Over 281.5 pass yds",
+    "odds": 3500,
+    "stake": 23,
+    "result": "loss",
+    "payout": 0,
+    "profit": -23,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-11-06T22:48:00.000Z"
+  },
+  {
+    "id": "demo-dfs-198",
+    "user_id": "demo",
+    "placed_at": "2026-01-12T17:51:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Flex: Lamb Over 77.5 rush yds | Purdy Over 3.5 3pt | Josh Allen Over 1.5 pass TDs | LeBron James Over 6.5 ast | Purdy Over 8.5 ast | Jalen Hurts Over 1.5 pass TDs",
+    "odds": 3500,
+    "stake": 22,
+    "result": "loss",
+    "payout": 0,
+    "profit": -22,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-12T17:51:00.000Z"
+  },
+  {
+    "id": "demo-dfs-199",
+    "user_id": "demo",
+    "placed_at": "2026-01-23T19:24:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Flex: Giannis Over 6.5 3pt | Josh Allen Over 5.5 3pt | Josh Allen Over 72.5 rec yds | Lamar Jackson Over 73.5 rush yds | LeBron James Over 54.5 rush yds | LeBron James Over 61.5 rec yds",
+    "odds": 3500,
+    "stake": 27,
+    "result": "loss",
+    "payout": 0,
+    "profit": -27,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2026-01-23T19:24:00.000Z"
+  },
+  {
+    "id": "demo-dfs-200",
+    "user_id": "demo",
+    "placed_at": "2025-12-10T19:40:00.000Z",
+    "sport": "NFL",
+    "league": "NFL",
+    "bet_type": "parlay",
+    "description": "6-pick Flex: Mahomes Over 5.5 ast | Josh Allen Over 283.5 pass yds | Jalen Hurts Over 26.5 pts | Josh Allen Over 75.5 rush yds | Doncic Over 3.5 3pt | Giannis Over 79.5 rec yds",
+    "odds": 3500,
+    "stake": 28,
+    "result": "loss",
+    "payout": 0,
+    "profit": -28,
+    "sportsbook": "PrizePicks",
+    "is_bonus_bet": false,
+    "parlay_legs": 6,
+    "tags": null,
+    "notes": null,
+    "upload_id": null,
+    "created_at": "2025-12-10T19:40:00.000Z"
+  }
 ];
 
-// Part 2: 4-pick (8) + first half of 5-pick entries
-const DEMO_DFS_BETS_PART2: Bet[] = [
-  // === 4-PICK ENTRIES (8 total: 8P + 0F, 1W + 7L) ===
-  { id: 'demo-dfs-18', user_id: 'demo', placed_at: '2025-11-15T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '4-pick Power: Josh Allen O 255.5 pass yds | Mahomes O 280.5 pass yds | Lamar Jackson O 1.5 pass TDs | Lamb O 75.5 rec yds', odds: 900, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-11-15T13:00:00Z' },
-  { id: 'demo-dfs-19', user_id: 'demo', placed_at: '2025-11-23T16:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '4-pick Power: Jokic O 25.5 pts | Doncic O 8.5 reb | Giannis O 11.5 reb | Brunson O 7.5 ast', odds: 900, stake: 20, result: 'loss', profit: -20, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-11-23T16:00:00Z' },
-  { id: 'demo-dfs-20', user_id: 'demo', placed_at: '2025-12-03T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '4-pick Power: Curry O 27.5 pts | Jokic O 11.5 reb | Doncic O 29.5 pts | Giannis O 28.5 pts', odds: 900, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-12-03T19:30:00Z' },
-  { id: 'demo-dfs-21', user_id: 'demo', placed_at: '2025-12-06T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '4-pick Power: Mahomes O 270.5 pass yds | Purdy O 238.5 pass yds | Lamb O 82.5 rec yds | Lamar Jackson O 68.5 rush yds', odds: 900, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-12-06T13:00:00Z' },
-  { id: 'demo-dfs-22', user_id: 'demo', placed_at: '2025-12-11T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '4-pick Power: Curry O 5.5 3pt | Tatum O 26.5 pts | Jokic O 9.5 ast | Brunson O 23.5 pts', odds: 900, stake: 10, result: 'win', profit: 90, payout: 100, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-12-11T19:00:00Z' },
-  { id: 'demo-dfs-23', user_id: 'demo', placed_at: '2025-12-14T19:30:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '4-pick Power: Josh Allen O 1.5 pass TDs | Jalen Hurts O 60.5 rush yds | Lamar Jackson O 67.5 rush yds | Lamb O 76.5 rec yds', odds: 900, stake: 20, result: 'loss', profit: -20, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T19:30:00Z' },
-  { id: 'demo-dfs-24', user_id: 'demo', placed_at: '2026-01-04T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '4-pick Power: Mahomes O 282.5 pass yds | Lamar Jackson O 69.5 rush yds | Lamb O 83.5 rec yds | Purdy O 243.5 pass yds', odds: 900, stake: 20, result: 'loss', profit: -20, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2026-01-04T13:00:00Z' },
-  { id: 'demo-dfs-25', user_id: 'demo', placed_at: '2026-01-15T19:30:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '4-pick Power: Curry O 24.5 pts | Jokic O 27.5 pts | Doncic O 8.5 ast | Giannis O 30.5 pts', odds: 900, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 4, tags: null, notes: null, upload_id: null, created_at: '2026-01-15T19:30:00Z' },
-
-  // === 5-PICK ENTRIES first half (entries 26-29) ===
-  { id: 'demo-dfs-26', user_id: 'demo', placed_at: '2025-11-17T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Josh Allen O 245.5 pass yds | Mahomes O 270.5 pass yds | Lamar Jackson O 70.5 rush yds | Lamb O 80.5 rec yds | Purdy O 236.5 pass yds', odds: 1900, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-11-17T13:00:00Z' },
-  { id: 'demo-dfs-27', user_id: 'demo', placed_at: '2025-11-24T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Mahomes O 285.5 pass yds | Jalen Hurts O 62.5 rush yds | Lamar Jackson O 1.5 pass TDs | Purdy O 245.5 pass yds | Lamb O 80.5 rec yds', odds: 1900, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-11-24T13:00:00Z' },
-  { id: 'demo-dfs-28', user_id: 'demo', placed_at: '2025-12-07T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '5-pick Power: Curry O 26.5 pts | Tatum O 27.5 pts | Jokic O 24.5 pts | Brunson O 21.5 pts | Doncic O 28.5 pts', odds: 1900, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-12-07T19:00:00Z' },
-  { id: 'demo-dfs-29', user_id: 'demo', placed_at: '2025-12-14T21:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Josh Allen O 255.5 pass yds | Mahomes O 280.5 pass yds | Lamar Jackson O 1.5 pass TDs | Purdy O 242.5 pass yds | Lamb O 76.5 rec yds', odds: 1900, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T21:00:00Z' },
-];
-
-// Part 3: remaining 5-pick (5) + 6-pick (4) entries
-const DEMO_DFS_BETS_PART3: Bet[] = [
-  // === 5-PICK ENTRIES continued (entries 30-34) ===
-  { id: 'demo-dfs-30', user_id: 'demo', placed_at: '2025-12-20T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Mahomes O 268.5 pass yds | Lamar Jackson O 64.5 rush yds | Purdy O 238.5 pass yds | Lamb O 79.5 rec yds | Saquon Barkley O 78.5 rush yds', odds: 1900, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-12-20T13:00:00Z' },
-  { id: 'demo-dfs-31', user_id: 'demo', placed_at: '2025-12-29T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Mahomes O 276.5 pass yds | Lamar Jackson O 66.5 rush yds | Lamb O 79.5 rec yds | Purdy O 241.5 pass yds | Derrick Henry O 82.5 rush yds', odds: 1900, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2025-12-29T13:00:00Z' },
-  { id: 'demo-dfs-32', user_id: 'demo', placed_at: '2026-01-07T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '5-pick Power: Curry O 26.5 pts | Tatum O 24.5 pts | Jokic O 25.5 pts | Doncic O 27.5 pts | Giannis O 29.5 pts', odds: 1900, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2026-01-07T19:00:00Z' },
-  { id: 'demo-dfs-33', user_id: 'demo', placed_at: '2026-01-11T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '5-pick Power: Josh Allen O 249.5 pass yds | Mahomes O 274.5 pass yds | Lamar Jackson O 66.5 rush yds | Lamb O 77.5 rec yds | Purdy O 239.5 pass yds', odds: 1900, stake: 10, result: 'win', profit: 190, payout: 200, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2026-01-11T13:00:00Z' },
-  { id: 'demo-dfs-34', user_id: 'demo', placed_at: '2026-01-25T16:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '5-pick Power: Curry O 24.5 pts | Tatum O 26.5 pts | Jokic O 23.5 pts | Brunson O 22.5 pts | Giannis O 30.5 pts', odds: 1900, stake: 30, result: 'loss', profit: -30, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 5, tags: null, notes: null, upload_id: null, created_at: '2026-01-25T16:00:00Z' },
-
-  // === 6-PICK ENTRIES (4 total: 4P + 0F, 0W + 4L) ===
-  { id: 'demo-dfs-35', user_id: 'demo', placed_at: '2025-11-29T19:30:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '6-pick Power: Mahomes O 275.5 pass yds | Lamar Jackson O 68.5 rush yds | Lamb O 78.5 rec yds | Purdy O 235.5 pass yds | Saquon Barkley O 80.5 rush yds | Derrick Henry O 85.5 rush yds', odds: 3500, stake: 25, result: 'loss', profit: -25, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 6, tags: null, notes: null, upload_id: null, created_at: '2025-11-29T19:30:00Z' },
-  { id: 'demo-dfs-36', user_id: 'demo', placed_at: '2025-12-14T23:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '6-pick Power: Josh Allen O 260.5 pass yds | Mahomes O 278.5 pass yds | Lamar Jackson O 72.5 rush yds | Lamb O 85.5 rec yds | Purdy O 250.5 pass yds | Saquon Barkley O 76.5 rush yds', odds: 3500, stake: 50, result: 'loss', profit: -50, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 6, tags: null, notes: null, upload_id: null, created_at: '2025-12-14T23:00:00Z' },
-  { id: 'demo-dfs-37', user_id: 'demo', placed_at: '2025-12-22T19:00:00Z', sport: 'NBA', league: 'NBA', bet_type: 'parlay', description: '6-pick Power: Curry O 27.5 pts | Jokic O 26.5 pts | Tatum O 28.5 pts | Doncic O 29.5 pts | Giannis O 31.5 pts | Brunson O 23.5 pts', odds: 3500, stake: 15, result: 'loss', profit: -15, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 6, tags: null, notes: null, upload_id: null, created_at: '2025-12-22T19:00:00Z' },
-  { id: 'demo-dfs-38', user_id: 'demo', placed_at: '2026-01-19T13:00:00Z', sport: 'NFL', league: 'NFL', bet_type: 'parlay', description: '6-pick Power: Mahomes O 277.5 pass yds | Lamar Jackson O 71.5 rush yds | Lamb O 81.5 rec yds | Purdy O 247.5 pass yds | Saquon Barkley O 82.5 rush yds | Derrick Henry O 88.5 rush yds', odds: 3500, stake: 35, result: 'loss', profit: -35, payout: 0, sportsbook: 'PrizePicks', is_bonus_bet: false, parlay_legs: 6, tags: null, notes: null, upload_id: null, created_at: '2026-01-19T13:00:00Z' },
-];
-
-export const DEMO_DFS_BETS: Bet[] = [...DEMO_DFS_BETS_PART1, ...DEMO_DFS_BETS_PART2, ...DEMO_DFS_BETS_PART3];
-
-// ── DFS Demo Analysis (PrizePicks) ──
+// -- DFS Demo Analysis (PrizePicks) --
+// Frozen output of a real runAutopsy(DEMO_DFS_BETS, null) call. Not hand-edited.
 
 export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
-  summary: {
-    total_bets: 200,
-    record: '64-136-0',
-    total_profit: -1480,
-    roi_percent: -8.2,
-    avg_stake: 18,
-    date_range: 'Nov 1, 2025 – Jan 31, 2026',
-    overall_grade: 'C-',
+  "summary": {
+    "total_bets": 200,
+    "record": "49W-151L-0P",
+    "total_profit": -1347.3400000000001,
+    "roi_percent": -31.93,
+    "avg_stake": 21.1,
+    "date_range": "2025-11-01 to 2026-01-31",
+    "overall_grade": null
   },
-
-  emotion_score: 68,
-  tilt_score: 68,
-  emotion_breakdown: {
-    stake_volatility: 14,
-    loss_chasing: 24,
-    streak_behavior: 20,
-    session_discipline: 10,
-  },
-  tilt_breakdown: {
-    stake_volatility: 14,
-    loss_chasing: 24,
-    streak_behavior: 20,
-    session_discipline: 10,
-  },
-
-  bankroll_health: 'caution',
-
-  betting_archetype: {
-    name: 'The Multiplier Chaser',
-    description: 'Bigger payout always calling. Your 2-pick game is actually solid. The 5-6 pick entries are where your bankroll goes to die, and you reach for them more on bets following a loss, not less.',
-  },
-
-  dfs_mode: true,
-  dfs_platform: 'Prizepicks',
-
-  discipline_score: {
-    total: 42,
-    tracking: 14,
-    sizing: 10,
-    control: 8,
-    strategy: 10,
-    percentile: 32,
-  },
-
-  emotion_percentile: 72,
-
-  biases_detected: [
+  "what_if_scenarios": [
     {
-      bias_name: 'High-Pick Reliance',
-      severity: 'critical',
-      description: '51% of your entries are 5-6 picks. Those hit at under 12%. Your 2-3 pick entries hit at 48%, but those are only 45% of your volume.',
-      evidence: '22 entries at 5-6 picks (51%) with -34% ROI vs 17 entries at 2-3 picks with +6% ROI.',
-      estimated_cost: 620,
-      fix: 'Cap your entries at 3 picks. Your hit rate at 2-3 picks is real. At 5-6 picks, the multiplier is doing the work your research is not.',
+      "label": "Flat-staked at $19 on every bet",
+      "actual": -1347.34,
+      "hypothetical": -924.67
     },
     {
-      bias_name: 'Multiplier Chasing',
-      severity: 'high',
-      description: 'Your average pick count jumps from 2.8 on entries following a win to 4.4 on entries following a loss. You are not researching more players, you are buying a bigger lottery ticket.',
-      evidence: 'Avg picks following a loss: 4.4 vs following a win: 2.8 (57% increase). 3 of your worst 5 sessions opened with a 2-3 pick loss and stepped up to 5-6 pick entries.',
-      estimated_cost: 490,
-      fix: 'Pre-commit to a pick count before your session starts. Losing a 2-pick entry is not a signal to go bigger, it is a signal to stop.',
-    },
-    {
-      bias_name: 'Power Play Preference',
-      severity: 'high',
-      description: 'You default to Power Play 71% of the time. Flex gives you partial payouts on near-misses. Your Flex ROI is positive. Your Power ROI is not.',
-      evidence: '27 Power entries (71%) at -12% ROI vs 11 Flex entries at +4% ROI.',
-      estimated_cost: 370,
-      fix: 'Switch to Flex as your default. Reserve Power for rare max-conviction entries. Flex smooths variance and keeps your bankroll in play longer.',
-    },
-    {
-      bias_name: 'Player Concentration Risk',
-      severity: 'medium',
-      description: 'Josh Allen appears in 29% of your entries. When he has an off game, multiple entries go down together. You have built correlation into what should be independent picks.',
-      evidence: 'Josh Allen in 11 of 38 entries (29%) with -18% ROI. Jalen Hurts second at 18% exposure, -24% ROI.',
-      estimated_cost: 180,
-      fix: 'No single player in more than 15% of your entries. Forced diversification eliminates correlation risk.',
-    },
+      "label": "Eliminated all parlays over 3 legs",
+      "actual": -1347.34,
+      "hypothetical": 10.66
+    }
   ],
-  strategic_leaks: [
+  "recovery": {
+    "biggestSingleLeakUSD": 1358,
+    "method": "no_long_parlays",
+    "overlapsExist": true,
+    "rangeLow": 1000,
+    "rangeHigh": 1700,
+    "netUSD": -1347
+  },
+  "charts": {
+    "timeOfDayPnl": [
+      {
+        "hour": 0,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 1,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 2,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 3,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 4,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 5,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 6,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 7,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 8,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 9,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 10,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 11,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 12,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 13,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 14,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 15,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 16,
+        "netUSD": 0,
+        "bets": 0
+      },
+      {
+        "hour": 17,
+        "netUSD": -288,
+        "bets": 35
+      },
+      {
+        "hour": 18,
+        "netUSD": -79,
+        "bets": 30
+      },
+      {
+        "hour": 19,
+        "netUSD": -488,
+        "bets": 33
+      },
+      {
+        "hour": 20,
+        "netUSD": -226.33,
+        "bets": 28
+      },
+      {
+        "hour": 21,
+        "netUSD": -372.34,
+        "bets": 33
+      },
+      {
+        "hour": 22,
+        "netUSD": 264.33,
+        "bets": 36
+      },
+      {
+        "hour": 23,
+        "netUSD": -158,
+        "bets": 5
+      }
+    ],
+    "dayOfWeekPnl": [
+      {
+        "day": 0,
+        "netUSD": 427.33,
+        "bets": 27
+      },
+      {
+        "day": 1,
+        "netUSD": 58,
+        "bets": 35
+      },
+      {
+        "day": 2,
+        "netUSD": -271.33,
+        "bets": 22
+      },
+      {
+        "day": 3,
+        "netUSD": -325.01,
+        "bets": 25
+      },
+      {
+        "day": 4,
+        "netUSD": -158,
+        "bets": 20
+      },
+      {
+        "day": 5,
+        "netUSD": -448.66,
+        "bets": 28
+      },
+      {
+        "day": 6,
+        "netUSD": -629.67,
+        "bets": 43
+      }
+    ],
+    "oddsBuckets": [
+      {
+        "bucket": "Heavy Chalk",
+        "roiPct": 0,
+        "bets": 0,
+        "winPct": 0,
+        "edgePP": 0
+      },
+      {
+        "bucket": "Moderate Favorite",
+        "roiPct": 0,
+        "bets": 0,
+        "winPct": 0,
+        "edgePP": 0
+      },
+      {
+        "bucket": "Slight Favorite",
+        "roiPct": 7.58,
+        "bets": 60,
+        "winPct": 63.33,
+        "edgePP": 3.33
+      },
+      {
+        "bucket": "Pick'em",
+        "roiPct": 0,
+        "bets": 0,
+        "winPct": 0,
+        "edgePP": 0
+      },
+      {
+        "bucket": "Slight Dog",
+        "roiPct": 0,
+        "bets": 0,
+        "winPct": 0,
+        "edgePP": 0
+      },
+      {
+        "bucket": "Moderate Dog",
+        "roiPct": 0,
+        "bets": 0,
+        "winPct": 0,
+        "edgePP": 0
+      },
+      {
+        "bucket": "Longshot",
+        "roiPct": -40.98,
+        "bets": 140,
+        "winPct": 7.86,
+        "edgePP": -2.16
+      }
+    ],
+    "stakeByStreak": {
+      "after3WinsUSD": 18,
+      "neutralUSD": 20.79,
+      "after3LossesUSD": 21.61
+    },
+    "sessionTimeline": [
+      {
+        "tOffsetMin": 0,
+        "stakeUSD": 10,
+        "outcome": "loss",
+        "isChaseMarker": false
+      },
+      {
+        "tOffsetMin": 37,
+        "stakeUSD": 21,
+        "outcome": "loss",
+        "isChaseMarker": true
+      },
+      {
+        "tOffsetMin": 53,
+        "stakeUSD": 30,
+        "outcome": "loss",
+        "isChaseMarker": true
+      },
+      {
+        "tOffsetMin": 91,
+        "stakeUSD": 34,
+        "outcome": "loss",
+        "isChaseMarker": true
+      },
+      {
+        "tOffsetMin": 125,
+        "stakeUSD": 15,
+        "outcome": "loss",
+        "isChaseMarker": false
+      },
+      {
+        "tOffsetMin": 144,
+        "stakeUSD": 23,
+        "outcome": "loss",
+        "isChaseMarker": true
+      }
+    ],
+    "heroSession": {
+      "sessionId": "SESSION-019",
+      "date": "Nov 22, 2025",
+      "framing": "loss",
+      "bets": 6
+    },
+    "betTypeMix": [
+      {
+        "class": "parlay",
+        "count": 200,
+        "pct": 100
+      }
+    ]
+  },
+  "biases_detected": [
     {
-      category: '5-6 pick entries',
-      detail: 'Volume concentrated where hit rate collapses. Over half your entries are 5-6 picks, but they hit at under 12%.',
-      roi_impact: -34,
-      sample_size: 22,
-      suggestion: 'Cap at 3 picks. Your research pays at low pick counts.',
+      "bias_name": "Post-Loss Escalation",
+      "severity": "low",
+      "description": "Your entry fees do creep up slightly in sequences following losses, going from $19 to $22 on average. It's not dramatic, but combined with the pick count escalation, it means your losing runs cost more per entry than your winning runs. Small leak, but worth knowing.",
+      "evidence": "Average entry fee following a losing entry: $22 vs following a winning entry: $19. Loss chase ratio of 1.17x. After 3+ loss streaks, average stake is $22 vs $18 after 3+ win streaks.",
+      "estimated_cost": 100,
+      "fix": "Pick your entry fee before the session starts and keep it flat the entire night, win or lose.",
+      "evidence_bet_ids": [
+        "demo-dfs-149",
+        "demo-dfs-145",
+        "demo-dfs-187",
+        "demo-dfs-171",
+        "demo-dfs-155",
+        "demo-dfs-153",
+        "demo-dfs-180",
+        "demo-dfs-113"
+      ],
+      "sample_size": 150,
+      "confidence": "medium",
+      "sub_splits": [
+        {
+          "label": "Bets following a losing bet",
+          "bets": 150,
+          "roi_pct": -40.27,
+          "net_usd": -1324.34
+        },
+        {
+          "label": "Bets following a winning bet",
+          "bets": 49,
+          "roi_pct": -1.2,
+          "net_usd": -11
+        }
+      ],
+      "severity_bar_ratio": 0.25,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
     },
     {
-      category: 'Power Plays',
-      detail: 'Default format has worse EV than the available alternative. Flex partial payouts absorb variance that Power does not.',
-      roi_impact: -12,
-      sample_size: 27,
-      suggestion: 'Make Flex your default. Reserve Power for max-conviction entries.',
+      "bias_name": "Stake Volatility",
+      "severity": "low",
+      "description": "Your entry fees swing from $8 to $38 with no clear system behind it. Some of that variance is fine, but when your biggest entries are going into your worst-performing entry types, the inconsistency is costing you. Flat sizing would have saved you on several of those max-stake Power losses.",
+      "evidence": "Entry fees range from $8 to $38 (avg $21, median $19). Variability score of 0.73, classified as noticeably inconsistent. Several $34-$38 entries appear on 4-6 pick Power plays that went 0-for.",
+      "estimated_cost": 200,
+      "fix": "Pick one entry fee and use it every time. Decide the amount before you sit down, not based on how you feel about the slate.",
+      "evidence_bet_ids": [
+        "demo-dfs-184",
+        "demo-dfs-186",
+        "demo-dfs-189",
+        "demo-dfs-113",
+        "demo-dfs-121",
+        "demo-dfs-137",
+        "demo-dfs-154",
+        "demo-dfs-145"
+      ],
+      "sample_size": 200,
+      "confidence": "medium",
+      "severity_bar_ratio": 0.25,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
     },
     {
-      category: 'Josh Allen entries',
-      detail: 'Over-concentrated exposure to single player variance. When Allen has an off game, multiple entries collapse.',
-      roi_impact: -18,
-      sample_size: 11,
-      suggestion: 'Cap single-player exposure at 15% of entries.',
+      "bias_name": "Category Concentration Leak",
+      "severity": "medium",
+      "description": "Every single entry you have is on PrizePicks, which is fine since that's the platform, but your NBA entries are bleeding out at -61.1% ROI compared to -17.5% on NFL. You're splitting your action across both sports without recognizing that one is costing you significantly more than the other.",
+      "evidence": "NBA: 62 entries at -61.1% ROI, $-852 profit. NFL: 138 entries at -17.5% ROI, $-495 profit. NBA is less than a third of your volume but accounts for more than half your total losses.",
+      "estimated_cost": 500,
+      "fix": "Cut NBA entries to no more than 20% of your weekly volume until you find a consistent angle there.",
+      "evidence_bet_ids": [
+        "demo-dfs-184",
+        "demo-dfs-186",
+        "demo-dfs-189",
+        "demo-dfs-113",
+        "demo-dfs-121",
+        "demo-dfs-137",
+        "demo-dfs-154",
+        "demo-dfs-145"
+      ],
+      "sample_size": 200,
+      "confidence": "high",
+      "sub_splits": [
+        {
+          "label": "parlay",
+          "bets": 200,
+          "roi_pct": -31.93,
+          "net_usd": -1347.34
+        }
+      ],
+      "severity_bar_ratio": 0.5,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
     },
     {
-      category: 'Post-loss entries',
-      detail: 'Pick count escalates within a losing sequence. A 2-pick loss is followed by a 5-pick entry, not by stopping.',
-      roi_impact: -26,
-      sample_size: 14,
-      suggestion: 'Lock pick count before session starts. Never adjust based on intermediate results.',
+      "bias_name": "Power Play Preference",
+      "severity": "high",
+      "description": "You're choosing Power Play on 66% of your entries, which means every single pick has to hit or you get nothing. Flex gives you partial payouts when a pick or two misses, and your numbers prove it works better for you. This is the single biggest fixable leak in your game.",
+      "evidence": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI. That's an 82-percentage-point gap in performance between the two formats.",
+      "estimated_cost": 1100,
+      "fix": "Default to Flex on every entry. Only go Power on 2-pick entries where you have real conviction.",
+      "sample_size": 200,
+      "confidence": "high",
+      "severity_bar_ratio": 0.75,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
     },
+    {
+      "bias_name": "Multiplier Chasing",
+      "severity": "medium",
+      "description": "After losing entries, your average pick count jumps from 2.8 to 3.8. You're stacking more picks to chase a bigger multiplier and dig out of the hole faster, but more picks means a harder entry to cash. The data shows this pattern is making your bad sessions worse.",
+      "evidence": "Average pick count after a loss: 3.8 vs after a win: 2.8, a 36% increase. Your 5-pick and 6-pick entries have -37.1% and -100% ROI respectively, compared to +7.6% on 2-pick entries.",
+      "estimated_cost": 400,
+      "fix": "Set your pick count before you open the app. Never go above 3 picks in a session where you've already lost an entry.",
+      "sample_size": 150,
+      "confidence": "high",
+      "severity_bar_ratio": 0.5,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
+    },
+    {
+      "bias_name": "Player Concentration Bias",
+      "severity": "high",
+      "description": "You're leaning on Josh Allen and Jalen Hurts in nearly every session, which means your results are basically a referendum on two players' stat lines. When they have off nights, your whole slate goes down with them. Spreading across more players gives you real diversification.",
+      "evidence": "Josh Allen appears in 30% of entries at -84.7% ROI. Jalen Hurts appears in 28% of entries at -40.2% ROI. Both are deep in the red despite being your most-used picks.",
+      "estimated_cost": 700,
+      "fix": "Cap any single player at 15% of your entries. If Allen or Hurts is in an entry, make it a 2-pick Flex only.",
+      "sample_size": 59,
+      "confidence": "medium",
+      "severity_bar_ratio": 0.75,
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "fix_visibility": "visible",
+      "estimated_cost_visibility": "visible"
+    }
   ],
-  behavioral_patterns: [
+  "strategic_leaks": [
     {
-      pattern_name: 'Pick Count Escalation',
-      description: 'Pick count escalates through losing sequences, not winning ones. Your average pick count jumps from 2.8 on entries following a win to 4.4 following a loss.',
-      frequency: '3 of 5 losing sessions',
-      impact: 'negative',
-      data_points: 'Avg picks following a loss: 4.4 vs following a win: 2.8. Dec 14 sequence: 2-pick to 4-pick to 5-pick to 6-pick.',
+      "category": "NBA parlay",
+      "detail": "Your NBA entries are the heaviest drain in the book. At -61.1% ROI on 62 entries, you're losing more than half your money back on NBA action. The player concentration issue is especially bad here, with Doncic at -81.5% ROI and LeBron at -81% ROI appearing in roughly 1 in 5 entries.",
+      "detail_visibility": "visible",
+      "roi_impact": -61.07455197132615,
+      "sample_size": 62,
+      "suggestion": "Treat NBA as a secondary sport. Limit yourself to 2-pick Flex entries only on NBA until you find a player or matchup angle that actually works for you.",
+      "suggestion_visibility": "visible",
+      "severity": "critical",
+      "confidence": "medium"
     },
     {
-      pattern_name: 'Weekend Heavy',
-      description: 'Saturday and Sunday represent 58% of your entries, with lower discipline and higher pick counts than weekday entries.',
-      frequency: 'Every week',
-      impact: 'negative',
-      data_points: '116 weekend entries at -11.4% ROI vs 84 weekday entries at -3.8% ROI.',
-    },
-    {
-      pattern_name: '2-3 Pick Discipline',
-      description: 'When you stick to 2-3 picks, your research actually pays. Your hit rate at low pick counts is where your edge lives.',
-      frequency: 'Consistent across sample',
-      impact: 'positive',
-      data_points: '2-3 pick entries: 48% hit rate, +6% ROI. Your best category by far.',
-    },
+      "category": "NFL parlay",
+      "detail": "NFL is your better sport but still runs negative at -17.5% ROI. The drag comes from Power Play overuse and high pick count entries. Your NFL 2-pick Flex entries are clearly your bread and butter, but you keep mixing in 5 and 6-pick Power entries that wipe out those gains.",
+      "detail_visibility": "visible",
+      "roi_impact": -17.534513274336277,
+      "sample_size": 138,
+      "suggestion": "Lean into what works on NFL: 2-pick and 3-pick Flex entries. Stop mixing in 5 and 6-pick Power entries on the same slate.",
+      "suggestion_visibility": "visible",
+      "severity": "medium",
+      "confidence": "high"
+    }
   ],
-  recommendations: [
+  "behavioral_patterns": [
     {
-      priority: 1,
-      title: 'Cap entries at 3 picks maximum',
-      description: 'Your 2-3 pick hit rate at 48% is where your research actually pays. 5-6 pick entries are effectively lottery tickets disguised as analysis.',
-      expected_improvement: 'Recover ~$620/quarter',
-      difficulty: 'easy',
+      "pattern_name": "Sunday Surge",
+      "description": "Your Sunday entries are genuinely profitable at +84.5% ROI across 27 entries. This is your best day by a massive margin and it's not a fluke given the sample size. You're likely more focused, picking better matchups, or simply playing your best game when the full NFL slate is in front of you.",
+      "frequency": "27 entries on Sundays, 13.5% of total volume",
+      "impact": "positive",
+      "data_points": "Sunday: 84.5% ROI, 48% win rate, $427 profit. Next best day is Monday at 7.9% ROI. Every other day of the week is negative."
     },
     {
-      priority: 2,
-      title: 'Make Flex your default, Power your exception',
-      description: 'Flex partial payouts absorb near-miss variance. Reserve Power for max-conviction entries only.',
-      expected_improvement: 'Recover ~$370/quarter',
-      difficulty: 'easy',
+      "pattern_name": "Friday and Saturday Bleed",
+      "description": "Friday and Saturday are your two worst days, combining for -71.8% and -67.1% ROI respectively. You're placing a high volume of entries on these days and losing at a brutal rate. This is where a lot of the NBA action and high pick count Power entries are concentrated.",
+      "frequency": "71 entries on Fri/Sat combined, 35.5% of total volume",
+      "impact": "negative",
+      "data_points": "Friday: -71.8% ROI, 18% win rate, $-449 profit on 28 entries. Saturday: -67.1% ROI, 19% win rate, $-630 profit on 43 entries."
     },
     {
-      priority: 3,
-      title: 'Lock pick count before each session',
-      description: 'Write down your pick count for the night before you log in. Never deviate based on intermediate results.',
-      expected_improvement: 'Recover ~$490/quarter',
-      difficulty: 'medium',
+      "pattern_name": "2-Pick Entry Discipline",
+      "description": "When you keep it to 2 picks, you actually have a real edge. 63.3% win rate on 2-pick entries with a positive ROI is legitimately sharp for a pick-em platform. The problem is you only play 2-pick entries 30% of the time and keep reaching for bigger multipliers.",
+      "frequency": "60 of 200 entries are 2-pick (30%)",
+      "impact": "positive",
+      "data_points": "2-pick entries: 63.3% win rate, 7.6% ROI. 6-pick entries: 0% win rate, -100% ROI. The gap between your best and worst pick count is the entire story of this sample."
     },
     {
-      priority: 4,
-      title: 'No player in more than 15% of entries',
-      description: 'Diversification is baked into your pick process, not an afterthought. Rotate star players instead of stacking them.',
-      expected_improvement: 'Recover ~$180/quarter',
-      difficulty: 'medium',
+      "pattern_name": "Pick Count Escalation in Losing Sequences",
+      "description": "Within sessions where entries are going cold, pick counts step up noticeably. A session that starts with a 2-pick entry often ends with a 5 or 6-pick entry as the losses stack up. This is the clearest behavioral pattern in the data and it's consistently making bad sessions worse.",
+      "frequency": "Average pick count after a loss is 3.8 vs 2.8 after a win, across the full sample",
+      "impact": "negative",
+      "data_points": "Pick count after loss: 3.8 vs after win: 2.8 (36% increase). 5 heated sessions detected out of 78 total. Worst session (Nov 22) had 6 entries and was flagged as heated."
     },
+    {
+      "pattern_name": "10pm Profitability Window",
+      "description": "Your 10pm entries are the only time-of-day window showing a positive ROI. This likely corresponds to late NFL or NBA games where you have more information available, like injury reports, early game results, and line movement context.",
+      "frequency": "36 entries at 10pm, 18% of total volume",
+      "impact": "positive",
+      "data_points": "10pm: 35.3% ROI, 25% win rate, $264 profit on 36 entries. 7pm is the worst window at -71.0% ROI on 33 entries."
+    }
   ],
-  personal_rules: [
-    { rule: 'Never build an entry with more than 3 picks', reason: 'Your 4+ pick entries are 3-24. That is a 11% hit rate costing you $640.', based_on: 'Pick count analysis' },
-    { rule: 'Default to Flex, not Power', reason: 'Your Power entries have -12% ROI. Flex entries have +4% ROI. The math is clear.', based_on: 'Power vs Flex breakdown' },
-    { rule: 'Do not raise pick count within a losing session', reason: 'Your pick count jumps 57% on entries following a loss. That is chasing with extra steps.', based_on: 'Loss sequence analysis' },
-    { rule: 'No single player in more than 3 entries per week', reason: 'Josh Allen in 29% of entries at -18% ROI. Concentration is killing you.', based_on: 'Player concentration analysis' },
-  ],
-  sport_specific_findings: [
+  "recommendations": [
     {
-      id: 'NBA-PLAYER-CONCENTRATION',
-      name: 'NBA player prop overexposure',
-      sport: 'NBA',
-      severity: 'medium',
-      description: 'LeBron James appears in 16% of entries. When he has an off shooting night, multiple entries collapse together.',
-      evidence: 'LeBron in 6 of 38 entries (16%). 4 of those 6 were losses. Combined ROI on LeBron entries: +8%, but variance is high.',
-      estimated_cost: -120,
-      recommendation: 'Spread NBA prop exposure across more players. No single NBA player in more than 10% of entries.',
+      "priority": 1,
+      "title": "Switch Your Default to Flex",
+      "description": "Your Flex entries are returning +24.7% ROI while your Power entries are at -57.6%. That gap is the entire ballgame. Flex gives you partial credit when one pick misses, which is the difference between cashing something and losing everything on a near-miss entry.",
+      "expected_improvement": "Shifting your default format to Flex would bring your entry results closer to your demonstrated Flex edge and reduce the all-or-nothing variance that's driving your losses. Save ~$1,100.",
+      "difficulty": "easy",
+      "tied_to_finding": "Power Play Preference",
+      "description_visibility": "visible",
+      "expected_improvement_visibility": "visible"
     },
     {
-      id: 'NFL-PICK-STACKING',
-      name: 'NFL pick concentration',
-      sport: 'NFL',
-      severity: 'high',
-      description: 'Josh Allen and Jalen Hurts appear together in 18% of your entries. When one has a bad game, the other often does too because you are picking correlated game scripts.',
-      evidence: 'Allen + Hurts stacked in 7 entries. Combined ROI on stacked entries: -22%.',
-      estimated_cost: -240,
-      recommendation: 'Avoid stacking QB props from the same slate. Diversify across positions and games.',
+      "priority": 2,
+      "title": "Cap Your Pick Count at 3",
+      "description": "Your 2-pick entries win at 63.3% and your 6-pick entries win at 0%. Every pick you add makes the entry harder to cash and the math compounds against you fast. Three picks is the ceiling where you still have a realistic shot at hitting.",
+      "expected_improvement": "Staying at 2 or 3 picks keeps you in the range where your actual skill shows up in the results, rather than being buried by the compounding difficulty of longer entries. Save ~$400.",
+      "difficulty": "medium",
+      "tied_to_finding": "Multiplier Chasing",
+      "description_visibility": "visible",
+      "expected_improvement_visibility": "visible"
     },
+    {
+      "priority": 3,
+      "title": "Rotate Off Josh Allen and Jalen Hurts",
+      "description": "Allen is in 30% of your entries at -84.7% ROI and Hurts is in 28% at -40.2% ROI. These two players are anchoring your losses. It doesn't matter how good they are in real life. On PrizePicks, your results with them are deeply negative and you need to diversify.",
+      "expected_improvement": "Spreading your picks across a wider player pool removes the single-player dependency that's making your results swing on two stat lines every week. Save ~$700.",
+      "difficulty": "medium",
+      "tied_to_finding": "Player Concentration Bias",
+      "description_visibility": "visible",
+      "expected_improvement_visibility": "visible"
+    },
+    {
+      "priority": 4,
+      "title": "Pull Back on NBA Volume",
+      "description": "NBA is running at -61.1% ROI and accounts for more than half your total dollar losses despite being less than a third of your entries. NFL is your better sport. Until you find a real NBA angle, treat it as a secondary market and limit your exposure there.",
+      "expected_improvement": "Reducing NBA volume and redirecting that action toward your stronger NFL entries would concentrate your play in the sport where your results are meaningfully better. Save ~$500.",
+      "difficulty": "medium",
+      "tied_to_finding": "Category Concentration Leak",
+      "description_visibility": "visible",
+      "expected_improvement_visibility": "visible"
+    },
+    {
+      "priority": 5,
+      "title": "Protect Your Sunday Edge",
+      "description": "Sunday is your only consistently profitable day at +84.5% ROI. That edge is real and worth protecting. Make Sunday your highest-focus session of the week, and treat it differently from your Friday and Saturday entries where you're bleeding badly.",
+      "expected_improvement": "Treating Sunday as your primary session and being more selective on Friday and Saturday would concentrate your best decision-making in the window where it's already paying off.",
+      "difficulty": "easy",
+      "description_visibility": "visible",
+      "expected_improvement_visibility": "visible"
+    }
   ],
-
-  session_analysis: {
-    total_sessions: 38,
-    avg_bets_per_winning_session: 3.2,
-    avg_bets_per_losing_session: 5.8,
-    worst_session: {
-      date: '2025-12-14',
-      bets: 4,
-      duration: '5 hours',
-      net: -110,
-      description: 'Classic pick-count escalation. Started with a 2-pick loss, ended with a $50 6-pick Power Play. Four entries in five hours, each one with more picks than the last.',
-    },
-    best_session: {
-      date: '2025-11-02',
-      bets: 3,
-      duration: '4 hours',
-      net: 23.34,
-      description: 'Disciplined 2-pick day. Three Flex entries on researched props. No escalation after the first win.',
-    },
-    insight: 'Your winning sessions average 3.2 entries. Your losing sessions average 5.8. More entries means more picks per entry means more losses. You are at your best when you keep it to 2-3 picks and walk away.',
+  "emotion_score": 33,
+  "tilt_score": 33,
+  "emotion_breakdown": {
+    "stake_volatility": 3,
+    "loss_chasing": 4,
+    "streak_behavior": 21,
+    "session_discipline": 5
   },
-
-  edge_profile: {
-    profitable_areas: [
-      { category: '2-pick entries', roi: 12, sample_size: 7, confidence: 'medium' },
-      { category: '3-pick Flex', roi: 8, sample_size: 4, confidence: 'low' },
-      { category: 'NFL props (low pick)', roi: 6, sample_size: 18, confidence: 'medium' },
-    ],
-    unprofitable_areas: [
-      { category: '5-pick Power', roi: -38, sample_size: 9, estimated_loss: 280 },
-      { category: '6-pick Power', roi: -100, sample_size: 4, estimated_loss: 125 },
-      { category: 'Josh Allen entries', roi: -18, sample_size: 11, estimated_loss: 140 },
-    ],
-    reallocation_advice: 'Shift volume from 5-6 pick Power entries into 2-3 pick Flex entries. Your profitable categories have enough sample size to trust.',
-    sharp_score: 35,
+  "tilt_breakdown": {
+    "stake_volatility": 3,
+    "loss_chasing": 4,
+    "streak_behavior": 21,
+    "session_discipline": 5
   },
-
-  betiq: {
-    score: 55,
-    components: {
-      line_value: 14,
-      calibration: 10,
-      sophistication: 6,
-      specialization: 10,
-      timing: 7,
-      confidence: 8,
+  "bankroll_health": "healthy",
+  "personal_rules": [
+    {
+      "rule": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter.",
+      "reason": "Your Flex entries return +24.7% ROI. Your Power entries return -57.6% ROI. The format choice is more important than the picks themselves.",
+      "based_on": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI"
     },
-    percentile: 48,
-    interpretation: 'Moderate skill at low pick counts. Your 2-3 pick research translates to real edge. At 5-6 picks, skill dissolves into variance.',
-    insufficient_data: false,
-  },
-
-  enhanced_tilt: {
-    score: 68,
-    signals: {
-      bet_sizing_volatility: 14,
-      loss_reaction: 24,
-      streak_behavior: 20,
-      session_discipline: 10,
-      session_acceleration: 16,
-      odds_drift_after_loss: 12,
+    {
+      "rule": "Maximum 3 picks per entry, no exceptions.",
+      "reason": "Your 2-pick entries win at 63.3%. Your 6-pick entries win at 0%. Every pick added past 3 is working against you.",
+      "based_on": "Pick count distribution: 2-pick 7.6% ROI, 3-pick -4.3% ROI, 4-pick -47.1% ROI, 5-pick -37.1% ROI, 6-pick -100% ROI"
     },
-    risk_level: 'elevated',
-    worst_trigger: 'Pick count jumps from 2.8 to 4.4 on entries following a loss. You are not adding research, you are adding lottery tickets.',
-    percentile: 28,
-  },
-
-  session_detection: {
-    sessions: [
-      { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, lateNightKnown: true, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [0, 1, 2] },
-      { id: 'SESSION-007', date: '2025-11-16', dayOfWeek: 'Saturday', startTime: '1:00 PM', endTime: '4:30 PM', durationMinutes: 210, bets: 4, wins: 1, losses: 3, pushes: 0, staked: 85, profit: -25, roi: -29.4, avgStake: 21, startingStake: 10, endingStake: 30, stakeEscalation: 3.0, maxStake: 30, minStake: 10, stakeCv: 0.45, betsPerHour: 1.1, longestLossStreak: 2, chasedAfterLoss: false, chaseCount: 0, lateNight: false, lateNightKnown: true, grade: 'C', gradeReasons: ['Moderate stake escalation', 'Mixed pick counts'], isHeated: false, heatSignals: [], betIndices: [38, 39, 40, 41] },
-      { id: 'SESSION-012', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '6:00 PM', endTime: '11:00 PM', durationMinutes: 300, bets: 4, wins: 0, losses: 4, pushes: 0, staked: 110, profit: -110, roi: -100, avgStake: 28, startingStake: 10, endingStake: 50, stakeEscalation: 5.0, maxStake: 50, minStake: 10, stakeCv: 0.68, betsPerHour: 0.8, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: true, lateNightKnown: true, grade: 'F', gradeReasons: ['Pick count escalated from 2 to 6', '3 chase entries following losses', 'Stakes increased 5x from start to finish'], isHeated: true, heatSignals: ['Pick count escalated 2 to 4 to 5 to 6 across session', 'Stakes quintupled while chasing losses'], betIndices: [89, 90, 91, 92] },
-      { id: 'SESSION-018', date: '2026-01-11', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '3:00 PM', durationMinutes: 120, bets: 2, wins: 1, losses: 1, pushes: 0, staked: 25, profit: 160, roi: 640, avgStake: 13, startingStake: 15, endingStake: 10, stakeEscalation: 0.67, maxStake: 15, minStake: 10, stakeCv: 0.24, betsPerHour: 1.0, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, lateNightKnown: true, grade: 'B', gradeReasons: ['Controlled pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [155, 156] },
-    ],
-    totalSessions: 38,
-    avgSessionLength: 5.3,
-    avgSessionDuration: 148,
-    sessionGradeDistribution: [
-      { grade: 'A', count: 6, percent: 16 },
-      { grade: 'B', count: 8, percent: 21 },
-      { grade: 'C', count: 12, percent: 32 },
-      { grade: 'D', count: 7, percent: 18 },
-      { grade: 'F', count: 5, percent: 13 },
-    ],
-    heatedSessionCount: 7,
-    heatedSessionPercent: 18,
-    avgGradedROI: { A: 14.2, B: 4.8, C: -5.6, D: -18.2, F: -42.1 },
-    bestSession: { id: 'SESSION-001', date: '2025-11-02', dayOfWeek: 'Sunday', startTime: '1:00 PM', endTime: '5:00 PM', durationMinutes: 240, bets: 3, wins: 2, losses: 1, pushes: 0, staked: 35, profit: 23.34, roi: 66.7, avgStake: 12, startingStake: 10, endingStake: 15, stakeEscalation: 1.5, maxStake: 15, minStake: 10, stakeCv: 0.2, betsPerHour: 0.75, longestLossStreak: 1, chasedAfterLoss: false, chaseCount: 0, lateNight: false, lateNightKnown: true, grade: 'A', gradeReasons: ['Consistent low pick count', 'No escalation within the session'], isHeated: false, heatSignals: [], betIndices: [] },
-    worstSession: { id: 'SESSION-012', date: '2025-12-14', dayOfWeek: 'Saturday', startTime: '6:00 PM', endTime: '11:00 PM', durationMinutes: 300, bets: 4, wins: 0, losses: 4, pushes: 0, staked: 110, profit: -110, roi: -100, avgStake: 28, startingStake: 10, endingStake: 50, stakeEscalation: 5.0, maxStake: 50, minStake: 10, stakeCv: 0.68, betsPerHour: 0.8, longestLossStreak: 4, chasedAfterLoss: true, chaseCount: 3, lateNight: true, lateNightKnown: true, grade: 'F', gradeReasons: ['Pick count escalated from 2 to 6', '3 chase entries', 'Stakes 5x'], isHeated: true, heatSignals: ['Pick count escalated while chasing losses'], betIndices: [] },
-    insight: 'Your A-graded sessions average +14.2% ROI. Your F sessions average -42.1%. The pattern is clear: low pick count and no escalation pays. Everything else costs you.',
-  },
-
-  bet_annotations: {
-    annotations: [
-      { betIndex: 0, betId: 'demo-dfs-1', classification: 'disciplined', confidence: 84, signals: [{ name: 'flat_pick_count', weight: -5, description: 'Stayed at 2 picks, within disciplined range', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'First entry of session, deliberate timing', category: 'disciplined' }], primaryReason: 'Stayed at 2 picks, within disciplined range', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: null, currentStreak: 0 },
-      { betIndex: 2, betId: 'demo-dfs-3', classification: 'disciplined', confidence: 80, signals: [{ name: 'flat_pick_count', weight: -5, description: 'Maintained 2 picks after previous win', category: 'disciplined' }, { name: 'controlled_sizing', weight: -3, description: 'Modest stake increase to $15, within normal range', category: 'disciplined' }], primaryReason: 'Maintained 2 picks after previous win', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 1.0, timeSinceLastBet: 120, currentStreak: 2 },
-      { betIndex: 8, betId: 'demo-dfs-9', classification: 'disciplined', confidence: 82, signals: [{ name: 'flat_pick_count', weight: -4, description: 'Kept to 3 picks Flex after mixed results', category: 'disciplined' }, { name: 'reasonable_pace', weight: -2, description: 'Spaced entry with research time', category: 'disciplined' }], primaryReason: 'Kept to 3 picks Flex after mixed results', sessionId: 'SESSION-007', sessionGrade: 'C', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: 90, currentStreak: -1 },
-      { betIndex: 89, betId: 'demo-dfs-7', classification: 'neutral', confidence: 60, signals: [{ name: 'session_opener', weight: 0, description: 'First entry of session, no prior context', category: 'neutral' }], primaryReason: 'Session opener at 2 picks, reasonable start', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 0.7, timeSinceLastBet: null, currentStreak: 0 },
-      { betIndex: 90, betId: 'demo-dfs-23', classification: 'chasing', confidence: 88, signals: [{ name: 'pick_count_escalation', weight: 8, description: 'Pick count jumped from 2 to 4 after previous loss', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count jumped from 2 to 4 after previous loss', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 1.4, timeSinceLastBet: 90, currentStreak: -1 },
-      { betIndex: 91, betId: 'demo-dfs-29', classification: 'chasing', confidence: 92, signals: [{ name: 'pick_count_escalation', weight: 9, description: 'Pick count stepped up from 4 to 5 over the prior losing entry', category: 'chasing' }, { name: 'stake_escalation', weight: 4, description: 'Stake stepped up from $20 to $30 over the prior losing bet', category: 'chasing' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count stepped up from 4 to 5 over the prior losing entry', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 2.1, timeSinceLastBet: 90, currentStreak: -2 },
-      { betIndex: 92, betId: 'demo-dfs-36', classification: 'chasing', confidence: 96, signals: [{ name: 'pick_count_escalation', weight: 10, description: 'Pick count jumped from 5 to 6 after previous loss', category: 'chasing' }, { name: 'stake_escalation', weight: 6, description: 'Stake increased from $30 to $50, largest of session', category: 'chasing' }, { name: 'max_pick_count', weight: 4, description: '6-pick Power Play, maximum multiplier chasing', category: 'emotional' }, { name: 'heated_session_context', weight: 3, description: 'Part of a heated session (Grade F)', category: 'emotional' }], primaryReason: 'Pick count jumped from 5 to 6 after previous loss, stake 5x session start', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.5, timeSinceLastBet: 120, currentStreak: -3 },
-      { betIndex: 155, betId: 'demo-dfs-33', classification: 'disciplined', confidence: 78, signals: [{ name: 'controlled_sizing', weight: -4, description: 'Minimum stake $10 on a 5-pick entry', category: 'disciplined' }, { name: 'recovery_discipline', weight: -3, description: 'Did not escalate after prior session losses', category: 'disciplined' }], primaryReason: 'Minimum stake on higher pick count, showing restraint', sessionId: 'SESSION-018', sessionGrade: 'B', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: 60, currentStreak: -1 },
-    ],
-    distribution: {
-      disciplined: { count: 90, percent: 45, totalStaked: 1620, totalProfit: 220, roi: 13.6 },
-      neutral: { count: 42, percent: 21, totalStaked: 756, totalProfit: -40, roi: -5.3 },
-      emotional: { count: 36, percent: 18, totalStaked: 900, totalProfit: -480, roi: -53.3 },
-      chasing: { count: 22, percent: 11, totalStaked: 660, totalProfit: -520, roi: -78.8 },
-      impulsive: { count: 10, percent: 5, totalStaked: 200, totalProfit: -160, roi: -80.0 },
+    {
+      "rule": "No single player appears in more than 2 entries per week.",
+      "reason": "Josh Allen at -84.7% ROI and Jalen Hurts at -40.2% ROI are your two most-used picks and your two biggest money losers. Concentration in individual players is a direct leak.",
+      "based_on": "Josh Allen in 30% of entries at -84.7% ROI, Jalen Hurts in 28% of entries at -40.2% ROI"
     },
-    emotionalCost: 280,
-    worstAnnotatedBet: { betIndex: 92, betId: 'demo-dfs-36', classification: 'chasing', confidence: 96, signals: [{ name: 'pick_count_escalation', weight: 10, description: 'Pick count jumped from 5 to 6 after previous loss', category: 'chasing' }], primaryReason: 'Pick count jumped from 5 to 6 after previous loss, stake 5x session start', sessionId: 'SESSION-012', sessionGrade: 'F', isInHeatedSession: true, stakeVsMedian: 3.5, timeSinceLastBet: 120, currentStreak: -3 },
-    bestAnnotatedBet: { betIndex: 0, betId: 'demo-dfs-1', classification: 'disciplined', confidence: 84, signals: [{ name: 'flat_pick_count', weight: -5, description: 'Stayed at 2 picks, within disciplined range', category: 'disciplined' }], primaryReason: 'Stayed at 2 picks, within disciplined range', sessionId: 'SESSION-001', sessionGrade: 'A', isInHeatedSession: false, stakeVsMedian: 0.7, timeSinceLastBet: null, currentStreak: 0 },
-    streakInfluence: {
-      avgStakeAfterWinStreak3: 12,
-      avgStakeAfterLossStreak3: 32,
-      avgStakeNeutral: 15,
+    {
+      "rule": "If you have already lost 2 entries in a session, stop for the night.",
+      "reason": "Your pick count escalates from 2.8 to 3.8 after losses, and your 5 heated sessions all show the same pattern of entries getting larger and more aggressive as the session goes on.",
+      "based_on": "5 heated sessions out of 78, avg pick count after loss 3.8 vs 2.8 after win, worst session had 6 entries"
     },
-    insight: '34% of your entries show emotional or chasing behavior, costing an estimated $280 in lost edge. Your disciplined entries return +13.6% ROI vs -60%+ on chasing entries.',
-  },
-
-  dfs_metrics: {
-    pickCountDistribution: [
-      { picks: 2, count: 7, winRate: 57, roi: 12, profit: 28 },
-      { picks: 3, count: 10, winRate: 30, roi: 2, profit: 8 },
-      { picks: 4, count: 8, winRate: 12, roi: -28, profit: -85 },
-      { picks: 5, count: 9, winRate: 11, roi: -38, profit: -125 },
-      { picks: 6, count: 4, winRate: 0, roi: -100, profit: -200 },
-    ],
-    powerVsFlex: {
-      powerCount: 27, powerROI: -12, powerProfit: -580,
-      flexCount: 11, flexROI: 4, flexProfit: 60,
+    {
+      "rule": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%.",
+      "reason": "NBA is running at -61.1% ROI and is responsible for $852 in losses. You do not currently have a demonstrated edge in NBA player props.",
+      "based_on": "NBA: 62 entries, -61.1% ROI, $-852 profit"
+    }
+  ],
+  "session_analysis": {
+    "total_sessions": 78,
+    "avg_bets_per_winning_session": 2.05,
+    "avg_bets_per_losing_session": 2.77,
+    "worst_session": {
+      "date": "Nov 22, 2025",
+      "bets": 6,
+      "duration": "5:07 PM - 7:31 PM",
+      "starting_stake": 10,
+      "ending_stake": 23,
+      "net": -133,
+      "description": "SESSION-019 on November 22, 2025 was your roughest night, going 6 entries deep and finishing $133 in the hole. It was flagged as a heated session, and looking at the raw bets from that date, the entries escalated from 2-pick to 5-pick and 6-pick Power plays as the losses stacked up. That's the pick count escalation pattern at its worst."
     },
-    playerConcentration: [
-      { player: 'Josh Allen', count: 11, percent: 29, roi: -18 },
-      { player: 'Jalen Hurts', count: 7, percent: 18, roi: -24 },
-      { player: 'LeBron James', count: 6, percent: 16, roi: 8 },
-    ],
-    avgPickCount: 3.8,
-    lowPickROI: 6.0,
-    highPickROI: -34.0,
-    pickCountAfterLoss: 4.4,
-    pickCountAfterWin: 2.8,
+    "best_session": {
+      "date": "Dec 14, 2025",
+      "bets": 1,
+      "duration": "6:57 PM - 6:57 PM",
+      "starting_stake": 30,
+      "ending_stake": 30,
+      "net": 270,
+      "description": "SESSION-035 on December 14, 2025 was clean and simple: 1 entry, $270 profit, grade A. That was the 4-pick Flex Mahomes entry that cashed at +900. One entry, right format, walked away. That's the blueprint."
+    },
+    "insight": "Most sessions look disciplined, but 5 of 78 had heated moments worth reviewing."
   },
+  "edge_profile": {
+    "profitable_areas": [],
+    "unprofitable_areas": [
+      {
+        "category": "NBA parlay",
+        "roi": -61.07,
+        "sample_size": 62,
+        "estimated_loss": 851.99
+      }
+    ],
+    "reallocation_advice": "Your real edge lives in NFL entries, specifically 2-pick and 3-pick Flex plays. That's where your Sunday profitability comes from and where your win rate is actually competitive. Pull back on NBA volume significantly and stop mixing high pick count Power entries into your NFL sessions. The data is clear: when you keep it simple on NFL with Flex, you cash. When you reach for the big multiplier on Power with 5 or 6 picks, you lose everything. Build your weekly routine around 2-3 pick NFL Flex entries, treat NBA as a small side market, and let your Sunday edge do the heavy lifting.",
+    "sharp_score": 34
+  },
+  "betting_archetype": {
+    "name": "The Lottery Bettor",
+    "description": "Power Play or nothing. You want the big hit, not the safe play. The math says Flex gives you better value, but the thrill is in the all-or-nothing."
+  },
+  "timing_analysis": {
+    "by_hour": [
+      {
+        "label": "12am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "1am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "2am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "3am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "4am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "5am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "6am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "7am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "8am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "9am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "10am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "11am",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "12pm",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "1pm",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "2pm",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "3pm",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "4pm",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "5pm",
+        "bets": 35,
+        "wins": 10,
+        "losses": 25,
+        "staked": 682,
+        "profit": -288,
+        "roi": -42.23,
+        "win_rate": 28.57,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "6pm",
+        "bets": 30,
+        "wins": 8,
+        "losses": 22,
+        "staked": 683,
+        "profit": -79,
+        "roi": -11.57,
+        "win_rate": 26.67,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "7pm",
+        "bets": 33,
+        "wins": 5,
+        "losses": 28,
+        "staked": 687,
+        "profit": -488,
+        "roi": -71.03,
+        "win_rate": 15.15,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "8pm",
+        "bets": 28,
+        "wins": 9,
+        "losses": 19,
+        "staked": 597,
+        "profit": -226.33,
+        "roi": -37.91,
+        "win_rate": 32.14,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "9pm",
+        "bets": 33,
+        "wins": 8,
+        "losses": 25,
+        "staked": 665,
+        "profit": -372.34,
+        "roi": -55.99,
+        "win_rate": 24.24,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "10pm",
+        "bets": 36,
+        "wins": 9,
+        "losses": 27,
+        "staked": 748,
+        "profit": 264.33,
+        "roi": 35.34,
+        "win_rate": 25,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "11pm",
+        "bets": 5,
+        "wins": 0,
+        "losses": 5,
+        "staked": 158,
+        "profit": -158,
+        "roi": -100,
+        "win_rate": 0,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      }
+    ],
+    "by_day": [
+      {
+        "label": "Mon",
+        "bets": 35,
+        "wins": 8,
+        "losses": 27,
+        "staked": 731,
+        "profit": 58,
+        "roi": 7.93,
+        "win_rate": 22.86,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Tue",
+        "bets": 22,
+        "wins": 5,
+        "losses": 17,
+        "staked": 461,
+        "profit": -271.33,
+        "roi": -58.86,
+        "win_rate": 22.73,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Wed",
+        "bets": 25,
+        "wins": 7,
+        "losses": 18,
+        "staked": 505,
+        "profit": -325.01,
+        "roi": -64.36,
+        "win_rate": 28,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Thu",
+        "bets": 20,
+        "wins": 3,
+        "losses": 17,
+        "staked": 453,
+        "profit": -158,
+        "roi": -34.88,
+        "win_rate": 15,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Fri",
+        "bets": 28,
+        "wins": 5,
+        "losses": 23,
+        "staked": 625,
+        "profit": -448.66,
+        "roi": -71.79,
+        "win_rate": 17.86,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Sat",
+        "bets": 43,
+        "wins": 8,
+        "losses": 35,
+        "staked": 939,
+        "profit": -629.67,
+        "roi": -67.06,
+        "win_rate": 18.6,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Sun",
+        "bets": 27,
+        "wins": 13,
+        "losses": 14,
+        "staked": 506,
+        "profit": 427.33,
+        "roi": 84.45,
+        "win_rate": 48.15,
+        "profit_visibility": "visible",
+        "staked_visibility": "visible"
+      }
+    ],
+    "best_window": {
+      "label": "Sun",
+      "roi": 84.45,
+      "count": 27
+    },
+    "worst_window": {
+      "label": "11pm",
+      "roi": -100,
+      "count": 5
+    },
+    "late_night_stats": {
+      "count": 5,
+      "roi": -100,
+      "pct_of_total": 2.5
+    },
+    "has_time_data": true
+  },
+  "odds_analysis": {
+    "buckets": [
+      {
+        "label": "Heavy Chalk",
+        "range": "-300 or worse",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "implied_prob": 0,
+        "actual_win_rate": 0,
+        "edge": 0,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Moderate Favorite",
+        "range": "-200 to -299",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "implied_prob": 0,
+        "actual_win_rate": 0,
+        "edge": 0,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Slight Favorite",
+        "range": "-110 to -199",
+        "bets": 60,
+        "wins": 38,
+        "losses": 22,
+        "staked": 787,
+        "profit": 59.66,
+        "roi": 7.58,
+        "win_rate": 63.33,
+        "implied_prob": 60,
+        "actual_win_rate": 63.33,
+        "edge": 3.33,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Pick'em",
+        "range": "-109 to +109",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "implied_prob": 0,
+        "actual_win_rate": 0,
+        "edge": 0,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Slight Dog",
+        "range": "+110 to +175",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "implied_prob": 0,
+        "actual_win_rate": 0,
+        "edge": 0,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Moderate Dog",
+        "range": "+176 to +300",
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "staked": 0,
+        "profit": 0,
+        "roi": 0,
+        "win_rate": 0,
+        "implied_prob": 0,
+        "actual_win_rate": 0,
+        "edge": 0,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      },
+      {
+        "label": "Longshot",
+        "range": "+301 or longer",
+        "bets": 140,
+        "wins": 11,
+        "losses": 129,
+        "staked": 3433,
+        "profit": -1407,
+        "roi": -40.98,
+        "win_rate": 7.86,
+        "implied_prob": 10.02,
+        "actual_win_rate": 7.86,
+        "edge": -2.16,
+        "profit_visibility": "visible",
+        "roi_visibility": "visible",
+        "win_rate_visibility": "visible",
+        "implied_prob_visibility": "visible",
+        "actual_win_rate_visibility": "visible",
+        "edge_visibility": "visible",
+        "staked_visibility": "visible"
+      }
+    ],
+    "expected_wins": 50.03,
+    "actual_wins": 49,
+    "luck_rating": -1.03,
+    "luck_label": "Slightly cold",
+    "total_settled": 200,
+    "best_bucket": {
+      "label": "Slight Favorite",
+      "edge": 3.33,
+      "count": 60
+    },
+    "worst_bucket": {
+      "label": "Longshot",
+      "edge": -2.16,
+      "count": 140
+    }
+  },
+  "dfs_mode": true,
+  "dfs_platform": "Prizepicks",
+  "dfs_metrics": {
+    "pickCountDistribution": [
+      {
+        "picks": 2,
+        "count": 60,
+        "roi": 7.6,
+        "profit": 60,
+        "winRate": 63.3
+      },
+      {
+        "picks": 3,
+        "count": 50,
+        "roi": -4.3,
+        "profit": -49,
+        "winRate": 16
+      },
+      {
+        "picks": 4,
+        "count": 35,
+        "roi": -47.1,
+        "profit": -427,
+        "winRate": 5.7
+      },
+      {
+        "picks": 5,
+        "count": 30,
+        "roi": -37.1,
+        "profit": -271,
+        "winRate": 3.3
+      },
+      {
+        "picks": 6,
+        "count": 25,
+        "roi": -100,
+        "profit": -660,
+        "winRate": 0
+      }
+    ],
+    "powerVsFlex": {
+      "powerCount": 132,
+      "powerROI": -57.6,
+      "powerProfit": -1672,
+      "flexCount": 68,
+      "flexROI": 24.7,
+      "flexProfit": 325
+    },
+    "playerConcentration": [
+      {
+        "player": "Josh Allen",
+        "count": 59,
+        "percent": 30,
+        "roi": -84.7
+      },
+      {
+        "player": "Jalen Hurts",
+        "count": 57,
+        "percent": 28,
+        "roi": -40.2
+      },
+      {
+        "player": "Purdy",
+        "count": 41,
+        "percent": 21,
+        "roi": -6.3
+      },
+      {
+        "player": "Doncic",
+        "count": 40,
+        "percent": 20,
+        "roi": -81.5
+      },
+      {
+        "player": "LeBron James",
+        "count": 39,
+        "percent": 20,
+        "roi": -81
+      },
+      {
+        "player": "Tatum",
+        "count": 38,
+        "percent": 19,
+        "roi": -4.4
+      },
+      {
+        "player": "Derrick Henry",
+        "count": 32,
+        "percent": 16,
+        "roi": -62.1
+      },
+      {
+        "player": "Curry",
+        "count": 31,
+        "percent": 16,
+        "roi": -60.9
+      },
+      {
+        "player": "Saquon Barkley",
+        "count": 30,
+        "percent": 15,
+        "roi": -79.2
+      },
+      {
+        "player": "Giannis",
+        "count": 27,
+        "percent": 14,
+        "roi": -28.2
+      }
+    ],
+    "avgPickCount": 3.6,
+    "lowPickROI": 0.6,
+    "highPickROI": -67,
+    "pickCountAfterLoss": 3.8,
+    "pickCountAfterWin": 2.8
+  },
+  "betiq": {
+    "score": 42,
+    "components": {
+      "line_value": 3,
+      "calibration": 20,
+      "sophistication": 0,
+      "specialization": 0,
+      "timing": 10,
+      "confidence": 9
+    },
+    "percentile": null,
+    "interpretation": "Below average. Focus on the 1-2 areas where you actually show positive ROI and cut everything else.",
+    "insufficient_data": false
+  },
+  "emotion_percentile": 80,
+  "emotion_score_insufficient_data": false,
+  "tilt_score_insufficient_data": false,
+  "enhanced_tilt": {
+    "score": 33,
+    "signals": {
+      "bet_sizing_volatility": 3,
+      "loss_reaction": 4,
+      "streak_behavior": 21,
+      "session_discipline": 5,
+      "session_acceleration": 15,
+      "odds_drift_after_loss": 25
+    },
+    "risk_level": "elevated",
+    "worst_trigger": "After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.",
+    "percentile": 80
+  },
+  "sport_specific_findings": [
+    {
+      "id": "DFS-LOSS-ESCALATION",
+      "name": "DFS pick count escalation after loss",
+      "sport": "DFS",
+      "severity": "medium",
+      "description": "After losses, you increase your pick count. Going for bigger multipliers to recover.",
+      "evidence": "Avg picks after loss: 3.8 vs after win: 2.8 (36% increase).",
+      "estimated_cost": null,
+      "recommendation": "Set a rule: your pick count should never change based on your last result.",
+      "sample_size": 200,
+      "confidence": "high",
+      "description_visibility": "visible",
+      "evidence_visibility": "visible",
+      "estimated_cost_visibility": "visible",
+      "recommendation_visibility": "visible"
+    }
+  ],
+  "session_detection": {
+    "sessions": [
+      {
+        "id": "SESSION-001",
+        "date": "Nov 1, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "7:49 PM",
+        "endTime": "10:09 PM",
+        "durationMinutes": 140,
+        "bets": 3,
+        "wins": 0,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 73,
+        "profit": -73,
+        "roi": -100,
+        "avgStake": 24.33,
+        "startingStake": 12,
+        "endingStake": 27,
+        "stakeEscalation": 2.25,
+        "maxStake": 34,
+        "minStake": 12,
+        "stakeCv": 0.38,
+        "betsPerHour": 1.29,
+        "longestLossStreak": 3,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          0,
+          1,
+          2
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-002",
+        "date": "Nov 3, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "9:23 PM",
+        "endTime": "9:23 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 9,
+        "profit": 6,
+        "roi": 66.67,
+        "avgStake": 9,
+        "startingStake": 9,
+        "endingStake": 9,
+        "stakeEscalation": 1,
+        "maxStake": 9,
+        "minStake": 9,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          3
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-003",
+        "date": "Nov 6, 2025",
+        "dayOfWeek": "Thursday",
+        "startTime": "9:10 PM",
+        "endTime": "10:48 PM",
+        "durationMinutes": 98,
+        "bets": 3,
+        "wins": 0,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 84,
+        "profit": -84,
+        "roi": -100,
+        "avgStake": 28,
+        "startingStake": 27,
+        "endingStake": 23,
+        "stakeEscalation": 0.85,
+        "maxStake": 34,
+        "minStake": 23,
+        "stakeCv": 0.16,
+        "betsPerHour": 1.84,
+        "longestLossStreak": 3,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "3 consecutive losses"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          4,
+          5,
+          6
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-004",
+        "date": "Nov 7, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "5:16 PM",
+        "endTime": "8:00 PM",
+        "durationMinutes": 164,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 91,
+        "profit": -91,
+        "roi": -100,
+        "avgStake": 22.75,
+        "startingStake": 21,
+        "endingStake": 32,
+        "stakeEscalation": 1.52,
+        "maxStake": 32,
+        "minStake": 17,
+        "stakeCv": 0.25,
+        "betsPerHour": 1.46,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-005",
+        "date": "Nov 8, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "5:31 PM",
+        "endTime": "5:57 PM",
+        "durationMinutes": 26,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 36,
+        "profit": -36,
+        "roi": -100,
+        "avgStake": 18,
+        "startingStake": 11,
+        "endingStake": 25,
+        "stakeEscalation": 2.27,
+        "maxStake": 25,
+        "minStake": 11,
+        "stakeCv": 0.39,
+        "betsPerHour": 4.62,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Rapid-fire betting at 4.6 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          11,
+          12
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-006",
+        "date": "Nov 8, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "10:12 PM",
+        "endTime": "10:39 PM",
+        "durationMinutes": 27,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 46,
+        "profit": -46,
+        "roi": -100,
+        "avgStake": 23,
+        "startingStake": 31,
+        "endingStake": 15,
+        "stakeEscalation": 0.48,
+        "maxStake": 31,
+        "minStake": 15,
+        "stakeCv": 0.35,
+        "betsPerHour": 4.44,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 4.4 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          13,
+          14
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-007",
+        "date": "Nov 9, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "5:17 PM",
+        "endTime": "5:17 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 8,
+        "profit": 5.33,
+        "roi": 66.63,
+        "avgStake": 8,
+        "startingStake": 8,
+        "endingStake": 8,
+        "stakeEscalation": 1,
+        "maxStake": 8,
+        "minStake": 8,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          15
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-008",
+        "date": "Nov 10, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "6:31 PM",
+        "endTime": "7:08 PM",
+        "durationMinutes": 37,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 45,
+        "profit": -45,
+        "roi": -100,
+        "avgStake": 22.5,
+        "startingStake": 26,
+        "endingStake": 19,
+        "stakeEscalation": 0.73,
+        "maxStake": 26,
+        "minStake": 19,
+        "stakeCv": 0.16,
+        "betsPerHour": 3.24,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.2 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          16,
+          17
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-009",
+        "date": "Nov 11, 2025",
+        "dayOfWeek": "Tuesday",
+        "startTime": "6:09 PM",
+        "endTime": "9:16 PM",
+        "durationMinutes": 187,
+        "bets": 4,
+        "wins": 1,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 95,
+        "profit": -71.67,
+        "roi": -75.44,
+        "avgStake": 23.75,
+        "startingStake": 14,
+        "endingStake": 27,
+        "stakeEscalation": 1.93,
+        "maxStake": 27,
+        "minStake": 14,
+        "stakeCv": 0.24,
+        "betsPerHour": 1.28,
+        "longestLossStreak": 3,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Heavy losses this session (-75.4% ROI)",
+          "3 consecutive losses"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          18,
+          19,
+          20,
+          21
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-010",
+        "date": "Nov 12, 2025",
+        "dayOfWeek": "Wednesday",
+        "startTime": "6:03 PM",
+        "endTime": "6:03 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 12,
+        "profit": 8,
+        "roi": 66.67,
+        "avgStake": 12,
+        "startingStake": 12,
+        "endingStake": 12,
+        "stakeEscalation": 1,
+        "maxStake": 12,
+        "minStake": 12,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          22
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-011",
+        "date": "Nov 13, 2025",
+        "dayOfWeek": "Thursday",
+        "startTime": "9:34 PM",
+        "endTime": "9:58 PM",
+        "durationMinutes": 24,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 33,
+        "profit": -33,
+        "roi": -100,
+        "avgStake": 16.5,
+        "startingStake": 9,
+        "endingStake": 24,
+        "stakeEscalation": 2.67,
+        "maxStake": 24,
+        "minStake": 9,
+        "stakeCv": 0.45,
+        "betsPerHour": 5,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Rapid-fire betting at 5.0 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          23,
+          24
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-012",
+        "date": "Nov 14, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "9:07 PM",
+        "endTime": "11:26 PM",
+        "durationMinutes": 139,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 98,
+        "profit": -98,
+        "roi": -100,
+        "avgStake": 24.5,
+        "startingStake": 27,
+        "endingStake": 33,
+        "stakeEscalation": 1.22,
+        "maxStake": 33,
+        "minStake": 15,
+        "stakeCv": 0.27,
+        "betsPerHour": 1.73,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": true,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "Late-night betting (after 11pm)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          25,
+          26,
+          27,
+          28
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-013",
+        "date": "Nov 15, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "7:09 PM",
+        "endTime": "7:09 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 28,
+        "profit": -28,
+        "roi": -100,
+        "avgStake": 28,
+        "startingStake": 28,
+        "endingStake": 28,
+        "stakeEscalation": 1,
+        "maxStake": 28,
+        "minStake": 28,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          29
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-014",
+        "date": "Nov 16, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "6:16 PM",
+        "endTime": "9:01 PM",
+        "durationMinutes": 165,
+        "bets": 2,
+        "wins": 1,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 37,
+        "profit": -17,
+        "roi": -45.95,
+        "avgStake": 18.5,
+        "startingStake": 25,
+        "endingStake": 12,
+        "stakeEscalation": 0.48,
+        "maxStake": 25,
+        "minStake": 12,
+        "stakeCv": 0.35,
+        "betsPerHour": 0.73,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Heavy losses this session (-45.9% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          30,
+          31
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-015",
+        "date": "Nov 17, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "7:36 PM",
+        "endTime": "7:36 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 15,
+        "profit": -15,
+        "roi": -100,
+        "avgStake": 15,
+        "startingStake": 15,
+        "endingStake": 15,
+        "stakeEscalation": 1,
+        "maxStake": 15,
+        "minStake": 15,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          32
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-016",
+        "date": "Nov 18, 2025",
+        "dayOfWeek": "Tuesday",
+        "startTime": "5:17 PM",
+        "endTime": "8:36 PM",
+        "durationMinutes": 199,
+        "bets": 4,
+        "wins": 2,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 100,
+        "profit": 28,
+        "roi": 28,
+        "avgStake": 25,
+        "startingStake": 35,
+        "endingStake": 18,
+        "stakeEscalation": 0.51,
+        "maxStake": 35,
+        "minStake": 12,
+        "stakeCv": 0.41,
+        "betsPerHour": 1.21,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          33,
+          34,
+          35,
+          36
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-017",
+        "date": "Nov 20, 2025",
+        "dayOfWeek": "Thursday",
+        "startTime": "5:33 PM",
+        "endTime": "5:33 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 29,
+        "profit": -29,
+        "roi": -100,
+        "avgStake": 29,
+        "startingStake": 29,
+        "endingStake": 29,
+        "stakeEscalation": 1,
+        "maxStake": 29,
+        "minStake": 29,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          37
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-018",
+        "date": "Nov 21, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "7:20 PM",
+        "endTime": "9:20 PM",
+        "durationMinutes": 120,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 42,
+        "profit": -10.33,
+        "roi": -24.6,
+        "avgStake": 14,
+        "startingStake": 8,
+        "endingStake": 19,
+        "stakeEscalation": 2.38,
+        "maxStake": 19,
+        "minStake": 8,
+        "stakeCv": 0.32,
+        "betsPerHour": 1.5,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Significant losses this session (-24.6% ROI)"
+        ],
+        "isHeated": true,
+        "framing": "loss",
+        "heatSignals": [
+          "Stakes more than doubled while chasing losses"
+        ],
+        "betIndices": [
+          38,
+          39,
+          40
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-019",
+        "date": "Nov 22, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "5:07 PM",
+        "endTime": "7:31 PM",
+        "durationMinutes": 144,
+        "bets": 6,
+        "wins": 0,
+        "losses": 6,
+        "pushes": 0,
+        "staked": 133,
+        "profit": -133,
+        "roi": -100,
+        "avgStake": 22.17,
+        "startingStake": 10,
+        "endingStake": 23,
+        "stakeEscalation": 2.3,
+        "maxStake": 34,
+        "minStake": 10,
+        "stakeCv": 0.37,
+        "betsPerHour": 2.5,
+        "longestLossStreak": 6,
+        "chasedAfterLoss": true,
+        "chaseCount": 4,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Chased losses 4 times in a single session",
+          "6 consecutive losses without stopping"
+        ],
+        "isHeated": true,
+        "framing": "loss",
+        "heatSignals": [
+          "Stakes more than doubled while chasing losses"
+        ],
+        "betIndices": [
+          41,
+          42,
+          43,
+          44,
+          45,
+          46
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-020",
+        "date": "Nov 23, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "10:32 PM",
+        "endTime": "10:59 PM",
+        "durationMinutes": 27,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 40,
+        "profit": -40,
+        "roi": -100,
+        "avgStake": 20,
+        "startingStake": 14,
+        "endingStake": 26,
+        "stakeEscalation": 1.86,
+        "maxStake": 26,
+        "minStake": 14,
+        "stakeCv": 0.3,
+        "betsPerHour": 4.44,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Rapid-fire betting at 4.4 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          47,
+          48
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-021",
+        "date": "Nov 24, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "5:36 PM",
+        "endTime": "9:24 PM",
+        "durationMinutes": 228,
+        "bets": 3,
+        "wins": 2,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 45,
+        "profit": -1.67,
+        "roi": -3.71,
+        "avgStake": 15,
+        "startingStake": 12,
+        "endingStake": 14,
+        "stakeEscalation": 1.17,
+        "maxStake": 19,
+        "minStake": 12,
+        "stakeCv": 0.2,
+        "betsPerHour": 0.79,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          49,
+          50,
+          51
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-022",
+        "date": "Nov 26, 2025",
+        "dayOfWeek": "Wednesday",
+        "startTime": "6:02 PM",
+        "endTime": "9:29 PM",
+        "durationMinutes": 207,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 89,
+        "profit": -89,
+        "roi": -100,
+        "avgStake": 22.25,
+        "startingStake": 11,
+        "endingStake": 34,
+        "stakeEscalation": 3.09,
+        "maxStake": 34,
+        "minStake": 11,
+        "stakeCv": 0.38,
+        "betsPerHour": 1.16,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": true,
+        "framing": "loss",
+        "heatSignals": [
+          "Stakes more than doubled while chasing losses"
+        ],
+        "betIndices": [
+          52,
+          53,
+          54,
+          55
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-023",
+        "date": "Nov 27, 2025",
+        "dayOfWeek": "Thursday",
+        "startTime": "9:23 PM",
+        "endTime": "9:55 PM",
+        "durationMinutes": 32,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 88,
+        "profit": 68,
+        "roi": 77.27,
+        "avgStake": 29.33,
+        "startingStake": 34,
+        "endingStake": 26,
+        "stakeEscalation": 0.76,
+        "maxStake": 34,
+        "minStake": 26,
+        "stakeCv": 0.12,
+        "betsPerHour": 5.63,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 5.6 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          56,
+          57,
+          58
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-024",
+        "date": "Nov 29, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "7:12 PM",
+        "endTime": "7:47 PM",
+        "durationMinutes": 35,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 68,
+        "profit": -68,
+        "roi": -100,
+        "avgStake": 34,
+        "startingStake": 30,
+        "endingStake": 38,
+        "stakeEscalation": 1.27,
+        "maxStake": 38,
+        "minStake": 30,
+        "stakeCv": 0.12,
+        "betsPerHour": 3.43,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.4 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          59,
+          60
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-025",
+        "date": "Nov 30, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "10:05 PM",
+        "endTime": "10:05 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 15,
+        "profit": 10,
+        "roi": 66.67,
+        "avgStake": 15,
+        "startingStake": 15,
+        "endingStake": 15,
+        "stakeEscalation": 1,
+        "maxStake": 15,
+        "minStake": 15,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          61
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-026",
+        "date": "Dec 1, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "7:01 PM",
+        "endTime": "7:35 PM",
+        "durationMinutes": 34,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 37,
+        "profit": -37,
+        "roi": -100,
+        "avgStake": 18.5,
+        "startingStake": 17,
+        "endingStake": 20,
+        "stakeEscalation": 1.18,
+        "maxStake": 20,
+        "minStake": 17,
+        "stakeCv": 0.08,
+        "betsPerHour": 3.53,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.5 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          62,
+          63
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-027",
+        "date": "Dec 3, 2025",
+        "dayOfWeek": "Wednesday",
+        "startTime": "10:08 PM",
+        "endTime": "10:25 PM",
+        "durationMinutes": 17,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 36,
+        "profit": -36,
+        "roi": -100,
+        "avgStake": 18,
+        "startingStake": 19,
+        "endingStake": 17,
+        "stakeEscalation": 0.89,
+        "maxStake": 19,
+        "minStake": 17,
+        "stakeCv": 0.06,
+        "betsPerHour": 7.06,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 7.1 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          64,
+          65
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-028",
+        "date": "Dec 6, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "8:41 PM",
+        "endTime": "8:41 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 13,
+        "profit": 8.67,
+        "roi": 66.69,
+        "avgStake": 13,
+        "startingStake": 13,
+        "endingStake": 13,
+        "stakeEscalation": 1,
+        "maxStake": 13,
+        "minStake": 13,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          66
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-029",
+        "date": "Dec 7, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "8:49 PM",
+        "endTime": "10:44 PM",
+        "durationMinutes": 115,
+        "bets": 3,
+        "wins": 3,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 50,
+        "profit": 252.67,
+        "roi": 505.34,
+        "avgStake": 16.67,
+        "startingStake": 16,
+        "endingStake": 16,
+        "stakeEscalation": 1,
+        "maxStake": 18,
+        "minStake": 16,
+        "stakeCv": 0.06,
+        "betsPerHour": 1.57,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          67,
+          68,
+          69
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-030",
+        "date": "Dec 9, 2025",
+        "dayOfWeek": "Tuesday",
+        "startTime": "5:36 PM",
+        "endTime": "9:52 PM",
+        "durationMinutes": 256,
+        "bets": 5,
+        "wins": 1,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 78,
+        "profit": -56.33,
+        "roi": -72.22,
+        "avgStake": 15.6,
+        "startingStake": 15,
+        "endingStake": 17,
+        "stakeEscalation": 1.13,
+        "maxStake": 25,
+        "minStake": 8,
+        "stakeCv": 0.36,
+        "betsPerHour": 1.17,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-72.2% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          70,
+          71,
+          72,
+          73,
+          74
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-031",
+        "date": "Dec 10, 2025",
+        "dayOfWeek": "Wednesday",
+        "startTime": "7:02 PM",
+        "endTime": "7:40 PM",
+        "durationMinutes": 38,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 62,
+        "profit": -62,
+        "roi": -100,
+        "avgStake": 31,
+        "startingStake": 34,
+        "endingStake": 28,
+        "stakeEscalation": 0.82,
+        "maxStake": 34,
+        "minStake": 28,
+        "stakeCv": 0.1,
+        "betsPerHour": 3.16,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.2 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          75,
+          76
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-032",
+        "date": "Dec 11, 2025",
+        "dayOfWeek": "Thursday",
+        "startTime": "7:49 PM",
+        "endTime": "8:26 PM",
+        "durationMinutes": 37,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 49,
+        "profit": -49,
+        "roi": -100,
+        "avgStake": 24.5,
+        "startingStake": 15,
+        "endingStake": 34,
+        "stakeEscalation": 2.27,
+        "maxStake": 34,
+        "minStake": 15,
+        "stakeCv": 0.39,
+        "betsPerHour": 3.24,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          77,
+          78
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-033",
+        "date": "Dec 12, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "10:48 PM",
+        "endTime": "10:48 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 34,
+        "profit": -34,
+        "roi": -100,
+        "avgStake": 34,
+        "startingStake": 34,
+        "endingStake": 34,
+        "stakeEscalation": 1,
+        "maxStake": 34,
+        "minStake": 34,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          79
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-034",
+        "date": "Dec 13, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "5:25 PM",
+        "endTime": "6:05 PM",
+        "durationMinutes": 40,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 40,
+        "profit": -40,
+        "roi": -100,
+        "avgStake": 20,
+        "startingStake": 17,
+        "endingStake": 23,
+        "stakeEscalation": 1.35,
+        "maxStake": 23,
+        "minStake": 17,
+        "stakeCv": 0.15,
+        "betsPerHour": 3,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          80,
+          81
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-035",
+        "date": "Dec 14, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "6:57 PM",
+        "endTime": "6:57 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 30,
+        "profit": 270,
+        "roi": 900,
+        "avgStake": 30,
+        "startingStake": 30,
+        "endingStake": 30,
+        "stakeEscalation": 1,
+        "maxStake": 30,
+        "minStake": 30,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          82
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-036",
+        "date": "Dec 15, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "5:16 PM",
+        "endTime": "8:52 PM",
+        "durationMinutes": 216,
+        "bets": 5,
+        "wins": 2,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 116,
+        "profit": 109.67,
+        "roi": 94.54,
+        "avgStake": 23.2,
+        "startingStake": 34,
+        "endingStake": 13,
+        "stakeEscalation": 0.38,
+        "maxStake": 34,
+        "minStake": 13,
+        "stakeCv": 0.36,
+        "betsPerHour": 1.39,
+        "longestLossStreak": 3,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "3 consecutive losses"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          83,
+          84,
+          85,
+          86,
+          87
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-037",
+        "date": "Dec 16, 2025",
+        "dayOfWeek": "Tuesday",
+        "startTime": "8:57 PM",
+        "endTime": "8:57 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 10,
+        "profit": 6.67,
+        "roi": 66.7,
+        "avgStake": 10,
+        "startingStake": 10,
+        "endingStake": 10,
+        "stakeEscalation": 1,
+        "maxStake": 10,
+        "minStake": 10,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          88
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-038",
+        "date": "Dec 19, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "6:01 PM",
+        "endTime": "7:33 PM",
+        "durationMinutes": 92,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 72,
+        "profit": -47,
+        "roi": -65.28,
+        "avgStake": 24,
+        "startingStake": 33,
+        "endingStake": 24,
+        "stakeEscalation": 0.73,
+        "maxStake": 33,
+        "minStake": 15,
+        "stakeCv": 0.31,
+        "betsPerHour": 1.96,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Heavy losses this session (-65.3% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          89,
+          90,
+          91
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-039",
+        "date": "Dec 20, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "5:45 PM",
+        "endTime": "10:59 PM",
+        "durationMinutes": 314,
+        "bets": 5,
+        "wins": 2,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 96,
+        "profit": -46,
+        "roi": -47.92,
+        "avgStake": 19.2,
+        "startingStake": 18,
+        "endingStake": 32,
+        "stakeEscalation": 1.78,
+        "maxStake": 32,
+        "minStake": 14,
+        "stakeCv": 0.34,
+        "betsPerHour": 0.96,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-47.9% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          92,
+          93,
+          94,
+          95,
+          96
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-040",
+        "date": "Dec 21, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "5:46 PM",
+        "endTime": "6:30 PM",
+        "durationMinutes": 44,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 47,
+        "profit": -47,
+        "roi": -100,
+        "avgStake": 23.5,
+        "startingStake": 16,
+        "endingStake": 31,
+        "stakeEscalation": 1.94,
+        "maxStake": 31,
+        "minStake": 16,
+        "stakeCv": 0.32,
+        "betsPerHour": 2.73,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          97,
+          98
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-041",
+        "date": "Dec 22, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "7:46 PM",
+        "endTime": "7:46 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 35,
+        "profit": -35,
+        "roi": -100,
+        "avgStake": 35,
+        "startingStake": 35,
+        "endingStake": 35,
+        "stakeEscalation": 1,
+        "maxStake": 35,
+        "minStake": 35,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          99
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-042",
+        "date": "Dec 24, 2025",
+        "dayOfWeek": "Wednesday",
+        "startTime": "10:52 PM",
+        "endTime": "10:52 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 18,
+        "profit": 12,
+        "roi": 66.67,
+        "avgStake": 18,
+        "startingStake": 18,
+        "endingStake": 18,
+        "stakeEscalation": 1,
+        "maxStake": 18,
+        "minStake": 18,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          100
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-043",
+        "date": "Dec 26, 2025",
+        "dayOfWeek": "Friday",
+        "startTime": "5:58 PM",
+        "endTime": "5:58 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 15,
+        "profit": 10,
+        "roi": 66.67,
+        "avgStake": 15,
+        "startingStake": 15,
+        "endingStake": 15,
+        "stakeEscalation": 1,
+        "maxStake": 15,
+        "minStake": 15,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          101
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-044",
+        "date": "Dec 27, 2025",
+        "dayOfWeek": "Saturday",
+        "startTime": "8:41 PM",
+        "endTime": "10:16 PM",
+        "durationMinutes": 95,
+        "bets": 2,
+        "wins": 1,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 39,
+        "profit": -10.67,
+        "roi": -27.36,
+        "avgStake": 19.5,
+        "startingStake": 17,
+        "endingStake": 22,
+        "stakeEscalation": 1.29,
+        "maxStake": 22,
+        "minStake": 17,
+        "stakeCv": 0.13,
+        "betsPerHour": 1.26,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Significant losses this session (-27.4% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          102,
+          103
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-045",
+        "date": "Dec 28, 2025",
+        "dayOfWeek": "Sunday",
+        "startTime": "6:30 PM",
+        "endTime": "6:30 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 17,
+        "profit": -17,
+        "roi": -100,
+        "avgStake": 17,
+        "startingStake": 17,
+        "endingStake": 17,
+        "stakeEscalation": 1,
+        "maxStake": 17,
+        "minStake": 17,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          104
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-046",
+        "date": "Dec 29, 2025",
+        "dayOfWeek": "Monday",
+        "startTime": "7:21 PM",
+        "endTime": "10:23 PM",
+        "durationMinutes": 182,
+        "bets": 8,
+        "wins": 1,
+        "losses": 7,
+        "pushes": 0,
+        "staked": 190,
+        "profit": 270,
+        "roi": 142.11,
+        "avgStake": 23.75,
+        "startingStake": 18,
+        "endingStake": 23,
+        "stakeEscalation": 1.28,
+        "maxStake": 34,
+        "minStake": 17,
+        "stakeCv": 0.25,
+        "betsPerHour": 2.64,
+        "longestLossStreak": 7,
+        "chasedAfterLoss": true,
+        "chaseCount": 5,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Chased losses 5 times in a single session",
+          "7 consecutive losses without stopping",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-047",
+        "date": "Dec 30, 2025",
+        "dayOfWeek": "Tuesday",
+        "startTime": "6:17 PM",
+        "endTime": "9:33 PM",
+        "durationMinutes": 196,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 105,
+        "profit": -105,
+        "roi": -100,
+        "avgStake": 26.25,
+        "startingStake": 32,
+        "endingStake": 19,
+        "stakeEscalation": 0.59,
+        "maxStake": 32,
+        "minStake": 19,
+        "stakeCv": 0.19,
+        "betsPerHour": 1.22,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "4 consecutive losses"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          113,
+          114,
+          115,
+          116
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-048",
+        "date": "Jan 1, 2026",
+        "dayOfWeek": "Thursday",
+        "startTime": "8:23 PM",
+        "endTime": "10:14 PM",
+        "durationMinutes": 111,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 70,
+        "profit": -70,
+        "roi": -100,
+        "avgStake": 17.5,
+        "startingStake": 11,
+        "endingStake": 16,
+        "stakeEscalation": 1.45,
+        "maxStake": 29,
+        "minStake": 11,
+        "stakeCv": 0.39,
+        "betsPerHour": 2.16,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "4 consecutive losses"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          117,
+          118,
+          119,
+          120
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-049",
+        "date": "Jan 3, 2026",
+        "dayOfWeek": "Saturday",
+        "startTime": "5:40 PM",
+        "endTime": "10:00 PM",
+        "durationMinutes": 260,
+        "bets": 7,
+        "wins": 1,
+        "losses": 6,
+        "pushes": 0,
+        "staked": 133,
+        "profit": -119.67,
+        "roi": -89.98,
+        "avgStake": 19,
+        "startingStake": 28,
+        "endingStake": 19,
+        "stakeEscalation": 0.68,
+        "maxStake": 33,
+        "minStake": 8,
+        "stakeCv": 0.43,
+        "betsPerHour": 1.62,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 3,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Chased losses 3 times in a single session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-90.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-050",
+        "date": "Jan 4, 2026",
+        "dayOfWeek": "Sunday",
+        "startTime": "8:15 PM",
+        "endTime": "8:51 PM",
+        "durationMinutes": 36,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 71,
+        "profit": -42.67,
+        "roi": -60.1,
+        "avgStake": 23.67,
+        "startingStake": 33,
+        "endingStake": 17,
+        "stakeEscalation": 0.52,
+        "maxStake": 33,
+        "minStake": 17,
+        "stakeCv": 0.29,
+        "betsPerHour": 5,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 5.0 bets/hour",
+          "Heavy losses this session (-60.1% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          128,
+          129,
+          130
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-051",
+        "date": "Jan 5, 2026",
+        "dayOfWeek": "Monday",
+        "startTime": "5:30 PM",
+        "endTime": "5:30 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 14,
+        "profit": 9.33,
+        "roi": 66.64,
+        "avgStake": 14,
+        "startingStake": 14,
+        "endingStake": 14,
+        "stakeEscalation": 1,
+        "maxStake": 14,
+        "minStake": 14,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          131
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-052",
+        "date": "Jan 5, 2026",
+        "dayOfWeek": "Monday",
+        "startTime": "10:39 PM",
+        "endTime": "11:20 PM",
+        "durationMinutes": 41,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 45,
+        "profit": -45,
+        "roi": -100,
+        "avgStake": 22.5,
+        "startingStake": 12,
+        "endingStake": 33,
+        "stakeEscalation": 2.75,
+        "maxStake": 33,
+        "minStake": 12,
+        "stakeCv": 0.47,
+        "betsPerHour": 2.93,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": true,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          132,
+          133
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-053",
+        "date": "Jan 7, 2026",
+        "dayOfWeek": "Wednesday",
+        "startTime": "5:04 PM",
+        "endTime": "5:40 PM",
+        "durationMinutes": 36,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 35,
+        "profit": -35,
+        "roi": -100,
+        "avgStake": 17.5,
+        "startingStake": 17,
+        "endingStake": 18,
+        "stakeEscalation": 1.06,
+        "maxStake": 18,
+        "minStake": 17,
+        "stakeCv": 0.03,
+        "betsPerHour": 3.33,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)",
+          "Elevated pace at 3.3 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          134,
+          135
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-054",
+        "date": "Jan 9, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "7:01 PM",
+        "endTime": "8:04 PM",
+        "durationMinutes": 63,
+        "bets": 4,
+        "wins": 0,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 100,
+        "profit": -100,
+        "roi": -100,
+        "avgStake": 25,
+        "startingStake": 8,
+        "endingStake": 31,
+        "stakeEscalation": 3.88,
+        "maxStake": 34,
+        "minStake": 8,
+        "stakeCv": 0.4,
+        "betsPerHour": 3.81,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": true,
+        "framing": "loss",
+        "heatSignals": [
+          "Stakes more than doubled while chasing losses"
+        ],
+        "betIndices": [
+          136,
+          137,
+          138,
+          139
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-055",
+        "date": "Jan 10, 2026",
+        "dayOfWeek": "Saturday",
+        "startTime": "6:13 PM",
+        "endTime": "9:44 PM",
+        "durationMinutes": 211,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 61,
+        "profit": -42.67,
+        "roi": -69.95,
+        "avgStake": 20.33,
+        "startingStake": 23,
+        "endingStake": 11,
+        "stakeEscalation": 0.48,
+        "maxStake": 27,
+        "minStake": 11,
+        "stakeCv": 0.33,
+        "betsPerHour": 0.85,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-70.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          140,
+          141,
+          142
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-056",
+        "date": "Jan 11, 2026",
+        "dayOfWeek": "Sunday",
+        "startTime": "5:55 PM",
+        "endTime": "5:55 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 11,
+        "profit": 7.33,
+        "roi": 66.64,
+        "avgStake": 11,
+        "startingStake": 11,
+        "endingStake": 11,
+        "stakeEscalation": 1,
+        "maxStake": 11,
+        "minStake": 11,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          143
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-057",
+        "date": "Jan 12, 2026",
+        "dayOfWeek": "Monday",
+        "startTime": "5:30 PM",
+        "endTime": "7:11 PM",
+        "durationMinutes": 101,
+        "bets": 5,
+        "wins": 1,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 96,
+        "profit": -74.33,
+        "roi": -77.43,
+        "avgStake": 19.2,
+        "startingStake": 30,
+        "endingStake": 13,
+        "stakeEscalation": 0.43,
+        "maxStake": 30,
+        "minStake": 13,
+        "stakeCv": 0.33,
+        "betsPerHour": 2.97,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-77.4% ROI)",
+          "Elevated pace at 3.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          144,
+          145,
+          146,
+          147,
+          148
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-058",
+        "date": "Jan 14, 2026",
+        "dayOfWeek": "Wednesday",
+        "startTime": "5:05 PM",
+        "endTime": "7:13 PM",
+        "durationMinutes": 128,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 51,
+        "profit": -29.33,
+        "roi": -57.51,
+        "avgStake": 17,
+        "startingStake": 13,
+        "endingStake": 17,
+        "stakeEscalation": 1.31,
+        "maxStake": 21,
+        "minStake": 13,
+        "stakeCv": 0.19,
+        "betsPerHour": 1.41,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Heavy losses this session (-57.5% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          149,
+          150,
+          151
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-059",
+        "date": "Jan 14, 2026",
+        "dayOfWeek": "Wednesday",
+        "startTime": "10:42 PM",
+        "endTime": "11:14 PM",
+        "durationMinutes": 32,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 53,
+        "profit": -53,
+        "roi": -100,
+        "avgStake": 26.5,
+        "startingStake": 17,
+        "endingStake": 36,
+        "stakeEscalation": 2.12,
+        "maxStake": 36,
+        "minStake": 17,
+        "stakeCv": 0.36,
+        "betsPerHour": 3.75,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": true,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          152,
+          153
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-060",
+        "date": "Jan 15, 2026",
+        "dayOfWeek": "Thursday",
+        "startTime": "6:40 PM",
+        "endTime": "7:57 PM",
+        "durationMinutes": 77,
+        "bets": 2,
+        "wins": 1,
+        "losses": 1,
+        "pushes": 0,
+        "staked": 37,
+        "profit": 77,
+        "roi": 208.11,
+        "avgStake": 18.5,
+        "startingStake": 18,
+        "endingStake": 19,
+        "stakeEscalation": 1.06,
+        "maxStake": 19,
+        "minStake": 18,
+        "stakeCv": 0.03,
+        "betsPerHour": 1.56,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          154,
+          155
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-061",
+        "date": "Jan 16, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "5:18 PM",
+        "endTime": "5:18 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 10,
+        "profit": 6.67,
+        "roi": 66.7,
+        "avgStake": 10,
+        "startingStake": 10,
+        "endingStake": 10,
+        "stakeEscalation": 1,
+        "maxStake": 10,
+        "minStake": 10,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          156
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-062",
+        "date": "Jan 16, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "9:40 PM",
+        "endTime": "10:18 PM",
+        "durationMinutes": 38,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 44,
+        "profit": -44,
+        "roi": -100,
+        "avgStake": 22,
+        "startingStake": 14,
+        "endingStake": 30,
+        "stakeEscalation": 2.14,
+        "maxStake": 30,
+        "minStake": 14,
+        "stakeCv": 0.36,
+        "betsPerHour": 3.16,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          157,
+          158
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-063",
+        "date": "Jan 17, 2026",
+        "dayOfWeek": "Saturday",
+        "startTime": "10:45 PM",
+        "endTime": "10:45 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 26,
+        "profit": 130,
+        "roi": 500,
+        "avgStake": 26,
+        "startingStake": 26,
+        "endingStake": 26,
+        "stakeEscalation": 1,
+        "maxStake": 26,
+        "minStake": 26,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          159
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-064",
+        "date": "Jan 18, 2026",
+        "dayOfWeek": "Sunday",
+        "startTime": "8:53 PM",
+        "endTime": "10:25 PM",
+        "durationMinutes": 92,
+        "bets": 5,
+        "wins": 1,
+        "losses": 4,
+        "pushes": 0,
+        "staked": 84,
+        "profit": -67.33,
+        "roi": -80.15,
+        "avgStake": 16.8,
+        "startingStake": 10,
+        "endingStake": 27,
+        "stakeEscalation": 2.7,
+        "maxStake": 27,
+        "minStake": 10,
+        "stakeCv": 0.39,
+        "betsPerHour": 3.26,
+        "longestLossStreak": 4,
+        "chasedAfterLoss": true,
+        "chaseCount": 2,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-80.2% ROI)"
+        ],
+        "isHeated": true,
+        "framing": "loss",
+        "heatSignals": [
+          "Stakes more than doubled while chasing losses"
+        ],
+        "betIndices": [
+          160,
+          161,
+          162,
+          163,
+          164
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-065",
+        "date": "Jan 19, 2026",
+        "dayOfWeek": "Monday",
+        "startTime": "8:51 PM",
+        "endTime": "9:13 PM",
+        "durationMinutes": 22,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 47,
+        "profit": -47,
+        "roi": -100,
+        "avgStake": 23.5,
+        "startingStake": 20,
+        "endingStake": 27,
+        "stakeEscalation": 1.35,
+        "maxStake": 27,
+        "minStake": 20,
+        "stakeCv": 0.15,
+        "betsPerHour": 5.45,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 5.5 bets/hour",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          165,
+          166
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-066",
+        "date": "Jan 20, 2026",
+        "dayOfWeek": "Tuesday",
+        "startTime": "10:51 PM",
+        "endTime": "11:31 PM",
+        "durationMinutes": 40,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 36,
+        "profit": -36,
+        "roi": -100,
+        "avgStake": 18,
+        "startingStake": 12,
+        "endingStake": 24,
+        "stakeEscalation": 2,
+        "maxStake": 24,
+        "minStake": 12,
+        "stakeCv": 0.33,
+        "betsPerHour": 3,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": true,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          167,
+          168
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-067",
+        "date": "Jan 21, 2026",
+        "dayOfWeek": "Wednesday",
+        "startTime": "5:03 PM",
+        "endTime": "10:09 PM",
+        "durationMinutes": 306,
+        "bets": 5,
+        "wins": 3,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 81,
+        "profit": -1.01,
+        "roi": -1.25,
+        "avgStake": 16.2,
+        "startingStake": 14,
+        "endingStake": 17,
+        "stakeEscalation": 1.21,
+        "maxStake": 20,
+        "minStake": 11,
+        "stakeCv": 0.2,
+        "betsPerHour": 0.98,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          169,
+          170,
+          171,
+          172,
+          173
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-068",
+        "date": "Jan 22, 2026",
+        "dayOfWeek": "Thursday",
+        "startTime": "7:32 PM",
+        "endTime": "8:00 PM",
+        "durationMinutes": 28,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 48,
+        "profit": -48,
+        "roi": -100,
+        "avgStake": 24,
+        "startingStake": 19,
+        "endingStake": 29,
+        "stakeEscalation": 1.53,
+        "maxStake": 29,
+        "minStake": 19,
+        "stakeCv": 0.21,
+        "betsPerHour": 4.29,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Rapid-fire betting at 4.3 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          174,
+          175
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-069",
+        "date": "Jan 23, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "6:58 PM",
+        "endTime": "7:24 PM",
+        "durationMinutes": 26,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 47,
+        "profit": -47,
+        "roi": -100,
+        "avgStake": 23.5,
+        "startingStake": 20,
+        "endingStake": 27,
+        "stakeEscalation": 1.35,
+        "maxStake": 27,
+        "minStake": 20,
+        "stakeCv": 0.15,
+        "betsPerHour": 4.62,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "B",
+        "gradeReasons": [
+          "Rapid-fire betting at 4.6 bets/hour",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          176,
+          177
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-070",
+        "date": "Jan 23, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "10:26 PM",
+        "endTime": "10:26 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 13,
+        "profit": 65,
+        "roi": 500,
+        "avgStake": 13,
+        "startingStake": 13,
+        "endingStake": 13,
+        "stakeEscalation": 1,
+        "maxStake": 13,
+        "minStake": 13,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          178
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-071",
+        "date": "Jan 24, 2026",
+        "dayOfWeek": "Saturday",
+        "startTime": "6:58 PM",
+        "endTime": "9:02 PM",
+        "durationMinutes": 124,
+        "bets": 4,
+        "wins": 1,
+        "losses": 3,
+        "pushes": 0,
+        "staked": 91,
+        "profit": -69.33,
+        "roi": -76.19,
+        "avgStake": 22.75,
+        "startingStake": 13,
+        "endingStake": 33,
+        "stakeEscalation": 2.54,
+        "maxStake": 33,
+        "minStake": 13,
+        "stakeCv": 0.39,
+        "betsPerHour": 1.94,
+        "longestLossStreak": 3,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-76.2% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          179,
+          180,
+          181,
+          182
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-072",
+        "date": "Jan 25, 2026",
+        "dayOfWeek": "Sunday",
+        "startTime": "6:32 PM",
+        "endTime": "10:02 PM",
+        "durationMinutes": 210,
+        "bets": 5,
+        "wins": 3,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 96,
+        "profit": 113,
+        "roi": 117.71,
+        "avgStake": 19.2,
+        "startingStake": 29,
+        "endingStake": 23,
+        "stakeEscalation": 0.79,
+        "maxStake": 29,
+        "minStake": 9,
+        "stakeCv": 0.39,
+        "betsPerHour": 1.43,
+        "longestLossStreak": 1,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          183,
+          184,
+          185,
+          186,
+          187
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-073",
+        "date": "Jan 26, 2026",
+        "dayOfWeek": "Monday",
+        "startTime": "9:51 PM",
+        "endTime": "10:17 PM",
+        "durationMinutes": 26,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 37,
+        "profit": -37,
+        "roi": -100,
+        "avgStake": 18.5,
+        "startingStake": 11,
+        "endingStake": 26,
+        "stakeEscalation": 2.36,
+        "maxStake": 26,
+        "minStake": 11,
+        "stakeCv": 0.41,
+        "betsPerHour": 4.62,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Rapid-fire betting at 4.6 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          188,
+          189
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-074",
+        "date": "Jan 27, 2026",
+        "dayOfWeek": "Tuesday",
+        "startTime": "8:33 PM",
+        "endTime": "8:59 PM",
+        "durationMinutes": 26,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 37,
+        "profit": -37,
+        "roi": -100,
+        "avgStake": 18.5,
+        "startingStake": 11,
+        "endingStake": 26,
+        "stakeEscalation": 2.36,
+        "maxStake": 26,
+        "minStake": 11,
+        "stakeCv": 0.41,
+        "betsPerHour": 4.62,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "D",
+        "gradeReasons": [
+          "Stakes escalated more than 2x from start to finish",
+          "Rapid-fire betting at 4.6 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          190,
+          191
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-075",
+        "date": "Jan 28, 2026",
+        "dayOfWeek": "Wednesday",
+        "startTime": "10:20 PM",
+        "endTime": "11:05 PM",
+        "durationMinutes": 45,
+        "bets": 3,
+        "wins": 1,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 68,
+        "profit": -39.67,
+        "roi": -58.34,
+        "avgStake": 22.67,
+        "startingStake": 17,
+        "endingStake": 32,
+        "stakeEscalation": 1.88,
+        "maxStake": 32,
+        "minStake": 17,
+        "stakeCv": 0.29,
+        "betsPerHour": 4,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": true,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-58.3% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          192,
+          193,
+          194
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-076",
+        "date": "Jan 29, 2026",
+        "dayOfWeek": "Thursday",
+        "startTime": "5:53 PM",
+        "endTime": "5:53 PM",
+        "durationMinutes": 0,
+        "bets": 1,
+        "wins": 1,
+        "losses": 0,
+        "pushes": 0,
+        "staked": 15,
+        "profit": 10,
+        "roi": 66.67,
+        "avgStake": 15,
+        "startingStake": 15,
+        "endingStake": 15,
+        "stakeEscalation": 1,
+        "maxStake": 15,
+        "minStake": 15,
+        "stakeCv": 0,
+        "betsPerHour": 10,
+        "longestLossStreak": 0,
+        "chasedAfterLoss": false,
+        "chaseCount": 0,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "A",
+        "gradeReasons": [
+          "Rapid-fire betting at 10.0 bets/hour"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          195
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-077",
+        "date": "Jan 30, 2026",
+        "dayOfWeek": "Friday",
+        "startTime": "5:09 PM",
+        "endTime": "5:37 PM",
+        "durationMinutes": 28,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 59,
+        "profit": -59,
+        "roi": -100,
+        "avgStake": 29.5,
+        "startingStake": 23,
+        "endingStake": 36,
+        "stakeEscalation": 1.57,
+        "maxStake": 36,
+        "minStake": 23,
+        "stakeCv": 0.22,
+        "betsPerHour": 4.29,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Rapid-fire betting at 4.3 bets/hour",
+          "Stepped up stakes from a prior losing bet"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          196,
+          197
+        ],
+        "profitVisibility": "visible"
+      },
+      {
+        "id": "SESSION-078",
+        "date": "Jan 31, 2026",
+        "dayOfWeek": "Saturday",
+        "startTime": "9:07 PM",
+        "endTime": "9:51 PM",
+        "durationMinutes": 44,
+        "bets": 2,
+        "wins": 0,
+        "losses": 2,
+        "pushes": 0,
+        "staked": 56,
+        "profit": -56,
+        "roi": -100,
+        "avgStake": 28,
+        "startingStake": 21,
+        "endingStake": 35,
+        "stakeEscalation": 1.67,
+        "maxStake": 35,
+        "minStake": 21,
+        "stakeCv": 0.25,
+        "betsPerHour": 2.73,
+        "longestLossStreak": 2,
+        "chasedAfterLoss": true,
+        "chaseCount": 1,
+        "lateNight": false,
+        "lateNightKnown": true,
+        "grade": "C",
+        "gradeReasons": [
+          "Stakes escalated more than 1.5x during the session",
+          "Stepped up stakes from a prior losing bet",
+          "Heavy losses this session (-100.0% ROI)"
+        ],
+        "isHeated": false,
+        "heatSignals": [],
+        "betIndices": [
+          198,
+          199
+        ],
+        "profitVisibility": "visible"
+      }
+    ],
+    "totalSessions": 78,
+    "avgSessionLength": 2.56,
+    "avgSessionDuration": 74.69,
+    "sessionGradeDistribution": [
+      {
+        "grade": "A",
+        "count": 29,
+        "percent": 37.18
+      },
+      {
+        "grade": "B",
+        "count": 24,
+        "percent": 30.77
+      },
+      {
+        "grade": "C",
+        "count": 16,
+        "percent": 20.51
+      },
+      {
+        "grade": "D",
+        "count": 9,
+        "percent": 11.54
+      },
+      {
+        "grade": "F",
+        "count": 0,
+        "percent": 0
+      }
+    ],
+    "heatedSessionCount": 5,
+    "heatedSessionPercent": 6.41,
+    "avgGradedROI": {
+      "A": 114.83,
+      "B": -91.79,
+      "C": -75.44,
+      "D": -97.79
+    },
+    "bestSession": {
+      "id": "SESSION-035",
+      "date": "Dec 14, 2025",
+      "dayOfWeek": "Sunday",
+      "startTime": "6:57 PM",
+      "endTime": "6:57 PM",
+      "durationMinutes": 0,
+      "bets": 1,
+      "wins": 1,
+      "losses": 0,
+      "pushes": 0,
+      "staked": 30,
+      "profit": 270,
+      "roi": 900,
+      "avgStake": 30,
+      "startingStake": 30,
+      "endingStake": 30,
+      "stakeEscalation": 1,
+      "maxStake": 30,
+      "minStake": 30,
+      "stakeCv": 0,
+      "betsPerHour": 10,
+      "longestLossStreak": 0,
+      "chasedAfterLoss": false,
+      "chaseCount": 0,
+      "lateNight": false,
+      "lateNightKnown": true,
+      "grade": "A",
+      "gradeReasons": [
+        "Rapid-fire betting at 10.0 bets/hour"
+      ],
+      "isHeated": false,
+      "heatSignals": [],
+      "betIndices": [
+        82
+      ],
+      "profitVisibility": "visible"
+    },
+    "worstSession": {
+      "id": "SESSION-019",
+      "date": "Nov 22, 2025",
+      "dayOfWeek": "Saturday",
+      "startTime": "5:07 PM",
+      "endTime": "7:31 PM",
+      "durationMinutes": 144,
+      "bets": 6,
+      "wins": 0,
+      "losses": 6,
+      "pushes": 0,
+      "staked": 133,
+      "profit": -133,
+      "roi": -100,
+      "avgStake": 22.17,
+      "startingStake": 10,
+      "endingStake": 23,
+      "stakeEscalation": 2.3,
+      "maxStake": 34,
+      "minStake": 10,
+      "stakeCv": 0.37,
+      "betsPerHour": 2.5,
+      "longestLossStreak": 6,
+      "chasedAfterLoss": true,
+      "chaseCount": 4,
+      "lateNight": false,
+      "lateNightKnown": true,
+      "grade": "D",
+      "gradeReasons": [
+        "Stakes escalated more than 2x from start to finish",
+        "Chased losses 4 times in a single session",
+        "6 consecutive losses without stopping"
+      ],
+      "isHeated": true,
+      "framing": "loss",
+      "heatSignals": [
+        "Stakes more than doubled while chasing losses"
+      ],
+      "betIndices": [
+        41,
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "betSnapshots": [
+        {
+          "placed_at": "2025-11-22T17:07:00.000Z",
+          "description": "2-pick Flex: Tatum Over 4.5 3pt | Jalen Hurts Over 83.5 rec yds",
+          "stake": 10,
+          "profit": -10,
+          "result": "loss"
+        },
+        {
+          "placed_at": "2025-11-22T17:44:00.000Z",
+          "description": "5-pick Power: Jokic Over 5.5 3pt | Saquon Barkley Over 64.5 rush yds | Josh Allen Over 1.5 pass TDs | Lamb Over 252.5 pass yds | LeBron James Over 9.5 reb",
+          "stake": 21,
+          "profit": -21,
+          "result": "loss"
+        },
+        {
+          "placed_at": "2025-11-22T18:00:00.000Z",
+          "description": "3-pick Power: Jokic Over 6.5 reb | Doncic Over 81.5 rush yds | Josh Allen Over 6.5 3pt",
+          "stake": 30,
+          "profit": -30,
+          "result": "loss"
+        },
+        {
+          "placed_at": "2025-11-22T18:38:00.000Z",
+          "description": "6-pick Power: LeBron James Over 223.5 pass yds | Josh Allen Over 23.5 pts | Saquon Barkley Over 6.5 ast | LeBron James Over 57.5 rec yds | Jalen Hurts Over 80.5 rush yds | Lamar Jackson Over 261.5 pass yds",
+          "stake": 34,
+          "profit": -34,
+          "result": "loss"
+        },
+        {
+          "placed_at": "2025-11-22T19:12:00.000Z",
+          "description": "2-pick Power: Jalen Hurts Over 57.5 rush yds | Mahomes Over 9.5 reb",
+          "stake": 15,
+          "profit": -15,
+          "result": "loss"
+        },
+        {
+          "placed_at": "2025-11-22T19:31:00.000Z",
+          "description": "6-pick Power: Curry Over 19.5 pts | Tatum Over 6.5 reb | Doncic Over 9.5 reb | Tatum Over 1.5 pass TDs | Derrick Henry Over 7.5 ast | Jalen Hurts Over 3.5 3pt",
+          "stake": 23,
+          "profit": -23,
+          "result": "loss"
+        }
+      ],
+      "profitVisibility": "visible"
+    },
+    "insight": "Most sessions look disciplined, but 5 of 78 had heated moments worth reviewing."
+  },
+  "bet_annotations": {
+    "annotations": [
+      {
+        "betIndex": 0,
+        "betId": "demo-dfs-1",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [],
+        "primaryReason": "No significant signals",
+        "sessionId": "SESSION-001",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": null,
+        "currentStreak": 0
+      },
+      {
+        "betIndex": 1,
+        "betId": "demo-dfs-145",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "sessionId": "SESSION-001",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 26,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 2,
+        "betId": "demo-dfs-119",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "114 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "114 min since last bet",
+        "sessionId": "SESSION-001",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 114,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 3,
+        "betId": "demo-dfs-4",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2834 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 3-loss streak",
+        "sessionId": "SESSION-002",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.47,
+        "timeSinceLastBet": 2834,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 4,
+        "betId": "demo-dfs-114",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "4307 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "4307 min since last bet",
+        "sessionId": "SESSION-003",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 4307,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 5,
+        "betId": "demo-dfs-67",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "72 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "72 min since last bet",
+        "sessionId": "SESSION-003",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 72,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 6,
+        "betId": "demo-dfs-197",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-003",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 26,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 7,
+        "betId": "demo-dfs-76",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1108 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-004",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 1108,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 8,
+        "betId": "demo-dfs-165",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-004",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 40,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 9,
+        "betId": "demo-dfs-23",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "104 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-004",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 104,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 10,
+        "betId": "demo-dfs-168",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "sessionId": "SESSION-004",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.68,
+        "timeSinceLastBet": 20,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 11,
+        "betId": "demo-dfs-3",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1291 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-005",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 1291,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 12,
+        "betId": "demo-dfs-175",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "sessionId": "SESSION-005",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.32,
+        "timeSinceLastBet": 26,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 13,
+        "betId": "demo-dfs-109",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "255 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 9-loss streak",
+        "sessionId": "SESSION-006",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.63,
+        "timeSinceLastBet": 255,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 14,
+        "betId": "demo-dfs-163",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 10-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-006",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 27,
+        "currentStreak": -10
+      },
+      {
+        "betIndex": 15,
+        "betId": "demo-dfs-58",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 11-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1118 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 11-loss streak",
+        "sessionId": "SESSION-007",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.42,
+        "timeSinceLastBet": 1118,
+        "currentStreak": -11
+      },
+      {
+        "betIndex": 16,
+        "betId": "demo-dfs-68",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1514 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1514 min since last bet",
+        "sessionId": "SESSION-008",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 1514,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 17,
+        "betId": "demo-dfs-147",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-008",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 37,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 18,
+        "betId": "demo-dfs-7",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1381 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-009",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 1381,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 19,
+        "betId": "demo-dfs-70",
+        "classification": "impulsive",
+        "confidence": 75,
+        "signals": [
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 1.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "instant_rebet",
+            "weight": 7,
+            "description": "Rebet in under 1.0 minutes",
+            "category": "impulsive"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Rebet in under 1.0 minutes",
+        "sessionId": "SESSION-009",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 1,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 20,
+        "betId": "demo-dfs-135",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "sessionId": "SESSION-009",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 28,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 21,
+        "betId": "demo-dfs-125",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "158 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "sessionId": "SESSION-009",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 158,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 22,
+        "betId": "demo-dfs-32",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1247 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-010",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 1247,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 23,
+        "betId": "demo-dfs-53",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1651 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1651 min since last bet",
+        "sessionId": "SESSION-011",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.47,
+        "timeSinceLastBet": 1651,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 24,
+        "betId": "demo-dfs-171",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.7x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.7x from the prior losing bet",
+        "sessionId": "SESSION-011",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.26,
+        "timeSinceLastBet": 24,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 25,
+        "betId": "demo-dfs-71",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1389 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1389 min since last bet",
+        "sessionId": "SESSION-012",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 1389,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 26,
+        "betId": "demo-dfs-185",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-012",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 25,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 27,
+        "betId": "demo-dfs-64",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "86 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "sessionId": "SESSION-012",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 86,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 28,
+        "betId": "demo-dfs-178",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "late_night",
+            "weight": 3,
+            "description": "Placed at 11pm",
+            "category": "emotional"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-012",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 28,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 29,
+        "betId": "demo-dfs-118",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1183 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-013",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.47,
+        "timeSinceLastBet": 1183,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 30,
+        "betId": "demo-dfs-123",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1387 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-014",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.32,
+        "timeSinceLastBet": 1387,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 31,
+        "betId": "demo-dfs-40",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "165 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-014",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 165,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 32,
+        "betId": "demo-dfs-131",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1355 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-015",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 1355,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 33,
+        "betId": "demo-dfs-113",
+        "classification": "chasing",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1301 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "sessionId": "SESSION-016",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.84,
+        "timeSinceLastBet": 1301,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 34,
+        "betId": "demo-dfs-121",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-016",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.84,
+        "timeSinceLastBet": 59,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 35,
+        "betId": "demo-dfs-50",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "96 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-016",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 96,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 36,
+        "betId": "demo-dfs-73",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-016",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 44,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 37,
+        "betId": "demo-dfs-120",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2697 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "2697 min since last bet",
+        "sessionId": "SESSION-017",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.53,
+        "timeSinceLastBet": 2697,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 38,
+        "betId": "demo-dfs-35",
+        "classification": "chasing",
+        "confidence": 53,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1547 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-018",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.42,
+        "timeSinceLastBet": 1547,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 39,
+        "betId": "demo-dfs-176",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "sessionId": "SESSION-018",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 33,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 40,
+        "betId": "demo-dfs-52",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "87 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-018",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 87,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 41,
+        "betId": "demo-dfs-56",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1187 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Part of a heated session",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.53,
+        "timeSinceLastBet": 1187,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 42,
+        "betId": "demo-dfs-164",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 37,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 43,
+        "betId": "demo-dfs-65",
+        "classification": "chasing",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 16,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 44,
+        "betId": "demo-dfs-194",
+        "classification": "chasing",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 38,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 45,
+        "betId": "demo-dfs-15",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "5th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 34,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 46,
+        "betId": "demo-dfs-191",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "6th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "sessionId": "SESSION-019",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 19,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 47,
+        "betId": "demo-dfs-92",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1621 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-020",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 1621,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 48,
+        "betId": "demo-dfs-193",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "sessionId": "SESSION-020",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 27,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 49,
+        "betId": "demo-dfs-42",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1117 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-021",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 1117,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 50,
+        "betId": "demo-dfs-130",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "149 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-021",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 149,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 51,
+        "betId": "demo-dfs-29",
+        "classification": "disciplined",
+        "confidence": 75,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "79 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-021",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 79,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 52,
+        "betId": "demo-dfs-87",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2678 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Part of a heated session",
+        "sessionId": "SESSION-022",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 2678,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 53,
+        "betId": "demo-dfs-177",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "sessionId": "SESSION-022",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.32,
+        "timeSinceLastBet": 40,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 54,
+        "betId": "demo-dfs-83",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "136 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-022",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 136,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 55,
+        "betId": "demo-dfs-126",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "sessionId": "SESSION-022",
+        "sessionGrade": "C",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 31,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 56,
+        "betId": "demo-dfs-85",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1434 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-023",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 1434,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 57,
+        "betId": "demo-dfs-181",
+        "classification": "chasing",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-023",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.47,
+        "timeSinceLastBet": 28,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 58,
+        "betId": "demo-dfs-72",
+        "classification": "chasing",
+        "confidence": 75,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 4.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "sessionId": "SESSION-023",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 4,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 59,
+        "betId": "demo-dfs-78",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2717 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "2717 min since last bet",
+        "sessionId": "SESSION-024",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 2717,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 60,
+        "betId": "demo-dfs-184",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-024",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 2,
+        "timeSinceLastBet": 35,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 61,
+        "betId": "demo-dfs-57",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1578 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-025",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 1578,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 62,
+        "betId": "demo-dfs-79",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1256 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-026",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 1256,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 63,
+        "betId": "demo-dfs-182",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-026",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.05,
+        "timeSinceLastBet": 34,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 64,
+        "betId": "demo-dfs-110",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "3033 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-027",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 3033,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 65,
+        "betId": "demo-dfs-159",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-027",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 17,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 66,
+        "betId": "demo-dfs-5",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "4216 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-028",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 4216,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 67,
+        "betId": "demo-dfs-98",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1448 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-029",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 1448,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 68,
+        "betId": "demo-dfs-133",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "78 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-029",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 78,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 69,
+        "betId": "demo-dfs-59",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          },
+          {
+            "name": "win_streak_no_escalation",
+            "weight": -4,
+            "description": "On a 3-win streak without increasing stakes",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-029",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 37,
+        "currentStreak": 3
+      },
+      {
+        "betIndex": 70,
+        "betId": "demo-dfs-105",
+        "classification": "disciplined",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2572 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          },
+          {
+            "name": "win_streak_no_escalation",
+            "weight": -4,
+            "description": "On a 4-win streak without increasing stakes",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-030",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 2572,
+        "currentStreak": 4
+      },
+      {
+        "betIndex": 71,
+        "betId": "demo-dfs-161",
+        "classification": "chasing",
+        "confidence": 92,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "sessionId": "SESSION-030",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.32,
+        "timeSinceLastBet": 22,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 72,
+        "betId": "demo-dfs-25",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-030",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 58,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 73,
+        "betId": "demo-dfs-49",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "132 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "132 min since last bet",
+        "sessionId": "SESSION-030",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.42,
+        "timeSinceLastBet": 132,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 74,
+        "betId": "demo-dfs-160",
+        "classification": "chasing",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "sessionId": "SESSION-030",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 44,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 75,
+        "betId": "demo-dfs-90",
+        "classification": "chasing",
+        "confidence": 53,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1270 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "sessionId": "SESSION-031",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 1270,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 76,
+        "betId": "demo-dfs-200",
+        "classification": "chasing",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-031",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.47,
+        "timeSinceLastBet": 38,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 77,
+        "betId": "demo-dfs-84",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1449 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-032",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 1449,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 78,
+        "betId": "demo-dfs-188",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "sessionId": "SESSION-032",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 37,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 79,
+        "betId": "demo-dfs-122",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1582 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "sessionId": "SESSION-033",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 1582,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 80,
+        "betId": "demo-dfs-34",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1117 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-034",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 1117,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 81,
+        "betId": "demo-dfs-183",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-034",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 40,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 82,
+        "betId": "demo-dfs-143",
+        "classification": "chasing",
+        "confidence": 53,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.3x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1492 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.3x from the prior losing bet",
+        "sessionId": "SESSION-035",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 1492,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 83,
+        "betId": "demo-dfs-102",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1339 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1339 min since last bet",
+        "sessionId": "SESSION-036",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 1339,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 84,
+        "betId": "demo-dfs-77",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "In a grade-A session",
+        "sessionId": "SESSION-036",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.68,
+        "timeSinceLastBet": 23,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 85,
+        "betId": "demo-dfs-139",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "sessionId": "SESSION-036",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 29,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 86,
+        "betId": "demo-dfs-124",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-036",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 35,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 87,
+        "betId": "demo-dfs-48",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "129 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-036",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 129,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 88,
+        "betId": "demo-dfs-43",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1445 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1445 min since last bet",
+        "sessionId": "SESSION-037",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.53,
+        "timeSinceLastBet": 1445,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 89,
+        "betId": "demo-dfs-127",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "4144 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "4144 min since last bet",
+        "sessionId": "SESSION-038",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 4144,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 90,
+        "betId": "demo-dfs-37",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-038",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 48,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 91,
+        "betId": "demo-dfs-142",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-038",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.26,
+        "timeSinceLastBet": 44,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 92,
+        "betId": "demo-dfs-136",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1332 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-039",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 1332,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 93,
+        "betId": "demo-dfs-51",
+        "classification": "disciplined",
+        "confidence": 83,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-039",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 5,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 94,
+        "betId": "demo-dfs-13",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "113 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-039",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 113,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 95,
+        "betId": "demo-dfs-55",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "176 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-039",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 176,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 96,
+        "betId": "demo-dfs-169",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "5th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "sessionId": "SESSION-039",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.68,
+        "timeSinceLastBet": 20,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 97,
+        "betId": "demo-dfs-93",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1127 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-040",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 1127,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 98,
+        "betId": "demo-dfs-174",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "sessionId": "SESSION-040",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.63,
+        "timeSinceLastBet": 44,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 99,
+        "betId": "demo-dfs-137",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1516 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 4-loss streak",
+        "sessionId": "SESSION-041",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.84,
+        "timeSinceLastBet": 1516,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 100,
+        "betId": "demo-dfs-17",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "3066 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-042",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 3066,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 101,
+        "betId": "demo-dfs-18",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2586 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-043",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 2586,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 102,
+        "betId": "demo-dfs-39",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1603 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-044",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 1603,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 103,
+        "betId": "demo-dfs-144",
+        "classification": "disciplined",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "95 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          },
+          {
+            "name": "win_streak_no_escalation",
+            "weight": -4,
+            "description": "On a 3-win streak without increasing stakes",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-044",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.16,
+        "timeSinceLastBet": 95,
+        "currentStreak": 3
+      },
+      {
+        "betIndex": 104,
+        "betId": "demo-dfs-138",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1214 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-045",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 1214,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 105,
+        "betId": "demo-dfs-60",
+        "classification": "disciplined",
+        "confidence": 83,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1491 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 1491,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 106,
+        "betId": "demo-dfs-179",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.47,
+        "timeSinceLastBet": 33,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 107,
+        "betId": "demo-dfs-88",
+        "classification": "chasing",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 21,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 108,
+        "betId": "demo-dfs-151",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 25,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 109,
+        "betId": "demo-dfs-94",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.16,
+        "timeSinceLastBet": 46,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 110,
+        "betId": "demo-dfs-173",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 31,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 111,
+        "betId": "demo-dfs-38",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 10,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 112,
+        "betId": "demo-dfs-172",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-046",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 16,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 113,
+        "betId": "demo-dfs-86",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1194 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1194 min since last bet",
+        "sessionId": "SESSION-047",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.68,
+        "timeSinceLastBet": 1194,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 114,
+        "betId": "demo-dfs-167",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-047",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.26,
+        "timeSinceLastBet": 25,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 115,
+        "betId": "demo-dfs-75",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "131 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-047",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 131,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 116,
+        "betId": "demo-dfs-192",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-047",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 40,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 117,
+        "betId": "demo-dfs-22",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2810 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-048",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 2810,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 118,
+        "betId": "demo-dfs-155",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.6x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.6x from the prior losing bet",
+        "sessionId": "SESSION-048",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.53,
+        "timeSinceLastBet": 44,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 119,
+        "betId": "demo-dfs-99",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-048",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 25,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 120,
+        "betId": "demo-dfs-190",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "sessionId": "SESSION-048",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 42,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 121,
+        "betId": "demo-dfs-129",
+        "classification": "chasing",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2606 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.47,
+        "timeSinceLastBet": 2606,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 122,
+        "betId": "demo-dfs-66",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "98 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.84,
+        "timeSinceLastBet": 98,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 123,
+        "betId": "demo-dfs-170",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 10-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 44,
+        "currentStreak": -10
+      },
+      {
+        "betIndex": 124,
+        "betId": "demo-dfs-115",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 11-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 12,
+        "currentStreak": -11
+      },
+      {
+        "betIndex": 125,
+        "betId": "demo-dfs-11",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 12-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "5th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "69 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 12-loss streak",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.42,
+        "timeSinceLastBet": 69,
+        "currentStreak": -12
+      },
+      {
+        "betIndex": 126,
+        "betId": "demo-dfs-91",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "6th bet on a weekend day",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "6th bet on a weekend day",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 19,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 127,
+        "betId": "demo-dfs-196",
+        "classification": "chasing",
+        "confidence": 53,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "7th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "sessionId": "SESSION-049",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 18,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 128,
+        "betId": "demo-dfs-62",
+        "classification": "chasing",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1335 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "sessionId": "SESSION-050",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 1335,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 129,
+        "betId": "demo-dfs-157",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-050",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 31,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 130,
+        "betId": "demo-dfs-20",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-050",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 5,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 131,
+        "betId": "demo-dfs-30",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1239 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-051",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 1239,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 132,
+        "betId": "demo-dfs-44",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "309 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "309 min since last bet",
+        "sessionId": "SESSION-052",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 309,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 133,
+        "betId": "demo-dfs-187",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "late_night",
+            "weight": 3,
+            "description": "Placed at 11pm",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "sessionId": "SESSION-052",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 41,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 134,
+        "betId": "demo-dfs-80",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2504 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-053",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 2504,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 135,
+        "betId": "demo-dfs-162",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-053",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 36,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 136,
+        "betId": "demo-dfs-8",
+        "classification": "chasing",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2961 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-054",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.42,
+        "timeSinceLastBet": 2961,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 137,
+        "betId": "demo-dfs-149",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 3.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 3.4x from the prior losing bet",
+        "sessionId": "SESSION-054",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 28,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 138,
+        "betId": "demo-dfs-108",
+        "classification": "chasing",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-054",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.79,
+        "timeSinceLastBet": 17,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 139,
+        "betId": "demo-dfs-166",
+        "classification": "chasing",
+        "confidence": 83,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-054",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.63,
+        "timeSinceLastBet": 18,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 140,
+        "betId": "demo-dfs-106",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1329 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "sessionId": "SESSION-055",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 1329,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 141,
+        "betId": "demo-dfs-112",
+        "classification": "chasing",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "sessionId": "SESSION-055",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 34,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 142,
+        "betId": "demo-dfs-26",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 10-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "177 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-055",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 177,
+        "currentStreak": -10
+      },
+      {
+        "betIndex": 143,
+        "betId": "demo-dfs-54",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1211 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1211 min since last bet",
+        "sessionId": "SESSION-056",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 1211,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 144,
+        "betId": "demo-dfs-69",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1415 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1415 min since last bet",
+        "sessionId": "SESSION-057",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 1415,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 145,
+        "betId": "demo-dfs-103",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 1.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "instant_rebet",
+            "weight": 7,
+            "description": "Rebet in under 1.0 minutes",
+            "category": "impulsive"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Rebet in under 1.0 minutes",
+        "sessionId": "SESSION-057",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 1,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 146,
+        "betId": "demo-dfs-146",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-057",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 17,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 147,
+        "betId": "demo-dfs-198",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 5 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 3.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 5 to 6 over the prior losing entry",
+        "sessionId": "SESSION-057",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.16,
+        "timeSinceLastBet": 3,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 148,
+        "betId": "demo-dfs-19",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "80 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-057",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 80,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 149,
+        "betId": "demo-dfs-33",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "2754 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "2754 min since last bet",
+        "sessionId": "SESSION-058",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 2754,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 150,
+        "betId": "demo-dfs-95",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "95 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-058",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 95,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 151,
+        "betId": "demo-dfs-150",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "sessionId": "SESSION-058",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 33,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 152,
+        "betId": "demo-dfs-27",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "209 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-059",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 209,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 153,
+        "betId": "demo-dfs-186",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "late_night",
+            "weight": 3,
+            "description": "Placed at 11pm",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "sessionId": "SESSION-059",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.89,
+        "timeSinceLastBet": 32,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 154,
+        "betId": "demo-dfs-128",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1166 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-060",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.95,
+        "timeSinceLastBet": 1166,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 155,
+        "betId": "demo-dfs-96",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "77 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-060",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 77,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 156,
+        "betId": "demo-dfs-10",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1281 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1281 min since last bet",
+        "sessionId": "SESSION-061",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.53,
+        "timeSinceLastBet": 1281,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 157,
+        "betId": "demo-dfs-100",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "262 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-062",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 262,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 158,
+        "betId": "demo-dfs-156",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "sessionId": "SESSION-062",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 38,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 159,
+        "betId": "demo-dfs-82",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1467 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-063",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 1467,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 160,
+        "betId": "demo-dfs-21",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1328 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Part of a heated session",
+        "sessionId": "SESSION-064",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.53,
+        "timeSinceLastBet": 1328,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 161,
+        "betId": "demo-dfs-36",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Part of a heated session",
+        "sessionId": "SESSION-064",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 52,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 162,
+        "betId": "demo-dfs-12",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-064",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 24,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 163,
+        "betId": "demo-dfs-111",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 0.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "instant_rebet",
+            "weight": 7,
+            "description": "Rebet in under 0.0 minutes",
+            "category": "impulsive"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "sessionId": "SESSION-064",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.16,
+        "timeSinceLastBet": 0,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 164,
+        "betId": "demo-dfs-140",
+        "classification": "chasing",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "heated_session_context",
+            "weight": 3,
+            "description": "Part of a heated session",
+            "category": "emotional"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "5th bet on a weekend day",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-064",
+        "sessionGrade": "D",
+        "isInHeatedSession": true,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 16,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 165,
+        "betId": "demo-dfs-61",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1346 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-065",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.05,
+        "timeSinceLastBet": 1346,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 166,
+        "betId": "demo-dfs-132",
+        "classification": "chasing",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-065",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 22,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 167,
+        "betId": "demo-dfs-31",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 6-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1538 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-066",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 1538,
+        "currentStreak": -6
+      },
+      {
+        "betIndex": 168,
+        "betId": "demo-dfs-148",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 9,
+            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 7-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "late_night",
+            "weight": 3,
+            "description": "Placed at 11pm",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "sessionId": "SESSION-066",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.26,
+        "timeSinceLastBet": 40,
+        "currentStreak": -7
+      },
+      {
+        "betIndex": 169,
+        "betId": "demo-dfs-24",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 8-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1052 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-067",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.74,
+        "timeSinceLastBet": 1052,
+        "currentStreak": -8
+      },
+      {
+        "betIndex": 170,
+        "betId": "demo-dfs-117",
+        "classification": "chasing",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 9-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-067",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 30,
+        "currentStreak": -9
+      },
+      {
+        "betIndex": 171,
+        "betId": "demo-dfs-45",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 10-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "66 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-067",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 66,
+        "currentStreak": -10
+      },
+      {
+        "betIndex": 172,
+        "betId": "demo-dfs-41",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "91 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-067",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.05,
+        "timeSinceLastBet": 91,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 173,
+        "betId": "demo-dfs-28",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "119 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-067",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 119,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 174,
+        "betId": "demo-dfs-107",
+        "classification": "disciplined",
+        "confidence": 80,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1283 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "win_streak_no_escalation",
+            "weight": -4,
+            "description": "On a 3-win streak without increasing stakes",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-068",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 1283,
+        "currentStreak": 3
+      },
+      {
+        "betIndex": 175,
+        "betId": "demo-dfs-152",
+        "classification": "chasing",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "sessionId": "SESSION-068",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.53,
+        "timeSinceLastBet": 28,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 176,
+        "betId": "demo-dfs-74",
+        "classification": "disciplined",
+        "confidence": 89,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1378 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-069",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.05,
+        "timeSinceLastBet": 1378,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 177,
+        "betId": "demo-dfs-199",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 6,
+            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "sessionId": "SESSION-069",
+        "sessionGrade": "B",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.42,
+        "timeSinceLastBet": 26,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 178,
+        "betId": "demo-dfs-97",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "182 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-070",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 182,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 179,
+        "betId": "demo-dfs-14",
+        "classification": "neutral",
+        "confidence": 33,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1232 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "1232 min since last bet",
+        "sessionId": "SESSION-071",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.68,
+        "timeSinceLastBet": 1232,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 180,
+        "betId": "demo-dfs-134",
+        "classification": "emotional",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 4.0 min since last bet",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Only 4.0 min since last bet",
+        "sessionId": "SESSION-071",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.58,
+        "timeSinceLastBet": 4,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 181,
+        "betId": "demo-dfs-63",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "97 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-071",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 97,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 182,
+        "betId": "demo-dfs-195",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "sessionId": "SESSION-071",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.74,
+        "timeSinceLastBet": 23,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 183,
+        "betId": "demo-dfs-89",
+        "classification": "neutral",
+        "confidence": 27,
+        "signals": [
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1290 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Betting during a 3-loss streak",
+        "sessionId": "SESSION-072",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.53,
+        "timeSinceLastBet": 1290,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 184,
+        "betId": "demo-dfs-46",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "82 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "82 min since last bet",
+        "sessionId": "SESSION-072",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.63,
+        "timeSinceLastBet": 82,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 185,
+        "betId": "demo-dfs-141",
+        "classification": "disciplined",
+        "confidence": 70,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "79 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-072",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 79,
+        "currentStreak": 2
+      },
+      {
+        "betIndex": 186,
+        "betId": "demo-dfs-6",
+        "classification": "chasing",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "4th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "sessionId": "SESSION-072",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.47,
+        "timeSinceLastBet": 35,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 187,
+        "betId": "demo-dfs-116",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "weekend_volume_spike",
+            "weight": 2,
+            "description": "5th bet on a weekend day",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-072",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 14,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 188,
+        "betId": "demo-dfs-2",
+        "classification": "neutral",
+        "confidence": 40,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1429 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-073",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 1429,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 189,
+        "betId": "demo-dfs-153",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.4x from the prior losing bet",
+        "sessionId": "SESSION-073",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 26,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 190,
+        "betId": "demo-dfs-9",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1336 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-074",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.58,
+        "timeSinceLastBet": 1336,
+        "currentStreak": -3
+      },
+      {
+        "betIndex": 191,
+        "betId": "demo-dfs-180",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.4x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 4-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 2.4x from the prior losing bet",
+        "sessionId": "SESSION-074",
+        "sessionGrade": "D",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.37,
+        "timeSinceLastBet": 26,
+        "currentStreak": -4
+      },
+      {
+        "betIndex": 192,
+        "betId": "demo-dfs-16",
+        "classification": "neutral",
+        "confidence": 47,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 5-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1521 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-075",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.89,
+        "timeSinceLastBet": 1521,
+        "currentStreak": -5
+      },
+      {
+        "betIndex": 193,
+        "betId": "demo-dfs-81",
+        "classification": "neutral",
+        "confidence": 20,
+        "signals": [
+          {
+            "name": "rapid_session_bet",
+            "weight": 4,
+            "description": "Only 2.0 min since last bet",
+            "category": "emotional"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Only 2.0 min since last bet",
+        "sessionId": "SESSION-075",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1,
+        "timeSinceLastBet": 2,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 194,
+        "betId": "demo-dfs-158",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          },
+          {
+            "name": "late_night",
+            "weight": 3,
+            "description": "Placed at 11pm",
+            "category": "emotional"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "sessionId": "SESSION-075",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.68,
+        "timeSinceLastBet": 43,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 195,
+        "betId": "demo-dfs-47",
+        "classification": "disciplined",
+        "confidence": 75,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1128 min since last bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-A session",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-076",
+        "sessionGrade": "A",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 0.79,
+        "timeSinceLastBet": 1128,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 196,
+        "betId": "demo-dfs-104",
+        "classification": "disciplined",
+        "confidence": 60,
+        "signals": [
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1396 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Stake is near the median",
+        "sessionId": "SESSION-077",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.21,
+        "timeSinceLastBet": 1396,
+        "currentStreak": 1
+      },
+      {
+        "betIndex": 197,
+        "betId": "demo-dfs-189",
+        "classification": "chasing",
+        "confidence": 86,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "sessionId": "SESSION-077",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.89,
+        "timeSinceLastBet": 28,
+        "currentStreak": -1
+      },
+      {
+        "betIndex": 198,
+        "betId": "demo-dfs-101",
+        "classification": "disciplined",
+        "confidence": 65,
+        "signals": [
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
+            "name": "consistent_after_loss",
+            "weight": -5,
+            "description": "Held stake near the median following a losing bet",
+            "category": "disciplined"
+          },
+          {
+            "name": "reasonable_pace",
+            "weight": -2,
+            "description": "1650 min since last bet",
+            "category": "disciplined"
+          }
+        ],
+        "primaryReason": "Held stake near the median following a losing bet",
+        "sessionId": "SESSION-078",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.11,
+        "timeSinceLastBet": 1650,
+        "currentStreak": -2
+      },
+      {
+        "betIndex": 199,
+        "betId": "demo-dfs-154",
+        "classification": "chasing",
+        "confidence": 95,
+        "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 7,
+            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "double_down_after_loss",
+            "weight": 4,
+            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "category": "chasing"
+          },
+          {
+            "name": "loss_streak_continuation",
+            "weight": 3,
+            "description": "Betting during a 3-loss streak",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "category": "chasing"
+          }
+        ],
+        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "sessionId": "SESSION-078",
+        "sessionGrade": "C",
+        "isInHeatedSession": false,
+        "stakeVsMedian": 1.84,
+        "timeSinceLastBet": 44,
+        "currentStreak": -3
+      }
+    ],
+    "distribution": {
+      "disciplined": {
+        "count": 59,
+        "percent": 29.5,
+        "totalStaked": 1000,
+        "totalProfit": 70.98,
+        "roi": 7.1
+      },
+      "emotional": {
+        "count": 1,
+        "percent": 0.5,
+        "totalStaked": 30,
+        "totalProfit": -30,
+        "roi": -100
+      },
+      "chasing": {
+        "count": 57,
+        "percent": 28.5,
+        "totalStaked": 1562,
+        "totalProfit": -631,
+        "roi": -40.4
+      },
+      "impulsive": {
+        "count": 1,
+        "percent": 0.5,
+        "totalStaked": 27,
+        "totalProfit": -27,
+        "roi": -100
+      },
+      "neutral": {
+        "count": 82,
+        "percent": 41,
+        "totalStaked": 1601,
+        "totalProfit": -730.32,
+        "roi": -45.62
+      }
+    },
+    "emotionalCost": 802.95,
+    "worstAnnotatedBet": {
+      "betIndex": 1,
+      "betId": "demo-dfs-145",
+      "classification": "chasing",
+      "confidence": 95,
+      "signals": [
+        {
+          "name": "post_loss_escalation",
+          "weight": 10,
+          "description": "Stake stepped up 2.8x from the prior losing bet",
+          "category": "chasing"
+        },
+        {
+          "name": "double_down_after_loss",
+          "weight": 4,
+          "description": "Same sport+type (NFL parlay) as the prior losing bet",
+          "category": "chasing"
+        },
+        {
+          "name": "odds_shift_to_longshot",
+          "weight": 5,
+          "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+          "category": "chasing"
+        },
+        {
+          "name": "dfs_pick_escalation",
+          "weight": 5,
+          "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+          "category": "chasing"
+        }
+      ],
+      "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+      "sessionId": "SESSION-001",
+      "sessionGrade": "C",
+      "isInHeatedSession": false,
+      "stakeVsMedian": 1.79,
+      "timeSinceLastBet": 26,
+      "currentStreak": -1
+    },
+    "bestAnnotatedBet": {
+      "betIndex": 18,
+      "betId": "demo-dfs-7",
+      "classification": "disciplined",
+      "confidence": 89,
+      "signals": [
+        {
+          "name": "flat_stake",
+          "weight": -4,
+          "description": "Stake is near the median",
+          "category": "disciplined"
+        },
+        {
+          "name": "consistent_after_loss",
+          "weight": -5,
+          "description": "Held stake near the median following a losing bet",
+          "category": "disciplined"
+        },
+        {
+          "name": "reasonable_pace",
+          "weight": -2,
+          "description": "1381 min since last bet",
+          "category": "disciplined"
+        },
+        {
+          "name": "controlled_in_good_session",
+          "weight": -2,
+          "description": "In a grade-B session",
+          "category": "disciplined"
+        }
+      ],
+      "primaryReason": "Held stake near the median following a losing bet",
+      "sessionId": "SESSION-009",
+      "sessionGrade": "B",
+      "isInHeatedSession": false,
+      "stakeVsMedian": 0.74,
+      "timeSinceLastBet": 1381,
+      "currentStreak": -2
+    },
+    "streakInfluence": {
+      "avgStakeAfterWinStreak3": 18,
+      "avgStakeAfterLossStreak3": 21.61,
+      "avgStakeNeutral": 20.79
+    },
+    "insight": "Most bets are neutral, but your disciplined bets (29.5%) show promise."
+  },
+  "executive_diagnosis": "This bettor has a Power Play problem. 132 Power entries returned -57.6% ROI while Flex entries returned +24.7%. That single switch is worth roughly $400 in recoverable losses.",
+  "executiveDiagnosis": {
+    "insightSnapshot": "Your betting shows post-loss escalation patterns. The full report breaks down 200 bets across 78 sessions.",
+    "insightFull": "This bettor has a Power Play problem. 132 Power entries returned -57.6% ROI while Flex entries returned +24.7%. That single switch is worth roughly $400 in recoverable losses."
+  },
+  "pertinent_negatives": [
+    {
+      "pattern": "Emotional Betting",
+      "finding": "Not detected",
+      "detail": "Session behavior stays disciplined under pressure. 61% of bettors show heated sessions exceeding 25% of total.",
+      "populationPercent": 61
+    },
+    {
+      "pattern": "Favorite Bias",
+      "finding": "Not detected",
+      "detail": "No systematic over-betting of favorites detected. 52% of bettors lean too heavily on chalk.",
+      "populationPercent": 52
+    },
+    {
+      "pattern": "Late Night Bias",
+      "finding": "Not detected",
+      "detail": "No significant late-night performance decay detected. 45% of bettors show worse outcomes after 10pm.",
+      "populationPercent": 45
+    },
+    {
+      "pattern": "Sunk Cost",
+      "finding": "Not detected",
+      "detail": "No pattern of chasing losing teams or players. 38% of bettors double down on losing selections.",
+      "populationPercent": 38
+    }
+  ],
+  "contradictions": [
+    {
+      "title": "Your Conviction and Accuracy Are Inversely Correlated",
+      "insight": "Your smallest bets (under $15) return -8.6% ROI across 59 bets. Your largest bets (over $27) return -63.7% ROI across 60 bets. The more confident you are, the worse you perform.",
+      "volumeLabel": "YOUR BIG BETS",
+      "volumeData": "$27+ stakes: 60 bets, -63.7% ROI",
+      "edgeLabel": "YOUR SMALL BETS",
+      "edgeData": "Under $15 stakes: 59 bets, -8.6% ROI"
+    }
+  ],
+  "summaryCounts": {
+    "sessionsAnalyzed": 78,
+    "biasesDetected": 6,
+    "patternsIdentified": 0,
+    "leakPatternsFlagged": 6,
+    "sportLevelFindings": 1
+  },
+  "sufficiency": {
+    "settledBets": 200,
+    "tier": "full",
+    "gated": []
+  },
+  "control_system": {
+    "controlStatus": "watch_mode",
+    "headline": "Your report should end in operating rules, not vague advice.",
+    "topRisks": [
+      {
+        "title": "Post-Loss Escalation",
+        "detail": "Your entry fees do creep up slightly in sequences following losses, going from $19 to $22 on average.",
+        "evidence": "Average entry fee following a losing entry: $22 vs following a winning entry: $19."
+      },
+      {
+        "title": "Stake Volatility",
+        "detail": "Your entry fees swing from $8 to $38 with no clear system behind it.",
+        "evidence": "Entry fees range from $8 to $38 (avg $21, median $19)."
+      },
+      {
+        "title": "Heated session relapse",
+        "detail": "You logged 5 heated sessions. Those are the moments your control system needs to treat differently.",
+        "evidence": "Most sessions look disciplined, but 5 of 78 had heated moments worth reviewing."
+      }
+    ],
+    "hardRules": [
+      {
+        "title": "No single player appears in more than 2 entries per week",
+        "description": "No single player appears in more than 2 entries per week.",
+        "rationale": "Josh Allen at -84.7% ROI and Jalen Hurts at -40.2% ROI are your two most-used picks and your two biggest money losers. Concentration in individual players is a direct leak.",
+        "rule_type": "ban_category",
+        "scope": "global",
+        "scope_value": null,
+        "severity": "critical",
+        "enforcement": "hard",
+        "provenance": "engine_recommended",
+        "trigger": {},
+        "source": "Josh Allen in 30% of entries at -84.7% ROI, Jalen Hurts in 28% of entries at -40.2% ROI"
+      },
+      {
+        "title": "Stop after 3 straight losses",
+        "description": "After 3 losses in a row, stop betting for the rest of the day.",
+        "rationale": "Your report shows the worst damage happens once the third loss turns into a chase sequence.",
+        "rule_type": "loss_streak_stop",
+        "scope": "session",
+        "scope_value": null,
+        "severity": "critical",
+        "enforcement": "hard",
+        "provenance": "engine_recommended",
+        "trigger": {
+          "threshold": 3,
+          "cooldownHours": 24
+        },
+        "source": "Post-Loss Escalation"
+      },
+      {
+        "title": "No bets after 11:00 PM",
+        "description": "No bets after 11:00 PM local time. Review lines in the morning instead.",
+        "rationale": "Late-night bets are one of your repeat failure modes. The product should slow you down before that window opens.",
+        "rule_type": "late_night_cutoff",
+        "scope": "time_window",
+        "scope_value": "23:00-04:00",
+        "severity": "guardrail",
+        "enforcement": "hard",
+        "provenance": "engine_recommended",
+        "trigger": {
+          "startHour": 23,
+          "endHour": 4,
+          "recurrenceWindowDays": 14
+        },
+        "source": "Timing analysis"
+      },
+      {
+        "title": "Pause parlays for 14 days",
+        "description": "No parlays for the next 14 days. Straight bets only while you reset your process.",
+        "rationale": "Your report already shows the category is leaking. The safest move is to remove easy relapse access for a short window.",
+        "rule_type": "ban_category",
+        "scope": "bet_type",
+        "scope_value": "parlay",
+        "severity": "guardrail",
+        "enforcement": "hard",
+        "provenance": "engine_recommended",
+        "trigger": {
+          "category": "parlay",
+          "recurrenceWindowDays": 14
+        },
+        "source": "Strategic leaks"
+      }
+    ],
+    "softRules": [
+      {
+        "title": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter",
+        "description": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter.",
+        "rationale": "Your Flex entries return +24.7% ROI. Your Power entries return -57.6% ROI. The format choice is more important than the picks themselves.",
+        "rule_type": "custom",
+        "scope": "global",
+        "scope_value": null,
+        "severity": "guardrail",
+        "enforcement": "soft",
+        "provenance": "engine_recommended",
+        "trigger": {},
+        "source": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI"
+      },
+      {
+        "title": "Maximum 3 picks per entry, no exceptions",
+        "description": "Maximum 3 picks per entry, no exceptions.",
+        "rationale": "Your 2-pick entries win at 63.3%. Your 6-pick entries win at 0%. Every pick added past 3 is working against you.",
+        "rule_type": "ban_category",
+        "scope": "global",
+        "scope_value": null,
+        "severity": "guardrail",
+        "enforcement": "soft",
+        "provenance": "engine_recommended",
+        "trigger": {},
+        "source": "Pick count distribution: 2-pick 7.6% ROI, 3-pick -4.3% ROI, 4-pick -47.1% ROI, 5-pick -37.1% ROI, 6-pick -100% ROI"
+      },
+      {
+        "title": "If you have already lost 2 entries in a session, stop for the night",
+        "description": "If you have already lost 2 entries in a session, stop for the night.",
+        "rationale": "Your pick count escalates from 2.8 to 3.8 after losses, and your 5 heated sessions all show the same pattern of entries getting larger and more aggressive as the session goes on.",
+        "rule_type": "session_limit",
+        "scope": "global",
+        "scope_value": null,
+        "severity": "guardrail",
+        "enforcement": "soft",
+        "provenance": "engine_recommended",
+        "trigger": {
+          "sessionLimit": 2
+        },
+        "source": "5 heated sessions out of 78, avg pick count after loss 3.8 vs 2.8 after win, worst session had 6 entries"
+      },
+      {
+        "title": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%",
+        "description": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%.",
+        "rationale": "NBA is running at -61.1% ROI and is responsible for $852 in losses. You do not currently have a demonstrated edge in NBA player props.",
+        "rule_type": "custom",
+        "scope": "global",
+        "scope_value": null,
+        "severity": "guardrail",
+        "enforcement": "soft",
+        "provenance": "engine_recommended",
+        "trigger": {},
+        "source": "NBA: 62 entries, -61.1% ROI, $-852 profit"
+      }
+    ],
+    "cooldownSuggestions": [
+      {
+        "trigger": "Post-loss escalation",
+        "label": "30-minute reset after a loss",
+        "durationLabel": "30 minutes",
+        "durationHours": 0.5,
+        "reason": "Short pauses are the fastest way to interrupt the immediate revenge-bet impulse."
+      },
+      {
+        "trigger": "Heated session",
+        "label": "Next-day lockout after a heated session",
+        "durationLabel": "24 hours",
+        "durationHours": 24,
+        "reason": "Your data shows same-day follow-ups after heated sessions tend to extend the damage, not repair it."
+      },
+      {
+        "trigger": "Late-night behavior",
+        "label": "Sleep-on-it cooldown",
+        "durationLabel": "Until tomorrow at 8:00 AM",
+        "durationHours": 8,
+        "reason": "If the cutoff is already broken, the safest next move is to hand the decision to tomorrow-you."
+      }
+    ],
+    "relapseTriggers": [
+      "Late-night betting windows",
+      "Bets placed shortly after a loss",
+      "Returning to the same leaking category under stress"
+    ],
+    "nextWeekFocus": "No single player appears in more than 2 entries per week.",
+    "planTemplate": {
+      "bettingHours": {
+        "startHour": null,
+        "endHour": 23,
+        "timezoneLabel": "Local time"
+      },
+      "maximumUnitSize": null,
+      "bannedBetCategories": [
+        "Maximum 3 picks per entry, no exceptions",
+        "No single player appears in more than 2 entries per week",
+        "parlay"
+      ],
+      "sessionLimit": 2,
+      "lossStreakStop": 3,
+      "lateNightCutoffHour": 23,
+      "postLossWaitingPeriodMinutes": 30,
+      "reflectionQuestion": "Would I still place this if my last bet had won?"
+    },
+    "recoveryModeRecommended": false,
+    "riskTier": "elevated",
+    "supportResources": [
+      {
+        "label": "National Problem Gambling Helpline",
+        "value": "Call or text 1-800-MY-RESET. Free and confidential, 24/7.",
+        "href": "tel:18006973738"
+      },
+      {
+        "label": "Problem gambling chat",
+        "value": "Start a confidential live chat through the National Council on Problem Gambling.",
+        "href": "https://www.ncpgambling.org/chat/"
+      },
+      {
+        "label": "Help by state",
+        "value": "Find local treatment, counseling, and peer-support options in your state.",
+        "href": "https://www.ncpgambling.org/help-treatment/help-by-state/"
+      },
+      {
+        "label": "988 Suicide and Crisis Lifeline",
+        "value": "If this feels like a crisis or you need immediate emotional support, call or text 988.",
+        "href": "https://988lifeline.org/"
+      }
+    ]
+  },
+  "discipline_score": {
+    "total": 32,
+    "tracking": 6,
+    "sizing": 11,
+    "control": 15,
+    "strategy": 0,
+    "percentile": 30
+  },
+  "schema_version": 4
 };
-
-// DEMO_ANALYSIS already carries a real control_system - it's part of
-// runAutopsy's own output (lib/autopsy-engine.ts), unlike the DFS fixture
-// below which predates that field and still needs it attached here.
-DEMO_DFS_ANALYSIS.control_system = buildReportControlSystem(DEMO_DFS_ANALYSIS);
