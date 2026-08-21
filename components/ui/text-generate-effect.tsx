@@ -61,9 +61,9 @@ export const TextGenerateEffect = ({
           ? { opacity: 1, filter: "blur(0px)" }
           : { opacity: 1, y: 0 },
         {
-          duration: useBlur ? duration : 0.35,
+          duration: useBlur ? duration : 0.25,
           ease: "easeOut",
-          delay: stagger(useBlur ? 0.08 : 0.04),
+          delay: stagger(useBlur ? 0.08 : 0.02),
         }
       );
     }, startDelay * 1000);

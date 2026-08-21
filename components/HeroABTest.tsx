@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { TextGenerateEffect } from '@/components/ui/text-generate-effect';
 import SmartCTALink from '@/components/SmartCTALink';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { REPORT_GENERATION_TIME_CAPITALIZED } from '@/lib/report-timing';
 
 // Sub-CTA line. While `PRICING_ENABLED` is false every user is served the Pro
 // tier for free, so quoting a price here contradicts what the product
@@ -78,7 +79,7 @@ export default function HeroABTest() {
           See what your <span className="text-scalpel">betting data</span> is trying to tell you.
         </h1>
         <p className="font-mono text-base md:text-lg text-fg-muted font-light tracking-wide mt-4 mb-8">
-          47 behavioral signals. 60 seconds. One forensic report.
+          47 behavioral signals. {REPORT_GENERATION_TIME_CAPITALIZED}. One forensic report.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <SmartCTALink intent="snapshot" className="btn-primary text-base !px-8 !py-3">Get Your Autopsy Report</SmartCTALink>
@@ -96,20 +97,20 @@ export default function HeroABTest() {
             as="h1"
             words="See what your betting data is trying to tell you."
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
-            duration={0.4}
+            filter={false}
             highlight="betting data"
           />
           <p className="font-mono text-base md:text-lg text-fg-muted tracking-wide mt-4 mb-8 animate-fade-in-d2">
-            47 behavioral signals. 60 seconds. One forensic report.
+            47 behavioral signals. {REPORT_GENERATION_TIME_CAPITALIZED}. One forensic report.
           </p>
         </>
       ) : (
         <>
           <TextGenerateEffect
             as="h1"
-            words="47 behavioral signals. 60 seconds. One upload."
+            words={`47 behavioral signals. ${REPORT_GENERATION_TIME_CAPITALIZED}. One upload.`}
             className="text-4xl md:text-6xl text-fg-bright leading-[1.08] mb-2"
-            duration={0.4}
+            filter={false}
             highlight="47"
           />
           <p className="text-fg text-base md:text-lg max-w-2xl mt-4 mb-8 leading-relaxed animate-fade-in-d2">

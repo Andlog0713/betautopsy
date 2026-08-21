@@ -10,6 +10,7 @@ import { useSnapshots } from '@/hooks/useSnapshots';
 import { useControlSystem } from '@/hooks/useControlSystem';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
+import { REPORT_GENERATION_TIME } from '@/lib/report-timing';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
@@ -710,7 +711,7 @@ export default function DashboardPage() {
                     {stats.totalBets} bets loaded. Run the autopsy.
                   </h2>
                   <p className="data-body mb-6 max-w-xl">
-                    A full behavioral analysis takes about 20 seconds. You&apos;ll get every leak, every bias, every dollar amount.
+                    A full behavioral analysis takes {REPORT_GENERATION_TIME}. You&apos;ll get every leak, every bias, every dollar amount.
                   </p>
                   <Link href="/reports?run=true" className="btn-primary inline-block text-base !px-6 !py-3 font-mono">
                     Run Your Autopsy →

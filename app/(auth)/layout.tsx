@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { PROBLEM_GAMBLING_HELPLINE } from '@/lib/support-resources';
+import { REPORT_GENERATION_TIME } from '@/lib/report-timing';
 
 export default function AuthLayout({
   children,
@@ -24,7 +25,7 @@ export default function AuthLayout({
             </div>
           </div>
           <p className="text-fg-muted text-sm leading-relaxed mt-4 mb-8">
-            Upload your betting history and get a full behavioral analysis in 20 seconds.
+            Upload your betting history and get a full behavioral analysis in {REPORT_GENERATION_TIME}.
           </p>
           <div className="space-y-3">
             {[

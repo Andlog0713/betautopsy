@@ -2070,22 +2070,35 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
           {/* Best / Worst / Late Night — left-rule columns, no boxes */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-            {analysis.timing_analysis.best_window && (
-              <div className="pl-4 border-l border-l-win/60">
-                <p className="data-label-sm mb-2">Best Window</p>
-                <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.best_window.label}</p>
-                <p className="data-number text-xl text-win leading-none">+{analysis.timing_analysis.best_window.roi.toFixed(1)}<span className="text-xs text-win/60">%</span></p>
-                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.best_window.count} bets</p>
-              </div>
-            )}
-            {analysis.timing_analysis.worst_window && (
-              <div className="pl-4 border-l border-l-loss/60">
-                <p className="data-label-sm mb-2">Worst Window</p>
-                <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.worst_window.label}</p>
-                <p className="data-number text-xl text-loss leading-none">{analysis.timing_analysis.worst_window.roi.toFixed(1)}<span className="text-xs text-loss/60">%</span></p>
-                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.worst_window.count} bets</p>
-              </div>
-            )}
+            {/* "Best" is relative to the sample's other windows, not an
+                absolute claim - when every window is negative, the "best"
+                one is still a loss. Sign-hardcoded "+"/win-green would
+                assert the opposite of what the number says (same bug fixed
+                in the odds-bucket cards above). */}
+            {analysis.timing_analysis.best_window && (() => {
+              const roi = analysis.timing_analysis.best_window!.roi;
+              const isPositive = roi >= 0;
+              return (
+                <div className={`pl-4 border-l ${isPositive ? 'border-l-win/60' : 'border-l-loss/60'}`}>
+                  <p className="data-label-sm mb-2">Best Window</p>
+                  <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.best_window!.label}</p>
+                  <p className={`data-number text-xl leading-none ${isPositive ? 'text-win' : 'text-loss'}`}>{isPositive ? '+' : ''}{roi.toFixed(1)}<span className={`text-xs ${isPositive ? 'text-win/60' : 'text-loss/60'}`}>%</span></p>
+                  <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.best_window!.count} bets</p>
+                </div>
+              );
+            })()}
+            {analysis.timing_analysis.worst_window && (() => {
+              const roi = analysis.timing_analysis.worst_window!.roi;
+              const isNegative = roi < 0;
+              return (
+                <div className={`pl-4 border-l ${isNegative ? 'border-l-loss/60' : 'border-l-win/60'}`}>
+                  <p className="data-label-sm mb-2">Worst Window</p>
+                  <p className="text-fg-bright text-base mb-1">{analysis.timing_analysis.worst_window!.label}</p>
+                  <p className={`data-number text-xl leading-none ${isNegative ? 'text-loss' : 'text-win'}`}>{!isNegative ? '+' : ''}{roi.toFixed(1)}<span className={`text-xs ${isNegative ? 'text-loss/60' : 'text-win/60'}`}>%</span></p>
+                  <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.worst_window!.count} bets</p>
+                </div>
+              );
+            })()}
             {analysis.timing_analysis.late_night_stats && (
               <div className={`pl-4 border-l ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-l-caution/60' : 'border-l-white/[0.06]'}`}>
                 <p className="data-label-sm mb-2">Late Night · 11p–4a</p>
@@ -2247,27 +2260,42 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </p>
             </div>
 
-            {/* Best Bucket */}
-            {analysis.odds_analysis.best_bucket && (
-              <div className="pl-4 border-l border-l-win/60">
-                <p className="data-label-sm mb-2">Best Odds Range</p>
-                <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.best_bucket.label}</p>
-                <p className="data-number text-xl text-win leading-none">+{analysis.odds_analysis.best_bucket.edge.toFixed(1)}<span className="text-xs text-win/60">pp</span></p>
-                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
-                <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">You consistently beat the implied odds here.</p>
-              </div>
-            )}
+            {/* Best Bucket. "Best" is relative to the sample's other buckets,
+                not an absolute claim - when every bucket is negative (most
+                users), the "best" one is still a loss. A hardcoded "+" and
+                win-green styling here asserted the opposite of what the
+                number said. Styling/prefix/caption now follow the edge's
+                actual sign, not its rank. */}
+            {analysis.odds_analysis.best_bucket && (() => {
+              const edge = analysis.odds_analysis.best_bucket.edge;
+              const isPositive = edge >= 0;
+              return (
+                <div className={`pl-4 border-l ${isPositive ? 'border-l-win/60' : 'border-l-loss/60'}`}>
+                  <p className="data-label-sm mb-2">Best Odds Range</p>
+                  <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.best_bucket.label}</p>
+                  <p className={`data-number text-xl leading-none ${isPositive ? 'text-win' : 'text-loss'}`}>{isPositive ? '+' : ''}{edge.toFixed(1)}<span className={`text-xs ${isPositive ? 'text-win/60' : 'text-loss/60'}`}>pp</span></p>
+                  <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.best_bucket.count} bets</p>
+                  <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">{isPositive ? 'You consistently beat the implied odds here.' : "Your least-bad price point - still not a real edge."}</p>
+                </div>
+              );
+            })()}
 
-            {/* Worst Bucket */}
-            {analysis.odds_analysis.worst_bucket && (
-              <div className="pl-4 border-l border-l-loss/60">
-                <p className="data-label-sm mb-2">Worst Odds Range</p>
-                <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.worst_bucket.label}</p>
-                <p className="data-number text-xl text-loss leading-none">{analysis.odds_analysis.worst_bucket.edge.toFixed(1)}<span className="text-xs text-loss/60">pp</span></p>
-                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
-                <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">The odds are beating you at this price point.</p>
-              </div>
-            )}
+            {/* Worst Bucket. Same fix, mirrored: a sample where even the
+                worst bucket is still positive should not be styled as a
+                loss. */}
+            {analysis.odds_analysis.worst_bucket && (() => {
+              const edge = analysis.odds_analysis.worst_bucket.edge;
+              const isNegative = edge < 0;
+              return (
+                <div className={`pl-4 border-l ${isNegative ? 'border-l-loss/60' : 'border-l-win/60'}`}>
+                  <p className="data-label-sm mb-2">Worst Odds Range</p>
+                  <p className="text-fg-bright text-base mb-1">{analysis.odds_analysis.worst_bucket.label}</p>
+                  <p className={`data-number text-xl leading-none ${isNegative ? 'text-loss' : 'text-win'}`}>{!isNegative ? '+' : ''}{edge.toFixed(1)}<span className={`text-xs ${isNegative ? 'text-loss/60' : 'text-win/60'}`}>pp</span></p>
+                  <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.odds_analysis.worst_bucket.count} bets</p>
+                  <p className="text-fg-dim text-[10px] mt-2 italic leading-snug">{isNegative ? 'The odds are beating you at this price point.' : 'Even your worst price point still beats the odds.'}</p>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -3702,13 +3730,18 @@ function SessionAnalysisSection({
           <span className="data-label block">Heated</span>
           <span className="font-mono text-lg font-bold text-loss">{sessionData.heatedSessionCount}</span>
         </div>
+        {/* Grade measures process discipline, not outcome, so an A-graded
+            session can still lose (good process, bad variance) and an
+            F-graded one can still win ("win-but-risky" framing elsewhere
+            in this file) - sign-hardcoded "+"/color here would assert an
+            outcome the number doesn't support, same bug fixed above. */}
         <div className="vitals-cell text-center">
           <span className="data-label block">A-Grade ROI</span>
-          <span className="font-mono text-lg font-bold text-win">+{(sessionData.avgGradedROI['A'] ?? 0).toFixed(1)}%</span>
+          <span className={`font-mono text-lg font-bold ${(sessionData.avgGradedROI['A'] ?? 0) >= 0 ? 'text-win' : 'text-loss'}`}>{(sessionData.avgGradedROI['A'] ?? 0) >= 0 ? '+' : ''}{(sessionData.avgGradedROI['A'] ?? 0).toFixed(1)}%</span>
         </div>
         <div className="vitals-cell text-center">
           <span className="data-label block">F-Grade ROI</span>
-          <span className="font-mono text-lg font-bold text-loss">{(sessionData.avgGradedROI['F'] ?? 0).toFixed(1)}%</span>
+          <span className={`font-mono text-lg font-bold ${(sessionData.avgGradedROI['F'] ?? 0) < 0 ? 'text-loss' : 'text-win'}`}>{(sessionData.avgGradedROI['F'] ?? 0) >= 0 ? '+' : ''}{(sessionData.avgGradedROI['F'] ?? 0).toFixed(1)}%</span>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import {
   PROBLEM_GAMBLING_HELPLINE,
   SUPPORT_PAGE_PATH,
 } from '@/lib/support-resources';
+import { REPORT_GENERATION_TIME, REPORT_GENERATION_TIME_CAPITALIZED } from '@/lib/report-timing';
 
 interface FAQItem {
   q: string;
@@ -22,7 +23,7 @@ const FAQ_DATA: FAQSection[] = [
   {
     title: 'What Is BetAutopsy?',
     items: [
-      { q: 'What is BetAutopsy?', a: 'BetAutopsy is a behavioral analysis tool for sports bettors. You upload your bet history and we analyze it for cognitive biases, emotional patterns, and strategic leaks. The stuff your basic tracker can\'t tell you. Think of it like a sports psychologist reviewing your game tape, except it takes 20 seconds and costs less than a bad parlay.' },
+      { q: 'What is BetAutopsy?', a: `BetAutopsy is a behavioral analysis tool for sports bettors. You upload your bet history and we analyze it for cognitive biases, emotional patterns, and strategic leaks. The stuff your basic tracker can't tell you. Think of it like a sports psychologist reviewing your game tape, except it takes ${REPORT_GENERATION_TIME} and costs less than a bad parlay.` },
       { q: 'Is BetAutopsy a bet tracker?', a: 'No. We\'re the intelligence layer on top of your tracker. Tools like Pikkit track your bets. We tell you what your betting behavior actually means: why you keep doubling your stake after losses, which sports are quietly bleeding your bankroll, and what biases are driving your worst decisions.' },
       { q: 'Does BetAutopsy give me picks or tell me what to bet?', a: 'Never. We are not a picks service and we never predict outcomes. BetAutopsy analyzes your behavior, not the games. Our goal is to help you understand yourself as a bettor so you can make smarter decisions on your own. Any tool that claims to tell you what to bet is selling you something we\'re not willing to sell.' },
       { q: 'Who is BetAutopsy for?', a: 'Anyone who takes their betting seriously enough to want real feedback, not just a win/loss record. If you\'ve ever wondered why you seem to always blow good runs, why certain sports consistently bleed you, or why your stakes creep up when you\'re on a bad streak, this tool, not gambling advice. You don\'t need to be a "sharp" bettor. You just need to be honest about wanting to improve.' },
@@ -48,7 +49,7 @@ const FAQ_DATA: FAQSection[] = [
       { q: 'What is the Emotion Score?', a: 'It\'s a 0–100 rating of how emotionally-driven your betting is. A low score means your decisions are relatively disciplined and consistent. A high score indicates significant emotional volatility: things like stake spikes after losses, chasing runs, or betting more frequently when tilted. It\'s calculated from patterns across your whole history, not any single bet.' },
       { q: 'What biases does BetAutopsy detect?', a: 'We scan for: loss chasing (stake increases after losses), favorite bias (systematically backing favorites regardless of value), recency bias (overweighting recent results in your selections), parlay addiction (heavy parlay volume with poor ROI relative to straight bets), gambler\'s fallacy (expecting streaks to reverse), availability bias (over-betting on memorable outcomes), and sunk cost behavior (returning to the same losing teams or markets). Each bias is backed by specific evidence from your data, not generic advice.' },
       { q: 'What are "strategic leaks"?', a: 'Strategic leaks are the specific markets, sports, or bet types where your ROI is consistently negative in a way that suggests a structural problem, not just bad luck. For example, if you\'re +8% ROI on NFL spreads but -31% ROI on NBA props, the props are a leak. We surface these with ROI, sample size, and a plain-English explanation of what might be driving it.' },
-      { q: 'How long does a report take to generate?', a: 'About 20 seconds from upload to finished report.' },
+      { q: 'How long does a report take to generate?', a: `${REPORT_GENERATION_TIME_CAPITALIZED} from upload to finished report.` },
       // This answer sits outside the "Plans & Pricing" section, so it needs its
       // own flag check — it was the one place a price survived that section
       // being filtered out.

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import SampleModeToggle, { type SampleMode } from '@/components/SampleModeToggle';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { DEMO_ANALYSIS, DEMO_DFS_ANALYSIS, DEMO_DFS_BETS } from '@/lib/demo-data';
+import { REPORT_GENERATION_TIME_COMPACT } from '@/lib/report-timing';
 
 const LS_KEY = 'sample_demo_view';
 
@@ -71,7 +72,7 @@ export default function SamplePageClient() {
             <p className="text-sm font-light">behavioral signals</p>
           </div>
           <div className="border-l-2 border-scalpel pl-4">
-            <p className="font-mono text-3xl font-bold text-scalpel">60s</p>
+            <p className="font-mono text-3xl font-bold text-scalpel">{REPORT_GENERATION_TIME_COMPACT}</p>
             <p className="text-sm font-light">to generate</p>
           </div>
         </div>
