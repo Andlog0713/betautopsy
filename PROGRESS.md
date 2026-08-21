@@ -464,19 +464,33 @@ Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
   Collapse" finding whose stated numbers matched the engine's real
   `by_day` output exactly — sound, not fabricated, and a finding that
   was structurally invisible to Claude before this fix.
-  **Not independently verified**: Vercel's actual production runtime
-  timezone. Runtime-log queries timed out repeatedly (wide windows) or
-  returned no TZ-revealing evidence (narrow windows); Vercel's own docs
-  search didn't surface an explicit statement either. Log viewer
-  timestamps display in UTC, which is consistent with — but not proof
-  of — the function runtime's own `Date` behavior. All 431+ existing
-  tests passed unchanged before and after the accessor swap on this
-  non-UTC machine, which is not evidence production was already correct
-  (a suite that never covered timezone-sensitive cases would pass
-  either way) — it shows the suite had a gap, which is why this bug
-  could ship unnoticed. A definitive answer needs either a one-line
-  diagnostic deployed to preview or direct confirmation from Vercel
-  support/docs; not done this pass.
+  **Vercel production runtime TZ**: never conclusively verified via logs
+  (runtime-log queries timed out on wide windows, no TZ-revealing
+  evidence on narrow ones; Vercel docs search found no explicit
+  statement). Resolved by not depending on inference: Vercel Functions
+  run on AWS Lambda, and Node on Lambda defaults to `TZ=UTC` unless
+  overridden — set `TZ=UTC` explicitly as a Vercel project environment
+  variable so this is guaranteed rather than inherited. (Dashboard →
+  Project → Settings → Environment Variables → add `TZ` = `UTC` for all
+  environments → redeploy.)
+  **Correction — why "431+ tests passed unchanged" was the wrong
+  evidence**: originally framed as "a suite that never covered
+  timezone-sensitive cases would pass either way." That undersold the
+  actual mechanism. `vitest.config.ts` pins `process.env.TZ = 'UTC'` for
+  the whole test process, so inside every test `new Date(x).getHours()`
+  (local) and `d.getUTCHours()` (UTC) return identical values — the
+  process's own local zone *is* UTC. A test that compares `getUTCHour(x)`
+  against a plain expected number therefore cannot distinguish a UTC
+  accessor from a local one; this isn't a coverage gap, it's structural
+  blindness to exactly this regression. Verified empirically: reverted
+  the UTC accessors, reran the original `date-utils.test.ts` unchanged —
+  all 8 tests stayed green. Fixed in PR #115 (`cc205bb`): the accessor
+  tests now assert *which* `Date.prototype` method gets called (spies on
+  a live `Date` instance — TZ-independent by construction), backed by a
+  source-level guard asserting no raw local accessor exists in
+  `lib/autopsy-engine.ts` / `lib/digest-helpers.ts` outside
+  `date-utils.ts` itself. Both verified to fail against the reverted
+  code and pass against the fix.
 
 ### Reverted — #111's total-profit "fix" was itself a fabrication
 Padded `DEMO_BETS` with 12 synthetic rows (9 identical $98 NHL losses, 3
