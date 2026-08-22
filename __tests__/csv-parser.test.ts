@@ -328,6 +328,73 @@ describe('parseCSV — cash-outs', () => {
 });
 
 // ============================================
+// Hierarchical rows (parlay legs, cash-out duplicates as separate rows)
+// ============================================
+
+describe('parseCSV — hierarchical row collapse', () => {
+  // Regression fixture for the bug where a real DraftKings-shaped export
+  // (row_type BET/LEG/CASH_OUT, 200/275/24 rows) got ingested as 499
+  // independent bets, turning a real -15.82% ROI loss into a fabricated
+  // +10.98% gain. Ground truth below is ground-truthed against the real
+  // file, not derived from this parser. Every prior ingestion test in this
+  // session used flat one-row-per-bet CSVs, which is exactly why this
+  // survived nine PRs untouched.
+  it('collapses the checked-in hierarchical-real-draftkings-export.csv fixture to its true 200 bets', () => {
+    const fixturePath = path.join(__dirname, 'fixtures/ingestion/hierarchical-real-draftkings-export.csv');
+    const input = readFileSync(fixturePath, 'utf-8');
+    const { bets, errors, collapse } = parseCSV(input);
+
+    expect(errors).toHaveLength(0);
+    expect(bets).toHaveLength(200);
+
+    const totalStaked = bets.reduce((sum, b) => sum + b.stake, 0);
+    const totalProfit = bets.reduce((sum, b) => sum + b.profit, 0);
+    const roi = (totalProfit / totalStaked) * 100;
+
+    expect(totalStaked).toBeCloseTo(22445.0, 2);
+    expect(totalProfit).toBeCloseTo(-3551.23, 2);
+    expect(roi).toBeCloseTo(-15.82, 2);
+
+    expect(collapse).toEqual({
+      rowsIn: 499,
+      betsOut: 200,
+      legsCollapsed: 275,
+      cashOutsDropped: 24,
+      unclassifiedChildren: 0,
+    });
+
+    // 9 of 78 parlay parents carry a sport label matching none of their
+    // legs' actual sports (e.g. parent tagged NHL, legs NCAAB/NFL) —
+    // Decision: label those explicitly rather than leave a wrong sport tag.
+    expect(bets.filter((b) => b.sport === 'Multi-Sport')).toHaveLength(9);
+
+    const parlays = bets.filter((b) => b.bet_type === 'parlay');
+    expect(parlays).toHaveLength(78);
+    expect(parlays.every((b) => (b.parlay_legs ?? 0) > 0)).toBe(true);
+
+    // Every collapsed child row is visible in warnings, including the
+    // "correctly dropped as a duplicate" happy path — silent row removal
+    // is how this bug shipped undetected in the first place.
+    const legWarnings = collapse.legsCollapsed;
+    const cashOutWarnings = collapse.cashOutsDropped;
+    expect(legWarnings + cashOutWarnings).toBe(299);
+  });
+
+  it('falls through unchanged when no row_id/parent_id hierarchy is present (flat CSV, zero regression)', () => {
+    const input = csv([
+      'date,sport,bet_type,description,odds,stake,result,profit',
+      '2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91',
+      '2025-01-05,NFL,spread,Bills +7,-110,100,loss,-100',
+    ]);
+    const { bets, collapse } = parseCSV(input);
+    expect(bets).toHaveLength(2);
+    expect(collapse).toEqual({
+      rowsIn: 2, betsOut: 2, legsCollapsed: 0, cashOutsDropped: 0, unclassifiedChildren: 0,
+    });
+  });
+});
+
+// ============================================
 // Profit calculation
 // ============================================
 

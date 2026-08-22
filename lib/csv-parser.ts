@@ -1,4 +1,4 @@
-import type { ParsedBet, CSVParseResult } from '@/types';
+import type { ParsedBet, CSVParseResult, HierarchicalCollapseCounts } from '@/types';
 
 // ── Column name mappings ──
 // Order matters: exact matches are tried first, then substring.
@@ -15,6 +15,10 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   profit: ['profit', 'net', 'pl', 'p_l', 'gain_loss', 'pnl', 'net_profit', 'returns'],
   sportsbook: ['sportsbook', 'book', 'operator', 'platform', 'bookie'],
   league: ['leagues', 'league'],
+  leg_number: ['leg_number', 'leg_num', 'legnum', 'leg_no', 'leg_index'],
+  row_id: ['bet_id', 'wager_id', 'ticket_id', 'transaction_id'],
+  parent_id: ['parent_bet_id', 'parent_id', 'parent_wager_id', 'parentbetid'],
+  row_type: ['row_type', 'rowtype', 'record_type', 'entry_type'],
 };
 
 // Headers that should NEVER match certain fields (explicit exclusions)
@@ -45,7 +49,7 @@ const RESULT_MAP: Record<string, ParsedBet['result']> = {
 // Detected separately below and reclassified by the row's actual
 // settlement value instead.
 const CASH_OUT_RESULT_STRINGS = new Set([
-  'cashed_out', 'cashedout', 'cashout', 'cashed out',
+  'cashed_out', 'cashedout', 'cashout', 'cashed out', 'cash_out',
 ]);
 
 // ── Sport detection from descriptions ──
@@ -131,13 +135,17 @@ const BET_TYPE_PATTERNS: [RegExp, string][] = [
 
 // ── Main parser ──
 
+const EMPTY_COLLAPSE_COUNTS: HierarchicalCollapseCounts = {
+  rowsIn: 0, betsOut: 0, legsCollapsed: 0, cashOutsDropped: 0, unclassifiedChildren: 0,
+};
+
 export function parseCSV(raw: string): CSVParseResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   const lines = parseCSVLines(raw);
   if (lines.length < 2) {
-    return { bets: [], errors: ['File is empty or has no data rows'], warnings, column_mapping: {} };
+    return { bets: [], errors: ['File is empty or has no data rows'], warnings, column_mapping: {}, collapse: EMPTY_COLLAPSE_COUNTS };
   }
 
   // Map headers
@@ -150,11 +158,12 @@ export function parseCSV(raw: string): CSVParseResult {
   if (missingRequired.length > 0) {
     if (!columnMapping['stake']) {
       errors.push(`Could not find required column: stake. Found columns: ${headers.join(', ')}`);
-      return { bets: [], errors, warnings, column_mapping: columnMapping };
+      return { bets: [], errors, warnings, column_mapping: columnMapping, collapse: EMPTY_COLLAPSE_COUNTS };
     }
   }
 
   const bets: ParsedBet[] = [];
+  const rowMetas: RowGroupMeta[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const row = lines[i];
@@ -162,13 +171,161 @@ export function parseCSV(raw: string): CSVParseResult {
 
     try {
       const bet = parseRow(row, headers, columnMapping, i + 1, warnings);
-      if (bet) bets.push(bet);
+      if (bet) {
+        bets.push(bet);
+        rowMetas.push({
+          lineNum: i + 1,
+          rowId: getField(row, headers, columnMapping, 'row_id'),
+          parentId: getField(row, headers, columnMapping, 'parent_id'),
+          legNumber: getField(row, headers, columnMapping, 'leg_number'),
+          rowType: getField(row, headers, columnMapping, 'row_type'),
+        });
+      }
     } catch (e) {
       errors.push(`Row ${i + 1}: ${e instanceof Error ? e.message : 'Parse error'}`);
     }
   }
 
-  return { bets, errors, warnings, column_mapping: columnMapping };
+  const { bets: collapsedBets, counts } = collapseHierarchicalRows(bets, rowMetas, warnings);
+
+  return { bets: collapsedBets, errors, warnings, column_mapping: columnMapping, collapse: counts };
+}
+
+// ── Hierarchical row collapse (multi-row wagers: parlay legs, cash-out duplicates) ──
+//
+// Some real sportsbook exports represent ONE logical wager as MULTIPLE CSV
+// rows: a parent BET row, LEG rows for each leg of a parlay, and/or a
+// CASH_OUT row duplicating the parent's settlement when a bet was cashed
+// out early. Left alone, every row above ingests as an independent bet.
+//
+// Detection is structural, not tied to any sportsbook's exact column
+// names: a row is a child of another row if its own `parent_id` value
+// matches the `row_id` of a row that is itself parentless (row_id
+// populated, parent_id empty). Real exports sometimes reuse the parent's
+// own row_id as a shared "wager group" key on every child row too (rather
+// than minting a unique ID per leg) — matching only against parentless
+// rows, instead of any row carrying that ID, resolves that correctly.
+//
+// If no row in the file exhibits this pattern, the whole pass is a no-op
+// and every row passes through exactly as parseRow() produced it — this
+// is the zero-regression guarantee for every currently-supported flat
+// CSV format (Pikkit, plain DraftKings/FanDuel exports, etc.).
+
+interface RowGroupMeta {
+  lineNum: number;
+  rowId: string;
+  parentId: string;
+  legNumber: string;
+  rowType: string;
+}
+
+function collapseHierarchicalRows(
+  bets: ParsedBet[],
+  metas: RowGroupMeta[],
+  warnings: string[]
+): { bets: ParsedBet[]; counts: HierarchicalCollapseCounts } {
+  const rowsIn = bets.length;
+
+  const parentIndexById = new Map<string, number>();
+  metas.forEach((m, i) => {
+    if (m.rowId && !m.parentId) parentIndexById.set(m.rowId, i);
+  });
+
+  const childIndices = new Set<number>();
+  metas.forEach((m, i) => {
+    if (m.parentId && parentIndexById.has(m.parentId)) childIndices.add(i);
+  });
+
+  if (childIndices.size === 0) {
+    return {
+      bets,
+      counts: { rowsIn, betsOut: rowsIn, legsCollapsed: 0, cashOutsDropped: 0, unclassifiedChildren: 0 },
+    };
+  }
+
+  const childrenByParent = new Map<number, number[]>();
+  childIndices.forEach((childIdx) => {
+    const parentIdx = parentIndexById.get(metas[childIdx].parentId)!;
+    if (!childrenByParent.has(parentIdx)) childrenByParent.set(parentIdx, []);
+    childrenByParent.get(parentIdx)!.push(childIdx);
+  });
+
+  let legsCollapsed = 0;
+  let cashOutsDropped = 0;
+  let unclassifiedChildren = 0;
+  const result: ParsedBet[] = [];
+
+  bets.forEach((bet, i) => {
+    if (childIndices.has(i)) return; // folded into its parent below, never emitted on its own
+
+    const children = childrenByParent.get(i) ?? [];
+    if (children.length === 0) {
+      result.push(bet);
+      return;
+    }
+
+    const parent = { ...bet };
+    const legDescriptions: string[] = [];
+    const legSports = new Set<string>();
+
+    for (const childIdx of children) {
+      const child = bets[childIdx];
+      const meta = metas[childIdx];
+      const isCashOutChild = child.settlement_type === 'cash_out';
+      const looksLikeLeg = meta.legNumber !== '' || /leg/i.test(meta.rowType) || /leg/i.test(child.bet_type);
+
+      if (isCashOutChild) {
+        if (parent.result === 'pending') {
+          // Parent carries no settlement of its own — the cash-out row is
+          // the only source of truth available, so fill the gap. Never
+          // overwrites a parent that already has a real result.
+          parent.result = child.result;
+          parent.profit = child.profit;
+          parent.payout = child.payout;
+          if (!parent.settlement_type) parent.settlement_type = 'cash_out';
+          warnings.push(`Row ${meta.lineNum}: CASH_OUT child row folded into parent's settlement (parent had no result of its own).`);
+        } else {
+          warnings.push(`Row ${meta.lineNum}: CASH_OUT child row dropped as a duplicate of its parent's already-settled result.`);
+        }
+        cashOutsDropped++;
+      } else if (looksLikeLeg) {
+        legDescriptions.push(child.description);
+        legSports.add(child.sport);
+        warnings.push(`Row ${meta.lineNum}: leg row collapsed into parent bet.`);
+        legsCollapsed++;
+      } else {
+        // Detected as a child (parent_id resolves to a real parent row)
+        // but matches neither known sub-type. Unknown is a valid value:
+        // fold it in as a leg (the safer of the two — it never
+        // contributes profit on its own) rather than guess, and warn so
+        // it's visible rather than silently absorbed.
+        legDescriptions.push(child.description);
+        legSports.add(child.sport);
+        warnings.push(`Row ${meta.lineNum}: child row of unrecognized sub-type, folded into parent bet as a leg.`);
+        unclassifiedChildren++;
+      }
+    }
+
+    if (legDescriptions.length > 0) {
+      parent.description = [parent.description, ...legDescriptions].join(' | ');
+      parent.bet_type = 'parlay';
+      parent.parlay_legs = legDescriptions.length;
+      // Decision: an explicit "Multi-Sport" label when the parent's own
+      // sport matches NONE of its legs' — anything else keeps the
+      // parent's own label. A parent tagged NHL on a parlay whose legs
+      // are all NCAAB/NFL isn't imprecise, it's wrong.
+      if (legSports.size > 0 && !legSports.has(parent.sport)) {
+        parent.sport = 'Multi-Sport';
+      }
+    }
+
+    result.push(parent);
+  });
+
+  return {
+    bets: result,
+    counts: { rowsIn, betsOut: result.length, legsCollapsed, cashOutsDropped, unclassifiedChildren },
+  };
 }
 
 // ── CSV line parser (handles quoted fields) ──
@@ -342,6 +499,14 @@ function parseRow(
     if (isNaN(profit)) profit = 0;
   }
 
+  // A populated leg-number column means this row is one leg of a parlay,
+  // not a standalone wager — its own odds/stake don't reflect real parlay
+  // payout math, so an empty profit/net column here is unknown, not a
+  // reason to compute a substitute. (Row-level parent/child collapsing
+  // happens upstream of this file; this guard only stops fabrication for
+  // formats where leg rows still reach parseRow as their own line.)
+  const isLegRow = get('leg_number') !== '';
+
   if (isCashOut) {
     // Reclassify by the row's actual settlement value (Stage 8) — a
     // cash-out can be a real win, loss, or breakeven, unlike a genuine
@@ -359,7 +524,11 @@ function parseRow(
       profit = 0;
     }
   } else {
-    if (!profitStr || profit === 0) {
+    if (!profitStr && isLegRow) {
+      // Unknown is a valid value: no profit column on a leg row means no
+      // profit, not a computed one.
+      profit = 0;
+    } else if (!profitStr || profit === 0) {
       profit = calculateProfit(odds, stake, result);
     }
     // Push and void ALWAYS have $0 profit — override any CSV value.
