@@ -886,18 +886,45 @@ function analysisTimeEstimate(betCount: number): string {
 }
 
 // Target duration (seconds) the progress bar paces itself against per
-// bracket - reaches ~92% around this point instead of hitting it early and
-// sitting still for the rest of a long real wait, which reads as a hang.
-// 90s for the 150-500 bracket is the measured figure, not an estimate.
+// bracket - reaches ~85% around this point instead of hitting a cap early
+// and sitting still for the rest of a long real wait, which reads as a
+// hang. 90s for the 150-500 bracket is the measured figure, not an
+// estimate.
 function analysisTargetSeconds(betCount: number): number {
   return betCount < 50 ? 15 : betCount <= 150 ? 45 : betCount <= 500 ? 90 : 180;
 }
 
-// Linear ramp toward 92%, paced against the bracket's real target instead
-// of a fixed curve tuned for a much shorter wait - keeps moving for the
-// whole expected duration rather than stalling at 92% for the back half.
+// Three phases, not a single curve: a linear ramp (first pass at this fix)
+// paces correctly against the real target but reads as sluggish - a
+// constant rate feels like crawling from the very start, even at
+// identical total time to completion. And a hard cap at the target still
+// reproduces the original stall, just later, on any run slower than its
+// own estimate.
+//   1. Fast initial burst (first ~5s, or 15% of the target if that's
+//      shorter): climbs to 40%. This is what reads as "it's working" -
+//      the first few seconds are what a user actually watches.
+//   2. Decelerating climb from 40% to 85% across the rest of the target
+//      window - lands close to done right around when the real response
+//      is actually expected.
+//   3. Past the target: an asymptotic creep from 85% toward 98% that
+//      never fully stops (exponential decay, never reaches its ceiling)
+//      instead of freezing dead - a run that takes 2-3x the target still
+//      shows visible, real motion instead of looking hung.
 function analysisSimulatedProgress(elapsedSeconds: number, betCount: number): number {
-  return Math.min(92, (elapsedSeconds / analysisTargetSeconds(betCount)) * 92);
+  const target = analysisTargetSeconds(betCount);
+  const burst = Math.min(target * 0.15, 5);
+  const burstCap = 40;
+  const mainCap = 85;
+
+  if (elapsedSeconds <= burst) {
+    return (elapsedSeconds / burst) * burstCap;
+  }
+  if (elapsedSeconds <= target) {
+    return burstCap + ((elapsedSeconds - burst) / (target - burst)) * (mainCap - burstCap);
+  }
+  const overTime = elapsedSeconds - target;
+  const creepCeiling = 98;
+  return mainCap + (creepCeiling - mainCap) * (1 - Math.exp(-overTime / target));
 }
 
 function AnalyzingState({ betCount }: { betCount: number }) {
