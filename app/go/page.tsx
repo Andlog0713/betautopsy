@@ -4,6 +4,7 @@ import { Logo } from '@/components/logo';
 import PaidTrafficDisclaimer from '@/components/PaidTrafficDisclaimer';
 import GoPageView from './GoPageView';
 import GoSignupLink from './GoSignupLink';
+import { REPORT_GENERATION_TIME, REPORT_GENERATION_TIME_CAPITALIZED } from '@/lib/report-timing';
 
 // Case file number is derived from the ISR cache window so it stays
 // stable across visitors within the hour. Mobile builds (`output:
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'BetAutopsy: Find Your Betting Leaks',
     description:
-      'Upload your betting history. Get a forensic behavioral report in 60 seconds.',
+      `Upload your betting history. Get a forensic behavioral report in ${REPORT_GENERATION_TIME}.`,
     url: 'https://www.betautopsy.com/go',
     images: [{ url: '/og', width: 1200, height: 630 }],
   },
@@ -82,7 +83,7 @@ const STEPS = [
   {
     num: '02',
     label: 'ANALYZE',
-    body: '47 behavioral signals scanned. Biases named. Dollar costs calculated. Under 60 seconds.',
+    body: `47 behavioral signals scanned. Biases named. Dollar costs calculated. ${REPORT_GENERATION_TIME_CAPITALIZED}.`,
   },
   {
     num: '03',
@@ -95,7 +96,7 @@ const OBJECTION_KILLERS = [
   'Data never sold or shared',
   'Works with any sportsbook',
   'No credit card required',
-  'Report ready in 60 seconds',
+  `Report ready in ${REPORT_GENERATION_TIME}`,
 ];
 
 function CheckIcon() {
@@ -150,7 +151,7 @@ export default function GoLandingPage() {
             <span className="text-scalpel">really costing you.</span>
           </h1>
           <p className="mt-4 text-fg-muted text-base md:text-lg font-light">
-            Upload your history. Get a 5-chapter forensic report in 60 seconds.
+            Upload your history. Get a 5-chapter forensic report in {REPORT_GENERATION_TIME}.
           </p>
           <div className="mt-7">
             <GoSignupLink className="btn-primary text-base !px-10 !py-3.5">
