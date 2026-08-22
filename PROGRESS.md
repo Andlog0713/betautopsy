@@ -675,6 +675,185 @@ guard), `npm run build` clean, extensive live dev-server + real
 production-build checks with direct console-message/localStorage
 manipulation rather than inference.
 
+### CRITICAL — CSV parser bug: real DraftKings export flipped a real loss into a fabricated gain (in progress, branch `fix/csv-parlay-leg-cashout-parsing`, based on `feat/stage8-cashout-settlement`/PR #109)
+
+Andrew uploaded a real-shaped DraftKings export with `row_type` BET/LEG/
+CASH_OUT rows (200/275/24) that `lib/csv-parser.ts` had no concept of —
+every row ingested as an independent bet, turning a real -15.82% ROI loss
+into a fabricated +10.98% gain. "It turned a losing bettor into a winning
+one on a product that exists to tell people the truth about their
+losses."
+
+Root cause (confirmed against real code + the real file, not inferred):
+three compounding mechanisms — (1) LEG rows have no profit/net column
+populated; `parseRow()`'s fallback (`!profitStr || profit === 0` →
+`calculateProfit()`) computed a fabricated profit from each leg's own
+odds/stake instead of leaving it unknown — the single largest
+contributor (+$9,277.29 fabricated across 165 "winning" legs, against a
+real -$3,551.23). (2) CASH_OUT rows duplicate their parent's already-
+correct settlement as extra independent rows, double-counting $2,685
+staked / -$316.79 net. (3) The pre-existing "push and void always $0
+profit" override was also zeroing real cash-out settlement on BET rows
+themselves — already fixed on PR #109 (`feat/stage8-cashout-settlement`,
+still open/unmerged as of this writing), which this branch builds on top
+of per Andrew's explicit instruction rather than beside it. Also found
+and confirmed: `CASH_OUT_RESULT_STRINGS` was missing the `cash_out`
+(underscore) spelling this file's own CASH_OUT rows use, misclassifying
+all 24 as `pending` with a spurious warning; 9 of 78 parlay parents carry
+a sport label matching none of their legs' actual sports (parent tagged
+NHL, legs NCAAB/NFL).
+
+Andrew's decisions: (1) multi-sport parlays get an explicit "Multi-Sport"
+label when the parent's sport matches none of its legs, keep the
+parent's label when it matches some. (2) ship a minimal pre-commit import
+review step (bet count / staked / net / date range / confirm — not
+row-by-row, that's a separate conversation). (3) fix the RESULT_MAP gap
+independently of the row-collapse work.
+
+Build order (Andrew's; "outline before coding" on anything touching the
+parse path, per the wire-data-provenance standing rule above):
+
+- **(a) done, verified** — LEG rows (detected via a new `leg_number`
+  column signal) with an empty profit/net column now get `profit = 0`,
+  never `calculateProfit()`. "Unknown is a valid value: no profit column
+  on a child row means no profit, not a computed one."
+- **(b) done, verified** — added `cash_out` to `CASH_OUT_RESULT_STRINGS`.
+- Re-ran the real file through the parser after (a)+(b): LEG rows now
+  `{count: 275, staked: 27030, profit: 0}` (was +$9,277.29 fabricated),
+  CASH_OUT rows now classify 16 loss / 8 win with zero warnings (was 24
+  "pending"/warned), BET rows unchanged at exactly -$3,551.23 (matches
+  ground truth, via PR #109). Overall total is still wrong (499 rows
+  still ingested independently, -7.42% ROI vs. the real -15.82%) until
+  (c) lands — but no longer *fabricates a gain*, the stated top priority
+  if shipped in pieces. All 427 existing tests still pass; no
+  regressions.
+- **(c) not started** — full generic row-collapse (parent/child
+  grouping, structural signals, Multi-Sport labeling). Outline delivered
+  to Andrew for sign-off, not yet coded (per his explicit re-instruction
+  to outline before coding this piece).
+- **(d) not started** — minimal import-review step.
+
+**Regression fixture**: real file copied to
+`__tests__/fixtures/ingestion/hierarchical-real-draftkings-export.csv`
+(permanent, checked in — noted as an intentional exception to this
+directory's "synthetic only" convention in its README). Ground-truth
+assertion test (200 bets / $22,445 staked / -$3,551.23 / -15.82% ROI)
+deferred until (c) ships — asserting it now would fail, since collapse
+doesn't exist yet.
+
+**Cleanup SQL** (Andrew's own contaminated account,
+andlog0713@gmail.com): ran the read-only verification SELECTs via
+Supabase MCP per Andrew's explicit instruction ("run the SELECTs and
+hand me the real output... I'll run the DELETEs myself"). Real
+`upload_id` `86f7d9df-9820-498b-8d25-93141dfabfe7` (499 bets, $52,160.00
+staked, $5,726.07 profit — matches the contaminated report exactly) and
+`report_id` `e8a49248-ab40-41a9-a1a9-bce7191387bd` confirmed. Andrew ran
+the `bets` DELETE himself (upload_id `86f7d9df-...`) — done.
+
+**`autopsy_reports` row `e8a49248-ab40-41a9-a1a9-bce7191387bd` — DO NOT
+DELETE.** Andrew is deliberately keeping this row: it's the only live
+artifact of this bug, and he wants to diff it against corrected output
+once (c) ships. Not cleanup debt — leave it until he says otherwise.
+
+**`is_paid` semantics investigated (report only, no code changed)**:
+confirmed `is_paid` means "full report," not "money changed hands" —
+`app/api/analyze/route.ts:541` sets `is_paid: !isSnapshot`, and
+`isSnapshot` is false for three unrelated reasons (real Stripe/IAP
+payment via `paidSnapshotId`, the free launch promo, or simply
+`tier === 'pro'` — a Pro user's report is never traced to a per-report
+charge at all). Also: `stripe_payment_intent_id` is only ever written
+onto the original *snapshot* row by the webhook — every `full` row's
+own `stripe_payment_intent_id` is null by construction, paid or not, so
+that column alone can't answer "was this paid."
+
+Traced all 22 current `is_paid=true` rows (Andrew's 21 + today's
+contaminated one) across 4 accounts: `cfd91e96`/`c1c16545`
+(hochh16@gmail.com / evanhochhauser@gmail.com, both Pro-tier comped, no
+`stripe_customer_id`, zero payment signal — pure tier-based `is_paid`),
+`dcb2436d` (Andrew's own account, 14 rows: 9 chained to
+`iap_transactions` rows that are **all `environment: SANDBOX`** — i.e.
+RevenueCat test purchases, zero real money, despite running the full
+production webhook path end to end; 2 chained to one real Stripe
+`payment_intent`; 2 with no payment signal at all, i.e. plain Pro-tier
+auto-`is_paid`), and `95c5ad28` (betautopsy@gmail.com, free tier but 3
+real Stripe `payment_intent`s on file, 1 chained through to a full
+report). **No row in the table traces to an external, unaffiliated,
+paying customer** — every dollar-shaped signal found belongs to an
+internal/founder-adjacent account.
+
+Two more findings surfaced along the way, not yet actioned: (1) two of
+`betautopsy@gmail.com`'s three real charges (`ff3e35c4`, `8210a41b`,
+2026-05-06) have no full-report row chained to them at all — charged,
+report never delivered, the exact failure mode `analyze/route.ts`'s
+own top-of-file comment already documents. (2) 3 of the 7 `stripe_events`
+rows don't correlate to any `payment_intent_id` in the `is_paid=true`
+set (`evt_1TSJrE7...`, `evt_1TSK717...` on 2026-05-01; `evt_1TVGEl7...`
+on 2026-05-09) — could be subscription-mode webhooks (which never touch
+`autopsy_reports`) or additional undelivered charges; not resolved,
+would need the Stripe dashboard directly to close out.
+
+### Done — (c) row-collapse + (d) minimal import review, both with the ground-truth test
+
+**(c)**: `collapseHierarchicalRows()` in `lib/csv-parser.ts`, a post-processing
+pass after the existing per-row loop. Detection: a row is a child iff its
+`parent_id` resolves to another row's `row_id` where THAT row's own
+`parent_id` is empty — resolved this way (not a simple 1:1 `row_id` map)
+because the real fixture reuses the parent's own `bet_id` as a shared
+"wager group" key on every LEG/CASH_OUT child row too, rather than
+minting a unique ID per leg; a naive map would silently point at the
+wrong row. Zero rows with this pattern → the whole pass is a no-op, every
+row passes through exactly as `parseRow()` produced it (zero regression
+on every existing flat-CSV format, all pre-existing tests still green).
+New canonical columns: `row_id`, `parent_id`, `row_type` (alongside (a)'s
+`leg_number`). Sub-classifies each child via the already-computed
+`settlement_type === 'cash_out'` signal first (no re-deriving from raw
+strings), then `/leg/i` against `row_type`/`bet_type`/`leg_number`
+populated; unclassified children default to leg-handling (never
+contributes profit) and warn by name rather than guess. Per Andrew's two
+adjustments: every child drop warns, including the correct-duplicate
+happy path (not just anomalies), and the function returns
+`{rowsIn, betsOut, legsCollapsed, cashOutsDropped, unclassifiedChildren}`
+instead of just the array.
+
+Re-parsed the real fixture: **200 bets, $22,445.00 staked, -$3,551.23
+profit, -15.82% ROI — exact match to Andrew's ground truth, to the
+penny.** `collapse: {rowsIn: 499, betsOut: 200, legsCollapsed: 275,
+cashOutsDropped: 24, unclassifiedChildren: 0}`. 9 Multi-Sport parlays
+(matches the root-cause count exactly). 299 warnings (275 + 24) — every
+collapsed row visible, per Andrew's instruction.
+
+Ground-truth test shipped in the same PR (`__tests__/csv-parser.test.ts`,
+new `parseCSV — hierarchical row collapse` block): asserts the exact
+numbers above plus the collapse counts, plus a second test proving a
+plain flat CSV (no `row_id`/`parent_id` columns) round-trips through
+`collapse: {rowsIn: N, betsOut: N, ...all zero}` unchanged.
+
+**(d)**: `/api/upload` now accepts a `preview: 'true'` form field. When
+set, it parses (through the same collapse pass) and returns
+`UploadPreviewResponse` (`bet_count`, `rows_in_file`, `total_staked`,
+`total_net`, `date_range_start/end`) without calling `importBets()` —
+nothing is written to the DB. `app/(dashboard)/upload/page.tsx`'s CSV
+flow now previews first, shows a confirm screen (with "N rows in your
+file → M bets" whenever collapse changed anything), and only commits
+(re-POSTing the same file without `preview`) on explicit confirm.
+Screenshot/Paste import already had their own review-before-commit step
+via `/api/upload-parsed` — left untouched, out of scope.
+
+Verified: tsc clean, 429/429 tests (2 new), `npm run build` clean.
+**Not verified live in a browser** — the authenticated `/upload` flow
+needs Andrew's own session; I don't have his credentials and won't
+attempt to sign in as him. Structural/type verification stands in;
+flagging this explicitly rather than claiming a full click-through.
+
+### Parked / next branch
+- **Andrew: click through the real `/upload` flow once** (preview screen
+  → confirm → commit) — the one thing I couldn't verify myself.
+- Two unresolved `is_paid` findings above (undelivered-report charges,
+  3 unmatched `stripe_events`) — reported only, no action taken; surface
+  to Andrew again if pursuing further.
+- PR #109 merge — still open as of this writing; this branch needs
+  rebasing once it lands.
+
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
 PRs #88/#89/#90 merged. This branch is the disclosure half of Stage 8 -
