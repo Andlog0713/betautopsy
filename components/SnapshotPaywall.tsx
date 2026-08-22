@@ -7,6 +7,14 @@ import { apiPost } from '@/lib/api-client';
 import { openCheckoutUrl } from '@/lib/native';
 import type { SufficiencyState } from '@/types';
 
+// Same window.Sentry?.captureException pattern as components/ErrorBoundary.tsx
+// - the already-initialized browser SDK, not a fresh @sentry/nextjs import.
+interface SentryWindow {
+  Sentry?: {
+    captureException: (err: unknown, context?: Record<string, unknown>) => void;
+  };
+}
+
 interface SnapshotPaywallProps {
   reportId?: string;
   isPro: boolean;
@@ -26,14 +34,27 @@ interface SnapshotPaywallProps {
 
 export default function SnapshotPaywall({ reportId, isPro, counts, sufficiency }: SnapshotPaywallProps) {
   const [loading, setLoading] = useState(false);
+  // Distinct from render-blocking errors elsewhere in this file — this one
+  // is user-visible and specifically about the checkout call failing, not
+  // a missing reportId or PRICING_ENABLED being off.
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   if (!PRICING_ENABLED) return null;
 
   const totalFindings = (counts?.leaks ?? 0) + (counts?.patterns ?? 0) + (counts?.total_biases ?? 0);
 
+  // Previously: a failed checkout (no url in the response, or the fetch
+  // itself throwing) only hit console.error and silently reverted the
+  // button - the exact path that threw coupon_applies_to_nothing three
+  // times in thirteen seconds in August, with nothing visible to the user
+  // who clicked buy three times and nothing telling us it happened until
+  // someone went looking in runtime logs. Now shows a real error with a
+  // support contact, and reports to Sentry so this surfaces the first time
+  // it happens instead of being discovered after the fact.
   async function handleUnlock() {
     if (!reportId) return;
     setLoading(true);
+    setCheckoutError(null);
     try {
       const res = await apiPost('/api/checkout', {
         type: 'report',
@@ -43,10 +64,20 @@ export default function SnapshotPaywall({ reportId, isPro, counts, sufficiency }
       if (data.url) {
         await openCheckoutUrl(data.url);
       } else {
-        console.error('Checkout error:', data.error);
+        const err = new Error(`Checkout failed: ${data.error ?? 'no checkout URL returned'}`);
+        console.error(err.message);
+        if (typeof window !== 'undefined') {
+          (window as unknown as SentryWindow).Sentry?.captureException(err, { extra: { reportId, isPro } });
+        }
+        setCheckoutError("Checkout didn't start. Try again, or email us if it keeps happening.");
         setLoading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error('Checkout request failed:', err);
+      if (typeof window !== 'undefined') {
+        (window as unknown as SentryWindow).Sentry?.captureException(err, { extra: { reportId, isPro } });
+      }
+      setCheckoutError("Checkout didn't start. Try again, or email us if it keeps happening.");
       setLoading(false);
     }
   }
@@ -105,6 +136,17 @@ export default function SnapshotPaywall({ reportId, isPro, counts, sufficiency }
           )}
         </button>
       </div>
+      {checkoutError && (
+        <div className="mt-3 pt-3 border-t border-border-subtle space-y-1">
+          <p className="text-loss text-xs">{checkoutError}</p>
+          <a
+            href="mailto:support@betautopsy.com?subject=Checkout%20didn%27t%20start"
+            className="text-scalpel text-xs hover:underline"
+          >
+            Email us and we&apos;ll help →
+          </a>
+        </div>
+      )}
     </div>
   );
 }

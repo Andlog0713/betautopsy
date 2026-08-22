@@ -28,8 +28,10 @@
 // were describing. Don't reuse this constant for snapshot-speed claims.
 export const REPORT_GENERATION_TIME = 'under 2 minutes';
 export const REPORT_GENERATION_TIME_CAPITALIZED = 'Under 2 minutes';
-// Compact form for stat-tile displays (paired with a short label like "to
-// generate", alongside other short tokens like "5"/"47" - see
-// components/SamplePageClient.tsx). Same underlying figure as the two
-// constants above, just formatted to fit a tile instead of a sentence.
-export const REPORT_GENERATION_TIME_COMPACT = '<2min';
+// No compact stat-tile variant: SamplePageClient.tsx used to show this as
+// a third "<2min to generate" tile next to "5 chapters"/"47 behavioral
+// signals" - dropped per review. Next to two quantity claims building
+// momentum toward "look how much you get," a wait-time duration reads as
+// a tonal shift into "here's how long you'll wait" instead. The sentence-
+// form constants above still carry the honest figure everywhere it's
+// informative context rather than a bragging stat.

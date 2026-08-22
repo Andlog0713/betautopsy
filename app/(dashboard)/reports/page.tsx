@@ -105,14 +105,6 @@ export default function ReportsPage() {
     ) {
       autoRunTriggered.current = true;
       const paidId = isUnlock ? searchParams.get('id') : null;
-      // eslint-disable-next-line no-console
-      console.log('[unlock-debug] auto-run effect firing', {
-        isUnlock,
-        paidId,
-        searchParamsString: searchParams.toString(),
-        loading,
-        totalBetCount,
-      });
       if (paidId) setPaidSnapshotId(paidId);
       // Clean URL only AFTER capturing what we need so refresh-during-run
       // doesn't strand the user on a stale `?unlocked=true` link or lose
@@ -223,14 +215,6 @@ export default function ReportsPage() {
         report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
         ...(isPaidUpgrade ? { paid_snapshot_id: paidId } : {}),
       };
-      // eslint-disable-next-line no-console
-      console.log('[unlock-debug] runAutopsy outgoing body', {
-        body,
-        tier,
-        effectiveTier: getEffectiveTier(tier),
-        paidIdOverride,
-        paidSnapshotId,
-      });
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
       if (analyzeScope.startsWith('uploads:')) body.upload_ids = analyzeScope.replace('uploads:', '').split(',');
@@ -326,13 +310,6 @@ export default function ReportsPage() {
               if (metricsTimer) { clearTimeout(metricsTimer); metricsTimer = null; }
               const d = event.data;
               const report = d.report as AutopsyReportType;
-              // eslint-disable-next-line no-console
-              console.log('[unlock-debug] complete event received', {
-                report_id: report.id,
-                report_type: report.report_type,
-                is_paid: report.is_paid,
-                upgraded_from_snapshot_id: report.upgraded_from_snapshot_id,
-              });
               setTierLimited(d.tier_limited ?? false);
               setTotalBetsAll(d.total_bets ?? 0);
               setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
@@ -477,7 +454,7 @@ export default function ReportsPage() {
           </div>
         )}
         {/* Compact progress bar while Claude is still analyzing */}
-        {running && <AnalyzingProgress />}
+        {running && <AnalyzingProgress betCount={activeReport.bet_count_analyzed} />}
 
         {/* First-insight celebration — surfaces top bias before the full report */}
         {firstInsight && (
@@ -873,7 +850,20 @@ export default function ReportsPage() {
 }
 
 // ── Analyzing Loading State ──
-
+//
+// Single source for both loading indicators below (AnalyzingState and
+// AnalyzingProgress): the estimate text and the progress-bar pacing both
+// key off bet count from these two functions, not two independently
+// hand-tuned guesses. AnalyzingProgress previously had its own flat
+// "15-25 seconds" claim regardless of bet count, plus a bar tuned to hit
+// 92% by ~30-40s - wrong for anything past a small dataset, and it's
+// specifically what renders during the post-checkout ?unlocked=true
+// auto-run, meaning the customer who just paid was the one watching
+// "Almost there..." roughly 65s before a real response actually arrived,
+// then a bar sitting at 92% for the back half of the wait. Two independent
+// real runAutopsy() calls this session (not mocked) measured ~90s each for
+// 200-300 bets - see lib/report-timing.ts - which is what the 150-500
+// bracket below is tuned against directly, not guessed.
 const LOADING_MESSAGES = [
   'Scanning your bet history...',
   'Calculating your Emotion Score...',
@@ -884,6 +874,31 @@ const LOADING_MESSAGES = [
   'Building your behavioral profile...',
   'Generating your action plan...',
 ];
+
+function analysisTimeEstimate(betCount: number): string {
+  return betCount < 50
+    ? 'This usually takes about 15 seconds.'
+    : betCount <= 150
+    ? `Analyzing ${betCount} bets, this usually takes 30-45 seconds.`
+    : betCount <= 500
+    ? `Deep analysis on ${betCount} bets. This can take 1-2 minutes.`
+    : `Comprehensive analysis on ${betCount} bets. Sit tight, this may take a few minutes.`;
+}
+
+// Target duration (seconds) the progress bar paces itself against per
+// bracket - reaches ~92% around this point instead of hitting it early and
+// sitting still for the rest of a long real wait, which reads as a hang.
+// 90s for the 150-500 bracket is the measured figure, not an estimate.
+function analysisTargetSeconds(betCount: number): number {
+  return betCount < 50 ? 15 : betCount <= 150 ? 45 : betCount <= 500 ? 90 : 180;
+}
+
+// Linear ramp toward 92%, paced against the bracket's real target instead
+// of a fixed curve tuned for a much shorter wait - keeps moving for the
+// whole expected duration rather than stalling at 92% for the back half.
+function analysisSimulatedProgress(elapsedSeconds: number, betCount: number): number {
+  return Math.min(92, (elapsedSeconds / analysisTargetSeconds(betCount)) * 92);
+}
 
 function AnalyzingState({ betCount }: { betCount: number }) {
   const [msgIndex, setMsgIndex] = useState(0);
@@ -905,21 +920,8 @@ function AnalyzingState({ betCount }: { betCount: number }) {
   const secs = elapsed % 60;
   const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
 
-  const estimate = betCount < 50
-    ? 'This usually takes about 15 seconds.'
-    : betCount <= 150
-    ? `Analyzing ${betCount} bets, this usually takes 30-45 seconds.`
-    : betCount <= 500
-    ? `Deep analysis on ${betCount} bets. This can take 1-2 minutes.`
-    : `Comprehensive analysis on ${betCount} bets. Sit tight, this may take a few minutes.`;
-
-  // Simulated progress
-  const progress = Math.min(92,
-    elapsed <= 5 ? (elapsed / 5) * 30 :
-    elapsed <= 20 ? 30 + ((elapsed - 5) / 15) * 30 :
-    elapsed <= 40 ? 60 + ((elapsed - 20) / 20) * 20 :
-    80 + ((elapsed - 40) / 30) * 12
-  );
+  const estimate = analysisTimeEstimate(betCount);
+  const progress = analysisSimulatedProgress(elapsed, betCount);
 
   return (
     <div className="card p-8 text-center space-y-4">
@@ -955,7 +957,7 @@ const PROGRESS_MESSAGES = [
   'Writing your action plan...',
 ];
 
-function AnalyzingProgress() {
+function AnalyzingProgress({ betCount }: { betCount: number }) {
   const [msgIndex, setMsgIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
@@ -965,15 +967,8 @@ function AnalyzingProgress() {
     return () => { clearInterval(timer); clearInterval(clock); };
   }, []);
 
-  // Simulated progress: fast at start, slows down, caps at 92%
-  const progress = Math.min(92,
-    elapsed <= 5 ? (elapsed / 5) * 25 :
-    elapsed <= 15 ? 25 + ((elapsed - 5) / 10) * 35 :
-    elapsed <= 30 ? 60 + ((elapsed - 15) / 15) * 20 :
-    80 + ((elapsed - 30) / 30) * 12
-  );
-
-  const estimate = elapsed < 10 ? 'Usually takes 15-25 seconds' : elapsed < 25 ? 'Almost there...' : 'Finishing up...';
+  const progress = analysisSimulatedProgress(elapsed, betCount);
+  const estimate = analysisTimeEstimate(betCount);
 
   return (
     <div className="card border-scalpel/20 bg-scalpel-muted p-4 space-y-3">

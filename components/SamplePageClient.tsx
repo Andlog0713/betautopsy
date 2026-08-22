@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import SampleModeToggle, { type SampleMode } from '@/components/SampleModeToggle';
 import DemoReportWrapper from '@/components/DemoReportWrapper';
 import { DEMO_ANALYSIS, DEMO_DFS_ANALYSIS, DEMO_DFS_BETS } from '@/lib/demo-data';
-import { REPORT_GENERATION_TIME_COMPACT } from '@/lib/report-timing';
 
 const LS_KEY = 'sample_demo_view';
 
@@ -62,6 +61,15 @@ export default function SamplePageClient() {
             ? 'This is the full, unredacted sample. 200 PrizePicks entries analyzed across 5 chapters. Scroll through the whole thing — when you\'re ready, upload your own history and get yours.'
             : `This is the full, unredacted sample. ${DEMO_ANALYSIS.summary.total_bets} bets analyzed across 5 chapters. Scroll through the whole thing — when you're ready, upload your own history and get yours.`}
         </p>
+        {/* Third tile used to be a "<2min to generate" stat. Dropped per
+            review: next to two quantity claims ("5", "47") that build
+            momentum toward "look how much you get," a wait-time duration
+            is a different kind of claim - it reads as a tonal shift into
+            "here's how long you'll wait" rather than reinforcing depth.
+            The honest "under 2 minutes" figure still lives in
+            lib/report-timing.ts and the sentence-form copy elsewhere
+            (hero subhead, FAQ) where it's informative context rather than
+            a bragging stat. */}
         <div className="flex gap-6 md:gap-10 mb-6">
           <div className="border-l-2 border-scalpel pl-4">
             <p className="font-mono text-3xl font-bold text-scalpel">5</p>
@@ -70,10 +78,6 @@ export default function SamplePageClient() {
           <div className="border-l-2 border-scalpel pl-4">
             <p className="font-mono text-3xl font-bold text-scalpel">47</p>
             <p className="text-sm font-light">behavioral signals</p>
-          </div>
-          <div className="border-l-2 border-scalpel pl-4">
-            <p className="font-mono text-3xl font-bold text-scalpel">{REPORT_GENERATION_TIME_COMPACT}</p>
-            <p className="text-sm font-light">to generate</p>
           </div>
         </div>
 
