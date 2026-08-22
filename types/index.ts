@@ -1304,11 +1304,24 @@ export interface ParsedBet {
   settlement_type?: 'cash_out' | null;
 }
 
+// Counts from collapsing multi-row wagers (parlay legs, cash-out
+// duplicates) into their parent bet during CSV parsing. rowsIn/betsOut
+// let the import-review step show "N rows in your file → M bets," the
+// exact visibility a silent 499-in/200-out collapse needs.
+export interface HierarchicalCollapseCounts {
+  rowsIn: number;
+  betsOut: number;
+  legsCollapsed: number;
+  cashOutsDropped: number;
+  unclassifiedChildren: number;
+}
+
 export interface CSVParseResult {
   bets: ParsedBet[];
   errors: string[];
   warnings: string[];
   column_mapping: Record<string, string>;
+  collapse: HierarchicalCollapseCounts;
 }
 
 // ── API Request/Response ──
@@ -1327,6 +1340,21 @@ export interface UploadResponse {
   bets_imported: number;
   duplicates_skipped: number;
   upload_id: string | null;
+  errors: string[];
+  warnings: string[];
+}
+
+// Minimal pre-commit summary for the CSV upload flow — bet count, staked,
+// net, date range. Nothing is written to the DB when this is returned;
+// the client re-POSTs the same file without the preview flag to commit.
+export interface UploadPreviewResponse {
+  preview: true;
+  bet_count: number;
+  rows_in_file: number;
+  total_staked: number;
+  total_net: number;
+  date_range_start: string | null;
+  date_range_end: string | null;
   errors: string[];
   warnings: string[];
 }

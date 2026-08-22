@@ -12,12 +12,12 @@ import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import PasteParser from '@/components/PasteParser';
 import ScreenshotParser from '@/components/ScreenshotParser';
-import type { UploadResponse } from '@/types';
+import type { UploadResponse, UploadPreviewResponse } from '@/types';
 import { userQualifiesForPromo } from '@/types';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Upload as UploadIcon, Smartphone, ClipboardList, FileText } from 'lucide-react';
 
-type UploadState = 'idle' | 'uploading' | 'success' | 'error';
+type UploadState = 'idle' | 'uploading' | 'previewing' | 'confirming' | 'success' | 'error';
 type ActiveMethod = 'pikkit' | 'screenshot' | 'paste' | 'csv';
 
 const VALID_METHODS: ActiveMethod[] = ['pikkit', 'screenshot', 'paste', 'csv'];
@@ -37,6 +37,8 @@ export default function UploadPage() {
   const [dragOver, setDragOver] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
   const [error, setError] = useState('');
+  const [preview, setPreview] = useState<UploadPreviewResponse | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [activeMethod, setActiveMethod] = useState<ActiveMethod>(initialMethod ?? 'pikkit');
   const [showPikkitSteps, setShowPikkitSteps] = useState(false);
   const [bankrollInput, setBankrollInput] = useState('');
@@ -82,8 +84,10 @@ export default function UploadPage() {
   const isOnboarding = reportCount === 0;
   const betCount = initialBetCount ?? 0;
 
+  // Parses the file server-side and shows a pre-commit summary (bet
+  // count, staked, net, date range) — nothing is written to the DB yet.
   const handleFile = useCallback(async (file: File) => {
-    if (state === 'uploading') return; // Prevent concurrent uploads
+    if (state === 'uploading' || state === 'previewing' || state === 'confirming') return; // Prevent concurrent uploads
     if (!file.name.endsWith('.csv')) {
       setError('Please upload a CSV file.');
       setState('error');
@@ -94,9 +98,38 @@ export default function UploadPage() {
     setState('uploading');
     setError('');
     setResult(null);
+    setPreview(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('preview', 'true');
+      const res = await apiPostFormData('/api/upload', formData);
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Upload failed');
+        setState('error');
+        triggerHaptic('heavy');
+        return;
+      }
+      setPreview(data as UploadPreviewResponse);
+      setPendingFile(file);
+      setState('previewing');
+    } catch {
+      setError('Upload failed. Please try again.');
+      setState('error');
+      triggerHaptic('heavy');
+    }
+  }, [state]);
+
+  // Re-sends the same file without the preview flag, which actually
+  // commits the bets — the same request the old single-step flow made.
+  const confirmImport = useCallback(async () => {
+    if (!pendingFile) return;
+    setState('confirming');
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', pendingFile);
       const res = await apiPostFormData('/api/upload', formData);
       const data = await res.json();
       if (!res.ok) {
@@ -109,6 +142,8 @@ export default function UploadPage() {
       window.gtag?.('event', 'csv_upload', { bet_count: (data as UploadResponse).bets_imported });
       trackUploadMeta();
       setState('success');
+      setPreview(null);
+      setPendingFile(null);
       // Medium impact on successful import — confirms the upload
       // landed without being as jarring as the error pulse.
       triggerHaptic('medium');
@@ -117,7 +152,13 @@ export default function UploadPage() {
       setState('error');
       triggerHaptic('heavy');
     }
-  }, [state]);
+  }, [pendingFile]);
+
+  function cancelPreview() {
+    setState('idle');
+    setPreview(null);
+    setPendingFile(null);
+  }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -392,7 +433,49 @@ export default function UploadPage() {
         {state === 'uploading' ? (
           <div className="space-y-3">
             <div className="animate-pulse"><Loader2 size={24} className="text-fg-muted animate-spin" /></div>
-            <p className="text-fg-muted text-sm">Parsing and importing your bets...</p>
+            <p className="text-fg-muted text-sm">Parsing your bets...</p>
+          </div>
+        ) : state === 'previewing' && preview ? (
+          <div className="space-y-4 text-left" onClick={(e) => e.stopPropagation()}>
+            <p className="text-fg-bright font-medium text-center">Does this look right?</p>
+            {preview.rows_in_file !== preview.bet_count && (
+              <p className="text-fg-muted text-xs text-center">
+                {preview.rows_in_file} rows in your file → {preview.bet_count} bet{preview.bet_count !== 1 ? 's' : ''}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className="font-mono text-xl font-bold text-scalpel">{preview.bet_count}</p>
+                <p className="text-xs text-fg-muted">bets</p>
+              </div>
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className="font-mono text-xl font-bold text-fg-bright">${preview.total_staked.toFixed(2)}</p>
+                <p className="text-xs text-fg-muted">staked</p>
+              </div>
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className={`font-mono text-xl font-bold ${preview.total_net >= 0 ? 'text-win' : 'text-loss'}`}>
+                  {preview.total_net >= 0 ? '+' : '-'}${Math.abs(preview.total_net).toFixed(2)}
+                </p>
+                <p className="text-xs text-fg-muted">net</p>
+              </div>
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className="font-mono text-xs font-bold text-fg-bright">
+                  {preview.date_range_start ? new Date(preview.date_range_start).toLocaleDateString() : '—'}
+                  {' – '}
+                  {preview.date_range_end ? new Date(preview.date_range_end).toLocaleDateString() : '—'}
+                </p>
+                <p className="text-xs text-fg-muted">date range</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+              <button onClick={confirmImport} className="btn-primary text-sm">Confirm Import</button>
+              <button onClick={cancelPreview} className="btn-secondary text-sm">Cancel</button>
+            </div>
+          </div>
+        ) : state === 'confirming' ? (
+          <div className="space-y-3">
+            <div className="animate-pulse"><Loader2 size={24} className="text-fg-muted animate-spin" /></div>
+            <p className="text-fg-muted text-sm">Importing your bets...</p>
           </div>
         ) : state === 'success' && result ? (
           <div className="space-y-3">

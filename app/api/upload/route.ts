@@ -3,6 +3,7 @@ import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { parseCSV } from '@/lib/csv-parser';
 import { importBets } from '@/lib/import-bets';
 import { logErrorServer } from '@/lib/log-error-server';
+import type { UploadPreviewResponse } from '@/types';
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
     // Parse the uploaded file
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const isPreview = formData.get('preview') === 'true';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const text = await file.text();
-    const { bets, errors, warnings, column_mapping } = parseCSV(text);
+    const { bets, errors, warnings, column_mapping, collapse } = parseCSV(text);
 
     if (bets.length === 0) {
       // Surface the most specific error the parser produced. The csv-parser
@@ -53,6 +55,30 @@ export async function POST(request: Request) {
         },
         { status: 400 }
       );
+    }
+
+    // Minimal pre-commit review: bet count, staked, net, date range — not
+    // a row-by-row audit. Nothing is written to the DB on this branch;
+    // the client re-POSTs the same file without `preview` to actually
+    // commit. Surfaces exactly the gap that let 499 rows silently become
+    // 200 bets: rows_in_file vs. bet_count are shown separately whenever
+    // the collapse pass changed anything.
+    if (isPreview) {
+      const totalStaked = bets.reduce((sum, b) => sum + b.stake, 0);
+      const totalNet = bets.reduce((sum, b) => sum + b.profit, 0);
+      const dates = bets.map((b) => b.placed_at).sort();
+      const preview: UploadPreviewResponse = {
+        preview: true,
+        bet_count: bets.length,
+        rows_in_file: collapse.rowsIn,
+        total_staked: totalStaked,
+        total_net: totalNet,
+        date_range_start: dates[0] ?? null,
+        date_range_end: dates[dates.length - 1] ?? null,
+        errors,
+        warnings,
+      };
+      return NextResponse.json(preview);
     }
 
     const result = await importBets(supabase, user.id, bets, file.name);
