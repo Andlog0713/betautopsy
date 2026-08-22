@@ -12,7 +12,7 @@ so each file routes through `parseCSV()` → `parseRow()` unchanged.
 | File | Exercises | Workstream |
 |---|---|---|
 | `odds-zero-and-missing.csv` | odds=0, blank odds, non-numeric odds on wins/losses — calcWhatIfProfit Infinity, impliedProb(0)=1.0 poisoning | WS-NUMERIC |
-| `cash-outs.csv` | `cashed_out`/`cashed out`/`cashout` result variants carrying nonzero profit that the parser currently zeroes via the void mapping | WS-NUMERIC |
+| `cash-outs.csv` | `cashed_out`/`cashed out`/`cashout` result variants carrying nonzero profit — reclassified to win/loss by that value (Stage 8), tagged `settlement_type: 'cash_out'`; exercised end to end in `__tests__/csv-parser.test.ts` | WS-NUMERIC |
 | `pushes-pending-void.csv` | pushes (win-rate denominator), pending + void with stakes (ROI denominator) | WS-NUMERIC |
 | `unparseable-dates.csv` | garbage/empty/ambiguous dates that currently default to TODAY | WS-TEMPORAL |
 | `cross-tz-iso.csv` | the same wall-clock moment as ISO+offset, ISO Z with millis (Pikkit-style `time_placed_iso`), and a naive string | WS-TEMPORAL |

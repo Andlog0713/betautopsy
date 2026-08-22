@@ -75,6 +75,15 @@ export interface Bet {
   notes: string | null;
   upload_id: string | null;
   created_at: string;
+  // Additive, optional (Stage 8). Marks a bet settled via a sportsbook
+  // cash-out rather than run-to-completion or a genuine push/void. The
+  // bet's own `result`/`profit` still carry its real settlement value
+  // (win/loss/push, reclassified from the CSV's profit column at import
+  // time) - this field doesn't widen `result`'s enum, it's an orthogonal
+  // note on HOW the bet settled, for anything that wants to distinguish
+  // a cash-out win from a full win later. Absent/null on pre-Stage-8 rows
+  // and on any bet that wasn't a cash-out.
+  settlement_type?: 'cash_out' | null;
 }
 
 // ── Autopsy Report ──
@@ -1291,6 +1300,8 @@ export interface ParsedBet {
   parlay_legs?: number;
   tags?: string[];
   notes?: string;
+  // See Bet.settlement_type — same field, same semantics.
+  settlement_type?: 'cash_out' | null;
 }
 
 export interface CSVParseResult {
