@@ -951,13 +951,15 @@ function dateBoundaryBets(): Bet[] {
   });
 }
 
-// Fixture: cash-out heavy. lib/csv-parser.ts currently maps cashed_out ->
-// 'void' at parse time and force-zeroes profit for void/push rows (P1-5,
-// still open as of this session) — so 'void' with profit: 0 is the actual
-// shape these rows reach the engine in today, real cash-out P&L already
-// discarded upstream of runSnapshot. This fixture documents that contract
-// at the engine boundary; it does not re-assert the parser bug itself
-// (covered separately, __tests__/csv-parser tests).
+// Fixture: cash-out heavy. As of Stage 8 (lib/csv-parser.ts), a cash-out
+// only reaches the engine as 'void'/profit: 0 when the source CSV has no
+// usable profit/net figure for that row - reclassified to win/loss by its
+// actual settlement value otherwise. This fixture constructs Bet[] objects
+// directly (bypassing parseCSV entirely) to document the engine's
+// contract for whichever void rows DO still reach it that way (genuine
+// void/push, or a cash-out with no recoverable profit data) — it does not
+// exercise the parser itself (covered separately, __tests__/csv-parser
+// tests and __tests__/fixtures/ingestion/cash-outs.csv).
 function cashOutHeavyBets(): Bet[] {
   const base = Date.parse('2026-04-01T17:00:00Z');
   return Array.from({ length: 40 }, (_, i) => {
