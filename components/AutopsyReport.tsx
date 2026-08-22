@@ -1408,7 +1408,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     {(bias.estimated_cost > 0 || snapshotLocked) && (
                       snapshotLocked
                         ? <RedactedValue type="dollar" seed={reportId} index={i} />
-                        : <span className="text-sm font-mono text-bleed">{formatApproxUSD(bias.estimated_cost)}/qtr</span>
+                        : <span className="text-sm font-mono text-bleed">{formatApproxUSD(bias.estimated_cost)}</span>
                     )}
                     <ChevronDown
                       size={14}
@@ -1527,7 +1527,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                           <p className="text-xs text-fg-dim font-mono">
                             est. cost: {snapshotLocked
                               ? <RedactedValue type="dollar" seed={reportId} index={i + 100} />
-                              : <span className="text-bleed font-medium">{formatApproxUSD(bias.estimated_cost)}/qtr</span>
+                              : <span className="text-bleed font-medium">{formatApproxUSD(bias.estimated_cost)}</span>
                             }
                           </p>
                         )}

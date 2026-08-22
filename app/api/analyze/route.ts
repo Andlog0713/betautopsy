@@ -572,37 +572,28 @@ export async function POST(request: Request) {
         // retention is limited and drops are rare, so a console-only
         // version ages out before enough accumulate to compute a real
         // miss rate, which is the whole point of this instrumentation.
-        // waitUntil, not a bare unwaited .then(): the whole point of this
-        // instrumentation is accumulating a reliable count, and a bare
-        // Promise gets reaped along with the instance once the SSE
-        // response closes - the exact failure mode maybeSendHeatedPush
-        // below hit in prod (killed mid-flight before its write landed).
+        // Fire-and-forget, same pattern as logErrorServer: never blocks
+        // or fails the response.
         if (drops.length > 0) {
-          // Promise.resolve(...) wraps the Supabase query builder's
-          // thenable (not a real Promise - it lazily builds the request
-          // on .then()) so waitUntil, which is typed for a real Promise,
-          // accepts it.
-          const dropsInsert = Promise.resolve(
-            serviceRole
-              .from('error_logs')
-              .insert(drops.map((d) => ({
-                user_id: user.id,
-                source: 'autopsy-engine-drop',
-                message: `${d.site} drop: ${d.category ?? '(no category)'} (${d.reason})`,
-                path: '/api/analyze',
-                metadata: {
-                  reportId: d.reportId,
-                  site: d.site,
-                  kind: d.kind ?? null,
-                  category: d.category,
-                  categoryRoiExists: d.categoryRoiExists,
-                  reason: d.reason,
-                },
-              })))
-          );
-          waitUntil(dropsInsert.then(({ error }) => {
-            if (error) console.error('Failed to persist engine drops:', error);
-          }));
+          serviceRole
+            .from('error_logs')
+            .insert(drops.map((d) => ({
+              user_id: user.id,
+              source: 'autopsy-engine-drop',
+              message: `${d.site} drop: ${d.category ?? '(no category)'} (${d.reason})`,
+              path: '/api/analyze',
+              metadata: {
+                reportId: d.reportId,
+                site: d.site,
+                kind: d.kind ?? null,
+                category: d.category,
+                categoryRoiExists: d.categoryRoiExists,
+                reason: d.reason,
+              },
+            })))
+            .then(({ error }) => {
+              if (error) console.error('Failed to persist engine drops:', error);
+            });
         }
 
         // Emit a durable handle for the new report row before any further SSE
