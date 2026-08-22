@@ -169,7 +169,6 @@ iPhone viewports).
   once and took login down for eight days (2026-08-05 to 08-13). Migrations
   live in `supabase/migrations/`.
 - **Stripe**: account `acct_1TEMwS7KVOLEKyGy`.
-- Andrew's user id: `dcb2436d-23ef-4da6-9802-15db75bb6406` (Pro, comped).
 
 ## Things that are Andrew's, not yours
 
