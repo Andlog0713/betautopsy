@@ -12,7 +12,7 @@
  * broader DOM fixture suite (jsdom + testing-library are new to this repo
  * as of this test) - that can follow as its own piece of work.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import AutopsyReport from '@/components/AutopsyReport';
 import { runSnapshot } from '@/lib/autopsy-engine';
@@ -28,6 +28,24 @@ beforeAll(() => {
   }
   // @ts-expect-error - test polyfill, not a full IntersectionObserver
   global.IntersectionObserver = MockIntersectionObserver;
+
+  class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  global.ResizeObserver = MockResizeObserver;
+  HTMLElement.prototype.getBoundingClientRect = () => ({
+    x: 0,
+    y: 0,
+    width: 320,
+    height: 200,
+    top: 0,
+    right: 320,
+    bottom: 200,
+    left: 0,
+    toJSON: () => ({}),
+  });
 });
 
 // Same shape as autopsy-engine.redaction.test.ts's makeFixtureBets(): 120
@@ -67,10 +85,8 @@ function makeFixtureBets(): Bet[] {
   return bets;
 }
 
-// Strips every aria-hidden subtree (RedactedValue's intentional blurred
-// decoy amounts, e.g. "$1,880" behind a CSS blur + aria-hidden="true") so
-// the check below only sees genuinely visible text. Decoy dollar strings
-// are the point of the paywall UI; a real leak is VISIBLE dollar text.
+// Strips every aria-hidden subtree so the check below only sees genuinely
+// visible text. Redacted numeric values must render as a nonnumeric lock.
 function visibleText(container: HTMLElement): string {
   const clone = container.cloneNode(true) as HTMLElement;
   clone.querySelectorAll('[aria-hidden="true"]').forEach((el) => el.remove());
@@ -98,12 +114,47 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     expect(visibleText(findings)).not.toMatch(/\$[\d,]/);
   });
 
-  // Closes the hole in the previous test: stripping aria-hidden content
-  // proves nothing is LEAKED, but says nothing about whether what's hidden
-  // is actually a decoy. A future refactor that renders a real dollar
-  // figure inside an aria-hidden wrapper (instead of RedactedValue's
-  // internal hash-based fakeDollar()) would pass the test above silently.
-  it('RedactedValue decoys are present and never echo the real (redacted) estimated_cost', async () => {
+  it('renders summary dollar sentinels as Locked, never $0 or +$0', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    render(<AutopsyReport analysis={analysis} bets={[]} isSnapshot={true} tier="free" />);
+
+    const netCell = screen.getByText('NET P&L').parentElement;
+    const stakeCell = screen.getByText('AVG STAKE').parentElement;
+    expect(netCell?.textContent).toContain('Locked');
+    expect(stakeCell?.textContent).toContain('Locked');
+    expect(netCell?.textContent).not.toMatch(/[+-]?\$0\b/);
+    expect(stakeCell?.textContent).not.toMatch(/\$0\b/);
+  });
+
+  it('does not reconstruct a recoverable dollar range from snapshot bet rows', async () => {
+    const bets = makeFixtureBets();
+    const { analysis } = await runSnapshot(bets);
+    const snapshotWithLeak = {
+      ...analysis,
+      strategic_leaks: [{
+        category: 'NBA',
+        detail: 'NBA wagers underperformed in this sample.',
+        roi_impact: -12,
+        sample_size: 60,
+        suggestion: '',
+        detail_visibility: 'visible' as const,
+        suggestion_visibility: 'hidden' as const,
+      }],
+    };
+
+    render(
+      <AutopsyReport
+        analysis={snapshotWithLeak}
+        bets={bets}
+        isSnapshot={true}
+        tier="free"
+      />,
+    );
+
+    expect(screen.queryByText('BIGGEST RECOVERABLE LEAK')).toBeNull();
+  });
+
+  it('RedactedValue uses a nonnumeric lock instead of fabricated decoys', async () => {
     const { analysis } = await runSnapshot(makeFixtureBets());
     const lockedBiases = analysis.biases_detected.filter((b) => b.estimated_cost_visibility !== 'visible');
     expect(lockedBiases.length).toBeGreaterThan(0);
@@ -121,15 +172,10 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     const decoys = Array.from(findings.querySelectorAll('[aria-hidden="true"]')).filter((el) =>
       /^\$[\d,]+$/.test(el.textContent?.trim() ?? '')
     );
-    expect(decoys.length).toBeGreaterThan(0);
-    for (const decoy of decoys) {
-      const amount = Number(decoy.textContent!.replace(/[$,]/g, ''));
-      // The decoy must never echo the real (redacted) wire value - i.e.
-      // it must never render literal $0, which is what estimated_cost
-      // actually is once redacted. A nonzero decoy proves it's the
-      // fake hash-based placeholder, not a real number that slipped through.
-      expect(amount).not.toBe(0);
-    }
+    expect(decoys).toEqual([]);
+    expect(
+      within(findings).getAllByRole('button', { name: /see your full dollar costs/i })[0].textContent,
+    ).toContain('Locked');
   });
 
   // Accessible-name check: the decoy amount is aria-hidden by design (it's
@@ -143,6 +189,43 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
 
     const lockControls = within(findings).getAllByRole('button', { name: /see your full dollar costs/i });
     expect(lockControls.length).toBeGreaterThan(0);
+  });
+
+  it('keeps paid snapshot redactions static and removes every repurchase control', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+
+    render(
+      <AutopsyReport
+        analysis={analysis}
+        bets={[]}
+        isSnapshot={true}
+        tier="free"
+        purchaseAvailable={false}
+      />,
+    );
+
+    expect(screen.getAllByText('Locked').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /see your full dollar costs/i })).toBeNull();
+    expect(screen.queryByText(/unlock your full report/i)).toBeNull();
+  });
+
+  it('initializes report charts with positive dimensions', async () => {
+    const bets = makeFixtureBets();
+    const { analysis } = await runSnapshot(bets);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    render(
+      <AutopsyReport
+        analysis={{ ...analysis, executive_diagnosis: 'Complete analysis.' }}
+        bets={bets}
+        isSnapshot={false}
+        tier="free"
+      />,
+    );
+
+    const warningText = warn.mock.calls.flat().join(' ');
+    expect(warningText).not.toMatch(/width\([^)]*\)[\s\S]*height\([^)]*\)[\s\S]*greater than 0/i);
+    warn.mockRestore();
   });
 });
 

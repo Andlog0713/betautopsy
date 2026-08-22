@@ -6,6 +6,33 @@ import { parseCSV, generateCSVTemplate } from '@/lib/csv-parser';
 // ── Helper ──
 
 function csv(lines: string[]): string {
+  if (lines.length === 0) return '';
+
+  // Most tests isolate one parser behavior. Supply the other required
+  // analytical fields explicitly so a test cannot pass through a parser
+  // fallback that production is forbidden to use.
+  const headers = lines[0].toLowerCase().split(',').map((header) => header.trim());
+  const additions = [
+    { header: 'date', aliases: ['date', 'time_placed', 'time_placed_iso', 'placed_at'], value: '2025-01-01T12:00:00Z' },
+    { header: 'sport', aliases: ['sport', 'sports', 'category'], value: 'NFL' },
+    { header: 'bet_type', aliases: ['bet_type', 'wager_type', 'market'], value: 'spread' },
+    { header: 'profit', aliases: ['profit', 'net', 'pnl', 'net_profit', 'returns'], value: '0' },
+  ].filter((addition) => !addition.aliases.some((alias) => headers.includes(alias)));
+
+  const dataLines = lines.slice(1).map((line) => line.replace(
+    /(^|,)(\d{4}-\d{2}-\d{2})(?=,|$)/,
+    '$1$2T12:00:00Z'
+  ));
+  if (additions.length === 0) return [lines[0], ...dataLines].join('\n');
+  return [
+    `${lines[0]},${additions.map((addition) => addition.header).join(',')}`,
+    ...dataLines.map((line) => line === ''
+      ? line
+      : `${line},${additions.map((addition) => addition.value).join(',')}`),
+  ].join('\n');
+}
+
+function rawCsv(lines: string[]): string {
   return lines.join('\n');
 }
 
@@ -92,7 +119,11 @@ describe('parseCSV — quoted fields', () => {
   });
 
   it('handles CRLF line endings', () => {
-    const input = 'date,description,odds,stake,result\r\n2025-01-05,Chiefs,-110,100,win\r\n2025-01-06,Bills,-110,50,loss\r\n';
+    const input = csv([
+      'date,description,odds,stake,result',
+      '2025-01-05,Chiefs,-110,100,win',
+      '2025-01-06,Bills,-110,50,loss',
+    ]).replace(/\n/g, '\r\n');
     const { bets } = parseCSV(input);
     expect(bets).toHaveLength(2);
   });
@@ -182,13 +213,15 @@ describe('parseCSV — odds', () => {
     expect(bets[0].odds).toBe(-200);
   });
 
-  it('handles missing odds gracefully', () => {
+  it('skips missing odds instead of assigning zero', () => {
     const input = csv([
       'description,stake,result',
       'Test,100,win',
     ]);
-    const { bets } = parseCSV(input);
-    expect(bets[0].odds).toBe(0);
+    const { bets, warnings, rows_skipped } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(rows_skipped).toBe(1);
+    expect(warnings.some((warning) => warning.includes('Missing odds'))).toBe(true);
   });
 });
 
@@ -201,12 +234,12 @@ describe('parseCSV — results', () => {
     ['win', 'win'], ['won', 'win'], ['Won', 'win'], ['W', 'win'],
     ['loss', 'loss'], ['lost', 'loss'], ['Lost', 'loss'], ['L', 'loss'],
     ['push', 'push'], ['draw', 'push'], ['tie', 'push'],
-    ['void', 'void'], ['voided', 'void'], ['cancelled', 'void'], ['cashed_out', 'void'],
+    ['void', 'void'], ['voided', 'void'], ['cancelled', 'void'], ['cashed_out', 'push'],
     ['pending', 'pending'], ['open', 'pending'], ['unsettled', 'pending'],
   ])('normalizes "%s" to "%s"', (input, expected) => {
     const csv_input = csv([
-      'description,odds,stake,result',
-      `Test,-110,100,${input}`,
+      'description,odds,stake,result,payout',
+      `Test,-110,100,${input},0`,
     ]);
     const { bets } = parseCSV(csv_input);
     expect(bets[0].result).toBe(expected);
@@ -230,13 +263,13 @@ describe('parseCSV — results', () => {
     expect(bets[0].result).toBe('loss');
   });
 
-  it('defaults unknown result to pending with warning', () => {
+  it('skips an unknown result instead of defaulting to pending', () => {
     const input = csv([
       'description,odds,stake,result',
       'Test,-110,100,UNKNOWN_STATUS',
     ]);
     const { bets, warnings } = parseCSV(input);
-    expect(bets[0].result).toBe('pending');
+    expect(bets).toHaveLength(0);
     expect(warnings.some((w) => w.includes('Unknown result'))).toBe(true);
   });
 });
@@ -273,15 +306,14 @@ describe('parseCSV — cash-outs', () => {
     expect(bets[0].settlement_type).toBe('cash_out');
   });
 
-  it('falls back to void/$0 for a cash-out with no profit column data, still tagged as a cash-out', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Test,-110,100,cashed_out',
+  it('skips a cash-out with unknown profit instead of converting it to void and zero', () => {
+    const input = rawCsv([
+      'date,sport,bet_type,description,odds,stake,result',
+      '2025-01-01T12:00:00Z,NFL,spread,Test,-110,100,cashed_out',
     ]);
-    const { bets } = parseCSV(input);
-    expect(bets[0].result).toBe('void');
-    expect(bets[0].profit).toBe(0);
-    expect(bets[0].settlement_type).toBe('cash_out');
+    const { bets, warnings } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(warnings.some((warning) => warning.includes('Missing profit'))).toBe(true);
   });
 
   it('does not tag a genuine void/cancellation as a cash-out', () => {
@@ -295,15 +327,14 @@ describe('parseCSV — cash-outs', () => {
     expect(bets[0].settlement_type).toBeUndefined();
   });
 
-  it('does not tag a genuine push as a cash-out, and still force-zeroes its profit', () => {
+  it('rejects a nonzero push instead of silently force-zeroing its profit', () => {
     const input = csv([
       'description,odds,stake,result,profit',
       'Test,-110,100,push,15',
     ]);
-    const { bets } = parseCSV(input);
-    expect(bets[0].result).toBe('push');
-    expect(bets[0].profit).toBe(0);
-    expect(bets[0].settlement_type).toBeUndefined();
+    const { bets, warnings } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(warnings.some((warning) => warning.includes('nonzero profit'))).toBe(true);
   });
 
   it('handles the checked-in cash-outs.csv ingestion fixture end to end', () => {
@@ -408,40 +439,39 @@ describe('parseCSV — profit', () => {
     expect(bets[0].profit).toBe(91);
   });
 
-  it('calculates profit for wins with negative odds', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Test,-200,200,win',
+  it('skips a negative-odds win with missing profit instead of calculating it', () => {
+    const input = rawCsv([
+      'date,sport,bet_type,description,odds,stake,result',
+      '2025-01-01T12:00:00Z,NFL,spread,Test,-200,200,win',
     ]);
-    const { bets } = parseCSV(input);
-    // -200 odds: profit = 200 * (100/200) = 100
-    expect(bets[0].profit).toBe(100);
+    const { bets, warnings } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(warnings.some((warning) => warning.includes('Missing profit'))).toBe(true);
   });
 
-  it('calculates profit for wins with positive odds', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Test,+150,100,win',
+  it('skips a positive-odds win with missing profit instead of calculating it', () => {
+    const input = rawCsv([
+      'date,sport,bet_type,description,odds,stake,result',
+      '2025-01-01T12:00:00Z,NFL,spread,Test,+150,100,win',
     ]);
     const { bets } = parseCSV(input);
-    // +150 odds: profit = 100 * (150/100) = 150
-    expect(bets[0].profit).toBe(150);
+    expect(bets).toHaveLength(0);
   });
 
-  it('calculates loss as negative stake', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Test,-110,100,loss',
+  it('skips a loss with missing profit instead of assigning negative stake', () => {
+    const input = rawCsv([
+      'date,sport,bet_type,description,odds,stake,result',
+      '2025-01-01T12:00:00Z,NFL,spread,Test,-110,100,loss',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].profit).toBe(-100);
+    expect(bets).toHaveLength(0);
   });
 
-  it('push and void always have $0 profit', () => {
+  it('preserves explicit zero profit for push and void rows', () => {
     const input = csv([
       'description,odds,stake,result,profit',
-      'Test,-110,100,push,50',
-      'Test,-110,100,void,50',
+      'Test,-110,100,push,0',
+      'Test,-110,100,void,0',
     ]);
     const { bets } = parseCSV(input);
     expect(bets[0].profit).toBe(0);
@@ -454,22 +484,23 @@ describe('parseCSV — profit', () => {
 // ============================================
 
 describe('parseCSV — sport detection', () => {
-  it('detects sport from description when no sport column', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Chiefs -3.5,-110,100,win',
+  it('does not infer NFL from a description when sport is missing', () => {
+    const input = rawCsv([
+      'date,bet_type,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,spread,Chiefs -3.5,-110,100,win,91',
     ]);
-    const { bets } = parseCSV(input);
-    expect(bets[0].sport).toBe('NFL');
+    const { bets, warnings } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(warnings.some((warning) => warning.includes('sport'))).toBe(true);
   });
 
-  it('detects NBA from description', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Jokic Over 25.5 pts,+100,50,win',
+  it('does not infer NBA from a player description when sport is missing', () => {
+    const input = rawCsv([
+      'date,bet_type,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,prop,Jokic Over 25.5 pts,+100,50,win,50',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].sport).toBe('NBA');
+    expect(bets).toHaveLength(0);
   });
 
   it('uses sport column when provided (capitalizes first letter)', () => {
@@ -500,13 +531,13 @@ describe('parseCSV — sport detection', () => {
     expect(bets[0].sport).toBe('NFL');
   });
 
-  it('defaults to Other when sport unknown', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Random event XYZ,-110,100,win',
+  it('does not default a missing sport to Other', () => {
+    const input = rawCsv([
+      'date,bet_type,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,spread,Random event XYZ,-110,100,win,91',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].sport).toBe('Other');
+    expect(bets).toHaveLength(0);
   });
 });
 
@@ -515,46 +546,47 @@ describe('parseCSV — sport detection', () => {
 // ============================================
 
 describe('parseCSV — bet type detection', () => {
-  it('detects spread', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Chiefs -3.5,-110,100,win',
+  it('does not infer spread from a description', () => {
+    const input = rawCsv([
+      'date,sport,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,NFL,Chiefs -3.5,-110,100,win,91',
     ]);
-    const { bets } = parseCSV(input);
-    expect(bets[0].bet_type).toBe('spread');
+    const { bets, warnings } = parseCSV(input);
+    expect(bets).toHaveLength(0);
+    expect(warnings.some((warning) => warning.includes('bet type'))).toBe(true);
   });
 
-  it('detects moneyline', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Chiefs Moneyline,-150,100,win',
+  it('does not infer moneyline from a description', () => {
+    const input = rawCsv([
+      'date,sport,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,NFL,Chiefs Moneyline,-150,100,win,66.67',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].bet_type).toBe('moneyline');
+    expect(bets).toHaveLength(0);
   });
 
-  it('detects total/over-under', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Over 45.5 total points,-110,100,win',
+  it('does not infer total from a description', () => {
+    const input = rawCsv([
+      'date,sport,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,NFL,Over 45.5 total points,-110,100,win,91',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].bet_type).toBe('total');
+    expect(bets).toHaveLength(0);
   });
 
-  it('detects prop from player-specific description', () => {
-    const input = csv([
-      'description,odds,stake,result',
-      'Jokic anytime scorer,-110,100,win',
+  it('does not infer prop from a player description', () => {
+    const input = rawCsv([
+      'date,sport,description,odds,stake,result,profit',
+      '2025-01-01T12:00:00Z,NBA,Jokic anytime scorer,-110,100,win,91',
     ]);
     const { bets } = parseCSV(input);
-    expect(bets[0].bet_type).toBe('prop');
+    expect(bets).toHaveLength(0);
   });
 
-  it('detects parlay', () => {
+  it('derives leg count only after the source identifies a parlay', () => {
     const input = csv([
-      'description,odds,stake,result',
-      '3-leg parlay,+550,25,loss',
+      'description,bet_type,odds,stake,result,profit',
+      '3-leg parlay,parlay,+550,25,loss,-25',
     ]);
     const { bets } = parseCSV(input);
     expect(bets[0].bet_type).toBe('parlay');
@@ -645,6 +677,65 @@ describe('parseCSV — stake validation', () => {
     const { bets, warnings } = parseCSV(input);
     expect(bets).toHaveLength(0);
     expect(warnings.some((w) => w.includes('Invalid stake'))).toBe(true);
+  });
+});
+
+// ============================================
+// Unknown analytical values
+// ============================================
+
+describe('parseCSV unknown analytical values', () => {
+  const header = 'date,sport,bet_type,description,odds,stake,result,profit';
+
+  it.each([
+    ['missing timestamp', ',NFL,spread,Test,-110,100,win,91', 'Missing date'],
+    ['date-only timestamp', '2026-02-10,NFL,spread,Test,-110,100,win,91', 'has no clock time'],
+    ['timezone-less timestamp', '2026-02-10T12:30:00,NFL,spread,Test,-110,100,win,91', 'no timezone'],
+    ['invalid calendar date', '2026-02-30T12:30:00Z,NFL,spread,Test,-110,100,win,91', 'invalid calendar date'],
+    ['missing sport', '2026-02-10T12:30:00Z,,spread,Chiefs -3.5,-110,100,win,91', 'sport'],
+    ['missing bet type', '2026-02-10T12:30:00Z,NFL,,Chiefs -3.5,-110,100,win,91', 'bet type'],
+    ['missing description', '2026-02-10T12:30:00Z,NFL,spread,,-110,100,win,91', 'description'],
+    ['missing odds', '2026-02-10T12:30:00Z,NFL,spread,Test,,100,win,91', 'odds'],
+    ['zero odds', '2026-02-10T12:30:00Z,NFL,spread,Test,0,100,win,91', 'parse odds'],
+    ['missing result', '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,,91', 'result'],
+    ['unknown result', '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,mystery,91', 'Unknown result'],
+    ['missing profit', '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,win,', 'profit'],
+    ['invalid profit', '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,win,unknown', 'parse profit'],
+  ])('skips %s without synthesizing a replacement', (_name, row, warningFragment) => {
+    const result = parseCSV(rawCsv([header, row]));
+    expect(result.bets).toHaveLength(0);
+    expect(result.rows_in_file).toBe(1);
+    expect(result.rows_skipped).toBe(1);
+    expect(result.warnings.join(' ')).toContain(warningFragment);
+    expect(result.warnings.join(' ')).not.toMatch(/using today|using 0|defaulting to pending/i);
+  });
+
+  it('preserves an explicit zero profit because zero is known source data', () => {
+    const result = parseCSV(rawCsv([
+      header,
+      '2026-02-10T12:30:00-05:00,NFL,spread,Test,-110,100,win,0',
+    ]));
+    expect(result.bets).toHaveLength(1);
+    expect(result.bets[0].profit).toBe(0);
+    expect(result.bets[0].placed_at).toBe('2026-02-10T17:30:00.000Z');
+  });
+
+  it('skips a pending row whose payout is unknown instead of assigning zero', () => {
+    const result = parseCSV(rawCsv([
+      header,
+      '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,pending,0',
+    ]));
+    expect(result.bets).toEqual([]);
+    expect(result.warnings.join(' ')).toContain('Missing payout for pending bet');
+  });
+
+  it('preserves an explicit pending payout from the source', () => {
+    const result = parseCSV(rawCsv([
+      `${header},payout`,
+      '2026-02-10T12:30:00Z,NFL,spread,Test,-110,100,pending,0,37.50',
+    ]));
+    expect(result.bets).toHaveLength(1);
+    expect(result.bets[0]).toMatchObject({ result: 'pending', profit: 0, payout: 37.5 });
   });
 });
 

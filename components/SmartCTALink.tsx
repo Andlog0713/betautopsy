@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuthState } from '@/components/AuthProvider';
+import { useAuthState, type AuthState } from '@/components/AuthProvider';
 
 /**
  * Auth-aware CTA. Routes to the right destination based on whether the
@@ -10,16 +10,13 @@ import { useAuthState } from '@/components/AuthProvider';
  * Routing matrix:
  *
  *   intent="snapshot" — "Get Your Autopsy Report" / "Start Free"
- *     anon         → /signup?next=/reports?run=true
- *     no-snapshot  → /reports?run=true
+ *     anon         → /signup?next=/upload
+ *     no-snapshot  → /upload
  *     has-snapshot → /reports?id=<latest>
  *
  *   intent="report" — "Get your report" (Full Report card)
- *     anon         → /signup?next=/reports?run=true   (run snapshot first;
- *                                                      the inline paywall
- *                                                      converts better than
- *                                                      the pricing grid)
- *     no-snapshot  → /reports?run=true
+ *     anon         → /signup?next=/upload
+ *     no-snapshot  → /upload
  *     has-snapshot → /pricing
  *
  * intent="pro" removed 2026-08-17 (D1): Pro is no longer marketed on web,
@@ -40,13 +37,13 @@ interface SmartCTALinkProps {
   onClick?: () => void;
 }
 
-function buildHref(intent: CTAIntent, auth: ReturnType<typeof useAuthState>): string {
+export function buildSmartCTAHref(intent: CTAIntent, auth: AuthState): string {
   if (auth.status === 'anon') {
-    return '/signup?next=' + encodeURIComponent('/reports?run=true');
+    return '/signup?next=' + encodeURIComponent('/upload');
   }
 
   if (auth.status === 'no-snapshot') {
-    return '/reports?run=true';
+    return '/upload';
   }
 
   if (auth.status === 'has-snapshot') {
@@ -77,7 +74,7 @@ export default function SmartCTALink({ intent, className, children, onClick }: S
   }
 
   return (
-    <Link href={buildHref(intent, auth)} className={className} onClick={onClick}>
+    <Link href={buildSmartCTAHref(intent, auth)} className={className} onClick={onClick}>
       {children}
     </Link>
   );

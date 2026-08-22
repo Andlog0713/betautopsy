@@ -28,7 +28,7 @@ export async function GET(
 
   const { data: report, error: dbError } = await supabase
     .from('autopsy_reports')
-    .select('*')
+    .select('*, fulfillment:report_fulfillments!report_fulfillments_snapshot_report_id_fkey(status,completed_report_id,next_attempt_at,paid_at)')
     .eq('id', id)
     .maybeSingle();
 
@@ -45,5 +45,31 @@ export async function GET(
     return NextResponse.json({ error: 'Report not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ report });
+  const rawFulfillment = Array.isArray(report.fulfillment)
+    ? report.fulfillment[0]
+    : report.fulfillment;
+  const fulfillment = rawFulfillment && typeof rawFulfillment === 'object'
+    ? rawFulfillment as {
+        status?: string | null;
+        completed_report_id?: string | null;
+        next_attempt_at?: string | null;
+        paid_at?: string | null;
+      }
+    : null;
+  const {
+    fulfillment: _fulfillment,
+    analyzed_bets_snapshot: _frozenBets,
+    ...publicReport
+  } = report as Record<string, unknown>;
+  void _fulfillment;
+  void _frozenBets;
+
+  return NextResponse.json({
+    report: {
+      ...publicReport,
+      fulfillment_status: fulfillment?.paid_at ? fulfillment.status ?? null : null,
+      completed_report_id: fulfillment?.completed_report_id ?? null,
+      fulfillment_next_attempt_at: fulfillment?.next_attempt_at ?? null,
+    },
+  });
 }

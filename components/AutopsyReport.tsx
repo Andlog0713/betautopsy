@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Cell, ReferenceLine,
 } from 'recharts';
 import ReportFeedback from './ReportFeedback';
+import RedactedValue, { isReportValueVisible } from './RedactedValue';
 import { triggerHaptic } from '@/lib/native';
 import { apiPost } from '@/lib/api-client';
 import { getArchetypeByName } from '@/lib/archetypes';
@@ -17,7 +18,6 @@ import ShareModal from './ShareModal';
 import ChapterNav from './report/ChapterNav';
 import ChapterHeader from './report/ChapterHeader';
 import SnapshotPaywall from './SnapshotPaywall';
-import RedactedValue from './RedactedValue';
 import { Lock, AlertTriangle, CheckCircle2, XCircle, Minus, Flame, ChevronDown, Fingerprint, ShieldCheck, Ban, Clock, DollarSign, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { NumberTicker } from '@/components/ui/number-ticker';
@@ -417,7 +417,7 @@ function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: Au
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
+export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, purchaseAvailable = true, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; purchaseAvailable?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
@@ -720,12 +720,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
     const biasItems: typeof items = [];
     biases_detected.forEach((b) => {
-      // Use Claude's estimated_cost if available, otherwise estimate from severity
-      let cost = Math.abs(b.estimated_cost || 0);
-      if (cost === 0 && avgStake > 0) {
-        const severityMultiplier = b.severity === 'critical' ? 8 : b.severity === 'high' ? 5 : b.severity === 'medium' ? 3 : 1;
-        cost = avgStake * severityMultiplier;
-      }
+      // The engine owns this number. A redacted or missing cost is omitted,
+      // never reconstructed from severity in the renderer.
+      const cost = isReportValueVisible(b.estimated_cost_visibility)
+        ? Math.abs(b.estimated_cost || 0)
+        : 0;
       if (cost > 0) {
         biasItems.push({ name: b.bias_name, type: 'bias', cost, severity: b.severity, fix: b.fix });
       }
@@ -816,6 +815,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
     exit_worst_category: 'exiting your worst category',
   };
   const recoveryDisplay = useMemo(() => {
+    // Snapshot dollar values are intentionally redacted. Do not reconstruct
+    // a paid recovery estimate from the raw bet rows supplied for charts or
+    // evidence, even when the deterministic snapshot contains leak labels.
+    if (isSnapshot) return null;
     if (analysis.recovery) {
       return {
         rangeLow: analysis.recovery.rangeLow,
@@ -832,13 +835,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       rangeLow,
       rangeHigh,
       methodLabel: `fixing "${biggest.name}"`,
-      // Old snapshots redact total_profit to 0; suppress the net line there.
-      netUSD: analysis.summary.total_profit_visibility === 'redacted_dollar'
-        ? null
-        : analysis.summary.total_profit,
+      // Redaction tags fail closed so a zero sentinel is never a net value.
+      netUSD: isReportValueVisible(analysis.summary.total_profit_visibility)
+        ? analysis.summary.total_profit
+        : null,
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analysis, prioritizedLeaks]);
+  }, [analysis, isSnapshot, prioritizedLeaks]);
   const largestLeakCost = prioritizedLeaks[0]?.cost ?? 0;
   const recoveryRangeLabel = recoveryDisplay
     ? `~$${Math.round(recoveryDisplay.rangeLow).toLocaleString()}-$${Math.round(recoveryDisplay.rangeHigh).toLocaleString()}`
@@ -1081,9 +1084,13 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
         <div className="vitals-cell">
           <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">NET P&amp;L</span>
-          <span className={`font-mono text-lg font-bold ${summary.total_profit >= 0 ? 'text-win' : 'text-loss'}`}>
-            {summary.total_profit >= 0 ? '+' : ''}{summary.total_profit < 0 ? '-' : ''}${Math.abs(summary.total_profit).toLocaleString(undefined, {maximumFractionDigits: 0})}
-          </span>
+          {isReportValueVisible(summary.total_profit_visibility) ? (
+            <span className={`font-mono text-lg font-bold ${summary.total_profit >= 0 ? 'text-win' : 'text-loss'}`}>
+              {summary.total_profit >= 0 ? '+' : ''}{summary.total_profit < 0 ? '-' : ''}${Math.abs(summary.total_profit).toLocaleString(undefined, {maximumFractionDigits: 0})}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 font-mono text-sm text-fg-muted"><Lock size={12} /> Locked</span>
+          )}
         </div>
         <div className="vitals-cell">
           <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">ROI</span>
@@ -1093,7 +1100,11 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         </div>
         <div className="vitals-cell">
           <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px] block mb-1">AVG STAKE</span>
-          <span className="font-mono text-lg font-bold text-fg-bright">${summary.avg_stake.toFixed(0)}</span>
+          {isReportValueVisible(summary.avg_stake_visibility) ? (
+            <span className="font-mono text-lg font-bold text-fg-bright">${summary.avg_stake.toFixed(0)}</span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 font-mono text-sm text-fg-muted"><Lock size={12} /> Locked</span>
+          )}
         </div>
       </div>
 
@@ -1318,7 +1329,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <div className="border-t border-border-subtle my-6" />
 
       {/* ═══ SNAPSHOT CTA: shown between chapters for free snapshots ═══ */}
-      {snapshotLocked && (
+      {snapshotLocked && purchaseAvailable && (
         <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={paywallCounts} sufficiency={analysis.sufficiency} />
       )}
 
@@ -1376,6 +1387,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               const sevColor = bias.severity === 'critical' || bias.severity === 'high' ? 'bleed' : bias.severity === 'medium' ? 'caution' : 'win';
               const borderClass = sevColor === 'bleed' ? 'border-l-bleed' : sevColor === 'caution' ? 'border-l-caution' : 'border-l-win';
               const badgeClass = sevColor === 'bleed' ? 'bg-bleed/10 text-bleed' : sevColor === 'caution' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
+              const estimatedCostVisible = isReportValueVisible(bias.estimated_cost_visibility);
               return (
               <div key={i} className={`card-tier-2 overflow-hidden border-l-2 ${borderClass}`}>
                 {/* Collapsed header — always visible */}
@@ -1405,9 +1417,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                     </span>
                   </div>
                   <div className="flex items-center gap-4 shrink-0 ml-4">
-                    {(bias.estimated_cost > 0 || snapshotLocked) && (
+                    {((estimatedCostVisible && bias.estimated_cost > 0) || snapshotLocked) && (
                       snapshotLocked
-                        ? <RedactedValue type="dollar" seed={reportId} index={i} />
+                        ? <RedactedValue type="dollar" seed={reportId} index={i} interactive={purchaseAvailable} />
                         : <span className="text-sm font-mono text-bleed">{formatApproxUSD(bias.estimated_cost)}</span>
                     )}
                     <ChevronDown
@@ -1480,7 +1492,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                             </div>
                           )}
                           <p className="text-xs text-fg-dim font-mono flex items-center gap-1.5">
-                            What it cost you: <RedactedValue type="dollar" seed={reportId} index={i + 100} />
+                            What it cost you: <RedactedValue type="dollar" seed={reportId} index={i + 100} interactive={purchaseAvailable} />
                           </p>
                           {(bias.sample_size != null || bias.confidence) && (
                             <p className="text-xs text-fg-dim">
@@ -1490,7 +1502,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                           )}
                         </>
                       ) : (
-                        <RedactedValue type="text" preview={0}>
+                        <RedactedValue type="text" preview={0} interactive={purchaseAvailable}>
                           {`This bias was detected with ${bias.severity} severity based on your betting patterns. The full analysis includes specific evidence, dollar cost estimates, and a recommended fix.`}
                         </RedactedValue>
                       )
@@ -1504,7 +1516,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                         <p className="text-sm text-fg leading-relaxed">{bias.description}</p>
                         {bias.fix && (
                           snapshotLocked ? (
-                            <RedactedValue type="section">
+                            <RedactedValue type="section" interactive={purchaseAvailable}>
                               <div className="pl-4 border-l border-l-scalpel/60 py-2">
                                 <div className="flex items-center gap-2 mb-1.5">
                                   <span className="w-1 h-1 rounded-full bg-scalpel" />
@@ -1523,10 +1535,10 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                             </div>
                           )
                         )}
-                        {(bias.estimated_cost > 0 || snapshotLocked) && (
+                        {((estimatedCostVisible && bias.estimated_cost > 0) || snapshotLocked) && (
                           <p className="text-xs text-fg-dim font-mono">
                             est. cost: {snapshotLocked
-                              ? <RedactedValue type="dollar" seed={reportId} index={i + 100} />
+                              ? <RedactedValue type="dollar" seed={reportId} index={i + 100} interactive={purchaseAvailable} />
                               : <span className="text-bleed font-medium">{formatApproxUSD(bias.estimated_cost)}</span>
                             }
                           </p>
@@ -1554,6 +1566,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             const isExpanded = expandedFindings.has(findingId);
             const borderClass = finding.severity === 'high' ? 'border-l-bleed' : finding.severity === 'medium' ? 'border-l-caution' : 'border-l-scalpel';
             const badgeClass = finding.severity === 'high' ? 'bg-bleed/10 text-bleed' : finding.severity === 'medium' ? 'bg-caution/10 text-caution' : 'bg-fg-dim/20 text-fg-muted';
+            const estimatedCostVisible = isReportValueVisible(finding.estimated_cost_visibility);
             return (
             <div key={finding.id} className={`card-tier-2 overflow-hidden border-l-2 ${borderClass}`}>
               <div
@@ -1567,7 +1580,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   </span>
                 </div>
                 <div className="flex items-center gap-4 shrink-0 ml-4">
-                  {finding.estimated_cost !== null && finding.estimated_cost > 0 && (
+                  {estimatedCostVisible && finding.estimated_cost !== null && finding.estimated_cost > 0 && (
                     <span className="text-sm font-mono text-bleed">-${Math.abs(finding.estimated_cost).toLocaleString()}</span>
                   )}
                   <ChevronDown size={14} className={`text-fg-dim transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1586,7 +1599,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                       <p className="text-sm text-fg leading-relaxed">{finding.recommendation}</p>
                     </div>
                   )}
-                  {finding.estimated_cost !== null && finding.estimated_cost > 0 && (
+                  {estimatedCostVisible && finding.estimated_cost !== null && finding.estimated_cost > 0 && (
                     <p className="text-xs text-fg-dim font-mono">
                       est. cost: <span className="text-bleed font-medium">-${Math.abs(finding.estimated_cost).toLocaleString()}</span>
                     </p>
@@ -1686,7 +1699,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               );
             })}
             {snapshotLocked && filteredLeaks.length > 3 && (
-              <RedactedValue type="section">
+              <RedactedValue type="section" interactive={purchaseAvailable}>
                 <div className="card-tier-2 p-5 text-center">
                   <p className="text-fg-bright font-medium">See all {filteredLeaks.length} strategic leaks</p>
                   <p className="text-fg-dim text-xs mt-1">Unlock the full report to see every leak and its dollar impact.</p>
@@ -1861,7 +1874,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       <ChapterHeader number={3} title="Your Data" subtitle="Charts and evidence supporting the diagnosis" />
 
       {/* P&L Over Time Chart */}
-      {!snapshotLocked && hasBets && pnlData.length > 1 && (
+      {!isSnapshot && hasBets && pnlData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
@@ -1869,7 +1882,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           </h2>
           <p className="text-fg-muted text-xs italic mb-3">Track momentum shifts and identify when behavioral patterns impact results.</p>
           <div className="h-48 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: 192 }}>
               <LineChart data={pnlData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} interval="preserveStartEnd" />
@@ -1884,7 +1897,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Stake Size Timeline */}
-      {!snapshotLocked && hasBets && stakeData.length > 1 && (
+      {!isSnapshot && hasBets && stakeData.length > 1 && (
         <div className="card p-6">
           <h2 className="font-semibold text-xl mb-1">
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
@@ -1896,7 +1909,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
             <span className="inline-block w-2 h-2 rounded-full bg-loss mr-1 ml-3 align-middle" /> Within 1hr of a loss
           </p>
           <div className="h-40 sm:h-48">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: 160 }}>
               <BarChart data={stakeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} interval="preserveStartEnd" />
@@ -1919,7 +1932,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <h2 className="font-semibold text-xl mb-1">ROI by Category</h2>
           <p className="text-fg-muted text-xs italic mb-3">See where your edge lives and where it doesn&apos;t.</p>
           <div style={{ height: Math.max(200, roiData.length * 36) }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: Math.max(200, roiData.length * 36) }}>
               <BarChart data={roiData} layout="vertical" margin={{ left: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} tickFormatter={(v: number) => `${v}%`} />
@@ -1959,7 +1972,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Timing Patterns */}
-      {!snapshotLocked && analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
+      {!isSnapshot && analysis.timing_analysis && analysis.timing_analysis.by_day.some((d) => d.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Timing Patterns</h2>
           <p className="text-fg-muted text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
@@ -1968,7 +1981,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
           <div className="card p-6">
             <h3 className="font-medium text-lg mb-4">ROI by Day of Week</h3>
             <div style={{ height: Math.max(200, analysis.timing_analysis.by_day.filter((d) => d.bets > 0).length * 40) }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: Math.max(200, analysis.timing_analysis.by_day.filter((d) => d.bets > 0).length * 40) }}>
                 <BarChart data={analysis.timing_analysis.by_day.filter((d) => d.bets > 0)} layout="vertical" margin={{ left: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                   <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} tickFormatter={(v: number) => `${v}%`} />
@@ -2125,7 +2138,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       )}
 
       {/* Odds Intelligence */}
-      {!snapshotLocked && analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
+      {!isSnapshot && analysis.odds_analysis && analysis.odds_analysis.buckets.some((b) => b.bets > 0) && (
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Odds Intelligence</h2>
           <p className="text-fg-muted text-xs italic -mt-2">How you perform at different price points, and whether you&apos;re finding real value or just getting lucky.</p>
@@ -2187,7 +2200,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
               </div>
               <div style={{ maxHeight: showEdgeChart ? '500px' : '0px', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
               <div style={{ height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42), marginTop: '16px' }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: Math.max(180, analysis.odds_analysis.buckets.filter((b) => b.bets >= 3).length * 42) }}>
                   <BarChart data={analysis.odds_analysis.buckets.filter((b) => b.bets >= 3)} layout="vertical" margin={{ left: 90 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                     <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'var(--font-mono)' }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} tickFormatter={(v: number) => `${v}pp`} />
@@ -3144,7 +3157,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
       </section>
 
       {/* Second CTA banner at the end of chapters for snapshots */}
-      {snapshotLocked && (
+      {snapshotLocked && purchaseAvailable && (
         <SnapshotPaywall reportId={reportId} isPro={effectiveTier === 'pro'} counts={paywallCounts} sufficiency={analysis.sufficiency} />
       )}
       </>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { useUser } from '@/hooks/useUser';
-import { useReports } from '@/hooks/useReports';
+import { useReportsSummary } from '@/hooks/useReports';
 import { apiPostFormData } from '@/lib/api-client';
 import { triggerHaptic } from '@/lib/native';
 import { trackUpload as trackUploadMeta } from '@/lib/meta-events';
@@ -31,7 +31,7 @@ export default function UploadPage() {
       : null;
 
   const { user, profile, mutate: mutateUser } = useUser();
-  const { reports } = useReports();
+  const { reports } = useReportsSummary();
 
   const [state, setState] = useState<UploadState>('idle');
   const [dragOver, setDragOver] = useState(false);
@@ -419,6 +419,22 @@ export default function UploadPage() {
   );
 
   function renderDropZone() {
+    const summarizeWarnings = (warnings: string[]) => {
+      const fieldWarnings = warnings.filter((warning) => /\b(skipped|invalid)\b/i.test(warning));
+      return {
+        visible: fieldWarnings.slice(0, 5),
+        remaining: Math.max(0, fieldWarnings.length - 5),
+      };
+    };
+    const previewRows = preview?.rows_in_file ?? preview?.bet_count;
+    const previewLogical = preview?.logical_bets ?? preview?.bet_count;
+    const committedLogical = result?.logical_bets
+      ?? ((result?.bets_imported ?? 0) + (result?.duplicates_skipped ?? 0));
+    const committedExisting = result?.existing_bets ?? result?.duplicates_skipped;
+    const committedNew = result?.new_bets ?? result?.bets_imported;
+    const previewWarningSummary = summarizeWarnings(preview?.warnings ?? []);
+    const committedWarningSummary = summarizeWarnings(result?.warnings ?? []);
+
     return (
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -438,16 +454,40 @@ export default function UploadPage() {
         ) : state === 'previewing' && preview ? (
           <div className="space-y-4 text-left" onClick={(e) => e.stopPropagation()}>
             <p className="text-fg-bright font-medium text-center">Does this look right?</p>
-            {preview.rows_in_file !== preview.bet_count && (
+            {previewRows != null && previewLogical != null && (
               <p className="text-fg-muted text-xs text-center">
-                {preview.rows_in_file} rows in your file → {preview.bet_count} bet{preview.bet_count !== 1 ? 's' : ''}
+                {previewRows} rows in your file → {previewLogical} logical bet{previewLogical !== 1 ? 's' : ''}
               </p>
             )}
-            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+            <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
               <div className="border-l-2 border-scalpel pl-3">
-                <p className="font-mono text-xl font-bold text-scalpel">{preview.bet_count}</p>
-                <p className="text-xs text-fg-muted">bets</p>
+                <p className="font-mono text-xl font-bold text-scalpel">{previewRows ?? 'N/A'}</p>
+                <p className="text-xs text-fg-muted">file rows</p>
               </div>
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className="font-mono text-xl font-bold text-scalpel">{previewLogical ?? 'N/A'}</p>
+                <p className="text-xs text-fg-muted">logical bets</p>
+              </div>
+              {preview.existing_bets != null && (
+                <div className="border-l-2 border-scalpel pl-3">
+                  <p className="font-mono text-xl font-bold text-fg-bright">{preview.existing_bets}</p>
+                  <p className="text-xs text-fg-muted">already in history</p>
+                </div>
+              )}
+              {preview.new_bets != null && (
+                <div className="border-l-2 border-scalpel pl-3">
+                  <p className="font-mono text-xl font-bold text-fg-bright">{preview.new_bets}</p>
+                  <p className="text-xs text-fg-muted">new inserts</p>
+                </div>
+              )}
+              {(preview.rows_skipped ?? 0) > 0 && (
+                <div className="border-l-2 border-caution pl-3">
+                  <p className="font-mono text-xl font-bold text-caution">{preview.rows_skipped}</p>
+                  <p className="text-xs text-fg-muted">rows skipped</p>
+                </div>
+              )}
+              </div>
+            <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
               <div className="border-l-2 border-scalpel pl-3">
                 <p className="font-mono text-xl font-bold text-fg-bright">${preview.total_staked.toFixed(2)}</p>
                 <p className="text-xs text-fg-muted">staked</p>
@@ -467,6 +507,14 @@ export default function UploadPage() {
                 <p className="text-xs text-fg-muted">date range</p>
               </div>
             </div>
+            {previewWarningSummary.visible.length > 0 && (
+              <div className="max-w-md mx-auto text-xs text-caution space-y-1" role="status">
+                {previewWarningSummary.visible.map((warning, index) => <p key={`${index}-${warning}`}>{warning}</p>)}
+                {previewWarningSummary.remaining > 0 && (
+                  <p>{previewWarningSummary.remaining} more skipped or invalid row warning{previewWarningSummary.remaining !== 1 ? 's' : ''}</p>
+                )}
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
               <button onClick={confirmImport} className="btn-primary text-sm">Confirm Import</button>
               <button onClick={cancelPreview} className="btn-secondary text-sm">Cancel</button>
@@ -478,14 +526,53 @@ export default function UploadPage() {
             <p className="text-fg-muted text-sm">Importing your bets...</p>
           </div>
         ) : state === 'success' && result ? (
-          <div className="space-y-3">
-            <div>{result.bets_imported > 0 ? <CheckCircle2 size={24} className="text-win" /> : <CheckCircle2 size={24} className="text-fg-muted" />}</div>
-            {result.bets_imported > 0 ? (
-              <p className="text-win font-medium">{result.bets_imported} bet{result.bets_imported !== 1 ? 's' : ''} imported
-                {result.duplicates_skipped > 0 && <span className="text-fg-muted font-normal text-sm block mt-1">{result.duplicates_skipped} duplicate{result.duplicates_skipped !== 1 ? 's' : ''} skipped</span>}
+          <div className="space-y-4 text-left" onClick={(event) => event.stopPropagation()}>
+            <div className="flex justify-center"><CheckCircle2 size={24} className={committedLogical > 0 ? 'text-win' : 'text-fg-muted'} /></div>
+            <p className="text-win font-medium text-center">
+              Import confirmed for {committedLogical} logical bet{committedLogical !== 1 ? 's' : ''}
+            </p>
+            {result.rows_in_file != null && (
+              <p className="text-fg-muted text-xs text-center">
+                Final counts after checking your current account
               </p>
-            ) : (
-              <p className="text-fg-muted">All bets were already in your history.</p>
+            )}
+            <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+              {result.rows_in_file != null && (
+                <div className="border-l-2 border-scalpel pl-3">
+                  <p className="font-mono text-xl font-bold text-fg-bright">{result.rows_in_file}</p>
+                  <p className="text-xs text-fg-muted">file rows</p>
+                </div>
+              )}
+              <div className="border-l-2 border-scalpel pl-3">
+                <p className="font-mono text-xl font-bold text-fg-bright">{committedLogical}</p>
+                <p className="text-xs text-fg-muted">logical bets</p>
+              </div>
+              {committedExisting != null && (
+                <div className="border-l-2 border-scalpel pl-3">
+                  <p className="font-mono text-xl font-bold text-fg-bright">{committedExisting}</p>
+                  <p className="text-xs text-fg-muted">already in history</p>
+                </div>
+              )}
+              {committedNew != null && (
+                <div className="border-l-2 border-scalpel pl-3">
+                  <p className="font-mono text-xl font-bold text-fg-bright">{committedNew}</p>
+                  <p className="text-xs text-fg-muted">new inserts</p>
+                </div>
+              )}
+              {(result.rows_skipped ?? 0) > 0 && (
+                <div className="border-l-2 border-caution pl-3">
+                  <p className="font-mono text-xl font-bold text-caution">{result.rows_skipped}</p>
+                  <p className="text-xs text-fg-muted">rows skipped</p>
+                </div>
+              )}
+            </div>
+            {committedWarningSummary.visible.length > 0 && (
+              <div className="max-w-md mx-auto text-xs text-caution space-y-1" role="status">
+                {committedWarningSummary.visible.map((warning, index) => <p key={`${index}-${warning}`}>{warning}</p>)}
+                {committedWarningSummary.remaining > 0 && (
+                  <p>{committedWarningSummary.remaining} more skipped or invalid row warning{committedWarningSummary.remaining !== 1 ? 's' : ''}</p>
+                )}
+              </div>
             )}
             <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
               <Link

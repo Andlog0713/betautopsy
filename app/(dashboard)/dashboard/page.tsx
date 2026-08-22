@@ -10,7 +10,6 @@ import { useSnapshots } from '@/hooks/useSnapshots';
 import { useControlSystem } from '@/hooks/useControlSystem';
 import { apiGet } from '@/lib/api-client';
 import { trackPurchase as trackPurchaseMeta, trackSignup as trackSignupMeta } from '@/lib/meta-events';
-import { REPORT_GENERATION_TIME } from '@/lib/report-timing';
 
 const ProgressChart = dynamic(() => import('@/components/ProgressChart'), {
   loading: () => <div className="case-card h-80 animate-pulse" />,
@@ -711,7 +710,7 @@ export default function DashboardPage() {
                     {stats.totalBets} bets loaded. Run the autopsy.
                   </h2>
                   <p className="data-body mb-6 max-w-xl">
-                    A full behavioral analysis takes {REPORT_GENERATION_TIME}. You&apos;ll get every leak, every bias, every dollar amount.
+                    Your free snapshot summarizes behavioral patterns found in the bets you uploaded. You can run another snapshot whenever your history changes.
                   </p>
                   <Link href="/reports?run=true" className="btn-primary inline-block text-base !px-6 !py-3 font-mono">
                     Run Your Autopsy →
@@ -730,33 +729,6 @@ export default function DashboardPage() {
               )}
             </section>
           ) : null}
-
-          {/* ── SECTION: LONGITUDINAL ── Free tier preview ── */}
-          {!isPaid && stats.reportCount > 0 && (
-            <section className="border-t border-white/[0.04] pt-10 mb-12">
-              <p className="case-header mb-6">LONGITUDINAL // LOCKED</p>
-              <div className="relative">
-                <div className="blur-sm pointer-events-none opacity-40">
-                  <div className="space-y-3 max-w-2xl">
-                    {[65, 52, 47, 38].map((h, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <span className="case-header w-16">WK {i + 1}</span>
-                        <div className="flex-1 h-1 bg-tier-2">
-                          <div className="h-full bg-scalpel" style={{ width: `${h}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <Lock size={20} className="text-fg-muted mx-auto mb-2" />
-                    <p className="case-header case-header-teal">PRO ONLY</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
 
           {/* MARKERS // CURRENT STATE — fallback for free users w/ bankroll only */}
           {!isPaid && !latest && (bankroll || journalCount >= 10) && (
@@ -804,18 +776,6 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </section>
-          )}
-
-          {/* ── SECTION: PROTOCOL ── Free tier upgrade ── */}
-          {!isPaid && !recoveryModeActive && (
-            <section className="border-t border-white/[0.04] pt-10 mb-12">
-              <p className="case-header case-header-teal mb-3">PROTOCOL // PRO UPGRADE</p>
-              <h3 className="font-bold text-xl text-fg-bright mb-2 tracking-tight">Track if you&apos;re actually changing.</h3>
-              <p className="data-body max-w-xl mb-5">
-                Pro users watched their Emotion Score drop from 72 to 34 over 8 weeks. Your first report was a snapshot. Your fifth is proof.
-              </p>
-              <Link href="/pricing" className="btn-primary inline-block text-sm font-mono">Start Tracking</Link>
             </section>
           )}
 

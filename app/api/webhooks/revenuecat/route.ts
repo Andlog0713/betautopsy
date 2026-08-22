@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { waitUntil } from '@vercel/functions';
 import { logErrorServer } from '@/lib/log-error-server';
-import { processUpgrade } from '@/lib/iap-upgrade';
+import {
+  processPaidReportFulfillment,
+  queuePaidReportFulfillment,
+} from '@/lib/paid-report-fulfillment';
 
 // Service-role client — webhook is called by RevenueCat, not a user
 // session. Mirrors app/api/webhook/route.ts (Stripe). RLS is bypassed
@@ -27,6 +30,15 @@ function createServiceClient() {
 // CANCELLATION / EXPIRATION / REFUND / TRANSFER are ignored for v1 —
 // refund handling is parked for v1.1.
 const PROCESS_TYPES = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
+const DEFAULT_REPORT_PRODUCT_IDS = ['single_report_v1'];
+
+function reportProductIds(): Set<string> {
+  const configured = process.env.REVENUECAT_REPORT_PRODUCT_IDS
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return new Set(configured?.length ? configured : DEFAULT_REPORT_PRODUCT_IDS);
+}
 
 // Match /api/analyze:25 — the waitUntil-invoked engine re-run is a Sonnet
 // full-report run, which can take 30-120s on the 5000-bet max-cap. The
@@ -34,6 +46,24 @@ const PROCESS_TYPES = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 // instance has to stay alive past response close until the waitUntil
 // Promise resolves. maxDuration caps that wait at 300s (Pro plan cap).
 export const maxDuration = 300;
+const PROVIDER_ACK_WAIT_MS = 5_000;
+
+async function fulfillmentNeedsProviderRetry(
+  work: ReturnType<typeof processPaidReportFulfillment>,
+): Promise<boolean> {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const result = await Promise.race([
+      work,
+      new Promise<'timeout'>((resolve) => {
+        timeout = setTimeout(() => resolve('timeout'), PROVIDER_ACK_WAIT_MS);
+      }),
+    ]);
+    return result === 'timeout' || result.status !== 'completed';
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 export async function POST(request: NextRequest) {
   const auth = request.headers.get('authorization');
@@ -84,23 +114,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, status: 'missing_fields' }, { status: 200 });
   }
 
-  const supabase = createServiceClient();
-
-  const { data: existingTx } = await supabase
-    .from('iap_transactions')
-    .select('id')
-    .eq('transaction_id', transactionId)
-    .maybeSingle();
-
-  if (existingTx) {
-    return NextResponse.json({ received: true, status: 'already_processed' }, { status: 200 });
+  if (!reportProductIds().has(productId)) {
+    await logErrorServer(new Error('RevenueCat purchase used an unsupported product'), {
+      path: '/api/webhooks/revenuecat',
+      userId,
+      metadata: { snapshotReportId, transactionId, productId, event_type: eventType },
+    });
+    return NextResponse.json(
+      { received: true, status: 'invalid_product' },
+      { status: 200 },
+    );
   }
+
+  const supabase = createServiceClient();
 
   const { data: snapshot, error: snapshotErr } = await supabase
     .from('autopsy_reports')
-    .select('id, user_id, report_type, analyzed_upload_ids, analyzed_sportsbook')
+    .select('id, user_id, report_type')
     .eq('id', snapshotReportId)
     .eq('user_id', userId)
+    .eq('report_type', 'snapshot')
     .maybeSingle();
 
   if (snapshotErr || !snapshot) {
@@ -112,41 +145,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, status: 'report_not_found' }, { status: 200 });
   }
 
-  // Already-upgraded guard: a prior webhook (different transactionId, e.g.
-  // user re-purchased after a failed first attempt) already produced the
-  // child row. Record the ledger row for completeness and skip the engine.
-  const { count: existingChildCount } = await supabase
-    .from('autopsy_reports')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('upgraded_from_snapshot_id', snapshotReportId);
-
-  if ((existingChildCount ?? 0) > 0) {
-    await supabase.from('iap_transactions').insert({
-      user_id: userId,
-      transaction_id: transactionId,
-      product_id: productId,
-      report_id: snapshotReportId,
-      event_type: eventType,
-      raw_event: event,
+  let queued: Awaited<ReturnType<typeof queuePaidReportFulfillment>>;
+  try {
+    queued = await queuePaidReportFulfillment({
+      snapshotId: snapshotReportId,
+      userId,
+      provider: 'revenuecat',
+      providerEventId: transactionId,
+      paymentReference: transactionId,
+    }, supabase);
+  } catch (queueError) {
+    await logErrorServer(queueError, {
+      path: '/api/webhooks/revenuecat',
+      userId,
+      metadata: { snapshotReportId, transactionId, stage: 'queue_fulfillment' },
     });
-    return NextResponse.json({ received: true, status: 'already_upgraded' }, { status: 200 });
+    return NextResponse.json({ error: 'Fulfillment queue failed' }, { status: 500 });
   }
 
-  // Insert ledger row BEFORE waitUntil so the record is durable even if
-  // the function dies before the background engine work completes. The
-  // existence of the row is the work-queue entry; processUpgrade is
-  // idempotent and safe to re-drive against it.
+  // Keep the provider audit ledger independently of the fulfillment queue.
+  // A duplicate delivery re-drives an unfinished durable job instead of
+  // short-circuiting merely because this ledger row already exists.
   const { error: ledgerErr } = await supabase
     .from('iap_transactions')
-    .insert({
-      user_id: userId,
-      transaction_id: transactionId,
-      product_id: productId,
-      report_id: snapshotReportId,
-      event_type: eventType,
-      raw_event: event,
-    });
+    .upsert(
+      {
+        user_id: userId,
+        transaction_id: transactionId,
+        product_id: productId,
+        report_id: snapshotReportId,
+        event_type: eventType,
+        raw_event: event,
+      },
+      { onConflict: 'transaction_id', ignoreDuplicates: true },
+    );
 
   if (ledgerErr) {
     await logErrorServer(ledgerErr, {
@@ -154,10 +186,35 @@ export async function POST(request: NextRequest) {
       userId,
       metadata: { snapshotReportId, transactionId, stage: 'iap_transactions_insert' },
     });
-    return NextResponse.json({ received: true, status: 'ledger_insert_failed' }, { status: 200 });
   }
 
-  waitUntil(processUpgrade({ snapshotId: snapshotReportId, userId, transactionId }));
+  if (queued.paymentConflict) {
+    await logErrorServer(new Error('RevenueCat payment conflicts with existing fulfillment'), {
+      path: '/api/webhooks/revenuecat',
+      userId,
+      metadata: { snapshotReportId, transactionId, productId },
+    });
+    return NextResponse.json({ received: true, status: 'payment_conflict' }, { status: 200 });
+  }
 
-  return NextResponse.json({ received: true, status: 'queued' }, { status: 200 });
+  if (queued.shouldStart) {
+    const work = processPaidReportFulfillment({ snapshotId: snapshotReportId });
+    waitUntil(work);
+    if (await fulfillmentNeedsProviderRetry(work)) {
+      return NextResponse.json(
+        { received: false, status: 'fulfillment_pending' },
+        { status: 503 },
+      );
+    }
+  } else if (queued.status !== 'completed') {
+    return NextResponse.json(
+      { received: false, status: 'fulfillment_pending' },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json(
+    { received: true, status: queued.status },
+    { status: 200 },
+  );
 }

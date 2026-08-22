@@ -68,5 +68,10 @@ export default defineConfig({
         url: 'http://localhost:3000',
         reuseExistingServer: false,
         timeout: 240_000,
+        env: {
+          BETAUTOPSY_PLAYWRIGHT_E2E: '1',
+          NEXT_PUBLIC_SUPABASE_URL: 'https://stub.supabase.co',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'stub-anon-key-playwright-only',
+        },
       },
 });

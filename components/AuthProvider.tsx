@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -16,10 +17,9 @@ import type { Profile } from '@/types';
  * App-wide auth + snapshot state.
  *
  * Cold-start contract (iOS-PR-1 Phase 3):
- *   - First render seeds state synchronously from `localStorage`
- *     under key `ba-auth-cache-v1`. Cold marketing pages get correct
- *     SmartCTALink routing on the first paint with zero network
- *     traffic, as long as the cache is fresh (<24h).
+ *   - Server render and the first client render both start at `loading`.
+ *     A layout effect then reads `ba-auth-cache-v1` before paint. This keeps
+ *     hydration deterministic while preserving a cache-first marketing load.
  *   - There is NO automatic network revalidation on mount. The
  *     network fetch only fires when something explicitly calls
  *     `revalidate()` — currently AuthGuard on dashboard mount, plus
@@ -76,6 +76,7 @@ export function useAuthSignOut(): () => Promise<void> {
 
 const CACHE_KEY = 'ba-auth-cache-v1';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 interface CacheEntry {
   userId: string;
@@ -141,14 +142,9 @@ function stateFromCache(entry: CacheEntry): AuthState {
 }
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Synchronous first-render seed. SSR returns 'loading' (no window);
-  // the very first client render reads the cache and sets state in
-  // one pass, so SmartCTALink renders correct routing on first paint
-  // for any user whose cache is fresh.
-  const [state, setState] = useState<AuthState>(() => {
-    const cached = readCache();
-    return cached ? stateFromCache(cached) : { status: 'loading' };
-  });
+  // The first client render must match SSR exactly. Cache hydration happens
+  // in the layout effect below, before the browser paints the loading shell.
+  const [state, setState] = useState<AuthState>({ status: 'loading' });
 
   // Dedupe concurrent revalidate() calls (e.g. AuthGuard mount races
   // with a post-login revalidate). The first call's promise is
@@ -241,26 +237,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // Cache-hit cold start: state was seeded synchronously from a fresh
-  // (<24h) cache, so trust it and fire no network — this is the common
-  // marketing-page case and stays zero-traffic.
-  //
-  // Cache-MISS cold start (no cache, or >24h stale): the synchronous
-  // seed is 'loading', and we cannot tell a logged-in user from a
-  // logged-out one without asking. The old code assumed 'anon', which
-  // rendered the Login/Sign Up nav (and disabled SmartCTALink) for
-  // users who actually hold a live Supabase session — e.g. they logged
-  // in, then returned to the landing page a day later without reopening
-  // the dashboard. Resolve it for real with a single getUser()
-  // revalidate: logged-out users still settle on 'anon' (same outcome,
-  // one cheap round-trip), logged-in users correctly show their avatar.
-  // AuthGuard / login flows that also call revalidate() are deduped via
-  // inFlight, so this never double-fetches.
-  useEffect(() => {
-    if (state.status === 'loading') void revalidate();
-    // Mount-only: the seeded status at first commit is the signal.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // A fresh cache avoids network traffic. A cache miss cannot distinguish a
+  // signed-out visitor from a live Supabase session, so it revalidates once.
+  // Concurrent AuthGuard or login calls are deduped by inFlight.
+  useIsomorphicLayoutEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setState(stateFromCache(cached));
+      return;
+    }
+    void revalidate();
+  }, [revalidate]);
 
   return (
     <AuthContext.Provider value={{ state, revalidate, signOut }}>

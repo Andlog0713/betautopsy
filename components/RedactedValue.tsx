@@ -6,41 +6,32 @@ interface RedactedValueProps {
   type: 'dollar' | 'text' | 'section';
   /** Number of characters to show before blur (for 'text' type). Default 15. */
   preview?: number;
-  /** Report ID for generating consistent fake dollar amounts. */
+  /** Retained for backwards-compatible call sites. */
   seed?: string;
-  /** Index for generating different fake amounts per field. */
+  /** Retained for backwards-compatible call sites. */
   index?: number;
   /** Called when user clicks on the redacted area. */
   onUpgrade?: () => void;
+  /** Whether the redaction should act as a purchase control. */
+  interactive?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
 
-/** Simple hash to generate deterministic numbers from a string. */
-function hashSeed(s: string, offset: number): number {
-  let h = 0;
-  const str = s + String(offset);
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
-/** Generate a plausible dollar amount between $180 and $4,200. */
-function fakeDollar(seed: string, index: number): string {
-  const h = hashSeed(seed || 'default', index);
-  const base = 180 + (h % 4020);
-  // Round to nearest $10 for realism
-  const rounded = Math.round(base / 10) * 10;
-  return rounded.toLocaleString();
+/**
+ * Legacy reports omitted visibility tags. Treat only that legacy absence and
+ * an explicit visible tag as renderable. Every redaction or unknown tag fails
+ * closed so a numeric sentinel can never be mistaken for a real value.
+ */
+export function isReportValueVisible(visibility: string | null | undefined): boolean {
+  return visibility == null || visibility === 'visible';
 }
 
 export default function RedactedValue({
   type,
   preview = 15,
-  seed = '',
-  index = 0,
   onUpgrade,
+  interactive = true,
   children,
   className = '',
 }: RedactedValueProps) {
@@ -55,23 +46,17 @@ export default function RedactedValue({
   };
 
   if (type === 'dollar') {
-    const amount = fakeDollar(seed, index);
     return (
       <span
-        className={`inline-flex items-center gap-1.5 cursor-pointer group ${className}`}
-        onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        title="See your full dollar costs"
+        className={`inline-flex items-center gap-1.5 ${interactive ? 'cursor-pointer group' : ''} ${className}`}
+        onClick={interactive ? handleClick : undefined}
+        role={interactive ? 'button' : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        aria-label={interactive ? 'See your full dollar costs' : undefined}
+        title={interactive ? 'See your full dollar costs' : undefined}
       >
-        <span
-          className="font-mono tabular-nums select-none"
-          style={{ filter: 'blur(7px)', WebkitUserSelect: 'none' }}
-          aria-hidden="true"
-        >
-          ${amount}
-        </span>
         <Lock size={12} className="text-scalpel opacity-60 group-hover:opacity-100 shrink-0" />
+        <span className="font-mono text-xs text-fg-muted">Locked</span>
       </span>
     );
   }
@@ -82,11 +67,11 @@ export default function RedactedValue({
     const hidden = text.slice(preview) || 'This content requires the full report to view.';
     return (
       <span
-        className={`cursor-pointer group ${className}`}
-        onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        title="See your full dollar costs"
+        className={`${interactive ? 'cursor-pointer group' : ''} ${className}`}
+        onClick={interactive ? handleClick : undefined}
+        role={interactive ? 'button' : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        title={interactive ? 'See your full dollar costs' : undefined}
       >
         {preview > 0 && <span>{visible}</span>}
         <span
@@ -104,10 +89,10 @@ export default function RedactedValue({
   // Section type: blur entire block
   return (
     <div
-      className={`relative cursor-pointer group ${className}`}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
+      className={`relative ${interactive ? 'cursor-pointer group' : ''} ${className}`}
+      onClick={interactive ? handleClick : undefined}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
     >
       <div
         className="select-none"
@@ -121,12 +106,14 @@ export default function RedactedValue({
       >
         {children}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="flex items-center gap-1.5 text-xs text-scalpel font-mono">
-          <Lock size={12} />
-          See full report
-        </span>
-      </div>
+      {interactive && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="flex items-center gap-1.5 text-xs text-scalpel font-mono">
+            <Lock size={12} />
+            See full report
+          </span>
+        </div>
+      )}
     </div>
   );
 }

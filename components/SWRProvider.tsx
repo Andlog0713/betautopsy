@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { SWRConfig, type Cache } from 'swr';
 import { createPersistentCacheProvider } from '@/lib/swr-persistent-cache';
+
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * SWR config wrapper. Mounted inside the dashboard layout so cached
@@ -11,15 +13,24 @@ import { createPersistentCacheProvider } from '@/lib/swr-persistent-cache';
  * SWR revalidates in the background per each hook's deduping interval.
  */
 export default function SWRProvider({ children }: { children: React.ReactNode }) {
-  // Memoize the provider factory so React strict-mode double-invokes of
-  // the layout don't construct two competing caches.
+  // SSR and the first client render both use an empty cache. Reading
+  // localStorage during the first client render would let cached SWR data
+  // produce different HTML from the server and trigger React hydration
+  // recovery. Remount once after hydration with the persistent provider.
+  const [storageReady, setStorageReady] = useState(false);
+  useIsomorphicLayoutEffect(() => setStorageReady(true), []);
+
   const provider = useMemo(() => {
+    if (!storageReady) {
+      return (() => new Map()) as unknown as (cache: Readonly<Cache>) => Cache;
+    }
     const factory = createPersistentCacheProvider();
     return (() => factory()) as unknown as (cache: Readonly<Cache>) => Cache;
-  }, []);
+  }, [storageReady]);
 
   return (
     <SWRConfig
+      key={storageReady ? 'persistent-cache' : 'hydration-cache'}
       value={{
         provider,
         revalidateOnFocus: false,

@@ -5,6 +5,8 @@ import { GEO_COOKIE_NAME, isConsentRequiredCountry } from '@/lib/consent-region'
 
 const protectedRoutes = ['/dashboard', '/upload', '/uploads', '/bets', '/reports', '/settings', '/admin'];
 const authRoutes = ['/login', '/signup'];
+const PLAYWRIGHT_AUTH_HEADER = 'x-betautopsy-playwright-auth';
+const PLAYWRIGHT_AUTH_TOKEN = 'paid-report-integrity-e2e-v1';
 
 // Stamps the geo-consent cookie on the outgoing response so the static layout
 // + client-side scripts can decide whether to show the EU banner / default
@@ -25,6 +27,7 @@ function attachGeoCookie(request: NextRequest, response: NextResponse): NextResp
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
   // Skip auth check for public routes and OAuth callback
   if (pathname.startsWith('/auth/callback') || pathname.startsWith('/api/webhook') || pathname.startsWith('/api/template') || pathname.startsWith('/og') || pathname.startsWith('/api/digest') || pathname.startsWith('/api/weekend-autopsy') || pathname.startsWith('/api/unsubscribe') || pathname.startsWith('/api/freeze-refill') || pathname.startsWith('/api/send-email')) {
@@ -36,6 +39,21 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith('/blog/'));
   if (isPublicRoute) {
     return attachGeoCookie(request, NextResponse.next());
+  }
+
+  // Authenticated browser tests need to reach the static dashboard shell
+  // without a live Supabase account. This bypass is deliberately unavailable
+  // on Vercel and requires both a test-run-only server flag and a matching
+  // request header. API authorization is untouched and remains independently
+  // enforced or mocked by the test.
+  const isPlaywrightAuthBypass =
+    isProtected &&
+    !pathname.startsWith('/admin') &&
+    process.env.BETAUTOPSY_PLAYWRIGHT_E2E === '1' &&
+    process.env.VERCEL !== '1' &&
+    request.headers.get(PLAYWRIGHT_AUTH_HEADER) === PLAYWRIGHT_AUTH_TOKEN;
+  if (isPlaywrightAuthBypass) {
+    return attachGeoCookie(request, NextResponse.next({ request }));
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -64,7 +82,6 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users away from protected routes
-  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
