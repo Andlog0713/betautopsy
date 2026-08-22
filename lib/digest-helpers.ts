@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Bet } from '@/types';
 import { formatParlayCompact } from '@/lib/format-parlay';
+import { getUTCDayOfWeek } from '@/lib/date-utils';
 
 export interface DigestStats {
   totalBets: number;
@@ -123,7 +124,7 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const betsByDay: Record<string, number> = {};
   bets.forEach((b) => {
-    const day = days[new Date(b.placed_at).getDay()];
+    const day = days[getUTCDayOfWeek(b.placed_at)];
     betsByDay[day] = (betsByDay[day] ?? 0) + 1;
   });
 
