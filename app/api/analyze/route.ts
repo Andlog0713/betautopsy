@@ -378,9 +378,17 @@ export async function POST(request: Request) {
           : reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
         const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
 
-        const { analysis, markdown, tokensUsed, model } = isSnapshot
+        // Pre-generated so the strategic_leaks/edge_profile drop records
+        // returned from runAutopsy (lib/autopsy-engine.ts) can tag each
+        // drop with the report id it belongs to, and so that id matches
+        // the actual saved row below (explicit `id:` on the insert)
+        // instead of being a throwaway correlation value with nothing to
+        // look up.
+        const reportId = crypto.randomUUID();
+
+        const { analysis, markdown, tokensUsed, model, drops } = isSnapshot
           ? await runSnapshot(betsToAnalyze, userBankroll)
-          : await runAutopsy(betsToAnalyze, userBankroll);
+          : await runAutopsy(betsToAnalyze, userBankroll, reportId);
 
         const costCents = Math.ceil(tokensUsed * 0.001);
         const dateStart = betsToAnalyze[0]?.placed_at ?? null;
@@ -528,6 +536,7 @@ export async function POST(request: Request) {
         const { data: savedReport, error: insertError } = await serviceRole
           .from('autopsy_reports')
           .insert({
+            id: reportId,
             user_id: user.id,
             report_type: effectiveReportType,
             bet_count_analyzed: betsToAnalyze.length,
@@ -556,6 +565,44 @@ export async function POST(request: Request) {
           sendEvent('error', { error: 'Report generated but failed to save. Please try again.' });
           controller.close();
           return;
+        }
+
+        // A: persist strategic_leaks/edge_profile drop records to
+        // error_logs instead of just console.log - Vercel runtime log
+        // retention is limited and drops are rare, so a console-only
+        // version ages out before enough accumulate to compute a real
+        // miss rate, which is the whole point of this instrumentation.
+        // waitUntil, not a bare unwaited .then(): the whole point of this
+        // instrumentation is accumulating a reliable count, and a bare
+        // Promise gets reaped along with the instance once the SSE
+        // response closes - the exact failure mode maybeSendHeatedPush
+        // below hit in prod (killed mid-flight before its write landed).
+        if (drops.length > 0) {
+          // Promise.resolve(...) wraps the Supabase query builder's
+          // thenable (not a real Promise - it lazily builds the request
+          // on .then()) so waitUntil, which is typed for a real Promise,
+          // accepts it.
+          const dropsInsert = Promise.resolve(
+            serviceRole
+              .from('error_logs')
+              .insert(drops.map((d) => ({
+                user_id: user.id,
+                source: 'autopsy-engine-drop',
+                message: `${d.site} drop: ${d.category ?? '(no category)'} (${d.reason})`,
+                path: '/api/analyze',
+                metadata: {
+                  reportId: d.reportId,
+                  site: d.site,
+                  kind: d.kind ?? null,
+                  category: d.category,
+                  categoryRoiExists: d.categoryRoiExists,
+                  reason: d.reason,
+                },
+              })))
+          );
+          waitUntil(dropsInsert.then(({ error }) => {
+            if (error) console.error('Failed to persist engine drops:', error);
+          }));
         }
 
         // Emit a durable handle for the new report row before any further SSE
