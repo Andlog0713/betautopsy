@@ -109,11 +109,235 @@
 
 ---
 
-## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes (2026-08-18)
+## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes + Phase 1/2 batch (2026-08-18)
 
-PRs #93-#99 merged/open. This entry covers the audit batch specifically
-(Part 1's security work and the Phase 1 launch-punch-list re-verification
-are logged on earlier branch entries below).
+PRs #93-#108 merged/open. This entry covers the audit batch and the
+lettered A-F batch that followed it (Part 1's security work and the
+Phase 1 launch-punch-list re-verification are logged on earlier branch
+entries below).
+
+### Incident — production broke between PR #99 and PR #101 (resolved)
+PR #97 and PR #99 both branched from the same pre-#97 main and both
+inserted a new function immediately before `calculateSharpScore` in
+`lib/autopsy-engine.ts`. PR #99's merge into main kept its own insertion
+(`estimatedCostBound`) and silently discarded PR #97's
+(`buildEdgeAreas`/`buildEdgeProfile`) — a same-line merge conflict
+resolved wrong, confirmed via `git show b25070c -- lib/autopsy-engine.ts`.
+Main did not compile from that merge until PR #101. Root-caused via the
+real Vercel build log (`get_deployment_build_logs`, `errorsOnly: true`):
+the only error was `Cannot find name 'buildEdgeProfile'` — nothing else
+was wrong. Confirmed PR #99's own branch predated PR #97's merge, so it
+never contained the call in isolation locally — not a stale-local-state
+false green, a genuinely isolated branch that didn't cover the eventual
+merge collision.
+
+**Fixed as PR #101**, shipped alone (per Andrew's explicit correction:
+don't bundle an urgent production fix with unrelated work), restoring
+the exact function bodies from PR #97's original merge commit
+(`b440d5c`). Diffed the restored file against all three PRs' (#97/#98/
+#99) original commits line-by-line to confirm nothing else was silently
+eaten along with the two missing functions — everything else (drop-on-
+miss `strategic_leaks` filter, `estimated_cost: Math.min(...)` bound,
+tightened prompt schemas) survived correctly.
+
+**Standing rule going forward for the rest of this session**: any branch
+touching `lib/autopsy-engine.ts` is rebased on the previous
+engine-touching branch, never independently branched from a common
+stale ancestor. Everything outside that file can still run in parallel.
+This is why PRs #102-#108 form a rebase chain off `fix/restore-edge-
+profile-functions` rather than each branching from `main` independently
+— main stayed broken (pre-#101) for the entire batch, so every branch
+needed a working ancestor to run `tsc`/`vitest`/`build` against; each
+PR's description notes the diff collapses once earlier PRs in the chain
+merge.
+
+### Done — Phase 1 (D), single-item PRs
+- **PR #102 — Meta Pixel consent gate**: `components/MetaPixel.tsx` now
+  gates on the same `ba-geo-eu` cookie `GoogleAnalytics.tsx` already
+  uses (fail-closed: EU/unknown region = no pixel). EU ad-conversion
+  data will change as a result — correct outcome of fixing a real gap,
+  not a regression.
+- **PR #103 — Terms**: 21+ → 18+; removed the "Paid subscriptions"/
+  "Cancellation" subsections (recurring Stripe billing language — no
+  subscription exists on any public surface, single one-time $19.99
+  report purchase is the only thing sold); redated.
+- **PR #104 — Privacy + FAQ + ShareModal + api-client**: 21+ → 18+;
+  §7's blanket "we do not use advertising or tracking cookies" was
+  false given Meta Pixel — replaced with an accurate EU-scoped
+  disclosure matching PR #102's actual gating behavior; FAQ's
+  self-contradicting Anthropic data-use line fixed to match Privacy
+  §5's already-correct framing; wired the existing but UI-orphaned
+  `DELETE /api/share` endpoint into `ShareModal.tsx` (added `apiDelete`
+  to `lib/api-client.ts`, added a "Delete shared link" button) — a real
+  capability with zero caller until now. Known gap not fixed: the
+  button only appears once a share link is minted in the current
+  session; no fetch-on-mount check for a pre-existing token from a past
+  session.
+
+### Done — D5, demo-data + copy fixes (PR #105)
+Targeted reconciliation, not the full "derive everything from one
+fixture" architectural rewrite Andrew's phrasing pointed at — the
+datasets are hand-authored prose fixtures, and a generic derivation-
+function architecture (mirroring `buildSessionAnalysis`/
+`buildEdgeProfile`) is a larger, separate effort, flagged as a possible
+follow-up rather than attempted blind under time pressure. Fixed the
+two specifically-confirmed contradictions in `DEMO_ANALYSIS`
+(`DEMO_DFS_ANALYSIS` was already internally consistent — checked both
+in full):
+- `session_analysis.total_sessions` (62) vs `session_detection.
+  totalSessions` (44) — set to 44; `worst_session`/`best_session` were
+  independently hand-authored and disagreed with `session_detection`'s
+  `worstSession`/`bestSession` on date/bet-count/net for the same
+  session — now copied from the same record.
+- `edge_profile.unprofitable_areas`'s `"All Parlays"` at -38.4%/87 bets
+  showing the identical ROI as `strategic_leaks`' `"NFL Parlays"` at
+  -38.4%/44 bets — the exact number-reuse mechanism already root-caused
+  and fixed in the real engine (PR #97/#98, see the comment above
+  `buildEdgeProfile`). Renamed to `"Parlays"`, gave the broader
+  population its own distinct ROI (-34.1%) instead of a copied one.
+
+Also fixed two product-copy issues in `components/AutopsyReport.tsx`
+that render on every real report, not just the demo: the Sharp Score
+footnote claimed "closing line value" as a methodology input — no CLV
+data exists anywhere in the codebase, rewrote to describe the real
+methodology (ROI + category consistency + odds calibration +
+discipline); the "ABOUT THIS REPORT" section described the product as
+analyzing "psychological patterns, emotional responses, and cognitive
+biases" — clinical/diagnostic language the product isn't licensed to
+use, reworded to behavioral/statistical framing consistent with the
+rest of the report's voice.
+
+### Done — paywall count source + FAQ overclaim (PR #106)
+Found while auditing item B (empty-state rendering): `AutopsyReport`'s
+`SnapshotPaywall` badges ("We found N findings") read from
+`analysis._snapshot_counts`, documented as legacy ("Supersedes
+`_snapshot_counts` going forward but does not replace it (kept for
+pre-V8.5 iOS)" — `types/index.ts`) and computed from different
+intermediate values than its successor `summaryCounts`:
+`_snapshot_counts.leaks` is the raw pre-filter leak count (before the
+platform-category and min-sample filters `strategic_leaks` itself
+applies) and `.patterns` is `biases_detected.length` capped at 5, a
+proxy, not the real `patternsSnapshot` count. Net effect: the paywall
+could promise more findings than the unlocked report actually shows.
+Web has no pre-V8.5 constraint, so it now prefers `summaryCounts`
+(remapped to the shape `SnapshotPaywall` expects) and falls back to
+`_snapshot_counts` only for reports saved before `summaryCounts`
+existed. Also fixed the FAQ's "top bias fully explained" claim — PR #89
+actually ships an evidence-only teaser (cost and fix stay locked);
+moved "fully explained" to describe the paid tier, where it's accurate.
+
+### Done — isPartialReport vacuous-truth bug (PR #107)
+The most severe finding of this pass. `isPartialReport` (gates ~10
+"Generating..." skeletons across nearly every report section) inferred
+"still waiting on Claude" purely from three arrays being empty: every
+bias has blank description/fix AND `strategic_leaks` empty AND
+`recommendations` empty. Vacuous-truth bug: `calculateMetrics`' bias
+detection only pushes a bias when its trigger condition fires, so a
+genuinely disciplined bettor can legitimately finish with all three
+empty — real, reachable, correct output, not "hasn't arrived yet." A
+fully complete report for such a user showed skeletons in nearly every
+section, **permanently, every time the report was viewed** (no
+time-based fallback). Fixed by excluding snapshot mode entirely
+(`runSnapshot` no longer calls Claude at all — Haiku call removed
+since the output had no consumer, per the comment at the top of
+`runSnapshot` — so a snapshot analysis is always fully assembled by
+the time it reaches the component) and anchoring full-report detection
+on `executive_diagnosis`/`executiveDiagnosis.insightFull` presence
+(Claude's required ~32-word summary, generated unconditionally
+regardless of finding count) instead of array emptiness. Added 2 jsdom
+tests; manually verified the fix discriminates by reverting it locally,
+confirming the "clean bettor" test fails against the old code exactly
+as the bug predicts, then restoring and confirming it passes.
+
+### Done — accessibility batch (PR #108)
+- **Viewport zoom (WCAG 1.4.4)**: `maximum-scale=1.0, user-scalable=no`
+  in the viewport `<meta>` and `touch-action: pan-x pan-y` in
+  `globals.css` were both blocking pinch-zoom **site-wide**, not just
+  in the Capacitor app they were built for — the CSS rule in particular
+  had no build-target scope at all, so it blocked pinch-zoom for every
+  mobile web visitor too. Both now gate on `isMobileBuild()`/a new
+  `data-build-target="mobile"` attribute on `<html>`. `ZoomGate`
+  (the iOS `gesturestart` suppressor) was already correctly scoped to
+  `isMobileApp()` — not changed.
+- **Main-content landmarks**: the skip-link only resolved on the
+  homepage — every other route either had a `<main>` missing the
+  matching id, or no `<main>` at all (`/go`, `/sample`,
+  `/reset-password`, the `(auth)` layout covering `/login`+`/signup`).
+  Fixed across 10 routes; live-verified via dev server that every route
+  has exactly one `id="main-content"` and the skip-link's target
+  actually resolves.
+- **`/terms` metadata**: had no `layout.tsx`, inherited the root's
+  generic title — added one matching `/privacy`'s existing pattern.
+- **`/sample` SSR h1**: lived inside a `'use client'` component gated
+  behind Suspense (`useSearchParams()` for `?view=`), so Next rendered
+  an empty skeleton fallback during static generation/ISR — the
+  prerendered HTML crawlers and pre-hydration visitors actually get had
+  no h1 at all. Moved the static/mode-independent eyebrow+h1 to the
+  parent server component; verified present in the actual
+  `.next/server/app/sample.html` build artifact.
+
+### Flagged, not fixed — needs Andrew's call
+- **`whatChanged` zero-baseline bug** (`lib/what-changed.ts`,
+  `computeTopImpactDeltas`): skips any bias delta where the previous
+  impact was `0` (`if (... || prevImpact === 0) continue`), to avoid a
+  div-by-zero in the percent calc. Silently drops the single most
+  notable case — a bias that cost $0 last report and now costs real
+  money. This field is **iOS-only** wire data (`types/index.ts`: "iOS
+  Chapter 1 renderer consumes this; web reports surface uses
+  lib/report-comparison separately" — web's own `WhatChangedSection`
+  already handles new-bias correctly via a different, already-correct
+  code path). A real fix (adding an `isNew` flag, making `deltaPercent`
+  optional for that case) changes what `ImpactDelta` looks like on the
+  wire for iOS's Codable decoder — exactly the "touches iOS" stop
+  condition. Not fixed this pass; needs either Andrew's explicit
+  go-ahead on the wire shape or a coordinated iOS-side change, which is
+  out of scope for a web-only session.
+- **CSP enforcement proposal** (Andrew asked for a proposal, not
+  implementation): `next.config.js` currently ships
+  `Content-Security-Policy-Report-Only` with no `report-uri`/`report-to`
+  directive — meaning it isn't actually collecting violation data
+  anywhere right now, report-only or not. One concrete, verified gap
+  found by reading the code: Meta Pixel (`components/MetaPixel.tsx`)
+  dynamically injects a `<script src="https://connect.facebook.net/
+  en_US/fbevents.js">`, and `connect.facebook.net` is not in
+  `script-src` — enforcing the policy as-is would silently break Meta
+  Pixel entirely. `js.stripe.com`/`challenges.cloudflare.com` are
+  covered in `frame-src` and don't appear as direct script sources
+  anywhere in this app's own code (Stripe looks hosted-checkout-only;
+  Turnstile's actual loading mechanism — possibly via Supabase Auth's
+  own captcha config — wasn't confirmed). Also present: `unsafe-eval`
+  in `script-src`, whose necessity in production (vs. only being needed
+  for dev-mode HMR) wasn't verified. Recommended staged rollout: (1)
+  add a `report-uri`/`report-to` endpoint now, while staying
+  report-only, so real violation data actually gets collected; (2) fix
+  the confirmed Meta Pixel gap and whatever else real traffic surfaces;
+  (3) then flip to enforced. Not implemented.
+- **Leaked-password protection** (Supabase Auth dashboard toggle, not
+  code): confirmed still disabled via `get_advisors` — Supabase Auth →
+  Policies → Password → enable "Leaked password protection" (checks
+  against HaveIBeenPwned.org on signup/password-reset). Remediation
+  doc: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+  Needs Andrew's hand — this is a dashboard click, not something
+  scriptable from this session.
+- **Supabase security advisor still flags `dashboard_stats` and
+  `increment_login_count`** as SECURITY DEFINER functions executable by
+  the `authenticated` role — checked, this is a confirmed false
+  positive, not a regression. Read both migration files
+  (`20260818_close_rpc_idor.sql`, `20260818_close_remaining_definer_
+  grants.sql`): both functions keep `authenticated`'s EXECUTE grant
+  deliberately (revoking it breaks real call sites — login, dashboard
+  stats) but scope themselves internally (`dashboard_stats` requires
+  `p_user_id = auth.uid()`, `increment_login_count` requires `id =
+  auth.uid()`), both documented with the reasoning in the migration
+  comments. The advisor linter can't see inside function bodies, so it
+  flags the SECURITY DEFINER + authenticated-callable pattern
+  regardless of internal checks — this is that limitation, not an open
+  gap. No action needed.
+- Two `rls_enabled_no_policy` INFO-level advisor findings
+  (`quiz_leads`, `stripe_events` — RLS enabled, no policies, so only
+  the service-role key can touch them) — lowest severity, almost
+  certainly intentional (both are server-only write paths), noted for
+  completeness, not investigated further.
 
 ### Done — the Claude-numeric-field audit, four fixes shipped as separate PRs
 Requested after the `session_analysis` fix (below) as a full audit of
@@ -166,6 +390,290 @@ from the model, unknown is a valid value, a redaction sentinel is not a
 value — since all three kept getting violated the same way: quietly, by
 code that looked reasonable in isolation, because the rule was understood
 rather than written down.
+
+### Done — Item F (Stage 8), PR #109, open
+Additive `settlement_type` sibling on `Bet`, cash-outs reclassified by
+actual settlement value from the CSV's own profit/net column instead of
+force-mapped to `result: 'void'` (which force-zeroed real wins/losses to
+$0). Does not widen the `result` enum. FAQ updated with a historical
+disclosure clause after review: rows imported before this fix stay
+wrong permanently — no backfill path (uploads aren't retained), and
+re-uploading the same history doesn't self-heal (the dedupe key doesn't
+include `result`/`profit`, so a re-upload matches the existing row and
+gets silently skipped, not corrected — traced earlier this session, see
+below).
+
+**Needs Andrew's hand before merging**: the checked-in
+`supabase/migrations/20260818_bets_settlement_type.sql` (a single
+nullable `text` column add) must be applied to production *before*
+this PR merges/deploys, or every CSV upload starts failing with
+`column settlement_type does not exist` the moment `lib/import-bets.ts`'s
+INSERT runs against a database that doesn't have it yet. Not
+auto-applied this session — additive schema changes to the live
+production DB need explicit go-ahead, not just feature-level approval.
+
+### Done — Items A/C/D4, PRs #113/#114/#115, open (rebase chain)
+Unblocked once #101 merged; landed as one rebase chain (#113 → #114 →
+#115), each based on the previous, per the serial-rebase rule above.
+
+- **#113 (A)** — `strategic_leaks`/`edge_profile` drop sites now return
+  a `drops: EngineDrop[]` array from `runAutopsy` (category, whether a
+  `category_roi` match existed, reason, a pre-generated report id used
+  for both the log and the actual saved row). First version used
+  `console.log`; per review, Vercel runtime log retention is limited
+  and drops are rare, so console-only logging ages out before enough
+  accumulate to compute a real miss rate — the whole point of this
+  instrumentation. Now persisted to the existing `error_logs` table
+  (`source: 'autopsy-engine-drop'`) by the API route, which already
+  holds a Supabase client — the engine module itself stays DB-free by
+  design. That persistence was itself fire-and-forget (bare `.then()`,
+  no `await`) — Vercel can freeze the execution context once the SSE
+  response completes, killing pending promises; the exact failure mode
+  `maybeSendHeatedPush` hit in prod (its own comment in the same file
+  documents it). Fixed: wrapped in `waitUntil` (`0d2018b`), same pattern
+  already used for that push send in this file.
+- **#114 (C)** — `recommendations[].expected_improvement`'s dollar
+  figure is no longer Claude-authored. Prompt constrained to a
+  behavioral description only (no numbers); engine appends the dollar
+  itself from the recommendation's `tied_to_finding`-linked bias's
+  already-bounded `estimated_cost`. Composed server-side rather than
+  wired to the renderer (no renderer risk; the client-side lookup would
+  need the same fuzzy bias-name matching that's caused problems
+  elsewhere this session). First version appended a hardcoded
+  `/quarter` — per review, `estimated_cost` is a total over whatever
+  period was actually analyzed (six weeks or two years, never
+  verified), so a fix whose purpose was removing an invented number
+  doesn't get to invent a denominator either. Fixed to state the figure
+  as exactly what it is, no period attached. First fix left the bias
+  card's own `/qtr` cost display untouched — same `bias.estimated_cost`
+  rendering as a rate in one spot and a total in the other, in the same
+  report. Fixed: stripped `/qtr` from both `components/AutopsyReport.tsx`
+  render sites too (`2d9b86b`). `lib/demo-data.ts`'s hand-authored
+  `/quarter` strings had the identical issue; moot now that the fixture
+  rebuild (below) replaced that file's numbers with real engine output.
+- **#115 (D4)** — new `lib/date-utils.ts`, UTC-accessor pattern across
+  ~17 sites (more than the ~10 estimated) in `lib/autopsy-engine.ts` +
+  `lib/digest-helpers.ts`. Confirmed real, not theoretical: this
+  session's own dev machine is `America/New_York`, not UTC, and a bet
+  at `2026-01-15T02:00:00Z` reads as a different calendar day *and* a
+  different hour bucket with local accessors there (verified via
+  `TZ=America/Los_Angeles node -e ...` before writing any fix). Also
+  fixed the `by_day`-bucketing correctness issue at the old line 425:
+  the Claude prompt's entire `TIMING ANALYSIS` block, including "By Day
+  of Week," was gated behind `has_time_data`, so Claude got zero
+  day-of-week signal for any user with the common midnight-artifact CSV
+  pattern (~66% of rows, per the earlier `has_time_data` gate's own
+  history) — even though day-of-week only needs the date portion,
+  which is always valid. Split the prompt so day-of-week always
+  includes real data; hour-of-day stays correctly gated.
+  **Spot-checked per review**: ran a real `runAutopsy` call (real
+  Claude API, not mocked) against a 150-bet, fully date-only fixture
+  with a deliberate weekday-vs-weekend ROI split (+2.0% weekday,
+  -53.4%/-49.1% Sat/Sun). Claude correctly surfaced a "Weekend
+  Collapse" finding whose stated numbers matched the engine's real
+  `by_day` output exactly — sound, not fabricated, and a finding that
+  was structurally invisible to Claude before this fix.
+  **Vercel production runtime TZ**: never conclusively verified via logs
+  (runtime-log queries timed out on wide windows, no TZ-revealing
+  evidence on narrow ones; Vercel docs search found no explicit
+  statement). Resolved by not depending on inference: Vercel Functions
+  run on AWS Lambda, and Node on Lambda defaults to `TZ=UTC` unless
+  overridden — set `TZ=UTC` explicitly as a Vercel project environment
+  variable so this is guaranteed rather than inherited. (Dashboard →
+  Project → Settings → Environment Variables → add `TZ` = `UTC` for all
+  environments → redeploy.)
+  **Correction — why "431+ tests passed unchanged" was the wrong
+  evidence**: originally framed as "a suite that never covered
+  timezone-sensitive cases would pass either way." That undersold the
+  actual mechanism. `vitest.config.ts` pins `process.env.TZ = 'UTC'` for
+  the whole test process, so inside every test `new Date(x).getHours()`
+  (local) and `d.getUTCHours()` (UTC) return identical values — the
+  process's own local zone *is* UTC. A test that compares `getUTCHour(x)`
+  against a plain expected number therefore cannot distinguish a UTC
+  accessor from a local one; this isn't a coverage gap, it's structural
+  blindness to exactly this regression. Verified empirically: reverted
+  the UTC accessors, reran the original `date-utils.test.ts` unchanged —
+  all 8 tests stayed green. Fixed in PR #115 (`cc205bb`): the accessor
+  tests now assert *which* `Date.prototype` method gets called (spies on
+  a live `Date` instance — TZ-independent by construction), backed by a
+  source-level guard asserting no raw local accessor exists in
+  `lib/autopsy-engine.ts` / `lib/digest-helpers.ts` outside
+  `date-utils.ts` itself. Both verified to fail against the reverted
+  code and pass against the fix.
+
+### Reverted twice — #111's total-profit "fix" was itself a fabrication
+Padded `DEMO_BETS` with 12 synthetic rows (9 identical $98 NHL losses, 3
+identical $66 NBA prop losses) sized to make the live-computed What-If/
+Leak-Prioritizer total hit `-1247` exactly, matching the hand-authored
+`summary.total_profit`. Same anti-pattern as everything else this
+session has been fixing — tuning numbers so two displays agree instead
+of deriving both from one source — and didn't even fix the underlying
+contradiction, just moved it (fixture now claims 280 bets, contained 47
+rows). Reverted in full.
+
+First re-fix attempt corrected NBA Props' `$340`/`$142` mismatch by
+changing only `estimated_loss`/`estimated_cost` (340→142) while leaving
+`roi: -18.3` and `sample_size: 52` untouched in the same objects — both
+still describing the fictional 280-bet population. Result: internally
+incoherent on its own terms (52 bets losing $142 at -18.3% implies
+~$776 staked, ~$15/bet — matches nothing else in the fixture). Reverted
+a second time, back to `$340`/`-18.3`/`52` — self-consistent, visibly
+wrong against `DEMO_BETS`'s real sample, left that way on purpose rather
+than partially patched, pending the fixture rebuild below. Heated-count
+and worst-session fixes were unaffected by either revert (no padding
+involved) and stayed.
+
+### Done — demo fixture rebuilt from real engine output (PR #117, open)
+Resolves the decision this section originally left open. Chose option
+(b): `lib/demo-data.ts`'s `DEMO_BETS`/`DEMO_ANALYSIS` replaced wholesale
+with 304 script-generated bets (deliberate per-category win-rate
+targets — NFL spread profitable, NBA prop/parlay/late-night clearly
+unprofitable, one loss-chasing session engineered to trip the *real*
+`detectAndGradeSessions` heated-session criteria rather than asserting
+`isHeated` by hand) run through the actual `calculateMetrics()` + one
+live `runAutopsy()` call against the real Claude API. `DEMO_ANALYSIS` is
+that call's frozen, unedited output (plus `discipline_score`, which
+`runAutopsy` doesn't compute — `app/api/analyze/route.ts` calls
+`calculateDisciplineScore` separately with profile/report-history
+context; used first-report-ish placeholder context for the demo).
+
+First generation attempt used per-bet win *probability* (independent
+Bernoulli draws) for parlay outcomes — a few lucky high-odds hits
+flipped the whole portfolio profitable ("The Sharp," +8.7% ROI),
+undercutting the entire product pitch. Fixed by picking an exact win
+*count* per category batch instead of relying on sampling to land near
+a target — removes the variance entirely.
+
+Every `DEMO_ANALYSIS` figure now traces to `DEMO_BETS` through the same
+code path a real report goes through — no more two populations wearing
+one label; `total_bets`/`biases_detected.length` mismatches with
+`DEMO_BETS`'s real size are now structurally impossible. Also fixed two
+now-stale hardcoded "280 bets" copy sites that directly describe this
+fixture (`components/SamplePageClient.tsx`, `app/page.tsx`'s homepage
+caption) to read live from `DEMO_ANALYSIS` instead. Verified: tsc clean,
+440/440 tests, `npm run build` clean, live dev-server + browser check of
+`/sample` and `/` (bias costs render as plain totals, no `/qtr`;
+findings/evidence/session-analysis/control-system sections internally
+consistent; 304-bet dataset renders without errors throughout).
+
+**Found, flagged, not fixed in that pass** (both since resolved, see
+below): `components/ProductShowcase.tsx`'s "From a real user's report
+with 280 bets" caption; `DEMO_DFS_BETS`/`DEMO_DFS_ANALYSIS` (PrizePicks
+demo) had the identical two-populations issue (38 real rows,
+`DEMO_DFS_ANALYSIS` claimed 200).
+
+### Done — DFS fixture rebuilt, drift guard, ProductShowcase fixed (PR #117, 2nd commit)
+`DEMO_DFS_ANALYSIS` rebuilt with the same real-engine approach: 200
+script-generated entries, deterministic win counts per (pick-count,
+Power/Flex) bucket, a multiplier-chasing overlay engineered to trip the
+real `pickCountAfterLoss > pickCountAfterWin * 1.2` detector threshold
+(two tuning passes — 25 retimed entries landed at 1.19x, just under
+threshold; prioritizing the highest-pick-count entries for the limited
+retiming slots got it to 1.36x). All 6 real biases fire; archetype
+("The Lottery Bettor") is one `determineDFSArchetype()` can actually
+produce, unlike the old fixture's fictional "The Multiplier Chaser."
+
+Added `__tests__/demo-fixture-drift.test.ts` (15 tests, both fixtures):
+`DEMO_ANALYSIS`/`DEMO_DFS_ANALYSIS` are frozen snapshots with nothing
+tying them to their bet arrays going forward — recomputes
+`calculateMetrics()` fresh and asserts every deterministic field still
+matches. Verified during development it actually discriminates
+(perturbed `total_bets` and an `roi_impact` value, both caught, then
+reverted — not committed).
+
+Fixed `ProductShowcase.tsx`'s caption to "Illustrative example, not an
+actual user report" (was false twice over: invented data, explicit false
+real-user claim).
+
+### Done — launch-readiness pass (PR #117, 3rd-5th commits)
+Walked `/`, `/sample`, `/login`, `/signup`, `/faq` live as a first-time
+visitor (couldn't sign in to walk the authenticated flow — hard
+constraint). Found and fixed, reordered twice across review rounds by
+actual severity:
+
+- **Sign-blind display bug** (`components/AutopsyReport.tsx`): hardcoded
+  `+` prefix and win-green styling on "best" odds bucket / "best" timing
+  window / A-grade session ROI, assuming "best of the sample" implies
+  positive. When every value in a sample is negative — true for the new
+  real fixture, true for most users — the "best" one is still a loss,
+  producing a literal `+-3.3pp` in green "good news" styling. Fixed all
+  three pairs to follow the value's actual sign, not its rank. Checked
+  two look-alikes (`SharedReport.tsx`, uploads-compare) — both pre-filter
+  to positive ROI upstream, safe.
+- **Checkout-wait dishonesty** (`app/(dashboard)/reports/page.tsx`):
+  `AnalyzingProgress` — the component that renders on the post-checkout
+  `?unlocked=true` auto-run, i.e. what the customer who just paid $19.99
+  actually watches — had a flat "15-25 seconds" estimate regardless of
+  bet count, capping at 92% by ~30-40s. Two real `runAutopsy()` calls
+  this session (200 and 304 bets) measured ~90s each. Extracted the
+  *other* loading component's bet-count-aware estimate (already matching
+  the measurement for 150-500 bets) into shared functions
+  (`analysisTimeEstimate`, `analysisSimulatedProgress`/
+  `analysisTargetSeconds`) so both read one source. Pacing redesigned
+  twice: first a linear ramp to the real target (correct pacing, but
+  reads as sluggish — a constant rate feels like crawling from the
+  start), then three phases — fast burst to 40% in ~5s, decelerating
+  climb to 85% across the target window, then an asymptotic creep toward
+  98% past the target that never fully stops (a run at 2-3x the target
+  still shows real motion instead of looking hung).
+- **Silent checkout failures** (`components/SnapshotPaywall.tsx`): a
+  failed `/api/checkout` call only hit `console.error` and reverted the
+  button — the exact path that threw `coupon_applies_to_nothing` three
+  times in thirteen seconds in August, invisible to the user each time.
+  Added a visible error with a `support@betautopsy.com` mailto link
+  (matching the existing `ScreenshotParser.tsx`/`PasteParser.tsx`
+  pattern) and Sentry reporting via the same `window.Sentry?.
+  captureException` pattern `ErrorBoundary.tsx` already uses.
+- **Verified against Stripe directly** (read-only, no code change): both
+  `STRIPE_REPORT_PRICE_ID` ($19.99, "Full Report") and
+  `STRIPE_EXTRA_REPORT_PRICE_ID` ($4.99, "Extra Report") are live-mode,
+  active prices matching what `SnapshotPaywall.tsx` displays — confirmed
+  before Andrew tested checkout with a real card.
+- **Hero headline unreadable for ~1-2s on every page load**
+  (`HeroABTest.tsx`'s word-by-word blur reveal). Dropped the blur, use
+  the component's existing fade+slide path, tightened its timing —
+  reveal now under ~0.5s.
+- **Three numbers for one claim** ("60s" vs "20s" for full-report
+  generation across `go/page.tsx`, `HeroABTest`, `SamplePageClient`,
+  FAQ, auth layout, dashboard). New `lib/report-timing.ts` centralizes
+  the verified claim ("under 2 minutes," from the same two real timing
+  measurements above). Left `ProductShowcase.tsx`'s "30 seconds" (CSV
+  import, a genuinely different and faster action) alone rather than
+  making an honest fast claim dishonest — flagged the deviation instead
+  of silently overriding the instruction.
+- **Homepage embedded report**: removed its `AnimatedSection`
+  scroll-fade wrapper (thousands of px tall — a normal scroll could land
+  mid-fade on the page's strongest asset) and added
+  `HomeReportStickyBar`, same pattern as the existing `SampleStickyBar`
+  but triggered off the report section's own scroll position instead of
+  a flat 300px threshold.
+- **Dropped `/sample`'s third stat-tile** ("<2min to generate") — next to
+  two quantity claims ("5 chapters," "47 behavioral signals") a wait-time
+  duration read as a tonal shift, confirmed live side-by-side.
+- **Real `/sample` hydration bug, root-caused and fixed** (not just
+  flagged — same class the original August audit caught, #418/#423,
+  still live on the exact page used to demo the product).
+  `SamplePageClient.tsx`'s `useState` initializer read `localStorage`
+  directly, which differs between SSR (always false) and the client's
+  first hydration pass (true) — any returning visitor who'd toggled
+  modes got a different initial value than the server rendered.
+  Confirmed by direct manipulation (cleared/set `localStorage`, watched
+  the Next.js dev-overlay's "2 errors" disappear/reappear on demand;
+  console showed React discarding the mismatched Suspense boundary
+  wrapping the *entire* `next/dynamic`-loaded `AutopsyReport`, not a
+  small text node) and in a **real production build** (`next start`,
+  not just dev mode) to answer whether it was dev-overlay-only — it
+  reproduced there too pre-fix, confirming a real visible flash/layout
+  shift in production. Fixed the standard way: initializer never touches
+  `localStorage` now; the stored preference restores in the existing
+  mount effect, client-only and post-hydration. Verified in production:
+  zero hydration errors, correct mode still restored.
+- Removed 3 leftover `[unlock-debug]` `console.log` calls.
+
+Verified throughout: tsc clean, 455/455 tests (added the 15-test drift
+guard), `npm run build` clean, extensive live dev-server + real
+production-build checks with direct console-message/localStorage
+manipulation rather than inference.
 
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 

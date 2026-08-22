@@ -135,6 +135,7 @@ export async function importBets(
       parlay_legs: bet.parlay_legs ?? null,
       tags: bet.tags ?? null,
       notes: bet.notes ?? null,
+      settlement_type: bet.settlement_type ?? null,
       ...(uploadId ? { upload_id: uploadId } : {}),
     }));
 
