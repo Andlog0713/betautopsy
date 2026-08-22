@@ -1,5 +1,34 @@
 # BetAutopsy — Claude Code instructions
 
+## CURRENT STATE (as of 2026-08-22)
+
+**Active PR**: [#118](https://github.com/Andlog0713/betautopsy/pull/118)
+`fix(csv): stop fabricating leg-row profit, collapse hierarchical rows
+into parent bets` — branch `fix/csv-parlay-leg-cashout-parsing`, rebased
+onto current `main` (includes #109/#113/#114/#115/#117), 3 commits,
+OPEN, not yet reviewed or merged. tsc clean, 469/469 tests, build clean;
+the real fixture re-verified post-rebase to an exact match against
+ground truth. Full history of this arc is logged under "Current branch:
+`docs/wire-provenance-standing-rule`" below.
+- **Blocking merge**: Andrew hasn't clicked through the live `/upload`
+  preview → confirm → commit flow yet — the one piece not verified in a
+  browser this session (auth-gated, no credentials to test with).
+
+**Do not delete**: `autopsy_reports` row
+`e8a49248-ab40-41a9-a1a9-bce7191387bd` (today's contaminated CSV-bug
+report, andlog0713@gmail.com). Andrew is deliberately keeping it to diff
+against corrected output once PR #118 lands. The contaminated `bets`
+rows themselves (`upload_id` `86f7d9df-9820-498b-8d25-93141dfabfe7`)
+were already deleted by Andrew.
+
+**Reported, not yet actioned** (from the `is_paid` semantics audit):
+- Two of `betautopsy@gmail.com`'s three real Stripe charges
+  (`ff3e35c4`, `8210a41b`, 2026-05-06) have no full-report row ever
+  created — charged, nothing delivered.
+- 3 of 7 `stripe_events` rows (`evt_1TSJrE7...`, `evt_1TSK717...`,
+  `evt_1TVGEl7...`) don't correlate to any known `payment_intent_id` —
+  unresolved, would need the Stripe dashboard directly to close out.
+
 ## Architecture
 - This repo is the web app (Next.js App Router), serving betautopsy.com and the API
   the iOS app calls.
