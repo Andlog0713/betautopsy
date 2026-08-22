@@ -29,6 +29,19 @@ were already deleted by Andrew.
   `evt_1TVGEl7...`) don't correlate to any known `payment_intent_id` —
   unresolved, would need the Stripe dashboard directly to close out.
 
+**PR #111 closed, not merged** (`fix(demo): reconcile the remaining
+four contradictions from #105`). GitHub reported an unresolvable
+conflict in `lib/demo-data.ts`. Checked out the branch: its entire net
+diff (after its own two follow-up reverts, including the NBA Props
+revert already logged below) was 8 lines fixing two internal-consistency
+bugs in the old hand-authored `DEMO_ANALYSIS` — text that PR #117's
+real-engine-output rebuild replaced entirely, not renamed or moved. The
+rebuilt fixture doesn't carry a fresh instance of the same contradiction
+(session narrative is now assembled from real computed values, so it's
+self-consistent by construction). Closed with an explanatory comment
+rather than forcing an empty conflict resolution — confirmed with
+Andrew first.
+
 ## Architecture
 - This repo is the web app (Next.js App Router), serving betautopsy.com and the API
   the iOS app calls.
