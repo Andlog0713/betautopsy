@@ -556,14 +556,124 @@ caption) to read live from `DEMO_ANALYSIS` instead. Verified: tsc clean,
 findings/evidence/session-analysis/control-system sections internally
 consistent; 304-bet dataset renders without errors throughout).
 
-**Found, flagged, not fixed (out of scope this pass)**:
-`components/ProductShowcase.tsx`'s "From a real user's report with 280
-bets" caption is a fully decorative, hand-illustrated "how it works"
-mockup (invented bias names/dollar figures, `/qtr` included) unconnected
-to `DEMO_ANALYSIS` or any real computation — different in kind, not
-touched. `DEMO_DFS_BETS`/`DEMO_DFS_ANALYSIS` (PrizePicks demo) has the
-*identical* two-populations issue (38 real rows, `DEMO_DFS_ANALYSIS`
-claims 200) but wasn't in scope for this pass.
+**Found, flagged, not fixed in that pass** (both since resolved, see
+below): `components/ProductShowcase.tsx`'s "From a real user's report
+with 280 bets" caption; `DEMO_DFS_BETS`/`DEMO_DFS_ANALYSIS` (PrizePicks
+demo) had the identical two-populations issue (38 real rows,
+`DEMO_DFS_ANALYSIS` claimed 200).
+
+### Done — DFS fixture rebuilt, drift guard, ProductShowcase fixed (PR #117, 2nd commit)
+`DEMO_DFS_ANALYSIS` rebuilt with the same real-engine approach: 200
+script-generated entries, deterministic win counts per (pick-count,
+Power/Flex) bucket, a multiplier-chasing overlay engineered to trip the
+real `pickCountAfterLoss > pickCountAfterWin * 1.2` detector threshold
+(two tuning passes — 25 retimed entries landed at 1.19x, just under
+threshold; prioritizing the highest-pick-count entries for the limited
+retiming slots got it to 1.36x). All 6 real biases fire; archetype
+("The Lottery Bettor") is one `determineDFSArchetype()` can actually
+produce, unlike the old fixture's fictional "The Multiplier Chaser."
+
+Added `__tests__/demo-fixture-drift.test.ts` (15 tests, both fixtures):
+`DEMO_ANALYSIS`/`DEMO_DFS_ANALYSIS` are frozen snapshots with nothing
+tying them to their bet arrays going forward — recomputes
+`calculateMetrics()` fresh and asserts every deterministic field still
+matches. Verified during development it actually discriminates
+(perturbed `total_bets` and an `roi_impact` value, both caught, then
+reverted — not committed).
+
+Fixed `ProductShowcase.tsx`'s caption to "Illustrative example, not an
+actual user report" (was false twice over: invented data, explicit false
+real-user claim).
+
+### Done — launch-readiness pass (PR #117, 3rd-5th commits)
+Walked `/`, `/sample`, `/login`, `/signup`, `/faq` live as a first-time
+visitor (couldn't sign in to walk the authenticated flow — hard
+constraint). Found and fixed, reordered twice across review rounds by
+actual severity:
+
+- **Sign-blind display bug** (`components/AutopsyReport.tsx`): hardcoded
+  `+` prefix and win-green styling on "best" odds bucket / "best" timing
+  window / A-grade session ROI, assuming "best of the sample" implies
+  positive. When every value in a sample is negative — true for the new
+  real fixture, true for most users — the "best" one is still a loss,
+  producing a literal `+-3.3pp` in green "good news" styling. Fixed all
+  three pairs to follow the value's actual sign, not its rank. Checked
+  two look-alikes (`SharedReport.tsx`, uploads-compare) — both pre-filter
+  to positive ROI upstream, safe.
+- **Checkout-wait dishonesty** (`app/(dashboard)/reports/page.tsx`):
+  `AnalyzingProgress` — the component that renders on the post-checkout
+  `?unlocked=true` auto-run, i.e. what the customer who just paid $19.99
+  actually watches — had a flat "15-25 seconds" estimate regardless of
+  bet count, capping at 92% by ~30-40s. Two real `runAutopsy()` calls
+  this session (200 and 304 bets) measured ~90s each. Extracted the
+  *other* loading component's bet-count-aware estimate (already matching
+  the measurement for 150-500 bets) into shared functions
+  (`analysisTimeEstimate`, `analysisSimulatedProgress`/
+  `analysisTargetSeconds`) so both read one source. Pacing redesigned
+  twice: first a linear ramp to the real target (correct pacing, but
+  reads as sluggish — a constant rate feels like crawling from the
+  start), then three phases — fast burst to 40% in ~5s, decelerating
+  climb to 85% across the target window, then an asymptotic creep toward
+  98% past the target that never fully stops (a run at 2-3x the target
+  still shows real motion instead of looking hung).
+- **Silent checkout failures** (`components/SnapshotPaywall.tsx`): a
+  failed `/api/checkout` call only hit `console.error` and reverted the
+  button — the exact path that threw `coupon_applies_to_nothing` three
+  times in thirteen seconds in August, invisible to the user each time.
+  Added a visible error with a `support@betautopsy.com` mailto link
+  (matching the existing `ScreenshotParser.tsx`/`PasteParser.tsx`
+  pattern) and Sentry reporting via the same `window.Sentry?.
+  captureException` pattern `ErrorBoundary.tsx` already uses.
+- **Verified against Stripe directly** (read-only, no code change): both
+  `STRIPE_REPORT_PRICE_ID` ($19.99, "Full Report") and
+  `STRIPE_EXTRA_REPORT_PRICE_ID` ($4.99, "Extra Report") are live-mode,
+  active prices matching what `SnapshotPaywall.tsx` displays — confirmed
+  before Andrew tested checkout with a real card.
+- **Hero headline unreadable for ~1-2s on every page load**
+  (`HeroABTest.tsx`'s word-by-word blur reveal). Dropped the blur, use
+  the component's existing fade+slide path, tightened its timing —
+  reveal now under ~0.5s.
+- **Three numbers for one claim** ("60s" vs "20s" for full-report
+  generation across `go/page.tsx`, `HeroABTest`, `SamplePageClient`,
+  FAQ, auth layout, dashboard). New `lib/report-timing.ts` centralizes
+  the verified claim ("under 2 minutes," from the same two real timing
+  measurements above). Left `ProductShowcase.tsx`'s "30 seconds" (CSV
+  import, a genuinely different and faster action) alone rather than
+  making an honest fast claim dishonest — flagged the deviation instead
+  of silently overriding the instruction.
+- **Homepage embedded report**: removed its `AnimatedSection`
+  scroll-fade wrapper (thousands of px tall — a normal scroll could land
+  mid-fade on the page's strongest asset) and added
+  `HomeReportStickyBar`, same pattern as the existing `SampleStickyBar`
+  but triggered off the report section's own scroll position instead of
+  a flat 300px threshold.
+- **Dropped `/sample`'s third stat-tile** ("<2min to generate") — next to
+  two quantity claims ("5 chapters," "47 behavioral signals") a wait-time
+  duration read as a tonal shift, confirmed live side-by-side.
+- **Real `/sample` hydration bug, root-caused and fixed** (not just
+  flagged — same class the original August audit caught, #418/#423,
+  still live on the exact page used to demo the product).
+  `SamplePageClient.tsx`'s `useState` initializer read `localStorage`
+  directly, which differs between SSR (always false) and the client's
+  first hydration pass (true) — any returning visitor who'd toggled
+  modes got a different initial value than the server rendered.
+  Confirmed by direct manipulation (cleared/set `localStorage`, watched
+  the Next.js dev-overlay's "2 errors" disappear/reappear on demand;
+  console showed React discarding the mismatched Suspense boundary
+  wrapping the *entire* `next/dynamic`-loaded `AutopsyReport`, not a
+  small text node) and in a **real production build** (`next start`,
+  not just dev mode) to answer whether it was dev-overlay-only — it
+  reproduced there too pre-fix, confirming a real visible flash/layout
+  shift in production. Fixed the standard way: initializer never touches
+  `localStorage` now; the stored preference restores in the existing
+  mount effect, client-only and post-hydration. Verified in production:
+  zero hydration errors, correct mode still restored.
+- Removed 3 leftover `[unlock-debug]` `console.log` calls.
+
+Verified throughout: tsc clean, 455/455 tests (added the 15-test drift
+guard), `npm run build` clean, extensive live dev-server + real
+production-build checks with direct console-message/localStorage
+manipulation rather than inference.
 
 ## Previous branch: `docs/faq-cashout-disclosure` — Stage 8 dedupe trace + FAQ line (2026-08-17, later)
 
