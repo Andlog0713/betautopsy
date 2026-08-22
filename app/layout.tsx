@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import CookieConsent from '@/components/CookieConsent';
@@ -168,6 +169,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === 'production' && (
           <>
             <GoogleAnalytics />
+            <Analytics />
             {/*
              * Meta ad pixel is web-only. Skipped on the mobile build
              * because pixels don't function inside a Capacitor WebView
