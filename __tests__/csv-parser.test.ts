@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import path from 'path';
 import { parseCSV, generateCSVTemplate } from '@/lib/csv-parser';
 
 // ── Helper ──
@@ -236,6 +238,92 @@ describe('parseCSV — results', () => {
     const { bets, warnings } = parseCSV(input);
     expect(bets[0].result).toBe('pending');
     expect(warnings.some((w) => w.includes('Unknown result'))).toBe(true);
+  });
+});
+
+// ============================================
+// Cash-outs (Stage 8) — reclassified by actual settlement value,
+// not force-mapped to 'void'/$0 the way a genuine push/void is.
+// ============================================
+
+describe('parseCSV — cash-outs', () => {
+  it.each([
+    ['cashed_out'], ['cashed out'], ['cashedout'], ['cashout'],
+  ])('reclassifies "%s" with a positive profit column to win, tagged as a cash-out', (variant) => {
+    const input = csv([
+      'description,odds,stake,result,profit',
+      `Test,+550,50,${variant},32.50`,
+    ]);
+    const { bets } = parseCSV(input);
+    expect(bets[0].result).toBe('win');
+    expect(bets[0].profit).toBe(32.5);
+    expect(bets[0].settlement_type).toBe('cash_out');
+  });
+
+  it.each([
+    ['cashed_out'], ['cashed out'], ['cashedout'], ['cashout'],
+  ])('reclassifies "%s" with a negative profit column to loss, tagged as a cash-out', (variant) => {
+    const input = csv([
+      'description,odds,stake,result,profit',
+      `Test,-130,100,${variant},-41.00`,
+    ]);
+    const { bets } = parseCSV(input);
+    expect(bets[0].result).toBe('loss');
+    expect(bets[0].profit).toBe(-41);
+    expect(bets[0].settlement_type).toBe('cash_out');
+  });
+
+  it('falls back to void/$0 for a cash-out with no profit column data, still tagged as a cash-out', () => {
+    const input = csv([
+      'description,odds,stake,result',
+      'Test,-110,100,cashed_out',
+    ]);
+    const { bets } = parseCSV(input);
+    expect(bets[0].result).toBe('void');
+    expect(bets[0].profit).toBe(0);
+    expect(bets[0].settlement_type).toBe('cash_out');
+  });
+
+  it('does not tag a genuine void/cancellation as a cash-out', () => {
+    const input = csv([
+      'description,odds,stake,result,profit',
+      'Test,-110,100,void,0',
+    ]);
+    const { bets } = parseCSV(input);
+    expect(bets[0].result).toBe('void');
+    expect(bets[0].profit).toBe(0);
+    expect(bets[0].settlement_type).toBeUndefined();
+  });
+
+  it('does not tag a genuine push as a cash-out, and still force-zeroes its profit', () => {
+    const input = csv([
+      'description,odds,stake,result,profit',
+      'Test,-110,100,push,15',
+    ]);
+    const { bets } = parseCSV(input);
+    expect(bets[0].result).toBe('push');
+    expect(bets[0].profit).toBe(0);
+    expect(bets[0].settlement_type).toBeUndefined();
+  });
+
+  it('handles the checked-in cash-outs.csv ingestion fixture end to end', () => {
+    const fixturePath = path.join(__dirname, 'fixtures/ingestion/cash-outs.csv');
+    const input = readFileSync(fixturePath, 'utf-8');
+    const { bets, errors } = parseCSV(input);
+    expect(errors).toHaveLength(0);
+    expect(bets).toHaveLength(6);
+
+    const cashOuts = bets.filter((b) => b.settlement_type === 'cash_out');
+    expect(cashOuts).toHaveLength(4);
+    // Row order from the fixture: cashed_out/+32.50, cashed out/-41.00,
+    // cashedout/+12.75, cashout/-22.40 — all four variants, all reclassified.
+    expect(cashOuts.map((b) => b.result)).toEqual(['win', 'loss', 'win', 'loss']);
+    expect(cashOuts.map((b) => b.profit)).toEqual([32.5, -41, 12.75, -22.4]);
+
+    // Non-cash-out control rows are unaffected and untagged.
+    const regular = bets.filter((b) => b.settlement_type !== 'cash_out');
+    expect(regular).toHaveLength(2);
+    expect(regular.every((b) => b.settlement_type === undefined)).toBe(true);
   });
 });
 

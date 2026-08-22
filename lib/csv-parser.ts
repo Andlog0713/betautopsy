@@ -34,9 +34,19 @@ const RESULT_MAP: Record<string, ParsedBet['result']> = {
   settled_push: 'push', settledpush: 'push',
   void: 'void', voided: 'void', cancelled: 'void', canceled: 'void',
   settled_void: 'void', settledvoid: 'void',
-  cashed_out: 'void', cashedout: 'void', cashout: 'void', 'cashed out': 'void',
   pending: 'pending', open: 'pending', unsettled: 'pending',
 };
+
+// Cash-outs are NOT in RESULT_MAP above (Stage 8) - unlike a genuine
+// void/push, which by definition always nets $0 (stake returned), a
+// cash-out settles for whatever the sportsbook's live offer was: a real
+// win, loss, or breakeven. Lumping it into 'void' silently forced its
+// profit to $0 regardless of the CSV's own profit/net column value.
+// Detected separately below and reclassified by the row's actual
+// settlement value instead.
+const CASH_OUT_RESULT_STRINGS = new Set([
+  'cashed_out', 'cashedout', 'cashout', 'cashed out',
+]);
 
 // ── Sport detection from descriptions ──
 
@@ -292,16 +302,24 @@ function parseRow(
 
   // Parse result — strip "SETTLED_" prefix for Pikkit format
   const rawResult = get('result');
-  let resultStr = rawResult.toLowerCase().trim();
-  // Try direct match first (e.g. "cashed_out", "cancelled")
-  let result = RESULT_MAP[resultStr];
-  if (!result) {
-    // Strip "SETTLED_" prefix and try again
-    resultStr = resultStr.replace(/^settled[_\s]*/i, '');
-    result = RESULT_MAP[resultStr] ?? 'pending';
-  }
-  if (rawResult && !RESULT_MAP[rawResult.toLowerCase().trim()] && !RESULT_MAP[resultStr]) {
-    warnings.push(`Row ${lineNum}: Unknown result "${rawResult}", defaulting to pending`);
+  const rawResultLower = rawResult.toLowerCase().trim();
+  const strippedResultStr = rawResultLower.replace(/^settled[_\s]*/i, '');
+  const isCashOut = CASH_OUT_RESULT_STRINGS.has(rawResultLower) || CASH_OUT_RESULT_STRINGS.has(strippedResultStr);
+
+  let result: ParsedBet['result'];
+  const settlementType: 'cash_out' | undefined = isCashOut ? 'cash_out' : undefined;
+  if (isCashOut) {
+    // Reclassified by actual settlement value below, once profit is
+    // parsed - a cash-out's real result can't be inferred from odds the
+    // way a run-to-completion win/loss can. 'void' is the fallback if the
+    // CSV turns out to have no usable profit figure for this row.
+    result = 'void';
+  } else {
+    // Try direct match first (e.g. "cancelled")
+    result = RESULT_MAP[rawResultLower] ?? RESULT_MAP[strippedResultStr] ?? 'pending';
+    if (rawResult && !RESULT_MAP[rawResultLower] && !RESULT_MAP[strippedResultStr]) {
+      warnings.push(`Row ${lineNum}: Unknown result "${rawResult}", defaulting to pending`);
+    }
   }
 
   // Parse date
@@ -323,13 +341,33 @@ function parseRow(
     profit = parseFloat(profitStr.replace(/[$,]/g, ''));
     if (isNaN(profit)) profit = 0;
   }
-  if (!profitStr || profit === 0) {
-    profit = calculateProfit(odds, stake, result);
-  }
 
-  // Push and void ALWAYS have $0 profit — override any CSV value
-  if (result === 'push' || result === 'void') {
-    profit = 0;
+  if (isCashOut) {
+    // Reclassify by the row's actual settlement value (Stage 8) — a
+    // cash-out can be a real win, loss, or breakeven, unlike a genuine
+    // push/void which always nets $0 by definition. A parsed profit of
+    // exactly 0 is indistinguishable from "no profit/net column data for
+    // this row" with this simple parsing, so it falls back to the same
+    // 'void'/$0 treatment the FAQ already discloses ("cash-outs currently
+    // recorded as $0 profit... since exported data doesn't reliably
+    // distinguish a profitable cash-out from a loss") rather than
+    // asserting a push it can't actually confirm.
+    if (profitStr && profit !== 0) {
+      result = profit > 0 ? 'win' : 'loss';
+    } else {
+      result = 'void';
+      profit = 0;
+    }
+  } else {
+    if (!profitStr || profit === 0) {
+      profit = calculateProfit(odds, stake, result);
+    }
+    // Push and void ALWAYS have $0 profit — override any CSV value.
+    // Cash-outs are handled in the branch above and never reach here, so
+    // this no longer wrongly zeroes a cash-out's real settlement value.
+    if (result === 'push' || result === 'void') {
+      profit = 0;
+    }
   }
 
   const payout = result === 'win' ? stake + Math.abs(profit) : (result === 'push' || result === 'void') ? stake : 0;
@@ -416,6 +454,7 @@ function parseRow(
     sportsbook: get('sportsbook') || undefined,
     is_bonus_bet: isBonusBet,
     parlay_legs: parlayLegs,
+    settlement_type: settlementType,
   };
 }
 
