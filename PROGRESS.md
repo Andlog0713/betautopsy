@@ -2,9 +2,14 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `943c1ab`,
+**Production**: `main` is on squash-merge commit `45fe069`,
+[PR #121](https://github.com/Andlog0713/betautopsy/pull/121), which enforces
+a request-nonced CSP. Production scripts have neither `unsafe-inline` nor
+`unsafe-eval`; API and other non-document responses receive a deny-all
+policy. Inline styles remain allowed because the current report UI, Sonner,
+and share-card surfaces generate them at runtime. It includes
 [PR #120](https://github.com/Andlog0713/betautopsy/pull/120), which disables
-new Pro subscription checkout. It includes
+new Pro subscription checkout,
 [PR #119](https://github.com/Andlog0713/betautopsy/pull/119), durable paid
 report fulfillment, and [PR #118](https://github.com/Andlog0713/betautopsy/pull/118),
 the hierarchical CSV correction at `3c386e8`. The authenticated `/upload`
@@ -15,17 +20,17 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: branch `codex/enforce-csp` replaces the non-enforcing
-Report-Only policy with a request-nonced, enforced CSP. Production scripts
-have neither `unsafe-inline` nor `unsafe-eval`; API and other non-document
-responses receive a deny-all policy. Inline styles remain allowed because
-the current report UI, Sonner, and share-card surfaces generate them at
-runtime. The implementation passed the four gates, 39 browser cases when
-run with each suite's required environment, and a discrimination check that
-fails when the old Report-Only header is restored. The legacy Capacitor
-export check is still blocked by its pre-existing `scripts/test-check-in.ts`
-import of API routes that `build-mobile.sh` temporarily removes; the wrapper
-restored all paths correctly, and no mobile files were changed.
+**In flight**: [PR #110](https://github.com/Andlog0713/betautopsy/pull/110),
+branch `fix/share-modal-fetch-existing-link`, is rebased on `45fe069`. It
+adds an authenticated, read-only lookup for an already-active share token so
+reopening ShareModal shows the promised "Delete shared link" control without
+minting or reactivating a public URL merely by opening the modal. The lookup
+is scoped to both `report_id` and the caller's `user_id`. API tests cover
+authentication, ownership, active, revoked, and absent tokens. A rendered UI
+test covers lookup, delete, and the no-POST-on-mount consent invariant, and
+fails when the mount lookup is removed. The final tree passes all four gates:
+TypeScript, 588 Vitest tests across 47 files, production build, and the design
+check with its 52 known warnings in non-strict mode.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -59,6 +64,10 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
+- **What Changed zero baseline**: open PR #112 currently fabricates
+  `deltaPercent: 100` when a bias has no prior nonzero baseline. Redesign it
+  so the wire represents "new" without inventing a percentage, then refresh
+  the PR after #110 merges.
 - **Design-system enforcement**: 52 known violations remain, and
   `check:design` still runs with `STRICT = false`.
 - **Pricing E2E coverage**: three `/pricing` cases actually exercise
@@ -66,7 +75,7 @@ Andrew first.
 - **Node parity**: CI pins Node 20, Vercel builds with Node 24, and there is
   no `engines` field.
 - **CSV re-upload coverage**: overlapping-window re-uploads have never been
-  tested.
+  tested. Add the coverage as the next separate stage after #112 merges.
 - **Supabase availability**: staying on the free tier is Andrew's call for
   now, not a bug. It remains a known risk because auto-pause killed login
   for eight days in August 2026.
