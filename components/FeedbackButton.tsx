@@ -33,7 +33,7 @@ export default function FeedbackButton() {
       {/* Tab button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-surface-1 border border-border-subtle border-r-0 rounded-l-sm px-2 py-3 text-fg-muted hover:text-fg hover:bg-surface-1/80 transition-colors"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 min-w-11 bg-surface-1 border border-border-subtle border-r-0 rounded-l-sm px-2 py-3 text-fg-muted hover:text-fg hover:bg-surface-1/80 transition-colors"
         style={{ writingMode: 'vertical-rl' }}
       >
         <span className="text-xs tracking-wider">Feedback</span>
