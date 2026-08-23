@@ -2,10 +2,15 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `9ccbc9f`,
+**Production**: `main` is on squash-merge commit `a6cfcd4`,
+[PR #112](https://github.com/Andlog0713/betautopsy/pull/112), which represents
+material impacts with a confirmed-zero or absent prior baseline without a
+fabricated percentage. Existing `topImpactDeltas` remain unchanged for
+shipping clients; the new case uses the additive optional
+`newImpactFindings` sibling. It includes
 [PR #110](https://github.com/Andlog0713/betautopsy/pull/110), which restores
 the cross-session delete control for active share links without minting a
-link on modal open. It includes
+link on modal open,
 [PR #121](https://github.com/Andlog0713/betautopsy/pull/121), which enforces
 a request-nonced CSP. Production scripts have neither `unsafe-inline` nor
 `unsafe-eval`; API and other non-document responses receive a deny-all
@@ -23,15 +28,13 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: [PR #112](https://github.com/Andlog0713/betautopsy/pull/112),
-branch `fix/whatchanged-zero-baseline`, is rebased on `9ccbc9f` and redesigned
-to remove its fabricated `deltaPercent: 100` placeholder. Existing
-`topImpactDeltas` and their required, computed `deltaPercent` remain
-unchanged for shipping clients. Material impacts with a confirmed-zero or
-absent prior baseline now use the additive optional `newImpactFindings`
-sibling, with a categorical baseline and real current impact but no percent
-field. Missing prior cost remains unknown and is skipped. Targeted tests fail
-when the old zero-baseline skip is restored.
+**In flight**: branch `codex/test-overlapping-csv-reupload` adds the missing
+sequential overlapping-window CSV coverage without changing production code.
+It parses and commits a four-bet export, previews and commits a second
+four-bet export containing two old and two new bets, and verifies the
+canonical database ends with six bets rather than eight. It also verifies
+logical upload membership, profile count, $355 final stake, and -$50.27 final
+net. The targeted test fails when the dedupe lookup is disabled.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -71,8 +74,6 @@ Andrew first.
   `/login` and pass while asserting nothing.
 - **Node parity**: CI pins Node 20, Vercel builds with Node 24, and there is
   no `engines` field.
-- **CSV re-upload coverage**: overlapping-window re-uploads have never been
-  tested. Add the coverage as the next separate stage after #112 merges.
 - **Supabase availability**: staying on the free tier is Andrew's call for
   now, not a bug. It remains a known risk because auto-pause killed login
   for eight days in August 2026.
