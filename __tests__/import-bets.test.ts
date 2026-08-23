@@ -4,10 +4,11 @@ import path from 'path';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ParsedBet } from '@/types';
 import { parseCSV } from '@/lib/csv-parser';
-import { buildBetImportPlan, importBets } from '@/lib/import-bets';
+import { buildBetImportPlan, importBets, planBetImport } from '@/lib/import-bets';
 
 interface ExistingIdentity {
   id: string;
+  upload_id?: string | null;
   placed_at: string;
   sport: string;
   league?: string | null;
@@ -69,6 +70,17 @@ function makeBet(overrides: Partial<ParsedBet> = {}): ParsedBet {
   };
 }
 
+function parseSyntheticExport(rows: string[]): ParsedBet[] {
+  const parsed = parseCSV([
+    'date,sport,bet_type,description,odds,stake,result,profit,sportsbook',
+    ...rows,
+  ].join('\n'));
+  expect(parsed.errors).toHaveLength(0);
+  expect(parsed.warnings).toHaveLength(0);
+  expect(parsed.bets).toHaveLength(rows.length);
+  return parsed.bets;
+}
+
 interface RecordedInsert {
   table: string;
   payload: Record<string, unknown> | Record<string, unknown>[];
@@ -78,6 +90,11 @@ function makeImportClient(existing: ExistingIdentity[]) {
   const inserts: RecordedInsert[] = [];
   const updates: RecordedInsert[] = [];
   const deletes: Array<{ table: string; ids?: unknown[]; id?: unknown }> = [];
+  let storedBets = existing.map((bet) => ({ ...bet }));
+  const uploads: Array<Record<string, unknown>> = [];
+  const memberships: Array<Record<string, unknown>> = [];
+  let profileBetCount = existing.length;
+  let uploadSequence = 0;
 
   function from(table: string) {
     let operation: 'select' | 'insert' | 'update' | 'delete' = 'select';
@@ -85,6 +102,8 @@ function makeImportClient(existing: ExistingIdentity[]) {
     let selected = '';
     let eqId: unknown;
     let inIds: unknown[] | undefined;
+    let rangeStart = 0;
+    let rangeEnd = 999;
 
     const builder = {
       select(columns: string) {
@@ -118,23 +137,47 @@ function makeImportClient(existing: ExistingIdentity[]) {
         if (column === 'id') inIds = value;
         return builder;
       },
-      range() {
+      range(start: number, end: number) {
+        rangeStart = start;
+        rangeEnd = end;
         if (table === 'bets' && operation === 'select') {
-          return Promise.resolve({ data: existing, error: null });
+          return Promise.resolve({ data: storedBets.slice(rangeStart, rangeEnd + 1), error: null });
         }
         return Promise.resolve({ data: [], error: null });
       },
       single() {
         if (table === 'uploads' && operation === 'insert') {
-          return Promise.resolve({ data: { id: 'logical-upload-1' }, error: null });
+          const id = `logical-upload-${++uploadSequence}`;
+          uploads.push({ id, ...(payload as Record<string, unknown>) });
+          return Promise.resolve({ data: { id }, error: null });
         }
         if (table === 'profiles' && operation === 'select') {
-          return Promise.resolve({ data: { bet_count: existing.length }, error: null });
+          return Promise.resolve({ data: { bet_count: profileBetCount }, error: null });
         }
         return Promise.resolve({ data: null, error: null });
       },
       then(resolve: (value: { data: unknown; error: null }) => unknown) {
-        if (operation === 'delete') deletes.push({ table, ids: inIds, id: eqId });
+        if (operation === 'insert' && table === 'bets') {
+          const rows = (
+            Array.isArray(payload) ? payload : payload ? [payload] : []
+          ) as unknown as ExistingIdentity[];
+          storedBets.push(...rows.map((row) => ({ ...row })));
+        }
+        if (operation === 'insert' && table === 'upload_bets') {
+          const rows = (
+            Array.isArray(payload) ? payload : payload ? [payload] : []
+          ) as Record<string, unknown>[];
+          memberships.push(...rows.map((row) => ({ ...row })));
+        }
+        if (operation === 'update' && table === 'profiles') {
+          profileBetCount = Number((payload as Record<string, unknown>).bet_count);
+        }
+        if (operation === 'delete') {
+          deletes.push({ table, ids: inIds, id: eqId });
+          if (table === 'bets' && inIds) {
+            storedBets = storedBets.filter((bet) => !inIds?.includes(bet.id));
+          }
+        }
         return Promise.resolve({ data: selected ? [] : null, error: null }).then(resolve);
       },
     };
@@ -147,6 +190,12 @@ function makeImportClient(existing: ExistingIdentity[]) {
     inserts,
     updates,
     deletes,
+    state: {
+      get bets() { return storedBets; },
+      uploads,
+      memberships,
+      get profileBetCount() { return profileBetCount; },
+    },
   };
 }
 
@@ -189,6 +238,72 @@ describe('buildBetImportPlan', () => {
 });
 
 describe('importBets logical memberships', () => {
+  it('commits overlapping export windows without duplicating historical bets', async () => {
+    const firstExport = parseSyntheticExport([
+      '2026-06-01T12:00:00Z,NFL,spread,Alpha -3.5,-110,100,loss,-100,DraftKings',
+      '2026-06-02T12:00:00Z,NBA,moneyline,Bravo ML,+150,50,win,75,DraftKings',
+      '2026-06-03T12:00:00Z,MLB,total,Charlie Under 8.5,-110,40,loss,-40,DraftKings',
+      '2026-06-04T12:00:00Z,NHL,moneyline,Delta ML,+120,60,win,72,DraftKings',
+    ]);
+    const secondExport = parseSyntheticExport([
+      '2026-06-03T12:00:00Z,MLB,total,Charlie Under 8.5,-110,40,loss,-40,DraftKings',
+      '2026-06-04T12:00:00Z,NHL,moneyline,Delta ML,+120,60,win,72,DraftKings',
+      '2026-06-05T12:00:00Z,WNBA,spread,Echo +4.5,-110,80,loss,-80,DraftKings',
+      '2026-06-06T12:00:00Z,NCAAB,total,Foxtrot Over 145.5,-110,25,win,22.73,DraftKings',
+    ]);
+    const mock = makeImportClient([]);
+
+    const firstPreview = await planBetImport(mock.client, 'user-1', firstExport);
+    const firstResult = await importBets(mock.client, 'user-1', firstExport, 'window-one.csv');
+    const secondPreview = await planBetImport(mock.client, 'user-1', secondExport);
+    const secondResult = await importBets(mock.client, 'user-1', secondExport, 'window-two.csv');
+
+    expect(firstPreview).toMatchObject({ logical_bets: 4, existing_bets: 0, new_bets: 4 });
+    expect(firstResult).toMatchObject({
+      bets_imported: 4,
+      duplicates_skipped: 0,
+      logical_bets: 4,
+      existing_bets: 0,
+      new_bets: 4,
+      upload_id: 'logical-upload-1',
+    });
+    expect(secondPreview).toMatchObject({ logical_bets: 4, existing_bets: 2, new_bets: 2 });
+    expect(secondResult).toMatchObject({
+      bets_imported: 2,
+      duplicates_skipped: 2,
+      logical_bets: 4,
+      existing_bets: 2,
+      new_bets: 2,
+      upload_id: 'logical-upload-2',
+    });
+
+    expect(mock.state.bets).toHaveLength(6);
+    expect(mock.state.profileBetCount).toBe(6);
+    expect(mock.state.uploads.map((upload) => upload.bet_count)).toEqual([4, 4]);
+
+    const firstMembers = mock.state.memberships.filter((row) => row.upload_id === 'logical-upload-1');
+    const secondMembers = mock.state.memberships.filter((row) => row.upload_id === 'logical-upload-2');
+    expect(firstMembers).toHaveLength(4);
+    expect(secondMembers).toHaveLength(4);
+
+    const canonicalSecondRows = mock.state.bets.filter((bet) => bet.upload_id === 'logical-upload-2');
+    expect(canonicalSecondRows.map((bet) => bet.description)).toEqual([
+      'Echo +4.5',
+      'Foxtrot Over 145.5',
+    ]);
+    expect(secondMembers.map((row) => row.bet_id)).toEqual([
+      mock.state.bets.find((bet) => bet.description === 'Charlie Under 8.5')?.id,
+      mock.state.bets.find((bet) => bet.description === 'Delta ML')?.id,
+      canonicalSecondRows[0].id,
+      canonicalSecondRows[1].id,
+    ]);
+
+    const finalStake = mock.state.bets.reduce((sum, bet) => sum + bet.stake, 0);
+    const finalNet = mock.state.bets.reduce((sum, bet) => sum + bet.profit, 0);
+    expect(finalStake).toBeCloseTo(355, 2);
+    expect(finalNet).toBeCloseTo(-50.27, 2);
+  });
+
   it('inserts only 78 new rows but persists all 200 ordered members', async () => {
     const bets = draftKingsBets();
     const existing = bets.slice(0, 122).map((bet, index) => existingIdentity(bet, `existing-${String(index).padStart(3, '0')}`));
