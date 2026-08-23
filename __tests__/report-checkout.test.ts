@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   createReportCheckout: vi.fn(),
+  createSubscriptionCheckout: vi.fn(),
   retrieveReportCheckout: vi.fn(),
   getCustomer: vi.fn(),
   snapshot: {
@@ -82,7 +83,7 @@ vi.mock('@/lib/stripe', () => ({
   getOrCreateCustomer: mocks.getCustomer,
   createReportCheckoutSession: mocks.createReportCheckout,
   retrieveReportCheckoutSession: mocks.retrieveReportCheckout,
-  createSubscriptionCheckoutSession: vi.fn(),
+  createSubscriptionCheckoutSession: mocks.createSubscriptionCheckout,
 }));
 
 vi.mock('@/lib/supabase-server', () => ({
@@ -117,6 +118,24 @@ beforeEach(() => {
 });
 
 describe('one-time report checkout', () => {
+  it('rejects new Pro subscription checkout before creating Stripe state', async () => {
+    const { POST } = await import('@/app/api/checkout/route');
+    const response = await POST(new Request('https://app.test/api/checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'subscription',
+        interval: 'monthly',
+      }),
+    }));
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({
+      error: 'New Pro subscriptions are not available.',
+    });
+    expect(mocks.getCustomer).not.toHaveBeenCalled();
+    expect(mocks.createSubscriptionCheckout).not.toHaveBeenCalled();
+  });
+
   it('opens the existing $19.99 report checkout for an exact eligible snapshot', async () => {
     const { POST } = await import('@/app/api/checkout/route');
     const response = await POST(new Request('https://app.test/api/checkout', {
