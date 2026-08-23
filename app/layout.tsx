@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
@@ -16,6 +17,9 @@ import SplashHider from '@/components/SplashHider';
 import ZoomGate from '@/components/ZoomGate';
 import AuthProvider from '@/components/AuthProvider';
 import AIConsentModal from '@/components/AIConsentModal';
+import JsonLd from '@/components/JsonLd';
+import { CSP_NONCE_HEADER } from '@/lib/content-security-policy';
+import { CspNonceProvider } from '@/components/CspNonceProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.betautopsy.com'),
@@ -60,11 +64,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Geo-gate moved out of the server-rendered layout: middleware writes the
-  // `ba-geo-eu` cookie at the edge and `<CookieConsent>` reads it on mount.
-  // Keeping `headers()` out of the layout lets every static-content route
-  // (`/`, `/sample`, `/blog`, `/faq`, `/privacy`, `/terms`, …) prerender to
-  // the CDN instead of going through ƒ Dynamic on every request.
+  // Web documents are rendered per request so the CSP nonce in the response
+  // always matches the framework and app-owned scripts in the HTML. The
+  // legacy Capacitor export has no middleware and must remain fully static.
+  const nonce = isMobileBuild()
+    ? undefined
+    : headers().get(CSP_NONCE_HEADER) ?? undefined;
 
   const orgJsonLd = {
     '@context': 'https://schema.org',
@@ -129,23 +134,15 @@ export default function RootLayout({
         <meta name="viewport" content={`viewport-fit=cover, width=device-width, initial-scale=1.0${isMobileBuild() ? ', maximum-scale=1.0, user-scalable=no' : ''}`} />
         <link rel="preconnect" href="https://o4511186679365632.ingest.us.sentry.io" />
         <link rel="alternate" type="application/rss+xml" title="BetAutopsy Blog" href="/blog/feed.xml" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
+        <JsonLd data={orgJsonLd} />
+        <JsonLd data={appJsonLd} />
+        <JsonLd data={websiteJsonLd} />
       </head>
       <body>
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-scalpel focus:text-base focus:px-4 focus:py-2 focus:rounded-sm focus:text-sm focus:font-medium">
-          Skip to content
-        </a>
+        <CspNonceProvider nonce={nonce}>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-scalpel focus:text-base focus:px-4 focus:py-2 focus:rounded-sm focus:text-sm focus:font-medium">
+            Skip to content
+          </a>
         {/*
          * Fires `hideSplashScreen()` exactly once on first mount
          * (Capacitor only — no-op on web). Must sit above
@@ -163,12 +160,12 @@ export default function RootLayout({
          */}
         <ZoomGate />
         <ScrollToTop />
-        <NextTopLoader color="#FACC15" height={2} showSpinner={false} shadow="0 0 10px #FACC15,0 0 5px #FACC15" />
+        <NextTopLoader nonce={nonce} color="#FACC15" height={2} showSpinner={false} shadow="0 0 10px #FACC15,0 0 5px #FACC15" />
         <NoiseOverlay />
         <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
         {process.env.NODE_ENV === 'production' && (
           <>
-            <GoogleAnalytics />
+            <GoogleAnalytics nonce={nonce} />
             <Analytics />
             {/*
              * Meta ad pixel is web-only. Skipped on the mobile build
@@ -182,7 +179,7 @@ export default function RootLayout({
              */}
             {!isMobileBuild() && (
               <>
-                <MetaPixel />
+                <MetaPixel nonce={nonce} />
                 <CookieConsent />
               </>
             )}
@@ -196,7 +193,8 @@ export default function RootLayout({
          * `isMobileBuild()` here lets webpack tree-shake it out of
          * the web bundle entirely.
          */}
-        {isMobileBuild() && <AIConsentModal />}
+          {isMobileBuild() && <AIConsentModal />}
+        </CspNonceProvider>
       </body>
     </html>
   );

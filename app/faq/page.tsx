@@ -8,6 +8,7 @@ import {
   SUPPORT_PAGE_PATH,
 } from '@/lib/support-resources';
 import { REPORT_GENERATION_TIME, REPORT_GENERATION_TIME_CAPITALIZED } from '@/lib/report-timing';
+import { useCspNonce } from '@/components/CspNonceProvider';
 
 interface FAQItem {
   q: string;
@@ -124,6 +125,7 @@ function FAQItemComponent({ item, isOpen, onToggle }: { item: FAQItem; isOpen: b
 
 export default function FAQPage() {
   const [openItem, setOpenItem] = useState<string | null>(null);
+  const nonce = useCspNonce();
 
   // Auto-generated from FAQ_DATA so the JSON-LD always matches the
   // visible content exactly. Google's FAQ rich result guidelines
@@ -148,6 +150,7 @@ export default function FAQPage() {
   return (
     <div className="space-y-4">
       <script
+        nonce={nonce}
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),

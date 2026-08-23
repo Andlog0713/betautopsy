@@ -1,23 +1,39 @@
 # BetAutopsy — Claude Code instructions
 
-## CURRENT STATE (as of 2026-08-22)
+## CURRENT STATE (as of 2026-08-23)
 
-**Active PR**: [#118](https://github.com/Andlog0713/betautopsy/pull/118)
-`fix(csv): stop fabricating leg-row profit, collapse hierarchical rows
-into parent bets` — branch `fix/csv-parlay-leg-cashout-parsing`, rebased
-onto current `main` (includes #109/#113/#114/#115/#117), 3 commits,
-OPEN, not yet reviewed or merged. tsc clean, 469/469 tests, build clean;
-the real fixture re-verified post-rebase to an exact match against
-ground truth. Full history of this arc is logged under "Current branch:
+**Production**: `main` is on squash-merge commit `943c1ab`,
+[PR #120](https://github.com/Andlog0713/betautopsy/pull/120), which disables
+new Pro subscription checkout. It includes
+[PR #119](https://github.com/Andlog0713/betautopsy/pull/119), durable paid
+report fulfillment, and [PR #118](https://github.com/Andlog0713/betautopsy/pull/118),
+the hierarchical CSV correction at `3c386e8`. The authenticated `/upload`
+preview → confirm → commit flow is
+verified in a browser with the real DraftKings export: the preview showed
+"499 rows in your file → 200 bets," and the resulting report showed
+-15.82% ROI, an exact match to ground truth. The listed merge blocker is
+cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
-- **Blocking merge**: Andrew hasn't clicked through the live `/upload`
-  preview → confirm → commit flow yet — the one piece not verified in a
-  browser this session (auth-gated, no credentials to test with).
+
+**In flight**: branch `codex/enforce-csp` replaces the non-enforcing
+Report-Only policy with a request-nonced, enforced CSP. Production scripts
+have neither `unsafe-inline` nor `unsafe-eval`; API and other non-document
+responses receive a deny-all policy. Inline styles remain allowed because
+the current report UI, Sonner, and share-card surfaces generate them at
+runtime. The implementation passed the four gates, 39 browser cases when
+run with each suite's required environment, and a discrimination check that
+fails when the old Report-Only header is restored. The legacy Capacitor
+export check is still blocked by its pre-existing `scripts/test-check-in.ts`
+import of API routes that `build-mobile.sh` temporarily removes; the wrapper
+restored all paths correctly, and no mobile files were changed.
+
+**Main provenance note**: commits `236ac27` and `27e1903` came from the
+GitHub web UI, not from a local session.
 
 **Do not delete**: `autopsy_reports` row
 `e8a49248-ab40-41a9-a1a9-bce7191387bd` (today's contaminated CSV-bug
 report, andlog0713@gmail.com). Andrew is deliberately keeping it to diff
-against corrected output once PR #118 lands. The contaminated `bets`
+against corrected output from PR #118. The contaminated `bets`
 rows themselves (`upload_id` `86f7d9df-9820-498b-8d25-93141dfabfe7`)
 were already deleted by Andrew.
 
@@ -41,6 +57,19 @@ rebuilt fixture doesn't carry a fresh instance of the same contradiction
 self-consistent by construction). Closed with an explanatory comment
 rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
+
+### Next up
+- **Design-system enforcement**: 52 known violations remain, and
+  `check:design` still runs with `STRICT = false`.
+- **Pricing E2E coverage**: three `/pricing` cases actually exercise
+  `/login` and pass while asserting nothing.
+- **Node parity**: CI pins Node 20, Vercel builds with Node 24, and there is
+  no `engines` field.
+- **CSV re-upload coverage**: overlapping-window re-uploads have never been
+  tested.
+- **Supabase availability**: staying on the free tier is Andrew's call for
+  now, not a bug. It remains a known risk because auto-pause killed login
+  for eight days in August 2026.
 
 ## Architecture
 - This repo is the web app (Next.js App Router), serving betautopsy.com and the API
