@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/blog-posts';
 import { Logo } from '@/components/logo';
+import JsonLd from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: 'The Post-Mortem: Sports Betting Psychology & Behavioral Analysis | BetAutopsy',
@@ -23,10 +24,7 @@ export default function BlogIndexPage() {
 
   return (
     <div className="space-y-12">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLd data={breadcrumbJsonLd} />
       {/* Blog hero banner */}
       <div className="relative overflow-hidden rounded-lg border border-border-subtle grid-paper">
         {/* Glow */}

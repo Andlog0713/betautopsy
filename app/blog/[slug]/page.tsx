@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/blog-posts';
+import JsonLd from '@/components/JsonLd';
 
 import WhyAmILosing from '../_posts/why-am-i-losing-at-sports-betting';
 import ParlayAddiction from '../_posts/parlay-addiction-the-real-math';
@@ -134,19 +135,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <article className="space-y-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c') }}
-      />
+      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={articleJsonLd} />
       {howToJsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd).replace(/</g, '\\u003c') }}
-        />
+        <JsonLd data={howToJsonLd} />
       )}
       <Link href="/blog" className="text-sm text-fg-muted hover:text-scalpel transition-colors">
         ← All posts

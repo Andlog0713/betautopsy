@@ -11,10 +11,6 @@ async function headers() {
         { key: 'X-Frame-Options', value: 'DENY' },
         { key: 'X-XSS-Protection', value: '1; mode=block' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        {
-          key: 'Content-Security-Policy-Report-Only',
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://www.google-analytics.com https://*.sentry.io; frame-src https://js.stripe.com https://challenges.cloudflare.com;",
-        },
       ],
     },
     {
@@ -33,24 +29,6 @@ async function headers() {
         { key: 'Access-Control-Allow-Origin', value: '*' },
         { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
         { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-      ],
-    },
-    {
-      source: '/blog/:path*',
-      headers: [
-        { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200' },
-      ],
-    },
-    {
-      source: '/faq',
-      headers: [
-        { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200' },
-      ],
-    },
-    {
-      source: '/how-to-upload',
-      headers: [
-        { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200' },
       ],
     },
   ];

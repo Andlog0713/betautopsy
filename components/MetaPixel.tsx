@@ -21,7 +21,7 @@ import { GEO_COOKIE_NAME } from '@/lib/consent-region';
  * of region) — that's the correct outcome of closing the gap, not a
  * regression to soften.
  */
-export default function MetaPixel() {
+export default function MetaPixel({ nonce }: { nonce?: string }) {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const [consentGranted, setConsentGranted] = useState(false);
 
@@ -38,7 +38,7 @@ export default function MetaPixel() {
 
   return (
     <>
-      <Script id="meta-pixel" strategy="lazyOnload">
+      <Script nonce={nonce} id="meta-pixel" strategy="lazyOnload">
         {`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

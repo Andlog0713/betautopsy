@@ -19,7 +19,7 @@ import { GEO_COOKIE_NAME } from '@/lib/consent-region';
  * a compile-time check (NEXT_PUBLIC_BUILD_TARGET) so the unused branch is
  * tree-shaken away.
  */
-export default function GoogleAnalytics() {
+export default function GoogleAnalytics({ nonce }: { nonce?: string }) {
   const initScript = isMobileBuild()
     ? `
       window.dataLayer = window.dataLayer || [];
@@ -42,10 +42,11 @@ export default function GoogleAnalytics() {
   return (
     <>
       <Script
+        nonce={nonce}
         src="https://www.googletagmanager.com/gtag/js?id=G-KSPJZVJ9CF"
         strategy="afterInteractive"
       />
-      <Script id="google-analytics" strategy="afterInteractive">
+      <Script nonce={nonce} id="google-analytics" strategy="afterInteractive">
         {initScript}
       </Script>
     </>

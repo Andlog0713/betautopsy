@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import QuizClient from './QuizClient';
+import JsonLd from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: 'What\'s Your Bet DNA? | Free Betting Personality Quiz | BetAutopsy',
@@ -34,10 +35,7 @@ const quizJsonLd = {
 export default function QuizPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(quizJsonLd) }}
-      />
+      <JsonLd data={quizJsonLd} />
       <QuizClient />
     </>
   );

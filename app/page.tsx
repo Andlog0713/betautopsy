@@ -14,6 +14,7 @@ import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import LogoScroll from '@/components/LogoScroll';
 import { BorderBeam } from '@/components/ui/border-beam';
 import ScrollToHash from '@/components/ScrollToHash';
+import JsonLd from '@/components/JsonLd';
 
 // Mobile builds (`output: 'export'`) can't use ISR — there is no
 // runtime to revalidate on — so drop the hint there. Web behavior is
@@ -94,10 +95,7 @@ export default function LandingPage() {
 
   return (
     <main id="main-content" className="min-h-screen">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <NavBar />
       <ScrollToHash />
 
