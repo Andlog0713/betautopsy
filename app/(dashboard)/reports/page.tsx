@@ -8,7 +8,7 @@ import { useUser } from '@/hooks/useUser';
 import { useReports } from '@/hooks/useReports';
 import { useSnapshots } from '@/hooks/useSnapshots';
 import { useUploads } from '@/hooks/useUploads';
-import { apiPost } from '@/lib/api-client';
+import { apiGet, apiPost } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import OnboardingSteps from '@/components/OnboardingSteps';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -16,11 +16,19 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 const AutopsyReport = dynamic(() => import('@/components/AutopsyReport'), {
   loading: () => <div className="h-96 bg-surface-1 rounded-sm animate-pulse" />,
 });
-import type { AutopsyReport as AutopsyReportType, AutopsyAnalysis, Bet, ReportComparison } from '@/types';
+import type {
+  AutopsyReport as AutopsyReportType,
+  AutopsyReportListItem,
+  AutopsyAnalysis,
+  Bet,
+  ReportComparison,
+  ReportFulfillmentStatus,
+} from '@/types';
 import { compareReports } from '@/lib/report-comparison';
 import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { trackPurchase as trackPurchaseMeta } from '@/lib/meta-events';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
+import { isReportValueVisible } from '@/components/RedactedValue';
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -35,9 +43,9 @@ export default function ReportsPage() {
   const { snapshots: latestTwoSnapshots } = useSnapshots({ ascending: false, limit: 2 });
   const { uploads } = useUploads();
 
-  // Local reports mirror so optimistic post-runAutopsy updates render
-  // synchronously alongside the SWR cache.
-  const [reports, setReports] = useState<AutopsyReportType[]>([]);
+  // Local summary rows mirror the SWR cache so a newly completed free
+  // snapshot can appear immediately without retaining every full payload.
+  const [reports, setReports] = useState<AutopsyReportListItem[]>([]);
   useEffect(() => { setReports(cachedReports); }, [cachedReports]);
 
   const tier = profile?.subscription_tier ?? 'free';
@@ -47,6 +55,9 @@ export default function ReportsPage() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
   const [activeReport, setActiveReport] = useState<AutopsyReportType | null>(null);
+  const [reportComparison, setReportComparison] = useState<ReportComparison | null>(null);
+  const [openingReportId, setOpeningReportId] = useState<string | null>(null);
+  const openingReportRef = useRef<string | null>(null);
   const [analyzedBets, setAnalyzedBets] = useState<Bet[]>([]);
   const [tierLimited, setTierLimited] = useState(false);
   const [totalBetsAll, setTotalBetsAll] = useState(0);
@@ -62,6 +73,7 @@ export default function ReportsPage() {
   const [newBetsSinceReport, setNewBetsSinceReport] = useState(0);
   const [lastReportDate, setLastReportDate] = useState<string | null>(null);
   const [paidSnapshotId, setPaidSnapshotId] = useState<string | null>(null);
+  const [fulfillmentStatus, setFulfillmentStatus] = useState<ReportFulfillmentStatus | null>(null);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -74,45 +86,87 @@ export default function ReportsPage() {
     else if (qUploadIds) setAnalyzeScope(`uploads:${qUploadIds}`);
     else if (qSportsbook) setAnalyzeScope(`book:${qSportsbook}`);
 
-    // Fire conversion pixels exactly once on the post-checkout redirect.
-    // The actual unlock trigger (capturing paid_snapshot_id and running
-    // the full analysis) lives in the auto-run effect below — we used
-    // to do that work here too, but setPaidSnapshotId followed by a
-    // history.replaceState produced a race where runAutopsy could fire
-    // before the state update applied AND before useSearchParams picked
-    // up the new URL, sending the request without paid_snapshot_id and
-    // letting the server downgrade to a snapshot. Now we capture
-    // straight from `searchParams` synchronously in the run effect.
+    // The success redirect is analytics and status display only. Verified
+    // payment fulfillment is owned by the server and survives this tab.
     if (typeof window !== 'undefined' && searchParams.get('unlocked') === 'true') {
       window.gtag?.('event', 'purchase', { value: 19.99, currency: 'USD' });
       trackPurchaseMeta('report', 19.99);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-trigger analysis after a post-checkout unlock (`?id=…&unlocked=true`)
-  // OR a deep-link run trigger (`?run=true`, `?upload_id=…`). The unlock
-  // path captures the paid snapshot id straight from the URL so timing
-  // with React state updates can't drop it.
+  // A checkout return starts polling only. Free deep links can still start
+  // snapshot analysis after bets have loaded.
   useEffect(() => {
     const isUnlock = searchParams.get('unlocked') === 'true';
-    const shouldAutoRun =
-      isUnlock || searchParams.get('run') === 'true' || searchParams.get('upload_id');
-    if (
-      shouldAutoRun &&
-      !autoRunTriggered.current &&
-      !loading &&
-      totalBetCount > 0
-    ) {
+    if (isUnlock && !autoRunTriggered.current && !loading) {
       autoRunTriggered.current = true;
-      const paidId = isUnlock ? searchParams.get('id') : null;
+      const paidId = searchParams.get('id');
       if (paidId) setPaidSnapshotId(paidId);
-      // Clean URL only AFTER capturing what we need so refresh-during-run
-      // doesn't strand the user on a stale `?unlocked=true` link or lose
-      // the snapshot id mid-flight.
       window.history.replaceState({}, '', '/reports');
-      runAutopsy(paidId ?? undefined);
+      return;
+    }
+
+    const shouldAutoRun = searchParams.get('run') === 'true' || searchParams.get('upload_id');
+    if (shouldAutoRun && !autoRunTriggered.current && !loading && totalBetCount > 0) {
+      autoRunTriggered.current = true;
+      window.history.replaceState({}, '', '/reports');
+      void runAutopsy();
     }
   }, [searchParams, loading, totalBetCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Open ordinary report deep links without treating them as analysis or
+  // checkout triggers.
+  useEffect(() => {
+    const reportId = searchParams.get('id');
+    if (
+      !reportId ||
+      searchParams.get('unlocked') === 'true' ||
+      loading ||
+      cachedReports.length === 0 ||
+      autoRunTriggered.current
+    ) return;
+    autoRunTriggered.current = true;
+    window.history.replaceState({}, '', '/reports');
+    void openReportById(reportId, cachedReports);
+  }, [searchParams, loading, cachedReports]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Payment fulfillment is durable and server-owned. Poll the compact list
+  // until its snapshot points at the completed child, then lazy-load detail.
+  useEffect(() => {
+    if (!paidSnapshotId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const poll = async () => {
+      try {
+        const refreshed = await mutateReports();
+        if (cancelled) return;
+        const current = refreshed ?? reports;
+        const snapshot = current.find((report) => report.id === paidSnapshotId);
+        const completedId = snapshot?.completed_report_id
+          ?? current.find((report) => report.upgraded_from_snapshot_id === paidSnapshotId)?.id
+          ?? null;
+
+        setFulfillmentStatus(snapshot?.fulfillment_status ?? null);
+        if (completedId) {
+          setFulfillmentStatus('completed');
+          setPaidSnapshotId(null);
+          await openReportById(completedId, current);
+          return;
+        }
+      } catch {
+        // Keep the last known state and try again. Never expose provider or
+        // worker internals on the customer-facing page.
+      }
+      if (!cancelled) timer = setTimeout(poll, 2500);
+    };
+
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [paidSnapshotId, mutateReports]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch filtered bet count when date range changes
   const fetchFilteredCount = useCallback(async () => {
@@ -199,21 +253,15 @@ export default function ReportsPage() {
     mutateReports();
   }
 
-  async function runAutopsy(paidIdOverride?: string) {
+  async function runAutopsy() {
     setRunning(true);
     setError('');
     setActiveReport(null);
     window.gtag?.('event', 'analysis_started');
 
     try {
-      // Prefer the caller-supplied id (post-checkout unlock effect) so we
-      // don't race against React's state batching on `paidSnapshotId`.
-      // Falls back to state for the legacy callers that still rely on it.
-      const paidId = paidIdOverride ?? paidSnapshotId;
-      const isPaidUpgrade = !!paidId;
       const body: Record<string, string | string[]> = {
-        report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
-        ...(isPaidUpgrade ? { paid_snapshot_id: paidId } : {}),
+        report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot',
       };
       if (dateFrom) body.date_from = dateFrom;
       if (dateTo) body.date_to = dateTo;
@@ -278,15 +326,12 @@ export default function ReportsPage() {
                 setTotalBetsAll(d.total_bets ?? 0);
                 setAnalyzedBets((d.analyzed_bets ?? []) as Bet[]);
 
-                // Create temporary report so AutopsyReport can render partial results.
-                // Mark it as `full` + paid when we're in a post-checkout unlock so the
-                // 30-90s LLM-generation window doesn't render the snapshot lock UI
-                // ("Get a Full Report" CTA) to a user who already paid. Without this,
-                // the user stares at a paywall mid-run for the report they just bought.
+                // Create a temporary report so an explicitly initiated analysis can
+                // render partial results. Paid fulfillment never enters this stream.
                 const tempReport: AutopsyReportType = {
                   id: 'loading',
                   user_id: '',
-                  report_type: (getEffectiveTier(tier) === 'pro' || isPaidUpgrade) ? 'full' : 'snapshot',
+                  report_type: getEffectiveTier(tier) === 'pro' ? 'full' : 'snapshot',
                   bet_count_analyzed: d.partial_analysis.summary.total_bets,
                   date_range_start: null,
                   date_range_end: null,
@@ -295,9 +340,9 @@ export default function ReportsPage() {
                   model_used: null,
                   tokens_used: null,
                   cost_cents: null,
-                  is_paid: tier === 'pro' || isPaidUpgrade,
+                  is_paid: tier === 'pro',
                   stripe_payment_intent_id: null,
-                  upgraded_from_snapshot_id: isPaidUpgrade ? (paidId ?? null) : null,
+                  upgraded_from_snapshot_id: null,
                   created_at: new Date().toISOString(),
                 };
                 setActiveReport(tempReport);
@@ -326,10 +371,31 @@ export default function ReportsPage() {
               }
 
               setActiveReport(report);
-              setReports((prev) => [report, ...prev]);
+              const listItem: AutopsyReportListItem = {
+                id: report.id,
+                report_type: report.report_type,
+                bet_count_analyzed: report.bet_count_analyzed,
+                date_range_start: report.date_range_start,
+                date_range_end: report.date_range_end,
+                report_json: report.report_summary ?? report.report_json,
+                is_paid: report.is_paid,
+                upgraded_from_snapshot_id: report.upgraded_from_snapshot_id,
+                created_at: report.created_at,
+                analyzed_upload_ids: report.analyzed_upload_ids,
+                analyzed_sportsbook: report.analyzed_sportsbook,
+                analyzed_bet_ids: report.analyzed_bet_ids,
+                report_summary: report.report_summary,
+                fulfillment_status: report.fulfillment_status,
+                completed_report_id: report.completed_report_id,
+                fulfillment_next_attempt_at: report.fulfillment_next_attempt_at,
+                card_biases: report.report_json.biases_detected?.slice(0, 3).map((bias) => ({
+                  bias_name: bias.bias_name,
+                  severity: bias.severity,
+                })),
+              };
+              setReports((prev) => [listItem, ...prev.filter((item) => item.id !== report.id)]);
               mutateReports();
               setRunning(false);
-              setPaidSnapshotId(null); // Clear after use
               streamComplete = true;
               window.gtag?.('event', 'analysis_completed', {
                 bet_count: (d.analyzed_bets as Bet[] | undefined)?.length,
@@ -358,17 +424,100 @@ export default function ReportsPage() {
     }
   }
 
-  async function openReport(report: AutopsyReportType) {
-    setActiveReport(report);
-    // Fetch bets for this report's date range so What-If and Leak Prioritizer work
-    const supabase = createBrowserSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    let query = supabase.from('bets').select('*').eq('user_id', user.id).order('placed_at', { ascending: true });
-    if (report.date_range_start) query = query.gte('placed_at', report.date_range_start);
-    if (report.date_range_end) query = query.lte('placed_at', report.date_range_end);
-    const { data: betsData } = await query;
-    if (betsData) setAnalyzedBets(betsData as Bet[]);
+  async function openReportById(
+    reportId: string,
+    list: AutopsyReportListItem[] = reports,
+  ) {
+    if (openingReportRef.current === reportId) return;
+    openingReportRef.current = reportId;
+    setOpeningReportId(reportId);
+    setError('');
+
+    try {
+      const activeIndex = list.findIndex((report) => report.id === reportId);
+      const previousId = activeIndex >= 0 && activeIndex < list.length - 1
+        ? list[activeIndex + 1].id
+        : null;
+      const [detailResponse, previousResponse] = await Promise.all([
+        apiGet(`/api/reports/${encodeURIComponent(reportId)}`),
+        previousId
+          ? apiGet(`/api/reports/${encodeURIComponent(previousId)}`)
+          : Promise.resolve(null),
+      ]);
+
+      if (!detailResponse.ok) throw new Error('detail unavailable');
+      const detailPayload = await detailResponse.json() as { report?: AutopsyReportType };
+      if (!detailPayload.report) throw new Error('detail missing');
+      const report = detailPayload.report;
+
+      let comparison: ReportComparison | null = null;
+      if (previousResponse?.ok) {
+        const previousPayload = await previousResponse.json() as { report?: AutopsyReportType };
+        if (previousPayload.report?.report_json) {
+          try {
+            const currentAnalysis = typeof report.report_json === 'string'
+              ? JSON.parse(report.report_json) as AutopsyAnalysis
+              : report.report_json;
+            const previousAnalysis = typeof previousPayload.report.report_json === 'string'
+              ? JSON.parse(previousPayload.report.report_json) as AutopsyAnalysis
+              : previousPayload.report.report_json;
+            comparison = compareReports(currentAnalysis, previousAnalysis);
+          } catch {
+            comparison = null;
+          }
+        }
+      }
+
+      setReportComparison(comparison);
+      setTierLimited(report.report_type === 'snapshot');
+      setActiveReport(report);
+
+      // Fetch the exact frozen cohort when available. Legacy rows fall back
+      // to their date range so existing What-If tools keep working.
+      const supabase = createBrowserSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      if (report.analyzed_bet_ids?.length) {
+        const chunks: string[][] = [];
+        for (let index = 0; index < report.analyzed_bet_ids.length; index += 200) {
+          chunks.push(report.analyzed_bet_ids.slice(index, index + 200));
+        }
+        const results = await Promise.all(chunks.map((ids) =>
+          supabase
+            .from('bets')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('id', ids)
+        ));
+        if (results.some((result) => result.error)) {
+          setAnalyzedBets([]);
+        } else {
+          const exactBets = results
+            .flatMap((result) => (result.data ?? []) as Bet[])
+            .sort((a, b) => a.placed_at.localeCompare(b.placed_at));
+          setAnalyzedBets(exactBets);
+        }
+      } else {
+        let query = supabase
+          .from('bets')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('placed_at', { ascending: true });
+        if (report.date_range_start) query = query.gte('placed_at', report.date_range_start);
+        if (report.date_range_end) query = query.lte('placed_at', report.date_range_end);
+        const { data: betsData } = await query;
+        setAnalyzedBets((betsData ?? []) as Bet[]);
+      }
+    } catch {
+      setError('This report could not be opened. Please try again.');
+    } finally {
+      openingReportRef.current = null;
+      setOpeningReportId(null);
+    }
+  }
+
+  async function openReport(report: AutopsyReportListItem) {
+    await openReportById(report.id);
   }
 
   function setQuickRange(days: number | null) {
@@ -416,19 +565,14 @@ export default function ReportsPage() {
       );
     }
 
-    // Compare with previous report if one exists
-    let reportComparison: ReportComparison | null = null;
-    const activeIdx = reports.findIndex(r => r.id === activeReport.id);
-    const previousReport = activeIdx >= 0 && activeIdx < reports.length - 1 ? reports[activeIdx + 1] : null;
-    if (previousReport) {
-      try {
-        const prevAnalysis: AutopsyAnalysis =
-          typeof previousReport.report_json === 'string'
-            ? JSON.parse(previousReport.report_json)
-            : previousReport.report_json;
-        reportComparison = compareReports(analysis, prevAnalysis);
-      } catch { /* skip comparison if previous report can't be parsed */ }
-    }
+    const paidSnapshot = activeReport.report_type === 'snapshot'
+      && (
+        activeReport.is_paid
+        || activeReport.fulfillment_status === 'paid_queued'
+        || activeReport.fulfillment_status === 'generating'
+        || activeReport.fulfillment_status === 'retryable_failure'
+        || activeReport.fulfillment_status === 'completed'
+      );
 
     return (
       <div className="space-y-6 animate-fade-in">
@@ -437,12 +581,12 @@ export default function ReportsPage() {
           <OnboardingSteps active={3} completed={[1, 2]} />
         )}
         <button
-          onClick={() => { setActiveReport(null); setAnalyzedBets([]); }}
+          onClick={() => { setActiveReport(null); setAnalyzedBets([]); setReportComparison(null); }}
           className="text-sm text-fg-muted hover:text-fg transition-colors"
         >
           ← Back to Reports
         </button>
-        {PRICING_ENABLED && tierLimited && (
+        {PRICING_ENABLED && tierLimited && !paidSnapshot && (
           <div className="card border-scalpel/20 bg-scalpel-muted p-5">
             <p className="text-fg-bright text-sm">
               This is a snapshot. The full report unlocks all 5 chapters
@@ -451,6 +595,31 @@ export default function ReportsPage() {
             <a href="/pricing" className="btn-primary inline-block mt-3 text-sm">
               Get Full Report: $19.99
             </a>
+          </div>
+        )}
+        {paidSnapshot && (
+          <div className="card border-scalpel/20 bg-scalpel-muted p-5" role="status">
+            <p className="text-fg-bright text-sm font-medium">
+              {activeReport.completed_report_id
+                ? 'Your full report is ready.'
+                : activeReport.fulfillment_status === 'retryable_failure'
+                ? 'Payment received. Report generation will retry automatically.'
+                : activeReport.fulfillment_status === 'generating'
+                ? 'Payment received. Your full report is being generated.'
+                : 'Payment received. Your full report is queued.'}
+            </p>
+            <p className="text-fg-muted text-xs mt-1">
+              You will not be charged again for this snapshot.
+            </p>
+            {activeReport.completed_report_id && (
+              <button
+                type="button"
+                className="btn-primary mt-3 text-sm"
+                onClick={() => void openReportById(activeReport.completed_report_id!)}
+              >
+                Open Full Report
+              </button>
+            )}
           </div>
         )}
         {/* Compact progress bar while Claude is still analyzing */}
@@ -465,7 +634,7 @@ export default function ReportsPage() {
             <div className="border-2 border-scalpel/40 bg-scalpel/[0.06] rounded-sm p-6 space-y-2">
               <div className="font-mono text-[10px] text-scalpel tracking-[3px] uppercase">YOUR FIRST AUTOPSY FOUND</div>
               <p className="font-bold text-xl text-fg-bright">
-                {firstInsight.biasName} is costing you ~${firstInsight.cost.toLocaleString()}/quarter.
+                {firstInsight.biasName} has an estimated cost of ~${firstInsight.cost.toLocaleString()} in this report.
               </p>
               <p className="text-fg-muted text-sm">Tap to see the full report.</p>
             </div>
@@ -479,7 +648,7 @@ export default function ReportsPage() {
             button + snapshot-upgrade card above the boundary stay
             accessible so the user can always escape. */}
         <ErrorBoundary>
-          <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} comparison={reportComparison} recoveryModeActive={profile?.manual_recovery_mode ?? false} />
+          <AutopsyReport analysis={analysis} bets={analyzedBets} previousSnapshot={prevSnapshot} reportId={activeReport.id} tier={tier as 'free' | 'pro'} isSnapshot={activeReport.report_type === 'snapshot'} purchaseAvailable={!paidSnapshot} comparison={reportComparison} recoveryModeActive={profile?.manual_recovery_mode ?? false} />
           {/* Post-first-report prompt */}
           {isFirstReport && (
             <div className="card p-5 text-center space-y-2">
@@ -511,7 +680,6 @@ export default function ReportsPage() {
     return filteredCount ?? totalBetCount;
   })();
   const betCountForRun = scopedCount;
-  const freeExhausted = PRICING_ENABLED && tier === 'free' && reports.length >= 1;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -523,67 +691,32 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {/* Free tier exhausted */}
-      {freeExhausted && !running && (
-        <div className="space-y-4">
-          <div className="card border-scalpel/20 bg-scalpel-muted p-6 text-center space-y-3">
-            <p className="text-fg-bright mb-2">
-              This is a snapshot. The full report goes much deeper.
-            </p>
-            <p className="text-fg-muted text-sm mb-4">
-              A full report goes 5,000 bets deep with dollar costs for every bias, strategic leak detection, and a personalized action plan.
-            </p>
-            <ul className="text-fg-muted text-sm space-y-1.5 mb-5 text-left max-w-md mx-auto">
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Every bias explained with estimated dollar cost</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Strategic leaks ranked by impact</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>Personal betting rules generated from YOUR data</li>
-              <li className="flex items-start gap-2"><span className="text-win shrink-0">•</span>What-If Simulator: see what fixing each leak saves you</li>
-            </ul>
-            <a href="/pricing" className="btn-primary inline-block">
-              Unlock Full Report: $19.99
-            </a>
-          </div>
-
-          {/* Locked feature previews — behavioral framing */}
-          <div className="relative">
-            <div className="blur-sm pointer-events-none opacity-50">
-              <div className="card p-5">
-                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Behavioral Edge Analysis</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Researched bets (&gt;2hr before game)</p><p className="font-mono text-win">+6.1% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Impulse bets (&lt;30min before game)</p><p className="font-mono text-loss">-18.4% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-loss">Post-loss bets</p><p className="font-mono text-loss">-22.7% ROI</p></div>
-                  <div className="bg-surface-2 rounded-sm p-3"><p className="text-xs text-win">Morning line bets</p><p className="font-mono text-win">+4.2% ROI</p></div>
-                </div>
-              </div>
-              <div className="card p-5 mt-3">
-                <h3 className="font-semibold text-lg mb-2 text-fg-bright">Personal Betting Rules</h3>
-                <div className="space-y-2">
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Never exceed $120 on a single bet. Your oversized bets lose at 71%</p></div>
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />No betting after 11pm. Your late-night bets are 4-17 with -34% ROI</p></div>
-                  <div className="card-tier-1 p-3"><p className="text-sm flex items-center gap-2"><span className="inline-block w-1.5 h-1.5 rounded-full bg-scalpel shrink-0" />Cap parlays at 20% of weekly volume. You&apos;re currently at 43%</p></div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="card bg-surface-1/95 p-6 text-center max-w-sm">
-                <div className="mb-2"><Lock size={24} className="text-fg-muted" /></div>
-                <p className="text-fg-bright font-medium mb-1">Unlock your full behavioral analysis</p>
-                <p className="text-fg-muted text-sm mb-3">Session-by-session analysis, personal betting rules from YOUR patterns, and a personalized action plan.</p>
-                <a href="/pricing" className="btn-primary inline-block text-sm">Get Full Report: $19.99</a>
-              </div>
-            </div>
-          </div>
+      {paidSnapshotId && (
+        <div className="card border-scalpel/20 bg-scalpel-muted p-5" role="status" aria-live="polite">
+          <p className="font-medium text-fg-bright">
+            {fulfillmentStatus === 'paid_queued'
+              ? 'Payment received. Your full report is queued.'
+              : fulfillmentStatus === 'generating'
+              ? 'Your full report is being generated.'
+              : fulfillmentStatus === 'retryable_failure'
+              ? 'Payment received. Report generation hit a temporary issue.'
+              : 'Checking your payment and report status.'}
+          </p>
+          <p className="text-sm text-fg-muted mt-1">
+            {fulfillmentStatus === 'retryable_failure'
+              ? 'It will retry automatically. You can close this page and return later.'
+              : 'You can close this page. Delivery does not depend on keeping this browser open.'}
+          </p>
         </div>
       )}
 
       {/* Free tier note */}
-      {PRICING_ENABLED && tier === 'free' && !freeExhausted && !running && totalBetCount > 0 && (
+      {PRICING_ENABLED && tier === 'free' && !running && totalBetCount > 0 && (
         <p className="text-fg-muted text-sm">Free tier: unlimited snapshot reports. Unlock the full 5-chapter analysis for $19.99.</p>
       )}
 
       {/* Analyze controls */}
-      {totalBetCount > 0 && !running && !freeExhausted && (
+      {totalBetCount > 0 && !running && (
         <div className="card p-5 space-y-4">
           {/* Scope selector */}
           <div>
@@ -691,13 +824,6 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* No date picker needed — just the button if no bets */}
-      {totalBetCount > 0 && !running && false && (
-        <button onClick={() => runAutopsy()} disabled={running} className="btn-primary">
-          <span className="flex items-center gap-1.5"><FlaskConical size={16} /> Run New Autopsy</span>
-        </button>
-      )}
-
       {/* Running state — full screen only before metrics arrive */}
       {running && !activeReport && reports.length === 0 && (
         <OnboardingSteps active={2} completed={[1]} />
@@ -726,7 +852,7 @@ export default function ReportsPage() {
       )}
 
       {/* Past reports list */}
-      {reports.length > 0 && !running && (
+      {reports.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-xl text-fg-bright">Past Reports</h2>
@@ -737,110 +863,132 @@ export default function ReportsPage() {
             )}
           </div>
           {reports.map((report) => {
-            let analysis: AutopsyAnalysis | null = null;
+            let analysis: Partial<AutopsyAnalysis> | null = null;
             try {
               analysis =
                 typeof report.report_json === 'string'
-                  ? JSON.parse(report.report_json as string)
+                  ? JSON.parse(report.report_json as string) as Partial<AutopsyAnalysis>
                   : report.report_json;
             } catch { /* skip corrupted report */ }
-            if (!analysis) return null;
+            const summary = analysis?.summary;
+            const grade = summary?.overall_grade;
+            const emotionScore = analysis?.emotion_score ?? analysis?.tilt_score;
+            const profitVisible = summary
+              ? isReportValueVisible(summary.total_profit_visibility)
+              : false;
+            const matchingUpload = uploads.find((upload) =>
+              upload.bet_count === report.bet_count_analyzed &&
+              Math.abs(new Date(upload.created_at).getTime() - new Date(report.created_at).getTime()) < 86400000
+            );
+            const title = matchingUpload?.filename
+              ?? (report.report_type === 'snapshot'
+                ? 'Snapshot'
+                : report.report_type === 'full'
+                ? 'Full Autopsy'
+                : report.report_type === 'weekly'
+                ? 'Weekly Report'
+                : 'Quick Scan');
+            const statusLabel = report.fulfillment_status === 'paid_queued'
+              ? 'Paid, queued'
+              : report.fulfillment_status === 'generating'
+              ? 'Generating full report'
+              : report.fulfillment_status === 'retryable_failure'
+              ? 'Retry scheduled'
+              : report.fulfillment_status === 'completed'
+              ? 'Full report delivered'
+              : null;
 
             return (
-              <button
-                key={report.id}
-                onClick={() => openReport(report)}
-                className="card p-5 w-full text-left hover:border-border transition-colors"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`font-bold text-2xl font-bold ${
-                        analysis.summary.overall_grade?.startsWith('A')
-                          ? 'text-win'
-                          : analysis.summary.overall_grade?.startsWith('B')
-                          ? 'text-win/70'
-                          : analysis.summary.overall_grade?.startsWith('C')
-                          ? 'text-caution'
-                          : 'text-loss'
-                      }`}
-                    >
-                      {analysis.summary.overall_grade ?? '—'}
-                    </span>
-                    <div>
-                      <p className="font-medium">
-                        {(() => {
-                          // Check if this report matches an upload by bet count and date proximity
-                          const matchingUpload = uploads.find((u) =>
-                            u.bet_count === report.bet_count_analyzed &&
-                            Math.abs(new Date(u.created_at).getTime() - new Date(report.created_at).getTime()) < 86400000
-                          );
-                          if (matchingUpload?.filename) return matchingUpload.filename;
-                          return report.report_type === 'snapshot' ? 'Snapshot' : report.report_type === 'full' ? 'Full Autopsy' : report.report_type === 'weekly' ? 'Weekly Report' : 'Quick Scan';
-                        })()}
-                      </p>
-                      <p className="text-fg-muted text-sm">
-                        {report.bet_count_analyzed} bets analyzed · {analysis.summary.record}
-                      </p>
+              <div key={report.id} className="card p-5 flex items-start gap-2 hover:border-border transition-colors">
+                <button
+                  onClick={() => openReport(report)}
+                  disabled={openingReportId === report.id}
+                  className="min-w-0 flex-1 text-left disabled:opacity-70"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span
+                        className={`font-bold text-2xl ${
+                          grade?.startsWith('A')
+                            ? 'text-win'
+                            : grade?.startsWith('B')
+                            ? 'text-win/70'
+                            : grade?.startsWith('C')
+                            ? 'text-caution'
+                            : grade
+                            ? 'text-loss'
+                            : 'text-fg-muted'
+                        }`}
+                      >
+                        {grade ?? 'N/A'}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{title}</p>
+                        <p className="text-fg-muted text-sm">
+                          {report.bet_count_analyzed} bets analyzed
+                          {summary?.record ? ` · ${summary.record}` : ''}
+                        </p>
+                        {statusLabel && <p className="text-xs text-scalpel mt-1">{statusLabel}</p>}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span
-                      className={`font-mono ${
-                        analysis.summary.total_profit >= 0 ? 'text-win' : 'text-loss'
-                      }`}
-                    >
-                      {analysis.summary.total_profit >= 0 ? '+' : ''}${analysis.summary.total_profit.toFixed(0)}
-                    </span>
-                    <span className="text-fg-muted">
-                      Emotion: {analysis.emotion_score ?? analysis.tilt_score}/100
-                    </span>
-                    <span className="text-fg-dim text-xs">
-                      {new Date(report.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}{' '}
-                      <span className="text-fg-dim">
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      {summary && Number.isFinite(summary.total_profit) && (
+                        profitVisible ? (
+                          <span className={`font-mono ${summary.total_profit >= 0 ? 'text-win' : 'text-loss'}`}>
+                            {summary.total_profit >= 0 ? '+' : ''}${summary.total_profit.toFixed(0)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 font-mono text-xs text-fg-muted">
+                            <Lock size={11} /> Locked
+                          </span>
+                        )
+                      )}
+                      {typeof emotionScore === 'number' && (
+                        <span className="text-fg-muted">Emotion: {emotionScore}/100</span>
+                      )}
+                      <span className="text-fg-dim text-xs">
+                        {new Date(report.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}{' '}
                         {new Date(report.created_at).toLocaleTimeString('en-US', {
                           hour: 'numeric',
                           minute: '2-digit',
                         })}
                       </span>
-                    </span>
-                    <button
-                      onClick={(e) => deleteReport(report.id, e)}
-                      className="text-fg-dim hover:text-loss transition-colors text-xs ml-2 w-11 h-11 -m-2 flex items-center justify-center rounded-sm shrink-0"
-                      aria-label="Delete report"
-                    >
-                      ✕
-                    </button>
+                      {openingReportId === report.id && <span className="text-xs text-fg-muted">Opening...</span>}
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {analysis.biases_detected.slice(0, 3).map((bias, i) => (
-                    <span
-                      key={i}
-                      className={`text-xs px-2 py-0.5 rounded-sm border ${
-                        bias.severity === 'critical'
-                          ? 'bg-bleed-muted text-loss border-bleed/20'
-                          : bias.severity === 'high'
-                          ? 'bg-orange-400/10 text-orange-400 border-orange-400/20'
-                          : bias.severity === 'medium'
-                          ? 'bg-caution/10 text-caution border-caution/20'
-                          : 'bg-win/10 text-win border-win/20'
-                      }`}
-                    >
-                      {bias.bias_name}
-                    </span>
-                  ))}
-                  {analysis.biases_detected.length > 3 && (
-                    <span className="text-xs text-fg-muted">
-                      +{analysis.biases_detected.length - 3} more
-                    </span>
+                  {(report.card_biases?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {report.card_biases!.map((bias) => (
+                        <span
+                          key={`${bias.bias_name}-${bias.severity}`}
+                          className={`text-xs px-2 py-0.5 rounded-sm border ${
+                            bias.severity === 'critical'
+                              ? 'bg-bleed-muted text-loss border-bleed/20'
+                              : bias.severity === 'high'
+                              ? 'bg-loss/10 text-loss border-loss/20'
+                              : bias.severity === 'medium'
+                              ? 'bg-caution/10 text-caution border-caution/20'
+                              : 'bg-win/10 text-win border-win/20'
+                          }`}
+                        >
+                          {bias.bias_name}
+                        </span>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={(event) => deleteReport(report.id, event)}
+                  className="text-fg-dim hover:text-loss transition-colors text-xs w-11 h-11 -m-2 flex items-center justify-center rounded-sm shrink-0"
+                  aria-label="Delete report"
+                >
+                  ✕
+                </button>
+              </div>
             );
           })}
         </div>
@@ -851,19 +999,8 @@ export default function ReportsPage() {
 
 // ── Analyzing Loading State ──
 //
-// Single source for both loading indicators below (AnalyzingState and
-// AnalyzingProgress): the estimate text and the progress-bar pacing both
-// key off bet count from these two functions, not two independently
-// hand-tuned guesses. AnalyzingProgress previously had its own flat
-// "15-25 seconds" claim regardless of bet count, plus a bar tuned to hit
-// 92% by ~30-40s - wrong for anything past a small dataset, and it's
-// specifically what renders during the post-checkout ?unlocked=true
-// auto-run, meaning the customer who just paid was the one watching
-// "Almost there..." roughly 65s before a real response actually arrived,
-// then a bar sitting at 92% for the back half of the wait. Two independent
-// real runAutopsy() calls this session (not mocked) measured ~90s each for
-// 200-300 bets - see lib/report-timing.ts - which is what the 150-500
-// bracket below is tuned against directly, not guessed.
+// Single source for the explicit analysis loading indicators below. Paid
+// checkout fulfillment does not use these client-side progress components.
 const LOADING_MESSAGES = [
   'Scanning your bet history...',
   'Calculating your Emotion Score...',

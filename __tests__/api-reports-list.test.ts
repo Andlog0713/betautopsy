@@ -64,13 +64,14 @@ const LIST_COLUMNS_STR = [
   'date_range_start',
   'date_range_end',
   'created_at',
-  'report_json',
+  'report_summary',
   'upgraded_from_snapshot_id',
   'is_paid',
   'analyzed_sportsbook',
+  'fulfillment:report_fulfillments!report_fulfillments_snapshot_report_id_fkey(status,completed_report_id,next_attempt_at)',
 ].join(',');
 
-const DROPPED_COLUMNS = [
+const NOT_SELECTED_COLUMNS = [
   'report_markdown',
   'model_used',
   'tokens_used',
@@ -78,6 +79,13 @@ const DROPPED_COLUMNS = [
   'stripe_payment_intent_id',
   'analyzed_upload_ids',
   'user_id',
+  'report_json',
+];
+
+const OMITTED_RESPONSE_COLUMNS = [
+  ...NOT_SELECTED_COLUMNS.filter((column) => column !== 'report_json'),
+  'report_summary',
+  'fulfillment',
 ];
 
 function req(query = '') {
@@ -112,11 +120,17 @@ describe('GET /api/reports — list-by-user', () => {
     // Alt-Svc: clear disables HTTP/3 advertisement so iOS stays on HTTP/2
     // (P0-PERSISTENCE-PERF-WEB-V3 — QUIC hangs on certain networks).
     expect(res.headers.get('Alt-Svc')).toBe('clear');
-    // List mode always emits a (slimmed) report_json. These rows carry no
-    // report_json, so the slim transform yields an empty object per row;
-    // ordering, scoping, and cap assertions below are the focus here.
+    // List mode preserves the additive partial report_json wire key while
+    // loading it from report_summary instead of the full detail column.
     expect(await res.json()).toEqual({
-      reports: rows.map((row) => ({ ...row, report_json: {} })),
+      reports: rows.map((row) => ({
+        ...row,
+        report_json: {},
+        card_biases: [],
+        fulfillment_status: null,
+        completed_report_id: null,
+        fulfillment_next_attempt_at: null,
+      })),
     });
 
     // Scoped by RLS via the authed client: no explicit user_id filter added,
@@ -162,20 +176,23 @@ describe('GET /api/reports — list-by-user', () => {
     expect(await res.json()).toEqual({ error: 'Internal error' });
   });
 
-  it('list mode strips report_json to the whitelist', async () => {
-    // Source report_json carries two whitelisted keys (betiq, summary) plus
-    // three heavy non-whitelisted keys. The slim transform must keep only the
-    // whitelisted keys that are present, and never invent absent ones.
+  it('uses report_summary, lifts card biases, and exposes fulfillment state', async () => {
     const rows = [
       {
         id: 'r1',
         created_at: '2026-05-20T00:00:00Z',
-        report_json: {
+        report_summary: {
           betiq: { score: 76 },
           summary: { total_bets: 120 },
-          bet_annotations: [{ note: 'heavy' }],
-          executive_diagnosis: 'long prose that should not ship to the card',
-          session_detection: { sessions: [{ grade: 'F' }] },
+          card_biases: [
+            { bias_name: 'Loss chasing', severity: 'high' },
+            { bias_name: 'Stake escalation', severity: 'medium' },
+          ],
+        },
+        fulfillment: {
+          status: 'generating',
+          completed_report_id: null,
+          next_attempt_at: '2026-05-20T00:05:00Z',
         },
       },
     ];
@@ -188,19 +205,17 @@ describe('GET /api/reports — list-by-user', () => {
     const body = await res.json();
     const slim = body.reports[0].report_json;
 
-    // Whitelisted keys present in source survive.
     expect(slim.betiq).toEqual({ score: 76 });
     expect(slim.summary).toEqual({ total_bets: 120 });
-
-    // Heavy non-whitelisted keys are stripped.
-    expect('bet_annotations' in slim).toBe(false);
-    expect('executive_diagnosis' in slim).toBe(false);
-    expect('session_detection' in slim).toBe(false);
-
-    // Whitelisted keys absent from source are NOT added (not nulled in).
-    expect('betting_archetype' in slim).toBe(false);
-    expect('_snapshot_teaser' in slim).toBe(false);
+    expect('card_biases' in slim).toBe(false);
     expect(Object.keys(slim).sort()).toEqual(['betiq', 'summary']);
+    expect(body.reports[0].card_biases).toEqual([
+      { bias_name: 'Loss chasing', severity: 'high' },
+      { bias_name: 'Stake escalation', severity: 'medium' },
+    ]);
+    expect(body.reports[0].fulfillment_status).toBe('generating');
+    expect(body.reports[0].completed_report_id).toBeNull();
+    expect(body.reports[0].fulfillment_next_attempt_at).toBe('2026-05-20T00:05:00Z');
 
     // Top-level row columns are preserved alongside the slimmed report_json.
     expect(body.reports[0].id).toBe('r1');
@@ -221,7 +236,8 @@ describe('GET /api/reports — list-by-user', () => {
         date_range_start: '2026-04-01',
         date_range_end: '2026-05-01',
         created_at: '2026-05-20T00:00:00Z',
-        report_json: { betiq: { score: 76 } },
+        report_summary: { betiq: { score: 76 } },
+        fulfillment: null,
         upgraded_from_snapshot_id: null,
         is_paid: true,
         analyzed_sportsbook: 'DraftKings',
@@ -238,14 +254,14 @@ describe('GET /api/reports — list-by-user', () => {
     expect(supabase.calls.select).toEqual([[LIST_COLUMNS_STR]]);
 
     // None of the dropped columns appear in the projection string.
-    for (const col of DROPPED_COLUMNS) {
+    for (const col of NOT_SELECTED_COLUMNS) {
       expect(LIST_COLUMNS_STR.split(',')).not.toContain(col);
     }
 
     // None of the dropped columns appear in the response row.
     const body = await res.json();
     const row = body.reports[0];
-    for (const col of DROPPED_COLUMNS) {
+    for (const col of OMITTED_RESPONSE_COLUMNS) {
       expect(col in row).toBe(false);
     }
 
@@ -258,24 +274,13 @@ describe('GET /api/reports — list-by-user', () => {
   });
 
   it('list mode response is under 100 KB for 100 typical rows', async () => {
-    // Each row's report_json is dominated by heavy non-whitelisted fields
-    // (bet_annotations + session_detection), the multi-MB payload the slim
-    // transform exists to strip. Small whitelisted card fields flow through.
-    const heavyAnnotations = Array.from({ length: 2000 }, (_, i) => ({
-      bet_id: `bet-${i}`,
-      note: 'emotional escalation after a bad beat in the prior leg of the parlay',
-      flagged: true,
-    }));
-    const heavySessions = Array.from({ length: 500 }, (_, i) => ({
-      session_id: `sess-${i}`,
-      grade: 'F',
-      heatSignals: ['chasing', 'late-night', 'stake-spike'],
-    }));
+    // Database projection contains only the stored summary. Heavy detail
+    // fields are absent before serialization, rather than stripped in memory.
     const rows = Array.from({ length: 100 }, (_, i) => ({
       id: `r${i}`,
       created_at: '2026-05-20T00:00:00Z',
       report_type: 'full',
-      report_json: {
+      report_summary: {
         betting_archetype: { name: 'The Tilter' },
         betiq: { score: 70 + (i % 30) },
         summary: { total_bets: 100 + i },
@@ -288,9 +293,9 @@ describe('GET /api/reports — list-by-user', () => {
         schema_version: 2,
         _snapshot_counts: { sessions: 12 },
         _snapshot_teaser: 'Your worst session cost you dearly. Tap to see the full breakdown of where it went wrong.',
-        bet_annotations: heavyAnnotations,
-        session_detection: { sessions: heavySessions },
+        card_biases: [{ bias_name: 'Loss chasing', severity: 'high' }],
       },
+      fulfillment: null,
     }));
     const supabase = makeSupabase({ data: rows, error: null });
     mockedAuth.mockResolvedValue({ supabase, user: USER, error: null });
@@ -302,7 +307,7 @@ describe('GET /api/reports — list-by-user', () => {
     const wireBytes = JSON.stringify(body).length;
 
     expect(wireBytes).toBeLessThan(100_000);
-    // Heavy fields are gone from every row.
+    // Heavy fields never appear in the partial wire payload.
     expect('bet_annotations' in body.reports[0].report_json).toBe(false);
     expect('session_detection' in body.reports[0].report_json).toBe(false);
   });

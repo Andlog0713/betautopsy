@@ -139,8 +139,9 @@ export async function createReportCheckoutSession(
   customerId: string,
   userId: string,
   snapshotReportId: string,
-  isExtraReport: boolean = false
-): Promise<string> {
+  isExtraReport: boolean = false,
+  priorCheckoutSessionId: string | null = null,
+): Promise<{ id: string; url: string }> {
   const priceId = isExtraReport
     ? process.env.STRIPE_EXTRA_REPORT_PRICE_ID!
     : process.env.STRIPE_REPORT_PRICE_ID!;
@@ -149,20 +150,56 @@ export async function createReportCheckoutSession(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  const session = await getStripe().checkout.sessions.create({
-    customer: customerId,
-    mode: 'payment',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
-    cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
-    metadata: {
-      supabase_user_id: userId,
-      report_id: snapshotReportId,
-      type: 'report_purchase',
+  const session = await getStripe().checkout.sessions.create(
+    {
+      customer: customerId,
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/reports?id=${snapshotReportId}&unlocked=true`,
+      cancel_url: `${appUrl}/reports?id=${snapshotReportId}`,
+      metadata: {
+        supabase_user_id: userId,
+        report_id: snapshotReportId,
+        type: 'report_purchase',
+      },
     },
-  });
+    {
+      // Concurrent or retried route calls for the same checkout generation
+      // receive one Stripe Session. When an unpaid session expires, its id
+      // becomes the stable anchor for exactly one replacement generation.
+      idempotencyKey: `report:${snapshotReportId}:${priorCheckoutSessionId ?? 'initial'}`,
+    },
+  );
 
-  return session.url!;
+  if (!session.url) throw new Error('Stripe report checkout returned no URL');
+
+  return { id: session.id, url: session.url };
+}
+
+export async function retrieveReportCheckoutSession(
+  sessionId: string,
+): Promise<{
+  id: string;
+  url: string | null;
+  status: Stripe.Checkout.Session.Status | null;
+  paymentStatus: Stripe.Checkout.Session.PaymentStatus;
+} | null> {
+  try {
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
+    return {
+      id: session.id,
+      url: session.url,
+      status: session.status,
+      paymentStatus: session.payment_status,
+    };
+  } catch (error) {
+    const missing = error !== null
+      && typeof error === 'object'
+      && 'code' in error
+      && (error as { code?: unknown }).code === 'resource_missing';
+    if (missing) return null;
+    throw error;
+  }
 }
 
 // Keep backward compat for existing code that calls createCheckoutSession

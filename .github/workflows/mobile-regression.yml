@@ -59,6 +59,7 @@ jobs:
           # fall through).
           NEXT_PUBLIC_SUPABASE_URL: https://stub.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: stub-anon-key-ci-build-only
+          BETAUTOPSY_PLAYWRIGHT_E2E: '1'
       - name: Start Next server
         # Boot the server here (instead of letting Playwright spawn it
         # from `webServer.command`) so that any `next start` boot
@@ -93,6 +94,7 @@ jobs:
           # the build-time inline relies on.
           NEXT_PUBLIC_SUPABASE_URL: https://stub.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: stub-anon-key-ci-runtime-only
+          BETAUTOPSY_PLAYWRIGHT_E2E: '1'
       - name: Run mobile regression suite
         run: npm run test:e2e
         env:
@@ -101,9 +103,8 @@ jobs:
           # 200s on :3000. Setting PLAYWRIGHT_BASE_URL flips the
           # `webServer` config to `undefined` (see playwright.config.ts).
           PLAYWRIGHT_BASE_URL: http://localhost:3000
-          # Without a seeded Supabase session this run skips
-          # `/dashboard/*` routes — the public/auth surface is
-          # where the regression spike came from anyway.
+          # The paid-report spec owns its synthetic Supabase session and
+          # route mocks. No live account or production data is used.
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Upload trace on failure
         if: failure()

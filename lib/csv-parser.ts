@@ -1,4 +1,10 @@
 import type { ParsedBet, CSVParseResult, HierarchicalCollapseCounts } from '@/types';
+import { parseExplicitTimestamp } from '@/lib/parsed-bet-validation';
+
+export type CSVParseResultWithDiagnostics = CSVParseResult & {
+  rows_in_file: number;
+  rows_skipped: number;
+};
 
 // ── Column name mappings ──
 // Order matters: exact matches are tried first, then substring.
@@ -12,7 +18,8 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   odds: ['odds', 'price', 'line', 'american_odds', 'dec_odds', 'decimal_odds'],
   stake: ['stake', 'amount', 'wager', 'risk', 'bet_amount', 'stake_amount'],
   result: ['result', 'outcome', 'status', 'settlement', 'settled'],
-  profit: ['profit', 'net', 'pl', 'p_l', 'gain_loss', 'pnl', 'net_profit', 'returns'],
+  profit: ['profit', 'net', 'pl', 'p_l', 'gain_loss', 'pnl', 'net_profit'],
+  payout: ['payout', 'return', 'returns', 'total_return'],
   sportsbook: ['sportsbook', 'book', 'operator', 'platform', 'bookie'],
   league: ['leagues', 'league'],
   leg_number: ['leg_number', 'leg_num', 'legnum', 'leg_no', 'leg_index'],
@@ -52,38 +59,6 @@ const CASH_OUT_RESULT_STRINGS = new Set([
   'cashed_out', 'cashedout', 'cashout', 'cashed out', 'cash_out',
 ]);
 
-// ── Sport detection from descriptions ──
-
-const SPORT_KEYWORDS: Record<string, string[]> = {
-  NFL: ['chiefs', 'eagles', 'bills', 'ravens', 'lions', 'niners', '49ers', 'cowboys', 'packers',
-        'dolphins', 'jets', 'patriots', 'steelers', 'bengals', 'browns', 'titans', 'colts',
-        'jaguars', 'texans', 'broncos', 'raiders', 'chargers', 'seahawks', 'rams', 'cardinals',
-        'falcons', 'saints', 'buccaneers', 'bucs', 'panthers', 'vikings', 'bears', 'commanders',
-        'giants', 'nfl', 'touchdown', 'passing yards', 'rushing yards'],
-  NBA: ['lakers', 'celtics', 'knicks', 'warriors', 'bucks', 'nets', 'heat', 'suns', 'nuggets',
-        'thunder', 'clippers', 'mavericks', 'mavs', '76ers', 'sixers', 'cavaliers', 'cavs',
-        'grizzlies', 'pelicans', 'kings', 'timberwolves', 'wolves', 'raptors', 'bulls', 'hawks',
-        'hornets', 'magic', 'pacers', 'pistons', 'blazers', 'rockets', 'spurs', 'jazz', 'wizards',
-        'nba', 'jokic', 'lebron', 'curry', 'tatum', 'points', 'rebounds', 'assists'],
-  MLB: ['yankees', 'dodgers', 'astros', 'braves', 'mets', 'phillies', 'padres', 'cubs',
-        'red sox', 'guardians', 'orioles', 'rangers', 'twins', 'rays', 'mariners', 'brewers',
-        'cardinals', 'marlins', 'pirates', 'reds', 'royals', 'tigers', 'angels', 'athletics',
-        'rockies', 'diamondbacks', 'nationals', 'white sox', 'mlb', 'runs', 'strikeouts', 'innings'],
-  NHL: ['bruins', 'maple leafs', 'oilers', 'avalanche', 'panthers', 'hurricanes', 'rangers',
-        'devils', 'stars', 'wild', 'jets', 'lightning', 'penguins', 'capitals', 'flames',
-        'canucks', 'senators', 'islanders', 'kraken', 'predators', 'red wings', 'blues',
-        'sabres', 'coyotes', 'ducks', 'sharks', 'blackhawks', 'blue jackets', 'kings',
-        'nhl', 'goals', 'saves', 'hockey'],
-  NCAAF: ['ncaaf', 'college football', 'cfb', 'bowl game', 'playoff'],
-  NCAAB: ['ncaab', 'ncaam', 'ncaaw', 'college basketball', 'cbb', 'march madness'],
-  Soccer: ['soccer', 'premier league', 'la liga', 'bundesliga', 'serie a', 'ligue 1',
-           'champions league', 'mls', 'epl', 'arsenal', 'manchester', 'liverpool', 'chelsea',
-           'barcelona', 'real madrid', 'clean sheet', 'nil'],
-  Tennis: ['tennis', 'nadal', 'djokovic', 'federer', 'alcaraz', 'sinner', 'atp', 'wta',
-           'grand slam', 'wimbledon', 'us open', 'australian open', 'french open', 'sets'],
-  MMA: ['mma', 'ufc', 'fight', 'ko', 'tko', 'submission', 'decision', 'round'],
-};
-
 // ── League to sport mapping (for Pikkit "sports" + "leagues" columns) ──
 
 const LEAGUE_SPORT_MAP: Record<string, string> = {
@@ -121,32 +96,30 @@ const PIKKIT_SPORT_MAP: Record<string, string> = {
   ufc: 'MMA',
 };
 
-// ── Bet type detection ──
-
-const BET_TYPE_PATTERNS: [RegExp, string][] = [
-  [/parlay|accumulator|combo|multi|(\d+[\s-]?leg)/i, 'parlay'],
-  [/spread|pts?|handicap|\+\d+\.5|\-\d+\.5/i, 'spread'],
-  [/over|under|total|o\/u|ou\b/i, 'total'],
-  [/moneyline|money\s*line|\bml\b|to\s*win\b|match\s*winner/i, 'moneyline'],
-  [/prop|player|first\s*(td|goal|basket)|anytime|assists|rebounds|yards|strikeout/i, 'prop'],
-  [/futures?|outright|championship|mvp|win\s*total/i, 'futures'],
-  [/live|in[\s-]?play|in[\s-]?game/i, 'live'],
-];
-
 // ── Main parser ──
 
 const EMPTY_COLLAPSE_COUNTS: HierarchicalCollapseCounts = {
   rowsIn: 0, betsOut: 0, legsCollapsed: 0, cashOutsDropped: 0, unclassifiedChildren: 0,
 };
 
-export function parseCSV(raw: string): CSVParseResult {
+export function parseCSV(raw: string): CSVParseResultWithDiagnostics {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   const lines = parseCSVLines(raw);
   if (lines.length < 2) {
-    return { bets: [], errors: ['File is empty or has no data rows'], warnings, column_mapping: {}, collapse: EMPTY_COLLAPSE_COUNTS };
+    return {
+      bets: [],
+      errors: ['File is empty or has no data rows'],
+      warnings,
+      column_mapping: {},
+      collapse: EMPTY_COLLAPSE_COUNTS,
+      rows_in_file: 0,
+      rows_skipped: 0,
+    };
   }
+
+  const rowsInFile = lines.length - 1;
 
   // Map headers
   const headers = lines[0].map((h) => h.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_'));
@@ -158,7 +131,15 @@ export function parseCSV(raw: string): CSVParseResult {
   if (missingRequired.length > 0) {
     if (!columnMapping['stake']) {
       errors.push(`Could not find required column: stake. Found columns: ${headers.join(', ')}`);
-      return { bets: [], errors, warnings, column_mapping: columnMapping, collapse: EMPTY_COLLAPSE_COUNTS };
+      return {
+        bets: [],
+        errors,
+        warnings,
+        column_mapping: columnMapping,
+        collapse: EMPTY_COLLAPSE_COUNTS,
+        rows_in_file: rowsInFile,
+        rows_skipped: rowsInFile,
+      };
     }
   }
 
@@ -188,7 +169,15 @@ export function parseCSV(raw: string): CSVParseResult {
 
   const { bets: collapsedBets, counts } = collapseHierarchicalRows(bets, rowMetas, warnings);
 
-  return { bets: collapsedBets, errors, warnings, column_mapping: columnMapping, collapse: counts };
+  return {
+    bets: collapsedBets,
+    errors,
+    warnings,
+    column_mapping: columnMapping,
+    collapse: counts,
+    rows_in_file: rowsInFile,
+    rows_skipped: rowsInFile - bets.length,
+  };
 }
 
 // ── Hierarchical row collapse (multi-row wagers: parlay legs, cash-out duplicates) ──
@@ -436,6 +425,13 @@ function parseRow(
   const description = get('description');
   const stakeStr = get('stake');
   const oddsStr = get('odds');
+  const isStructuralChild = get('parent_id') !== '';
+  const isLegRow = get('leg_number') !== '';
+
+  if (!description) {
+    warnings.push(`Row ${lineNum}: Missing description, skipped`);
+    return null;
+  }
 
   if (!stakeStr) {
     warnings.push(`Row ${lineNum}: Missing stake, skipped`);
@@ -448,12 +444,22 @@ function parseRow(
     return null;
   }
 
-  // Parse odds
-  let odds = 0;
-  if (oddsStr) {
+  // Odds are a required analytical input. Zero is not valid American odds,
+  // and silently using it poisons implied-probability and what-if math.
+  let odds: number;
+  if (!oddsStr && isStructuralChild) {
+    // Structural children never survive as standalone analytical bets. Their
+    // odds do not affect the parent's settlement or report calculations.
+    odds = 0;
+  } else {
+    if (!oddsStr) {
+      warnings.push(`Row ${lineNum}: Missing odds, skipped`);
+      return null;
+    }
     odds = parseOdds(oddsStr);
     if (odds === 0) {
-      warnings.push(`Row ${lineNum}: Could not parse odds "${oddsStr}", using 0`);
+      warnings.push(`Row ${lineNum}: Could not parse odds "${oddsStr}", skipped`);
+      return null;
     }
   }
 
@@ -463,83 +469,104 @@ function parseRow(
   const strippedResultStr = rawResultLower.replace(/^settled[_\s]*/i, '');
   const isCashOut = CASH_OUT_RESULT_STRINGS.has(rawResultLower) || CASH_OUT_RESULT_STRINGS.has(strippedResultStr);
 
+  if (!rawResult) {
+    warnings.push(`Row ${lineNum}: Missing result, skipped`);
+    return null;
+  }
+
   let result: ParsedBet['result'];
   const settlementType: 'cash_out' | undefined = isCashOut ? 'cash_out' : undefined;
   if (isCashOut) {
-    // Reclassified by actual settlement value below, once profit is
-    // parsed - a cash-out's real result can't be inferred from odds the
-    // way a run-to-completion win/loss can. 'void' is the fallback if the
-    // CSV turns out to have no usable profit figure for this row.
-    result = 'void';
+    // Reclassified by the explicitly reported settlement value below.
+    // This initial value is never emitted for a logical cash-out row.
+    result = 'pending';
   } else {
-    // Try direct match first (e.g. "cancelled")
-    result = RESULT_MAP[rawResultLower] ?? RESULT_MAP[strippedResultStr] ?? 'pending';
-    if (rawResult && !RESULT_MAP[rawResultLower] && !RESULT_MAP[strippedResultStr]) {
-      warnings.push(`Row ${lineNum}: Unknown result "${rawResult}", defaulting to pending`);
+    const normalizedResult = RESULT_MAP[rawResultLower] ?? RESULT_MAP[strippedResultStr];
+    if (!normalizedResult) {
+      warnings.push(`Row ${lineNum}: Unknown result "${rawResult}", skipped`);
+      return null;
     }
+    result = normalizedResult;
   }
 
   // Parse date
   const dateStr = get('date');
-  let placedAt: string;
-  try {
-    const d = dateStr ? new Date(dateStr) : new Date();
-    if (isNaN(d.getTime())) throw new Error('Invalid date');
-    placedAt = d.toISOString();
-  } catch {
-    placedAt = new Date().toISOString();
-    if (dateStr) warnings.push(`Row ${lineNum}: Could not parse date "${dateStr}", using today`);
+  if (!dateStr) {
+    warnings.push(`Row ${lineNum}: Missing date, skipped`);
+    return null;
   }
+  const parsedTimestamp = parseExplicitTimestamp(dateStr);
+  if (!parsedTimestamp.value) {
+    warnings.push(`Row ${lineNum}: ${parsedTimestamp.error}, skipped`);
+    return null;
+  }
+  const placedAt = parsedTimestamp.value;
 
-  // Parse profit or calculate it
-  let profit = 0;
+  // Profit must come from the export. Child leg rows are the sole exception:
+  // they never survive the hierarchy collapse and their individual net is not
+  // part of the parent wager's settlement math.
   const profitStr = get('profit');
-  if (profitStr) {
-    profit = parseFloat(profitStr.replace(/[$,]/g, ''));
-    if (isNaN(profit)) profit = 0;
-  }
-
-  // A populated leg-number column means this row is one leg of a parlay,
-  // not a standalone wager — its own odds/stake don't reflect real parlay
-  // payout math, so an empty profit/net column here is unknown, not a
-  // reason to compute a substitute. (Row-level parent/child collapsing
-  // happens upstream of this file; this guard only stops fabrication for
-  // formats where leg rows still reach parseRow as their own line.)
-  const isLegRow = get('leg_number') !== '';
-
-  if (isCashOut) {
-    // Reclassify by the row's actual settlement value (Stage 8) — a
-    // cash-out can be a real win, loss, or breakeven, unlike a genuine
-    // push/void which always nets $0 by definition. A parsed profit of
-    // exactly 0 is indistinguishable from "no profit/net column data for
-    // this row" with this simple parsing, so it falls back to the same
-    // 'void'/$0 treatment the FAQ already discloses ("cash-outs currently
-    // recorded as $0 profit... since exported data doesn't reliably
-    // distinguish a profitable cash-out from a loss") rather than
-    // asserting a push it can't actually confirm.
-    if (profitStr && profit !== 0) {
-      result = profit > 0 ? 'win' : 'loss';
-    } else {
-      result = 'void';
+  let profit: number;
+  if (!profitStr) {
+    if (isStructuralChild && isLegRow) {
       profit = 0;
+    } else {
+      warnings.push(`Row ${lineNum}: Missing profit, skipped`);
+      return null;
     }
   } else {
-    if (!profitStr && isLegRow) {
-      // Unknown is a valid value: no profit column on a leg row means no
-      // profit, not a computed one.
-      profit = 0;
-    } else if (!profitStr || profit === 0) {
-      profit = calculateProfit(odds, stake, result);
-    }
-    // Push and void ALWAYS have $0 profit — override any CSV value.
-    // Cash-outs are handled in the branch above and never reach here, so
-    // this no longer wrongly zeroes a cash-out's real settlement value.
-    if (result === 'push' || result === 'void') {
-      profit = 0;
+    profit = parseFloat(profitStr.replace(/[$,]/g, ''));
+    if (!Number.isFinite(profit)) {
+      warnings.push(`Row ${lineNum}: Could not parse profit "${profitStr}", skipped`);
+      return null;
     }
   }
 
-  const payout = result === 'win' ? stake + Math.abs(profit) : (result === 'push' || result === 'void') ? stake : 0;
+  if (isCashOut) {
+    result = profit > 0 ? 'win' : profit < 0 ? 'loss' : 'push';
+  } else if ((result === 'push' || result === 'void') && profit !== 0) {
+    warnings.push(`Row ${lineNum}: ${result} result has nonzero profit "${profitStr}", skipped`);
+    return null;
+  }
+
+  if (result === 'win' && profit < 0) {
+    warnings.push(`Row ${lineNum}: win result has negative profit "${profitStr}", skipped`);
+    return null;
+  }
+  if (result === 'loss' && profit > 0) {
+    warnings.push(`Row ${lineNum}: loss result has positive profit "${profitStr}", skipped`);
+    return null;
+  }
+
+  const payoutStr = get('payout');
+  let payout: number;
+  if (payoutStr) {
+    payout = parseFloat(payoutStr.replace(/[$,]/g, ''));
+    if (!Number.isFinite(payout) || payout < 0) {
+      warnings.push(`Row ${lineNum}: Could not parse payout "${payoutStr}", skipped`);
+      return null;
+    }
+  } else if (result === 'pending' && isStructuralChild) {
+    // Structural child values are discarded by hierarchy collapse. Keeping a
+    // neutral placeholder here preserves the parent relationship without
+    // emitting that placeholder as an analytical bet.
+    payout = 0;
+  } else if (result === 'pending') {
+    warnings.push(`Row ${lineNum}: Missing payout for pending bet, skipped`);
+    return null;
+  } else if (isCashOut) {
+    payout = stake + profit;
+    if (!Number.isFinite(payout) || payout < 0) {
+      warnings.push(`Row ${lineNum}: Cash-out settlement produces an invalid payout, skipped`);
+      return null;
+    }
+  } else {
+    payout = result === 'win'
+      ? stake + profit
+      : result === 'push' || result === 'void'
+        ? stake
+        : 0;
+  }
 
   // Detect sport — use sports column + leagues column for Pikkit
   let sport = '';
@@ -570,18 +597,18 @@ function parseRow(
     }
   }
 
-  if (!sport && description) {
-    sport = detectSport(description);
+  if (!sport) {
+    warnings.push(`Row ${lineNum}: Missing or unrecognized sport, skipped`);
+    return null;
   }
-  sport = sport || 'Other';
 
-  // Detect bet type
+  // Bet type is a required source category. Do not infer one from prose.
   let betType = get('bet_type');
   if (betType) betType = betType.toLowerCase().trim();
-  if (!betType && description) {
-    betType = detectBetType(description);
+  if (!betType) {
+    warnings.push(`Row ${lineNum}: Missing bet type, skipped`);
+    return null;
   }
-  betType = betType || 'other';
 
   // Detect bonus bets
   const allText = row.join(' ').toLowerCase();
@@ -614,13 +641,14 @@ function parseRow(
     placed_at: placedAt,
     sport,
     bet_type: betType,
-    description: description || `Bet on row ${lineNum}`,
+    description,
     odds,
     stake,
     result,
     payout,
     profit,
     sportsbook: get('sportsbook') || undefined,
+    league: rawLeague || undefined,
     is_bonus_bet: isBonusBet,
     parlay_legs: parlayLegs,
     settlement_type: settlementType,
@@ -652,58 +680,23 @@ function decimalToAmerican(decimal: number): number {
   return 0;
 }
 
-// ── Profit calculation ──
-
-function calculateProfit(odds: number, stake: number, result: string): number {
-  if (result === 'win') {
-    if (odds > 0) return stake * (odds / 100);
-    if (odds < 0) return stake * (100 / Math.abs(odds));
-    return 0;
-  }
-  if (result === 'loss') return -stake;
-  return 0; // push, void, pending
-}
-
-// ── Sport detection ──
-
-function detectSport(description: string): string {
-  const lower = description.toLowerCase();
-  for (const [sport, keywords] of Object.entries(SPORT_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (lower.includes(keyword.toLowerCase())) {
-        return sport;
-      }
-    }
-  }
-  return '';
-}
-
-// ── Bet type detection ──
-
-function detectBetType(description: string): string {
-  for (const [pattern, type] of BET_TYPE_PATTERNS) {
-    if (pattern.test(description)) return type;
-  }
-  return '';
-}
-
 // ── CSV Template ──
 
 export function generateCSVTemplate(): string {
   return `date,sport,bet_type,description,odds,stake,result,profit,sportsbook
-2025-01-05,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
-2025-01-05,NFL,spread,Bills +7,-110,100,loss,-100,FanDuel
-2025-01-06,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM
-2025-01-06,NBA,moneyline,Celtics ML,-150,150,win,100,DraftKings
-2025-01-07,NBA,parlay,3-leg: Lakers ML + Over 220 + Lebron 25+,+550,25,loss,-25,FanDuel
-2025-01-08,NFL,moneyline,Ravens ML,-200,200,win,100,Caesars
-2025-01-08,NBA,prop,Curry Over 28.5 pts,-110,110,loss,-110,DraftKings
-2025-01-09,NBA,spread,Knicks -4.5,-110,150,loss,-150,BetMGM
-2025-01-09,NBA,spread,Celtics -6,-110,200,loss,-200,FanDuel
-2025-01-10,NBA,parlay,4-leg parlay,+1200,50,loss,-50,DraftKings
-2025-01-10,NBA,moneyline,Thunder ML,-180,180,win,100,FanDuel
-2025-01-11,NFL,spread,Eagles -3,-110,100,win,91,Caesars
-2025-01-11,NBA,prop,Tatum Over 27.5 pts,+105,75,win,79,BetMGM
-2025-01-12,NBA,parlay,3-leg parlay,+450,40,loss,-40,DraftKings
-2025-01-12,NBA,spread,Bucks -5.5,-110,100,loss,-100,FanDuel`;
+2025-01-05T12:00:00Z,NFL,spread,Chiefs -3.5,-110,100,win,91,DraftKings
+2025-01-05T12:05:00Z,NFL,spread,Bills +7,-110,100,loss,-100,FanDuel
+2025-01-06T12:00:00Z,NBA,prop,Jokic Over 25.5 pts,+100,50,loss,-50,BetMGM
+2025-01-06T12:05:00Z,NBA,moneyline,Celtics ML,-150,150,win,100,DraftKings
+2025-01-07T12:00:00Z,NBA,parlay,3-leg: Lakers ML + Over 220 + Lebron 25+,+550,25,loss,-25,FanDuel
+2025-01-08T12:00:00Z,NFL,moneyline,Ravens ML,-200,200,win,100,Caesars
+2025-01-08T12:05:00Z,NBA,prop,Curry Over 28.5 pts,-110,110,loss,-110,DraftKings
+2025-01-09T12:00:00Z,NBA,spread,Knicks -4.5,-110,150,loss,-150,BetMGM
+2025-01-09T12:05:00Z,NBA,spread,Celtics -6,-110,200,loss,-200,FanDuel
+2025-01-10T12:00:00Z,NBA,parlay,4-leg parlay,+1200,50,loss,-50,DraftKings
+2025-01-10T12:05:00Z,NBA,moneyline,Thunder ML,-180,180,win,100,FanDuel
+2025-01-11T12:00:00Z,NFL,spread,Eagles -3,-110,100,win,91,Caesars
+2025-01-11T12:05:00Z,NBA,prop,Tatum Over 27.5 pts,+105,75,win,79,BetMGM
+2025-01-12T12:00:00Z,NBA,parlay,3-leg parlay,+450,40,loss,-40,DraftKings
+2025-01-12T12:05:00Z,NBA,spread,Bucks -5.5,-110,100,loss,-100,FanDuel`;
 }

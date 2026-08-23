@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { processUpgrade, validateFrozenBetCohort } from '@/lib/iap-upgrade';
+
+const pipelineMocks = vi.hoisted(() => ({
+  generate: vi.fn(),
+}));
+
+vi.mock('@/lib/full-report-pipeline', () => ({
+  FullReportPersistenceError: class FullReportPersistenceError extends Error {},
+  generateAndPersistFullReport: pipelineMocks.generate,
+}));
 
 // Mock the Anthropic-touching engine module so processUpgrade short-circuits
 // before reaching runAutopsy. We're only exercising cohort resolution.
@@ -17,10 +27,9 @@ vi.mock('@/lib/log-error-server', () => ({
 }));
 
 // Track which tables get queried and which filters get applied so we can
-// assert cohort resolution. P0 fix contract: empty analyzed_upload_ids must
-// NOT query the uploads table (no single-upload substitution) and must NOT
-// apply an upload_id filter on the bets query (no-filter = full history,
-// mirroring /api/analyze). Non-empty must apply the upload_id filter.
+// assert cohort resolution. A legacy snapshot with neither exact bet ids nor
+// a nonempty upload lock is unrecoverable because current account history is
+// mutable and may not match what the customer paid to unlock.
 type QueryRecord = { table: string; op: string; args?: unknown };
 const calls: QueryRecord[] = [];
 
@@ -30,6 +39,9 @@ const calls: QueryRecord[] = [];
 // builder so any chain order resolves; .range() is the awaited terminal.
 function makeMockSupabase(opts: {
   analyzedUploadIds: string[] | null;
+  analyzedBetIds?: string[] | null;
+  frozenBets?: unknown;
+  betCountAnalyzed?: number;
 }) {
   return {
     from(table: string) {
@@ -71,8 +83,11 @@ function makeMockSupabase(opts: {
               data: {
                 id: 'snap-1',
                 user_id: 'user-1',
+                bet_count_analyzed: opts.betCountAnalyzed ?? 20,
                 analyzed_upload_ids: opts.analyzedUploadIds,
+                analyzed_bet_ids: opts.analyzedBetIds ?? null,
                 analyzed_sportsbook: null,
+                analyzed_bets_snapshot: opts.frozenBets ?? null,
               },
               error: null,
             };
@@ -93,6 +108,11 @@ let mockClient: ReturnType<typeof makeMockSupabase>;
 
 beforeEach(() => {
   calls.length = 0;
+  pipelineMocks.generate.mockResolvedValue({
+    reusedExisting: true,
+    report: { id: 'full-report-1' },
+    tokensUsed: 0,
+  });
 });
 
 afterEach(() => {
@@ -100,37 +120,24 @@ afterEach(() => {
 });
 
 describe('iap-upgrade cohort resolution (P0 fix)', () => {
-  it('empty analyzed_upload_ids: no uploads-table query, no upload_id filter (full-history mirror)', async () => {
-    mockClient = makeMockSupabase({ analyzedUploadIds: [] });
+  it('refuses a legacy snapshot with no immutable cohort instead of using current history', async () => {
+    mockClient = makeMockSupabase({ analyzedUploadIds: [], analyzedBetIds: null });
 
-    vi.resetModules();
-    vi.mock('@/lib/supabase-server', () => ({
-      createServiceRoleClient: () => mockClient,
-    }));
-    const { processUpgrade } = await import('@/lib/iap-upgrade');
     await processUpgrade({ snapshotId: 'snap-1', userId: 'user-1', transactionId: 'tx-1' });
 
-    // The P0 bug substituted the most-recent single upload from the uploads
-    // table. The fix must never do that.
     const uploadsQueried = calls.some((c) => c.table === 'uploads');
     expect(uploadsQueried).toBe(false);
 
-    // And the bets query must run with NO upload_id filter (full history).
-    const betsUploadFilter = calls.some(
-      (c) => c.table === 'bets' && c.op === 'in' &&
-        (c.args as { col?: string })?.col === 'upload_id'
-    );
-    expect(betsUploadFilter).toBe(false);
+    const betsQueried = calls.some((c) => c.table === 'bets');
+    expect(betsQueried).toBe(false);
   });
 
   it('non-empty analyzed_upload_ids: filters the bets query by that upload set, no uploads-table query', async () => {
-    mockClient = makeMockSupabase({ analyzedUploadIds: ['upload-direct-1'] });
+    mockClient = makeMockSupabase({
+      analyzedUploadIds: ['upload-direct-1'],
+      analyzedBetIds: null,
+    });
 
-    vi.resetModules();
-    vi.mock('@/lib/supabase-server', () => ({
-      createServiceRoleClient: () => mockClient,
-    }));
-    const { processUpgrade } = await import('@/lib/iap-upgrade');
     await processUpgrade({ snapshotId: 'snap-2', userId: 'user-1', transactionId: 'tx-2' });
 
     const uploadsQueried = calls.some((c) => c.table === 'uploads');
@@ -144,16 +151,60 @@ describe('iap-upgrade cohort resolution (P0 fix)', () => {
     expect((betsUploadFilter!.args as { vals?: unknown }).vals).toEqual(['upload-direct-1']);
   });
 
-  it('resolves without throwing to the caller even when the cohort is empty', async () => {
-    mockClient = makeMockSupabase({ analyzedUploadIds: [] });
+  it('keeps the legacy processUpgrade wrapper non-throwing for compatibility', async () => {
+    mockClient = makeMockSupabase({ analyzedUploadIds: [], analyzedBetIds: null });
 
-    vi.resetModules();
-    vi.mock('@/lib/supabase-server', () => ({
-      createServiceRoleClient: () => mockClient,
-    }));
-    const { processUpgrade } = await import('@/lib/iap-upgrade');
     await expect(
       processUpgrade({ snapshotId: 'snap-3', userId: 'user-1', transactionId: 'tx-3' })
     ).resolves.toBeUndefined();
+  });
+
+  it('uses a validated frozen cohort without resolving mutable bet rows', async () => {
+    const frozen = [
+      { id: 'bet-1', user_id: 'user-1', placed_at: '2026-08-20T12:00:00Z' },
+      { id: 'bet-2', user_id: 'user-1', placed_at: '2026-08-21T12:00:00Z' },
+    ];
+    mockClient = makeMockSupabase({
+      analyzedUploadIds: ['upload-direct-1'],
+      analyzedBetIds: ['bet-1', 'bet-2'],
+      frozenBets: frozen,
+      betCountAnalyzed: 2,
+    });
+
+    await processUpgrade({ snapshotId: 'snap-frozen', userId: 'user-1', transactionId: 'tx-frozen' });
+
+    expect(pipelineMocks.generate).toHaveBeenCalledWith(expect.objectContaining({
+      bets: frozen,
+      analyzedUploadIds: ['upload-direct-1'],
+    }));
+    expect(calls.some((call) => call.table === 'bets' && call.op === 'range')).toBe(false);
+    expect(calls.some(
+      (call) => call.table === 'bets' && call.op === 'in'
+        && (call.args as { col?: string })?.col === 'id',
+    )).toBe(false);
+  });
+
+  it('fails closed when frozen count or IDs disagree with snapshot metadata', () => {
+    const validIdentity = {
+      id: 'bet-1',
+      user_id: 'user-1',
+      placed_at: '2026-08-20T12:00:00Z',
+    };
+
+    expect(() => validateFrozenBetCohort({
+      snapshotId: 'snap-bad-count',
+      userId: 'user-1',
+      frozenValue: [validIdentity],
+      analyzedBetIds: ['bet-1'],
+      betCountAnalyzed: 2,
+    })).toThrow(/count 1 does not match 2/);
+
+    expect(() => validateFrozenBetCohort({
+      snapshotId: 'snap-bad-ids',
+      userId: 'user-1',
+      frozenValue: [validIdentity],
+      analyzedBetIds: ['bet-other'],
+      betCountAnalyzed: 1,
+    })).toThrow(/bet ids do not match/);
   });
 });

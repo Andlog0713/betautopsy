@@ -68,6 +68,43 @@ begin
 end;
 $$;
 
+-- Payment, entitlement, and administrator fields are server-owned. The
+-- profile UPDATE policy remains broad enough for user-managed fields such as
+-- display_name, bankroll, and email_digest_enabled, while this trigger blocks
+-- direct client escalation through PostgREST.
+create or replace function public.protect_profile_service_fields()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if current_user not in ('service_role', 'postgres', 'supabase_admin')
+    and (
+      new.email is distinct from old.email
+      or new.stripe_customer_id is distinct from old.stripe_customer_id
+      or new.subscription_tier is distinct from old.subscription_tier
+      or new.subscription_status is distinct from old.subscription_status
+      or new.trial_ends_at is distinct from old.trial_ends_at
+      or new.is_admin is distinct from old.is_admin
+      or new.reports_used_this_period is distinct from old.reports_used_this_period
+      or new.current_period_start is distinct from old.current_period_start
+      or new.created_at is distinct from old.created_at
+    ) then
+    raise exception 'Service-owned profile fields cannot be changed by this role'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.protect_profile_service_fields()
+  from public, anon, authenticated;
+
+create trigger profiles_protect_service_fields
+  before update on profiles
+  for each row
+  execute function public.protect_profile_service_fields();
+
 -- ── Uploads ──
 
 create table if not exists uploads (
@@ -101,7 +138,20 @@ create table if not exists bets (
   parlay_legs integer,
   tags text[],
   notes text,
+  settlement_type text check (settlement_type is null or settlement_type = 'cash_out'),
   created_at timestamptz default now()
+);
+
+-- ── Logical Upload Memberships ──
+
+create table if not exists upload_bets (
+  upload_id uuid not null references uploads(id) on delete cascade,
+  bet_id uuid not null references bets(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  position integer not null check (position >= 0),
+  created_at timestamptz not null default now(),
+  primary key (upload_id, bet_id),
+  unique (upload_id, position)
 );
 
 -- ── Autopsy Reports ──
@@ -121,8 +171,61 @@ create table if not exists autopsy_reports (
   is_paid boolean default false,
   stripe_payment_intent_id text,
   upgraded_from_snapshot_id uuid references autopsy_reports(id),
+  analyzed_upload_ids uuid[],
+  analyzed_bet_ids uuid[],
+  analyzed_bets_snapshot jsonb,
+  analyzed_sportsbook text,
+  report_summary jsonb not null default '{}'::jsonb,
   created_at timestamptz default now()
 );
+
+-- ── Paid Report Fulfillment ──
+
+create table if not exists report_fulfillments (
+  id uuid primary key default gen_random_uuid(),
+  snapshot_report_id uuid not null unique references autopsy_reports(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text check (provider in ('stripe', 'revenuecat')),
+  provider_event_id text,
+  payment_reference text,
+  checkout_session_id text,
+  status text not null default 'unpaid' check (status in (
+    'unpaid', 'paid_queued', 'generating', 'completed', 'retryable_failure'
+  )),
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  lease_expires_at timestamptz,
+  next_attempt_at timestamptz,
+  last_error text,
+  completed_report_id uuid unique references autopsy_reports(id) on delete set null,
+  paid_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.ensure_snapshot_fulfillment()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.report_type = 'snapshot' then
+    insert into public.report_fulfillments (snapshot_report_id, user_id, status)
+    values (new.id, new.user_id, 'unpaid')
+    on conflict (snapshot_report_id) do nothing;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.ensure_snapshot_fulfillment() from public, anon, authenticated;
+
+create trigger autopsy_reports_ensure_fulfillment
+  after insert on autopsy_reports
+  for each row
+  when (new.report_type = 'snapshot')
+  execute function public.ensure_snapshot_fulfillment();
 
 -- ── Progress Snapshots ──
 
@@ -418,7 +521,21 @@ create index if not exists idx_rate_limits_reset on rate_limits(reset_at);
 create index if not exists idx_bets_user_id on bets(user_id);
 create index if not exists idx_bets_user_placed on bets(user_id, placed_at desc);
 create index if not exists idx_bets_user_result on bets(user_id, result);
+create index if not exists upload_bets_bet_id_idx on upload_bets(bet_id);
+create index if not exists upload_bets_user_upload_idx on upload_bets(user_id, upload_id);
 create index if not exists idx_reports_user_id on autopsy_reports(user_id, created_at desc);
+create unique index if not exists idx_autopsy_reports_one_upgrade_per_snapshot
+  on autopsy_reports(upgraded_from_snapshot_id)
+  where upgraded_from_snapshot_id is not null;
+create unique index if not exists idx_report_fulfillments_provider_event
+  on report_fulfillments(provider, provider_event_id)
+  where provider is not null and provider_event_id is not null;
+create unique index if not exists idx_report_fulfillments_payment_reference
+  on report_fulfillments(provider, payment_reference)
+  where provider is not null and payment_reference is not null;
+create index if not exists idx_report_fulfillments_due
+  on report_fulfillments(status, next_attempt_at, created_at)
+  where status in ('paid_queued', 'retryable_failure', 'generating');
 create index if not exists idx_uploads_user on uploads(user_id, created_at desc);
 create index if not exists idx_snapshots_user on progress_snapshots(user_id, snapshot_date desc);
 create index if not exists idx_feedback_type on feedback(type, created_at desc);
@@ -449,10 +566,35 @@ create policy "Users can insert own bets" on bets for insert with check (auth.ui
 create policy "Users can update own bets" on bets for update using (auth.uid() = user_id);
 create policy "Users can delete own bets" on bets for delete using (auth.uid() = user_id);
 
+-- Logical Upload Memberships
+alter table upload_bets enable row level security;
+grant select, insert, delete on table upload_bets to authenticated;
+create policy "Users can view own upload memberships" on upload_bets
+  for select using (auth.uid() = user_id);
+create policy "Users can create own upload memberships" on upload_bets
+  for insert with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from uploads
+      where uploads.id = upload_bets.upload_id and uploads.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from bets
+      where bets.id = upload_bets.bet_id and bets.user_id = auth.uid()
+    )
+  );
+create policy "Users can delete own upload memberships" on upload_bets
+  for delete using (auth.uid() = user_id);
+
 -- Autopsy Reports
 alter table autopsy_reports enable row level security;
 create policy "Users can view own reports" on autopsy_reports for select using (auth.uid() = user_id);
-create policy "Users can insert own reports" on autopsy_reports for insert with check (auth.uid() = user_id);
+
+-- Paid Report Fulfillments
+alter table report_fulfillments enable row level security;
+grant select on table report_fulfillments to authenticated;
+create policy "Users read own report fulfillments" on report_fulfillments
+  for select to authenticated using (auth.uid() = user_id);
 
 -- Uploads
 alter table uploads enable row level security;

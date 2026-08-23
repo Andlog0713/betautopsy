@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { parseCSV } from '@/lib/csv-parser';
-import { importBets } from '@/lib/import-bets';
+import { importBets, planBetImport } from '@/lib/import-bets';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { UploadPreviewResponse } from '@/types';
 
@@ -34,7 +34,14 @@ export async function POST(request: Request) {
     }
 
     const text = await file.text();
-    const { bets, errors, warnings, column_mapping, collapse } = parseCSV(text);
+    const {
+      bets,
+      errors,
+      warnings,
+      column_mapping,
+      rows_in_file: rowsInFile,
+      rows_skipped: rowsSkipped,
+    } = parseCSV(text);
 
     if (bets.length === 0) {
       // Surface the most specific error the parser produced. The csv-parser
@@ -43,15 +50,19 @@ export async function POST(request: Request) {
       // the generic "No valid bets found" fallback. Prepend a one-line
       // explainer and a link to the template so users know where to go
       // next.
-      const firstSpecificError = errors.find((e) => e && e.length > 0);
-      const detail = firstSpecificError
-        ? `${firstSpecificError}`
+      const firstSpecificIssue = errors.find((e) => e && e.length > 0)
+        ?? warnings.find((warning) => warning && warning.length > 0);
+      const detail = firstSpecificIssue
+        ? `${firstSpecificIssue}`
         : "We couldn't read any bets from this file.";
       return NextResponse.json(
         {
           error: `${detail} Download the CSV template at /example-bets.csv if you're not sure what format we expect.`,
           errors,
+          warnings,
           column_mapping,
+          rows_in_file: rowsInFile,
+          rows_skipped: rowsSkipped,
         },
         { status: 400 }
       );
@@ -64,13 +75,18 @@ export async function POST(request: Request) {
     // 200 bets: rows_in_file vs. bet_count are shown separately whenever
     // the collapse pass changed anything.
     if (isPreview) {
+      const plan = await planBetImport(supabase, user.id, bets);
       const totalStaked = bets.reduce((sum, b) => sum + b.stake, 0);
       const totalNet = bets.reduce((sum, b) => sum + b.profit, 0);
       const dates = bets.map((b) => b.placed_at).sort();
       const preview: UploadPreviewResponse = {
         preview: true,
         bet_count: bets.length,
-        rows_in_file: collapse.rowsIn,
+        rows_in_file: rowsInFile,
+        logical_bets: plan.logical_bets,
+        existing_bets: plan.existing_bets,
+        new_bets: plan.new_bets,
+        rows_skipped: rowsSkipped,
         total_staked: totalStaked,
         total_net: totalNet,
         date_range_start: dates[0] ?? null,
@@ -87,6 +103,11 @@ export async function POST(request: Request) {
       ...result,
       errors: [...result.errors, ...errors],
       warnings,
+      rows_in_file: rowsInFile,
+      rows_skipped: rowsSkipped,
+      logical_bets: result.logical_bets,
+      existing_bets: result.existing_bets,
+      new_bets: result.new_bets,
     });
   } catch (error) {
     console.error('Upload error:', error);

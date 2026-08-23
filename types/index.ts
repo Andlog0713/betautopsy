@@ -104,6 +104,40 @@ export interface AutopsyReport {
   stripe_payment_intent_id: string | null;
   upgraded_from_snapshot_id: string | null;
   created_at: string;
+  // Additive report-integrity fields. Older rows and native clients can
+  // omit them; new snapshots freeze the exact IDs they analyzed.
+  analyzed_upload_ids?: string[] | null;
+  analyzed_sportsbook?: string | null;
+  analyzed_bet_ids?: string[] | null;
+  report_summary?: Partial<AutopsyAnalysis>;
+  fulfillment_status?: ReportFulfillmentStatus | null;
+  completed_report_id?: string | null;
+  fulfillment_next_attempt_at?: string | null;
+}
+
+export type ReportFulfillmentStatus =
+  | 'paid_queued'
+  | 'generating'
+  | 'completed'
+  | 'retryable_failure';
+
+export interface ReportCardBias {
+  bias_name: string;
+  severity: SeverityTier;
+}
+
+export interface AutopsyReportListItem extends Omit<
+  AutopsyReport,
+  'user_id' | 'report_json' | 'report_markdown' | 'model_used' | 'tokens_used' | 'cost_cents' | 'stripe_payment_intent_id'
+> {
+  user_id?: never;
+  report_json: Partial<AutopsyAnalysis>;
+  report_markdown?: never;
+  model_used?: never;
+  tokens_used?: never;
+  cost_cents?: never;
+  stripe_payment_intent_id?: never;
+  card_biases?: ReportCardBias[];
 }
 
 // ── Report-trust metadata (schema_version 3) ──
@@ -1322,6 +1356,8 @@ export interface CSVParseResult {
   warnings: string[];
   column_mapping: Record<string, string>;
   collapse: HierarchicalCollapseCounts;
+  rows_in_file?: number;
+  rows_skipped?: number;
 }
 
 // ── API Request/Response ──
@@ -1342,6 +1378,11 @@ export interface UploadResponse {
   upload_id: string | null;
   errors: string[];
   warnings: string[];
+  logical_bets?: number;
+  existing_bets?: number;
+  new_bets?: number;
+  rows_in_file?: number;
+  rows_skipped?: number;
 }
 
 // Minimal pre-commit summary for the CSV upload flow — bet count, staked,
@@ -1357,6 +1398,10 @@ export interface UploadPreviewResponse {
   date_range_end: string | null;
   errors: string[];
   warnings: string[];
+  logical_bets?: number;
+  existing_bets?: number;
+  new_bets?: number;
+  rows_skipped?: number;
 }
 
 export interface CheckoutRequest {

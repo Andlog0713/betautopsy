@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { importBets } from '@/lib/import-bets';
 import { logErrorServer } from '@/lib/log-error-server';
+import { isValidParsedBet, parsedBetValidationError } from '@/lib/parsed-bet-validation';
 import type { ParsedBet } from '@/types';
 
 export async function POST(request: Request) {
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { bets, source } = body as { bets?: ParsedBet[]; source?: string };
+    const { bets, source } = body as { bets?: unknown[]; source?: string };
 
     if (!Array.isArray(bets) || bets.length === 0) {
       return NextResponse.json({ error: 'bets array is required and must not be empty' }, { status: 400 });
@@ -23,20 +24,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Maximum 500 bets per import' }, { status: 400 });
     }
 
-    // Validate required fields on each bet
-    const validBets = bets.filter((b) =>
-      b.placed_at && b.description && typeof b.odds === 'number' && typeof b.stake === 'number' && b.stake > 0 && b.result
-    );
+    // Client-parsed imports bypass parseCSV, so validate every analytical
+    // field here instead of allowing database defaults to turn unknowns into
+    // zero, pending, or an empty category.
+    const invalidReasons = bets
+      .map(parsedBetValidationError)
+      .filter((reason): reason is string => reason !== null);
+    const validBets = bets.filter(isValidParsedBet) as ParsedBet[];
     if (validBets.length === 0) {
-      return NextResponse.json({ error: 'No valid bets found. Each bet needs a date, description, odds, stake, and result.' }, { status: 400 });
+      return NextResponse.json({
+        error: 'No valid bets found. Required analytical fields must be explicit and valid.',
+        rows_in_file: bets.length,
+        rows_skipped: bets.length,
+        validation_errors: invalidReasons,
+      }, { status: 400 });
     }
 
     const result = await importBets(supabase, user.id, validBets, source ?? 'paste-import');
-    if (validBets.length < bets.length) {
-      result.errors.push(`${bets.length - validBets.length} bet(s) skipped due to missing required fields.`);
-    }
+    const rowsSkipped = bets.length - validBets.length;
+    const errors = [...result.errors];
+    if (rowsSkipped > 0) errors.push(`${rowsSkipped} bet(s) skipped due to unknown or invalid required fields.`);
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      errors,
+      rows_in_file: bets.length,
+      rows_skipped: rowsSkipped,
+      validation_errors: invalidReasons,
+    });
   } catch (error) {
     console.error('Upload-parsed error:', error);
     logErrorServer(error, { path: '/api/upload-parsed' });

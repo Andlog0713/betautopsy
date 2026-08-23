@@ -11,6 +11,10 @@
     {
       "path": "/api/freeze-refill",
       "schedule": "0 5 1 * *"
+    },
+    {
+      "path": "/api/report-fulfillment/recover",
+      "schedule": "15 6 * * *"
     }
   ],
   "redirects": [

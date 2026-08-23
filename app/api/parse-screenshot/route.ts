@@ -3,6 +3,8 @@ import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import Anthropic from '@anthropic-ai/sdk';
 import { logErrorServer } from '@/lib/log-error-server';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { normalizeExtractedBet } from '@/lib/model-parsed-bet';
+import type { ParsedBet } from '@/types';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Multiple images may take longer
@@ -17,19 +19,19 @@ EXTRACTION RULES:
 3. Skip deposits, withdrawals, bonuses, casino games, and navigation elements.
 4. For parlays: combine all leg descriptions with " + " separator. Use the OVERALL parlay odds, stake, result, and profit — not individual legs. Count the legs.
 5. For same-game parlays (SGP): treat as a single parlay bet. Combine leg descriptions.
-6. Profit calculation: For wins, profit = (payout - stake). For losses, profit = -stake. For pushes, profit = 0.
+6. Profit must be visibly present in the source as profit, net, won, or lost. Never calculate or estimate it.
 7. If you can identify the sportsbook from logos, colors, or branding (DraftKings blue, FanDuel blue/navy, BetMGM gold, Caesars green, theScore Bet, Fanatics, bet365, BetRivers), include it.
-8. Infer sport from team/player names: NBA teams → NBA, NFL teams → NFL, MLB teams → MLB, NHL teams → NHL, soccer → Soccer, UFC/MMA → MMA, PGA → Golf, ATP/WTA → Tennis.
-9. Infer bet_type: spreads have +/- point numbers, totals have over/under, moneylines are straight wins, props mention player stats, parlays have multiple legs, futures are season-long.
-10. Read dates carefully from the screenshot. Use YYYY-MM-DD format.
+8. Copy sport only when the source identifies it. Never infer it from a team or player name.
+9. Copy bet_type only when the source identifies it. Never infer a category from description prose.
+10. Copy placed_at only when date, clock time, and timezone or UTC offset are all visible. Use an ISO 8601 timestamp with the explicit offset.
 11. Read odds carefully — they may be in American (-110, +150) or decimal (1.91, 2.50) format.
-12. If text is partially cut off or blurry, make your best guess and note it in parse_notes.
+12. If a required field is cut off, blurry, date-only, or missing, skip that bet and note the exact reason. Never make a best guess.
 
 RESPOND WITH ONLY valid JSON, no markdown fences:
 {
   "bets": [
     {
-      "date": "2025-01-05",
+      "placed_at": "2025-01-05T19:30:00-05:00",
       "sport": "NFL",
       "bet_type": "spread",
       "description": "Chiefs -3.5",
@@ -38,7 +40,8 @@ RESPOND WITH ONLY valid JSON, no markdown fences:
       "result": "win",
       "profit": 90.91,
       "sportsbook": "DraftKings",
-      "parlay_legs": null
+      "parlay_legs": null,
+      "is_bonus_bet": false
     }
   ],
   "parse_notes": ["Extracted 12 bets from settled history page", "1 bet partially cut off at bottom — skipped"]
@@ -145,62 +148,15 @@ export async function POST(request: Request) {
     }
 
     // Validate and normalize each bet (same logic as parse-paste)
-    const validBets = [];
-    const notes = parsed.parse_notes || [];
+    const validBets: ParsedBet[] = [];
+    const notes = Array.isArray(parsed.parse_notes)
+      ? parsed.parse_notes.filter((note): note is string => typeof note === 'string')
+      : [];
 
-    for (const b of parsed.bets) {
-      if (!b.date || !b.description || b.odds === undefined || b.stake === undefined || !b.result) continue;
-
-      let odds = Number(b.odds);
-      if (!isNaN(odds) && odds > 1 && odds < 20 && !Number.isInteger(odds)) {
-        odds = odds >= 2.0 ? Math.round((odds - 1) * 100) : Math.round(-100 / (odds - 1));
-      }
-
-      const resultMap: Record<string, string> = {
-        win: 'win', won: 'win', w: 'win', hit: 'win',
-        loss: 'loss', lost: 'loss', l: 'loss', miss: 'loss',
-        push: 'push', draw: 'push', tie: 'push',
-        void: 'void', voided: 'void', cancelled: 'void', canceled: 'void',
-      };
-      const result = resultMap[String(b.result).toLowerCase().trim()] || String(b.result);
-      if (!['win', 'loss', 'push', 'void'].includes(result)) continue;
-
-      const stake = Math.abs(Number(b.stake));
-      if (isNaN(stake) || stake <= 0) continue;
-      if (isNaN(odds)) continue;
-
-      let profit = Number(b.profit);
-      if (isNaN(profit)) {
-        if (result === 'win') {
-          profit = odds > 0 ? stake * (odds / 100) : stake * (100 / Math.abs(odds));
-        } else if (result === 'loss') {
-          profit = -stake;
-        } else {
-          profit = 0;
-        }
-      }
-
-      let date = String(b.date);
-      try {
-        const d = new Date(date);
-        if (!isNaN(d.getTime())) date = d.toISOString().split('T')[0];
-      } catch { /* keep original */ }
-
-      validBets.push({
-        placed_at: date,
-        sport: String(b.sport || 'Other'),
-        bet_type: String(b.bet_type || 'other'),
-        description: String(b.description).substring(0, 500),
-        odds,
-        stake: Number(stake.toFixed(2)),
-        result,
-        payout: result === 'win' ? Number((stake + profit).toFixed(2)) : result === 'push' ? stake : 0,
-        profit: Number(profit.toFixed(2)),
-        sportsbook: b.sportsbook ? String(b.sportsbook) : null,
-        parlay_legs: b.parlay_legs ? Number(b.parlay_legs) : null,
-        is_bonus_bet: false,
-        league: null,
-      });
+    for (let index = 0; index < parsed.bets.length; index++) {
+      const normalized = normalizeExtractedBet(parsed.bets[index]);
+      if (normalized.bet) validBets.push(normalized.bet);
+      else notes.push(`Bet ${index + 1}: skipped, ${normalized.error}`);
     }
 
     return NextResponse.json({

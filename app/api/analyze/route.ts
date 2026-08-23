@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import * as Sentry from "@sentry/nextjs";
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { runAutopsy, runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore, calculateBetIQ, estimatePercentile, calculateEnhancedTilt, detectSportSpecificPatterns } from '@/lib/autopsy-engine';
-import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
+import { runSnapshot, calculateMetrics, calculateMetricsOnly, calculateDisciplineScore } from '@/lib/autopsy-engine';
 import { computeWhatChanged } from '@/lib/what-changed';
 import { maybeSendHeatedPush } from '@/lib/push-heated-send';
 import { waitUntil } from '@vercel/functions';
@@ -12,6 +11,13 @@ import { TIER_LIMITS, userQualifiesForPromo } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
 import { parseCSV } from '@/lib/csv-parser';
 import { importBets } from '@/lib/import-bets';
+import {
+  FullReportPersistenceError,
+  generateAndPersistFullReport,
+  type FullReportProfileContext,
+} from '@/lib/full-report-pipeline';
+import { resolveBetsForReportScope } from '@/lib/report-cohort';
+import { buildReportSummary } from '@/lib/report-summary';
 import type { AutopsyAnalysis, Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
 
 // 5-minute Vercel function timeout. Default (10s edge / 60s serverless on
@@ -66,6 +72,7 @@ export async function POST(request: Request) {
   let dateFrom: string | null = null;
   let dateTo: string | null = null;
   let uploadIds: string[] = [];
+  let analyzedBetIds: string[] | null | undefined;
   let sportsbook: string | null = null;
   let filterLabel = '';
   let paidSnapshotId: string | null = null;
@@ -153,61 +160,65 @@ export async function POST(request: Request) {
     }
   }
 
-  // Verify paid report: free users requesting 'full' must have a paid snapshot
-  // that hasn't already been used to generate a full report
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  // Paid fulfillment is server-owned. Browsers and stale native clients may
+  // observe status here, but they never get to start the paid LLM run.
   if (tier === 'free' && reportType === 'full' && paidSnapshotId) {
-    const { data: paidReport } = await supabase
-      .from('autopsy_reports')
-      .select('id, is_paid, analyzed_upload_ids, analyzed_sportsbook')
-      .eq('id', paidSnapshotId)
-      .eq('user_id', user.id)
-      .eq('is_paid', true)
-      .single();
-    if (!paidReport) {
+    if (!uuidRegex.test(paidSnapshotId)) {
       return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
     }
-    // Lock the full-report run to the EXACT upload-and-sportsbook scope the
-    // snapshot was produced from. The user paid for a deep dive on that
-    // snapshot's bets — not a fresh analysis of whatever's in their account
-    // now. If they uploaded new bets between snapshot and purchase, those
-    // are NOT included; if they deleted some, those are still missing too.
-    // Either way, the contract is what they saw on the Buy CTA.
-    //
-    // Note: we don't override dateFrom/dateTo here. The snapshot's
-    // date_range_start/end are the *observed* range of analyzed bets, not
-    // the user-supplied filter — locking to them would be imperfect
-    // (backfilled bets in the same range still slip through) AND requires
-    // converting timestamptz → YYYY-MM-DD to satisfy the date-format
-    // regex above. Upload + sportsbook locks cover the realistic
-    // post-payment data-drift cases without that complexity.
-    //
-    // Legacy snapshots (analyzed_upload_ids === NULL — pre-migration rows)
-    // fall through to the body filter, preserving the old "analyze all
-    // current bets" behavior so existing rows keep working.
-    const typedPaid = paidReport as {
-      analyzed_upload_ids: string[] | null;
-      analyzed_sportsbook: string | null;
-    };
-    if (typedPaid.analyzed_upload_ids !== null) {
-      uploadIds = typedPaid.analyzed_upload_ids;
-      sportsbook = typedPaid.analyzed_sportsbook;
-    }
-    // Check if this paid snapshot was already used to generate a full report
-    const { count: existingFull } = await supabase
+    const { data: paidReport, error: paidReportError } = await supabase
       .from('autopsy_reports')
-      .select('id', { count: 'exact', head: true })
+      .select('id, report_type')
+      .eq('id', paidSnapshotId)
       .eq('user_id', user.id)
-      .eq('upgraded_from_snapshot_id', paidSnapshotId);
-    if ((existingFull ?? 0) > 0) {
+      .maybeSingle();
+    if (paidReportError) {
+      logErrorServer(paidReportError, {
+        path: '/api/analyze',
+        userId: user.id,
+        metadata: { stage: 'paid-snapshot-lookup', paidSnapshotId },
+      });
+      return NextResponse.json({ error: 'Failed to verify paid report.' }, { status: 500 });
+    }
+    if (!paidReport || paidReport.report_type !== 'snapshot') {
+      return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
+    }
+
+    const { data: fulfillment, error: fulfillmentError } = await supabase
+      .from('report_fulfillments')
+      .select('status, completed_report_id, paid_at')
+      .eq('snapshot_report_id', paidSnapshotId)
+      .maybeSingle();
+    if (fulfillmentError) {
+      logErrorServer(fulfillmentError, {
+        path: '/api/analyze',
+        userId: user.id,
+        metadata: { stage: 'paid-fulfillment-lookup', paidSnapshotId },
+      });
+      return NextResponse.json({ error: 'Failed to verify paid report.' }, { status: 500 });
+    }
+    if (!fulfillment?.paid_at) {
+      return NextResponse.json({ error: 'Payment required for full report.' }, { status: 402 });
+    }
+    if (fulfillment.status === 'completed' || fulfillment.completed_report_id) {
       return NextResponse.json({ error: 'This report has already been unlocked. View it in your report history.' }, { status: 400 });
     }
+
+    return NextResponse.json(
+      {
+        status: fulfillment.status,
+        message: 'Paid report fulfillment is already owned by the server.',
+      },
+      { status: 202 },
+    );
   } else if (tier === 'free' && reportType === 'full') {
     // Free user requesting full without a paid snapshot — downgrade to snapshot
     reportType = 'snapshot';
   }
 
   // Input validation
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const dateRegex = /^\d{4}-\d{2}-\d{2}/;
   if (dateFrom && (!dateRegex.test(dateFrom) || isNaN(Date.parse(dateFrom)))) {
     return NextResponse.json({ error: 'Invalid start date format.' }, { status: 400 });
@@ -221,52 +232,24 @@ export async function POST(request: Request) {
     }
   }
 
-  // Fetch bets
-  let query = supabase
-    .from('bets')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('placed_at', { ascending: true });
+  if (uploadIds.length === 1) filterLabel = 'upload';
+  else if (uploadIds.length > 1) filterLabel = 'uploads';
+  if (sportsbook) filterLabel = filterLabel || 'sportsbook';
 
-  if (uploadIds.length === 1) {
-    query = query.eq('upload_id', uploadIds[0]);
-    filterLabel = 'upload';
-  } else if (uploadIds.length > 1) {
-    query = query.in('upload_id', uploadIds);
-    filterLabel = 'uploads';
-  }
-  if (sportsbook) {
-    query = query.eq('sportsbook', sportsbook);
-    filterLabel = filterLabel || 'sportsbook';
-  }
-  if (dateFrom) {
-    query = query.gte('placed_at', new Date(dateFrom).toISOString());
-  }
-  if (dateTo) {
-    const endDate = new Date(dateTo);
-    endDate.setDate(endDate.getDate() + 1);
-    query = query.lt('placed_at', endDate.toISOString());
-  }
-
-  // Paginate to avoid Supabase default row limits
-  const allBets: Bet[] = [];
-  let fetchStart = 0;
-  const FETCH_PAGE = 1000;
-  let betsError: unknown = null;
-  while (true) {
-    const { data: page, error } = await query.range(fetchStart, fetchStart + FETCH_PAGE - 1);
-    if (error) { betsError = error; break; }
-    if (!page || page.length === 0) break;
-    allBets.push(...(page as Bet[]));
-    if (page.length < FETCH_PAGE) break;
-    fetchStart += FETCH_PAGE;
-  }
-
-  if (betsError) {
+  let bets: Bet[];
+  try {
+    bets = await resolveBetsForReportScope(supabase, {
+      userId: user.id,
+      analyzedBetIds,
+      uploadIds,
+      sportsbook,
+      dateFrom,
+      dateTo,
+    });
+  } catch (error) {
+    logErrorServer(error, { path: '/api/analyze', userId: user.id, metadata: { stage: 'resolve-cohort' } });
     return NextResponse.json({ error: 'Failed to fetch bets' }, { status: 500 });
   }
-
-  const bets = allBets;
 
   const betList = (bets ?? []) as Bet[];
 
@@ -371,10 +354,10 @@ export async function POST(request: Request) {
           && userQualifiesForPromo(typedProfile.created_at)
           && !hasUsedPromo;
 
-        // Free users get snapshots; full reports require Pro, payment, or promo
-        const hasPaidForFull = tier === 'free' && reportType === 'full' && !!paidSnapshotId;
-        const isSnapshot = promoEligible || hasPaidForFull
-          ? false // promo or paid users get a full report
+        // Free users get snapshots; full reports require Pro or the disabled
+        // legacy promo. Paid snapshot upgrades are owned by the worker above.
+        const isSnapshot = promoEligible
+          ? false
           : reportType === 'snapshot' || (tier === 'free' && reportType !== 'full');
         const effectiveReportType = isSnapshot ? 'snapshot' : reportType;
 
@@ -386,9 +369,74 @@ export async function POST(request: Request) {
         // look up.
         const reportId = crypto.randomUUID();
 
-        const { analysis, markdown, tokensUsed, model, drops } = isSnapshot
-          ? await runSnapshot(betsToAnalyze, userBankroll)
-          : await runAutopsy(betsToAnalyze, userBankroll, reportId);
+        if (!isSnapshot) {
+          const profileContext: FullReportProfileContext = {
+            email: typedProfile.email ?? user.email ?? null,
+            bankroll: userBankroll ?? null,
+            streak_count: typedProfile.streak_count ?? 0,
+            streak_last_date: typedProfile.streak_last_date ?? null,
+            streak_best: typedProfile.streak_best ?? 0,
+            streak_freezes: typedProfile.streak_freezes ?? 1,
+          };
+          const persistenceClient = createServiceRoleClient();
+
+          try {
+            const fullResult = await generateAndPersistFullReport({
+              supabase,
+              persistenceClient,
+              userId: user.id,
+              profile: profileContext,
+              bets: betsToAnalyze,
+              reportType: effectiveReportType,
+              analyzedUploadIds: uploadIds,
+              analyzedSportsbook: sportsbook,
+              reportCount: rptCount ?? 0,
+              recentUploadCount: recentUploadCount ?? 0,
+              previousSnapshot: prevSnap,
+              upgradedFromSnapshotId: paidSnapshotId,
+              reportId,
+              dropLogPath: '/api/analyze',
+              deferBackground: (promise) => waitUntil(promise),
+              beforePersist: tier === 'pro'
+                ? async () => {
+                    const { error: usageError } = await persistenceClient
+                      .from('profiles')
+                      .update({
+                        reports_used_this_period: (typedProfile.reports_used_this_period ?? 0) + 1,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', user.id);
+                    if (usageError) {
+                      throw new Error(`Failed to record report usage: ${usageError.message}`);
+                    }
+                  }
+                : undefined,
+            });
+
+            sendEvent('report_started', { report_id: fullResult.report.id });
+            waitUntil(maybeSendHeatedPush(user.id, fullResult.report.id, fullResult.analysis));
+            sendEvent('complete', {
+              report: fullResult.report,
+              tier_limited: tierLimited,
+              total_bets: totalBetCount,
+              analyzed_bets: betsToAnalyze,
+              filter: filterLabel || null,
+            });
+            return;
+          } catch (error) {
+            if (error instanceof FullReportPersistenceError) {
+              console.error('Failed to save report:', error.persistenceError);
+              sendEvent('error', { error: error.message });
+              return;
+            }
+            throw error;
+          }
+        }
+
+        const { analysis, markdown, tokensUsed, model, drops } = await runSnapshot(
+          betsToAnalyze,
+          userBankroll,
+        );
 
         const costCents = Math.ceil(tokensUsed * 0.001);
         const dateStart = betsToAnalyze[0]?.placed_at ?? null;
@@ -409,45 +457,6 @@ export async function POST(request: Request) {
             loss_chase_ratio: prevSnap.loss_chase_ratio,
           } : null,
         });
-        // settled-bet count drives the minimum-sample gates below. The
-        // shared engine functions (calculateBetIQ, calculateEnhancedTilt)
-        // self-gate internally; only the percentile wrappers need handling
-        // here because the route re-derives them after the engine call.
-        const settledCount = metricsForDiscipline.summary.wins + metricsForDiscipline.summary.losses;
-        const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
-        // Only overwrite for full reports - same rule as sport_specific_findings
-        // below, and the same bug class. runSnapshot already assembled its
-        // own correctly-redacted discipline_score (omitted entirely by
-        // design), betiq, enhanced_tilt, and insufficient_data flags;
-        // unconditionally recomputing and reassigning them here clobbered
-        // that for every snapshot report, writing a real discipline_score +
-        // percentile (with no isSnapshot gate at all, unlike the fix already
-        // applied to sport_specific_findings three lines below) into every
-        // free user's stored report_json. For snapshot mode the engine
-        // output is authoritative; only full mode falls through.
-        if (!isSnapshot) {
-          analysis.discipline_score = disciplineResult
-            ? (disciplineResult.insufficient_data
-                ? { ...disciplineResult }
-                : { ...disciplineResult, percentile: estimatePercentile('discipline_score', disciplineResult.total) })
-            : undefined;
-          analysis.betiq = calculateBetIQ(metricsForDiscipline, betsToAnalyze);
-          analysis.emotion_percentile = emotionInsufficient ? null : estimatePercentile('emotion_score', analysis.emotion_score, true);
-          analysis.emotion_score_insufficient_data = emotionInsufficient;
-          analysis.tilt_score_insufficient_data = emotionInsufficient;
-          analysis.enhanced_tilt = calculateEnhancedTilt(metricsForDiscipline, betsToAnalyze);
-        }
-        const sportFindings = detectSportSpecificPatterns(metricsForDiscipline, betsToAnalyze);
-        // Only overwrite for full reports. runSnapshot already assembled a
-        // redacted variant of sport_specific_findings (estimated_cost zeroed,
-        // evidence dollar-scrubbed, visibility tags applied); clobbering it
-        // here with raw findings is the exact wire-shape leak surfaced in
-        // iPhone QA on 2026-05-18 (snapshot 2d5e2936). For snapshot mode the
-        // engine output is authoritative; only full mode falls through.
-        if (!isSnapshot && sportFindings.length > 0) {
-          analysis.sport_specific_findings = sportFindings;
-        }
-
         // Check if user took the quiz — store quiz archetype for comparison
         try {
           const { data: quizLead } = await supabase
@@ -514,17 +523,6 @@ export async function POST(request: Request) {
           Sentry.captureException(err);
         }
 
-        // For Pro users running full reports, track usage
-        if (!isSnapshot && tier === 'pro') {
-          await supabase
-            .from('profiles')
-            .update({
-              reports_used_this_period: (typedProfile.reports_used_this_period ?? 0) + 1,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', user.id);
-        }
-
         // Save report. Use the service-role client specifically for this
         // INSERT: report_json is a multi-hundred-KB JSON blob, and the
         // anon role's 3s statement_timeout cancels it (Postgres 57014)
@@ -555,6 +553,12 @@ export async function POST(request: Request) {
             // analyzed_sportsbook is null when no sportsbook filter applied.
             analyzed_upload_ids: uploadIds,
             analyzed_sportsbook: sportsbook,
+            analyzed_bet_ids: betsToAnalyze.map((bet) => bet.id),
+            // Freeze the exact raw inputs alongside their IDs. Paid
+            // fulfillment prefers this immutable copy so account edits or
+            // deletions cannot change the report the customer purchased.
+            analyzed_bets_snapshot: betsToAnalyze,
+            report_summary: buildReportSummary(analysis),
             ...(paidSnapshotId ? { upgraded_from_snapshot_id: paidSnapshotId } : {}),
           })
           .select()

@@ -24,10 +24,10 @@ const LIST_LIMIT = 100;
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// List mode returns only columns the iOS Row decoder consumes (per Phase 1
-// recon: id, report_type, bet_count_analyzed, date_range_start/end,
-// created_at, report_json, plus upgraded_from_snapshot_id for D14 swap).
-// Dropped from select: user_id (iOS knows it), report_markdown (~5 KB/row
+// List mode returns only card data. Full report_json is deliberately absent
+// from this query; report_summary is a compact write-time projection and the
+// detail route loads the full payload on demand. Dropped from select:
+// user_id (iOS knows it), report_markdown (~5 KB/row
 // avg, 269 KB total for 58-report user), model_used, tokens_used,
 // cost_cents, stripe_payment_intent_id, analyzed_upload_ids. Adding a
 // column here requires confirming iOS Row consumes it.
@@ -43,10 +43,11 @@ const LIST_COLUMNS = [
   'date_range_start',
   'date_range_end',
   'created_at',
-  'report_json',
+  'report_summary',
   'upgraded_from_snapshot_id',
   'is_paid',
   'analyzed_sportsbook',
+  'fulfillment:report_fulfillments!report_fulfillments_snapshot_report_id_fkey(status,completed_report_id,next_attempt_at)',
 ].join(',');
 
 // Vercel function timeout safety. Default is 10s; the list query + slim
@@ -55,45 +56,58 @@ const LIST_COLUMNS = [
 // margin for the server-side work.
 export const maxDuration = 30;
 
-// Card-essential whitelist for list-mode report_json. iOS ReportListView
-// renders cards from these fields plus the top-level autopsy_reports columns
-// (case_number, created_at, bet_count_analyzed, date_range_start/end,
-// report_type). Detail view (/api/reports/:id) returns the full report_json
-// on tap; iOS lazy-fetches in ReportScrollView.
-//
-// To ADD a key here: confirm iOS card uses it AND that the key's avg size
-// is small (<1 KB). To REMOVE a key: confirm no iOS card site references it.
-// Keys missing from a row's report_json are simply absent from the slim
-// response (not nulled).
-//
-// Sizes (avg) per MCP measurement May 21 2026:
-//   betting_archetype 124B  betiq 376B  summary 232B  summaryCounts 176B
-//   discipline_score 150B  emotion_score 17B  emotion_percentile 17B
-//   tilt_score 17B  bankroll_health 15B  schema_version 17B
-//   _snapshot_counts 136B  _snapshot_teaser 1.3KB
-const LIST_REPORT_JSON_WHITELIST = [
-  'betting_archetype',
-  'betiq',
-  'summary',
-  'summaryCounts',
-  'discipline_score',
-  'emotion_score',
-  'emotion_percentile',
-  'tilt_score',
-  'bankroll_health',
-  'schema_version',
-  '_snapshot_counts',
-  '_snapshot_teaser',
-] as const;
+interface FulfillmentListRow {
+  status?: string | null;
+  completed_report_id?: string | null;
+  next_attempt_at?: string | null;
+}
 
-function slimReportJson(reportJson: unknown): Record<string, unknown> {
-  if (!reportJson || typeof reportJson !== 'object') return {};
-  const source = reportJson as Record<string, unknown>;
-  const slim: Record<string, unknown> = {};
-  for (const key of LIST_REPORT_JSON_WHITELIST) {
-    if (key in source) slim[key] = source[key];
-  }
-  return slim;
+const CARD_SEVERITIES = new Set(['low', 'medium', 'high', 'critical']);
+
+function toListRow(row: Record<string, unknown>): Record<string, unknown> {
+  const storedSummary = row.report_summary && typeof row.report_summary === 'object'
+    ? row.report_summary as Record<string, unknown>
+    : {};
+  const cardBiases = Array.isArray(storedSummary.card_biases)
+    ? storedSummary.card_biases.filter((bias) => {
+        if (!bias || typeof bias !== 'object') return false;
+        const candidate = bias as Record<string, unknown>;
+        return typeof candidate.bias_name === 'string'
+          && typeof candidate.severity === 'string'
+          && CARD_SEVERITIES.has(candidate.severity);
+      })
+      .slice(0, 3)
+      .map((bias) => {
+        const candidate = bias as Record<string, unknown>;
+        return { bias_name: candidate.bias_name, severity: candidate.severity };
+      })
+    : [];
+  const { card_biases: _cardBiases, ...reportSummary } = storedSummary;
+  void _cardBiases;
+  const rawFulfillment = Array.isArray(row.fulfillment)
+    ? row.fulfillment[0]
+    : row.fulfillment;
+  const fulfillment = rawFulfillment && typeof rawFulfillment === 'object'
+    ? rawFulfillment as FulfillmentListRow
+    : null;
+  const { report_summary: _summary, fulfillment: _fulfillment, ...card } = row;
+  void _summary;
+  void _fulfillment;
+
+  const paidStatus = fulfillment?.status && fulfillment.status !== 'unpaid'
+    ? fulfillment.status
+    : null;
+
+  return {
+    ...card,
+    // Keep the established additive wire key for native clients. It now
+    // contains the stored card projection, never a runtime-slimmed full row.
+    report_json: reportSummary,
+    card_biases: cardBiases,
+    fulfillment_status: paidStatus,
+    completed_report_id: fulfillment?.completed_report_id ?? null,
+    fulfillment_next_attempt_at: fulfillment?.next_attempt_at ?? null,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -143,8 +157,13 @@ export async function GET(request: NextRequest) {
     // certain ISP/NAT networks (quic_conn_keepalive timeouts) — first launch
     // fast, subsequent launches hang. Clearing the hint forces iOS back to
     // HTTP/2. Both branches set it; iOS hits this polling branch during IAP.
+    const publicReports = (data ?? []).map((report) => {
+      const { analyzed_bets_snapshot: _frozenBets, ...publicReport } = report as Record<string, unknown>;
+      void _frozenBets;
+      return publicReport;
+    });
     return NextResponse.json(
-      { reports: data ?? [] },
+      { reports: publicReports },
       { headers: { 'Alt-Svc': 'clear' } },
     );
   }
@@ -176,14 +195,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
-  // Slim each row's report_json to the card-essential whitelist. The heavy
-  // fields (bet_annotations ~2.5 MB, session_detection ~260 KB) are stripped;
-  // iOS lazy-fetches the full report via /api/reports/:id on detail-view tap.
+  // Convert the stored card projection back to the additive report_json key
+  // consumed by existing clients. Heavy detail fields never leave Postgres.
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
-  const slimmedReports = rows.map((row) => ({
-    ...row,
-    report_json: slimReportJson(row.report_json),
-  }));
+  const slimmedReports = rows.map(toListRow);
 
   const tSlimDone = performance.now();
 
