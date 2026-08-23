@@ -5,11 +5,11 @@ export default function BetsLoading() {
     <div className="space-y-6 animate-fade-in">
       <Skeleton className="h-8 w-40" />
       <div className="flex gap-3">
-        <Skeleton className="h-9 w-28 rounded-lg" />
-        <Skeleton className="h-9 w-28 rounded-lg" />
+        <Skeleton className="h-9 w-28 rounded-md" />
+        <Skeleton className="h-9 w-28 rounded-md" />
       </div>
       <div className="space-y-0">
-        <Skeleton className="h-10 rounded-t-lg" />
+        <Skeleton className="h-10 rounded-t-md" />
         {[...Array(8)].map((_, i) => (
           <Skeleton key={i} className="h-14 rounded-none" />
         ))}

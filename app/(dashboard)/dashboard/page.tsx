@@ -49,11 +49,11 @@ function gradeImproved(from: string, to: string): boolean {
 
 function gradeColor(grade: string): string {
   const g = grade.toUpperCase();
-  if (g.startsWith('A')) return 'text-win';
-  if (g.startsWith('B')) return 'text-win/70';
+  if (g.startsWith('A')) return 'text-scalpel';
+  if (g.startsWith('B')) return 'text-scalpel/70';
   if (g.startsWith('C')) return 'text-caution';
-  if (g.startsWith('D')) return 'text-orange-400';
-  return 'text-loss';
+  if (g.startsWith('D')) return 'text-fg-muted';
+  return 'text-fg-dim';
 }
 
 export default function DashboardPage() {
@@ -244,7 +244,7 @@ export default function DashboardPage() {
       date: snapshots.find((s) => s.tilt_score < 40)?.snapshot_date,
     },
     {
-      id: 'discipline_streak', label: 'Discipline Streak', icon: <Flame size={14} className="text-orange-400" />,
+      id: 'discipline_streak', label: 'Discipline Streak', icon: <Flame size={14} className="text-scalpel" />,
       criteria: '3 reports in a row with improving emotion score',
       earned: (() => {
         for (let i = 2; i < snapshots.length; i++) {
@@ -317,7 +317,7 @@ export default function DashboardPage() {
       const daysSinceStreak = Math.floor((Date.now() - new Date(streakLastDate).getTime()) / 86400000);
       const daysLeft = 21 - daysSinceStreak;
       if (daysSinceStreak >= 14 && daysLeft > 0) return {
-        icon: <Flame size={16} className="text-orange-400 shrink-0" />,
+        icon: <Flame size={16} className="text-scalpel shrink-0" />,
         message: `Your ${streakCount}-week streak is at risk. ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left to keep it alive.`,
         action: 'Run Autopsy',
         href: '/reports?run=true',
@@ -346,7 +346,7 @@ export default function DashboardPage() {
     };
     // 5. Streak start
     if (stats.reportCount > 0 && streakCount === 0) return {
-      icon: <Flame size={16} className="text-orange-400 shrink-0" />,
+      icon: <Flame size={16} className="text-scalpel shrink-0" />,
       message: 'Start your streak. Weekly check-ins unlock badges and keep you accountable.',
       action: 'Run Autopsy',
       href: '/reports?run=true',
@@ -657,14 +657,14 @@ export default function DashboardPage() {
                             <>
                               <div className="flex items-center gap-2 mb-2">
                                 <p className="case-header">{streakCount > 0 ? 'STREAK' : 'NO STREAK'}</p>
-                                {streakCount >= 3 && <Flame size={11} className="text-orange-400" />}
-                                {streakCount >= 10 && <Flame size={11} className="text-orange-400 -ml-1" />}
+                                {streakCount >= 3 && <Flame size={11} className="text-scalpel" />}
+                                {streakCount >= 10 && <Flame size={11} className="text-scalpel -ml-1" />}
                               </div>
                               <p className="text-2xl data-number text-fg-bright leading-none">
                                 {streakCount > 0 ? `${streakCount}w` : '—'}
                               </p>
                               <div className="flex items-center gap-2 text-[10px] text-fg-dim data-number mt-2 tracking-wider">
-                                <span className="flex items-center gap-1"><Snowflake size={9} className="text-cyan-400" />{streakFreezes}</span>
+                                <span className="flex items-center gap-1"><Snowflake size={9} className="text-fg-muted" />{streakFreezes}</span>
                                 {streakBest > 1 && <><span>·</span><span>BEST {streakBest}</span></>}
                                 {streakWeeks >= 2 && <><span>·</span><span>{streakWeeks} CONSEC</span></>}
                               </div>

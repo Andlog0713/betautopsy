@@ -25,7 +25,7 @@ export interface ShareCardData {
   emotionalRecord?: { bets: number; roi: number };
 }
 
-const SANS = "'Inter', -apple-system, sans-serif";
+const SANS = "'Plus Jakarta Sans', -apple-system, sans-serif";
 
 const ShareCard = forwardRef<HTMLDivElement, {
   data: ShareCardData;

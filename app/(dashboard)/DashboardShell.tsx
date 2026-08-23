@@ -116,7 +116,7 @@ export default function DashboardShell({
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
               aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={mobileNavOpen}
-              className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
+              className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-md hover:bg-surface-1 transition-colors"
             >
               {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -125,7 +125,7 @@ export default function DashboardShell({
             </Link>
           </div>
           {(profile?.streak_count ?? 0) > 0 && (
-            <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5"><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
+            <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5"><Flame size={10} className="text-scalpel" />{profile?.streak_count}</span>
           )}
         </div>
       </header>
@@ -136,7 +136,7 @@ export default function DashboardShell({
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-50 bg-black/50 md:hidden"
             onClick={() => setMobileNavOpen(false)}
           />
           {/* Panel */}
@@ -148,7 +148,7 @@ export default function DashboardShell({
               <button
                 onClick={() => setMobileNavOpen(false)}
                 aria-label="Close navigation"
-                className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
+                className="text-fg-dim hover:text-fg w-11 h-11 -m-2 flex items-center justify-center rounded-md hover:bg-surface-1 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -160,7 +160,7 @@ export default function DashboardShell({
                   key={item.href}
                   href={item.href}
                   onClick={handleMobileNavClick}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                       : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -177,7 +177,7 @@ export default function DashboardShell({
               <Link
                 href="/pricing"
                 onClick={() => setMobileNavOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                   isActive('/pricing')
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -193,7 +193,7 @@ export default function DashboardShell({
                   <Link
                     href="/admin/reports"
                     onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                       pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
                         ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                         : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -205,7 +205,7 @@ export default function DashboardShell({
                   <Link
                     href="/admin/feedback"
                     onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                       pathname === '/admin/feedback'
                         ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                         : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -224,7 +224,7 @@ export default function DashboardShell({
                   key={item.href}
                   href={item.href}
                   onClick={handleMobileNavClick}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
                       ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                       : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -244,7 +244,7 @@ export default function DashboardShell({
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="text-fg-dim hover:text-loss w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-surface-1 transition-colors"
+                  className="text-fg-dim hover:text-loss w-11 h-11 -m-2 flex items-center justify-center rounded-md hover:bg-surface-1 transition-colors"
                   aria-label="Sign out"
                 >
                   <LogOut size={16} />
@@ -272,7 +272,7 @@ export default function DashboardShell({
               href={item.href}
               title={item.label}
               onClick={handleDesktopNavClick}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                   : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -290,7 +290,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/reports"
                 title="Admin"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   pathname === '/admin/reports' || pathname.startsWith('/admin/reports/')
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -302,7 +302,7 @@ export default function DashboardShell({
               <Link
                 href="/admin/feedback"
                 title="Feedback"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   pathname === '/admin/feedback'
                     ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                     : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -319,7 +319,7 @@ export default function DashboardShell({
               href={item.href}
               title={item.label}
               onClick={handleDesktopNavClick}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 isActive(item.href)
                   ? 'bg-surface-2 text-fg-bright border-l-2 border-scalpel'
                   : 'text-fg-dim hover:text-fg-muted hover:bg-surface-1 border-l-2 border-transparent'
@@ -336,21 +336,21 @@ export default function DashboardShell({
             <Link
               href="/pricing"
               title="Get Full Report"
-              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-lg px-2 py-2 transition-colors border border-scalpel/20"
+              className="flex items-center justify-center gap-1.5 text-[11px] bg-scalpel-muted text-scalpel hover:bg-scalpel/15 rounded-md px-2 py-2 transition-colors border border-scalpel/20"
             >
               <ArrowUpRight size={14} />
               <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap font-mono tracking-wider">Get Full Report</span>
             </Link>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
+            <div className="w-7 h-7 rounded-md bg-surface-2 border border-border-subtle flex items-center justify-center text-[10px] font-mono font-medium text-fg-muted shrink-0">
               {(profile?.display_name?.[0] ?? profile?.email?.[0] ?? '?').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
               <div className="flex items-center gap-1.5">
                 <p className="font-mono text-[10px] text-fg truncate">{profile?.display_name ?? profile?.email}</p>
                 {(profile?.streak_count ?? 0) > 0 && (
-                  <span className="font-mono text-[9px] text-scalpel shrink-0 flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
+                  <span className="font-mono text-[9px] text-scalpel shrink-0 flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-scalpel" />{profile?.streak_count}</span>
                 )}
               </div>
               <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>
@@ -359,7 +359,7 @@ export default function DashboardShell({
               <EyeToggle />
               <button
                 onClick={handleSignOut}
-                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-lg hover:bg-surface-1"
+                className="text-fg-dim hover:text-loss transition-colors shrink-0 p-1 rounded-md hover:bg-surface-1"
                 title="Sign out"
               >
                 <LogOut size={16} />

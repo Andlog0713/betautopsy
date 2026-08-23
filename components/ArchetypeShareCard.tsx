@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import { getArchetypeByName } from '@/lib/archetypes';
 import type { ShareCardData } from './ShareCard';
 
-const FONT_HEADING = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const FONT_HEADING = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 const FONT_MONO = "'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace";
 
 /**

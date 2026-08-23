@@ -246,7 +246,7 @@ function InfoTip({ text }: { text: string }) {
   return (
     <span className="relative group inline-flex ml-1 align-middle">
       <Info size={11} className="text-fg-dim cursor-help" />
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-md bg-surface-2 border border-border text-[11px] text-fg-muted leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 shadow-lg">
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-md bg-surface-2 border border-border text-[11px] text-fg-muted leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
         {text}
       </span>
     </span>
@@ -916,7 +916,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div>
           <p className="font-mono text-[10px] text-fg-dim tracking-[2px] mb-1.5">
             AUTOPSY REPORT #{reportId ? `BA-${reportId.slice(0, 4).toUpperCase()}` : 'BA-LIVE'}
-            {analysis.dfs_mode && <span className="ml-2 text-purple-400">· {analysis.dfs_platform ?? 'DFS'}</span>}
+            {analysis.dfs_mode && <span className="ml-2 text-scalpel">· {analysis.dfs_platform ?? 'DFS'}</span>}
           </p>
           <p className="font-mono text-[10px] text-fg-dim tracking-[1px]">
             {summary.date_range.toUpperCase()} · {summary.total_bets} {analysis.dfs_mode ? 'ENTRIES' : 'SPECIMENS'} ANALYZED
@@ -1006,7 +1006,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
 
       {/* Mixed data banner */}
       {mixedDataInfo && !readOnly && (
-        <div className="card border-purple-500/20 bg-purple-500/5 p-5">
+        <div className="card border-scalpel/20 bg-scalpel/5 p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p className="text-fg-bright font-medium text-sm">This report includes both sportsbook bets and DFS pick&apos;em entries.</p>
@@ -1019,7 +1019,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                 </a>
               )}
               {mixedDataInfo.dfsBook && (
-                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.dfsBook)}`} className="text-xs font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-3 py-2 rounded-sm transition-colors">
+                <a href={`/reports?run=true&sportsbook=${encodeURIComponent(mixedDataInfo.dfsBook)}`} className="text-xs font-medium bg-scalpel/10 hover:bg-scalpel/20 text-scalpel px-3 py-2 rounded-sm transition-colors">
                   DFS Only
                 </a>
               )}
@@ -1033,8 +1033,8 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="card-tier-1 p-5 mb-5">
           <p className="font-mono text-[9px] text-fg-dim tracking-[2px] mb-1">SUBJECT CLASSIFICATION</p>
           <div className="flex items-center gap-2 mb-1">
-            <Fingerprint size={16} className="text-purple-400 shrink-0" />
-            <h2 className="font-bold text-xl text-purple-400">{analysis.betting_archetype.name}</h2>
+            <Fingerprint size={16} className="text-scalpel shrink-0" />
+            <h2 className="font-bold text-xl text-scalpel">{analysis.betting_archetype.name}</h2>
           </div>
           <div className="prose prose-invert prose-sm max-w-none prose-p:text-fg-muted prose-p:leading-relaxed prose-strong:text-fg-bright"><p className="text-[12px] text-fg-muted leading-relaxed">{analysis.betting_archetype.description}</p></div>
         </div>
@@ -2318,7 +2318,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
         <div className="card p-6">
           <div className="flex items-center gap-2 mb-1">
             <h2 className="font-semibold text-xl">Performance by Pick Count</h2>
-            <span className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full">DFS</span>
+            <span className="text-xs bg-scalpel/10 text-scalpel px-2 py-0.5 rounded-full">DFS</span>
           </div>
           <p className="text-fg-muted text-xs italic mb-4">Fewer picks = higher win rate. Where&apos;s your sweet spot?</p>
           <div className="overflow-x-auto">
@@ -2687,7 +2687,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
                             <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
+                              <div className="h-full rounded-full bg-scalpel" style={{ width: `${pct}%` }} />
                             </div>
                             {item.fix && (
                               <div className="pl-4 border-l border-l-scalpel/60 py-2">
@@ -3269,7 +3269,7 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                               <span className="text-fg-muted font-mono">{pct.toFixed(0)}%</span>
                             </div>
                             <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full bg-gradient-to-r from-loss to-scalpel" style={{ width: `${pct}%` }} />
+                              <div className="h-full rounded-full bg-scalpel" style={{ width: `${pct}%` }} />
                             </div>
                             {item.fix && (
                               <div className="pl-4 border-l border-l-scalpel/60 py-2">

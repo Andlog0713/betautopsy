@@ -32,11 +32,11 @@ interface AdminReport {
 
 function gradeColor(grade: string): string {
   const g = grade.toUpperCase();
-  if (g.startsWith('A')) return 'text-win';
-  if (g.startsWith('B')) return 'text-win/70';
-  if (g.startsWith('C')) return 'text-amber-400';
-  if (g.startsWith('D')) return 'text-orange-400';
-  return 'text-red-400';
+  if (g.startsWith('A')) return 'text-scalpel';
+  if (g.startsWith('B')) return 'text-scalpel/70';
+  if (g.startsWith('C')) return 'text-caution';
+  if (g.startsWith('D')) return 'text-fg-muted';
+  return 'text-fg-dim';
 }
 
 const tierBadge: Record<string, string> = {
@@ -135,7 +135,7 @@ export default function AdminReportsPage() {
       </div>
 
       {error && (
-        <div className="card p-4 border-red-400/30 bg-red-400/5 text-red-400 text-sm">
+        <div className="card p-4 border-caution/30 bg-caution/5 text-caution text-sm">
           {error}
         </div>
       )}
@@ -195,12 +195,12 @@ export default function AdminReportsPage() {
                       {r.bet_count_analyzed}
                     </td>
                     <td className={`px-4 py-3 text-right font-mono font-medium ${
-                      Number(r.total_profit) >= 0 ? 'text-win' : 'text-red-400'
+                      Number(r.total_profit) >= 0 ? 'text-win' : 'text-loss'
                     }`}>
                       {Number(r.total_profit) >= 0 ? '+' : ''}${Number(r.total_profit).toFixed(0)}
                     </td>
                     <td className={`px-4 py-3 text-right font-mono ${
-                      Number(r.roi_percent) >= 0 ? 'text-win' : 'text-red-400'
+                      Number(r.roi_percent) >= 0 ? 'text-win' : 'text-loss'
                     }`}>
                       {Number(r.roi_percent).toFixed(1)}%
                     </td>

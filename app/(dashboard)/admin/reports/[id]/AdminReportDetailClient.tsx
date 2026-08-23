@@ -88,7 +88,7 @@ export default function AdminReportDetailClient() {
   if (error || !report) {
     return (
       <div className="card p-8 text-center">
-        <p className="text-red-400 mb-4">{error || 'Report not found'}</p>
+        <p className="text-caution mb-4">{error || 'Report not found'}</p>
         <button
           onClick={() => router.push('/admin/reports')}
           className="text-scalpel hover:underline text-sm"

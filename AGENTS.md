@@ -140,9 +140,10 @@ timezone tests structurally unable to detect the bug they guarded.
   emerald, sky, rose, indigo, violet.
 - No bento grids, glassmorphism, shadcn defaults, emoji in UI strings, or
   hamburger menus on any viewport.
-- `npm run check:design` enforces this. It currently runs with
-  `STRICT = false` and 55 known violations. Clearing them and flipping
-  STRICT to true is open work.
+- `npm run check:design` enforces the mechanically detectable rules in
+  strict mode. It rejects off-palette utility colors, retired V2 colors and
+  fonts, backdrop blur, radii over 6px, gradient background utilities, and
+  shadows.
 
 ---
 
@@ -157,14 +158,14 @@ npm run build
 npm run check:design
 ```
 
-E2E: `npx playwright test` (mobile-regression suite, 24 cases across three
+E2E: `npx playwright test` (mobile-regression suite, 39 cases across three
 iPhone viewports).
 
 ## Infrastructure
 
 - **Vercel**: project `prj_r0wFxPCTLG4TTtfxq1eLlmd8Rl3X`, team
-  `team_xCaAzK3aMfuYVN88D27yxpRT`. CI pins Node 20; Vercel builds Node 24.
-  That mismatch is known and unresolved.
+  `team_xCaAzK3aMfuYVN88D27yxpRT`. npm, all three GitHub workflows, and
+  Vercel use Node `24.x`, enforced through `package.json` and `.npmrc`.
 - **Supabase**: project `eekubnadizmtuhnxzcig`. Free tier — it auto-paused
   once and took login down for eight days (2026-08-05 to 08-13). Migrations
   live in `supabase/migrations/`.

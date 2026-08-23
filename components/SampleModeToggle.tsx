@@ -15,7 +15,7 @@ export default function SampleModeToggle({ mode, onChange }: SampleModeTogglePro
           onClick={() => onChange('sportsbook')}
           className={`px-5 py-1.5 rounded-full font-mono text-xs tracking-wider transition-all duration-200 ${
             mode === 'sportsbook'
-              ? 'bg-scalpel text-white shadow-sm'
+              ? 'bg-scalpel text-[#0A0E12]'
               : 'text-fg-muted hover:text-fg'
           }`}
         >
@@ -25,7 +25,7 @@ export default function SampleModeToggle({ mode, onChange }: SampleModeTogglePro
           onClick={() => onChange('dfs')}
           className={`px-5 py-1.5 rounded-full font-mono text-xs tracking-wider transition-all duration-200 ${
             mode === 'dfs'
-              ? 'bg-purple-600 text-white shadow-sm'
+              ? 'bg-scalpel text-[#0A0E12]'
               : 'text-fg-muted hover:text-fg'
           }`}
         >

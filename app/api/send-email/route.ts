@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a">
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f5f5f5;width:100%">
 <tr><td align="center" style="padding:24px 16px">
-<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e5e5"><tbody>
+<table cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #e5e5e5"><tbody>
 
 <!-- Header -->
 <tr><td style="background-color:#0A0E12;padding:24px 32px">
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 
   <!-- CTA -->
   <div style="text-align:center;margin:32px 0">
-    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:16px;font-weight:700;padding:14px 40px;border-radius:10px;text-decoration:none">Go to Your Dashboard →</a>
+    <a href="https://www.betautopsy.com/dashboard" style="display:inline-block;background:#FACC15;color:#0A0E12;font-size:16px;font-weight:700;padding:14px 40px;border-radius:6px;text-decoration:none">Go to Your Dashboard →</a>
   </div>
 
   <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 8px">

@@ -201,7 +201,7 @@ export default function SettingsPage() {
             <a
               key={section}
               href={`#settings-${section.toLowerCase().replace(/\s+/g, '-')}`}
-              className="block text-sm text-fg-dim hover:text-fg-bright px-3 py-1.5 rounded-lg hover:bg-surface-1 transition-colors"
+              className="block text-sm text-fg-dim hover:text-fg-bright px-3 py-1.5 rounded-md hover:bg-surface-1 transition-colors"
             >
               {section}
             </a>
@@ -256,7 +256,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <span className="text-fg-muted">Freezes: </span>
-                <span className="text-fg-bright font-mono flex items-center gap-1"><Snowflake size={14} className="text-cyan-400" /> {profile?.streak_freezes ?? 1}</span>
+                <span className="text-fg-bright font-mono flex items-center gap-1"><Snowflake size={14} className="text-fg-muted" /> {profile?.streak_freezes ?? 1}</span>
               </div>
             </div>
           </div>

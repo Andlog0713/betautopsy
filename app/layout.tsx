@@ -160,9 +160,9 @@ export default function RootLayout({
          */}
         <ZoomGate />
         <ScrollToTop />
-        <NextTopLoader nonce={nonce} color="#FACC15" height={2} showSpinner={false} shadow="0 0 10px #FACC15,0 0 5px #FACC15" />
+        <NextTopLoader nonce={nonce} color="#FACC15" height={2} showSpinner={false} shadow={false} />
         <NoiseOverlay />
-        <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', color: '#e5e5e5', fontFamily: 'var(--font-jakarta)' } }} />
+        <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { background: '#131A20', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF3', fontFamily: 'var(--font-jakarta)' } }} />
         {process.env.NODE_ENV === 'production' && (
           <>
             <GoogleAnalytics nonce={nonce} />

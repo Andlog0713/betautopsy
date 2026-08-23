@@ -145,8 +145,6 @@ export default function LandingPage() {
           Works with
         </p>
         <div className="relative">
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-base to-transparent z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-base to-transparent z-10" />
           <LogoScroll />
         </div>
       </section>
@@ -203,7 +201,6 @@ export default function LandingPage() {
           which reads as broken rather than as a design choice. Renders
           immediately instead. */}
       <section className="bg-surface-2 border-y border-border-subtle py-16 md:py-20 relative overflow-hidden" id="sample">
-        <div className="absolute -top-10 -left-20 w-[400px] h-[300px] bg-cyan-500/[0.08] rounded-full blur-[100px] pointer-events-none z-0" />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="case-header mb-3">EXHIBIT A // PRO TIER SAMPLE</div>
           <h2 className="font-extrabold text-2xl md:text-3xl tracking-tight text-fg-bright mb-3">
@@ -214,9 +211,9 @@ export default function LandingPage() {
           </p>
           <div className="border border-border-subtle rounded-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle bg-surface-1">
-              <div className="w-2 h-2 rounded-full bg-loss" />
-              <div className="w-2 h-2 rounded-full bg-caution" />
-              <div className="w-2 h-2 rounded-full bg-win" />
+              <div className="w-2 h-2 rounded-full bg-border-strong" />
+              <div className="w-2 h-2 rounded-full bg-fg-dim" />
+              <div className="w-2 h-2 rounded-full bg-scalpel" />
               <span className="flex-1 text-center font-mono text-[10px] text-fg-dim tracking-wider">betautopsy.com/reports</span>
             </div>
             <DemoReportWrapper />

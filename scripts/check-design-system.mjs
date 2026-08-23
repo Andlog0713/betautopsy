@@ -1,18 +1,13 @@
 #!/usr/bin/env node
 /**
- * Warning-level design-system lint.
+ * Strict design-system lint.
  *
  * Greps `app/` and `components/` for tokens that violate the
  * BetAutopsy forensic spec — off-palette Tailwind colors, soft
  * shadows / glass blur, oversized rounded corners, gradients.
  * Each match is printed as a GitHub Actions `::warning::`
  * annotation so the offending file/line is surfaced in the PR
- * checks UI without failing the build.
- *
- * The script intentionally exits 0 today. A follow-up branch — once
- * the sweep PR clears the existing 51 off-palette color usages and
- * ~41 oversized-radius hits surfaced in `MOBILE_AUDIT.md` — flips
- * `STRICT` to true so new violations break CI.
+ * checks UI and fails the build when a violation is present.
  *
  * Run locally:    node scripts/check-design-system.mjs
  * Or via npm:     npm run check:design
@@ -22,7 +17,7 @@ import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const TARGETS = ['app', 'components'];
-const STRICT = false; // flip to true after the color sweep lands
+const STRICT = true;
 
 const PATTERNS = [
   {
@@ -30,15 +25,23 @@ const PATTERNS = [
     // Off-palette Tailwind color families. Design system tokens are
     // bleed/scalpel/win/loss/caution/fg/bg/tier — anything else slips
     // back into shadcn defaults.
-    re: /\b(?:text|bg|border|ring|fill|stroke|from|to|via|decoration|outline|divide|placeholder|caret|accent)-(amber|orange|cyan|purple|pink|fuchsia|emerald|sky|rose|indigo|violet|lime|yellow|teal|blue)-\d{2,3}\b/g,
+    re: /\b(?:text|bg|border|ring|fill|stroke|from|to|via|decoration|outline|divide|placeholder|caret|accent)-(amber|orange|cyan|purple|pink|fuchsia|emerald|sky|rose|indigo|violet|lime|yellow|teal|blue|red|green)-\d{2,3}\b/g,
+  },
+  {
+    name: 'retired-brand-color',
+    re: /#(?:00c9a7|e8453c|0d1117)\b|rgba?\(\s*0\s*,\s*201\s*,\s*167\b/gi,
+  },
+  {
+    name: 'retired-font',
+    re: /\bInter\b/g,
   },
   {
     name: 'backdrop-blur',
-    re: /\bbackdrop-blur(?:-(?:none|sm|md|lg|xl|2xl|3xl))?\b/g,
+    re: /\bbackdrop-blur(?:-(?:none|sm|md|lg|xl|2xl|3xl))?\b|\bbackdrop-filter\s*:/g,
   },
   {
     name: 'oversized-radius',
-    re: /\brounded(?:-[a-z]+)?-(2xl|3xl)\b/g,
+    re: /\brounded(?:-[a-z]+)?-(lg|xl|2xl|3xl)\b|\bborder-radius\s*:\s*(?:[7-9](?:\.\d+)?|[1-9]\d+(?:\.\d+)?)px\b/g,
   },
   {
     name: 'gradient-bg',
@@ -46,7 +49,7 @@ const PATTERNS = [
   },
   {
     name: 'soft-shadow',
-    re: /\bshadow-(sm|md|lg|xl|2xl|inner)\b/g,
+    re: /\bshadow-(sm|md|lg|xl|2xl|inner)\b|\bbox-shadow\s*:|\bshadow\s*=(?!\{false\})/g,
   },
 ];
 
@@ -95,6 +98,12 @@ console.log(`design-system check — ${total} violation(s)`);
 for (const [name, count] of Object.entries(byPattern)) {
   if (count > 0) console.log(`  ${name.padEnd(20)} ${count}`);
 }
-console.log(STRICT ? '\nstrict mode: failing build' : '\nwarning mode: not failing build');
+console.log(
+  STRICT
+    ? total > 0
+      ? '\nstrict mode: failing build'
+      : '\nstrict mode: enabled'
+    : '\nwarning mode: not failing build'
+);
 
 process.exit(STRICT && total > 0 ? 1 : 0);

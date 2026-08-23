@@ -67,7 +67,7 @@ export default function NavBar() {
         style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 44px) + 12px)' }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <nav className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.08] rounded-full px-6 h-14 md:h-[72px] flex items-center justify-between">
+          <nav className="bg-surface-1 border border-border-subtle rounded-full px-6 h-14 md:h-[72px] flex items-center justify-between">
             {/* Logo — wrapper expands to 44pt min-height so the tap zone meets
                 Apple HIG without changing the rendered Logo glyph size. */}
             <Link
@@ -114,9 +114,9 @@ export default function NavBar() {
               ) : user ? (
                 <div className="flex items-center gap-3">
                   {(profile?.streak_count ?? 0) > 0 && (
-                    <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-orange-400" />{profile?.streak_count}</span>
+                    <span className="font-mono text-[10px] text-scalpel flex items-center gap-0.5" title={`${profile?.streak_count}-week autopsy streak`}><Flame size={10} className="text-scalpel" />{profile?.streak_count}</span>
                   )}
-                  <Link href="/dashboard" className="text-sm font-medium text-[#f6f0ff] hover:text-scalpel transition-colors hidden sm:block">
+                  <Link href="/dashboard" className="text-sm font-medium text-fg hover:text-scalpel transition-colors hidden sm:block">
                     Dashboard
                   </Link>
                   <div className="relative" ref={menuRef}>
@@ -127,7 +127,7 @@ export default function NavBar() {
                       {initial}
                     </button>
                     {menuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-surface-2 border border-border-subtle rounded-lg p-1 animate-fade-in z-50">
+                      <div className="absolute right-0 mt-2 w-48 bg-surface-2 border border-border-subtle rounded-md p-1 animate-fade-in z-50">
                         <div className="px-3 py-2 border-b border-border-subtle mb-1">
                           <p className="font-mono text-xs text-fg-muted truncate">{user.email}</p>
                           <span className="font-mono text-[9px] tracking-wider uppercase text-scalpel">{tier}</span>

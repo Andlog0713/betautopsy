@@ -49,7 +49,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
   }
 
   return (
-    <div className="sticky top-0 z-30 bg-base/80 backdrop-blur-xl border-b border-border-subtle -mx-1 px-1">
+    <div className="sticky top-0 z-30 bg-base border-b border-border-subtle -mx-1 px-1">
       <nav className="flex items-center gap-0 overflow-x-auto scrollbar-hide py-2">
         {CHAPTERS.map((ch, i) => {
           const isActive = activeChapter === ch.id;
@@ -79,7 +79,7 @@ export default function ChapterNav({ tier = 'free', onSharpClick, readOnly = fal
                 onSharpClick();
               }
             }}
-            className="relative flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors text-cyan-400/60 hover:text-cyan-400"
+            className="relative flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors text-scalpel/60 hover:text-scalpel"
           >
             <span className="font-mono text-[9px] text-fg-dim/40">06</span>
             <span className="hidden sm:inline">TOOLS</span>

@@ -84,7 +84,7 @@ export default function SamplePage() {
                 const Icon = ch.icon;
                 return (
                   <div key={ch.num} className="case-card p-5 flex items-start gap-4 border-l-2 border-l-scalpel">
-                    <div className="w-10 h-10 rounded-lg bg-scalpel/10 border border-scalpel/20 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-scalpel/10 border border-scalpel/20 flex items-center justify-center shrink-0">
                       <Icon size={18} className="text-scalpel" />
                     </div>
                     <div className="min-w-0">

@@ -2,7 +2,10 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `52b8805`,
+**Production**: `main` is on squash-merge commit `1217a10`,
+[PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
+the false-positive `/pricing` mobile cases with authenticated coverage of the
+real page, locked $19.99 copy, and final URL. It includes
 [PR #123](https://github.com/Andlog0713/betautopsy/pull/123), which aligns
 npm, all three GitHub workflows, and Vercel on Node `24.x` with strict engine
 enforcement. It includes [PR #122](https://github.com/Andlog0713/betautopsy/pull/122), which adds
@@ -30,17 +33,18 @@ preview → confirm → commit flow is
 verified in a browser with the real DraftKings export: the preview showed
 "499 rows in your file → 200 bets," and the resulting report showed
 -15.82% ROI, an exact match to ground truth. The listed merge blocker is
-cleared. Full history of this arc is logged under "Current branch:
+cleared. Full history of this arc is logged under "Previous branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: branch `codex/fix-pricing-e2e` replaces the three false-positive
-`/pricing` mobile cases that silently followed the client auth redirect and
-tested `/login`. The dedicated pricing case uses a synthetic local session,
-mocks only browser-side Supabase reads, asserts the final URL and locked
-pricing copy, then runs the existing overflow, tap-target, and safe-area
-checks across all three iPhone projects. That real route exposed two hidden
-tap-target failures; the mobile logo link now has a 44px minimum height and
-the vertical Feedback tab has a 44px minimum width.
+**In flight**: branch `codex/enforce-design-system` clears the 52 listed design
+violations plus 55 equivalent violations the warning-only checker missed.
+The checker now rejects larger named and raw CSS radii, raw shadows, Tailwind
+red and green families, retired V2 colors, and Inter in addition to its prior
+rules. All reported findings are at zero and `STRICT = true`. Visual checks of
+the landing page, collapsed sample gate, full sample, and mobile layouts show
+the flat surfaces, 6px cards, yellow actions, and neutral secondary states
+rendering without overflow or content loss. All four gates and the full
+39-case Playwright suite pass. The branch is ready for PR review.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -74,8 +78,6 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **Design-system enforcement**: 52 known violations remain, and
-  `check:design` still runs with `STRICT = false`.
 - **Supabase availability**: staying on the free tier is Andrew's call for
   now, not a bug. It remains a known risk because auto-pause killed login
   for eight days in August 2026.
@@ -189,7 +191,34 @@ Andrew first.
 
 ---
 
-## Current branch: `docs/wire-provenance-standing-rule` — Claude-numeric-field audit fixes + Phase 1/2 batch (2026-08-18)
+## Current branch: `codex/enforce-design-system` (2026-08-23)
+
+### Done this session
+
+- Confirmed PR #124 merged to `main` as `1217a10` before branching.
+- Proved strict mode discriminates: enabling it against the starting tree
+  failed on 95 violations.
+- Cleared the original 52 findings plus 43 radius and raw-shadow forms the
+  checker missed. Added enforcement for five Tailwind red/green utilities and
+  seven retired V2 color/font references, bringing the corrected total to 107.
+- Standardized approved UI treatments: yellow for actions and DFS accents,
+  neutral text for non-financial state, flat surfaces, and a 6px maximum card
+  radius. Grade displays no longer use money red/green for letter grades.
+- Removed the landing report's gradient gate without changing its collapsed
+  disclosure behavior. Replaced shimmer gradients with a flat pulse skeleton.
+- React review found no hook, event, accessibility, rendering, or data-flow
+  regressions. The changes are class and style substitutions except for
+  simplifying the decorative shiny-text and skeleton implementations.
+- Stabilized the CSP browser test after two full runs and a 15-run stress check
+  proved WebKit does not reliably mirror blocked handlers to the console. The
+  test now asserts the security behavior itself: the injected handler cannot
+  set its window flag. Removing CSP makes that assertion fail.
+- Typecheck, 595 unit tests, production build, and strict design check pass.
+  Visual QA passed on desktop and mobile landing and sample surfaces. The CSP
+  case passed 15 repeated runs, and the final full Playwright run passed all 39
+  cases across the three iPhone projects.
+
+## Previous branch: `docs/wire-provenance-standing-rule` - Claude-numeric-field audit fixes + Phase 1/2 batch (2026-08-18)
 
 PRs #93-#108 merged/open. This entry covers the audit batch and the
 lettered A-F batch that followed it (Part 1's security work and the
