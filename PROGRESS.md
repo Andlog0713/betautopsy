@@ -2,7 +2,10 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `45fe069`,
+**Production**: `main` is on squash-merge commit `9ccbc9f`,
+[PR #110](https://github.com/Andlog0713/betautopsy/pull/110), which restores
+the cross-session delete control for active share links without minting a
+link on modal open. It includes
 [PR #121](https://github.com/Andlog0713/betautopsy/pull/121), which enforces
 a request-nonced CSP. Production scripts have neither `unsafe-inline` nor
 `unsafe-eval`; API and other non-document responses receive a deny-all
@@ -20,17 +23,15 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: [PR #110](https://github.com/Andlog0713/betautopsy/pull/110),
-branch `fix/share-modal-fetch-existing-link`, is rebased on `45fe069`. It
-adds an authenticated, read-only lookup for an already-active share token so
-reopening ShareModal shows the promised "Delete shared link" control without
-minting or reactivating a public URL merely by opening the modal. The lookup
-is scoped to both `report_id` and the caller's `user_id`. API tests cover
-authentication, ownership, active, revoked, and absent tokens. A rendered UI
-test covers lookup, delete, and the no-POST-on-mount consent invariant, and
-fails when the mount lookup is removed. The final tree passes all four gates:
-TypeScript, 588 Vitest tests across 47 files, production build, and the design
-check with its 52 known warnings in non-strict mode.
+**In flight**: [PR #112](https://github.com/Andlog0713/betautopsy/pull/112),
+branch `fix/whatchanged-zero-baseline`, is rebased on `9ccbc9f` and redesigned
+to remove its fabricated `deltaPercent: 100` placeholder. Existing
+`topImpactDeltas` and their required, computed `deltaPercent` remain
+unchanged for shipping clients. Material impacts with a confirmed-zero or
+absent prior baseline now use the additive optional `newImpactFindings`
+sibling, with a categorical baseline and real current impact but no percent
+field. Missing prior cost remains unknown and is skipped. Targeted tests fail
+when the old zero-baseline skip is restored.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -64,10 +65,6 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **What Changed zero baseline**: open PR #112 currently fabricates
-  `deltaPercent: 100` when a bias has no prior nonzero baseline. Redesign it
-  so the wire represents "new" without inventing a percentage, then refresh
-  the PR after #110 merges.
 - **Design-system enforcement**: 52 known violations remain, and
   `check:design` still runs with `STRICT = false`.
 - **Pricing E2E coverage**: three `/pricing` cases actually exercise

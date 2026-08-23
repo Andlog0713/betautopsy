@@ -543,12 +543,24 @@ export interface ImpactDelta {
   confidence: 'high' | 'medium' | 'low';
 }
 
+export interface NewImpactFinding {
+  biasName: string;
+  currentImpact: number;
+  baseline: 'not_previously_detected' | 'confirmed_zero';
+  confidence: 'high' | 'medium' | 'low';
+}
+
 export interface WhatChanged {
   previousReportDate: string;
   daysSincePrevious: number;
   archetypeChange?: ArchetypeChange;
   betIQDelta?: BetIQDelta;
   topImpactDeltas?: ImpactDelta[];
+  // Additive sibling for material current impacts that have no nonzero
+  // denominator. Existing ImpactDelta stays unchanged so shipping clients
+  // can keep decoding its required deltaPercent. New findings omit a
+  // percentage entirely instead of carrying a numeric placeholder.
+  newImpactFindings?: NewImpactFinding[];
   // True when the compared reports were generated under different
   // report_json schema_versions (absent version = 1). A delta across the
   // boundary can reflect the engine's shape change (e.g. v3's bias dedup)

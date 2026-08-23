@@ -210,6 +210,7 @@ describe('computeWhatChanged', () => {
       const result = computeWhatChanged(prev, curr);
       expect(result).toBeDefined();
       expect(result?.topImpactDeltas).toBeUndefined();
+      expect(result?.newImpactFindings).toBeUndefined();
       expect(result?.betIQDelta).toEqual({ from: 50, to: 55, direction: 'improved' });
     });
   });
@@ -260,6 +261,94 @@ describe('computeWhatChanged', () => {
       expect(result?.topImpactDeltas).toHaveLength(3);
       const names = result?.topImpactDeltas?.map(d => d.biasName);
       expect(names).toEqual(['B', 'C', 'A']);
+    });
+  });
+
+  describe('W9 - zero or absent impact baseline', () => {
+    it('surfaces a confirmed zero baseline without inventing a percentage', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Loss Chasing', estimated_cost: 0 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Loss Chasing', estimated_cost: 900 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.topImpactDeltas).toBeUndefined();
+      expect(result?.newImpactFindings).toHaveLength(1);
+      expect(result?.newImpactFindings?.[0]).toEqual({
+        biasName: 'Loss Chasing',
+        currentImpact: 900,
+        baseline: 'confirmed_zero',
+        confidence: 'high',
+      });
+      expect(result?.newImpactFindings?.[0]).not.toHaveProperty('deltaPercent');
+    });
+
+    it('keeps an absent baseline distinct from a confirmed zero', () => {
+      const prev = makeInput(makeAnalysis({ biases_detected: [] }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Parlay Addiction', estimated_cost: 1200 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.newImpactFindings?.[0]).toEqual({
+        biasName: 'Parlay Addiction',
+        currentImpact: 1200,
+        baseline: 'not_previously_detected',
+        confidence: 'high',
+      });
+      expect(result?.newImpactFindings?.[0]).not.toHaveProperty('previousImpact');
+      expect(result?.newImpactFindings?.[0]).not.toHaveProperty('deltaPercent');
+    });
+
+    it('does not surface a trivial new bias under the absolute threshold', () => {
+      const prev = makeInput(makeAnalysis({ biases_detected: [] }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Minor Bias', estimated_cost: 50 })],
+      }));
+      expect(computeWhatChanged(prev, curr)).toBeUndefined();
+    });
+
+    it('leaves normal nonzero deltas unchanged', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', estimated_cost: 3200 })],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [makeBias({ bias_name: 'Post-Loss Escalation', estimated_cost: 1800 })],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.newImpactFindings).toBeUndefined();
+      expect(result?.topImpactDeltas?.[0].deltaPercent).toBe(-44);
+    });
+
+    it('keeps new findings separate so older consumers retain normal deltas', () => {
+      const prev = makeInput(makeAnalysis({
+        biases_detected: [
+          makeBias({ bias_name: 'Small Existing Delta', estimated_cost: 1000 }),
+        ],
+      }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [
+          makeBias({ bias_name: 'Small Existing Delta', estimated_cost: 600 }),  // |Δ|=400
+          makeBias({ bias_name: 'Brand New Bias', estimated_cost: 2000 }),       // |Δ|=2000
+        ],
+      }));
+      const result = computeWhatChanged(prev, curr);
+      expect(result?.topImpactDeltas?.map((d) => d.biasName)).toEqual(['Small Existing Delta']);
+      expect(result?.newImpactFindings?.map((d) => d.biasName)).toEqual(['Brand New Bias']);
+    });
+
+    it('sorts new findings by current impact and caps them at three', () => {
+      const prev = makeInput(makeAnalysis({ biases_detected: [] }));
+      const curr = makeInput(makeAnalysis({
+        biases_detected: [
+          makeBias({ bias_name: 'A', estimated_cost: 600 }),
+          makeBias({ bias_name: 'B', estimated_cost: 900 }),
+          makeBias({ bias_name: 'C', estimated_cost: 1200 }),
+          makeBias({ bias_name: 'D', estimated_cost: 1500 }),
+        ],
+      }));
+      const names = computeWhatChanged(prev, curr)?.newImpactFindings?.map((d) => d.biasName);
+      expect(names).toEqual(['D', 'C', 'B']);
     });
   });
 

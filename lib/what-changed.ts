@@ -2,6 +2,7 @@ import type {
   AutopsyAnalysis,
   BetIQDelta,
   ImpactDelta,
+  NewImpactFinding,
   WhatChanged,
 } from '@/types';
 
@@ -63,28 +64,57 @@ function computeBetIQDelta(
   return { from: prev, to: curr, direction };
 }
 
-function computeTopImpactDeltas(
+function computeImpactChanges(
   previous: WhatChangedInput,
   current: WhatChangedInput,
-): ImpactDelta[] {
+): {
+  topImpactDeltas: ImpactDelta[];
+  newImpactFindings: NewImpactFinding[];
+} {
   const prevBiases = previous.analysis.biases_detected ?? [];
   const currBiases = current.analysis.biases_detected ?? [];
-  if (prevBiases.length === 0 || currBiases.length === 0) return [];
+  if (currBiases.length === 0) {
+    return { topImpactDeltas: [], newImpactFindings: [] };
+  }
 
+  // Track names separately from numeric costs. A prior finding with an
+  // unknown cost is an unknown baseline, not a zero or absent baseline.
   const prevByName = new Map<string, number>();
+  const prevNames = new Set<string>();
   for (const b of prevBiases) {
-    if (typeof b.estimated_cost === 'number' && b.bias_name) {
-      prevByName.set(b.bias_name.toLowerCase(), b.estimated_cost);
+    if (!b.bias_name) continue;
+    const key = b.bias_name.toLowerCase();
+    prevNames.add(key);
+    if (typeof b.estimated_cost === 'number') {
+      prevByName.set(key, b.estimated_cost);
     }
   }
 
   const confidence = confidenceFor(previous.betCountAnalyzed, current.betCountAnalyzed);
   const candidates: ImpactDelta[] = [];
+  const newCandidates: NewImpactFinding[] = [];
 
   for (const c of currBiases) {
     if (typeof c.estimated_cost !== 'number' || !c.bias_name) continue;
-    const prevImpact = prevByName.get(c.bias_name.toLowerCase());
-    if (typeof prevImpact !== 'number' || prevImpact === 0) continue;
+    const key = c.bias_name.toLowerCase();
+    const prevImpact = prevByName.get(key);
+
+    // A finding with an unknown prior cost cannot support any numeric
+    // comparison. Keep unknown as unknown and skip it.
+    if (typeof prevImpact !== 'number' && prevNames.has(key)) continue;
+
+    if (typeof prevImpact !== 'number' || prevImpact === 0) {
+      if (c.estimated_cost < IMPACT_ABS_THRESHOLD) continue;
+      newCandidates.push({
+        biasName: c.bias_name,
+        currentImpact: c.estimated_cost,
+        baseline: typeof prevImpact === 'number'
+          ? 'confirmed_zero'
+          : 'not_previously_detected',
+        confidence,
+      });
+      continue;
+    }
 
     const delta = c.estimated_cost - prevImpact;
     const passesRelative = Math.abs(delta) >= IMPACT_REL_THRESHOLD * Math.abs(prevImpact);
@@ -105,8 +135,12 @@ function computeTopImpactDeltas(
     const bAbs = Math.abs(b.currentImpact - b.previousImpact);
     return bAbs - aAbs;
   });
+  newCandidates.sort((a, b) => Math.abs(b.currentImpact) - Math.abs(a.currentImpact));
 
-  return candidates.slice(0, MAX_IMPACT_DELTAS);
+  return {
+    topImpactDeltas: candidates.slice(0, MAX_IMPACT_DELTAS),
+    newImpactFindings: newCandidates.slice(0, MAX_IMPACT_DELTAS),
+  };
 }
 
 export function computeWhatChanged(
@@ -117,11 +151,16 @@ export function computeWhatChanged(
 
   const archetypeChange = computeArchetypeChange(previous.analysis, current.analysis);
   const betIQDelta = computeBetIQDelta(previous.analysis, current.analysis);
-  const topImpactDeltas = computeTopImpactDeltas(previous, current);
+  const { topImpactDeltas, newImpactFindings } = computeImpactChanges(previous, current);
 
   // Tighten: if no substantive deltas survive the thresholds, omit the
   // whole whatChanged field — empty cards are not a useful signal.
-  if (!archetypeChange && !betIQDelta && topImpactDeltas.length === 0) {
+  if (
+    !archetypeChange
+    && !betIQDelta
+    && topImpactDeltas.length === 0
+    && newImpactFindings.length === 0
+  ) {
     return undefined;
   }
 
@@ -132,6 +171,7 @@ export function computeWhatChanged(
   if (archetypeChange) result.archetypeChange = archetypeChange;
   if (betIQDelta) result.betIQDelta = betIQDelta;
   if (topImpactDeltas.length > 0) result.topImpactDeltas = topImpactDeltas;
+  if (newImpactFindings.length > 0) result.newImpactFindings = newImpactFindings;
 
   // Cross-version annotation: deltas spanning a schema_version boundary can
   // reflect the engine's shape change (e.g. v3 bias dedup collapsing a
