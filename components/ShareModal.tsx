@@ -7,7 +7,7 @@ import { toPng } from 'html-to-image';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import ShareCard, { type ShareCardData } from './ShareCard';
 import ArchetypeShareCard from './ArchetypeShareCard';
-import { apiPost, apiDelete } from '@/lib/api-client';
+import { apiPost, apiGet, apiDelete } from '@/lib/api-client';
 import { getArchetypeByName } from '@/lib/archetypes';
 import {
   StorySlidePersonality, StorySlideBehavioral, StorySlideReceipt, StorySlideCTA,
@@ -79,6 +79,30 @@ export default function ShareModal({
     }
   }, [reportId, shareUrl]);
 
+  // Fetch-on-mount: a link shared in a PAST session (this component
+  // remounts fresh every time the modal opens, shareUrl starts null) still
+  // needs its "Delete shared link" control to show, not just one minted
+  // this session. GET is read-only - unlike ensureShareUrl's POST, it
+  // never mints or re-activates anything, so this doesn't create a link
+  // just by opening the modal to look.
+  useEffect(() => {
+    if (!reportId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiGet(`/api/share?report_id=${encodeURIComponent(reportId)}`);
+        const result = await res.json();
+        if (!cancelled && result.share_id) {
+          setShareUrl(`${window.location.origin}/share/${result.share_id}`);
+        }
+      } catch {
+        // Silent - worst case the delete control just doesn't appear until
+        // the user re-shares, same as the pre-fix behavior.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reportId]);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', h);
@@ -136,9 +160,11 @@ export default function ShareModal({
   // Wires Privacy Policy §6's "you can delete shared reports at any time"
   // claim to an actual control - the DELETE /api/share endpoint has existed
   // since the share-token-consent migration, but nothing in the UI ever
-  // called it. Only meaningful once a link exists in this session
-  // (shareUrl set via Copy link / Post on X); revoking clears local state
-  // so the button reverts to "Copy report link" for a fresh mint.
+  // called it. shareUrl is populated either by minting/re-fetching this
+  // session (Copy link / Post on X) or by the fetch-on-mount check above
+  // finding an already-active link from a past session; revoking clears
+  // local state so the button reverts to "Copy report link" for a fresh
+  // mint either way.
   async function handleRevokeLink() {
     if (!reportId || !shareUrl) return;
     setRevoking(true);
