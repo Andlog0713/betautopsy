@@ -400,7 +400,7 @@ export default function BetsPage() {
                         );
                       })()}
                       {bet.is_bonus_bet && (
-                        <span className="ml-2 text-xs bg-amber-500/10 text-caution px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs bg-scalpel-muted text-caution px-1.5 py-0.5 rounded">
                           Bonus
                         </span>
                       )}
@@ -521,7 +521,7 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
         </button>
       ) : (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-base/80" onClick={() => { setShowConfirm(false); setConfirmText(''); }}>
-          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-red-400/20 bg-surface-1 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
+          <div role="alertdialog" aria-modal="true" aria-label="Confirm delete all bets" className="card border-caution/20 bg-surface-1 p-6 max-w-md space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-lg text-fg-bright">Clear All Bets</h3>
             <p className="text-sm text-fg-bright">
               This will permanently delete all <span className="font-mono font-medium">{betCount}</span> of

@@ -34,15 +34,6 @@
   to { transform: translateX(calc(-100% - 0.5rem)); }
 }
 
-/* Mobile animation performance */
-@media (max-width: 768px) {
-  .animate-shiny-text {
-    animation: none !important;
-    background: none !important;
-  }
-}
-
-
 @layer base {
   html {
     background-color: #0A0E12;
@@ -135,17 +126,15 @@
      The translucent box style.
      One unified surface across the entire site:
      - background: rgba(255,255,255,0.04)
-     - border-radius: 16px
+     - border-radius: 6px
      - no border
-     - 1px inset highlight on the top edge (frosted depth, NOT a border)
      - hover: lift to rgba(255,255,255,0.06)
      ────────────────────────────────────────────────────────── */
   .case-card,
   .card {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 6px;
     border: none;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
   }
   .case-card:hover {
@@ -222,7 +211,7 @@
 
   /* ── Vitals strip ── keeps 1px gap lines between cells but no outer stroke */
   .vitals-strip {
-    @apply grid gap-px bg-border-subtle rounded-2xl overflow-hidden;
+    @apply grid gap-px bg-border-subtle rounded-md overflow-hidden;
   }
   .vitals-cell {
     @apply bg-base p-3;
@@ -232,8 +221,7 @@
   .finding-card {
     background-color: rgba(255, 255, 255, 0.04);
     border-left: 2px solid rgba(250, 204, 21, 0.6);
-    border-radius: 16px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
     padding: 1.25rem;
   }
 
@@ -291,9 +279,8 @@
   .card-tier-1,
   .card-tier-2 {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 6px;
     border: none;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     transition: background-color 180ms ease;
   }
   .card-tier-1:hover,
@@ -310,16 +297,12 @@
     border-left-color: #FACC15;
   }
 
-  /* ── Teal flare ── scalpel-colored left rule + soft outer glow.
+  /* ── Teal flare ── scalpel-colored left rule.
      Meant as a modifier on top of .card-tier-1 / .card / .card-tier-2
      to give a single card forensic emphasis. Explicitly sets
      border-left-style to work around the base `border: none`. */
   .card-flare-teal {
     border-left: 3px solid #FACC15;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.03),
-      -6px 0 48px -8px rgba(250, 204, 21, 0.28),
-      inset 80px 0 120px -80px rgba(250, 204, 21, 0.10);
   }
 
   /* Grid-paper overlay — 24px grid, brand at 2% — only on hero/auth panels */
@@ -333,10 +316,9 @@
   /* Hero card — translucent surface w/ left scalpel rule for emphasis */
   .card-hero {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 6px;
     border: none;
     border-left: 2px solid #FACC15;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Forensic case-header label — JetBrains-style mono, 3px tracking */

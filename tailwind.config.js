@@ -5,6 +5,20 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    // Only explicitly approved shape and depth utilities are generated.
+    boxShadow: {
+      none: 'none',
+    },
+    backdropBlur: {
+      none: '0',
+    },
+    borderRadius: {
+      none: '0px',
+      sm: '2px',
+      DEFAULT: '4px',
+      md: '6px',
+      full: '9999px',
+    },
     extend: {
       colors: {
         base: '#0A0E12',
@@ -63,27 +77,6 @@ module.exports = {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
-      // Forensic aesthetic: no soft shadows, no glass blur. Tailwind's
-      // defaults for these would let `shadow-md`/`backdrop-blur-sm` slip
-      // back in via training-data muscle memory; the empty objects make
-      // those classes emit no CSS so they fail loudly in review.
-      boxShadow: {},
-      backdropBlur: {},
-      // Cards top out at `lg` (10px). The previous `2xl` (16px) and
-      // `3xl` (20px) tokens encouraged shadcn-style soft shapes that
-      // don't fit the case-file metaphor — dropped here. Existing
-      // `rounded-2xl`/`rounded-3xl` usages will silently stop emitting
-      // CSS; `scripts/check-design-system.mjs` surfaces them as CI
-      // warnings until the sweep branch maps each one to the right
-      // token.
-      borderRadius: {
-        'none': '0px',
-        'sm': '2px',
-        DEFAULT: '4px',
-        'md': '6px',
-        'lg': '10px',
-        'xl': '12px',
-      },
       keyframes: {
         'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
@@ -93,19 +86,12 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        shimmer: {
-          '100%': { transform: 'translateX(100%)' },
-        },
         'slide-in-left': {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
         'border-beam': {
           '100%': { 'offset-distance': '100%' },
-        },
-        'shiny-text': {
-          '0%, 90%, 100%': { 'background-position': 'calc(-100% - var(--shiny-width)) 0' },
-          '30%, 60%': { 'background-position': 'calc(100% + var(--shiny-width)) 0' },
         },
         marquee: {
           from: { transform: 'translateX(0)' },
@@ -130,10 +116,8 @@ module.exports = {
         'slide-up-d4': 'slide-up 0.5s ease-out 0.4s both',
         'slide-up-d5': 'slide-up 0.5s ease-out 0.5s both',
         'slide-up-d6': 'slide-up 0.5s ease-out 0.6s both',
-        shimmer: 'shimmer 2s infinite',
         'slide-in-left': 'slide-in-left 0.2s ease-out',
         'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
-        'shiny-text': 'shiny-text 8s infinite',
         marquee: 'marquee var(--duration) infinite linear',
         'marquee-vertical': 'marquee-vertical var(--duration) infinite linear',
       },

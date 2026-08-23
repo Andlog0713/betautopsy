@@ -32,11 +32,11 @@ function gradeColor(grade: string | null | undefined): string {
   // Snapshot (free) shares suppress overall_grade → null. Render a neutral
   // color instead of throwing on null.startsWith.
   if (!grade) return 'text-fg-muted';
-  if (grade.startsWith('A')) return 'text-win';
-  if (grade.startsWith('B')) return 'text-win/70';
+  if (grade.startsWith('A')) return 'text-scalpel';
+  if (grade.startsWith('B')) return 'text-scalpel/70';
   if (grade.startsWith('C')) return 'text-caution';
-  if (grade.startsWith('D')) return 'text-orange-400';
-  return 'text-loss';
+  if (grade.startsWith('D')) return 'text-fg-muted';
+  return 'text-fg-dim';
 }
 
 export default function SharedReport({ data }: { data: ShareData }) {
@@ -130,10 +130,10 @@ export default function SharedReport({ data }: { data: ShareData }) {
               <div className="pt-2 border-t border-border-subtle">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-fg-muted text-xs">Sharp Score</p>
-                  <p className="font-mono text-sm text-cyan-400">{data.sharp_score}/100</p>
+                  <p className="font-mono text-sm text-scalpel">{data.sharp_score}/100</p>
                 </div>
                 <div className="h-2 bg-base rounded-full overflow-hidden">
-                  <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${data.sharp_score}%` }} />
+                  <div className="h-full bg-scalpel rounded-full" style={{ width: `${data.sharp_score}%` }} />
                 </div>
               </div>
             )}

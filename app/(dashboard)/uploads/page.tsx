@@ -281,7 +281,7 @@ export default function UploadsPage() {
             Analyze Selected
           </button>
           {selected.size === 2 && isPaid && (
-            <button onClick={compareSelected} className="text-sm text-cyan-400 hover:underline">
+            <button onClick={compareSelected} className="text-sm text-scalpel hover:underline">
               Compare
             </button>
           )}

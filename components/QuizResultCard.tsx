@@ -26,11 +26,11 @@ function gradeColor(g: string): string {
 }
 
 const ARCHETYPE_BG: Record<string, string> = {
-  'The Natural': 'radial-gradient(ellipse at 30% 20%, rgba(0,201,167,0.08) 0%, transparent 50%)',
+  'The Natural': 'radial-gradient(ellipse at 30% 20%, rgba(250,204,21,0.08) 0%, transparent 50%)',
   'Heated Bettor': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.05) 0px, transparent 40px)',
   'Parlay Dreamer': 'radial-gradient(circle at 40% 40%, rgba(139,92,246,0.08) 0%, transparent 50%)',
   'Degen King': 'repeating-linear-gradient(135deg, rgba(248,113,113,0.06) 0px, transparent 30px)',
-  'Sharp Sleeper': 'repeating-linear-gradient(0deg, rgba(0,201,167,0.04) 0px, transparent 3px, transparent 14px)',
+  'Sharp Sleeper': 'repeating-linear-gradient(0deg, rgba(250,204,21,0.04) 0px, transparent 3px, transparent 14px)',
 };
 
 interface Props {
@@ -45,7 +45,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
   const bgPattern = ARCHETYPE_BG[result.archetype.name] ?? 'none';
   const topBias = result.biases[0];
   const severityColor = topBias?.severity === 'high' ? '#FF4D4D' : topBias?.severity === 'medium' ? '#FFCD2C' : '#00DC82';
-  const severityBg = topBias?.severity === 'high' ? 'rgba(248,113,113,0.15)' : topBias?.severity === 'medium' ? 'rgba(251,191,36,0.15)' : 'rgba(0,201,167,0.15)';
+  const severityBg = topBias?.severity === 'high' ? 'rgba(248,113,113,0.15)' : topBias?.severity === 'medium' ? 'rgba(251,191,36,0.15)' : 'rgba(250,204,21,0.15)';
 
   // Ensure we always have 3 roast lines
   const baseRoasts = (roasts ?? []).slice(0, 3);
@@ -60,7 +60,7 @@ const QuizResultCard = forwardRef<HTMLDivElement, Props>(({ result, roasts }, re
   }
 
   const mono = "'JetBrains Mono', monospace";
-  const sans = "'Inter', -apple-system, sans-serif";
+  const sans = "'Plus Jakarta Sans', -apple-system, sans-serif";
 
   return (
     <div

@@ -174,7 +174,7 @@ export default function JournalEntryModal({ isOpen, onClose, onSaved }: Props) {
               {[
                 { value: hadAlcohol, setter: setHadAlcohol, label: 'Had alcohol', icon: <Beer size={16} /> },
                 { value: timePressure, setter: setTimePressure, label: 'Feeling time pressure', icon: <Clock size={16} /> },
-                { value: chasingLosses, setter: setChasingLosses, label: 'Chasing a loss', icon: <Flame size={16} className="text-orange-400" /> },
+                { value: chasingLosses, setter: setChasingLosses, label: 'Chasing a loss', icon: <Flame size={16} className="text-scalpel" /> },
               ].map(toggle => (
                 <button
                   key={toggle.label}

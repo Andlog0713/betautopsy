@@ -4,7 +4,7 @@ import { forwardRef } from 'react';
 import type { ShareCardData } from './ShareCard';
 import type { BehavioralInsight, RoastStat } from '@/lib/share-helpers';
 
-const SANS = "'Inter', -apple-system, sans-serif";
+const SANS = "'Plus Jakarta Sans', -apple-system, sans-serif";
 
 function LogoMark({ dark = false }: { dark?: boolean }) {
   const strokeColor = dark ? '#0A0E12' : '#FACC15';

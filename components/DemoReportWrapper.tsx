@@ -73,11 +73,10 @@ export default function DemoReportWrapper({ ungated = false, analysis, bets }: D
           />
         </div>
 
-        {/* ── Gradient Fade + CTA (when collapsed) ── */}
+        {/* Collapsed report cover and CTA */}
         {!isOpen && (
           <div className="absolute bottom-0 left-0 right-0 z-20">
-            {/* Tall gradient fade */}
-            <div className="h-80 bg-gradient-to-t from-base via-base/90 to-transparent" />
+            <div className="h-24 bg-base" />
 
             {/* CTA area */}
             <div className="bg-base pb-4 text-center space-y-4">

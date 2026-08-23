@@ -21,7 +21,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 const TYPE_BADGE: Record<FeedbackType, string> = {
   report_reaction: 'bg-scalpel/10 text-scalpel border border-scalpel/20',
   bug: 'bg-bleed/10 text-bleed border border-bleed/20',
-  feature_request: 'bg-amber-400/10 text-amber-400 border border-amber-400/20',
+  feature_request: 'bg-scalpel-muted text-scalpel border border-scalpel/20',
   general: 'bg-ink-700/30 text-fg-muted border border-border-subtle',
 };
 

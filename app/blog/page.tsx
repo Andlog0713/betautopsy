@@ -26,7 +26,7 @@ export default function BlogIndexPage() {
     <div className="space-y-12">
       <JsonLd data={breadcrumbJsonLd} />
       {/* Blog hero banner */}
-      <div className="relative overflow-hidden rounded-lg border border-border-subtle grid-paper">
+      <div className="relative overflow-hidden rounded-md border border-border-subtle grid-paper">
         {/* Glow */}
         <div className="absolute -top-16 -right-16 w-[300px] h-[300px] bg-scalpel/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 w-[200px] h-[200px] bg-scalpel/5 rounded-full blur-[80px] pointer-events-none" />

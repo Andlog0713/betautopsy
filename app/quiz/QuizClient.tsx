@@ -457,8 +457,8 @@ export default function QuizClient() {
   // FULL RESULT
   // ══════════════════════════════
   if (phase === 'full_result' && result) {
-    const eColor = result.emotion_estimate <= 30 ? 'text-win' : result.emotion_estimate <= 55 ? 'text-caution' : result.emotion_estimate <= 75 ? 'text-orange-400' : 'text-loss';
-    const eBarColor = result.emotion_estimate <= 30 ? 'bg-win' : result.emotion_estimate <= 55 ? 'bg-caution' : result.emotion_estimate <= 75 ? 'bg-orange-400' : 'bg-loss';
+    const eColor = result.emotion_estimate <= 30 ? 'text-scalpel' : result.emotion_estimate <= 55 ? 'text-caution' : result.emotion_estimate <= 75 ? 'text-fg-muted' : 'text-fg-dim';
+    const eBarColor = result.emotion_estimate <= 30 ? 'bg-scalpel' : result.emotion_estimate <= 55 ? 'bg-caution' : result.emotion_estimate <= 75 ? 'bg-fg-muted' : 'bg-fg-dim';
 
     return (
       <main id="main-content" className="min-h-screen bg-base px-4 py-12 overflow-x-hidden">
