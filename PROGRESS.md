@@ -2,8 +2,10 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `40489c1`,
-[PR #122](https://github.com/Andlog0713/betautopsy/pull/122), which adds
+**Production**: `main` is on squash-merge commit `52b8805`,
+[PR #123](https://github.com/Andlog0713/betautopsy/pull/123), which aligns
+npm, all three GitHub workflows, and Vercel on Node `24.x` with strict engine
+enforcement. It includes [PR #122](https://github.com/Andlog0713/betautopsy/pull/122), which adds
 sequential overlapping-window CSV re-upload coverage and proves two repeated
 bets plus two new bets produce six canonical bets rather than eight. It
 includes [PR #112](https://github.com/Andlog0713/betautopsy/pull/112), which represents
@@ -31,13 +33,14 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: branch `codex/align-node-24` makes `package.json` the shared
-Node runtime contract for npm, Vercel, and all three GitHub workflows. The
-declared engine is `24.x`, matching the live Vercel project setting and the
-local runtime. GitHub Actions reads that declaration through
-`actions/setup-node@v4` instead of pinning Node 20 independently. Repository
-installs reject other Node majors instead of allowing an `EBADENGINE` warning
-to be ignored.
+**In flight**: branch `codex/fix-pricing-e2e` replaces the three false-positive
+`/pricing` mobile cases that silently followed the client auth redirect and
+tested `/login`. The dedicated pricing case uses a synthetic local session,
+mocks only browser-side Supabase reads, asserts the final URL and locked
+pricing copy, then runs the existing overflow, tap-target, and safe-area
+checks across all three iPhone projects. That real route exposed two hidden
+tap-target failures; the mobile logo link now has a 44px minimum height and
+the vertical Feedback tab has a 44px minimum width.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -73,8 +76,6 @@ Andrew first.
 ### Next up
 - **Design-system enforcement**: 52 known violations remain, and
   `check:design` still runs with `STRICT = false`.
-- **Pricing E2E coverage**: three `/pricing` cases actually exercise
-  `/login` and pass while asserting nothing.
 - **Supabase availability**: staying on the free tier is Andrew's call for
   now, not a bug. It remains a known risk because auto-pause killed login
   for eight days in August 2026.

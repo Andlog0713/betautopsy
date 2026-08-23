@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, type BrowserContext, type Route } from '@playwright/test';
 
 /**
  * Three assertions per route, three viewports, run on every PR:
@@ -32,13 +32,110 @@ const PUBLIC_ROUTES = [
   '/login',
   '/signup',
   '/reset-password',
-  '/pricing',
   '/privacy',
   '/terms',
   '/faq',
 ];
 
+const PRICING_USER_ID = '44444444-4444-4444-8444-444444444444';
+const PRICING_USER = {
+  id: PRICING_USER_ID,
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'pricing-e2e@example.com',
+  email_confirmed_at: '2026-01-01T00:00:00.000Z',
+  app_metadata: { provider: 'email', providers: ['email'] },
+  user_metadata: {},
+  identities: [],
+  created_at: '2026-01-01T00:00:00.000Z',
+  updated_at: '2026-01-01T00:00:00.000Z',
+  is_anonymous: false,
+};
+const PRICING_PROFILE = {
+  id: PRICING_USER_ID,
+  email: PRICING_USER.email,
+  display_name: 'Pricing E2E',
+  subscription_tier: 'free',
+  subscription_status: 'inactive',
+  stripe_customer_id: null,
+  streak_count: 0,
+  is_admin: false,
+};
+const PRICING_CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': [
+    'accept-profile',
+    'apikey',
+    'authorization',
+    'content-profile',
+    'content-type',
+    'prefer',
+    'x-client-info',
+    'x-supabase-api-version',
+  ].join(', '),
+  'access-control-allow-methods': 'GET, HEAD, POST, PATCH, DELETE, OPTIONS',
+};
+
 const TAP_TARGET_MIN = 44;
+
+function base64Url(value: string): string {
+  return Buffer.from(value).toString('base64url');
+}
+
+function makePricingAccessToken(expiresAt: number): string {
+  return [
+    base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' })),
+    base64Url(JSON.stringify({ sub: PRICING_USER_ID, role: 'authenticated', exp: expiresAt })),
+    'pricing-e2e-signature',
+  ].join('.');
+}
+
+async function prepareAuthenticatedPricing(
+  context: BrowserContext,
+  appOrigin: string,
+): Promise<void> {
+  const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60;
+  const session = {
+    access_token: makePricingAccessToken(expiresAt),
+    refresh_token: 'pricing-e2e-refresh-token',
+    expires_in: 3600,
+    expires_at: expiresAt,
+    token_type: 'bearer',
+    user: PRICING_USER,
+  };
+  await context.addCookies([{
+    name: 'sb-stub-auth-token',
+    value: `base64-${base64Url(JSON.stringify(session))}`,
+    url: appOrigin,
+    sameSite: 'Lax',
+  }]);
+
+  await context.route('https://stub.supabase.co/**', async (route: Route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: PRICING_CORS_HEADERS });
+      return;
+    }
+
+    const acceptsObject = request.headers().accept?.includes('application/vnd.pgrst.object');
+    let body: unknown = [];
+    if (url.pathname === '/auth/v1/user') {
+      body = PRICING_USER;
+    } else if (url.pathname === '/rest/v1/profiles') {
+      body = acceptsObject ? PRICING_PROFILE : [PRICING_PROFILE];
+    } else if (url.pathname === '/rest/v1/autopsy_reports') {
+      body = acceptsObject ? null : [];
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: PRICING_CORS_HEADERS,
+      body: JSON.stringify(body),
+    });
+  });
+}
 
 // Selectors that may legitimately be smaller than 44pt — typically
 // inline text links/buttons inside paragraphs, or accessibility
@@ -215,6 +312,14 @@ async function expectNoFixedUnderHomeIndicator(page: Page) {
   ).toEqual([]);
 }
 
+async function expectMobileLayout(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(250);
+  await expectNoHorizontalOverflow(page);
+  await expectTapTargets(page, TAP_TARGET_EXEMPT_SELECTORS);
+  await expectNoFixedUnderHomeIndicator(page);
+}
+
 for (const route of PUBLIC_ROUTES) {
   test(`mobile regression — ${route}`, async ({ page }) => {
     await page.goto(route, { waitUntil: 'networkidle' });
@@ -223,10 +328,21 @@ for (const route of PUBLIC_ROUTES) {
     // and other layout-critical classes can still be one paint away
     // from settling. A small idle wait stops the suite from measuring
     // mid-hydration on slow CI runners.
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(250);
-    await expectNoHorizontalOverflow(page);
-    await expectTapTargets(page, TAP_TARGET_EXEMPT_SELECTORS);
-    await expectNoFixedUnderHomeIndicator(page);
+    await expectMobileLayout(page);
   });
 }
+
+test('mobile regression: authenticated /pricing', async ({ page, context, baseURL }) => {
+  expect(baseURL).toBeTruthy();
+  const appOrigin = new URL(baseURL!).origin;
+  expect(['localhost', '127.0.0.1']).toContain(new URL(appOrigin).hostname);
+  await prepareAuthenticatedPricing(context, appOrigin);
+
+  await page.goto('/pricing', { waitUntil: 'networkidle' });
+  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page.getByRole('heading', { name: 'Pricing', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Full Report', exact: true })).toBeVisible();
+  await expect(page.getByText('$19.99', { exact: true })).toBeVisible();
+  await expect(page.getByText('Pay once. No subscription.', { exact: true })).toBeVisible();
+  await expectMobileLayout(page);
+});

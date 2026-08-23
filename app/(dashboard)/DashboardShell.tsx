@@ -120,7 +120,7 @@ export default function DashboardShell({
             >
               {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="min-h-11 inline-flex items-center">
               <Logo size="xs" />
             </Link>
           </div>
