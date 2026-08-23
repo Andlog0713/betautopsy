@@ -2,8 +2,11 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `a6cfcd4`,
-[PR #112](https://github.com/Andlog0713/betautopsy/pull/112), which represents
+**Production**: `main` is on squash-merge commit `40489c1`,
+[PR #122](https://github.com/Andlog0713/betautopsy/pull/122), which adds
+sequential overlapping-window CSV re-upload coverage and proves two repeated
+bets plus two new bets produce six canonical bets rather than eight. It
+includes [PR #112](https://github.com/Andlog0713/betautopsy/pull/112), which represents
 material impacts with a confirmed-zero or absent prior baseline without a
 fabricated percentage. Existing `topImpactDeltas` remain unchanged for
 shipping clients; the new case uses the additive optional
@@ -28,13 +31,13 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Current branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: branch `codex/test-overlapping-csv-reupload` adds the missing
-sequential overlapping-window CSV coverage without changing production code.
-It parses and commits a four-bet export, previews and commits a second
-four-bet export containing two old and two new bets, and verifies the
-canonical database ends with six bets rather than eight. It also verifies
-logical upload membership, profile count, $355 final stake, and -$50.27 final
-net. The targeted test fails when the dedupe lookup is disabled.
+**In flight**: branch `codex/align-node-24` makes `package.json` the shared
+Node runtime contract for npm, Vercel, and all three GitHub workflows. The
+declared engine is `24.x`, matching the live Vercel project setting and the
+local runtime. GitHub Actions reads that declaration through
+`actions/setup-node@v4` instead of pinning Node 20 independently. Repository
+installs reject other Node majors instead of allowing an `EBADENGINE` warning
+to be ignored.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -72,8 +75,6 @@ Andrew first.
   `check:design` still runs with `STRICT = false`.
 - **Pricing E2E coverage**: three `/pricing` cases actually exercise
   `/login` and pass while asserting nothing.
-- **Node parity**: CI pins Node 20, Vercel builds with Node 24, and there is
-  no `engines` field.
 - **Supabase availability**: staying on the free tier is Andrew's call for
   now, not a bug. It remains a known risk because auto-pause killed login
   for eight days in August 2026.
