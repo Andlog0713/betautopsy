@@ -13,7 +13,7 @@ let _stripe: Stripe | null = null;
 // wrapper in git history, PR #81, for the failure mode that produces).
 
 export function isStripeConfigured(): boolean {
-  return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRO_PRICE_ID);
+  return !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_REPORT_PRICE_ID);
 }
 
 export function getStripe(): Stripe {
@@ -101,37 +101,6 @@ export async function getOrCreateCustomer(
   return { customerId: customer.id, created: true };
 }
 
-// Pro subscription checkout ($39.99/mo or $299.99/yr). Not marketed on web
-// (2026-08-17, D1) - existing Pro subscribers keep working (manage/cancel
-// via createCustomerPortalSession below), but this is no longer reachable
-// from any public-facing CTA. Left in place rather than deleted in case a
-// subscription is ever started manually; do not wire a new public entry
-// point to it without a deliberate pricing decision.
-export async function createSubscriptionCheckoutSession(
-  customerId: string,
-  userId: string,
-  interval: 'monthly' | 'annual' = 'monthly'
-): Promise<string> {
-  const priceId = interval === 'annual'
-    ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID!
-    : process.env.STRIPE_PRO_PRICE_ID!;
-
-  if (!priceId) throw new Error(`No price ID configured for Pro ${interval}`);
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-  const session = await getStripe().checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/dashboard?upgraded=true`,
-    cancel_url: `${appUrl}/pricing`,
-    metadata: { supabase_user_id: userId, tier: 'pro' },
-  });
-
-  return session.url!;
-}
-
 // One-time report purchase (STRIPE_REPORT_PRICE_ID, $19.99 flat - the only
 // thing marketed on web; STRIPE_EXTRA_REPORT_PRICE_ID for existing Pro
 // subscribers exceeding their monthly allocation, unchanged, backend-only)
@@ -200,16 +169,6 @@ export async function retrieveReportCheckoutSession(
     if (missing) return null;
     throw error;
   }
-}
-
-// Keep backward compat for existing code that calls createCheckoutSession
-export async function createCheckoutSession(
-  customerId: string,
-  tier: 'pro',
-  userId: string,
-  interval: 'monthly' | 'annual' = 'monthly'
-): Promise<string> {
-  return createSubscriptionCheckoutSession(customerId, userId, interval);
 }
 
 export async function createCustomerPortalSession(customerId: string): Promise<string> {

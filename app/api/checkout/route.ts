@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import {
   getOrCreateCustomer,
-  createSubscriptionCheckoutSession,
   createReportCheckoutSession,
   retrieveReportCheckoutSession,
   isStripeConfigured,
@@ -23,10 +22,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, interval, snapshotReportId } = body;
+    const { type, snapshotReportId } = body;
 
-    if (type !== 'subscription' && type !== 'report') {
-      return NextResponse.json({ error: 'Invalid checkout type. Must be "subscription" or "report".' }, { status: 400 });
+    if (type === 'subscription') {
+      return NextResponse.json(
+        { error: 'New Pro subscriptions are not available.' },
+        { status: 403 },
+      );
+    }
+
+    if (type !== 'report') {
+      return NextResponse.json({ error: 'Invalid checkout type. Must be "report".' }, { status: 400 });
     }
 
     // Get profile
@@ -67,16 +73,7 @@ export async function POST(request: Request) {
       }
     }
 
-    let url: string;
-
-    if (type === 'subscription') {
-      const subInterval = interval || 'monthly';
-      url = await createSubscriptionCheckoutSession(
-        customerId,
-        user.id,
-        subInterval
-      );
-    } else {
+    if (type === 'report') {
       // Report purchase
       if (!snapshotReportId) {
         return NextResponse.json({ error: 'snapshotReportId is required for report purchases' }, { status: 400 });
@@ -180,10 +177,10 @@ export async function POST(request: Request) {
       if (persistCheckoutError) {
         throw new Error(`Failed to persist report checkout: ${persistCheckoutError.message}`);
       }
-      url = checkout.url;
+      return NextResponse.json({ url: checkout.url });
     }
 
-    return NextResponse.json({ url });
+    return NextResponse.json({ error: 'Invalid checkout type. Must be "report".' }, { status: 400 });
   } catch (error) {
     console.error('Checkout error:', error);
     logErrorServer(error, { path: '/api/checkout' });

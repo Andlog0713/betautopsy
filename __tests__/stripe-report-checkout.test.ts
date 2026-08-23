@@ -21,10 +21,22 @@ beforeEach(() => {
   process.env.STRIPE_SECRET_KEY = 'sk_test_unit';
   process.env.STRIPE_REPORT_PRICE_ID = 'price_report';
   process.env.STRIPE_EXTRA_REPORT_PRICE_ID = 'price_extra';
+  delete process.env.STRIPE_PRO_PRICE_ID;
   process.env.NEXT_PUBLIC_APP_URL = 'https://app.test';
   mocks.createSession.mockResolvedValue({
     id: 'cs-1',
     url: 'https://checkout.stripe.test/cs-1',
+  });
+});
+
+describe('Stripe payment configuration', () => {
+  it('depends on the one-time report price rather than a retired Pro price', async () => {
+    const { isStripeConfigured } = await import('@/lib/stripe');
+
+    expect(isStripeConfigured()).toBe(true);
+
+    delete process.env.STRIPE_REPORT_PRICE_ID;
+    expect(isStripeConfigured()).toBe(false);
   });
 });
 
