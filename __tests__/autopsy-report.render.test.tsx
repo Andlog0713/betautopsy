@@ -13,9 +13,10 @@
  * as of this test) - that can follow as its own piece of work.
  */
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import AutopsyReport from '@/components/AutopsyReport';
 import { runSnapshot } from '@/lib/autopsy-engine';
+import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
 import type { Bet } from '@/types';
 
 // framer-motion's useInView (via components/ui/number-ticker.tsx) needs
@@ -226,6 +227,55 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     const warningText = warn.mock.calls.flat().join(' ');
     expect(warningText).not.toMatch(/width\([^)]*\)[\s\S]*height\([^)]*\)[\s\S]*greater than 0/i);
     warn.mockRestore();
+  });
+
+  it('renders the frozen session snapshots instead of unrelated prop indices', () => {
+    render(
+      <AutopsyReport
+        analysis={DEMO_ANALYSIS}
+        bets={DEMO_BETS}
+        isSnapshot={false}
+        tier="pro"
+      />,
+    );
+
+    const bestSessionButton = screen.getAllByRole('button', { name: /view session bets/i })[0];
+    const bestSessionCard = bestSessionButton.parentElement;
+    expect(bestSessionCard).not.toBeNull();
+    fireEvent.click(bestSessionButton);
+
+    expect(within(bestSessionCard!).getByText('3-leg NFL parlay: Chiefs + Texans + Texans')).toBeTruthy();
+    expect(within(bestSessionCard!).getByText('2h 22m later')).toBeTruthy();
+    expect(within(bestSessionCard!).queryByText('24h 50m later')).toBeNull();
+  });
+
+  it('reconstructs session indices from engine ordering when snapshots are unavailable', () => {
+    const sessionDetection = DEMO_ANALYSIS.session_detection!;
+    const bestSession = sessionDetection.bestSession!;
+    const analysisWithoutSnapshots = {
+      ...DEMO_ANALYSIS,
+      session_detection: {
+        ...sessionDetection,
+        bestSession: { ...bestSession, betSnapshots: undefined },
+      },
+    };
+
+    render(
+      <AutopsyReport
+        analysis={analysisWithoutSnapshots}
+        bets={DEMO_BETS}
+        isSnapshot={false}
+        tier="pro"
+      />,
+    );
+
+    const bestSessionButton = screen.getAllByRole('button', { name: /view session bets/i })[0];
+    const bestSessionCard = bestSessionButton.parentElement;
+    expect(bestSessionCard).not.toBeNull();
+    fireEvent.click(bestSessionButton);
+
+    expect(within(bestSessionCard!).getByText('3-leg NFL parlay: Chiefs + Texans + Texans')).toBeTruthy();
+    expect(within(bestSessionCard!).getByText('2h 22m later')).toBeTruthy();
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateMetrics } from '@/lib/autopsy-engine';
+import { findExplainer } from '@/lib/bias-explainers';
 import { parseCSV } from '@/lib/csv-parser';
 import {
   comparableBetSequences,
@@ -273,8 +274,26 @@ describe('temporal provenance', () => {
       'Stakes jumped after losses. Parlays also underperformed.',
     )).toBe('Parlays also underperformed.');
     expect(stripUnprovableResultSequenceSentences(
+      'Average stakes rose after a string of losses and fell after a string of wins. Stake sizing varied widely.',
+    )).toBe('Stake sizing varied widely.');
+    expect(stripUnprovableResultSequenceSentences(
+      'The session was already in the red before those bets. Stakes rose steadily in the source order.',
+    )).toBe('Stakes rose steadily in the source order.');
+    expect(stripUnprovableResultSequenceSentences(
       'Stakes rose on bets following rows later settled as losses. Settlement timing is unavailable.',
     )).toBe('Stakes rose on bets following rows later settled as losses. Settlement timing is unavailable.');
+    expect(stripUnprovableResultSequenceSentences(
+      'After a stretch of wins, stakes rose. Source-order stake variation remained high.',
+    )).toBe('Source-order stake variation remained high.');
+    expect(stripUnprovableResultSequenceSentences(
+      'Each miss seemed to prompt a larger multiplier. Pick counts rose in source order.',
+    )).toBe('Pick counts rose in source order.');
+  });
+
+  it('keeps static explainers inside the same settlement-provenance contract', () => {
+    const explainer = findExplainer('Overconfidence');
+    expect(explainer?.what).toMatch(/settlement timing is unavailable/i);
+    expect(explainer?.what).not.toMatch(/after a stretch of wins/i);
   });
 
   it('suppresses unverified temporal sections and claims on a historical saved report', () => {

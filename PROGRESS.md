@@ -2,12 +2,28 @@
 
 ## CURRENT STATE (as of 2026-08-31)
 
-**Production**: GitHub `main` is on `f7441ea`,
+**Production**: The presence of this block on GitHub `main` means
+[PR #128](https://github.com/Andlog0713/betautopsy/pull/128) is merged. That
+Stage 2 release preserves source date, clock, and timezone as separate facts;
+stores a UTC instant only when the source supplied an offset; marks historical
+rows `legacy_unknown` without heuristic backfill; and keeps date-only or
+timezone-naive rows out of analyses that require real chronology. Saved-report
+copy is sanitized when it treats source order as settlement order, and session
+evidence uses the exact frozen session membership. The additive production
+migration `20260831213000_temporal_provenance` was applied before the code
+release and verified against all 8,665 existing bets: the row count did not
+change, every historical row retained `placed_at`, every row received
+`legacy_unknown`, and every new column, constraint, generated date, report
+range, and index matched the reviewed schema. Supabase remains on the free
+tier. Typecheck, 647 unit tests, the production build, strict design validation
+with zero findings, and all 39 browser cases are green.
+
+The production code also includes `f7441ea`,
 [PR #127](https://github.com/Andlog0713/betautopsy/pull/127). That release
 makes every adoptable control action, scope, trigger, threshold, evidence
 record, and sufficiency check deterministic. A historical financial claim is
 attached only when it matches the corresponding deterministic counterfactual
-over the same frozen cohort. The production code also includes `4850621`,
+over the same frozen cohort. It also includes `4850621`,
 [PR #125](https://github.com/Andlog0713/betautopsy/pull/125), which clears
 107 enforceable design-system violations, expands the checker to cover the
 forms it previously missed, and enables strict enforcement with zero reported
@@ -47,17 +63,8 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Previous branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: `codex/temporal-provenance` is Stage 2 of the post-audit
-roadmap and the final stage authorized for this run. It preserves source date,
-clock, and timezone as separate facts; stores a UTC instant only when the
-source supplied an offset; marks all historical rows `legacy_unknown` without
-heuristic backfill; and keeps date-only or timezone-naive rows out of analyses
-that require real chronology. The migration, wire compatibility, old-report
-sanitization, overlapping re-upload behavior, and refreshed public samples are
-complete in the release candidate. Typecheck, 643 unit tests, the production
-build, strict design validation with zero findings, and all 39 browser cases
-are green. The production migration and release remain. Stage 3 and later have
-not started.
+**In flight**: None. Stage 2 is the final stage authorized for this run. Stage
+3 and later have not started.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -91,10 +98,7 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **Finish Stage 2 only**: complete gates, apply the reviewed migration, ship
-  the current branch, verify production, and stop.
-- **Paused after Stage 2 by Andrew**: no later roadmap stage should begin in
-  this run.
+- **Stop after Stage 2**: no later roadmap stage should begin in this run.
 - **Stage 3, Upload History correctness, not started**: make upload records and outcomes
   truthful and reconcilable.
 - **Stage 4, report and dashboard provenance, not started**: unify report scope and select

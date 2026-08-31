@@ -6817,10 +6817,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Stake Volatility",
       "severity": "medium",
-      "description": "Bet sizing is all over the place. The next day, sizing snapped back to normal. This kind of volatility is the clearest signal in the data that something other than a pre-planned process is driving stake decisions on certain nights. The loss-streak data backs this up: average stakes are noticeably higher after a string of losses than after a string of wins.",
+      "description": "Bet sizing varies widely across the sample. The next source date returned to the earlier sizing range, but exposure still changes substantially from one bet to the next.",
       "evidence": "Bet sizes range from $15 to $450 (avg $70). Noticeably inconsistent sizing",
       "estimated_cost": 78.99,
-      "fix": "Decide your standard bet size before you open the app, not in the moment. Whatever that number is, it stays the same whether you're up, down, or in the middle of a rough stretch. The big-stake nights aren't where you're finding your edge, they're where you're trying to get even fast. Locking in a consistent size before each session removes that lever entirely.",
+      "fix": "Decide your standard bet size before you open the app, not in the moment. Keep it consistent throughout the session. Large stakes make any bad run more expensive, while a fixed size keeps exposure controlled.",
       "evidence_bet_ids": [
         "demo-304",
         "demo-303",
@@ -6898,11 +6898,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     },
     {
       "category": "NBA spread",
-      "detail": "The rapid-fire pattern is visible here: multiple NBA spread bets in the same session, often on games happening simultaneously or within minutes of each other.",
+      "detail": "Multiple NBA spread bets appear on the same source dates, and this category lost money over the sample.",
       "detail_visibility": "visible",
       "roi_impact": -26.432778733983547,
       "sample_size": 55,
-      "suggestion": "Spreading across multiple simultaneous NBA games dilutes whatever edge you might have on any individual matchup.",
+      "suggestion": "Set a precommitted NBA spread volume limit and review the high-volume dates before adding more exposure.",
       "suggestion_visibility": "visible",
       "severity": "high",
       "confidence": "medium"
@@ -6991,7 +6991,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 59,
       "ending_stake": 450,
       "net": -1316.73,
-      "description": "Then something shifted. Each bet was larger than the last. The session was already in the red before those bets, and the escalating stakes turned a bad night into the worst session in the entire sample by a wide margin. The next day, stakes snapped back to normal, which tells you this wasn't a planned high-roller session. It was a session that got away."
+      "description": "Stakes increased across this source-ordered session, and it finished with the worst net result in the sample. The next source date returned to the earlier sizing range."
     },
     "best_session": {
       "date": "Nov 14, 2025",
@@ -7715,18 +7715,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     },
     {
       "id": "NBA-RAPID-BETTING",
-      "name": "NBA rapid-fire sessions",
+      "name": "High-volume NBA dates",
       "sport": "NBA",
       "severity": "high",
-      "description": "Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.",
+      "description": "Multiple source dates contain 4 or more NBA bets, and that high-volume cohort lost money.",
       "evidence": "13 days with 4+ NBA bets. Combined: $-2210.",
       "estimated_cost": -2210,
-      "recommendation": "Limit yourself to pre-game NBA bets only. Live betting NBA is where emotional decisions get expensive.",
+      "recommendation": "Set a precommitted NBA volume limit before each slate and review the high-volume dates before adding more exposure.",
       "sample_size": 61,
       "confidence": "medium",
       "sub_splits": [
         {
-          "label": "Bets on 13 rapid-fire days (4+ NBA bets/day)",
+          "label": "Bets on 13 high-volume NBA dates (4+ bets/date)",
           "bets": 61,
           "roi_pct": null,
           "net_usd": -2210
@@ -28111,7 +28111,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Multiplier Chasing",
       "severity": "medium",
-      "description": "Pick counts step up noticeably in sessions that follow losing entries. The problem is that each additional pick compounds the difficulty dramatically.",
+      "description": "Pick counts are higher on entries following rows later settled as losses. Settlement timing is unavailable, so this does not show that a result caused the next choice. Each added pick compounds the difficulty.",
       "evidence": "Average pick count on entries following a row later settled as a loss: 3.8 vs 2.8 following a row later settled as a win. Settlement timing is unavailable",
       "estimated_cost": 0,
       "fix": "Set your pick count before you open the app, not after you see the results of your last entry. If you lost your last entry, that is exactly the wrong moment to add more picks.",
@@ -28330,7 +28330,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 10,
       "ending_stake": 23,
       "net": -133,
-      "description": "The pattern here is the pick count escalation in real time: each miss seemed to prompt a bigger swing at a larger multiplier rather than a step back. This is the session that most clearly shows the multiplier chasing behavior in action."
+      "description": "Pick counts and multipliers increased across this source-ordered session. Settlement timing is unavailable, so the sequence does not establish what prompted those changes."
     },
     "best_session": {
       "date": "Dec 14, 2025",

@@ -3556,10 +3556,13 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 // ── Session Bet Timeline ──
 
 function SessionBetTimeline({ session, bets, show, setShow }: { session: import('@/types').DetectedSession; bets: Bet[]; show: boolean; setShow: (v: boolean) => void }) {
-  // Use bets from prop if available, fall back to embedded snapshots
-  const sessionBets = bets.length > 0
-    ? session.betIndices.map(idx => bets[idx]).filter((bet): bet is Bet => Boolean(bet))
-    : (session.betSnapshots ?? []);
+  const orderedBets = useMemo(() => [...bets].sort(compareBetsByRecordedTime), [bets]);
+  // Frozen snapshots preserve the exact session membership even when a saved
+  // report is later opened with bets in a different query order. Newer local
+  // clock sessions without snapshots fall back to the engine's sort order.
+  const sessionBets = (session.betSnapshots?.length ?? 0) >= 2
+    ? session.betSnapshots!
+    : session.betIndices.map(idx => orderedBets[idx]).filter((bet): bet is Bet => Boolean(bet));
   if (sessionBets.length < 2) return null;
 
   return (

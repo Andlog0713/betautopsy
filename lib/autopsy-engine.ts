@@ -1390,8 +1390,9 @@ function buildSessionAnalysis(
 
   const safeDescription = (description: string | undefined, session: DetectedSession) => {
     const numberSafe = stripModelNumberSentences(description);
-    if (localTimeConfirmed) return numberSafe || fallbackDescription(session);
-    return stripLocalTimeBehaviorSentences(numberSafe) || fallbackDescription(session);
+    const sequenceSafe = stripUnprovableResultSequenceSentences(numberSafe);
+    if (localTimeConfirmed) return sequenceSafe || fallbackDescription(session);
+    return stripLocalTimeBehaviorSentences(sequenceSafe) || fallbackDescription(session);
   };
 
   return {
@@ -2089,16 +2090,16 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       if (rapidProfit < 0) {
         const sev = rapidNBADays >= 6 ? 'high' as const : 'medium' as const;
         findings.push({
-          id: 'NBA-RAPID-BETTING', name: 'NBA rapid-fire sessions', sport: 'NBA',
+          id: 'NBA-RAPID-BETTING', name: 'High-volume NBA dates', sport: 'NBA',
           severity: sev,
-          description: 'Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.',
+          description: 'Multiple source dates contain 4 or more NBA bets, and that high-volume cohort lost money.',
           evidence: `${rapidNBADays} days with 4+ NBA bets. Combined: $${Math.round(rapidProfit)}.`,
           estimated_cost: rapidProfit < 0 ? Math.round(rapidProfit) : null,
-          recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where emotional decisions get expensive.',
+          recommendation: 'Set a precommitted NBA volume limit before each slate and review the high-volume dates before adding more exposure.',
           sample_size: rapidDayBets.length,
           confidence: confidenceFor(rapidDayBets.length, sev),
           sub_splits: [
-            { label: `Bets on ${rapidNBADays} rapid-fire days (4+ NBA bets/day)`, bets: rapidDayBets.length, roi_pct: null, net_usd: Math.round(rapidProfit) },
+            { label: `Bets on ${rapidNBADays} high-volume NBA dates (4+ bets/date)`, bets: rapidDayBets.length, roi_pct: null, net_usd: Math.round(rapidProfit) },
           ],
         });
       }
@@ -2989,7 +2990,7 @@ You do NOT calculate: emotion_score, roi_percent, win_rate, bankroll_health, cat
 ### Sport-Specific Considerations
 When analyzing bets, pay attention to these sport-specific behavioral patterns:
 - **NFL**: Key number overpays (buying through 3/7 at bad juice), primetime game overload, parlay addiction specific to NFL
-- **NBA**: Player prop overexposure (recreational trap), rapid-fire in-game betting suggesting emotional decisions, back-to-back scheduling awareness
+- **NBA**: Player prop overexposure, high-volume source dates, source-clock clustering without inferring live betting or motive, back-to-back scheduling awareness
 - **MLB**: Moneyline tunnel vision (ignoring run lines and totals), starting pitcher obsession
 - **DFS**: Multiplier/pick-count chasing (5+ picks for max payout when 2-3 is more profitable), same-player repetition regardless of matchup
 
@@ -3097,7 +3098,7 @@ BEHAVIORAL FRAMING RULE: This constrains the PRESCRIPTIVE ADVICE FIELDS ONLY (fi
 - Parlay example: instead of "parlays are negative EV, so cap your legs", say the parlays got worse with each leg the user added, and the rule is to stop at 2 legs.
 - NFL spread example: instead of "buy off the key number, take the alternate, watch the line movement", reframe as a pre-bet checkpoint. Ask whether the user is betting the game in front of them or chasing the last one, and note that NFL spreads are this bettor's weak spot.
 
-PROVABLE-SEQUENCE RULE: The source data has no settlement timestamps, so you cannot establish that a bet settled as a loss before the next bet was placed. Never frame stake escalation as a reaction to a settled result. Do NOT write "after a loss", "within minutes of the result", "right after losing", or any phrasing that asserts a loss triggered the next bet. State only what the bet ordering and the stakes show: stakes rising in close succession within a session (rapid in-session stake escalation). Keep the escalation finding itself; only the unprovable causal-timing claim goes. This applies to every field, not only the advice fields.
+PROVABLE-SEQUENCE RULE: The source data has no settlement timestamps, so you cannot establish that a bet settled as a loss before the next bet was placed. Never frame stake escalation as a reaction to a settled result. Do NOT write "after a loss", "after a string or stretch of losses", "already in the red before the next bet", "each miss prompted the next choice", "within minutes of the result", "right after losing", or any phrasing that asserts a result triggered the next bet. State only what the bet ordering and the stakes show: stakes rising in close succession within a session (rapid in-session stake escalation). Keep the escalation finding itself; only the unprovable causal-timing claim goes. This applies to every field, not only the advice fields.
 
 TIME-OF-DAY RULE: Use only the source clock fields supplied in the analysis. Date-only and legacy timestamps have no clock time and must never enter an hour, late-night, pace, or session claim. A sourced 12:00am value is real clock data. Never describe a source clock as the bettor's local time unless the analysis explicitly confirms that basis. When local_time_confirmed is false, source-clock patterns are observations only: do not turn them into a cutoff, cooldown, recommendation, behavior label, or any other adoptable action. When clock data is absent, say so plainly.
 

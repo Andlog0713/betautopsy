@@ -127,8 +127,8 @@ const EXPLAINER_ENTRIES: { keywords: string[]; explainer: BiasExplainer }[] = [
   {
     keywords: ['overconfiden', 'inflated confidence', 'winning streak'],
     explainer: {
-      what: 'After a stretch of wins, you increase stakes or take riskier bets because you feel "hot."',
-      why: 'Confidence is not evidence of skill, especially over small samples. A 5-bet winning streak is statistically meaningless. The vig does not care how you feel.',
+      what: 'Higher stakes or riskier bets appear later in source-ordered runs whose earlier rows later settled as wins. Settlement timing is unavailable, so the sequence does not show those wins were known at the time.',
+      why: 'Once wins are known, confidence can feel like evidence of skill even over a small sample. The vig does not change with that feeling.',
       fix: 'Keep stakes flat regardless of recent results. If you want to increase your unit size, do it quarterly based on bankroll growth, not based on a good week.',
     },
   },
