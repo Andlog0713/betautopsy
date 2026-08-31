@@ -15,7 +15,7 @@ Return a JSON object with:
 }
 
 Each bet object must have these fields:
-- placed_at: ISO 8601 timestamp including an explicit timezone or UTC offset copied from the source
+- placed_at: exact date or timestamp text copied from the source. Keep date-only and timezone-naive values exactly as shown.
 - sport: string (e.g. "NFL", "NBA", "MLB", "NHL", "Soccer", "Tennis", "MMA", "Golf", "College Football", "College Basketball", etc.)
 - league: string or null
 - bet_type: one of "spread", "moneyline", "total", "prop", "parlay", "teaser", "future", "live", "other"
@@ -32,9 +32,9 @@ Each bet object must have these fields:
 - notes: string or null
 
 Important rules:
-- Never invent, infer, estimate, calculate, or default a missing timestamp, timezone, sport, bet type, odds, stake, result, profit, or payout.
+- Never invent, infer, estimate, calculate, or default a missing date, clock time, timezone, sport, bet type, odds, stake, result, profit, or payout.
 - Skip a bet when any required field is absent or unreadable and explain the omission in parse_notes.
-- Do not convert a date-only value to noon or assume a year or timezone.
+- A date is required. Clock time and timezone are optional facts. Preserve them only when visible, and never add either one.
 - Do not calculate profit from odds or result. Profit must be visibly present in the source.
 - Use a bet type only when the source identifies it. Do not infer a category from description prose.
 - Map result synonyms: "won"/"w"/"hit"/"cashed" -> "win"; "lost"/"l"/"miss"/"missed" -> "loss"; "push"/"tie"/"draw"/"refund"/"cancelled" -> "push"; "void"/"canceled"/"no action" -> "void"; "pending"/"open"/"unsettled" -> "pending".

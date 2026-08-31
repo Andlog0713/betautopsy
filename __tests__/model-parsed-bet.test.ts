@@ -31,8 +31,6 @@ describe('normalizeExtractedBet', () => {
   });
 
   it.each([
-    ['date-only timestamp', { placed_at: '2026-08-22' }],
-    ['timezone-less timestamp', { placed_at: '2026-08-22T19:15:00' }],
     ['unknown odds', { odds: undefined }],
     ['unknown result', { result: 'maybe' }],
     ['unknown profit', { profit: undefined }],
@@ -42,6 +40,31 @@ describe('normalizeExtractedBet', () => {
     const normalized = normalizeExtractedBet({ ...validSource(), ...overrides });
     expect(normalized.bet).toBeNull();
     expect(normalized.error).toBeTruthy();
+  });
+
+  it('preserves a model-extracted date without adding a clock', () => {
+    const normalized = normalizeExtractedBet({ ...validSource(), placed_at: '2026-08-22' });
+    expect(normalized.error).toBeNull();
+    expect(normalized.bet).toMatchObject({
+      placed_at: null,
+      source_placed_at: '2026-08-22',
+      placed_date: '2026-08-22',
+      placed_time: null,
+      source_timezone: null,
+      timestamp_quality: 'date_only',
+    });
+  });
+
+  it('preserves a model-extracted local clock without adding a timezone', () => {
+    const normalized = normalizeExtractedBet({ ...validSource(), placed_at: '2026-08-22T19:15:00' });
+    expect(normalized.error).toBeNull();
+    expect(normalized.bet).toMatchObject({
+      placed_at: null,
+      source_placed_at: '2026-08-22T19:15:00',
+      placed_time: '19:15:00',
+      source_timezone: null,
+      timestamp_quality: 'local_datetime',
+    });
   });
 
   it('rejects an explicit pending result when its payout is unknown', () => {

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Bet } from '@/types';
+import { compareBetsByRecordedTime } from '@/lib/temporal-provenance';
 
 const PAGE_SIZE = 1000;
 const ID_CHUNK_SIZE = 200;
@@ -24,13 +25,16 @@ function uniqueIds(ids: string[]): string[] {
 }
 
 function mostRecentAscending(bets: Bet[], maxBets?: number): Bet[] {
-  const ascending = [...bets].sort((a, b) => {
-    const byDate = new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime();
-    return byDate || a.id.localeCompare(b.id);
-  });
+  const ascending = [...bets].sort(compareBetsByRecordedTime);
 
   if (!maxBets || ascending.length <= maxBets) return ascending;
   return ascending.slice(ascending.length - maxBets);
+}
+
+function scopeDateKey(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+  return match?.[1] ?? null;
 }
 
 async function fetchBetsByIds(
@@ -102,15 +106,16 @@ async function fetchLegacyUploadBets(
       .select('*')
       .eq('user_id', scope.userId)
       .in('upload_id', uploadIds)
-      .order('placed_at', { ascending: true });
+      .order('recorded_date', { ascending: true })
+      .order('placed_time', { ascending: true, nullsFirst: false })
+      .order('placed_at', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true });
 
     if (scope.sportsbook) query = query.eq('sportsbook', scope.sportsbook);
-    if (scope.dateFrom) query = query.gte('placed_at', new Date(scope.dateFrom).toISOString());
-    if (scope.dateTo) {
-      const exclusiveEnd = new Date(scope.dateTo);
-      exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
-      query = query.lt('placed_at', exclusiveEnd.toISOString());
-    }
+    const dateFrom = scopeDateKey(scope.dateFrom);
+    const dateTo = scopeDateKey(scope.dateTo);
+    if (dateFrom) query = query.gte('recorded_date', dateFrom);
+    if (dateTo) query = query.lte('recorded_date', dateTo);
 
     const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
     if (error) throw new Error(`Failed to fetch legacy upload cohort: ${error.message}`);
@@ -133,15 +138,16 @@ async function fetchAllUserBets(
       .from('bets')
       .select('*')
       .eq('user_id', scope.userId)
-      .order('placed_at', { ascending: true });
+      .order('recorded_date', { ascending: true })
+      .order('placed_time', { ascending: true, nullsFirst: false })
+      .order('placed_at', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true });
 
     if (scope.sportsbook) query = query.eq('sportsbook', scope.sportsbook);
-    if (scope.dateFrom) query = query.gte('placed_at', new Date(scope.dateFrom).toISOString());
-    if (scope.dateTo) {
-      const exclusiveEnd = new Date(scope.dateTo);
-      exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
-      query = query.lt('placed_at', exclusiveEnd.toISOString());
-    }
+    const dateFrom = scopeDateKey(scope.dateFrom);
+    const dateTo = scopeDateKey(scope.dateTo);
+    if (dateFrom) query = query.gte('recorded_date', dateFrom);
+    if (dateTo) query = query.lte('recorded_date', dateTo);
 
     const { data, error } = await query.range(offset, offset + PAGE_SIZE - 1);
     if (error) throw new Error(`Failed to fetch report cohort: ${error.message}`);

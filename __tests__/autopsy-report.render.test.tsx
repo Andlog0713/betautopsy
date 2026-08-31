@@ -274,4 +274,41 @@ describe('AutopsyReport — isPartialReport vacuous-truth guard', () => {
 
     expect(screen.queryAllByText(/Generating/i).length).toBeGreaterThan(0);
   });
+
+  it('does not render local-time claims from a saved report with no timestamp provenance', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const historicalAnalysis = {
+      ...analysis,
+      timing_analysis: analysis.timing_analysis
+        ? {
+            ...analysis.timing_analysis,
+            clock_basis: undefined,
+            local_time_confirmed: undefined,
+          }
+        : undefined,
+      behavioral_patterns: [{
+        pattern_name: 'Late-night losses',
+        description: 'Late-night bets underperformed.',
+        frequency: 'Often',
+        impact: 'negative' as const,
+        data_points: 'After 11pm',
+      }],
+      recommendations: [{
+        priority: 1,
+        title: 'Set an 11pm cutoff',
+        description: 'Stop betting after 11pm.',
+        expected_improvement: 'Avoid overnight losses.',
+        difficulty: 'easy' as const,
+      }],
+      executive_diagnosis: 'Your sizing is uneven. Late-night losses dominate.',
+    };
+
+    const { container } = render(
+      <AutopsyReport analysis={historicalAnalysis} bets={[]} isSnapshot={false} tier="pro" />,
+    );
+
+    expect(container.textContent).toContain('Your sizing is uneven.');
+    expect(container.textContent).not.toMatch(/late[- ]?night|overnight|11pm/i);
+    expect(screen.queryByText('Timing Patterns')).toBeNull();
+  });
 });

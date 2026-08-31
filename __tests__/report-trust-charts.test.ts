@@ -7,13 +7,14 @@ import {
 } from '@/lib/engine/charts';
 import { calculateMetrics, detectAndGradeSessions, runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet, DetectedSession, SessionDetectionResult } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── helpers ──────────────────────────────────────────────────────────
 
 let betSeq = 0;
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   betSeq++;
-  return {
+  return markFixtureTimestampAsSourced({
     id: `bet-${betSeq}`,
     user_id: 'user-1',
     placed_at: '2026-02-01T17:00:00.000Z',
@@ -34,7 +35,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: null,
     created_at: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  };
+  });
 }
 
 function makeSession(overrides: Partial<DetectedSession> = {}): DetectedSession {

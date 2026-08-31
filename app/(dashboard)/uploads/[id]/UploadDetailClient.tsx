@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { formatBetDescription } from '@/lib/format-parlay';
 import { createBrowserSupabaseClient as createClient } from '@/lib/supabase-browser';
 import type { Bet, Upload } from '@/types';
+import { formatRecordedDate } from '@/lib/temporal-provenance';
 
 export default function UploadDetailClient() {
   const params = useParams();
@@ -20,7 +21,14 @@ export default function UploadDetailClient() {
     const supabase = createClient();
     const [uploadRes, betsRes] = await Promise.all([
       supabase.from('uploads').select('*').eq('id', uploadId).single(),
-      supabase.from('bets').select('*').eq('upload_id', uploadId).order('placed_at', { ascending: false }),
+      supabase
+        .from('bets')
+        .select('*')
+        .eq('upload_id', uploadId)
+        .order('recorded_date', { ascending: false })
+        .order('placed_time', { ascending: false, nullsFirst: false })
+        .order('placed_at', { ascending: false, nullsFirst: false })
+        .order('id', { ascending: false }),
     ]);
     if (uploadRes.data) setUpload(uploadRes.data as Upload);
     if (betsRes.data) setBets(betsRes.data as Bet[]);
@@ -129,7 +137,7 @@ export default function UploadDetailClient() {
                     />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-fg-muted">
-                    {new Date(bet.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {formatRecordedDate(bet, { month: 'short', day: 'numeric' })}
                   </td>
                   <td className="px-4 py-3 text-fg-bright">
                     {(() => {

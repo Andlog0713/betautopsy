@@ -1,4 +1,5 @@
 import type { ParsedBet } from '@/types';
+import { parseSourcedTimestamp, temporalFieldsAgree } from '@/lib/temporal-provenance';
 
 const RESULTS = new Set<ParsedBet['result']>(['win', 'loss', 'push', 'void', 'pending']);
 
@@ -13,45 +14,18 @@ function isNonEmptyString(value: unknown): value is string {
 
 /** Parse only timestamps whose clock time and timezone are both sourced. */
 export function parseExplicitTimestamp(raw: unknown): ExplicitTimestampResult {
-  if (!isNonEmptyString(raw)) return { value: null, error: 'placed_at must be a valid timestamp' };
-
-  const value = raw.trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return { value: null, error: `Date "${value}" has no clock time` };
+  const parsed = parseSourcedTimestamp(raw);
+  if (!parsed.value) return { value: null, error: parsed.error };
+  if (parsed.value.timestamp_quality === 'date_only') {
+    return { value: null, error: `Date "${parsed.value.source_placed_at}" has no clock time` };
   }
-  if (!/[T\s]\d{2}:\d{2}/.test(value)) {
-    return { value: null, error: `Timestamp "${value}" has no valid clock time` };
+  if (parsed.value.timestamp_quality === 'local_datetime') {
+    return {
+      value: null,
+      error: `Timestamp "${parsed.value.source_placed_at}" has no timezone or UTC offset`,
+    };
   }
-  if (!/(?:Z|[+-]\d{2}(?::?\d{2})?|UTC|GMT)$/i.test(value)) {
-    return { value: null, error: `Timestamp "${value}" has no timezone or UTC offset` };
-  }
-
-  const calendarDate = /^(\d{4})-(\d{2})-(\d{2})[T\s]/.exec(value);
-  if (calendarDate) {
-    const year = Number(calendarDate[1]);
-    const month = Number(calendarDate[2]);
-    const day = Number(calendarDate[3]);
-    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-    if (month < 1 || month > 12 || day < 1 || day > daysInMonth) {
-      return { value: null, error: `Timestamp "${value}" has an invalid calendar date` };
-    }
-  }
-
-  const clockTime = /[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?/.exec(value);
-  if (
-    !clockTime ||
-    Number(clockTime[1]) > 23 ||
-    Number(clockTime[2]) > 59 ||
-    Number(clockTime[3] ?? 0) > 59
-  ) {
-    return { value: null, error: `Timestamp "${value}" has an invalid clock time` };
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return { value: null, error: `Could not parse timestamp "${value}"` };
-  }
-  return { value: parsed.toISOString(), error: '' };
+  return { value: parsed.value.placed_at, error: '' };
 }
 
 /**
@@ -63,8 +37,11 @@ export function parsedBetValidationError(value: unknown): string | null {
   if (!value || typeof value !== 'object') return 'bet must be an object';
 
   const bet = value as Record<string, unknown>;
-  const parsedTimestamp = parseExplicitTimestamp(bet.placed_at);
+  const parsedTimestamp = parseSourcedTimestamp(bet.source_placed_at ?? bet.placed_at);
   if (!parsedTimestamp.value) return parsedTimestamp.error;
+  if (!temporalFieldsAgree(bet, parsedTimestamp.value)) {
+    return 'temporal provenance fields conflict with the source timestamp';
+  }
   if (!isNonEmptyString(bet.sport)) return 'sport is required';
   if (!isNonEmptyString(bet.bet_type)) return 'bet_type is required';
   if (!isNonEmptyString(bet.description)) return 'description is required';

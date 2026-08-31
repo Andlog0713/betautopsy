@@ -4,6 +4,7 @@ import { parseCSV } from '@/lib/csv-parser';
 import { importBets, planBetImport } from '@/lib/import-bets';
 import { logErrorServer } from '@/lib/log-error-server';
 import type { UploadPreviewResponse } from '@/types';
+import { betRecordedDate } from '@/lib/temporal-provenance';
 
 export async function POST(request: Request) {
   try {
@@ -78,7 +79,10 @@ export async function POST(request: Request) {
       const plan = await planBetImport(supabase, user.id, bets);
       const totalStaked = bets.reduce((sum, b) => sum + b.stake, 0);
       const totalNet = bets.reduce((sum, b) => sum + b.profit, 0);
-      const dates = bets.map((b) => b.placed_at).sort();
+      const dates = bets
+        .map(betRecordedDate)
+        .filter((date): date is string => date !== null)
+        .sort();
       const preview: UploadPreviewResponse = {
         preview: true,
         bet_count: bets.length,

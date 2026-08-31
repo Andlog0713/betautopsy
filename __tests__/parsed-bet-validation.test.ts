@@ -27,8 +27,6 @@ describe('client-parsed bet validation', () => {
   it.each([
     ['placed_at', ''],
     ['placed_at', 'not-a-date'],
-    ['placed_at', '2026-02-10'],
-    ['placed_at', '2026-02-10T12:30:00'],
     ['sport', ''],
     ['bet_type', ''],
     ['description', ''],
@@ -43,6 +41,30 @@ describe('client-parsed bet validation', () => {
     const bet = { ...validBet(), [field]: value };
     expect(isValidParsedBet(bet)).toBe(false);
     expect(parsedBetValidationError(bet)).toBeTruthy();
+  });
+
+  it.each([
+    ['date-only source', '2026-02-10'],
+    ['source clock without timezone', '2026-02-10T12:30:00'],
+  ])('accepts a %s without manufacturing an instant', (_label, source) => {
+    const bet = validBet({ placed_at: null, source_placed_at: source });
+    expect(isValidParsedBet(bet)).toBe(true);
+    expect(parsedBetValidationError(bet)).toBeNull();
+  });
+
+  it('accepts an older explicit ISO instant without requiring canonical milliseconds', () => {
+    const bet = validBet({ placed_at: '2026-01-01T12:00:00Z' });
+    expect(parsedBetValidationError(bet)).toBeNull();
+  });
+
+  it('accepts an older date-only value carried in placed_at for canonical import', () => {
+    const bet = validBet({ placed_at: '2026-02-10' });
+    expect(parsedBetValidationError(bet)).toBeNull();
+  });
+
+  it('rejects canonical partial provenance that leaves the source value in placed_at', () => {
+    const bet = validBet({ placed_at: '2026-02-10', source_placed_at: '2026-02-10' });
+    expect(parsedBetValidationError(bet)).toContain('temporal provenance fields conflict');
   });
 
   it('rejects a nonzero push profit instead of silently force-zeroing it', () => {

@@ -87,8 +87,8 @@ export default function ComparePage() {
       const [uploadA, uploadB, betsA, betsB] = await Promise.all([
         supabase.from('uploads').select('*').eq('id', idA).single(),
         supabase.from('uploads').select('*').eq('id', idB).single(),
-        supabase.from('bets').select('*').eq('upload_id', idA).order('placed_at', { ascending: true }),
-        supabase.from('bets').select('*').eq('upload_id', idB).order('placed_at', { ascending: true }),
+        supabase.from('bets').select('*').eq('upload_id', idA).order('recorded_date', { ascending: true }).order('placed_time', { ascending: true, nullsFirst: false }).order('placed_at', { ascending: true, nullsFirst: false }).order('id', { ascending: true }),
+        supabase.from('bets').select('*').eq('upload_id', idB).order('recorded_date', { ascending: true }).order('placed_time', { ascending: true, nullsFirst: false }).order('placed_at', { ascending: true, nullsFirst: false }).order('id', { ascending: true }),
       ]);
 
       if (uploadA.data && uploadB.data) {

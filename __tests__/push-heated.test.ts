@@ -136,7 +136,7 @@ describe('isSessionFresh', () => {
 });
 
 describe('buildHeatedCopy', () => {
-  it('uses late-night phrasing when lateNight=true', () => {
+  it('does not relabel a source-clock flag as local night', () => {
     const s = makeSession({
       dayOfWeek: 'Sunday',
       lateNight: true,
@@ -145,10 +145,10 @@ describe('buildHeatedCopy', () => {
     });
     expect(buildHeatedCopy(s)).toEqual({
       title: 'Heated session detected',
-      body: 'We caught a heated session. Sunday night, 7 bets in 7h. Tap to see the autopsy.',
+      body: 'We caught a heated session. Sunday, 7 bets in 7h. Tap to see the autopsy.',
     });
   });
-  it('drops night suffix when lateNight=false', () => {
+  it('keeps the weekday when lateNight=false', () => {
     const s = makeSession({
       dayOfWeek: 'Saturday',
       lateNight: false,

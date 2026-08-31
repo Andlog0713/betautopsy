@@ -13,6 +13,11 @@ import { BET_COUNT_THRESHOLDS } from './engine/constants/thresholds';
 import { buildReportSummary } from './report-summary';
 import { computeWhatChanged } from './what-changed';
 import type { AutopsyAnalysis, Bet, ProgressSnapshot } from '@/types';
+import {
+  betRecordedDate,
+  betTimestampQuality,
+  sanitizeUnconfirmedLocalTimeClaims,
+} from './temporal-provenance';
 
 // Promo-era rows can carry report_type='snapshot' even though runAutopsy made
 // full content. The promo is disabled, but retaining the additive union keeps
@@ -121,7 +126,9 @@ async function addWhatChanged(
     if (priorRow?.report_json && priorRow.created_at) {
       const whatChanged = computeWhatChanged(
         {
-          analysis: priorRow.report_json as AutopsyAnalysis,
+          analysis: sanitizeUnconfirmedLocalTimeClaims(
+            priorRow.report_json as AutopsyAnalysis,
+          ),
           createdAt: priorRow.created_at as string,
           betCountAnalyzed: (priorRow.bet_count_analyzed as number | null) ?? 0,
         },
@@ -296,8 +303,19 @@ export async function generateAndPersistFullReport(
   await addWhatChanged(args.supabase, args.userId, analysis, args.bets.length);
   await args.beforePersist?.();
 
-  const dateStart = args.bets[0]?.placed_at ?? null;
-  const dateEnd = args.bets[args.bets.length - 1]?.placed_at ?? null;
+  const instantBets = args.bets
+    .filter((bet): bet is Bet & { placed_at: string } => (
+      betTimestampQuality(bet) === 'instant' && Boolean(bet.placed_at)
+    ))
+    .sort((a, b) => a.placed_at.localeCompare(b.placed_at));
+  const dateStart = instantBets[0]?.placed_at ?? null;
+  const dateEnd = instantBets[instantBets.length - 1]?.placed_at ?? null;
+  const recordedDates = args.bets
+    .map(betRecordedDate)
+    .filter((date): date is string => Boolean(date))
+    .sort();
+  const dateStartDate = recordedDates[0] ?? null;
+  const dateEndDate = recordedDates[recordedDates.length - 1] ?? null;
   const { data: savedReport, error: insertError } = await args.persistenceClient
     .from('autopsy_reports')
     .insert({
@@ -307,6 +325,8 @@ export async function generateAndPersistFullReport(
       bet_count_analyzed: args.bets.length,
       date_range_start: dateStart,
       date_range_end: dateEnd,
+      date_range_start_date: dateStartDate,
+      date_range_end_date: dateEndDate,
       report_json: analysis,
       report_summary: buildReportSummary(analysis),
       report_markdown: markdown,

@@ -14,6 +14,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { buildWhatIfScenarios, type MetricsWhatIfsShape } from '@/lib/engine/whatIf';
 import { runAutopsy, runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── Anthropic SDK mock ─────────────────────────────────────────────────
 // runAutopsy dynamically imports @anthropic-ai/sdk; runSnapshot is pure-compute.
@@ -41,7 +42,7 @@ vi.mock('@anthropic-ai/sdk', () => {
 let seq = 0;
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   seq++;
-  return {
+  return markFixtureTimestampAsSourced({
     id: `wi-${seq}`,
     user_id: 'test-user',
     placed_at: '2026-04-15T14:00:00Z',
@@ -62,7 +63,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: null,
     created_at: '2026-04-15T14:00:00Z',
     ...overrides,
-  };
+  });
 }
 
 function makeWhatIfs(overrides: Partial<MetricsWhatIfsShape> = {}): MetricsWhatIfsShape {

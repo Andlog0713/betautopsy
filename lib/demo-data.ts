@@ -1,4 +1,16 @@
 import type { AutopsyAnalysis, Bet } from '@/types';
+import { parseSourcedTimestamp } from '@/lib/temporal-provenance';
+
+function markDemoTimestampsAsSourced(bets: Bet[]): Bet[] {
+  return bets.map((bet) => {
+    if (!bet.placed_at) return bet;
+    const parsed = parseSourcedTimestamp(bet.placed_at);
+    if (!parsed.value || parsed.value.timestamp_quality !== 'instant') {
+      throw new Error(parsed.error ?? `Invalid sourced demo timestamp for ${bet.id}`);
+    }
+    return { ...bet, ...parsed.value };
+  });
+}
 
 // -- Demo Bets --
 // 304 bets (Nov 1, 2025 - Jan 31, 2026), script-generated with deliberate
@@ -6,7 +18,9 @@ import type { AutopsyAnalysis, Bet } from '@/types';
 // prop/parlay/late-night unprofitable, one loss-chasing session) and run
 // through the REAL engine: lib/autopsy-engine.ts's calculateMetrics() +
 // one live runAutopsy() call against the actual Claude API. DEMO_ANALYSIS
-// below is that call's frozen, unedited output - EXCEPT discipline_score,
+// below is that call's frozen engine output after the same mechanical
+// provenance and model-number filters used for paid reports, except for
+// discipline_score,
 // which runAutopsy does not compute (app/api/analyze/route.ts calls
 // calculateDisciplineScore separately, using profile/report-history
 // context - hasBankroll, reportCount, streakCount, a prior snapshot - that
@@ -31,7 +45,7 @@ import type { AutopsyAnalysis, Bet } from '@/types';
 // description - it is not checked in (it makes a real, billed Claude API
 // call, so it must not run as part of `npx vitest run`).
 
-export const DEMO_BETS: Bet[] = [
+const DEMO_BETS_SOURCE: Bet[] = [
   {
     "id": "demo-1",
     "user_id": "demo",
@@ -6418,6 +6432,8 @@ export const DEMO_BETS: Bet[] = [
   }
 ];
 
+export const DEMO_BETS = markDemoTimestampsAsSourced(DEMO_BETS_SOURCE);
+
 // -- Demo Analysis --
 // Frozen output of a real runAutopsy(DEMO_BETS, null) call. Not hand-edited.
 
@@ -6762,10 +6778,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Heavy Parlay Tendency",
       "severity": "low",
-      "description": "You're throwing 3-leg parlays at +500 consistently, which sounds exciting until you see the hit rate. The parlay ROI sits at -30.2% versus -13.2% on straight bets, meaning the parlays are dragging your overall numbers down meaningfully. The good news: this isn't out of control. At 28% of your bets, it's a habit worth trimming, not an emergency.",
-      "evidence": "85 parlays at -30.2% ROI versus 219 straight bets at -13.2% ROI. NFL parlays specifically are the worst offender at -38.7% ROI across 40 bets, losing $522 while your NFL straight bets made $497.",
-      "estimated_cost": 700,
-      "fix": "Cap parlays at one per session, max 3 legs, and only when your straight bet already cashed.",
+      "description": "The NFL parlay drag is the clearest example: NFL straight bets are actually in the green, but the NFL parlays are a significant drag pulling the whole sport toward breakeven. The NBA parlays follow the same script.",
+      "evidence": "28% parlays, parlay ROI: -30.2% vs straight: -13.2%",
+      "estimated_cost": 764,
+      "fix": "The parlay habit isn't destroying you, but it's a consistent drain. Your straight bets are where your actual edge lives, so that's where your real money should go.",
       "evidence_bet_ids": [
         "demo-75",
         "demo-81",
@@ -6801,10 +6817,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Stake Volatility",
       "severity": "medium",
-      "description": "Your bet sizing is genuinely all over the place. One day you're putting $15 on a parlay, the next you're firing $450 on an NBA spread. That kind of range makes it impossible to manage your bankroll or evaluate whether your process is actually working. The inconsistency also shows up in loss-streak behavior: your average stake climbs from $69 neutral to $75 after three straight losses.",
-      "evidence": "Stakes range from $15 to $450 with an average of $70.16 and a variability score of 0.83 (flagged as inconsistent). After 3+ loss streaks, average stake rises to $75 versus $69 neutral. December 13 is the clearest example: stakes of $350, $400, $450, $300, $220, and $150 all in one session.",
-      "estimated_cost": 500,
-      "fix": "Pick one stake amount before you sit down and bet that same amount every single time, no exceptions.",
+      "description": "Bet sizing is all over the place. The next day, sizing snapped back to normal. This kind of volatility is the clearest signal in the data that something other than a pre-planned process is driving stake decisions on certain nights. The loss-streak data backs this up: average stakes are noticeably higher after a string of losses than after a string of wins.",
+      "evidence": "Bet sizes range from $15 to $450 (avg $70). Noticeably inconsistent sizing",
+      "estimated_cost": 78.99,
+      "fix": "Decide your standard bet size before you open the app, not in the moment. Whatever that number is, it stays the same whether you're up, down, or in the middle of a rough stretch. The big-stake nights aren't where you're finding your edge, they're where you're trying to get even fast. Locking in a consistent size before each session removes that lever entirely.",
       "evidence_bet_ids": [
         "demo-304",
         "demo-303",
@@ -6826,10 +6842,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Category Concentration Leak",
       "severity": "low",
-      "description": "NBA is your most-played category by a wide margin, and it's also your worst-performing one. You're putting 57% of your bets into a market where you're losing at -24.9% ROI. The NBA spread and NBA prop sub-categories are both deep in the red, and the rapid-fire multi-bet NBA days are where the real damage piles up. Your NFL game is actually close to breakeven, which makes the NBA overload even more costly by comparison.",
-      "evidence": "175 NBA bets at -24.9% ROI, totaling $-2950 in losses. NBA spread: -26.4% ROI on 55 bets ($-1382). NBA props: -25.8% ROI on 55 bets ($-832). 13 days with 4+ NBA bets combined for $-2210. NFL sits at -0.3% ROI across 114 bets.",
-      "estimated_cost": 1500,
-      "fix": "Cut NBA volume by a third and redirect those bets toward NFL spreads where your numbers are nearly flat.",
+      "description": "The problem is the NBA ROI is the worst of any major sport here. Spreads, props, parlays, and moneylines in the NBA are all running negative, with NBA spreads and props being particularly rough.",
+      "evidence": "NBA: 175 bets at -24.9% ROI ($-2950)",
+      "estimated_cost": 2949.97,
+      "fix": "NBA is where your volume is highest and your results are worst. That's not a coincidence. Your NFL spread game is genuinely profitable, so shifting some of that NBA volume toward NFL straight bets is the smarter play with this sample.",
       "evidence_bet_ids": [
         "demo-304",
         "demo-303",
@@ -6860,139 +6876,62 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   "strategic_leaks": [
     {
       "category": "NBA prop",
-      "detail": "You're betting NBA player props at a high clip (55 bets, 31% of all NBA action) and getting crushed. Props are a recreational trap in the NBA because the books price them sharply and the variance on individual player stats is brutal. You're hitting LeBron overs, Jokic assists, Curry rebounds, and they're not connecting at a rate that justifies the volume.",
+      "detail": "Player props are a recreational trap in the NBA and this sample shows exactly why. There's a lot of LeBron, Doncic, Brunson, and Edwards prop action, often multiple props on the same player across different sessions. The lines on star player props are extremely sharp and the books price them well. Hitting them occasionally feels like skill but the volume at this loss rate is a real drain.",
       "detail_visibility": "visible",
       "roi_impact": -25.8372165268717,
       "sample_size": 55,
-      "suggestion": "Treat NBA props as a bonus play, not a staple. If you do play them, stick to the ones where you have a specific reason tied to matchup or role, not just a feel for a player's ceiling.",
+      "suggestion": "Treat NBA props as a small-stake side play, not a core betting category.",
       "suggestion_visibility": "visible",
       "severity": "high",
       "confidence": "medium"
     },
     {
       "category": "NFL parlay",
-      "detail": "Your NFL straight bets are nearly breakeven at -0.3% ROI, which is genuinely respectable. But your NFL parlays are destroying that edge at -38.7% ROI. You're essentially building a solid foundation with your NFL straight bets and then torching it with parlay add-ons. The NFL parlay drag is the clearest structural leak in your entire betting profile.",
+      "detail": "This is the most frustrating leak because the underlying NFL straight bet game is actually profitable. The parlays are taking a sport where you have a real edge and turning it into a losing category. The NFL parlay ROI is the worst of any sub-category in the data. You're essentially taxing your own good NFL handicapping by bundling it with other legs that dilute the edge.",
       "detail_visibility": "visible",
       "roi_impact": -38.666666666666664,
       "sample_size": 40,
-      "suggestion": "Stop combining your NFL picks into parlays. Your straight NFL game is working. Let it work on its own.",
+      "suggestion": "Stop parlaying your NFL picks. The straight bet record in NFL spreads speaks for itself. Parlaying them doesn't multiply your edge, it multiplies the ways you can lose.",
       "suggestion_visibility": "visible",
       "severity": "critical",
       "confidence": "medium"
     },
     {
       "category": "NBA spread",
-      "detail": "NBA spreads are your highest-volume sub-category and one of your worst performers. At -26.4% ROI across 55 bets, you're losing more than a quarter of every dollar wagered here. The rapid-fire multi-bet NBA days amplify this leak significantly.",
+      "detail": "The rapid-fire pattern is visible here: multiple NBA spread bets in the same session, often on games happening simultaneously or within minutes of each other.",
       "detail_visibility": "visible",
       "roi_impact": -26.432778733983547,
       "sample_size": 55,
-      "suggestion": "Limit yourself to one NBA spread per day. More bets on the same night does not mean more edge, it means more exposure to a market where you're currently running cold.",
+      "suggestion": "Spreading across multiple simultaneous NBA games dilutes whatever edge you might have on any individual matchup.",
       "suggestion_visibility": "visible",
       "severity": "high",
       "confidence": "medium"
-    },
-    {
-      "category": "NHL spread",
-      "detail": "Small sample but ugly: 7 bets at -44.6% ROI. You're taking puck-line dogs and chalk at bad prices and it's not working at all. This is a category to either build a real angle in or walk away from entirely.",
-      "detail_visibility": "visible",
-      "roi_impact": -44.63894967177243,
-      "sample_size": 7,
-      "suggestion": "Either develop a specific NHL spread angle or cut it. Seven bets at -44.6% is not a sample worth continuing without a clear reason to be there.",
-      "suggestion_visibility": "visible",
-      "severity": "critical",
-      "confidence": "low"
     }
   ],
   "behavioral_patterns": [
     {
-      "pattern_name": "Late-Night Collapse Window",
-      "description": "Bets placed between 11pm and 4am are running at a 0% win rate across 42 bets. This is not a cold streak, it is a complete shutout. The 11pm window alone shows -43.9% ROI with a 13% win rate. Whether this is fatigue, emotional decisions after a rough evening session, or just bad game selection late at night, the pattern is stark and consistent.",
-      "frequency": "42 bets across the sample, 14% of total volume",
-      "impact": "negative",
-      "data_points": "11pm: -43.9% ROI, 13% win rate, 24 bets, $-720. 12am-3am: -100% ROI across 22 bets, $-2097 combined. Late-night total (11pm-4am): -71.5% ROI."
-    },
-    {
       "pattern_name": "Thursday Sharp Instinct",
-      "description": "Thursday is your best day by a significant margin, with a 55% win rate and +15.9% ROI across 31 bets. This is the one day where your selections are consistently outperforming the implied odds. It stands out sharply against every other day of the week.",
-      "frequency": "31 bets on Thursdays across the sample",
+      "description": "Thursday is the only day of the week running positive ROI with a win rate well above the overall average. This likely reflects Thursday Night Football action where the bettor has found a consistent angle. It's a genuine bright spot in the weekly pattern and stands out sharply against the rest of the week.",
+      "frequency": "Every Thursday in the sample",
       "impact": "positive",
-      "data_points": "Thursday: +15.9% ROI, 55% win rate, 31 bets, $+336 profit. Next best day is Wednesday at -2.5% ROI."
-    },
-    {
-      "pattern_name": "Saturday Volume Trap",
-      "description": "Saturday is your highest-volume day and your second-worst performer. You're betting more on Saturdays than almost any other day, but the results are consistently poor. High volume on a bad-performing day amplifies losses faster than any other pattern in this data.",
-      "frequency": "56 bets on Saturdays, the most of any day",
-      "impact": "negative",
-      "data_points": "Saturday: -26.5% ROI, 41% win rate, 56 bets, $-1462 profit. Highest single-day loss total in the sample."
-    },
-    {
-      "pattern_name": "December 13 Stake Escalation Session",
-      "description": "December 13 shows the clearest example of in-session stake escalation in the entire dataset. Stakes jumped from typical $50-100 range to $350, $400, $450, $300, $220, and $150 across 10 bets in a single session. This is the worst session in the sample and the only F-grade session recorded.",
-      "frequency": "Single session (SESSION-052), but the most damaging in the dataset",
-      "impact": "negative",
-      "data_points": "SESSION-052 on Dec 12-13: 10 bets, $-1317 profit, grade F, flagged as heated. Stakes of $350, $400, $450 on NBA spreads all lost."
-    },
-    {
-      "pattern_name": "6pm-7pm Profitable Window",
-      "description": "The early evening window is where your sharpest betting happens. The 6pm slot runs at +54.6% ROI with a 63% win rate, and 7pm holds positive at +4.2% ROI. This is the opposite of the late-night pattern and suggests your best decision-making happens early in the evening before fatigue or session momentum sets in.",
-      "frequency": "61 bets between 6pm-7pm across the sample",
-      "impact": "positive",
-      "data_points": "6pm: +54.6% ROI, 63% win rate, 16 bets, $+711. 7pm: +4.2% ROI, 49% win rate, 45 bets, $+126."
+      "data_points": "Thursday has the highest win rate of any day and the only clearly positive ROI."
     },
     {
       "pattern_name": "NFL Spread Discipline",
-      "description": "Your NFL spread game is legitimately one of the better parts of this profile. At +7.7% ROI across 60 bets, you're actually making money here. This is a real edge worth protecting, and it gets buried under the parlay losses and NBA volume.",
-      "frequency": "60 NFL spread bets across the sample",
+      "description": "The picks show range: dogs, chalk, home and away, across multiple teams. This is the foundation of a real edge.",
+      "frequency": "Consistent throughout the sample, heaviest on weekends",
       "impact": "positive",
-      "data_points": "NFL spread: +7.7% ROI, 60 bets, $+463 profit. NFL overall: -0.3% ROI, 114 bets, nearly breakeven."
+      "data_points": "NFL spread is the only major sub-category with a positive ROI and a meaningful profit figure. The contrast with NFL parlays, which are deeply negative, reinforces that the straight bet process is where the skill lives."
     }
   ],
   "recommendations": [
     {
       "priority": 1,
-      "title": "Stop Betting After 10pm",
-      "description": "The data is unambiguous: bets placed after 10pm are not working. The 11pm-4am window is a 0% win rate across 42 bets. This is not bad luck, it is a consistent behavioral pattern across three months. Set a hard stop at 10pm and do not place any bets after that time, regardless of what games are on.",
-      "expected_improvement": "Eliminating the late-night window removes your single worst-performing behavioral pattern and keeps your decision-making in the hours where you actually have a track record.",
-      "difficulty": "medium",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 2,
-      "title": "Cut NBA Volume by a Third",
-      "description": "NBA is 57% of your bets and your worst-performing sport. Your NFL game is nearly breakeven and your NFL spreads are actually profitable. The fix is not to stop betting NBA entirely, but to stop treating it as your primary market. Reduce NBA bets and shift that attention toward the NFL spread game where your instincts are clearly sharper.",
-      "expected_improvement": "Reducing NBA overexposure and leaning into your NFL spread strength shifts your volume toward the market where your selections are actually working. Save ~$1,500.",
+      "title": "Shift NBA Volume to NFL Spreads",
+      "description": "You have a real edge in NFL spreads and a real leak in NBA bets. The fix isn't complicated: bet less NBA and more NFL straight bets. If it's the latter, pass. Your Thursday and weekend NFL spread game is where your instincts are sharpest. Trust that and let it carry more of the load.",
+      "expected_improvement": "Excluding the flagged cohort improves historical P&L by ~$2,900.",
       "difficulty": "medium",
       "tied_to_finding": "Category Concentration Leak",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 3,
-      "title": "Drop NFL Parlays Entirely",
-      "description": "Your NFL straight bets are one of the few genuinely profitable categories in this entire dataset. Your NFL parlays are destroying that profit at -38.7% ROI. These two things are directly connected: you are building real edge with your NFL picks and then giving it back by combining them into parlays. Bet your NFL picks straight and let the edge compound on its own.",
-      "expected_improvement": "Removing NFL parlays stops the single clearest structural leak in your betting and lets your legitimate NFL spread edge actually show up in your results. Save ~$700.",
-      "difficulty": "easy",
-      "tied_to_finding": "Heavy Parlay Tendency",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 4,
-      "title": "Lock In One Stake Amount Before Every Session",
-      "description": "Your bet sizing swings from $15 to $450 within the same sport on the same day. That range makes it impossible to know whether your process is working or whether you just ran hot or cold on a big bet. Before you place your first bet of any session, decide what you are betting on every play that day and do not change it based on how the session is going.",
-      "expected_improvement": "Consistent stake sizing makes your results reflect your actual selection quality rather than how much you happened to bet on your winners versus your losers. Save ~$500.",
-      "difficulty": "medium",
-      "tied_to_finding": "Stake Volatility",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 5,
-      "title": "Protect Your Thursday Edge",
-      "description": "Thursday is the one day where your selections are genuinely outperforming the market at +15.9% ROI and 55% win rate. That is a real signal worth protecting. Make sure your Thursday bets are straight bets at consistent stakes, not parlays or inflated sizes that could distort the results.",
-      "expected_improvement": "Treating Thursday as your sharpest betting day and keeping those bets clean and consistent lets a genuine edge compound over time rather than getting diluted by parlay drag.",
-      "difficulty": "easy",
       "description_visibility": "visible",
       "expected_improvement_visibility": "visible"
     }
@@ -7014,29 +6953,31 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   "bankroll_health": "caution",
   "personal_rules": [
     {
-      "rule": "No bets after 10pm, full stop.",
-      "reason": "42 bets placed between 11pm and 4am produced a 0% win rate and -71.5% ROI. That window is costing you money every time you open the app late.",
-      "based_on": "Late-night time-of-day ROI breakdown showing complete shutout from 11pm through 4am"
-    },
-    {
-      "rule": "Maximum 2 NBA bets per day.",
-      "reason": "The 13 days with 4+ NBA bets combined for $-2210 in losses. More NBA bets per day does not mean more edge, it means more exposure to your worst-performing market.",
-      "based_on": "NBA rapid-fire sessions finding: 13 days with 4+ NBA bets at combined $-2210"
-    },
-    {
-      "rule": "No NFL parlays. Bet every NFL pick straight.",
-      "reason": "NFL straight bets made $497. NFL parlays lost $522. You have a real NFL edge that parlays are erasing completely.",
-      "based_on": "NFL parlay drag: NFL straight bets +$497, NFL parlays -$522 at -38.7% ROI"
-    },
-    {
-      "rule": "Decide your stake for the session before placing the first bet, and do not change it.",
-      "reason": "Your stakes range from $15 to $450 with a variability score of 0.83. The December 13 session shows what happens when sizing escalates mid-session: $-1317 in a single day.",
-      "based_on": "Stake Volatility bias: variability score 0.83, max stake $450, worst session $-1317"
-    },
-    {
-      "rule": "On Saturdays, bet half your normal volume.",
-      "reason": "Saturday is your highest-volume day at 56 bets and your second-worst performer at -26.5% ROI and $-1462 in losses. More bets on your worst day amplifies the damage.",
-      "based_on": "Day-of-week breakdown: Saturday -26.5% ROI, 56 bets, $-1462 profit"
+      "rule": "No single bet can exceed $90 until your next report.",
+      "reason": "A fixed ceiling keeps every stake within the engine-derived limit until the next report.",
+      "based_on": "Sizing discipline",
+      "candidate_id": "stake_cap",
+      "rule_type": "stake_cap",
+      "scope": "global",
+      "scope_value": null,
+      "severity": "guardrail",
+      "enforcement": "hard",
+      "provenance": "engine_recommended",
+      "trigger": {
+        "maxStake": 90,
+        "maxStakeMultiplier": 1.25
+      },
+      "evidence": {
+        "basis": "sizing",
+        "summary": "Stake Volatility qualified across 304 bets; average stake was $70.",
+        "sampleSize": 304
+      },
+      "sufficiency": {
+        "status": "sufficient",
+        "observed": 304,
+        "minimum": 10,
+        "unit": "qualified_bets"
+      }
     }
   ],
   "session_analysis": {
@@ -7050,7 +6991,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 59,
       "ending_stake": 450,
       "net": -1316.73,
-      "description": "SESSION-052 on December 12, 2025 is the one to learn from. Ten bets, $-1317 in losses, the only F-grade session in 108 total, and flagged as heated. This is where the stake escalation pattern is most visible in the raw data, with NBA spread bets climbing to $350, $400, and $450 in a single sitting."
+      "description": "Then something shifted. Each bet was larger than the last. The session was already in the red before those bets, and the escalating stakes turned a bad night into the worst session in the entire sample by a wide margin. The next day, stakes snapped back to normal, which tells you this wasn't a planned high-roller session. It was a session that got away."
     },
     "best_session": {
       "date": "Nov 14, 2025",
@@ -7059,7 +7000,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 41,
       "ending_stake": 67,
       "net": 329.82,
-      "description": "SESSION-020 on November 14, 2025 is what disciplined betting looks like for this bettor: 4 bets, $330 profit, grade A. A clean NFL parlay hit at +500 combined with a solid NFL spread win kept the session tight and profitable without chasing or overextending."
+      "description": "This session shows the process working. It's the template."
     },
     "insight": "Most sessions look disciplined, but 4 of 108 had heated moments worth reviewing."
   },
@@ -7098,13 +7039,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "estimated_loss": 522
       },
       {
+        "category": "NBA parlay",
+        "roi": -20.54,
+        "sample_size": 45,
+        "estimated_loss": 242
+      },
+      {
         "category": "NHL spread",
         "roi": -44.64,
         "sample_size": 7,
         "estimated_loss": 204
       }
     ],
-    "reallocation_advice": "Your NFL spread game is the clearest real edge in this profile at +7.7% ROI across 60 bets. That is where your attention and your stakes belong. Pull back on NBA props and NBA spreads, which are bleeding money at -25% or worse, and stop combining your NFL picks into parlays that erase the profit your straight bets are generating. The Thursday window and the 6pm-7pm time slot are where your sharpest decisions happen. Build your sessions around those windows and treat everything after 10pm as off-limits.",
+    "reallocation_advice": "Your NFL straight bet game is the foundation to build on. NFL spreads and NFL moneylines are both in the green, which means your process for handicapping NFL games is working. The move is to protect that edge by keeping those bets straight and not bundling them into parlays that dilute the result. On the NBA side, the volume is too high relative to the results. NHL is a small sample but the spread results are ugly. Either find a specific angle there or leave it alone.",
     "sharp_score": 41
   },
   "betting_archetype": {
@@ -7498,12 +7445,20 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "roi": -100,
       "count": 4
     },
-    "late_night_stats": {
-      "count": 42,
-      "roi": -71.55,
-      "pct_of_total": 13.82
+    "late_night_stats": null,
+    "source_clock_window_stats": {
+      "count": 46,
+      "roi": -75.34,
+      "pct_of_total": 15.13
     },
-    "has_time_data": true
+    "has_time_data": true,
+    "clock_basis": "source_clock",
+    "clock_label": "Clock time and timezone supplied by source",
+    "time_bearing_bets": 304,
+    "date_bearing_bets": 304,
+    "timezone_bearing_bets": 304,
+    "legacy_unknown_bets": 0,
+    "local_time_confirmed": false
   },
   "odds_analysis": {
     "buckets": [
@@ -7673,17 +7628,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
   },
   "dfs_mode": false,
   "betiq": {
-    "score": 62,
+    "score": 59,
     "components": {
       "line_value": 18,
       "calibration": 15,
       "sophistication": 6,
       "specialization": 3,
-      "timing": 8,
+      "timing": 5,
       "confidence": 12
     },
     "percentile": null,
-    "interpretation": "Above-average skill. You have identifiable edges. The question is whether you're exploiting them enough.",
+    "interpretation": "Moderate skill level. Some promising spots, but you're also making bets without clear edge.",
     "insufficient_data": false
   },
   "emotion_percentile": 30,
@@ -7811,12 +7766,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 20.0 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -7852,7 +7808,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -7892,7 +7849,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -7931,7 +7889,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -7969,7 +7928,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8008,17 +7968,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": true,
         "framing": "win-but-risky",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           10,
@@ -8052,12 +8013,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": false,
         "chaseCount": 0,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Heavy losses this session (-43.0% ROI)",
-          "Late-night betting (after 11pm)"
+          "Heavy losses this session (-43.0% ROI)"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -8094,10 +8055,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -8136,7 +8098,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8175,7 +8138,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 7.5 bets/hour"
@@ -8215,10 +8179,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": false,
@@ -8256,11 +8221,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -8297,7 +8263,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Moderately inconsistent stake sizing within session",
@@ -8336,13 +8303,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 4,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-64.1% ROI)",
-          "Late-night betting (after 11pm)"
+          "4 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -8382,7 +8350,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-100.0% ROI)"
@@ -8421,11 +8390,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.9 bets/hour",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -8462,7 +8432,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8501,7 +8472,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8540,7 +8512,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -8580,7 +8553,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session"
@@ -8621,7 +8595,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -8659,7 +8634,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8698,10 +8674,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Significant losses this session (-23.0% ROI)"
         ],
         "isHeated": false,
@@ -8742,7 +8719,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -8781,11 +8759,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -8824,10 +8803,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-40.6% ROI)"
         ],
         "isHeated": false,
@@ -8865,11 +8845,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "C",
         "gradeReasons": [
-          "7 consecutive losses without stopping",
-          "Stepped up stakes from a prior losing bet",
+          "7 consecutive source-order rows later settled as losses",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -8910,28 +8891,25 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 3,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "D",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           79,
           80,
           81
         ],
-        "triggerEvent": {
-          "type": "late_night",
-          "description": "Late-night session starting at 8:09 PM."
-        },
         "profitVisibility": "visible"
       },
       {
@@ -8960,7 +8938,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -8996,13 +8975,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": false,
         "chaseCount": 0,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "B",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-100.0% ROI)",
-          "Moderately inconsistent stake sizing within session",
-          "Late-night betting (after 11pm)"
+          "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -9038,7 +9017,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9077,7 +9057,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9116,11 +9097,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -9157,7 +9139,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -9195,7 +9178,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -9232,7 +9216,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9270,12 +9255,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "C",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-38.9% ROI)"
         ],
         "isHeated": false,
@@ -9314,7 +9300,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Significant losses this session (-18.6% ROI)"
@@ -9352,13 +9339,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 3,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-45.1% ROI)",
-          "Late-night betting (after 11pm)"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -9396,7 +9384,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Moderately inconsistent stake sizing within session"
@@ -9435,7 +9424,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -9473,7 +9463,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -9510,7 +9501,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9549,7 +9541,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Significant losses this session (-27.4% ROI)"
@@ -9589,7 +9582,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-34.4% ROI)"
@@ -9631,7 +9625,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9670,11 +9665,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -9712,11 +9708,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": false,
@@ -9752,12 +9749,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": false,
         "chaseCount": 0,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Heavy losses this session (-100.0% ROI)",
-          "Late-night betting (after 11pm)"
+          "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -9793,7 +9790,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9832,7 +9830,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -9870,19 +9869,20 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 7,
         "chasedAfterLoss": true,
         "chaseCount": 5,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "F",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Chased losses 5 times in a single session",
+          "Raised stakes after losing-result rows 5 times in one source-ordered session",
           "Highly inconsistent stake sizing within session"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
           "Session grade: F",
-          "Stakes more than doubled while chasing losses",
+          "Stakes more than doubled across a losing-result sequence",
           "Extended session with heavy losses while chasing"
         ],
         "betIndices": [
@@ -9897,10 +9897,6 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           140,
           141
         ],
-        "triggerEvent": {
-          "type": "late_night",
-          "description": "Late-night session starting at 7:35 PM."
-        },
         "profitVisibility": "visible"
       },
       {
@@ -9928,18 +9924,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 3,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Chased losses 3 times in a single session",
-          "Stepped up stakes from a prior losing bet"
+          "Raised stakes after losing-result rows 3 times in one source-ordered session",
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           142,
@@ -9953,7 +9950,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         ],
         "triggerEvent": {
           "type": "loss",
-          "description": "Preceded by a $450 losing bet on Dec 13.",
+          "description": "Preceded in the comparable source order by a $450 bet later settled as a loss on Dec 13.",
           "triggeringBetId": "demo-304"
         },
         "profitVisibility": "visible"
@@ -9984,7 +9981,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -10022,10 +10020,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
           "Elevated pace at 3.2 bets/hour"
         ],
@@ -10065,7 +10064,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -10103,7 +10103,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10142,7 +10143,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 8.6 bets/hour",
@@ -10182,7 +10184,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10221,7 +10224,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -10258,12 +10262,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": false,
         "chaseCount": 0,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Heavy losses this session (-100.0% ROI)",
-          "Late-night betting (after 11pm)"
+          "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -10298,13 +10302,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 3,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Moderately inconsistent stake sizing within session",
-          "Late-night betting (after 11pm)"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -10343,7 +10348,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -10381,7 +10387,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -10418,12 +10425,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 1,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "Late-night betting (after 11pm)"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -10460,7 +10467,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -10498,7 +10506,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -10536,7 +10545,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 8.0 bets/hour"
@@ -10575,7 +10585,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10614,7 +10625,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10653,7 +10665,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10692,7 +10705,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 20.0 bets/hour"
@@ -10731,7 +10745,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10769,12 +10784,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 0,
         "chasedAfterLoss": false,
         "chaseCount": 0,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Moderately inconsistent stake sizing within session",
-          "Late-night betting (after 11pm)"
+          "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -10811,7 +10826,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -10849,11 +10865,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Moderately inconsistent stake sizing within session"
         ],
         "isHeated": false,
@@ -10890,10 +10907,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Significant losses this session (-18.9% ROI)"
         ],
         "isHeated": false,
@@ -10934,7 +10952,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -10973,10 +10992,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11013,12 +11033,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 1,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "Late-night betting (after 11pm)"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11057,7 +11077,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-34.8% ROI)"
@@ -11097,7 +11118,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -11136,7 +11158,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -11173,7 +11196,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -11211,7 +11235,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -11249,11 +11274,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-52.3% ROI)",
           "Moderately inconsistent stake sizing within session"
         ],
@@ -11293,10 +11319,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Significant losses this session (-15.7% ROI)"
         ],
         "isHeated": false,
@@ -11335,11 +11362,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 4.8 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11379,7 +11407,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -11416,13 +11445,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "Heavy losses this session (-33.1% ROI)",
-          "Late-night betting (after 11pm)"
+          "Stepped up stakes from a prior bet later settled as a loss",
+          "Heavy losses this session (-33.1% ROI)"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11459,7 +11488,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -11496,13 +11526,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 3,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "B",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "Late-night betting (after 11pm)",
-          "3 consecutive losses"
+          "Stepped up stakes from a prior bet later settled as a loss",
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11541,10 +11571,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-49.0% ROI)",
           "Moderately inconsistent stake sizing within session"
         ],
@@ -11586,7 +11617,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -11625,11 +11657,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-55.2% ROI)"
         ],
         "isHeated": false,
@@ -11669,11 +11702,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11709,7 +11743,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-100.0% ROI)"
@@ -11748,11 +11783,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "3 consecutive losses"
+          "Stepped up stakes from a prior bet later settled as a loss",
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11790,12 +11826,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 6,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "C",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "B",
         "gradeReasons": [
-          "6 consecutive losses without stopping",
-          "Stepped up stakes from a prior losing bet",
+          "6 consecutive source-order rows later settled as losses",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -11836,11 +11873,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-44.3% ROI)",
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11877,12 +11915,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
-          "Late-night betting (after 11pm)"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11922,12 +11960,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-35.7% ROI)",
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -11967,7 +12006,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -12006,12 +12046,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 20.0 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -12047,11 +12088,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 6.7 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -12089,12 +12131,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-52.3% ROI)",
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -12132,7 +12175,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -12170,7 +12214,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-41.8% ROI)"
@@ -12190,8 +12235,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     "sessionGradeDistribution": [
       {
         "grade": "A",
-        "count": 51,
-        "percent": 47.22
+        "count": 53,
+        "percent": 49.07
       },
       {
         "grade": "B",
@@ -12200,13 +12245,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       },
       {
         "grade": "C",
-        "count": 8,
-        "percent": 7.41
+        "count": 7,
+        "percent": 6.48
       },
       {
         "grade": "D",
-        "count": 4,
-        "percent": 3.7
+        "count": 3,
+        "percent": 2.78
       },
       {
         "grade": "F",
@@ -12217,10 +12262,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     "heatedSessionCount": 4,
     "heatedSessionPercent": 3.7,
     "avgGradedROI": {
-      "A": 26.1,
-      "B": -70.27,
-      "C": -31.33,
-      "D": -77.66,
+      "A": 23.3,
+      "B": -71.24,
+      "C": -30.25,
+      "D": -70.21,
       "F": -79.95
     },
     "bestSession": {
@@ -12249,7 +12294,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "chasedAfterLoss": false,
       "chaseCount": 0,
       "lateNight": false,
-      "lateNightKnown": true,
+      "lateNightKnown": false,
+      "sourceClockLateWindow": false,
       "grade": "A",
       "gradeReasons": [
         "Stakes escalated more than 1.5x during the session"
@@ -12265,6 +12311,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "betSnapshots": [
         {
           "placed_at": "2025-11-14T18:01:00.000Z",
+          "source_placed_at": "2025-11-14T18:01:00.000Z",
+          "placed_date": "2025-11-14",
+          "placed_time": "18:01:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "3-leg NFL parlay: Chiefs + Texans + Texans",
           "stake": 41,
           "profit": 205,
@@ -12272,6 +12323,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-14T20:23:00.000Z",
+          "source_placed_at": "2025-11-14T20:23:00.000Z",
+          "placed_date": "2025-11-14",
+          "placed_time": "20:23:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Cowboys +2",
           "stake": 124,
           "profit": 112.73,
@@ -12279,6 +12335,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-14T21:32:00.000Z",
+          "source_placed_at": "2025-11-14T21:32:00.000Z",
+          "placed_date": "2025-11-14",
+          "placed_time": "21:32:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "76ers -9",
           "stake": 87,
           "profit": 79.09,
@@ -12286,6 +12347,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-14T22:43:00.000Z",
+          "source_placed_at": "2025-11-14T22:43:00.000Z",
+          "placed_date": "2025-11-14",
+          "placed_time": "22:43:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Panthers -1.5",
           "stake": 67,
           "profit": -67,
@@ -12319,19 +12385,20 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "longestLossStreak": 7,
       "chasedAfterLoss": true,
       "chaseCount": 5,
-      "lateNight": true,
-      "lateNightKnown": true,
+      "lateNight": false,
+      "lateNightKnown": false,
+      "sourceClockLateWindow": true,
       "grade": "F",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
-        "Chased losses 5 times in a single session",
+        "Raised stakes after losing-result rows 5 times in one source-ordered session",
         "Highly inconsistent stake sizing within session"
       ],
       "isHeated": true,
       "framing": "loss",
       "heatSignals": [
         "Session grade: F",
-        "Stakes more than doubled while chasing losses",
+        "Stakes more than doubled across a losing-result sequence",
         "Extended session with heavy losses while chasing"
       ],
       "betIndices": [
@@ -12346,13 +12413,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         140,
         141
       ],
-      "triggerEvent": {
-        "type": "late_night",
-        "description": "Late-night session starting at 7:35 PM."
-      },
       "betSnapshots": [
         {
           "placed_at": "2025-12-12T19:35:00.000Z",
+          "source_placed_at": "2025-12-12T19:35:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "19:35:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Thunder +2.5",
           "stake": 59,
           "profit": -59,
@@ -12360,6 +12428,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T19:54:00.000Z",
+          "source_placed_at": "2025-12-12T19:54:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "19:54:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Packers +5",
           "stake": 111,
           "profit": 100.91,
@@ -12367,6 +12440,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T20:49:00.000Z",
+          "source_placed_at": "2025-12-12T20:49:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "20:49:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Chiefs +1",
           "stake": 62,
           "profit": 56.36,
@@ -12374,6 +12452,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T21:41:00.000Z",
+          "source_placed_at": "2025-12-12T21:41:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "21:41:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Curry Over 8.5 reb",
           "stake": 60,
           "profit": -60,
@@ -12381,6 +12464,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T22:02:00.000Z",
+          "source_placed_at": "2025-12-12T22:02:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "22:02:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Jokic Over 5.5 ast",
           "stake": 56,
           "profit": -56,
@@ -12388,6 +12476,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T23:14:00.000Z",
+          "source_placed_at": "2025-12-12T23:14:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "23:14:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "3-leg NBA parlay: Heat + Magic + Warriors",
           "stake": 25,
           "profit": -25,
@@ -12395,6 +12488,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-12T23:27:00.000Z",
+          "source_placed_at": "2025-12-12T23:27:00.000Z",
+          "placed_date": "2025-12-12",
+          "placed_time": "23:27:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Jokic Over 31.5 pts",
           "stake": 74,
           "profit": -74,
@@ -12402,6 +12500,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-13T00:45:00.000Z",
+          "source_placed_at": "2025-12-13T00:45:00.000Z",
+          "placed_date": "2025-12-13",
+          "placed_time": "00:45:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Warriors +6.5",
           "stake": 350,
           "profit": -350,
@@ -12409,6 +12512,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-13T01:39:00.000Z",
+          "source_placed_at": "2025-12-13T01:39:00.000Z",
+          "placed_date": "2025-12-13",
+          "placed_time": "01:39:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Knicks ML",
           "stake": 400,
           "profit": -400,
@@ -12416,6 +12524,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-12-13T02:19:00.000Z",
+          "source_placed_at": "2025-12-13T02:19:00.000Z",
+          "placed_date": "2025-12-13",
+          "placed_time": "02:19:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "Nuggets +6.5",
           "stake": 450,
           "profit": -450,
@@ -12432,16 +12545,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 0,
         "betId": "demo-278",
         "classification": "neutral",
-        "confidence": 40,
-        "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
-          }
-        ],
-        "primaryReason": "Placed at 3am",
+        "confidence": 20,
+        "signals": [],
+        "primaryReason": "No significant signals",
         "sessionId": "SESSION-001",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -12458,14 +12564,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
           },
           {
             "name": "rapid_session_bet",
@@ -12480,7 +12580,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "impulsive"
           }
         ],
-        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-001",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -12524,7 +12624,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -12542,7 +12642,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -12558,7 +12658,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-002",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -12659,7 +12759,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -12692,11 +12792,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 4-win streak without increasing stakes",
+            "description": "4 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "On a 4-win streak without increasing stakes",
+        "primaryReason": "4 consecutive source-order rows later settled as wins without increasing stakes",
         "sessionId": "SESSION-003",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -12713,7 +12813,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -12729,7 +12829,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-004",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -12800,7 +12900,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "description": "Stake stepped up 1.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -12812,7 +12912,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -12822,7 +12922,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-006",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -12839,13 +12939,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.7x from the prior losing bet",
+            "description": "Stake stepped up 2.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -12855,7 +12955,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-006",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -12926,13 +13026,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 15,
         "betId": "demo-87",
-        "classification": "chasing",
-        "confidence": 47,
+        "classification": "neutral",
+        "confidence": 27,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -12942,15 +13042,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "chasing"
           },
           {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
-          {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -12966,7 +13060,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-007",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -12983,7 +13077,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.2x from the prior losing bet",
+            "description": "Stake stepped up 3.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -12999,7 +13093,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-008",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13076,7 +13170,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13098,7 +13192,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-008",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13115,7 +13209,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL spread) as the prior losing bet",
+            "description": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13125,7 +13219,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL spread) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
         "sessionId": "SESSION-008",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13136,15 +13230,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 21,
         "betId": "demo-285",
-        "classification": "neutral",
-        "confidence": 53,
+        "classification": "disciplined",
+        "confidence": 70,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
-          },
           {
             "name": "flat_stake",
             "weight": -4,
@@ -13181,7 +13269,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13197,7 +13285,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-010",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13274,7 +13362,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA spread) as the prior losing bet",
+            "description": "Same sport+type (NBA spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13290,7 +13378,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA spread) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA spread) as the prior bet later settled as a loss",
         "sessionId": "SESSION-011",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13334,7 +13422,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13346,7 +13434,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13362,7 +13450,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-011",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13374,14 +13462,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 28,
         "betId": "demo-276",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 33,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -13389,7 +13471,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 2am",
+        "primaryReason": "210 min since last bet",
         "sessionId": "SESSION-012",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -13401,19 +13483,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 29,
         "betId": "demo-69",
         "classification": "neutral",
-        "confidence": 33,
+        "confidence": 27,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -13424,7 +13500,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13434,7 +13510,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-012",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -13457,7 +13533,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13473,7 +13549,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-013",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13523,7 +13599,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 5.2x from the prior losing bet",
+            "description": "Stake stepped up 5.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13545,7 +13621,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 5.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 5.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13568,7 +13644,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13584,7 +13660,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13595,15 +13671,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 34,
         "betId": "demo-155",
-        "classification": "neutral",
-        "confidence": 40,
+        "classification": "disciplined",
+        "confidence": 60,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "flat_stake",
             "weight": -4,
@@ -13629,12 +13699,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 35,
         "betId": "demo-261",
         "classification": "chasing",
-        "confidence": 83,
+        "confidence": 70,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13644,19 +13714,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "chasing"
           },
           {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
-          {
             "name": "controlled_in_good_session",
             "weight": -2,
             "description": "In a grade-B session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13667,20 +13731,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 36,
         "betId": "demo-145",
-        "classification": "chasing",
-        "confidence": 53,
+        "classification": "neutral",
+        "confidence": 33,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.9x from the prior losing bet",
+            "description": "Stake stepped up 2.9x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 0am",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -13701,7 +13759,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13713,19 +13771,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 37,
         "betId": "demo-197",
         "classification": "disciplined",
-        "confidence": 65,
+        "confidence": 80,
         "signals": [
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -13736,7 +13788,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13752,7 +13804,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13769,7 +13821,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13781,13 +13833,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13803,7 +13855,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-015",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13820,19 +13872,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13848,7 +13900,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-015",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -13865,13 +13917,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -13883,7 +13935,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13899,7 +13951,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-016",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13916,7 +13968,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -13928,7 +13980,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -13938,7 +13990,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-016",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -13950,12 +14002,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 42,
         "betId": "demo-241",
         "classification": "chasing",
-        "confidence": 86,
+        "confidence": 75,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -13967,14 +14019,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 1am",
-            "category": "emotional"
           },
           {
             "name": "reasonable_pace",
@@ -13989,7 +14035,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-017",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14006,13 +14052,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -14024,7 +14070,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14040,7 +14086,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-018",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14057,7 +14103,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -14069,7 +14115,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14085,7 +14131,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14174,7 +14220,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -14207,7 +14253,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 4-win streak without increasing stakes",
+            "description": "4 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -14228,7 +14274,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -14240,7 +14286,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14256,7 +14302,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-020",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14345,7 +14391,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -14426,7 +14472,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -14448,7 +14494,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-021",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14492,25 +14538,25 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14526,7 +14572,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14543,13 +14589,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.2x from the prior losing bet",
+            "description": "Stake stepped up 3.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -14559,7 +14605,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14576,7 +14622,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -14588,7 +14634,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14598,7 +14644,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14669,7 +14715,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -14681,7 +14727,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14691,7 +14737,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -14708,13 +14754,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14730,7 +14776,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-024",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14747,13 +14793,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14769,7 +14815,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-025",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14807,7 +14853,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.8x from the prior losing bet",
+            "description": "Stake stepped up 3.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -14817,7 +14863,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-025",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14894,7 +14940,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14910,7 +14956,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-026",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14948,7 +14994,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -14960,7 +15006,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -14976,7 +15022,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-026",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -14993,7 +15039,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15009,7 +15055,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15026,13 +15072,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15042,7 +15088,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15059,23 +15105,23 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.3x from the prior losing bet",
+            "description": "Stake stepped up 1.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15092,17 +15138,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15119,13 +15165,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15135,7 +15181,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15152,7 +15198,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15164,17 +15210,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15186,25 +15232,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 78,
         "betId": "demo-113",
         "classification": "chasing",
-        "confidence": 70,
+        "confidence": 53,
         "signals": [
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 1am",
-            "category": "emotional"
           },
           {
             "name": "reasonable_pace",
@@ -15213,7 +15253,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -15230,7 +15270,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15252,9 +15292,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 9-loss streak",
+        "primaryReason": "9 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-028",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": true,
         "stakeVsMedian": 0.23,
         "timeSinceLastBet": 1136,
@@ -15269,19 +15309,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15293,13 +15333,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-028",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": true,
         "stakeVsMedian": 0.51,
         "timeSinceLastBet": 60,
@@ -15309,25 +15349,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 81,
         "betId": "demo-181",
         "classification": "chasing",
-        "confidence": 70,
+        "confidence": 53,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 11-loss streak",
+            "description": "11 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "heated_session_context",
@@ -15350,7 +15384,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15360,9 +15394,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-028",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": true,
         "stakeVsMedian": 0.86,
         "timeSinceLastBet": 121,
@@ -15377,7 +15411,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 12-loss streak",
+            "description": "12 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15389,7 +15423,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15405,7 +15439,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-029",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -15449,7 +15483,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "description": "Stake stepped up 1.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15461,7 +15495,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15473,13 +15507,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-030",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.17,
         "timeSinceLastBet": 1460,
@@ -15489,12 +15523,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 85,
         "betId": "demo-258",
         "classification": "chasing",
-        "confidence": 75,
+        "confidence": 60,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15502,12 +15536,6 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": 5,
             "description": "Jumped to a parlay from a prior losing straight bet",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "reasonable_pace",
@@ -15518,13 +15546,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-030",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.35,
         "timeSinceLastBet": 123,
@@ -15539,13 +15567,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.1x from the prior losing bet",
+            "description": "Stake stepped up 3.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15557,7 +15585,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15573,7 +15601,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-031",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -15590,7 +15618,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15602,7 +15630,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15618,7 +15646,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-032",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -15635,13 +15663,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15657,7 +15685,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-033",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -15674,13 +15702,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.4x from the prior losing bet",
+            "description": "Stake stepped up 4.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -15696,7 +15724,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-033",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -15746,7 +15774,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15762,7 +15790,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-034",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -15779,13 +15807,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA prop) as the prior losing bet",
+            "description": "Same sport+type (NBA prop) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15795,7 +15823,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-034",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -15890,11 +15918,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "On a 3-win streak without increasing stakes",
+        "primaryReason": "3 consecutive source-order rows later settled as wins without increasing stakes",
         "sessionId": "SESSION-035",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -15906,24 +15934,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 96,
         "betId": "demo-192",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 33,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 1am",
-            "category": "emotional"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -15939,7 +15961,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-036",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -15951,12 +15973,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 97,
         "betId": "demo-260",
         "classification": "chasing",
-        "confidence": 70,
+        "confidence": 60,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -15970,11 +15992,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": -2,
             "description": "1121 min since last bet",
             "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-037",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.38,
         "timeSinceLastBet": 1121,
@@ -15984,24 +16012,30 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 98,
         "betId": "demo-268",
         "classification": "chasing",
-        "confidence": 65,
+        "confidence": 53,
         "signals": [
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-037",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.43,
         "timeSinceLastBet": 16,
@@ -16011,18 +16045,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 99,
         "betId": "demo-186",
         "classification": "chasing",
-        "confidence": 65,
+        "confidence": 53,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -16034,13 +16068,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
+            "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-037",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.65,
         "timeSinceLastBet": 34,
@@ -16049,15 +16089,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 100,
         "betId": "demo-228",
-        "classification": "neutral",
-        "confidence": 27,
+        "classification": "disciplined",
+        "confidence": 60,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "weekend_volume_spike",
             "weight": 2,
@@ -16075,11 +16109,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": -2,
             "description": "102 min since last bet",
             "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
         "primaryReason": "Stake is near the median",
         "sessionId": "SESSION-037",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.71,
         "timeSinceLastBet": 102,
@@ -16094,13 +16134,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA prop) as the prior losing bet",
+            "description": "Same sport+type (NBA prop) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -16112,7 +16152,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -16128,7 +16168,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-038",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16220,7 +16260,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -16232,7 +16272,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -16248,7 +16288,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-039",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16260,12 +16300,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 106,
         "betId": "demo-246",
         "classification": "chasing",
-        "confidence": 92,
+        "confidence": 83,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -16277,14 +16317,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "controlled_in_good_session",
@@ -16293,7 +16327,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-039",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16364,7 +16398,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -16380,7 +16414,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-041",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16457,20 +16491,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 112,
         "betId": "demo-18",
-        "classification": "neutral",
-        "confidence": 47,
+        "classification": "disciplined",
+        "confidence": 65,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -16481,7 +16509,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -16497,7 +16525,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-043",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16514,13 +16542,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL spread) as the prior losing bet",
+            "description": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -16542,7 +16570,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-044",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16619,7 +16647,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -16641,7 +16669,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-045",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16658,7 +16686,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -16670,7 +16698,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -16686,7 +16714,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-045",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16769,7 +16797,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -16791,7 +16819,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-045",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -16803,14 +16831,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 121,
         "betId": "demo-253",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -16824,7 +16846,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 3am",
+        "primaryReason": "265 min since last bet",
         "sessionId": "SESSION-046",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16841,7 +16863,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -16857,7 +16879,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 3-loss streak",
+        "primaryReason": "3 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-047",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16874,13 +16896,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.6x from the prior losing bet",
+            "description": "Stake stepped up 3.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -16896,7 +16918,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-047",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -16988,7 +17010,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 6.8x from the prior losing bet",
+            "description": "Stake stepped up 6.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17004,7 +17026,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 6.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 6.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-048",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -17042,13 +17064,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 129,
         "betId": "demo-102",
-        "classification": "chasing",
-        "confidence": 47,
+        "classification": "neutral",
+        "confidence": 27,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17058,15 +17080,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "chasing"
           },
           {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
-          {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -17082,7 +17098,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -17094,14 +17110,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 130,
         "betId": "demo-267",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -17115,7 +17125,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 2am",
+        "primaryReason": "194 min since last bet",
         "sessionId": "SESSION-050",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -17132,13 +17142,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.4x from the prior losing bet",
+            "description": "Stake stepped up 4.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -17154,7 +17164,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-051",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -17171,7 +17181,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -17189,7 +17199,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -17199,7 +17209,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17216,13 +17226,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -17232,7 +17242,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17303,7 +17313,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA prop) as the prior losing bet",
+            "description": "Same sport+type (NBA prop) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17321,11 +17331,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17337,12 +17347,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 137,
         "betId": "demo-265",
         "classification": "chasing",
-        "confidence": 92,
+        "confidence": 83,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17350,12 +17360,6 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": 5,
             "description": "Jumped to a parlay from a prior losing straight bet",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "heated_session_context",
@@ -17370,7 +17374,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17382,25 +17386,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 138,
         "betId": "demo-200",
         "classification": "chasing",
-        "confidence": 80,
+        "confidence": 65,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.0x from the prior losing bet",
+            "description": "Stake stepped up 3.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "heated_session_context",
@@ -17417,11 +17415,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17432,31 +17430,25 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 139,
         "betId": "demo-302",
-        "classification": "emotional",
+        "classification": "chasing",
         "confidence": 95,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.7x from the prior losing bet",
+            "description": "Stake stepped up 4.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "oversized_bet",
             "weight": 8,
             "description": "Stake is 5.4x the median",
-            "category": "emotional"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 0am",
             "category": "emotional"
           },
           {
@@ -17472,7 +17464,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-052",
         "sessionGrade": "F",
         "isInHeatedSession": true,
@@ -17484,24 +17476,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 140,
         "betId": "demo-303",
         "classification": "emotional",
-        "confidence": 95,
+        "confidence": 92,
         "signals": [
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "oversized_bet",
             "weight": 8,
             "description": "Stake is 6.2x the median",
-            "category": "emotional"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 1am",
             "category": "emotional"
           },
           {
@@ -17523,24 +17509,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 141,
         "betId": "demo-304",
         "classification": "emotional",
-        "confidence": 95,
+        "confidence": 92,
         "signals": [
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "oversized_bet",
             "weight": 8,
             "description": "Stake is 6.9x the median",
-            "category": "emotional"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
             "category": "emotional"
           },
           {
@@ -17567,7 +17547,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -17591,7 +17571,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -17601,7 +17581,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-053",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -17690,7 +17670,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17706,7 +17686,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-053",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -17723,7 +17703,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -17745,7 +17725,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-053",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -17795,19 +17775,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "oversized_bet",
             "weight": 8,
             "description": "Stake is 4.6x the median",
-            "category": "emotional"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
             "category": "emotional"
           },
           {
@@ -17835,18 +17809,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 149,
         "betId": "demo-301",
         "classification": "emotional",
-        "confidence": 95,
+        "confidence": 89,
         "signals": [
           {
             "name": "oversized_bet",
             "weight": 8,
             "description": "Stake is 4.6x the median",
-            "category": "emotional"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
             "category": "emotional"
           },
           {
@@ -17966,7 +17934,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -17976,7 +17944,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-055",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -17993,7 +17961,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -18005,7 +17973,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18015,7 +17983,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-055",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -18032,13 +18000,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -18054,7 +18022,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-056",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18065,15 +18033,9 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 156,
         "betId": "demo-227",
-        "classification": "neutral",
-        "confidence": 53,
+        "classification": "disciplined",
+        "confidence": 70,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 3am",
-            "category": "emotional"
-          },
           {
             "name": "flat_stake",
             "weight": -4,
@@ -18110,7 +18072,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18126,7 +18088,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-058",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18143,7 +18105,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL spread) as the prior losing bet",
+            "description": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18155,7 +18117,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18165,7 +18127,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-058",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18209,7 +18171,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.1x from the prior losing bet",
+            "description": "Stake stepped up 3.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18221,7 +18183,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18237,7 +18199,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-060",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18254,7 +18216,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18276,7 +18238,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-060",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18348,14 +18310,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 164,
         "betId": "demo-154",
         "classification": "disciplined",
-        "confidence": 80,
+        "confidence": 89,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "flat_stake",
             "weight": -4,
@@ -18365,7 +18321,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18381,7 +18337,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-061",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18398,7 +18354,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18410,7 +18366,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18426,7 +18382,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-062",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -18443,13 +18399,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.3x from the prior losing bet",
+            "description": "Stake stepped up 3.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -18459,7 +18415,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-062",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -18509,7 +18465,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18537,7 +18493,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-062",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -18548,20 +18504,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 169,
         "betId": "demo-250",
-        "classification": "emotional",
-        "confidence": 70,
+        "classification": "chasing",
+        "confidence": 53,
         "signals": [
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "weekend_volume_spike",
@@ -18588,7 +18538,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-062",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -18605,13 +18555,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -18627,7 +18577,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-063",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18660,14 +18610,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 172,
         "betId": "demo-84",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 0am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -18681,7 +18625,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 0am",
+        "primaryReason": "89 min since last bet",
         "sessionId": "SESSION-063",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18698,7 +18642,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18720,7 +18664,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-064",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18809,7 +18753,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -18830,13 +18774,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA prop) as the prior losing bet",
+            "description": "Same sport+type (NBA prop) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18848,7 +18792,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -18864,7 +18808,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-065",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18876,14 +18820,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 178,
         "betId": "demo-277",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -18897,7 +18835,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 11pm",
+        "primaryReason": "170 min since last bet",
         "sessionId": "SESSION-065",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -18914,7 +18852,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.6x from the prior losing bet",
+            "description": "Stake stepped up 3.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -18930,7 +18868,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-066",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19019,11 +18957,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "On a 3-win streak without increasing stakes",
+        "primaryReason": "3 consecutive source-order rows later settled as wins without increasing stakes",
         "sessionId": "SESSION-067",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19079,7 +19017,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 5-win streak without increasing stakes",
+            "description": "5 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -19133,7 +19071,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19149,7 +19087,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-070",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -19166,7 +19104,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19178,13 +19116,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19200,7 +19138,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-071",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -19217,13 +19155,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -19235,7 +19173,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19251,7 +19189,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-072",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19307,7 +19245,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19329,7 +19267,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-073",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -19346,7 +19284,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 5.8x from the prior losing bet",
+            "description": "Stake stepped up 5.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19362,7 +19300,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 5.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 5.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-074",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19407,14 +19345,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 193,
         "betId": "demo-251",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -19428,7 +19360,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 11pm",
+        "primaryReason": "134 min since last bet",
         "sessionId": "SESSION-074",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19478,11 +19410,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 4-win streak without increasing stakes",
+            "description": "4 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "On a 4-win streak without increasing stakes",
+        "primaryReason": "4 consecutive source-order rows later settled as wins without increasing stakes",
         "sessionId": "SESSION-076",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -19499,7 +19431,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.5x from the prior losing bet",
+            "description": "Stake stepped up 4.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19509,7 +19441,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-076",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -19685,7 +19617,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19701,7 +19633,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-077",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19713,14 +19645,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 203,
         "betId": "demo-107",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -19734,7 +19660,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 2am",
+        "primaryReason": "240 min since last bet",
         "sessionId": "SESSION-078",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -19751,7 +19677,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -19763,7 +19689,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19779,7 +19705,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-079",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19829,7 +19755,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19839,7 +19765,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-079",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19895,7 +19821,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19911,7 +19837,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-080",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19928,7 +19854,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -19944,7 +19870,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-080",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -19988,13 +19914,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA spread) as the prior losing bet",
+            "description": "Same sport+type (NBA spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20010,7 +19936,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-080",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20022,14 +19948,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 212,
         "betId": "demo-262",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -20043,7 +19963,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 11pm",
+        "primaryReason": "77 min since last bet",
         "sessionId": "SESSION-080",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20060,7 +19980,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20072,7 +19992,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20088,7 +20008,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-081",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20138,7 +20058,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20150,7 +20070,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20160,7 +20080,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-081",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20177,7 +20097,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20189,7 +20109,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20205,7 +20125,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-082",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20222,7 +20142,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -20234,7 +20154,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20250,7 +20170,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-083",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20288,7 +20208,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20310,7 +20230,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-084",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20393,7 +20313,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20409,7 +20329,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-086",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20426,19 +20346,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20454,7 +20374,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-086",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20466,14 +20386,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 224,
         "betId": "demo-96",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 33,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "weekend_volume_spike",
             "weight": 2,
@@ -20493,7 +20407,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 11pm",
+        "primaryReason": "4th bet on a weekend day",
         "sessionId": "SESSION-086",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20510,7 +20424,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.9x from the prior losing bet",
+            "description": "Stake stepped up 4.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20532,7 +20446,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-087",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20555,7 +20469,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20565,7 +20479,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-087",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20582,13 +20496,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -20598,7 +20512,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-087",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -20696,7 +20610,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA spread) as the prior losing bet",
+            "description": "Same sport+type (NBA spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20708,7 +20622,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20718,7 +20632,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-088",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20735,7 +20649,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA spread) as the prior losing bet",
+            "description": "Same sport+type (NBA spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -20753,7 +20667,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20763,7 +20677,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-088",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20885,7 +20799,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 4-win streak without increasing stakes",
+            "description": "4 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -20939,7 +20853,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -20955,7 +20869,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-090",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -20993,20 +20907,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 240,
         "betId": "demo-172",
-        "classification": "chasing",
-        "confidence": 53,
+        "classification": "neutral",
+        "confidence": 33,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "reasonable_pace",
@@ -21021,7 +20929,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-090",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21077,13 +20985,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
         "primaryReason": "1283 min since last bet",
         "sessionId": "SESSION-092",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.43,
         "timeSinceLastBet": 1283,
@@ -21110,13 +21018,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
         "primaryReason": "Stake is near the median",
         "sessionId": "SESSION-092",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.75,
         "timeSinceLastBet": 87,
@@ -21137,19 +21045,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           },
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "On a 3-win streak without increasing stakes",
+        "primaryReason": "3 consecutive source-order rows later settled as wins without increasing stakes",
         "sessionId": "SESSION-092",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.32,
         "timeSinceLastBet": 84,
@@ -21164,7 +21072,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.8x from the prior losing bet",
+            "description": "Stake stepped up 3.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21182,13 +21090,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-092",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.22,
         "timeSinceLastBet": 73,
@@ -21197,13 +21105,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 246,
         "betId": "demo-269",
-        "classification": "chasing",
-        "confidence": 60,
+        "classification": "neutral",
+        "confidence": 40,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21213,27 +21121,21 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "chasing"
           },
           {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
-          {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
             "name": "controlled_in_good_session",
             "weight": -2,
-            "description": "In a grade-B session",
+            "description": "In a grade-A session",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-092",
-        "sessionGrade": "B",
+        "sessionGrade": "A",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.52,
         "timeSinceLastBet": 58,
@@ -21248,13 +21150,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21266,7 +21168,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21282,7 +21184,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21299,7 +21201,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21311,7 +21213,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21327,7 +21229,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21344,13 +21246,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.4x from the prior losing bet",
+            "description": "Stake stepped up 4.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21360,7 +21262,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21377,13 +21279,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL spread) as the prior losing bet",
+            "description": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21405,7 +21307,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL spread) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL spread) as the prior bet later settled as a loss",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21417,14 +21319,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 251,
         "betId": "demo-98",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 47,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 0am",
-            "category": "emotional"
-          },
           {
             "name": "reasonable_pace",
             "weight": -2,
@@ -21438,7 +21334,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 0am",
+        "primaryReason": "172 min since last bet",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21449,31 +21345,25 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 252,
         "betId": "demo-91",
-        "classification": "chasing",
-        "confidence": 53,
+        "classification": "neutral",
+        "confidence": 33,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 1am",
-            "category": "emotional"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21489,7 +21379,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-093",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21506,7 +21396,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21518,7 +21408,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21534,7 +21424,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-094",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21551,7 +21441,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21563,7 +21453,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21573,7 +21463,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-095",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -21590,17 +21480,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.2x from the prior losing bet",
+            "description": "Stake stepped up 4.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 4.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-095",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -21617,11 +21507,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Betting during a 5-loss streak",
+        "primaryReason": "5 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-095",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -21665,11 +21555,11 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-095",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -21686,7 +21576,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21698,7 +21588,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21714,7 +21604,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-096",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21731,13 +21621,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -21749,7 +21639,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21765,7 +21655,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-096",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -21815,7 +21705,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21831,7 +21721,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-097",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -21935,7 +21825,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -21951,7 +21841,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-098",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -21968,7 +21858,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -21990,7 +21880,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-098",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22002,18 +21892,18 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 268,
         "betId": "demo-51",
         "classification": "neutral",
-        "confidence": 33,
+        "confidence": 20,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.9x from the prior losing bet",
+            "description": "Stake stepped up 2.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -22025,7 +21915,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22033,11 +21923,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": -2,
             "description": "1265 min since last bet",
             "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.08,
         "timeSinceLastBet": 1265,
@@ -22047,12 +21943,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 269,
         "betId": "demo-89",
         "classification": "chasing",
-        "confidence": 60,
+        "confidence": 47,
         "signals": [
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -22064,13 +21960,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22078,11 +21974,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": -2,
             "description": "137 min since last bet",
             "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.6,
         "timeSinceLastBet": 137,
@@ -22092,24 +21994,30 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 270,
         "betId": "demo-110",
         "classification": "chasing",
-        "confidence": 65,
+        "confidence": 53,
         "signals": [
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.32,
         "timeSinceLastBet": 43,
@@ -22119,24 +22027,30 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 271,
         "betId": "demo-5",
         "classification": "chasing",
-        "confidence": 89,
+        "confidence": 83,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 4.8x from the prior losing bet",
+            "description": "Stake stepped up 4.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 4.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 4.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.55,
         "timeSinceLastBet": 21,
@@ -22145,20 +22059,14 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       {
         "betIndex": 272,
         "betId": "demo-71",
-        "classification": "neutral",
-        "confidence": 53,
+        "classification": "disciplined",
+        "confidence": 80,
         "signals": [
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -22169,7 +22077,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22177,11 +22085,17 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "weight": -2,
             "description": "104 min since last bet",
             "category": "disciplined"
+          },
+          {
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.15,
         "timeSinceLastBet": 104,
@@ -22191,30 +22105,30 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 273,
         "betId": "demo-35",
         "classification": "chasing",
-        "confidence": 86,
+        "confidence": 65,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
+            "name": "controlled_in_good_session",
+            "weight": -2,
+            "description": "In a grade-B session",
+            "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-099",
-        "sessionGrade": "C",
+        "sessionGrade": "B",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.6,
         "timeSinceLastBet": 9,
@@ -22229,7 +22143,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -22241,7 +22155,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22257,7 +22171,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-100",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22307,7 +22221,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -22319,7 +22233,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22329,7 +22243,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-100",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22379,13 +22293,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.2x from the prior losing bet",
+            "description": "Stake stepped up 3.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -22401,7 +22315,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-101",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22478,7 +22392,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.6x from the prior losing bet",
+            "description": "Stake stepped up 2.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -22496,7 +22410,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22506,7 +22420,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-101",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22518,14 +22432,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 282,
         "betId": "demo-266",
         "classification": "neutral",
-        "confidence": 40,
+        "confidence": 20,
         "signals": [
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
-          },
           {
             "name": "weekend_volume_spike",
             "weight": 2,
@@ -22539,7 +22447,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Placed at 11pm",
+        "primaryReason": "5th bet on a weekend day",
         "sessionId": "SESSION-101",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22551,19 +22459,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 283,
         "betId": "demo-292",
         "classification": "chasing",
-        "confidence": 89,
+        "confidence": 80,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.1x from the prior losing bet",
+            "description": "Stake stepped up 3.1x from the prior bet later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "weekend_volume_spike",
@@ -22578,7 +22480,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-101",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -22601,7 +22503,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22617,7 +22519,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-102",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -22715,7 +22617,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22731,7 +22633,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-102",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -22748,7 +22650,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -22760,7 +22662,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22770,7 +22672,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior losing bet",
+        "primaryReason": "Shifted to longshot odds (+500) from shorter odds on the prior bet later settled as a loss",
         "sessionId": "SESSION-102",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -22782,30 +22684,24 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 290,
         "betId": "demo-86",
         "classification": "neutral",
-        "confidence": 27,
+        "confidence": 33,
         "signals": [
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 2am",
-            "category": "emotional"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22821,7 +22717,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-103",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -22838,19 +22734,19 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22860,7 +22756,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-104",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -22877,13 +22773,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.7x from the prior losing bet",
+            "description": "Stake stepped up 2.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -22899,7 +22795,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "impulsive"
           }
         ],
-        "primaryReason": "Stake stepped up 2.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-104",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -22916,7 +22812,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -22928,7 +22824,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -22944,7 +22840,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-105",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -22988,7 +22884,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.3x from the prior losing bet",
+            "description": "Stake stepped up 1.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -23000,7 +22896,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23010,7 +22906,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-105",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -23048,7 +22944,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.3x from the prior losing bet",
+            "description": "Stake stepped up 3.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -23060,7 +22956,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23076,7 +22972,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 3.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-106",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -23126,7 +23022,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23136,7 +23032,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-106",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -23153,7 +23049,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -23165,7 +23061,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23175,7 +23071,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-106",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -23192,7 +23088,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -23204,7 +23100,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23220,7 +23116,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-107",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -23270,7 +23166,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -23286,7 +23182,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-108",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -23297,25 +23193,25 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     ],
     "distribution": {
       "disciplined": {
-        "count": 90,
-        "percent": 29.6,
-        "totalStaked": 5617,
-        "totalProfit": -75.18,
-        "roi": -1.34
+        "count": 96,
+        "percent": 31.6,
+        "totalStaked": 6030,
+        "totalProfit": -488.18,
+        "roi": -8.1
       },
       "emotional": {
-        "count": 9,
-        "percent": 3,
-        "totalStaked": 2286,
-        "totalProfit": -1244.64,
-        "roi": -54.45
+        "count": 7,
+        "percent": 2.3,
+        "totalStaked": 1920,
+        "totalProfit": -878.64,
+        "roi": -45.76
       },
       "chasing": {
-        "count": 75,
-        "percent": 24.7,
-        "totalStaked": 5003,
-        "totalProfit": -895.7,
-        "roi": -17.9
+        "count": 71,
+        "percent": 23.4,
+        "totalStaked": 5059,
+        "totalProfit": -951.7,
+        "roi": -18.81
       },
       "impulsive": {
         "count": 2,
@@ -23327,12 +23223,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "neutral": {
         "count": 128,
         "percent": 42.1,
-        "totalStaked": 8317,
-        "totalProfit": -1119.09,
-        "roi": -13.46
+        "totalStaked": 8214,
+        "totalProfit": -1016.09,
+        "roi": -12.37
       }
     },
-    "emotionalCost": 1954.26,
+    "emotionalCost": 1169.54,
     "worstAnnotatedBet": {
       "betIndex": 1,
       "betId": "demo-122",
@@ -23342,14 +23238,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         {
           "name": "post_loss_escalation",
           "weight": 10,
-          "description": "Stake stepped up 2.8x from the prior losing bet",
+          "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
           "category": "chasing"
-        },
-        {
-          "name": "late_night",
-          "weight": 3,
-          "description": "Placed at 3am",
-          "category": "emotional"
         },
         {
           "name": "rapid_session_bet",
@@ -23364,7 +23254,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           "category": "impulsive"
         }
       ],
-      "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+      "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
       "sessionId": "SESSION-001",
       "sessionGrade": "D",
       "isInHeatedSession": false,
@@ -23387,7 +23277,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
         {
           "name": "consistent_after_loss",
           "weight": -5,
-          "description": "Held stake near the median following a losing bet",
+          "description": "Held stake near the median following a prior row later settled as a loss",
           "category": "disciplined"
         },
         {
@@ -23403,7 +23293,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           "category": "disciplined"
         }
       ],
-      "primaryReason": "Held stake near the median following a losing bet",
+      "primaryReason": "Held stake near the median following a prior row later settled as a loss",
       "sessionId": "SESSION-013",
       "sessionGrade": "A",
       "isInHeatedSession": false,
@@ -23416,12 +23306,12 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
       "avgStakeAfterLossStreak3": 75.27,
       "avgStakeNeutral": 68.93
     },
-    "insight": "29.6% of bets follow a disciplined process, but selections are still losing. The issue is bet selection, not process."
+    "insight": "31.6% of bets follow a disciplined process, but selections are still losing. The issue is bet selection, not process."
   },
-  "executive_diagnosis": "This bettor runs disciplined sessions but bleeds out in NBA. 175 NBA bets at -24.9% ROI account for nearly all the damage. The late-night window (11pm-4am) is a 0% win rate black hole.",
+  "executive_diagnosis": "This bettor has real NFL spread instincts but NBA is bleeding them dry.",
   "executiveDiagnosis": {
     "insightSnapshot": "Your betting shows heavy parlay tendency patterns. The full report breaks down 304 bets across 108 sessions.",
-    "insightFull": "This bettor runs disciplined sessions but bleeds out in NBA. 175 NBA bets at -24.9% ROI account for nearly all the damage. The late-night window (11pm-4am) is a 0% win rate black hole."
+    "insightFull": "This bettor has real NFL spread instincts but NBA is bleeding them dry."
   },
   "pertinent_negatives": [
     {
@@ -23468,13 +23358,13 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     "topRisks": [
       {
         "title": "Heavy Parlay Tendency",
-        "detail": "You're throwing 3-leg parlays at +500 consistently, which sounds exciting until you see the hit rate.",
-        "evidence": "85 parlays at -30."
+        "detail": "The NFL parlay drag is the clearest example: NFL straight bets are actually in the green, but the NFL parlays are a significant drag pulling the whole sport toward breakeven.",
+        "evidence": "28% parlays, parlay ROI: -30."
       },
       {
         "title": "Stake Volatility",
-        "detail": "Your bet sizing is genuinely all over the place.",
-        "evidence": "Stakes range from $15 to $450 with an average of $70."
+        "detail": "Bet sizing is all over the place.",
+        "evidence": "Bet sizes range from $15 to $450 (avg $70)."
       },
       {
         "title": "Heated session relapse",
@@ -23484,39 +23374,10 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     ],
     "hardRules": [
       {
-        "title": "No bets after 10pm, full stop",
-        "description": "No bets after 10pm, full stop.",
-        "rationale": "42 bets placed between 11pm and 4am produced a 0% win rate and -71.5% ROI. That window is costing you money every time you open the app late.",
-        "rule_type": "late_night_cutoff",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "critical",
-        "enforcement": "hard",
-        "provenance": "engine_recommended",
-        "trigger": {
-          "startHour": 22
-        },
-        "source": "Late-night time-of-day ROI breakdown showing complete shutout from 11pm through 4am"
-      },
-      {
-        "title": "No NFL parlays. Bet every NFL pick straight",
-        "description": "No NFL parlays. Bet every NFL pick straight.",
-        "rationale": "NFL straight bets made $497. NFL parlays lost $522. You have a real NFL edge that parlays are erasing completely.",
-        "rule_type": "ban_category",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "critical",
-        "enforcement": "hard",
-        "provenance": "engine_recommended",
-        "trigger": {
-          "category": "parlay"
-        },
-        "source": "NFL parlay drag: NFL straight bets +$497, NFL parlays -$522 at -38.7% ROI"
-      },
-      {
+        "candidateId": "stake_cap",
         "title": "Cap stake at $90",
         "description": "No single bet can exceed $90 until your next report.",
-        "rationale": "Your control system should defend you from the outsized bet that usually follows a bad sequence.",
+        "rationale": "A fixed ceiling keeps every stake within the engine-derived limit until the next report.",
         "rule_type": "stake_cap",
         "scope": "global",
         "scope_value": null,
@@ -23527,85 +23388,46 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
           "maxStake": 90,
           "maxStakeMultiplier": 1.25
         },
-        "source": "Sizing discipline"
+        "source": "Sizing discipline",
+        "evidence": {
+          "basis": "sizing",
+          "summary": "Stake Volatility qualified across 304 bets; average stake was $70.",
+          "sampleSize": 304
+        },
+        "sufficiency": {
+          "status": "sufficient",
+          "observed": 304,
+          "minimum": 10,
+          "unit": "qualified_bets"
+        }
       }
     ],
-    "softRules": [
-      {
-        "title": "Maximum 2 NBA bets per day",
-        "description": "Maximum 2 NBA bets per day.",
-        "rationale": "The 13 days with 4+ NBA bets combined for $-2210 in losses. More NBA bets per day does not mean more edge, it means more exposure to your worst-performing market.",
-        "rule_type": "custom",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "NBA rapid-fire sessions finding: 13 days with 4+ NBA bets at combined $-2210"
-      },
-      {
-        "title": "Decide your stake for the session before placing the first bet, and do not change it",
-        "description": "Decide your stake for the session before placing the first bet, and do not change it.",
-        "rationale": "Your stakes range from $15 to $450 with a variability score of 0.83. The December 13 session shows what happens when sizing escalates mid-session: $-1317 in a single day.",
-        "rule_type": "session_limit",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "Stake Volatility bias: variability score 0.83, max stake $450, worst session $-1317"
-      },
-      {
-        "title": "On Saturdays, bet half your normal volume",
-        "description": "On Saturdays, bet half your normal volume.",
-        "rationale": "Saturday is your highest-volume day at 56 bets and your second-worst performer at -26.5% ROI and $-1462 in losses. More bets on your worst day amplifies the damage.",
-        "rule_type": "custom",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "Day-of-week breakdown: Saturday -26.5% ROI, 56 bets, $-1462 profit"
-      }
-    ],
+    "softRules": [],
     "cooldownSuggestions": [
       {
         "trigger": "Heated session",
         "label": "Next-day lockout after a heated session",
         "durationLabel": "24 hours",
         "durationHours": 24,
-        "reason": "Your data shows same-day follow-ups after heated sessions tend to extend the damage, not repair it."
-      },
-      {
-        "trigger": "Late-night behavior",
-        "label": "Sleep-on-it cooldown",
-        "durationLabel": "Until tomorrow at 8:00 AM",
-        "durationHours": 8,
-        "reason": "If the cutoff is already broken, the safest next move is to hand the decision to tomorrow-you."
+        "reason": "A next-day lockout adds friction after a heated session. This is a harm-reduction control, not a claim of predicted profit."
       }
     ],
     "relapseTriggers": [
-      "Late-night betting windows",
-      "Bets placed shortly after a loss",
+      "A higher-stake decision following a known loss",
       "Returning to the same leaking category under stress"
     ],
-    "nextWeekFocus": "No bets after 10pm, full stop.",
+    "nextWeekFocus": "No single bet can exceed $90 until your next report.",
     "planTemplate": {
       "bettingHours": {
         "startHour": null,
-        "endHour": 22,
-        "timezoneLabel": "Local time"
+        "endHour": null,
+        "timezoneLabel": "Clock time and timezone supplied by source"
       },
       "maximumUnitSize": 90,
-      "bannedBetCategories": [
-        "parlay"
-      ],
+      "bannedBetCategories": [],
       "sessionLimit": 4,
       "lossStreakStop": null,
-      "lateNightCutoffHour": 22,
+      "lateNightCutoffHour": null,
       "postLossWaitingPeriodMinutes": null,
       "reflectionQuestion": "Would I still place this if my last bet had won?"
     },
@@ -23635,8 +23457,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
     ]
   },
   "discipline_score": {
-    "total": 37,
-    "tracking": 6,
+    "total": 34,
+    "tracking": 3,
     "sizing": 11,
     "control": 7,
     "strategy": 13,
@@ -23653,7 +23475,8 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
 // a multiplier-chasing overlay engineered to trip the real
 // pickCountAfterLoss > pickCountAfterWin * 1.2 detector threshold) run
 // through calculateMetrics() + one live runAutopsy() call. DEMO_DFS_ANALYSIS
-// below is that call's frozen, unedited output (plus discipline_score,
+// below is that call's frozen engine output after the same mechanical
+// provenance and model-number filters used for paid reports (plus discipline_score,
 // which runAutopsy doesn't compute - see the same note on DEMO_ANALYSIS
 // above; synthesized first-report-ish context here too).
 //
@@ -23665,7 +23488,7 @@ export const DEMO_ANALYSIS: AutopsyAnalysis = {
 // the only population; every DEMO_DFS_ANALYSIS figure is computed from
 // exactly these entries.
 
-export const DEMO_DFS_BETS: Bet[] = [
+const DEMO_DFS_BETS_SOURCE: Bet[] = [
   {
     "id": "demo-dfs-1",
     "user_id": "demo",
@@ -27868,6 +27691,8 @@ export const DEMO_DFS_BETS: Bet[] = [
   }
 ];
 
+export const DEMO_DFS_BETS = markDemoTimestampsAsSourced(DEMO_DFS_BETS_SOURCE);
+
 // -- DFS Demo Analysis (PrizePicks) --
 // Frozen output of a real runAutopsy(DEMO_DFS_BETS, null) call. Not hand-edited.
 
@@ -27890,7 +27715,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "label": "Eliminated all parlays over 3 legs",
       "actual": -1347.34,
-      "hypothetical": 10.66
+      "hypothetical": 10.66,
+      "affectedBets": 90
     }
   ],
   "recovery": {
@@ -28173,10 +27999,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Post-Loss Escalation",
       "severity": "low",
-      "description": "Your entry fees do creep up slightly in sequences following losses, going from $19 to $22 on average. It's not dramatic, but combined with the pick count escalation, it means your losing runs cost more per entry than your winning runs. Small leak, but worth knowing.",
-      "evidence": "Average entry fee following a losing entry: $22 vs following a winning entry: $19. Loss chase ratio of 1.17x. After 3+ loss streaks, average stake is $22 vs $18 after 3+ win streaks.",
-      "estimated_cost": 100,
-      "fix": "Pick your entry fee before the session starts and keep it flat the entire night, win or lose.",
+      "description": "The gap is not dramatic, but it is consistent across the sample.",
+      "evidence": "ratio: 1.17x (avg stake on bets following a row later settled as a loss: $22 vs following a row later settled as a win: $19). Settlement timing is unavailable",
+      "estimated_cost": 1324.34,
+      "fix": "Decide your entry fee for the session before you start, and do not adjust it based on what just happened. The same amount every entry, win or lose, decided in advance.",
       "evidence_bet_ids": [
         "demo-dfs-149",
         "demo-dfs-145",
@@ -28191,13 +28017,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "confidence": "medium",
       "sub_splits": [
         {
-          "label": "Bets following a losing bet",
+          "label": "Bets after rows later settled as losses",
           "bets": 150,
           "roi_pct": -40.27,
           "net_usd": -1324.34
         },
         {
-          "label": "Bets following a winning bet",
+          "label": "Bets after rows later settled as wins",
           "bets": 49,
           "roi_pct": -1.2,
           "net_usd": -11
@@ -28212,10 +28038,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Stake Volatility",
       "severity": "low",
-      "description": "Your entry fees swing from $8 to $38 with no clear system behind it. Some of that variance is fine, but when your biggest entries are going into your worst-performing entry types, the inconsistency is costing you. Flat sizing would have saved you on several of those max-stake Power losses.",
-      "evidence": "Entry fees range from $8 to $38 (avg $21, median $19). Variability score of 0.73, classified as noticeably inconsistent. Several $34-$38 entries appear on 4-6 pick Power plays that went 0-for.",
-      "estimated_cost": 200,
-      "fix": "Pick one entry fee and use it every time. Decide the amount before you sit down, not based on how you feel about the slate.",
+      "description": "There is no clear logic to when the bigger entries go in versus the smaller ones. The sizing and the format are often working against each other.",
+      "evidence": "Bet sizes range from $8 to $38 (avg $21). Noticeably inconsistent sizing",
+      "estimated_cost": 422.67,
+      "fix": "Do not size up because you feel more confident about a particular slate. Confidence is not a reliable signal, and the data here shows that the bigger entries are not landing on the better outcomes.",
       "evidence_bet_ids": [
         "demo-dfs-184",
         "demo-dfs-186",
@@ -28237,10 +28063,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Category Concentration Leak",
       "severity": "medium",
-      "description": "Every single entry you have is on PrizePicks, which is fine since that's the platform, but your NBA entries are bleeding out at -61.1% ROI compared to -17.5% on NFL. You're splitting your action across both sports without recognizing that one is costing you significantly more than the other.",
-      "evidence": "NBA: 62 entries at -61.1% ROI, $-852 profit. NFL: 138 entries at -17.5% ROI, $-495 profit. NBA is less than a third of your volume but accounts for more than half your total losses.",
-      "estimated_cost": 500,
-      "fix": "Cut NBA entries to no more than 20% of your weekly volume until you find a consistent angle there.",
+      "description": "But within that, the concentration of NBA entries is a real problem. NBA entries are running at a dramatically worse loss rate than NFL entries. The NBA side of this portfolio is doing the heavy lifting on the downside, and it is not a small gap.",
+      "evidence": "parlay: 200 bets at -31.9% ROI ($-1347)",
+      "estimated_cost": 1347.34,
+      "fix": "Recognize that your NFL entries, while still negative overall, are performing meaningfully better than your NBA entries. Until you identify a genuine edge in NBA props, consider pulling back on NBA volume and focusing your entries on the NFL slate where your results are less damaging.",
       "evidence_bet_ids": [
         "demo-dfs-184",
         "demo-dfs-186",
@@ -28270,10 +28096,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Power Play Preference",
       "severity": "high",
-      "description": "You're choosing Power Play on 66% of your entries, which means every single pick has to hit or you get nothing. Flex gives you partial payouts when a pick or two misses, and your numbers prove it works better for you. This is the single biggest fixable leak in your game.",
-      "evidence": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI. That's an 82-percentage-point gap in performance between the two formats.",
-      "estimated_cost": 1100,
-      "fix": "Default to Flex on every entry. Only go Power on 2-pick entries where you have real conviction.",
+      "description": "Flex entries, which pay out even on partial hits, are running solidly profitable. Power entries are getting crushed. This isn't a pick quality problem. It's a format problem. The all-or-nothing structure of Power Play is eating this bettor alive, and yet it remains the dominant choice across the entire sample. The appeal is obvious: Power multipliers look bigger on paper.",
+      "evidence": "132 Power entries (66%) at -57.6% ROI vs 68 Flex entries at 24.7% ROI",
+      "estimated_cost": 0,
+      "fix": "Before submitting any entry, ask yourself: am I choosing Power because I genuinely believe every pick is a lock, or because the multiplier looks more exciting? If it's the latter, switch to Flex. Make Flex your default format and treat Power as the exception, not the rule.",
       "sample_size": 200,
       "confidence": "high",
       "severity_bar_ratio": 0.75,
@@ -28285,10 +28111,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Multiplier Chasing",
       "severity": "medium",
-      "description": "After losing entries, your average pick count jumps from 2.8 to 3.8. You're stacking more picks to chase a bigger multiplier and dig out of the hole faster, but more picks means a harder entry to cash. The data shows this pattern is making your bad sessions worse.",
-      "evidence": "Average pick count after a loss: 3.8 vs after a win: 2.8, a 36% increase. Your 5-pick and 6-pick entries have -37.1% and -100% ROI respectively, compared to +7.6% on 2-pick entries.",
-      "estimated_cost": 400,
-      "fix": "Set your pick count before you open the app. Never go above 3 picks in a session where you've already lost an entry.",
+      "description": "Pick counts step up noticeably in sessions that follow losing entries. The problem is that each additional pick compounds the difficulty dramatically.",
+      "evidence": "Average pick count on entries following a row later settled as a loss: 3.8 vs 2.8 following a row later settled as a win. Settlement timing is unavailable",
+      "estimated_cost": 0,
+      "fix": "Set your pick count before you open the app, not after you see the results of your last entry. If you lost your last entry, that is exactly the wrong moment to add more picks.",
       "sample_size": 150,
       "confidence": "high",
       "severity_bar_ratio": 0.5,
@@ -28300,10 +28126,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     {
       "bias_name": "Player Concentration Bias",
       "severity": "high",
-      "description": "You're leaning on Josh Allen and Jalen Hurts in nearly every session, which means your results are basically a referendum on two players' stat lines. When they have off nights, your whole slate goes down with them. Spreading across more players gives you real diversification.",
-      "evidence": "Josh Allen appears in 30% of entries at -84.7% ROI. Jalen Hurts appears in 28% of entries at -40.2% ROI. Both are deep in the red despite being your most-used picks.",
-      "estimated_cost": 700,
-      "fix": "Cap any single player at 15% of your entries. If Allen or Hurts is in an entry, make it a 2-pick Flex only.",
+      "description": "Both are running deeply negative ROI across this sample. This is a classic familiarity trap: these are household names, easy to feel confident about, and constantly in the news cycle. But heavy concentration on a handful of players means that when those players have a bad stretch, the entire portfolio bleeds. There is no diversification buffer.",
+      "evidence": "Top picks: Josh Allen in 30% of entries, Jalen Hurts in 28% of entries. Overexposure to individual player performance.",
+      "estimated_cost": 0,
+      "fix": "If you notice the same name showing up week after week, that is a signal to look elsewhere. Familiarity with a player is not the same as having an edge on their prop line.",
       "sample_size": 59,
       "confidence": "medium",
       "severity_bar_ratio": 0.75,
@@ -28316,22 +28142,22 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
   "strategic_leaks": [
     {
       "category": "NBA parlay",
-      "detail": "Your NBA entries are the heaviest drain in the book. At -61.1% ROI on 62 entries, you're losing more than half your money back on NBA action. The player concentration issue is especially bad here, with Doncic at -81.5% ROI and LeBron at -81% ROI appearing in roughly 1 in 5 entries.",
+      "detail": "The loss rate is severe and consistent across the entire sample period, not just a bad week. The player concentration problem is especially acute on the NBA side, with Doncic and LeBron both appearing frequently and both running deeply negative.",
       "detail_visibility": "visible",
       "roi_impact": -61.07455197132615,
       "sample_size": 62,
-      "suggestion": "Treat NBA as a secondary sport. Limit yourself to 2-pick Flex entries only on NBA until you find a player or matchup angle that actually works for you.",
+      "suggestion": "Treat NBA entries as a reduced-volume category until you can identify a specific prop type or player matchup where you have a real read. Do not enter NBA slates out of habit or because games are on.",
       "suggestion_visibility": "visible",
       "severity": "critical",
       "confidence": "medium"
     },
     {
       "category": "NFL parlay",
-      "detail": "NFL is your better sport but still runs negative at -17.5% ROI. The drag comes from Power Play overuse and high pick count entries. Your NFL 2-pick Flex entries are clearly your bread and butter, but you keep mixing in 5 and 6-pick Power entries that wipe out those gains.",
+      "detail": "NFL entries are losing too, but the damage is far more contained than on the NBA side. The underlying NFL pick quality may not be as bad as the results suggest.",
       "detail_visibility": "visible",
       "roi_impact": -17.534513274336277,
       "sample_size": 138,
-      "suggestion": "Lean into what works on NFL: 2-pick and 3-pick Flex entries. Stop mixing in 5 and 6-pick Power entries on the same slate.",
+      "suggestion": "Build from that foundation instead of layering on more picks.",
       "suggestion_visibility": "visible",
       "severity": "medium",
       "confidence": "high"
@@ -28339,47 +28165,33 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
   ],
   "behavioral_patterns": [
     {
-      "pattern_name": "Sunday Surge",
-      "description": "Your Sunday entries are genuinely profitable at +84.5% ROI across 27 entries. This is your best day by a massive margin and it's not a fluke given the sample size. You're likely more focused, picking better matchups, or simply playing your best game when the full NFL slate is in front of you.",
-      "frequency": "27 entries on Sundays, 13.5% of total volume",
+      "pattern_name": "Sunday Sharpness",
+      "description": "Sunday entries are running at a dramatically better rate than any other day of the week. The win rate on Sundays nearly doubles the overall average, and the ROI is the only day-of-week bucket running positive by a wide margin. This likely reflects better preparation on NFL game days when this bettor has had time to research the slate.",
+      "frequency": "Every Sunday in the sample",
       "impact": "positive",
-      "data_points": "Sunday: 84.5% ROI, 48% win rate, $427 profit. Next best day is Monday at 7.9% ROI. Every other day of the week is negative."
+      "data_points": "Every other day of the week is negative, with Friday and Saturday being the worst."
     },
     {
-      "pattern_name": "Friday and Saturday Bleed",
-      "description": "Friday and Saturday are your two worst days, combining for -71.8% and -67.1% ROI respectively. You're placing a high volume of entries on these days and losing at a brutal rate. This is where a lot of the NBA action and high pick count Power entries are concentrated.",
-      "frequency": "71 entries on Fri/Sat combined, 35.5% of total volume",
+      "pattern_name": "Friday and Saturday Volume Trap",
+      "description": "Friday and Saturday see heavy entry volume but produce the worst results of any days in the sample. These are high-action days with lots of games, which seems to pull in more entries, but the results suggest the picks are less researched or the formats are more aggressive on these days.",
+      "frequency": "Consistent across the full sample period",
       "impact": "negative",
-      "data_points": "Friday: -71.8% ROI, 18% win rate, $-449 profit on 28 entries. Saturday: -67.1% ROI, 19% win rate, $-630 profit on 43 entries."
+      "data_points": ""
     },
     {
-      "pattern_name": "2-Pick Entry Discipline",
-      "description": "When you keep it to 2 picks, you actually have a real edge. 63.3% win rate on 2-pick entries with a positive ROI is legitimately sharp for a pick-em platform. The problem is you only play 2-pick entries 30% of the time and keep reaching for bigger multipliers.",
-      "frequency": "60 of 200 entries are 2-pick (30%)",
-      "impact": "positive",
-      "data_points": "2-pick entries: 63.3% win rate, 7.6% ROI. 6-pick entries: 0% win rate, -100% ROI. The gap between your best and worst pick count is the entire story of this sample."
-    },
-    {
-      "pattern_name": "Pick Count Escalation in Losing Sequences",
-      "description": "Within sessions where entries are going cold, pick counts step up noticeably. A session that starts with a 2-pick entry often ends with a 5 or 6-pick entry as the losses stack up. This is the clearest behavioral pattern in the data and it's consistently making bad sessions worse.",
-      "frequency": "Average pick count after a loss is 3.8 vs 2.8 after a win, across the full sample",
+      "pattern_name": "Power Format Default",
+      "description": "Power Play is the default format choice even when Flex is available and has proven more profitable. This is not a pick quality issue. It is a format selection habit.",
+      "frequency": "",
       "impact": "negative",
-      "data_points": "Pick count after loss: 3.8 vs after win: 2.8 (36% increase). 5 heated sessions detected out of 78 total. Worst session (Nov 22) had 6 entries and was flagged as heated."
-    },
-    {
-      "pattern_name": "10pm Profitability Window",
-      "description": "Your 10pm entries are the only time-of-day window showing a positive ROI. This likely corresponds to late NFL or NBA games where you have more information available, like injury reports, early game results, and line movement context.",
-      "frequency": "36 entries at 10pm, 18% of total volume",
-      "impact": "positive",
-      "data_points": "10pm: 35.3% ROI, 25% win rate, $264 profit on 36 entries. 7pm is the worst window at -71.0% ROI on 33 entries."
+      "data_points": "Power entries make up the large majority of the portfolio and account for essentially all of the losses. Flex entries are profitable over the same sample period."
     }
   ],
   "recommendations": [
     {
       "priority": 1,
-      "title": "Switch Your Default to Flex",
-      "description": "Your Flex entries are returning +24.7% ROI while your Power entries are at -57.6%. That gap is the entire ballgame. Flex gives you partial credit when one pick misses, which is the difference between cashing something and losing everything on a near-miss entry.",
-      "expected_improvement": "Shifting your default format to Flex would bring your entry results closer to your demonstrated Flex edge and reduce the all-or-nothing variance that's driving your losses. Save ~$1,100.",
+      "title": "Default to Flex, Use Power Sparingly",
+      "description": "Flex Play is your profitable format. Power Play is not. The gap between them over this sample is not close. Make Flex your automatic choice for every entry and only consider Power when you have a very short pick count and extremely high conviction on every pick.",
+      "expected_improvement": "Shifting the majority of entries from Power to Flex removes the all-or-nothing penalty and gives you partial payouts on entries where most picks hit, which meaningfully reduces the frequency of total losses.",
       "difficulty": "easy",
       "tied_to_finding": "Power Play Preference",
       "description_visibility": "visible",
@@ -28387,40 +28199,21 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     },
     {
       "priority": 2,
-      "title": "Cap Your Pick Count at 3",
-      "description": "Your 2-pick entries win at 63.3% and your 6-pick entries win at 0%. Every pick you add makes the entry harder to cash and the math compounds against you fast. Three picks is the ceiling where you still have a realistic shot at hitting.",
-      "expected_improvement": "Staying at 2 or 3 picks keeps you in the range where your actual skill shows up in the results, rather than being buried by the compounding difficulty of longer entries. Save ~$400.",
-      "difficulty": "medium",
-      "tied_to_finding": "Multiplier Chasing",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 3,
-      "title": "Rotate Off Josh Allen and Jalen Hurts",
-      "description": "Allen is in 30% of your entries at -84.7% ROI and Hurts is in 28% at -40.2% ROI. These two players are anchoring your losses. It doesn't matter how good they are in real life. On PrizePicks, your results with them are deeply negative and you need to diversify.",
-      "expected_improvement": "Spreading your picks across a wider player pool removes the single-player dependency that's making your results swing on two stat lines every week. Save ~$700.",
-      "difficulty": "medium",
-      "tied_to_finding": "Player Concentration Bias",
-      "description_visibility": "visible",
-      "expected_improvement_visibility": "visible"
-    },
-    {
-      "priority": 4,
       "title": "Pull Back on NBA Volume",
-      "description": "NBA is running at -61.1% ROI and accounts for more than half your total dollar losses despite being less than a third of your entries. NFL is your better sport. Until you find a real NBA angle, treat it as a secondary market and limit your exposure there.",
-      "expected_improvement": "Reducing NBA volume and redirecting that action toward your stronger NFL entries would concentrate your play in the sport where your results are meaningfully better. Save ~$500.",
+      "description": "Your NBA entries are losing at a rate that is dramatically worse than your NFL entries. Until you can identify a specific type of NBA prop or a specific player matchup where you have a genuine read, treat NBA as a low-volume category. Do not enter NBA slates just because games are on.",
+      "expected_improvement": "Reducing NBA entry volume cuts exposure to the worst-performing category in your portfolio and redirects that activity toward NFL slates where your results, while still negative, are far less damaging. Excluding the flagged cohort improves historical P&L by ~$1,300.",
       "difficulty": "medium",
       "tied_to_finding": "Category Concentration Leak",
       "description_visibility": "visible",
       "expected_improvement_visibility": "visible"
     },
     {
-      "priority": 5,
-      "title": "Protect Your Sunday Edge",
-      "description": "Sunday is your only consistently profitable day at +84.5% ROI. That edge is real and worth protecting. Make Sunday your highest-focus session of the week, and treat it differently from your Friday and Saturday entries where you're bleeding badly.",
-      "expected_improvement": "Treating Sunday as your primary session and being more selective on Friday and Saturday would concentrate your best decision-making in the window where it's already paying off.",
+      "priority": 3,
+      "title": "Set Your Entry Fee Before the Session Starts",
+      "description": "Your entry fees vary too much without a clear pattern tied to better outcomes. Decide what you are putting in per entry before you open the app, and do not change it during the session.",
+      "expected_improvement": "Consistent entry sizing removes the habit of quietly inflating fees during a session, which keeps your exposure predictable and prevents individual sessions from running away from you. The flat-stake counterfactual improves historical P&L by ~$420.",
       "difficulty": "easy",
+      "tied_to_finding": "Stake Volatility",
       "description_visibility": "visible",
       "expected_improvement_visibility": "visible"
     }
@@ -28442,29 +28235,88 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
   "bankroll_health": "healthy",
   "personal_rules": [
     {
-      "rule": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter.",
-      "reason": "Your Flex entries return +24.7% ROI. Your Power entries return -57.6% ROI. The format choice is more important than the picks themselves.",
-      "based_on": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI"
+      "rule": "After 3 losses in a row, stop betting for the rest of the day.",
+      "reason": "This guardrail interrupts the repeated loss-sequence escalation detected in this report.",
+      "based_on": "Post-Loss Escalation",
+      "candidate_id": "loss_streak_stop",
+      "rule_type": "loss_streak_stop",
+      "scope": "session",
+      "scope_value": null,
+      "severity": "critical",
+      "enforcement": "hard",
+      "provenance": "engine_recommended",
+      "trigger": {
+        "threshold": 3,
+        "cooldownHours": 24
+      },
+      "evidence": {
+        "basis": "bias",
+        "summary": "Post-Loss Escalation qualified across 150 ordered bets.",
+        "sampleSize": 150
+      },
+      "sufficiency": {
+        "status": "sufficient",
+        "observed": 150,
+        "minimum": 10,
+        "unit": "qualified_bets"
+      }
     },
     {
-      "rule": "Maximum 3 picks per entry, no exceptions.",
-      "reason": "Your 2-pick entries win at 63.3%. Your 6-pick entries win at 0%. Every pick added past 3 is working against you.",
-      "based_on": "Pick count distribution: 2-pick 7.6% ROI, 3-pick -4.3% ROI, 4-pick -47.1% ROI, 5-pick -37.1% ROI, 6-pick -100% ROI"
+      "rule": "Do not place parlays with more than 3 legs until your next report.",
+      "reason": "Removing those 90 bets would have improved this cohort's historical net by $1,358.",
+      "based_on": "No-long-parlays What-If",
+      "candidate_id": "no_long_parlays",
+      "rule_type": "ban_category",
+      "scope": "bet_type",
+      "scope_value": "parlay",
+      "severity": "guardrail",
+      "enforcement": "hard",
+      "provenance": "engine_recommended",
+      "trigger": {
+        "category": "parlay",
+        "maxParlayLegs": 3
+      },
+      "evidence": {
+        "basis": "what_if",
+        "summary": "The same frozen cohort moved from -$1,347 to +$11 without parlays over 3 legs.",
+        "sampleSize": 90,
+        "actualProfit": -1347.34,
+        "hypotheticalProfit": 10.66,
+        "deltaProfit": 1358
+      },
+      "sufficiency": {
+        "status": "sufficient",
+        "observed": 90,
+        "minimum": 10,
+        "unit": "qualified_bets"
+      }
     },
     {
-      "rule": "No single player appears in more than 2 entries per week.",
-      "reason": "Josh Allen at -84.7% ROI and Jalen Hurts at -40.2% ROI are your two most-used picks and your two biggest money losers. Concentration in individual players is a direct leak.",
-      "based_on": "Josh Allen in 30% of entries at -84.7% ROI, Jalen Hurts in 28% of entries at -40.2% ROI"
-    },
-    {
-      "rule": "If you have already lost 2 entries in a session, stop for the night.",
-      "reason": "Your pick count escalates from 2.8 to 3.8 after losses, and your 5 heated sessions all show the same pattern of entries getting larger and more aggressive as the session goes on.",
-      "based_on": "5 heated sessions out of 78, avg pick count after loss 3.8 vs 2.8 after win, worst session had 6 entries"
-    },
-    {
-      "rule": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%.",
-      "reason": "NBA is running at -61.1% ROI and is responsible for $852 in losses. You do not currently have a demonstrated edge in NBA player props.",
-      "based_on": "NBA: 62 entries, -61.1% ROI, $-852 profit"
+      "rule": "No single bet can exceed $25 until your next report.",
+      "reason": "A fixed ceiling keeps every stake within the engine-derived limit until the next report.",
+      "based_on": "Sizing discipline",
+      "candidate_id": "stake_cap",
+      "rule_type": "stake_cap",
+      "scope": "global",
+      "scope_value": null,
+      "severity": "guardrail",
+      "enforcement": "hard",
+      "provenance": "engine_recommended",
+      "trigger": {
+        "maxStake": 25,
+        "maxStakeMultiplier": 1.25
+      },
+      "evidence": {
+        "basis": "sizing",
+        "summary": "Stake Volatility qualified across 200 bets; average stake was $21.",
+        "sampleSize": 200
+      },
+      "sufficiency": {
+        "status": "sufficient",
+        "observed": 200,
+        "minimum": 10,
+        "unit": "qualified_bets"
+      }
     }
   ],
   "session_analysis": {
@@ -28478,7 +28330,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 10,
       "ending_stake": 23,
       "net": -133,
-      "description": "SESSION-019 on November 22, 2025 was your roughest night, going 6 entries deep and finishing $133 in the hole. It was flagged as a heated session, and looking at the raw bets from that date, the entries escalated from 2-pick to 5-pick and 6-pick Power plays as the losses stacked up. That's the pick count escalation pattern at its worst."
+      "description": "The pattern here is the pick count escalation in real time: each miss seemed to prompt a bigger swing at a larger multiplier rather than a step back. This is the session that most clearly shows the multiplier chasing behavior in action."
     },
     "best_session": {
       "date": "Dec 14, 2025",
@@ -28487,7 +28339,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "starting_stake": 30,
       "ending_stake": 30,
       "net": 270,
-      "description": "SESSION-035 on December 14, 2025 was clean and simple: 1 entry, $270 profit, grade A. That was the 4-pick Flex Mahomes entry that cashed at +900. One entry, right format, walked away. That's the blueprint."
+      "description": "That is it."
     },
     "insight": "Most sessions look disciplined, but 5 of 78 had heated moments worth reviewing."
   },
@@ -28501,7 +28353,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "estimated_loss": 851.99
       }
     ],
-    "reallocation_advice": "Your real edge lives in NFL entries, specifically 2-pick and 3-pick Flex plays. That's where your Sunday profitability comes from and where your win rate is actually competitive. Pull back on NBA volume significantly and stop mixing high pick count Power entries into your NFL sessions. The data is clear: when you keep it simple on NFL with Flex, you cash. When you reach for the big multiplier on Power with 5 or 6 picks, you lose everything. Build your weekly routine around 2-3 pick NFL Flex entries, treat NBA as a small side market, and let your Sunday edge do the heavy lifting.",
+    "reallocation_advice": "You are not a bad picker. You are a picker who keeps choosing the hardest possible format to win with, on the sport where your results are worst.",
     "sharp_score": 34
   },
   "betting_archetype": {
@@ -28895,12 +28747,20 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "roi": -100,
       "count": 5
     },
-    "late_night_stats": {
+    "late_night_stats": null,
+    "source_clock_window_stats": {
       "count": 5,
       "roi": -100,
       "pct_of_total": 2.5
     },
-    "has_time_data": true
+    "has_time_data": true,
+    "clock_basis": "source_clock",
+    "clock_label": "Clock time and timezone supplied by source",
+    "time_bearing_bets": 200,
+    "date_bearing_bets": 200,
+    "timezone_bearing_bets": 200,
+    "legacy_unknown_bets": 0,
+    "local_time_confirmed": false
   },
   "odds_analysis": {
     "buckets": [
@@ -29185,13 +29045,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     "pickCountAfterWin": 2.8
   },
   "betiq": {
-    "score": 42,
+    "score": 37,
     "components": {
       "line_value": 3,
       "calibration": 20,
       "sophistication": 0,
       "specialization": 0,
-      "timing": 10,
+      "timing": 5,
       "confidence": 9
     },
     "percentile": null,
@@ -29212,19 +29072,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "odds_drift_after_loss": 25
     },
     "risk_level": "elevated",
-    "worst_trigger": "After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.",
+    "worst_trigger": "In source order, bets following rows later settled as losses shift toward longer odds. Settlement timing is unavailable, so this does not establish a reaction to a result.",
     "percentile": 80
   },
   "sport_specific_findings": [
     {
       "id": "DFS-LOSS-ESCALATION",
-      "name": "DFS pick count escalation after loss",
+      "name": "DFS pick count escalation in losing-result sequences",
       "sport": "DFS",
       "severity": "medium",
-      "description": "After losses, you increase your pick count. Going for bigger multipliers to recover.",
-      "evidence": "Avg picks after loss: 3.8 vs after win: 2.8 (36% increase).",
+      "description": "Pick counts are higher on entries following rows later settled as losses. Settlement timing is unavailable, so the data does not show that a result caused the next choice.",
+      "evidence": "Avg picks after a row later settled as a loss: 3.8 vs after a row later settled as a win: 2.8 (36% increase).",
       "estimated_cost": null,
-      "recommendation": "Set a rule: your pick count should never change based on your last result.",
+      "recommendation": "Choose a pick-count limit before the session and keep it fixed throughout the session.",
       "sample_size": 200,
       "confidence": "high",
       "description_visibility": "visible",
@@ -29261,11 +29121,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -29303,7 +29164,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -29341,12 +29203,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -29383,11 +29246,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -29426,12 +29290,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 4.6 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -29467,7 +29332,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 4.4 bets/hour",
@@ -29507,7 +29373,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -29545,7 +29412,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-100.0% ROI)",
@@ -29585,12 +29453,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
           "Heavy losses this session (-75.4% ROI)",
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -29628,7 +29497,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -29666,12 +29536,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 5.0 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -29706,13 +29577,14 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 4,
         "chasedAfterLoss": true,
         "chaseCount": 2,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
-          "Late-night betting (after 11pm)"
+          "4 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -29750,7 +29622,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -29789,7 +29662,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-45.9% ROI)"
@@ -29828,7 +29702,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -29867,7 +29742,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -29906,7 +29782,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -29945,17 +29822,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Significant losses this session (-24.6% ROI)"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           38,
@@ -29990,17 +29868,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 4,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Chased losses 4 times in a single session",
-          "6 consecutive losses without stopping"
+          "Raised stakes after losing-result rows 4 times in one source-ordered session",
+          "6 consecutive source-order rows later settled as losses"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           41,
@@ -30038,12 +29917,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
           "Rapid-fire betting at 4.4 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -30079,7 +29959,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -30117,17 +29998,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           52,
@@ -30163,7 +30045,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 5.6 bets/hour"
@@ -30203,10 +30086,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
           "Elevated pace at 3.4 bets/hour"
         ],
@@ -30244,7 +30128,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -30282,10 +30167,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
           "Elevated pace at 3.5 bets/hour"
         ],
@@ -30323,7 +30209,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 7.1 bets/hour",
@@ -30363,7 +30250,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -30401,7 +30289,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -30439,10 +30328,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-72.2% ROI)"
         ],
         "isHeated": false,
@@ -30482,7 +30372,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-100.0% ROI)",
@@ -30522,11 +30413,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -30563,7 +30455,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -30602,10 +30495,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
           "Elevated pace at 3.0 bets/hour"
         ],
@@ -30643,7 +30537,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -30681,10 +30576,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "3 consecutive losses"
+          "3 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -30723,7 +30619,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -30761,7 +30658,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-65.3% ROI)"
@@ -30801,11 +30699,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-47.9% ROI)"
         ],
         "isHeated": false,
@@ -30845,11 +30744,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -30886,7 +30786,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -30925,7 +30826,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -30963,7 +30865,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -31001,7 +30904,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Significant losses this session (-27.4% ROI)"
@@ -31040,7 +30944,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour",
@@ -31079,12 +30984,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 5,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
-          "Chased losses 5 times in a single session",
-          "7 consecutive losses without stopping",
-          "Stepped up stakes from a prior losing bet"
+          "Raised stakes after losing-result rows 5 times in one source-ordered session",
+          "7 consecutive source-order rows later settled as losses",
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -31126,12 +31032,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
-          "4 consecutive losses"
+          "4 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -31169,12 +31076,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
-          "4 consecutive losses"
+          "4 consecutive source-order rows later settled as losses"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -31212,11 +31120,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 3,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
-          "Chased losses 3 times in a single session",
-          "Stepped up stakes from a prior losing bet",
+          "Raised stakes after losing-result rows 3 times in one source-ordered session",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-90.0% ROI)"
         ],
         "isHeated": false,
@@ -31258,7 +31167,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 5.0 bets/hour",
@@ -31299,7 +31209,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -31336,12 +31247,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "D",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -31378,10 +31290,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)",
           "Elevated pace at 3.3 bets/hour"
         ],
@@ -31419,17 +31332,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           136,
@@ -31465,10 +31379,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-70.0% ROI)"
         ],
         "isHeated": false,
@@ -31506,7 +31421,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -31544,10 +31460,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-77.4% ROI)",
           "Elevated pace at 3.0 bets/hour"
         ],
@@ -31588,7 +31505,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Heavy losses this session (-57.5% ROI)"
@@ -31627,12 +31545,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
-        "grade": "D",
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
+        "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -31669,10 +31588,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -31708,7 +31628,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -31746,11 +31667,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -31787,7 +31709,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -31825,17 +31748,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 2,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-80.2% ROI)"
         ],
         "isHeated": true,
         "framing": "loss",
         "heatSignals": [
-          "Stakes more than doubled while chasing losses"
+          "Stakes more than doubled across a losing-result sequence"
         ],
         "betIndices": [
           160,
@@ -31872,11 +31796,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 5.5 bets/hour",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -31912,12 +31837,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -31954,10 +31880,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -31996,12 +31923,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
           "Rapid-fire betting at 4.3 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -32037,11 +31965,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "B",
         "gradeReasons": [
           "Rapid-fire betting at 4.6 bets/hour",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -32078,7 +32007,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -32116,11 +32046,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-76.2% ROI)"
         ],
         "isHeated": false,
@@ -32159,7 +32090,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [],
         "isHeated": false,
@@ -32199,12 +32131,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 4.6 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -32240,12 +32173,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "D",
         "gradeReasons": [
           "Stakes escalated more than 2x from start to finish",
           "Rapid-fire betting at 4.6 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -32280,12 +32214,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "longestLossStreak": 2,
         "chasedAfterLoss": true,
         "chaseCount": 1,
-        "lateNight": true,
-        "lateNightKnown": true,
+        "lateNight": false,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": true,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-58.3% ROI)"
         ],
         "isHeated": false,
@@ -32323,7 +32258,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": false,
         "chaseCount": 0,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "A",
         "gradeReasons": [
           "Rapid-fire betting at 10.0 bets/hour"
@@ -32361,12 +32297,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
           "Rapid-fire betting at 4.3 bets/hour",
-          "Stepped up stakes from a prior losing bet"
+          "Stepped up stakes from a prior bet later settled as a loss"
         ],
         "isHeated": false,
         "heatSignals": [],
@@ -32402,11 +32339,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "chasedAfterLoss": true,
         "chaseCount": 1,
         "lateNight": false,
-        "lateNightKnown": true,
+        "lateNightKnown": false,
+        "sourceClockLateWindow": false,
         "grade": "C",
         "gradeReasons": [
           "Stakes escalated more than 1.5x during the session",
-          "Stepped up stakes from a prior losing bet",
+          "Stepped up stakes from a prior bet later settled as a loss",
           "Heavy losses this session (-100.0% ROI)"
         ],
         "isHeated": false,
@@ -32434,13 +32372,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       },
       {
         "grade": "C",
-        "count": 16,
-        "percent": 20.51
+        "count": 18,
+        "percent": 23.08
       },
       {
         "grade": "D",
-        "count": 9,
-        "percent": 11.54
+        "count": 7,
+        "percent": 8.97
       },
       {
         "grade": "F",
@@ -32453,8 +32391,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     "avgGradedROI": {
       "A": 114.83,
       "B": -91.79,
-      "C": -75.44,
-      "D": -97.79
+      "C": -78.17,
+      "D": -97.16
     },
     "bestSession": {
       "id": "SESSION-035",
@@ -32482,7 +32420,8 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "chasedAfterLoss": false,
       "chaseCount": 0,
       "lateNight": false,
-      "lateNightKnown": true,
+      "lateNightKnown": false,
+      "sourceClockLateWindow": false,
       "grade": "A",
       "gradeReasons": [
         "Rapid-fire betting at 10.0 bets/hour"
@@ -32520,17 +32459,18 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "chasedAfterLoss": true,
       "chaseCount": 4,
       "lateNight": false,
-      "lateNightKnown": true,
+      "lateNightKnown": false,
+      "sourceClockLateWindow": false,
       "grade": "D",
       "gradeReasons": [
         "Stakes escalated more than 2x from start to finish",
-        "Chased losses 4 times in a single session",
-        "6 consecutive losses without stopping"
+        "Raised stakes after losing-result rows 4 times in one source-ordered session",
+        "6 consecutive source-order rows later settled as losses"
       ],
       "isHeated": true,
       "framing": "loss",
       "heatSignals": [
-        "Stakes more than doubled while chasing losses"
+        "Stakes more than doubled across a losing-result sequence"
       ],
       "betIndices": [
         41,
@@ -32543,6 +32483,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "betSnapshots": [
         {
           "placed_at": "2025-11-22T17:07:00.000Z",
+          "source_placed_at": "2025-11-22T17:07:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "17:07:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "2-pick Flex: Tatum Over 4.5 3pt | Jalen Hurts Over 83.5 rec yds",
           "stake": 10,
           "profit": -10,
@@ -32550,6 +32495,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-22T17:44:00.000Z",
+          "source_placed_at": "2025-11-22T17:44:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "17:44:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "5-pick Power: Jokic Over 5.5 3pt | Saquon Barkley Over 64.5 rush yds | Josh Allen Over 1.5 pass TDs | Lamb Over 252.5 pass yds | LeBron James Over 9.5 reb",
           "stake": 21,
           "profit": -21,
@@ -32557,6 +32507,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-22T18:00:00.000Z",
+          "source_placed_at": "2025-11-22T18:00:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "18:00:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "3-pick Power: Jokic Over 6.5 reb | Doncic Over 81.5 rush yds | Josh Allen Over 6.5 3pt",
           "stake": 30,
           "profit": -30,
@@ -32564,6 +32519,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-22T18:38:00.000Z",
+          "source_placed_at": "2025-11-22T18:38:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "18:38:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "6-pick Power: LeBron James Over 223.5 pass yds | Josh Allen Over 23.5 pts | Saquon Barkley Over 6.5 ast | LeBron James Over 57.5 rec yds | Jalen Hurts Over 80.5 rush yds | Lamar Jackson Over 261.5 pass yds",
           "stake": 34,
           "profit": -34,
@@ -32571,6 +32531,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-22T19:12:00.000Z",
+          "source_placed_at": "2025-11-22T19:12:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "19:12:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "2-pick Power: Jalen Hurts Over 57.5 rush yds | Mahomes Over 9.5 reb",
           "stake": 15,
           "profit": -15,
@@ -32578,6 +32543,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         },
         {
           "placed_at": "2025-11-22T19:31:00.000Z",
+          "source_placed_at": "2025-11-22T19:31:00.000Z",
+          "placed_date": "2025-11-22",
+          "placed_time": "19:31:00.000",
+          "source_timezone": "Z",
+          "timestamp_quality": "instant",
           "description": "6-pick Power: Curry Over 19.5 pts | Tatum Over 6.5 reb | Doncic Over 9.5 reb | Tatum Over 1.5 pass TDs | Derrick Henry Over 7.5 ast | Jalen Hurts Over 3.5 3pt",
           "stake": 23,
           "profit": -23,
@@ -32613,29 +32583,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-001",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -32673,7 +32643,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -32689,7 +32659,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 3-loss streak",
+        "primaryReason": "3 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-002",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -32760,13 +32730,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -32782,7 +32752,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-003",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -32799,13 +32769,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -32817,7 +32787,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -32827,7 +32797,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-004",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -32844,19 +32814,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -32868,11 +32838,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-004",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -32889,13 +32859,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -32907,7 +32877,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -32917,7 +32887,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-004",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -32934,29 +32904,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-004",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -32973,19 +32943,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -32995,7 +32965,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-005",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -33012,35 +32982,35 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "description": "Stake stepped up 2.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-005",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -33057,7 +33027,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -33073,7 +33043,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 9-loss streak",
+        "primaryReason": "9 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-006",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33090,19 +33060,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33120,7 +33090,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33130,7 +33100,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-006",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33147,7 +33117,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 11-loss streak",
+            "description": "11 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -33163,7 +33133,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 11-loss streak",
+        "primaryReason": "11 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-007",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33207,7 +33177,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33219,7 +33189,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33229,7 +33199,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-008",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33252,7 +33222,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33268,7 +33238,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-009",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33318,7 +33288,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33328,7 +33298,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
         "sessionId": "SESSION-009",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33345,7 +33315,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33361,7 +33331,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-009",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33378,13 +33348,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33400,7 +33370,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-010",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33438,19 +33408,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.7x from the prior losing bet",
+            "description": "Stake stepped up 2.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33460,7 +33430,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-011",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -33504,13 +33474,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33522,7 +33492,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33532,7 +33502,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-012",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33549,13 +33519,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -33577,7 +33547,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-012",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33589,31 +33559,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 28,
         "betId": "demo-dfs-178",
         "classification": "chasing",
-        "confidence": 95,
+        "confidence": 89,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "controlled_in_good_session",
@@ -33622,7 +33586,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-012",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33639,13 +33603,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -33661,7 +33625,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-013",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -33678,13 +33642,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -33700,7 +33664,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33717,13 +33681,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33739,7 +33703,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-014",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33789,13 +33753,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "description": "Stake stepped up 2.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33811,7 +33775,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-016",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33828,7 +33792,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33838,7 +33802,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-016",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33855,19 +33819,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -33883,7 +33847,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-016",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -33954,7 +33918,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -33970,7 +33934,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-018",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -33987,25 +33951,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34023,11 +33987,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-018",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -34044,13 +34008,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -34068,7 +34032,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34078,7 +34042,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-018",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -34122,25 +34086,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34158,11 +34122,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -34179,7 +34143,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34189,7 +34153,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -34206,13 +34170,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34228,7 +34192,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -34245,13 +34209,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -34275,11 +34239,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -34296,25 +34260,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34336,7 +34300,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-019",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -34353,7 +34317,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -34365,7 +34329,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34375,7 +34339,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-020",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -34392,23 +34356,23 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-020",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -34425,13 +34389,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34447,7 +34411,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-021",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34497,7 +34461,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34509,7 +34473,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34525,7 +34489,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-021",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34569,13 +34533,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "description": "Stake stepped up 2.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34585,7 +34549,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-022",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -34614,7 +34578,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34624,7 +34588,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-022",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -34641,25 +34605,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "description": "Stake stepped up 1.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34669,7 +34633,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-022",
         "sessionGrade": "C",
         "isInHeatedSession": true,
@@ -34686,13 +34650,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -34708,7 +34672,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34725,13 +34689,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34741,7 +34705,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34758,13 +34722,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -34780,7 +34744,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-023",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34824,7 +34788,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34834,7 +34798,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-024",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -34857,7 +34821,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34873,7 +34837,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-025",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -34923,13 +34887,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -34941,7 +34905,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34951,7 +34915,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-026",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -34974,7 +34938,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -34990,7 +34954,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35007,19 +34971,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35031,7 +34995,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35041,7 +35005,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-027",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35058,19 +35022,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35086,7 +35050,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-028",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35181,7 +35145,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -35220,7 +35184,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 4-win streak without increasing stakes",
+            "description": "4 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -35241,19 +35205,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35263,7 +35227,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-030",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35280,13 +35244,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35296,7 +35260,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-030",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35340,19 +35304,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35364,7 +35328,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35374,7 +35338,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-030",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35391,7 +35355,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35407,7 +35371,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-031",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35424,19 +35388,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35446,7 +35410,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-031",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35463,13 +35427,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -35481,7 +35445,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35491,7 +35455,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-032",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -35508,23 +35472,23 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.3x from the prior losing bet",
+            "description": "Stake stepped up 2.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-032",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -35541,13 +35505,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -35563,7 +35527,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-033",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35580,13 +35544,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -35598,7 +35562,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35614,7 +35578,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-034",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35631,31 +35595,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35671,7 +35635,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-034",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -35688,13 +35652,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.3x from the prior losing bet",
+            "description": "Stake stepped up 1.3x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -35710,7 +35674,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.3x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-035",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35775,7 +35739,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35787,7 +35751,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35797,7 +35761,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
         "sessionId": "SESSION-036",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35814,7 +35778,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35826,7 +35790,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35836,7 +35800,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-036",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35853,19 +35817,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35881,7 +35845,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-036",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -35952,7 +35916,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -35964,7 +35928,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -35974,7 +35938,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-038",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -36024,7 +35988,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36040,7 +36004,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-039",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36063,7 +36027,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36073,7 +36037,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-039",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36162,25 +36126,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36196,7 +36160,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-039",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36213,7 +36177,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36225,7 +36189,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36235,7 +36199,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-040",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36252,29 +36216,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-040",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36291,7 +36255,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -36307,7 +36271,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 4-loss streak",
+        "primaryReason": "4 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-041",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36324,7 +36288,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -36336,7 +36300,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36352,7 +36316,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-042",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -36453,7 +36417,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -36480,7 +36444,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36496,7 +36460,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-045",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36519,7 +36483,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36529,7 +36493,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36546,29 +36510,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36585,17 +36549,17 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36612,19 +36576,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36636,11 +36600,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36657,7 +36621,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -36669,11 +36633,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36690,23 +36654,23 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36723,13 +36687,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -36741,11 +36705,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36762,31 +36726,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36796,7 +36760,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-046",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -36840,7 +36804,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36856,7 +36820,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-047",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36873,7 +36837,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36889,7 +36853,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-047",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36906,19 +36870,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -36930,7 +36894,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36940,7 +36904,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-047",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -36957,19 +36921,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -36985,7 +36949,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-048",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37002,31 +36966,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.6x from the prior losing bet",
+            "description": "Stake stepped up 2.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37036,7 +37000,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-048",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37053,13 +37017,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37071,7 +37035,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37081,7 +37045,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-048",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37098,19 +37062,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37122,7 +37086,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37132,7 +37096,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-048",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37149,19 +37113,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.8x from the prior losing bet",
+            "description": "Stake stepped up 1.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37171,7 +37135,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37188,7 +37152,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37200,7 +37164,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37210,7 +37174,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37227,19 +37191,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37251,11 +37215,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37272,19 +37236,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 1.9x from the prior losing bet",
+            "description": "Stake stepped up 1.9x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 11-loss streak",
+            "description": "11 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37294,7 +37258,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.9x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.9x from the prior bet later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37311,7 +37275,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 12-loss streak",
+            "description": "12 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37327,7 +37291,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 12-loss streak",
+        "primaryReason": "12 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37365,13 +37329,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37389,11 +37353,11 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-049",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -37410,7 +37374,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37426,7 +37390,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-050",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37443,13 +37407,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37461,7 +37425,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37471,7 +37435,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-050",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37488,7 +37452,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37500,7 +37464,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37510,7 +37474,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-050",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37566,7 +37530,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         ],
         "primaryReason": "309 min since last bet",
         "sessionId": "SESSION-052",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.63,
         "timeSinceLastBet": 309,
@@ -37581,37 +37545,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.8x from the prior losing bet",
+            "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
         "sessionId": "SESSION-052",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.74,
         "timeSinceLastBet": 41,
@@ -37632,7 +37590,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37648,7 +37606,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-053",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37665,13 +37623,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37683,7 +37641,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37693,7 +37651,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-053",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37710,13 +37668,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37732,7 +37690,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-054",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -37749,31 +37707,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 3.4x from the prior losing bet",
+            "description": "Stake stepped up 3.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37783,7 +37741,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 3.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 3.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-054",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -37800,13 +37758,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37816,7 +37774,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-054",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -37833,13 +37791,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37849,7 +37807,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-054",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -37866,13 +37824,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -37894,7 +37852,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NBA parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-055",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37911,19 +37869,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -37933,7 +37891,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 4 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
         "sessionId": "SESSION-055",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -37950,13 +37908,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -37972,7 +37930,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-055",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38061,7 +38019,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38088,13 +38046,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NBA parlay) as the prior losing bet",
+            "description": "Same sport+type (NBA parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38106,7 +38064,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38116,7 +38074,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-057",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38133,13 +38091,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 5 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 5 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38157,7 +38115,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38167,7 +38125,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 5 to 6 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 5 to 6 over the prior entry later settled as a loss",
         "sessionId": "SESSION-057",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38184,13 +38142,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38206,7 +38164,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-057",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38283,7 +38241,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38295,7 +38253,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38305,7 +38263,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Picks stepped up from 3 to 5 over the prior losing entry",
+        "primaryReason": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
         "sessionId": "SESSION-058",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -38322,7 +38280,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38334,7 +38292,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38344,9 +38302,9 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-059",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": false,
         "stakeVsMedian": 0.89,
         "timeSinceLastBet": 209,
@@ -38361,37 +38319,31 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-059",
-        "sessionGrade": "D",
+        "sessionGrade": "C",
         "isInHeatedSession": false,
         "stakeVsMedian": 1.89,
         "timeSinceLastBet": 32,
@@ -38406,7 +38358,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -38418,7 +38370,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38434,7 +38386,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-060",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -38451,13 +38403,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -38469,7 +38421,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38485,7 +38437,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-060",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -38556,23 +38508,23 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.1x from the prior losing bet",
+            "description": "Stake stepped up 2.1x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.1x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.1x from the prior bet later settled as a loss",
         "sessionId": "SESSION-062",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -38589,7 +38541,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38605,7 +38557,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-063",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -38663,14 +38615,32 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       },
       {
         "betIndex": 162,
-        "betId": "demo-dfs-12",
-        "classification": "neutral",
-        "confidence": 33,
+        "betId": "demo-dfs-111",
+        "classification": "chasing",
+        "confidence": 95,
         "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 8,
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
+            "category": "chasing"
+          },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior bet later settled as a loss",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38680,48 +38650,36 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           },
           {
+            "name": "flat_stake",
+            "weight": -4,
+            "description": "Stake is near the median",
+            "category": "disciplined"
+          },
+          {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-064",
         "sessionGrade": "D",
         "isInHeatedSession": true,
-        "stakeVsMedian": 0.63,
+        "stakeVsMedian": 1.16,
         "timeSinceLastBet": 24,
         "currentStreak": -1
       },
       {
         "betIndex": 163,
-        "betId": "demo-dfs-111",
-        "classification": "chasing",
+        "betId": "demo-dfs-12",
+        "classification": "emotional",
         "confidence": 95,
         "signals": [
           {
-            "name": "post_loss_escalation",
-            "weight": 8,
-            "description": "Stake stepped up 1.8x from the prior losing bet",
-            "category": "chasing"
-          },
-          {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
-            "category": "chasing"
-          },
-          {
-            "name": "odds_shift_to_longshot",
-            "weight": 5,
-            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
-            "category": "chasing"
-          },
-          {
-            "name": "dfs_pick_escalation",
-            "weight": 5,
-            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38749,23 +38707,17 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "impulsive"
           },
           {
-            "name": "flat_stake",
-            "weight": -4,
-            "description": "Stake is near the median",
-            "category": "disciplined"
-          },
-          {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.8x from the prior losing bet",
+        "primaryReason": "Rebet in under 0.0 minutes",
         "sessionId": "SESSION-064",
         "sessionGrade": "D",
         "isInHeatedSession": true,
-        "stakeVsMedian": 1.16,
+        "stakeVsMedian": 0.63,
         "timeSinceLastBet": 0,
         "currentStreak": -2
       },
@@ -38773,18 +38725,36 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 164,
         "betId": "demo-dfs-140",
         "classification": "chasing",
-        "confidence": 86,
+        "confidence": 95,
         "signals": [
+          {
+            "name": "post_loss_escalation",
+            "weight": 10,
+            "description": "Stake stepped up 2.3x from the prior bet later settled as a loss",
+            "category": "chasing"
+          },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
+            "category": "chasing"
+          },
+          {
+            "name": "odds_shift_to_longshot",
+            "weight": 5,
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
+            "category": "chasing"
+          },
+          {
+            "name": "dfs_pick_escalation",
+            "weight": 5,
+            "description": "Picks stepped up from 2 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38800,7 +38770,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Stake stepped up 2.3x from the prior bet later settled as a loss",
         "sessionId": "SESSION-064",
         "sessionGrade": "D",
         "isInHeatedSession": true,
@@ -38817,7 +38787,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -38829,7 +38799,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38845,7 +38815,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-065",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38862,19 +38832,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -38884,7 +38854,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-065",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -38901,13 +38871,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 6-loss streak",
+            "description": "6 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -38917,7 +38887,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-066",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -38934,32 +38904,26 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 9,
-            "description": "Stake stepped up 2.0x from the prior losing bet",
+            "description": "Stake stepped up 2.0x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 7-loss streak",
+            "description": "7 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           },
           {
             "name": "flat_stake",
@@ -38968,7 +38932,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 2.0x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.0x from the prior bet later settled as a loss",
         "sessionId": "SESSION-066",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -38985,7 +38949,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 8-loss streak",
+            "description": "8 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -38997,7 +38961,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39013,7 +38977,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-067",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39030,25 +38994,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 9-loss streak",
+            "description": "9 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 4 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39060,7 +39024,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39070,7 +39034,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-067",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39087,19 +39051,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 10-loss streak",
+            "description": "10 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39115,7 +39079,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-067",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39210,7 +39174,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "win_streak_no_escalation",
             "weight": -4,
-            "description": "On a 3-win streak without increasing stakes",
+            "description": "3 consecutive source-order rows later settled as wins without increasing stakes",
             "category": "disciplined"
           }
         ],
@@ -39231,17 +39195,17 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.5x from the prior losing bet",
+            "description": "Stake stepped up 1.5x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.5x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.5x from the prior bet later settled as a loss",
         "sessionId": "SESSION-068",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -39264,7 +39228,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39280,7 +39244,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-069",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -39297,25 +39261,25 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 6,
-            "description": "Stake stepped up 1.4x from the prior losing bet",
+            "description": "Stake stepped up 1.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39325,7 +39289,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Stake stepped up 1.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-069",
         "sessionGrade": "B",
         "isInHeatedSession": false,
@@ -39342,13 +39306,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39364,7 +39328,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-070",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39423,7 +39387,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39435,7 +39399,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39445,7 +39409,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-071",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -39462,19 +39426,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.2x from the prior losing bet",
+            "description": "Stake stepped up 2.2x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39484,7 +39448,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 2.2x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.2x from the prior bet later settled as a loss",
         "sessionId": "SESSION-071",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -39501,7 +39465,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -39517,7 +39481,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Betting during a 3-loss streak",
+        "primaryReason": "3 consecutive prior source-order rows later settled as losses",
         "sessionId": "SESSION-072",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39594,7 +39558,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39610,7 +39574,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Same sport+type (NFL parlay) as the prior losing bet",
+        "primaryReason": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
         "sessionId": "SESSION-072",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39660,13 +39624,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39676,7 +39640,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-073",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -39693,29 +39657,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.4x from the prior losing bet",
+            "description": "Stake stepped up 2.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+1900) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-073",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -39732,19 +39696,19 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39754,7 +39718,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-074",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -39771,35 +39735,35 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 10,
-            "description": "Stake stepped up 2.4x from the prior losing bet",
+            "description": "Stake stepped up 2.4x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "odds_shift_to_longshot",
             "weight": 5,
-            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior losing bet",
+            "description": "Shifted to longshot odds (+3500) from shorter odds on the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 4-loss streak",
+            "description": "4 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 2 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 2 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 2.4x from the prior losing bet",
+        "primaryReason": "Stake stepped up 2.4x from the prior bet later settled as a loss",
         "sessionId": "SESSION-074",
         "sessionGrade": "D",
         "isInHeatedSession": false,
@@ -39816,13 +39780,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 5-loss streak",
+            "description": "5 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
@@ -39834,7 +39798,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39844,7 +39808,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-075",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -39883,28 +39847,22 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "betIndex": 194,
         "betId": "demo-dfs-158",
         "classification": "chasing",
-        "confidence": 95,
+        "confidence": 89,
         "signals": [
           {
             "name": "post_loss_escalation",
             "weight": 8,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
-          },
-          {
-            "name": "late_night",
-            "weight": 3,
-            "description": "Placed at 11pm",
-            "category": "emotional"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-075",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -39921,7 +39879,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -39933,7 +39891,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -39949,7 +39907,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-076",
         "sessionGrade": "A",
         "isInHeatedSession": false,
@@ -39993,17 +39951,17 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.6x from the prior losing bet",
+            "description": "Stake stepped up 1.6x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 6 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 6 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.6x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.6x from the prior bet later settled as a loss",
         "sessionId": "SESSION-077",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -40020,7 +39978,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
@@ -40032,7 +39990,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "consistent_after_loss",
             "weight": -5,
-            "description": "Held stake near the median following a losing bet",
+            "description": "Held stake near the median following a prior row later settled as a loss",
             "category": "disciplined"
           },
           {
@@ -40042,7 +40000,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
             "category": "disciplined"
           }
         ],
-        "primaryReason": "Held stake near the median following a losing bet",
+        "primaryReason": "Held stake near the median following a prior row later settled as a loss",
         "sessionId": "SESSION-078",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -40059,29 +40017,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           {
             "name": "post_loss_escalation",
             "weight": 7,
-            "description": "Stake stepped up 1.7x from the prior losing bet",
+            "description": "Stake stepped up 1.7x from the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "double_down_after_loss",
             "weight": 4,
-            "description": "Same sport+type (NFL parlay) as the prior losing bet",
+            "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
             "category": "chasing"
           },
           {
             "name": "loss_streak_continuation",
             "weight": 3,
-            "description": "Betting during a 3-loss streak",
+            "description": "3 consecutive prior source-order rows later settled as losses",
             "category": "chasing"
           },
           {
             "name": "dfs_pick_escalation",
             "weight": 5,
-            "description": "Picks stepped up from 3 to 5 over the prior losing entry",
+            "description": "Picks stepped up from 3 to 5 over the prior entry later settled as a loss",
             "category": "chasing"
           }
         ],
-        "primaryReason": "Stake stepped up 1.7x from the prior losing bet",
+        "primaryReason": "Stake stepped up 1.7x from the prior bet later settled as a loss",
         "sessionId": "SESSION-078",
         "sessionGrade": "C",
         "isInHeatedSession": false,
@@ -40099,10 +40057,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "roi": 7.1
       },
       "emotional": {
-        "count": 1,
-        "percent": 0.5,
-        "totalStaked": 30,
-        "totalProfit": -30,
+        "count": 2,
+        "percent": 1,
+        "totalStaked": 42,
+        "totalProfit": -42,
         "roi": -100
       },
       "chasing": {
@@ -40120,14 +40078,14 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "roi": -100
       },
       "neutral": {
-        "count": 82,
-        "percent": 41,
-        "totalStaked": 1601,
-        "totalProfit": -730.32,
-        "roi": -45.62
+        "count": 81,
+        "percent": 40.5,
+        "totalStaked": 1589,
+        "totalProfit": -718.32,
+        "roi": -45.21
       }
     },
-    "emotionalCost": 802.95,
+    "emotionalCost": 815.8,
     "worstAnnotatedBet": {
       "betIndex": 1,
       "betId": "demo-dfs-145",
@@ -40137,29 +40095,29 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         {
           "name": "post_loss_escalation",
           "weight": 10,
-          "description": "Stake stepped up 2.8x from the prior losing bet",
+          "description": "Stake stepped up 2.8x from the prior bet later settled as a loss",
           "category": "chasing"
         },
         {
           "name": "double_down_after_loss",
           "weight": 4,
-          "description": "Same sport+type (NFL parlay) as the prior losing bet",
+          "description": "Same sport+type (NFL parlay) as the prior bet later settled as a loss",
           "category": "chasing"
         },
         {
           "name": "odds_shift_to_longshot",
           "weight": 5,
-          "description": "Shifted to longshot odds (+900) from shorter odds on the prior losing bet",
+          "description": "Shifted to longshot odds (+900) from shorter odds on the prior bet later settled as a loss",
           "category": "chasing"
         },
         {
           "name": "dfs_pick_escalation",
           "weight": 5,
-          "description": "Picks stepped up from 2 to 4 over the prior losing entry",
+          "description": "Picks stepped up from 2 to 4 over the prior entry later settled as a loss",
           "category": "chasing"
         }
       ],
-      "primaryReason": "Stake stepped up 2.8x from the prior losing bet",
+      "primaryReason": "Stake stepped up 2.8x from the prior bet later settled as a loss",
       "sessionId": "SESSION-001",
       "sessionGrade": "C",
       "isInHeatedSession": false,
@@ -40182,7 +40140,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         {
           "name": "consistent_after_loss",
           "weight": -5,
-          "description": "Held stake near the median following a losing bet",
+          "description": "Held stake near the median following a prior row later settled as a loss",
           "category": "disciplined"
         },
         {
@@ -40198,7 +40156,7 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           "category": "disciplined"
         }
       ],
-      "primaryReason": "Held stake near the median following a losing bet",
+      "primaryReason": "Held stake near the median following a prior row later settled as a loss",
       "sessionId": "SESSION-009",
       "sessionGrade": "B",
       "isInHeatedSession": false,
@@ -40213,10 +40171,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     },
     "insight": "Most bets are neutral, but your disciplined bets (29.5%) show promise."
   },
-  "executive_diagnosis": "This bettor has a Power Play problem. 132 Power entries returned -57.6% ROI while Flex entries returned +24.7%. That single switch is worth roughly $400 in recoverable losses.",
+  "executive_diagnosis": "Your betting shows post-loss escalation patterns. The full report breaks down 200 bets across 78 sessions.",
   "executiveDiagnosis": {
     "insightSnapshot": "Your betting shows post-loss escalation patterns. The full report breaks down 200 bets across 78 sessions.",
-    "insightFull": "This bettor has a Power Play problem. 132 Power entries returned -57.6% ROI while Flex entries returned +24.7%. That single switch is worth roughly $400 in recoverable losses."
+    "insightFull": "Your betting shows post-loss escalation patterns. The full report breaks down 200 bets across 78 sessions."
   },
   "pertinent_negatives": [
     {
@@ -40230,12 +40188,6 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
       "finding": "Not detected",
       "detail": "No systematic over-betting of favorites detected. 52% of bettors lean too heavily on chalk.",
       "populationPercent": 52
-    },
-    {
-      "pattern": "Late Night Bias",
-      "finding": "Not detected",
-      "detail": "No significant late-night performance decay detected. 45% of bettors show worse outcomes after 10pm.",
-      "populationPercent": 45
     },
     {
       "pattern": "Sunk Cost",
@@ -40272,13 +40224,13 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     "topRisks": [
       {
         "title": "Post-Loss Escalation",
-        "detail": "Your entry fees do creep up slightly in sequences following losses, going from $19 to $22 on average.",
-        "evidence": "Average entry fee following a losing entry: $22 vs following a winning entry: $19."
+        "detail": "The gap is not dramatic, but it is consistent across the sample.",
+        "evidence": "ratio: 1."
       },
       {
         "title": "Stake Volatility",
-        "detail": "Your entry fees swing from $8 to $38 with no clear system behind it.",
-        "evidence": "Entry fees range from $8 to $38 (avg $21, median $19)."
+        "detail": "Entry fees swing from the minimum up to nearly five times that amount within the same sample period.",
+        "evidence": "Bet sizes range from $8 to $38 (avg $21)."
       },
       {
         "title": "Heated session relapse",
@@ -40288,22 +40240,10 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     ],
     "hardRules": [
       {
-        "title": "No single player appears in more than 2 entries per week",
-        "description": "No single player appears in more than 2 entries per week.",
-        "rationale": "Josh Allen at -84.7% ROI and Jalen Hurts at -40.2% ROI are your two most-used picks and your two biggest money losers. Concentration in individual players is a direct leak.",
-        "rule_type": "ban_category",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "critical",
-        "enforcement": "hard",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "Josh Allen in 30% of entries at -84.7% ROI, Jalen Hurts in 28% of entries at -40.2% ROI"
-      },
-      {
+        "candidateId": "loss_streak_stop",
         "title": "Stop after 3 straight losses",
         "description": "After 3 losses in a row, stop betting for the rest of the day.",
-        "rationale": "Your report shows the worst damage happens once the third loss turns into a chase sequence.",
+        "rationale": "This guardrail interrupts the repeated loss-sequence escalation detected in this report.",
         "rule_type": "loss_streak_stop",
         "scope": "session",
         "scope_value": null,
@@ -40314,29 +40254,24 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
           "threshold": 3,
           "cooldownHours": 24
         },
-        "source": "Post-Loss Escalation"
-      },
-      {
-        "title": "No bets after 11:00 PM",
-        "description": "No bets after 11:00 PM local time. Review lines in the morning instead.",
-        "rationale": "Late-night bets are one of your repeat failure modes. The product should slow you down before that window opens.",
-        "rule_type": "late_night_cutoff",
-        "scope": "time_window",
-        "scope_value": "23:00-04:00",
-        "severity": "guardrail",
-        "enforcement": "hard",
-        "provenance": "engine_recommended",
-        "trigger": {
-          "startHour": 23,
-          "endHour": 4,
-          "recurrenceWindowDays": 14
+        "source": "Post-Loss Escalation",
+        "evidence": {
+          "basis": "bias",
+          "summary": "Post-Loss Escalation qualified across 150 ordered bets.",
+          "sampleSize": 150
         },
-        "source": "Timing analysis"
+        "sufficiency": {
+          "status": "sufficient",
+          "observed": 150,
+          "minimum": 10,
+          "unit": "qualified_bets"
+        }
       },
       {
-        "title": "Pause parlays for 14 days",
-        "description": "No parlays for the next 14 days. Straight bets only while you reset your process.",
-        "rationale": "Your report already shows the category is leaking. The safest move is to remove easy relapse access for a short window.",
+        "candidateId": "no_long_parlays",
+        "title": "Limit parlays to 3 legs",
+        "description": "Do not place parlays with more than 3 legs until your next report.",
+        "rationale": "Removing those 90 bets would have improved this cohort's historical net by $1,358.",
         "rule_type": "ban_category",
         "scope": "bet_type",
         "scope_value": "parlay",
@@ -40345,111 +40280,86 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
         "provenance": "engine_recommended",
         "trigger": {
           "category": "parlay",
-          "recurrenceWindowDays": 14
+          "maxParlayLegs": 3
         },
-        "source": "Strategic leaks"
-      }
-    ],
-    "softRules": [
-      {
-        "title": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter",
-        "description": "Every entry is Flex unless it is a 2-pick entry with both picks at -150 odds or shorter.",
-        "rationale": "Your Flex entries return +24.7% ROI. Your Power entries return -57.6% ROI. The format choice is more important than the picks themselves.",
-        "rule_type": "custom",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "132 Power entries at -57.6% ROI vs 68 Flex entries at +24.7% ROI"
+        "source": "No-long-parlays What-If",
+        "evidence": {
+          "basis": "what_if",
+          "summary": "The same frozen cohort moved from -$1,347 to +$11 without parlays over 3 legs.",
+          "sampleSize": 90,
+          "actualProfit": -1347.34,
+          "hypotheticalProfit": 10.66,
+          "deltaProfit": 1358
+        },
+        "sufficiency": {
+          "status": "sufficient",
+          "observed": 90,
+          "minimum": 10,
+          "unit": "qualified_bets"
+        }
       },
       {
-        "title": "Maximum 3 picks per entry, no exceptions",
-        "description": "Maximum 3 picks per entry, no exceptions.",
-        "rationale": "Your 2-pick entries win at 63.3%. Your 6-pick entries win at 0%. Every pick added past 3 is working against you.",
-        "rule_type": "ban_category",
+        "candidateId": "stake_cap",
+        "title": "Cap stake at $25",
+        "description": "No single bet can exceed $25 until your next report.",
+        "rationale": "A fixed ceiling keeps every stake within the engine-derived limit until the next report.",
+        "rule_type": "stake_cap",
         "scope": "global",
         "scope_value": null,
         "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "Pick count distribution: 2-pick 7.6% ROI, 3-pick -4.3% ROI, 4-pick -47.1% ROI, 5-pick -37.1% ROI, 6-pick -100% ROI"
-      },
-      {
-        "title": "If you have already lost 2 entries in a session, stop for the night",
-        "description": "If you have already lost 2 entries in a session, stop for the night.",
-        "rationale": "Your pick count escalates from 2.8 to 3.8 after losses, and your 5 heated sessions all show the same pattern of entries getting larger and more aggressive as the session goes on.",
-        "rule_type": "session_limit",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
+        "enforcement": "hard",
         "provenance": "engine_recommended",
         "trigger": {
-          "sessionLimit": 2
+          "maxStake": 25,
+          "maxStakeMultiplier": 1.25
         },
-        "source": "5 heated sessions out of 78, avg pick count after loss 3.8 vs 2.8 after win, worst session had 6 entries"
-      },
-      {
-        "title": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%",
-        "description": "NBA entries are 2-pick Flex only until your NBA ROI is above -20%.",
-        "rationale": "NBA is running at -61.1% ROI and is responsible for $852 in losses. You do not currently have a demonstrated edge in NBA player props.",
-        "rule_type": "custom",
-        "scope": "global",
-        "scope_value": null,
-        "severity": "guardrail",
-        "enforcement": "soft",
-        "provenance": "engine_recommended",
-        "trigger": {},
-        "source": "NBA: 62 entries, -61.1% ROI, $-852 profit"
+        "source": "Sizing discipline",
+        "evidence": {
+          "basis": "sizing",
+          "summary": "Stake Volatility qualified across 200 bets; average stake was $21.",
+          "sampleSize": 200
+        },
+        "sufficiency": {
+          "status": "sufficient",
+          "observed": 200,
+          "minimum": 10,
+          "unit": "qualified_bets"
+        }
       }
     ],
+    "softRules": [],
     "cooldownSuggestions": [
       {
         "trigger": "Post-loss escalation",
         "label": "30-minute reset after a loss",
         "durationLabel": "30 minutes",
         "durationHours": 0.5,
-        "reason": "Short pauses are the fastest way to interrupt the immediate revenge-bet impulse."
+        "reason": "A short pause adds friction before the next stake decision. This is a harm-reduction control, not a claim about what caused the historical sequence."
       },
       {
         "trigger": "Heated session",
         "label": "Next-day lockout after a heated session",
         "durationLabel": "24 hours",
         "durationHours": 24,
-        "reason": "Your data shows same-day follow-ups after heated sessions tend to extend the damage, not repair it."
-      },
-      {
-        "trigger": "Late-night behavior",
-        "label": "Sleep-on-it cooldown",
-        "durationLabel": "Until tomorrow at 8:00 AM",
-        "durationHours": 8,
-        "reason": "If the cutoff is already broken, the safest next move is to hand the decision to tomorrow-you."
+        "reason": "A next-day lockout adds friction after a heated session. This is a harm-reduction control, not a claim of predicted profit."
       }
     ],
     "relapseTriggers": [
-      "Late-night betting windows",
-      "Bets placed shortly after a loss",
+      "A higher-stake decision following a known loss",
       "Returning to the same leaking category under stress"
     ],
-    "nextWeekFocus": "No single player appears in more than 2 entries per week.",
+    "nextWeekFocus": "After 3 losses in a row, stop betting for the rest of the day.",
     "planTemplate": {
       "bettingHours": {
         "startHour": null,
-        "endHour": 23,
-        "timezoneLabel": "Local time"
+        "endHour": null,
+        "timezoneLabel": "Clock time and timezone supplied by source"
       },
-      "maximumUnitSize": null,
-      "bannedBetCategories": [
-        "Maximum 3 picks per entry, no exceptions",
-        "No single player appears in more than 2 entries per week",
-        "parlay"
-      ],
-      "sessionLimit": 2,
+      "maximumUnitSize": 25,
+      "bannedBetCategories": [],
+      "sessionLimit": 4,
       "lossStreakStop": 3,
-      "lateNightCutoffHour": 23,
+      "lateNightCutoffHour": null,
       "postLossWaitingPeriodMinutes": 30,
       "reflectionQuestion": "Would I still place this if my last bet had won?"
     },
@@ -40479,12 +40389,12 @@ export const DEMO_DFS_ANALYSIS: AutopsyAnalysis = {
     ]
   },
   "discipline_score": {
-    "total": 32,
-    "tracking": 6,
+    "total": 29,
+    "tracking": 3,
     "sizing": 11,
     "control": 15,
     "strategy": 0,
-    "percentile": 30
+    "percentile": 12
   },
   "schema_version": 4
 };

@@ -1,5 +1,5 @@
 import type { ParsedBet, CSVParseResult, HierarchicalCollapseCounts } from '@/types';
-import { parseExplicitTimestamp } from '@/lib/parsed-bet-validation';
+import { parseSourcedTimestamp } from '@/lib/temporal-provenance';
 
 export type CSVParseResultWithDiagnostics = CSVParseResult & {
   rows_in_file: number;
@@ -495,12 +495,12 @@ function parseRow(
     warnings.push(`Row ${lineNum}: Missing date, skipped`);
     return null;
   }
-  const parsedTimestamp = parseExplicitTimestamp(dateStr);
+  const parsedTimestamp = parseSourcedTimestamp(dateStr);
   if (!parsedTimestamp.value) {
     warnings.push(`Row ${lineNum}: ${parsedTimestamp.error}, skipped`);
     return null;
   }
-  const placedAt = parsedTimestamp.value;
+  const temporal = parsedTimestamp.value;
 
   // Profit must come from the export. Child leg rows are the sole exception:
   // they never survive the hierarchy collapse and their individual net is not
@@ -638,7 +638,7 @@ function parseRow(
   }
 
   return {
-    placed_at: placedAt,
+    ...temporal,
     sport,
     bet_type: betType,
     description,

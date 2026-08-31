@@ -26,6 +26,7 @@ import type {
 } from '@/types';
 import { SUPPORT_RESOURCES } from '@/lib/support-resources';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
+import { betSequencePartition, betSequenceTimeMs } from '@/lib/temporal-provenance';
 
 type CheckInEvaluationResult = {
   actionGate: CheckInActionGate;
@@ -85,14 +86,18 @@ function getActiveCooldown(cooldowns: Cooldown[], now = new Date()): Cooldown | 
 }
 
 function getLossStreak(recentBets: Bet[]): number {
-  const sorted = [...recentBets].sort((a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime());
+  const sorted = recentBets
+    .filter((bet) => betSequencePartition(bet) === 'instant')
+    .sort((a, b) => (betSequenceTimeMs(b) ?? 0) - (betSequenceTimeMs(a) ?? 0));
   let streak = 0;
   for (const bet of sorted) {
     if (bet.result === 'loss') {
       streak += 1;
       continue;
     }
-    if (bet.result === 'win' || bet.result === 'push' || bet.result === 'void') break;
+    // Pending is unknown, not permission to look through it and stitch older
+    // losses into a current run.
+    break;
   }
   return streak;
 }
@@ -100,7 +105,9 @@ function getLossStreak(recentBets: Bet[]): number {
 function getCurrentSessionBetCount(recentBets: Bet[], placedAtIso: string): number {
   const target = new Date(placedAtIso).getTime();
   return recentBets.filter((bet) => {
-    const placed = new Date(bet.placed_at).getTime();
+    if (betSequencePartition(bet) !== 'instant') return false;
+    const placed = betSequenceTimeMs(bet);
+    if (placed === null) return false;
     const delta = target - placed;
     return delta >= 0 && delta <= 6 * MILLIS_PER_HOUR;
   }).length;
@@ -146,6 +153,7 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
   );
   const stakeVolatilitySample = stakeVolatilityBias?.sample_size ?? 0;
   const lateNight = analysis.timing_analysis?.has_time_data
+    && analysis.timing_analysis.local_time_confirmed === true
     ? analysis.timing_analysis.late_night_stats
     : null;
   const longParlayWhatIf = analysis.what_if_scenarios?.find(
@@ -408,7 +416,7 @@ function buildPlanSettings(analysis: AutopsyAnalysis, rules: ControlRuleSuggesti
     bettingHours: {
       startHour: null,
       endHour: lateNight,
-      timezoneLabel: 'Local time',
+      timezoneLabel: analysis.timing_analysis?.clock_label ?? 'Time basis unavailable',
     },
     maximumUnitSize: stakeCap,
     bannedBetCategories,
@@ -478,7 +486,7 @@ function buildCooldownSuggestions(analysis: AutopsyAnalysis, rules: ControlRuleS
       label: '30-minute reset after a loss',
       durationLabel: '30 minutes',
       durationHours: 0.5,
-      reason: 'Short pauses are the fastest way to interrupt the immediate revenge-bet impulse.',
+      reason: 'A short pause adds friction before the next stake decision. This is a harm-reduction control, not a claim about what caused the historical sequence.',
     });
   }
 
@@ -488,7 +496,7 @@ function buildCooldownSuggestions(analysis: AutopsyAnalysis, rules: ControlRuleS
       label: 'Next-day lockout after a heated session',
       durationLabel: '24 hours',
       durationHours: 24,
-      reason: 'Your data shows same-day follow-ups after heated sessions tend to extend the damage, not repair it.',
+      reason: 'A next-day lockout adds friction after a heated session. This is a harm-reduction control, not a claim of predicted profit.',
     });
   }
 
@@ -517,11 +525,10 @@ function buildCooldownSuggestions(analysis: AutopsyAnalysis, rules: ControlRuleS
 // DO NOT market the recovery feature until the calibration query is re-run on a
 // real population and RECOVERY_EMOTION_CUTOFF is moved to roughly p90-p95.
 //
-// HARD DEPENDENCY: emotion_score and heatedSessionPercent are computed partly
-// from the vig-mislabeled "luck" component and the timezone-broken late-night /
-// heated-session signal (WS-NUMERIC / WS-TEMPORAL). When those engine fixes
-// land, these cutoffs MUST be re-tuned in the same change — a user can cross or
-// un-cross the recovery line from the math changing, not their behavior.
+// HARD DEPENDENCY: emotion_score and heatedSessionPercent change when their
+// deterministic inputs change. Re-run calibration before changing these
+// cutoffs because a math change can move a user between tiers even when their
+// behavior did not change.
 const RECOVERY_EMOTION_CUTOFF = 80; // Tier 2 gate (raised from codex's 70)
 const RECOVERY_HEATED_PCT = 35;     // Tier 2 corroboration floor
 const ELEVATED_EMOTION_MIN = 60;    // Tier 1 lower bound
@@ -580,6 +587,8 @@ export function buildReportControlSystem(
     : riskTier === 'elevated'
     ? 'watch_mode'
     : 'support_mode';
+  const confirmedLateNightRisk = analysis.timing_analysis?.local_time_confirmed === true
+    && (analysis.timing_analysis.late_night_stats?.count ?? 0) > 0;
 
   return {
     controlStatus: status,
@@ -591,8 +600,8 @@ export function buildReportControlSystem(
     softRules,
     cooldownSuggestions: buildCooldownSuggestions(analysis, rules),
     relapseTriggers: [
-      'Late-night betting windows',
-      'Bets placed shortly after a loss',
+      ...(confirmedLateNightRisk ? ['Late-night betting windows'] : []),
+      'A higher-stake decision following a known loss',
       'Returning to the same leaking category under stress',
     ],
     nextWeekFocus: hardRules[0]?.description
@@ -884,23 +893,9 @@ function evaluateSingleRule(
       return null;
     }
     case 'cooldown_after_loss': {
-      const waitMinutes = rule.trigger.waitMinutes ?? 30;
-      const lastSettled = [...recentBets].sort(
-        (a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
-      )[0];
-      if (lastSettled?.result !== 'loss') return null;
-      const minutesSince = (new Date(request.placedAt).getTime() - new Date(lastSettled.placed_at).getTime()) / 60000;
-      if (minutesSince >= 0 && minutesSince < waitMinutes) {
-        return {
-          ruleId: rule.id,
-          ruleType: rule.rule_type,
-          title: rule.title,
-          ruleText: rule.description,
-          enforcement: rule.enforcement,
-          severity: rule.severity,
-          reason: `Only ${Math.round(minutesSince)} minutes have passed since your last loss. Your cooldown requires ${waitMinutes}.`,
-        };
-      }
+      // Bet rows store placement time and final result, not settlement time.
+      // An explicit active cooldown can still enforce this control, but the
+      // evaluator must not manufacture the missing start time from placed_at.
       return null;
     }
     case 'emotion_block': {
@@ -937,12 +932,14 @@ function evaluateSingleRule(
       return null;
     }
     case 'rapid_fire_limit': {
-      const lastBet = [...recentBets].sort(
-        (a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
-      )[0];
+      const lastBet = recentBets
+        .filter((bet) => betSequencePartition(bet) === 'instant')
+        .sort((a, b) => (betSequenceTimeMs(b) ?? 0) - (betSequenceTimeMs(a) ?? 0))[0];
       const waitMinutes = rule.trigger.waitMinutes ?? 30;
       if (!lastBet) return null;
-      const minutesSince = (new Date(request.placedAt).getTime() - new Date(lastBet.placed_at).getTime()) / 60000;
+      const lastBetTime = betSequenceTimeMs(lastBet);
+      if (lastBetTime === null) return null;
+      const minutesSince = (new Date(request.placedAt).getTime() - lastBetTime) / 60000;
       if (minutesSince >= 0 && minutesSince < waitMinutes) {
         return {
           ruleId: rule.id,

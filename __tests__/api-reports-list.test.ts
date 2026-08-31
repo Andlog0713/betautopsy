@@ -63,6 +63,8 @@ const LIST_COLUMNS_STR = [
   'bet_count_analyzed',
   'date_range_start',
   'date_range_end',
+  'date_range_start_date',
+  'date_range_end_date',
   'created_at',
   'report_summary',
   'upgraded_from_snapshot_id',
@@ -340,7 +342,7 @@ describe('GET /api/reports?upgraded_from — IAP polling (unchanged)', () => {
     expect(mockedAuth).not.toHaveBeenCalled();
   });
 
-  it('polling mode preserves full report_json (unchanged from 5cc8356)', async () => {
+  it('polling mode preserves the paid report while removing unproven legacy timing fields', async () => {
     // Polling mode serves IAP materialization; iOS needs the COMPLETE report.
     // The slim transform must not touch this branch — heavy fields survive.
     const rows = [
@@ -364,9 +366,10 @@ describe('GET /api/reports?upgraded_from — IAP polling (unchanged)', () => {
     const body = await res.json();
     const rj = body.reports[0].report_json;
 
-    // All heavy fields preserved — polling mode is intentionally NOT slimmed.
-    expect(rj.bet_annotations).toEqual([{ note: 'heavy' }]);
-    expect(rj.session_detection).toEqual({ sessions: [{ grade: 'F' }] });
+    // Polling mode remains unslimmed, but old reports cannot prove the clock
+    // basis behind their sequencing and timing-derived sections.
+    expect(rj.bet_annotations).toBeUndefined();
+    expect(rj.session_detection).toBeUndefined();
     expect(rj.executive_diagnosis).toBe('full prose that MUST ship to the paid detail view');
     expect(rj.betiq).toEqual({ score: 76 });
   });

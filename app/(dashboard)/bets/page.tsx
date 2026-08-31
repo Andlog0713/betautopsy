@@ -11,6 +11,11 @@ import { usePrivacy, EyeToggle } from '@/components/PrivacyContext';
 import { formatBetDescription } from '@/lib/format-parlay';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
 import type { Bet } from '@/types';
+import {
+  compareBetsByRecordedTime,
+  formatRecordedDate,
+  manualDateTemporalFields,
+} from '@/lib/temporal-provenance';
 
 // Normalize sport names for display (fixes legacy "Nhl" → "NHL" etc.)
 const SPORT_DISPLAY: Record<string, string> = {
@@ -74,7 +79,7 @@ export default function BetsPage() {
       let cmp = 0;
       switch (sortCol) {
         case 'placed_at':
-          cmp = new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime();
+          cmp = compareBetsByRecordedTime(a, b);
           break;
         case 'sport':
           cmp = a.sport.localeCompare(b.sport);
@@ -379,7 +384,7 @@ export default function BetsPage() {
                       />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-fg-muted">
-                      {new Date(bet.placed_at).toLocaleDateString('en-US', {
+                      {formatRecordedDate(bet, {
                         month: 'short',
                         day: 'numeric',
                       })}
@@ -566,8 +571,10 @@ function ClearAllBets({ betCount, onCleared }: { betCount: number; onCleared: ()
 // ── Manual Bet Entry Form ──
 
 function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string> | null; onSuccess: () => void }) {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const [form, setForm] = useState({
-    placed_at: new Date().toISOString().split('T')[0],
+    placed_at: today,
     sport: prefill?.sport || 'NFL',
     bet_type: prefill?.bet_type || 'spread',
     description: prefill?.description || '',
@@ -609,10 +616,11 @@ function BetEntryForm({ prefill, onSuccess }: { prefill?: Record<string, string>
     const odds = parseInt(form.odds);
     const stake = parseFloat(form.stake);
     const payout = form.result === 'win' ? stake + profit : form.result === 'push' ? stake : 0;
+    const temporal = manualDateTemporalFields(form.placed_at);
 
     const { error: insertError } = await supabase.from('bets').insert({
       user_id: user.id,
-      placed_at: new Date(form.placed_at).toISOString(),
+      ...temporal,
       sport: form.sport,
       bet_type: form.bet_type,
       description: form.description,

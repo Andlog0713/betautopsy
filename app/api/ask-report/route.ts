@@ -6,6 +6,13 @@ import { logErrorServer } from '@/lib/log-error-server';
 import { RECOVERY_SUPPORT_FOOTER } from '@/lib/support-resources';
 import type { AutopsyAnalysis, Bet } from '@/types';
 import { attachCanonicalControlRules } from '@/lib/control-system';
+import {
+  betRecordedDate,
+  betSourceDayOfWeek,
+  compareBetsByRecordedTime,
+  sanitizeUnconfirmedLocalTimeClaims,
+} from '@/lib/temporal-provenance';
+import { resolveBetsForReportScope } from '@/lib/report-cohort';
 
 const SYSTEM_PROMPT = `You are BetAutopsy's report analyst. You answer questions about this specific user's betting behavioral analysis report and their underlying bet data. Be specific and reference their actual numbers. Keep answers under 200 words. Never give betting picks, tout services, or financial advice. Never recommend specific bets. If asked something outside the scope of this report, say so. Always defer to the grades, scores, and classifications already in this report. Do not re-evaluate or contradict them.`;
 
@@ -86,13 +93,16 @@ function aggregateBets(bets: Bet[]): string {
 
   // Day of week
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayBreakdown = groupROI((b) => dayNames[new Date(b.placed_at).getUTCDay()]);
+  const dayBreakdown = groupROI((b) => {
+    const day = betSourceDayOfWeek(b);
+    return day === null ? 'Unknown' : dayNames[day];
+  });
 
   // Last 10 bets for recency context
   const recentBets = [...bets]
-    .sort((a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime())
+    .sort((a, b) => compareBetsByRecordedTime(b, a))
     .slice(0, 10)
-    .map((b) => `  ${b.placed_at.slice(0, 10)} | ${b.sport} | ${b.bet_type} | ${b.description} | ${b.odds > 0 ? '+' : ''}${b.odds} | $${b.stake} | ${b.result} | $${b.profit}`)
+    .map((b) => `  ${b.source_placed_at ?? betRecordedDate(b) ?? 'date unknown'} | ${b.sport} | ${b.bet_type} | ${b.description} | ${b.odds > 0 ? '+' : ''}${b.odds} | $${b.stake} | ${b.result} | $${b.profit}`)
     .join('\n');
 
   return `
@@ -156,7 +166,7 @@ export async function POST(request: Request) {
 
     const { data: report, error: reportError } = await supabase
       .from('autopsy_reports')
-      .select('id, report_json, is_paid, date_range_start, date_range_end')
+      .select('id, report_json, is_paid, date_range_start, date_range_end, date_range_start_date, date_range_end_date, analyzed_bet_ids')
       .eq('id', report_id)
       .eq('user_id', user.id)
       .maybeSingle();
@@ -173,22 +183,23 @@ export async function POST(request: Request) {
     if (!storedAnalysis) {
       return NextResponse.json({ error: 'Report data is missing.' }, { status: 404 });
     }
-    const analysis = attachCanonicalControlRules(storedAnalysis);
+    const analysis = attachCanonicalControlRules(
+      sanitizeUnconfirmedLocalTimeClaims(storedAnalysis),
+    );
 
     // Fetch the actual bets that made up this report and aggregate them
     let betSummary = '';
-    if (report.date_range_start && report.date_range_end) {
-      const { data: bets } = await supabase
-        .from('bets')
-        .select('placed_at, sport, league, bet_type, description, odds, stake, result, profit, sportsbook, is_bonus_bet, parlay_legs')
-        .eq('user_id', user.id)
-        .gte('placed_at', report.date_range_start)
-        .lte('placed_at', report.date_range_end)
-        .order('placed_at', { ascending: true });
-
-      if (bets && bets.length > 0) {
-        betSummary = aggregateBets(bets as Bet[]);
-      }
+    const startDate = report.date_range_start_date ?? report.date_range_start?.slice(0, 10) ?? null;
+    const endDate = report.date_range_end_date ?? report.date_range_end?.slice(0, 10) ?? null;
+    const hasFrozenIds = Array.isArray(report.analyzed_bet_ids);
+    if (hasFrozenIds || (startDate && endDate)) {
+      const bets = await resolveBetsForReportScope(supabase, {
+        userId: user.id,
+        analyzedBetIds: hasFrozenIds ? report.analyzed_bet_ids : null,
+        dateFrom: startDate,
+        dateTo: endDate,
+      });
+      if (bets.length > 0) betSummary = aggregateBets(bets);
     }
 
     const trimmedContext = trimReportContext(analysis);

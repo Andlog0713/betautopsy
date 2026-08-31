@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { logErrorServer } from '@/lib/log-error-server';
 import { attachCanonicalControlRules } from '@/lib/control-system';
+import { sanitizeUnconfirmedLocalTimeClaims } from '@/lib/temporal-provenance';
 import type { AutopsyAnalysis } from '@/types';
 
 // User-scoped fetch of a single autopsy_reports row. Used by the iOS
@@ -65,9 +66,12 @@ export async function GET(
   } = report as Record<string, unknown>;
   void _fulfillment;
   void _frozenBets;
-  const reportJson = report.report_type === 'snapshot' || !report.report_json
-    ? report.report_json
-    : attachCanonicalControlRules(report.report_json as AutopsyAnalysis);
+  const provenanceSafeReport = report.report_json
+    ? sanitizeUnconfirmedLocalTimeClaims(report.report_json as AutopsyAnalysis)
+    : report.report_json;
+  const reportJson = report.report_type === 'snapshot' || !provenanceSafeReport
+    ? provenanceSafeReport
+    : attachCanonicalControlRules(provenanceSafeReport);
 
   return NextResponse.json({
     report: {

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AutopsyAnalysis, Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 const mocks = vi.hoisted(() => ({
   runAutopsy: vi.fn(),
@@ -128,7 +129,7 @@ function makeClient(options: MockClientOptions = {}) {
 }
 
 function bet(id: string, placedAt: string): Bet {
-  return {
+  return markFixtureTimestampAsSourced({
     id,
     user_id: 'user-1',
     placed_at: placedAt,
@@ -148,7 +149,7 @@ function bet(id: string, placedAt: string): Bet {
     notes: null,
     upload_id: 'upload-1',
     created_at: placedAt,
-  };
+  });
 }
 
 function pipelineArgs(
@@ -278,6 +279,8 @@ describe('canonical full-report pipeline', () => {
       cost_cents: 2,
       date_range_start: '2026-08-20T12:00:00.000Z',
       date_range_end: '2026-08-21T12:00:00.000Z',
+      date_range_start_date: '2026-08-20',
+      date_range_end_date: '2026-08-21',
     });
     expect(analysis).toMatchObject({
       quiz_archetype: 'Careful Grinder',

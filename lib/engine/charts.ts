@@ -9,6 +9,7 @@ import type {
   AnnotationSummary,
 } from '@/types';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
+import { betSequenceTimeMs, compareBetsByRecordedTime } from '@/lib/temporal-provenance';
 
 /**
  * Chart-ready typed arrays (report-trust, schema_version 3). Everything here
@@ -36,9 +37,7 @@ const BY_DAY_TO_JS_DAY = [1, 2, 3, 4, 5, 6, 0];
 const KNOWN_BET_CLASSES = new Set(['moneyline', 'spread', 'total', 'prop', 'futures']);
 
 function sortBetsLikeEngine(bets: Bet[]): Bet[] {
-  return [...bets].sort(
-    (a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime(),
-  );
+  return [...bets].sort(compareBetsByRecordedTime);
 }
 
 /**
@@ -76,7 +75,8 @@ export function buildHeroSessionTimeline(
     .filter((b): b is Bet => b != null);
   if (sessionBets.length === 0) return [];
 
-  const t0 = new Date(sessionBets[0].placed_at).getTime();
+  const t0 = betSequenceTimeMs(sessionBets[0]);
+  if (t0 === null) return [];
   const points: SessionTimelinePoint[] = [];
   for (let i = 0; i < sessionBets.length; i++) {
     const bet = sessionBets[i];
@@ -86,8 +86,10 @@ export function buildHeroSessionTimeline(
     // ORIGINAL session sequence was a loss and this stake exceeds it.
     const isChaseMarker =
       prev != null && prev.result === 'loss' && Number(bet.stake) > Number(prev.stake);
+    const betTime = betSequenceTimeMs(bet);
+    if (betTime === null) continue;
     points.push({
-      tOffsetMin: Math.max(0, Math.round((new Date(bet.placed_at).getTime() - t0) / 60000)),
+      tOffsetMin: Math.max(0, Math.round((betTime - t0) / 60000)),
       stakeUSD: Number(bet.stake),
       outcome: bet.result,
       isChaseMarker,

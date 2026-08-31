@@ -155,7 +155,8 @@ export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationE
 
 type RecentBet = {
   id: string;
-  placed_at: string;
+  placed_at: string | null;
+  timestamp_quality?: 'instant' | 'local_datetime' | 'date_only' | 'legacy_unknown';
   stake: number;
   profit: number | null;
   result: string;
@@ -280,8 +281,9 @@ export async function scoreCheckIn(
 
   const { data: recentBetsRaw } = await supabase
     .from('bets')
-    .select('id, placed_at, stake, profit, result, sport, bet_type')
+    .select('id, placed_at, timestamp_quality, stake, profit, result, sport, bet_type')
     .eq('user_id', userId)
+    .eq('timestamp_quality', 'instant')
     .order('placed_at', { ascending: false })
     .limit(30);
 
@@ -348,7 +350,9 @@ export async function scoreCheckIn(
     ? request.localHour
     : placedAt.getUTCHours();
   if (isLateNightHour(hour)) {
-    const lateStats = report?.timing_analysis?.late_night_stats ?? null;
+    const lateStats = report?.timing_analysis?.local_time_confirmed === true
+      ? report.timing_analysis.late_night_stats
+      : null;
     let severity: CheckInSeverity;
     let detail: string;
     if (lateStats && lateStats.count > 0 && typeof lateStats.roi === 'number' && Math.abs(lateStats.roi) <= 100) {
@@ -359,7 +363,7 @@ export async function scoreCheckIn(
       detail = `Your late-night sessions have been deeply unprofitable across ${lateStats.count} bets.`;
     } else {
       severity = 'medium';
-      detail = 'Late-night betting tends to correlate with worse outcomes. Real engine analysis kicks in after your first autopsy.';
+      detail = 'This check-in falls in the 11pm to 4:59am local window. Pause and review the decision before continuing.';
     }
     flags.push(flag(severity, 'Late-night betting', detail));
   }
@@ -385,7 +389,7 @@ export async function scoreCheckIn(
   // Severity HIGH if (b) also fires (escalation context), MEDIUM otherwise.
   const lastSettled = recentBets.find(b => isSettled(b.result));
   let recentLossFires = false;
-  if (lastSettled && lastSettled.result === 'loss') {
+  if (lastSettled?.placed_at && lastSettled.result === 'loss') {
     const minutesSince = (placedAt.getTime() - new Date(lastSettled.placed_at).getTime()) / 60000;
     if (minutesSince >= 0 && minutesSince <= RECENT_LOSS_WINDOW_MIN) {
       recentLossFires = true;
@@ -393,8 +397,8 @@ export async function scoreCheckIn(
       const severity: CheckInSeverity = aboveStakeFires ? 'high' : 'medium';
       flags.push(flag(
         severity,
-        'Recent loss',
-        `Your last bet was a $${lossAmount.toFixed(0)} loss ${Math.round(minutesSince)} minutes ago.`,
+        'Nearby losing bet',
+        `A bet placed ${Math.round(minutesSince)} minutes earlier later settled as a $${lossAmount.toFixed(0)} loss. Settlement time is not available.`,
       ));
     }
   }
@@ -406,7 +410,7 @@ export async function scoreCheckIn(
     flags.push(flag(
       'high',
       'Post-loss escalation pattern',
-      'Bet size escalation after a recent loss. Your report flagged this as an active bias.',
+      'A higher stake sits near a recently placed bet now recorded as a loss. Settlement time is unavailable. Your report flagged the broader source-order pattern.',
     ));
   }
 

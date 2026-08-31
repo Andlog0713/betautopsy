@@ -9,6 +9,7 @@ import {
   findCanonicalRuleSuggestion,
 } from '@/lib/control-system';
 import { SUPPORT_RESOURCES } from '@/lib/support-resources';
+import { sanitizeUnconfirmedLocalTimeClaims } from '@/lib/temporal-provenance';
 import type {
   AutopsyAnalysis,
   ControlPlan,
@@ -207,7 +208,9 @@ async function loadControlState(userId: string, supabase: NonNullable<Awaited<Re
   const latestReport = reportRes.data
     ? {
         id: String(reportRes.data.id),
-        analysis: reportRes.data.report_json as AutopsyAnalysis,
+        analysis: sanitizeUnconfirmedLocalTimeClaims(
+          reportRes.data.report_json as AutopsyAnalysis,
+        ),
       }
     : null;
   const planRows = isMissingControlSchemaError(plansRes.error) ? [] : (plansRes.data ?? []);
@@ -374,7 +377,9 @@ export async function POST(request: Request) {
         }
 
         const canonical = findCanonicalRuleSuggestion(
-          sourceReport.report_json as AutopsyAnalysis,
+          sanitizeUnconfirmedLocalTimeClaims(
+            sourceReport.report_json as AutopsyAnalysis,
+          ),
           rule.title,
           rule.rule_type,
         );

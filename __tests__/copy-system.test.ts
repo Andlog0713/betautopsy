@@ -124,7 +124,10 @@ const multiFlagRequest: PreBetCheckInRequest = {
 
 const multiFlagReport = {
   report_json: {
-    timing_analysis: { late_night_stats: { count: 14, roi: -23 } },
+    timing_analysis: {
+      late_night_stats: { count: 14, roi: -23 },
+      local_time_confirmed: true,
+    },
     biases_detected: [{ bias_name: 'Post-Loss Escalation', severity: 'high' }],
   },
 };

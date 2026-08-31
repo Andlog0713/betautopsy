@@ -4,19 +4,7 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Camera, Search, Loader2, CheckCircle2 } from 'lucide-react';
 import { apiPost, apiPostFormData } from '@/lib/api-client';
-
-interface ParsedBet {
-  placed_at: string;
-  sport: string;
-  bet_type: string;
-  description: string;
-  odds: number;
-  stake: number;
-  result: string;
-  profit: number;
-  sportsbook: string | null;
-  parlay_legs: number | null;
-}
+import type { ParsedBet } from '@/types';
 
 type Phase = 'input' | 'parsing' | 'preview' | 'importing' | 'success';
 
@@ -232,7 +220,7 @@ export default function ScreenshotParser() {
                       className="accent-scalpel"
                     />
                   </td>
-                  <td className="p-2 font-mono text-xs text-fg-muted">{bet.placed_at}</td>
+                  <td className="p-2 font-mono text-xs text-fg-muted">{bet.source_placed_at ?? bet.placed_date ?? bet.placed_at ?? 'Unknown'}</td>
                   <td className="p-2 text-fg-muted">{bet.sport}</td>
                   <td className="p-2 text-fg-bright max-w-[200px] truncate" title={bet.description}>{bet.description}</td>
                   <td className="p-2 text-right font-mono text-fg-muted">{bet.odds > 0 ? `+${bet.odds}` : bet.odds}</td>

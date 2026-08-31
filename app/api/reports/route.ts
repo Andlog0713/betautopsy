@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { logErrorServer } from '@/lib/log-error-server';
 import { attachCanonicalControlRules } from '@/lib/control-system';
+import { sanitizeUnconfirmedLocalTimeClaims } from '@/lib/temporal-provenance';
 import type { AutopsyAnalysis } from '@/types';
 
 // User-scoped list of autopsy_reports. Two modes on the same handler:
@@ -44,6 +45,8 @@ const LIST_COLUMNS = [
   'bet_count_analyzed',
   'date_range_start',
   'date_range_end',
+  'date_range_start_date',
+  'date_range_end_date',
   'created_at',
   'report_summary',
   'upgraded_from_snapshot_id',
@@ -162,11 +165,14 @@ export async function GET(request: NextRequest) {
     const publicReports = (data ?? []).map((report) => {
       const { analyzed_bets_snapshot: _frozenBets, ...publicReport } = report as Record<string, unknown>;
       void _frozenBets;
+      const provenanceSafeReport = report.report_json
+        ? sanitizeUnconfirmedLocalTimeClaims(report.report_json as AutopsyAnalysis)
+        : report.report_json;
       return {
         ...publicReport,
-        report_json: report.report_type === 'snapshot' || !report.report_json
-          ? report.report_json
-          : attachCanonicalControlRules(report.report_json as AutopsyAnalysis),
+        report_json: report.report_type === 'snapshot' || !provenanceSafeReport
+          ? provenanceSafeReport
+          : attachCanonicalControlRules(provenanceSafeReport),
       };
     });
     return NextResponse.json(

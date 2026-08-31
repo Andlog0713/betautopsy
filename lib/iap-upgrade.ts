@@ -54,11 +54,19 @@ export function validateFrozenBetCohort(args: {
       throw new Error(`frozen_scope_invalid: snapshot ${args.snapshotId} contains a non-object bet`);
     }
     const row = value as Record<string, unknown>;
+    const hasLegacyInstant = typeof row.placed_at === 'string';
+    const hasPartialSourceTime = row.placed_at === null
+      && typeof row.source_placed_at === 'string'
+      && typeof row.placed_date === 'string'
+      && (
+        (row.timestamp_quality === 'date_only' && row.placed_time === null)
+        || (row.timestamp_quality === 'local_datetime' && typeof row.placed_time === 'string')
+      );
     if (
       typeof row.id !== 'string'
       || row.id.length === 0
       || row.user_id !== args.userId
-      || typeof row.placed_at !== 'string'
+      || (!hasLegacyInstant && !hasPartialSourceTime)
     ) {
       throw new Error(`frozen_scope_invalid: snapshot ${args.snapshotId} contains an invalid bet identity`);
     }

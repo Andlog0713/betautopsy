@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { calculateMetrics } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── Fixture helpers (mirror autopsy-engine.test.ts conventions) ──
 
 function makeBet(overrides: Partial<Bet> = {}): Bet {
-  return {
+  return markFixtureTimestampAsSourced({
     id: `b-${Math.random().toString(36).slice(2, 10)}`,
     user_id: 'user-test',
     placed_at: '2025-03-15T14:00:00Z',
@@ -26,7 +27,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: 'upload-test',
     created_at: '2025-03-15T14:00:00Z',
     ...overrides,
-  };
+  });
 }
 
 // Spread N bets across a date range with daytime hours so timing analysis
@@ -120,10 +121,12 @@ describe('Phase 4 additive detectors (volume floor)', () => {
     expect(fired?.data).toMatch(/\d+\s*bets/);
   });
 
-  it('FIRES Sustained Late-Night Concentration on a 600-bet user with 150 deeply negative late-night bets', () => {
+  it('keeps source-clock observations out of behavioral bias detection', () => {
     const bets = spreadBets(600, (i) => {
       if (i < 150) {
-        // Late-night LOCAL hour (2am) so timing detection is timezone-agnostic.
+        // The source supplies a 2am UTC clock. It does not establish the
+        // bettor's local time, so the engine may report the source-clock
+        // observation but cannot label it late-night behavior.
         const d = new Date(2024, 0, 1 + i, 2, 0, 0);
         return {
           placed_at: d.toISOString(),
@@ -141,16 +144,13 @@ describe('Phase 4 additive detectors (volume floor)', () => {
       };
     });
     const metrics = calculateMetrics(bets);
-    // Report-trust dedup: Late-Night Betting (25%+ share) and Sustained
-    // Late-Night Concentration (100+ bets) both fire on this cohort and
-    // measure the same window, so exactly ONE late-night impact survives
-    // (tie on severity -> the established detector wins). The signal the
-    // additive detector exists to catch is still surfaced.
     const lateNightBiases = metrics.biases_detected.filter(
       (b) => b.bias_name === 'Sustained Late-Night Concentration' || b.bias_name === 'Late-Night Betting'
     );
-    expect(lateNightBiases).toHaveLength(1);
-    expect(lateNightBiases[0].data).toMatch(/\$/);
+    expect(lateNightBiases).toHaveLength(0);
+    expect(metrics.timing.local_time_confirmed).toBe(false);
+    expect(metrics.timing.late_night_stats).toBeNull();
+    expect(metrics.timing.source_clock_window_stats).toMatchObject({ count: 150 });
   });
 
   it('FIRES Chronic Emotional Drag on a 600-bet user with dense loss-chasing bursts', () => {

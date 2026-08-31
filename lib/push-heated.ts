@@ -66,18 +66,16 @@ export interface HeatedPushCopy {
   body: string;
 }
 
-// Body copy per locked template. lateNight conjunction adds " night"
-// to weekday when the session crossed into late-night territory. All
-// numeric fields read directly from the engine (session.bets, NOT
-// betIndices.length, since the engine canonicalizes the count itself).
+// Body copy per locked template. All numeric fields read directly from the
+// engine (session.bets, not betIndices.length, since the engine canonicalizes
+// the count itself). Source-clock data is never relabeled as local night.
 export function buildHeatedCopy(session: DetectedSession): HeatedPushCopy {
   const weekday = (session.dayOfWeek && session.dayOfWeek.trim()) || 'Recent';
-  const dayPhrase = session.lateNight ? `${weekday} night` : weekday;
   const betCount = Math.max(0, Math.floor(session.bets ?? 0));
   const durationHours = Math.max(1, Math.round((session.durationMinutes ?? 0) / 60));
   return {
     title: 'Heated session detected',
-    body: `We caught a heated session. ${dayPhrase}, ${betCount} bets in ${durationHours}h. Tap to see the autopsy.`,
+    body: `We caught a heated session. ${weekday}, ${betCount} bets in ${durationHours}h. Tap to see the autopsy.`,
   };
 }
 

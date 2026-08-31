@@ -1,7 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Bet } from '@/types';
 import { formatParlayCompact } from '@/lib/format-parlay';
-import { getUTCDayOfWeek } from '@/lib/date-utils';
+import {
+  betSourceDayOfWeek,
+  betSourceHour,
+  betSequenceTimeMs,
+  comparableBetSequences,
+  formatSourceTime,
+} from '@/lib/temporal-provenance';
 
 export interface DigestStats {
   totalBets: number;
@@ -28,6 +34,8 @@ export interface DigestStats {
   longestLoseStreak: number;
   uniqueSportsbooks: string[];
   betsByDay: Record<string, number>;
+  timeBearingBets: number;
+  hasReliableClockCoverage: boolean;
 }
 
 export async function getWeeklyBets(
@@ -39,8 +47,10 @@ export async function getWeeklyBets(
     .from('bets')
     .select('*')
     .eq('user_id', userId)
-    .gte('placed_at', sinceDate)
-    .order('placed_at', { ascending: true });
+    .gte('recorded_date', sinceDate.slice(0, 10))
+    .order('recorded_date', { ascending: true })
+    .order('placed_time', { ascending: true, nullsFirst: false })
+    .order('placed_at', { ascending: true, nullsFirst: false });
   return (data ?? []) as Bet[];
 }
 
@@ -56,11 +66,13 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
 
   // Loss chasing detection
   let stakeAfterLoss = 0, countAfterLoss = 0, stakeAfterWin = 0, countAfterWin = 0;
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    if (prev.result === 'loss') { stakeAfterLoss += Number(sorted[i].stake); countAfterLoss++; }
-    else if (prev.result === 'win') { stakeAfterWin += Number(sorted[i].stake); countAfterWin++; }
+  const sequences = comparableBetSequences(bets);
+  for (const sequence of sequences) {
+    for (let i = 1; i < sequence.length; i++) {
+      const prev = sequence[i - 1];
+      if (prev.result === 'loss') { stakeAfterLoss += Number(sequence[i].stake); countAfterLoss++; }
+      else if (prev.result === 'win') { stakeAfterWin += Number(sequence[i].stake); countAfterWin++; }
+    }
   }
   const avgStakeAfterLoss = countAfterLoss > 0 ? stakeAfterLoss / countAfterLoss : avgStake;
   const avgStakeAfterWin = countAfterWin > 0 ? stakeAfterWin / countAfterWin : avgStake;
@@ -102,18 +114,25 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
     if (sportRoi > bestSportRoi && v.count >= 3) { bestSportRoi = sportRoi; mostProfitableSport = k; }
   });
 
-  // Late night bets (after ~10pm — rough UTC estimate: hours 2-8 UTC for US timezones)
+  // Count only sourced clock values. A missing clock is not midnight.
+  const timeBearingBets = bets.filter((bet) => betSourceHour(bet) !== null).length;
+  const hasReliableClockCoverage = timeBearingBets >= 5
+    && timeBearingBets / Math.max(1, bets.length) >= 0.95;
   const lateNightBets = bets.filter((b) => {
-    const h = new Date(b.placed_at).getUTCHours();
-    return h >= 3 && h <= 9; // roughly 10pm-4am US
+    const hour = betSourceHour(b);
+    return hour !== null && (hour >= 23 || hour <= 4);
   }).length;
 
   // Streaks
   let longestWinStreak = 0, longestLoseStreak = 0, curWin = 0, curLose = 0;
-  for (const b of sorted) {
-    if (b.result === 'win') { curWin++; curLose = 0; longestWinStreak = Math.max(longestWinStreak, curWin); }
-    else if (b.result === 'loss') { curLose++; curWin = 0; longestLoseStreak = Math.max(longestLoseStreak, curLose); }
-    else { curWin = 0; curLose = 0; }
+  for (const sequence of sequences) {
+    curWin = 0;
+    curLose = 0;
+    for (const b of sequence) {
+      if (b.result === 'win') { curWin++; curLose = 0; longestWinStreak = Math.max(longestWinStreak, curWin); }
+      else if (b.result === 'loss') { curLose++; curWin = 0; longestLoseStreak = Math.max(longestLoseStreak, curLose); }
+      else { curWin = 0; curLose = 0; }
+    }
   }
 
   // Sportsbooks
@@ -124,7 +143,9 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const betsByDay: Record<string, number> = {};
   bets.forEach((b) => {
-    const day = days[getUTCDayOfWeek(b.placed_at)];
+    const dayIndex = betSourceDayOfWeek(b);
+    if (dayIndex === null) return;
+    const day = days[dayIndex];
     betsByDay[day] = (betsByDay[day] ?? 0) + 1;
   });
 
@@ -142,6 +163,8 @@ export function calculateDigestStats(bets: Bet[]): DigestStats {
     longestWinStreak, longestLoseStreak,
     uniqueSportsbooks: Array.from(books),
     betsByDay,
+    timeBearingBets,
+    hasReliableClockCoverage,
   };
 }
 
@@ -155,8 +178,8 @@ export function generateInsight(stats: DigestStats): Insight {
   if (stats.avgStakeAfterLoss > stats.avgStakeAfterWin * 1.3 && stats.losses > 2) {
     const pctIncrease = Math.round(((stats.avgStakeAfterLoss - stats.avgStakeAfterWin) / stats.avgStakeAfterWin) * 100);
     return {
-      headline: 'Your stakes jumped after losses',
-      detail: `Your average bet was $${stats.avgStakeAfterLoss.toLocaleString()} after a loss vs $${stats.avgStakeAfterWin.toLocaleString()} after a win, a ${pctIncrease}% increase. This is the most expensive pattern in sports betting. Try setting a rule: next bet after a loss must be the same size or smaller.`,
+      headline: 'Higher stakes followed losing-result rows',
+      detail: `In the comparable source order, your average stake was $${stats.avgStakeAfterLoss.toLocaleString()} following a bet later settled as a loss vs $${stats.avgStakeAfterWin.toLocaleString()} following one later settled as a win, a ${pctIncrease}% difference. Settlement times are unavailable, so this does not show that a result caused the next stake.`,
     };
   }
 
@@ -170,10 +193,10 @@ export function generateInsight(stats: DigestStats): Insight {
   }
 
   // 3. Late night bets
-  if (stats.lateNightBets >= 3) {
+  if (stats.hasReliableClockCoverage && stats.lateNightBets >= 3) {
     return {
-      headline: `${stats.lateNightBets} late-night bets this week`,
-      detail: 'Bets placed late at night tend to be less researched and more impulsive. Consider setting a betting cutoff time. Your morning-you makes better decisions than your midnight-you.',
+      headline: `${stats.lateNightBets} bets in the source-clock 11pm to 4:59am window`,
+      detail: 'This is a source-clock observation only. BetAutopsy does not assume that the source clock is your local time, so it does not turn this window into a cutoff recommendation.',
     };
   }
 
@@ -216,8 +239,8 @@ export function generatePositiveLead(stats: DigestStats): PositiveLead {
   if (stats.straightBetRoi > 0) {
     return { text: `Your straight bets went +${stats.straightBetRoi}% this week` };
   }
-  if (stats.lateNightBets === 0 && stats.totalBets > 0) {
-    return { text: 'No late-night bets logged this week' };
+  if (stats.hasReliableClockCoverage && stats.lateNightBets === 0 && stats.totalBets > 0) {
+    return { text: 'No bets appeared in the source-clock 11pm to 4:59am window this week' };
   }
   if (stats.mostProfitableSport) {
     const sport = stats.mostProfitableSport;
@@ -238,7 +261,8 @@ export async function getWeekendBets(
   supabase: SupabaseClient,
   userId: string
 ): Promise<Bet[]> {
-  // Last Friday 5pm UTC through last Sunday 11:59pm UTC
+  // Previous Friday through Sunday by recorded source calendar date. A
+  // partial timestamp cannot support a universal 5pm cutoff.
   const now = new Date();
   const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon, ...
   // Calculate days back to last Friday
@@ -255,9 +279,11 @@ export async function getWeekendBets(
     .from('bets')
     .select('*')
     .eq('user_id', userId)
-    .gte('placed_at', friday.toISOString())
-    .lte('placed_at', sunday.toISOString())
-    .order('placed_at', { ascending: true });
+    .gte('recorded_date', friday.toISOString().slice(0, 10))
+    .lte('recorded_date', sunday.toISOString().slice(0, 10))
+    .order('recorded_date', { ascending: true })
+    .order('placed_time', { ascending: true, nullsFirst: false })
+    .order('placed_at', { ascending: true, nullsFirst: false });
   return (data ?? []) as Bet[];
 }
 
@@ -273,30 +299,30 @@ export interface WeekendSession {
 export function detectWeekendSessions(bets: Bet[]): WeekendSession[] {
   if (bets.length === 0) return [];
 
-  const sorted = [...bets].sort((a, b) =>
-    new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime()
-  );
-
-  const sessions: Bet[][] = [[sorted[0]]];
-  for (let i = 1; i < sorted.length; i++) {
-    const gap = (new Date(sorted[i].placed_at).getTime() - new Date(sorted[i - 1].placed_at).getTime()) / 60000;
-    if (gap > 90) {
-      sessions.push([sorted[i]]);
-    } else {
-      sessions[sessions.length - 1].push(sorted[i]);
+  const sessions: Bet[][] = [];
+  for (const sequence of comparableBetSequences(bets)) {
+    let current: Bet[] = [];
+    for (const bet of sequence) {
+      if (current.length > 0) {
+        const previous = current[current.length - 1];
+        const previousTime = betSequenceTimeMs(previous);
+        const thisTime = betSequenceTimeMs(bet);
+        if (previousTime === null || thisTime === null || (thisTime - previousTime) / 60000 > 90) {
+          sessions.push(current);
+          current = [];
+        }
+      }
+      current.push(bet);
     }
+    if (current.length > 0) sessions.push(current);
   }
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return sessions.map(sessionBets => {
-    const first = new Date(sessionBets[0].placed_at);
-    const day = days[first.getUTCDay()];
-    const hours = first.getUTCHours();
-    const mins = first.getUTCMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const h12 = hours % 12 || 12;
-    const startTime = `${h12}:${String(mins).padStart(2, '0')} ${ampm}`;
+    const first = sessionBets[0];
+    const day = days[betSourceDayOfWeek(first) ?? 0];
+    const startTime = formatSourceTime(first) ?? 'Time unknown';
 
     const profit = sessionBets.reduce((s, b) => s + Number(b.profit), 0);
     const betsCount = sessionBets.length;

@@ -14,6 +14,7 @@ class Query {
   private inclusions: Array<[string, unknown[]]> = [];
   private lowerBounds: Array<[string, string]> = [];
   private upperBounds: Array<[string, string]> = [];
+  private inclusiveUpperBounds: Array<[string, string]> = [];
   private orderBy: [string, boolean] | null = null;
   private bounds: [number, number] | null = null;
 
@@ -24,6 +25,7 @@ class Query {
   in(column: string, values: unknown[]) { this.inclusions.push([column, values]); return this; }
   gte(column: string, value: string) { this.lowerBounds.push([column, value]); return this; }
   lt(column: string, value: string) { this.upperBounds.push([column, value]); return this; }
+  lte(column: string, value: string) { this.inclusiveUpperBounds.push([column, value]); return this; }
   order(column: string, options?: { ascending?: boolean }) {
     this.orderBy = [column, options?.ascending !== false];
     return this;
@@ -36,7 +38,8 @@ class Query {
       return this.equals.every(([column, expected]) => row[column] === expected)
       && this.inclusions.every(([column, values]) => values.includes(row[column]))
       && this.lowerBounds.every(([column, lower]) => String(row[column]) >= lower)
-      && this.upperBounds.every(([column, upper]) => String(row[column]) < upper);
+      && this.upperBounds.every(([column, upper]) => String(row[column]) < upper)
+      && this.inclusiveUpperBounds.every(([column, upper]) => String(row[column]) <= upper);
     });
     if (this.orderBy) {
       const [column, ascending] = this.orderBy;
@@ -100,6 +103,12 @@ function storedBet(
     user_id: 'user-1',
     upload_id: uploadId,
     placed_at: parsed.placed_at,
+    source_placed_at: parsed.source_placed_at,
+    placed_date: parsed.placed_date,
+    placed_time: parsed.placed_time,
+    source_timezone: parsed.source_timezone,
+    timestamp_quality: parsed.timestamp_quality,
+    recorded_date: parsed.placed_date,
     sport: parsed.sport,
     league: parsed.league ?? null,
     bet_type: parsed.bet_type,
@@ -115,7 +124,7 @@ function storedBet(
     tags: parsed.tags ?? null,
     notes: parsed.notes ?? null,
     settlement_type: parsed.settlement_type ?? null,
-    created_at: parsed.placed_at,
+    created_at: '2026-02-01T00:00:00.000Z',
   };
 }
 
@@ -192,6 +201,26 @@ describe('resolveBetsForReportScope', () => {
     });
 
     expect(result.map((bet) => bet.id)).toEqual(['bet-frozen']);
+  });
+
+  it('includes date-only bets at both inclusive date boundaries', async () => {
+    const parsed = parseCSV([
+      'date,sport,bet_type,description,odds,stake,result,profit,sportsbook',
+      '2026-01-01,NFL,spread,Before,-110,100,loss,-100,DraftKings',
+      '2026-01-02,NFL,spread,Start,-110,100,loss,-100,DraftKings',
+      '2026-01-03,NFL,spread,End,-110,100,loss,-100,DraftKings',
+      '2026-01-04,NFL,spread,After,-110,100,loss,-100,DraftKings',
+    ].join('\n'));
+    const rows = parsed.bets.map((bet, index) => storedBet(bet, `bet-${index}`, 'upload-1'));
+    const client = makeClient({ bets: rows });
+
+    const result = await resolveBetsForReportScope(client, {
+      userId: 'user-1',
+      dateFrom: '2026-01-02',
+      dateTo: '2026-01-03',
+    });
+
+    expect(result.map((bet) => bet.description)).toEqual(['Start', 'End']);
   });
 
   it('feeds all 200 logical bets to the engine after a 122-overlap re-upload', async () => {

@@ -1,8 +1,8 @@
 import type { ParsedBet } from '@/types';
 import {
-  parseExplicitTimestamp,
   parsedBetValidationError,
 } from '@/lib/parsed-bet-validation';
+import { parseSourcedTimestamp } from '@/lib/temporal-provenance';
 
 const RESULT_ALIASES: Record<string, ParsedBet['result']> = {
   win: 'win',
@@ -80,7 +80,7 @@ export function normalizeExtractedBet(
   if (!value || typeof value !== 'object') return { bet: null, error: 'bet is not an object' };
   const raw = value as Record<string, unknown>;
 
-  const timestamp = parseExplicitTimestamp(raw.placed_at ?? raw.date);
+  const timestamp = parseSourcedTimestamp(raw.placed_at ?? raw.date);
   if (!timestamp.value) return { bet: null, error: timestamp.error };
 
   const sport = nonemptyString(raw.sport);
@@ -138,7 +138,7 @@ export function normalizeExtractedBet(
   const sportsbook = optionalString(raw.sportsbook) ?? optionalString(options.sportsbookHint);
 
   const bet: ParsedBet = {
-    placed_at: timestamp.value,
+    ...timestamp.value,
     sport,
     league: optionalString(raw.league),
     bet_type: betType.toLowerCase(),

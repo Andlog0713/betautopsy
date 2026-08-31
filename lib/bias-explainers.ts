@@ -14,8 +14,8 @@ const EXPLAINER_ENTRIES: { keywords: string[]; explainer: BiasExplainer }[] = [
   {
     keywords: ['post-loss', 'loss escalation', 'loss chasing', 'chasing losses'],
     explainer: {
-      what: 'Your stake sizes increase after losses. The bigger the losing streak, the bigger the bets that follow it.',
-      why: 'Loss aversion makes the pain of losing feel twice as intense as an equivalent win. Your brain tries to "fix" the loss by betting bigger to recover faster. The result is that a $50 bad day becomes a $300 catastrophe.',
+      what: 'Your stake sizes rise on bets following source rows later settled as losses. Settlement timing is unavailable, so the sequence does not prove those results caused the increases.',
+      why: 'Loss aversion can create pressure to recover quickly once a loss is known. The source history shows the stake pattern, while the missing settlement times limit what the report can claim about its cause.',
       fix: 'Hard ceiling: no bet over 1.5x your average stake after a loss. Mandatory break after 3 consecutive losses. Track your "chase bets" separately and compute their ROI.',
     },
   },
@@ -62,7 +62,7 @@ const EXPLAINER_ENTRIES: { keywords: string[]; explainer: BiasExplainer }[] = [
   {
     keywords: ['bigger payout', 'longer odds', 'odds drift', 'payout chasing'],
     explainer: {
-      what: 'After losses, you shift toward longer odds and bigger potential payouts instead of sticking to your normal range.',
+      what: 'Longer odds appear on entries following rows later settled as losses. Settlement timing is unavailable, so this association does not prove a known result caused the shift.',
       why: 'Your brain wants to recover the loss in one shot, so it gravitates toward higher-payout bets. But longer odds have lower win probability and higher vig. You are trading a recoverable loss for an even less likely recovery.',
       fix: 'Stick to your normal odds range regardless of recent results. If you usually bet -110 to +150, do not shift to +300 after a losing streak.',
     },

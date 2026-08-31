@@ -19,6 +19,13 @@ import {
 import { resolveBetsForReportScope } from '@/lib/report-cohort';
 import { buildReportSummary } from '@/lib/report-summary';
 import type { AutopsyAnalysis, Bet, Profile, SubscriptionTier, ProgressSnapshot } from '@/types';
+import {
+  betRecordedDate,
+  betTimestampQuality,
+  compareBetsByRecordedTime,
+  parseSourcedTimestamp,
+  sanitizeUnconfirmedLocalTimeClaims,
+} from '@/lib/temporal-provenance';
 
 // 5-minute Vercel function timeout. Default (10s edge / 60s serverless on
 // hobby, 300s on pro) is too short for full-report LLM analyses on the
@@ -219,11 +226,15 @@ export async function POST(request: Request) {
   }
 
   // Input validation
-  const dateRegex = /^\d{4}-\d{2}-\d{2}/;
-  if (dateFrom && (!dateRegex.test(dateFrom) || isNaN(Date.parse(dateFrom)))) {
+  const validSourceDateFilter = (value: string): boolean => {
+    const date = /^(\d{4}-\d{2}-\d{2})/.exec(value)?.[1];
+    if (!date) return false;
+    return parseSourcedTimestamp(date).value?.timestamp_quality === 'date_only';
+  };
+  if (dateFrom && !validSourceDateFilter(dateFrom)) {
     return NextResponse.json({ error: 'Invalid start date format.' }, { status: 400 });
   }
-  if (dateTo && (!dateRegex.test(dateTo) || isNaN(Date.parse(dateTo)))) {
+  if (dateTo && !validSourceDateFilter(dateTo)) {
     return NextResponse.json({ error: 'Invalid end date format.' }, { status: 400 });
   }
   for (const uid of uploadIds) {
@@ -271,15 +282,12 @@ export async function POST(request: Request) {
   // Enforce per-report bet limit (5000 for all tiers)
   const ABSOLUTE_MAX_BETS = 5000;
   const totalBetCount = betList.length;
-  let betsToAnalyze = betList;
+  let betsToAnalyze = [...betList].sort(compareBetsByRecordedTime);
   let tierLimited = false;
   const effectiveLimit = limits.maxBetsPerReport ?? ABSOLUTE_MAX_BETS;
 
   if (betList.length > effectiveLimit) {
-    const sorted = [...betList].sort(
-      (a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
-    );
-    betsToAnalyze = sorted.slice(0, effectiveLimit).reverse();
+    betsToAnalyze = betsToAnalyze.slice(betsToAnalyze.length - effectiveLimit);
     tierLimited = true;
   }
 
@@ -439,8 +447,19 @@ export async function POST(request: Request) {
         );
 
         const costCents = Math.ceil(tokensUsed * 0.001);
-        const dateStart = betsToAnalyze[0]?.placed_at ?? null;
-        const dateEnd = betsToAnalyze[betsToAnalyze.length - 1]?.placed_at ?? null;
+        const instantBets = betsToAnalyze
+          .filter((bet): bet is Bet & { placed_at: string } => (
+            betTimestampQuality(bet) === 'instant' && Boolean(bet.placed_at)
+          ))
+          .sort((a, b) => a.placed_at.localeCompare(b.placed_at));
+        const dateStart = instantBets[0]?.placed_at ?? null;
+        const dateEnd = instantBets[instantBets.length - 1]?.placed_at ?? null;
+        const recordedDates = betsToAnalyze
+          .map(betRecordedDate)
+          .filter((date): date is string => Boolean(date))
+          .sort();
+        const dateStartDate = recordedDates[0] ?? null;
+        const dateEndDate = recordedDates[recordedDates.length - 1] ?? null;
 
         // Discipline score for full analysis
         const metricsForDiscipline = calculateMetrics(betsToAnalyze, userBankroll);
@@ -504,7 +523,9 @@ export async function POST(request: Request) {
           if (priorRow?.report_json && priorRow.created_at) {
             const whatChanged = computeWhatChanged(
               {
-                analysis: priorRow.report_json as AutopsyAnalysis,
+                analysis: sanitizeUnconfirmedLocalTimeClaims(
+                  priorRow.report_json as AutopsyAnalysis,
+                ),
                 createdAt: priorRow.created_at as string,
                 betCountAnalyzed: (priorRow.bet_count_analyzed as number | null) ?? 0,
               },
@@ -540,6 +561,8 @@ export async function POST(request: Request) {
             bet_count_analyzed: betsToAnalyze.length,
             date_range_start: dateStart,
             date_range_end: dateEnd,
+            date_range_start_date: dateStartDate,
+            date_range_end_date: dateEndDate,
             report_json: analysis,
             report_markdown: markdown,
             model_used: model,

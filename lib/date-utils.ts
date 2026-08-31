@@ -1,7 +1,7 @@
 // UTC-accessor helpers for bet-timestamp date/time math.
 //
-// Bet timestamps (Bet.placed_at) are stored as UTC ISO strings. Reading
-// them with Date.prototype's LOCAL accessors (getHours/getDay/getMinutes)
+// Qualified bet instants (non-null Bet.placed_at values) are stored as UTC
+// ISO strings. Reading them with Date.prototype's LOCAL accessors
 // silently reinterprets that UTC instant in the RUNNING PROCESS's local
 // timezone - correct only by accident when the process happens to run in
 // UTC (Vercel's serverless default, but not guaranteed: a local dev
@@ -29,12 +29,10 @@ export function getUTCDayOfWeek(dateInput: string | Date): number {
   return d.getUTCDay();
 }
 
-// True when the timestamp is exactly midnight (00:00 UTC) - the signature
-// of a date-only source value (no real time component) that got coerced
-// to a Date at parse time, not a genuine midnight bet placement. Used to
-// gate has_time_data wherever a real recorded clock time matters
-// (hour-of-day analysis). Day-of-week does NOT need this gate: the date
-// portion is known and valid regardless of whether the time is real.
+// True when a qualified instant falls exactly at midnight UTC. This says
+// nothing about source provenance: a genuine midnight value remains real
+// clock data, while date-only rows now have placed_at = null. New analysis
+// should use the provenance helpers in temporal-provenance.ts.
 export function isMidnightUTC(dateInput: string | Date): boolean {
   return getUTCHour(dateInput) === 0 && getUTCMinute(dateInput) === 0;
 }
