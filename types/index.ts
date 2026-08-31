@@ -520,6 +520,9 @@ export interface WhatIfScenario {
   label: string;
   actual: number;
   hypothetical: number;
+  /** Number of settled bets changed by this counterfactual, when the engine
+   * can identify the affected subset. Optional for older report payloads. */
+  affectedBets?: number;
 }
 
 // ── What Changed (longitudinal-memory deltas for Chapter 1) ──
@@ -605,6 +608,7 @@ export interface ControlRuleTrigger {
   maxStake?: number;
   maxStakeMultiplier?: number;
   category?: string;
+  maxParlayLegs?: number;
   sessionLimit?: number;
   waitMinutes?: number;
   cooldownHours?: number;
@@ -638,6 +642,9 @@ export interface ControlRule {
 }
 
 export interface ControlRuleSuggestion {
+  /** Stable engine-owned identity. Optional on saved reports created before
+   * recommendation-integrity enforcement. */
+  candidateId?: string;
   title: string;
   description: string;
   rationale: string;
@@ -649,6 +656,29 @@ export interface ControlRuleSuggestion {
   provenance: ControlRuleProvenance;
   trigger: ControlRuleTrigger;
   source: string;
+  /** Deterministic evidence for this action. The model never authors these
+   * values or this summary. */
+  evidence?: ControlRuleEvidence;
+  /** The engine-owned sample gate that qualified this action. */
+  sufficiency?: ControlRuleSufficiency;
+  /** Report whose frozen cohort produced the suggestion. */
+  sourceReportId?: string | null;
+}
+
+export interface ControlRuleEvidence {
+  basis: 'bias' | 'timing' | 'what_if' | 'sizing' | 'sessions' | 'emotion';
+  summary: string;
+  sampleSize?: number;
+  actualProfit?: number;
+  hypotheticalProfit?: number;
+  deltaProfit?: number;
+}
+
+export interface ControlRuleSufficiency {
+  status: 'sufficient';
+  observed: number;
+  minimum: number;
+  unit: 'settled_bets' | 'qualified_bets' | 'sessions';
 }
 
 export interface ControlPlanSettings {
@@ -831,6 +861,7 @@ export interface PersonalRule {
   rule: string;
   reason: string;
   based_on: string;
+  candidate_id?: string;
   rule_type?: ControlRuleType;
   scope?: ControlRuleScope;
   scope_value?: string | null;
@@ -838,6 +869,8 @@ export interface PersonalRule {
   enforcement?: ControlRuleEnforcement;
   provenance?: ControlRuleProvenance;
   trigger?: ControlRuleTrigger;
+  evidence?: ControlRuleEvidence;
+  sufficiency?: ControlRuleSufficiency;
 }
 
 export interface SessionAnalysis {
@@ -1513,6 +1546,9 @@ export interface PreBetCheckInRequest {
   stake: number;
   odds: number;
   betType: string;
+  /** Optional because existing iOS clients do not send it. A parlay-leg rule
+   * is evaluated only when the client supplies the real leg count. */
+  parlayLegs?: number;
   placedAt: string;
   // Optional 0-23 hour of day in the user's local timezone. iOS Phase 2
   // computes this via Calendar.current and sends it on every request.

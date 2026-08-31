@@ -59,6 +59,14 @@ worth surfacing). It never writes a number.
 Already fixed four violations of this: `session_analysis`, `edge_profile`,
 `strategic_leaks`, `biases_detected[].estimated_cost`. Don't add a fifth.
 
+No model-authored number, threshold, predicate, or categorical action may
+become an adoptable control rule. The engine owns the action type, scope,
+trigger, thresholds, evidence, and sufficiency checks. The model may select
+and explain supported actions, but it cannot define them.
+
+When an action makes a historical financial claim, that claim must agree
+with the matching deterministic counterfactual over the same frozen cohort.
+
 ### 3. Unknown is a valid value.
 Never convert unknown into a default during normalization. Not unknown time
 to midnight. Not cash-out to void. Not missing sportsbook to an inferred

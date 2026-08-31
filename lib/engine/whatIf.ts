@@ -25,7 +25,7 @@ import type { Bet, WhatIfScenario } from '@/types';
 // — only the fields this transform reads. Full metrics.what_ifs is assignable.
 export interface MetricsWhatIfsShape {
   flat_stake: { median_stake: number; hypothetical_profit: number };
-  no_long_parlays: { hypothetical_profit: number };
+  no_long_parlays: { hypothetical_profit: number; removed_count?: number };
   profitable_only: { hypothetical_profit: number };
   actual_profit: number;
 }
@@ -49,10 +49,14 @@ export function buildWhatIfScenarios(
   // (web's `noBigParlays.length < settled.length` condition).
   const hasBigParlays = settled.some((b) => (b.parlay_legs ?? 0) > 3);
   if (hasBigParlays) {
+    const affectedBets = Number.isFinite(whatIfs.no_long_parlays.removed_count)
+      ? whatIfs.no_long_parlays.removed_count
+      : settled.filter((b) => (b.parlay_legs ?? 0) > 3).length;
     scenarios.push({
       label: 'Eliminated all parlays over 3 legs',
       actual: whatIfs.actual_profit,
       hypothetical: whatIfs.no_long_parlays.hypothetical_profit,
+      affectedBets,
     });
   }
 

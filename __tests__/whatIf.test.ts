@@ -98,7 +98,12 @@ describe('buildWhatIfScenarios (metrics.what_ifs transform)', () => {
       [makeBet({ parlay_legs: 5, result: 'loss', profit: -100 }), makeBet({ parlay_legs: 1, result: 'win' })],
     );
     const s2 = result.find((s) => s.label === 'Eliminated all parlays over 3 legs');
-    expect(s2).toEqual({ label: 'Eliminated all parlays over 3 legs', actual: -200, hypothetical: 800 });
+    expect(s2).toEqual({
+      label: 'Eliminated all parlays over 3 legs',
+      actual: -200,
+      hypothetical: 800,
+      affectedBets: 1,
+    });
   });
 
   it('omits scenario 3 when all categories are uniformly profitable', () => {

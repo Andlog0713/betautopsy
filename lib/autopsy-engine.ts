@@ -11,7 +11,7 @@ import { dedupeBiases } from '@/lib/engine/dedupeBiases';
 import { confidenceFor, leakSeverityFromRoi } from '@/lib/engine/confidence';
 import { buildReportCharts, buildSessionTimelineSilhouette } from '@/lib/engine/charts';
 import { applySmallSampleBiasTier, buildSufficiencyState, isLimitedSample } from '@/lib/engine/sufficiency';
-import { buildReportControlSystem } from '@/lib/control-system';
+import { attachCanonicalControlRules } from '@/lib/control-system';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
 
 // Lazy-load the Anthropic SDK so it never lands in the client bundle.
@@ -2935,7 +2935,8 @@ IMPORTANT: All numerical metrics (ROI, win rate, emotion score, bankroll health,
 - Interpret what the numbers mean behaviorally
 - Write descriptions and evidence for each pre-classified bias (do NOT add or remove biases, do NOT change severity levels)
 - Identify behavioral patterns in the sequence and timing of bets
-- Generate personal_rules (3-5 specific, measurable rules referencing data)
+- Do not generate control rules. The deterministic engine owns every rule,
+  threshold, trigger, evidence field, and sufficiency decision.
 - Generate session narratives for best/worst sessions
 - Generate edge_profile reallocation advice and sharp_score
 - Assign the overall_grade based on the provided metrics
@@ -2993,13 +2994,6 @@ Respond with valid JSON:
       "expected_improvement": "one sentence describing the behavioral change and its qualitative benefit - no dollar amounts, no percentages, no numbers of any kind",
       "difficulty": "easy|medium|hard",
       "tied_to_finding": "the exact bias_name from biases_detected this recommendation most directly addresses, or empty string if none apply - do not paraphrase or invent a name"
-    }
-  ],
-  "personal_rules": [
-    {
-      "rule": "specific measurable rule referencing a number from the data",
-      "reason": "why this rule matters",
-      "based_on": "the data pattern"
     }
   ],
   "session_analysis": {
@@ -3064,7 +3058,7 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 
 SPORTSBOOK RULE: Never reference specific sportsbook names (DraftKings, FanDuel, Caesars, BetMGM, etc.) in strategic_leaks, recommendations, or edge_profile. Sportsbook-level ROI differences are variance, not actionable insight. Only analyze by sport, bet type, odds range, timing, and behavioral pattern. Never recommend switching sportsbooks or increasing/decreasing volume on a specific sportsbook. Sportsbook choice is not a behavioral pattern.
 
-BEHAVIORAL FRAMING RULE: This constrains the PRESCRIPTIVE ADVICE FIELDS ONLY (fix, recommendations, personal_rules, and edge_profile.reallocation_advice). It does NOT apply to descriptions, evidence, or the executive diagnosis, which may state facts plainly (for example that losses pushed through certain margins, or that a category runs negative). Keep your usual voice, this is a vocabulary constraint on the advice, not a tone change. In the advice fields, every line is a BEHAVIORAL discipline rule grounded in the user's own pattern: what to stop doing and why it cost them, in plain language, never how to handicap the bet. Do NOT use, in the advice fields: "expected value", "+EV", "positive expected value", "negative expected value", "EV", "key number", "key numbers", "line movement", "wait for the line to move", "take the alternate", "alternate line". Do NOT prescribe a staking system in the advice fields either: no "1% of bankroll", no "unit size", no "set your unit", no "X units". Frame stake fixes behaviorally instead: bet the same amount every time, decided before you sit down, not adjusted for confidence or for your last result.
+BEHAVIORAL FRAMING RULE: This constrains the PRESCRIPTIVE ADVICE FIELDS ONLY (fix, recommendations, and edge_profile.reallocation_advice). It does NOT apply to descriptions, evidence, or the executive diagnosis, which may state facts plainly (for example that losses pushed through certain margins, or that a category runs negative). Keep your usual voice, this is a vocabulary constraint on the advice, not a tone change. In the advice fields, every line is a BEHAVIORAL discipline rule grounded in the user's own pattern: what to stop doing and why it cost them, in plain language, never how to handicap the bet. Do NOT use, in the advice fields: "expected value", "+EV", "positive expected value", "negative expected value", "EV", "key number", "key numbers", "line movement", "wait for the line to move", "take the alternate", "alternate line". Do NOT prescribe a staking system in the advice fields either: no "1% of bankroll", no "unit size", no "set your unit", no "X units". Frame stake fixes behaviorally instead: bet the same amount every time, decided before you sit down, not adjusted for confidence or for your last result.
 - Parlay example: instead of "parlays are negative EV, so cap your legs", say the parlays got worse with each leg the user added, and the rule is to stop at 2 legs.
 - NFL spread example: instead of "buy off the key number, take the alternate, watch the line movement", reframe as a pre-bet checkpoint. Ask whether the user is betting the game in front of them or chasing the last one, and note that NFL spreads are this bettor's weak spot.
 
@@ -3398,7 +3392,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     emotion_breakdown: metrics.emotion_breakdown,
     tilt_breakdown: metrics.emotion_breakdown, // backward compat
     bankroll_health: metrics.bankroll_health,
-    personal_rules: claudeData.personal_rules as AutopsyAnalysis['personal_rules'],
+    personal_rules: undefined,
     session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
     edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, drops, reportId),
     betting_archetype: metrics.betting_archetype,
@@ -3445,10 +3439,7 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     sufficiency: buildSufficiencyState(settledCount, metrics.sessionDetection?.totalSessions ?? 0),
   };
 
-  const analysis: AutopsyAnalysis = {
-    ...analysisBase,
-    control_system: buildReportControlSystem(analysisBase),
-  };
+  const analysis = attachCanonicalControlRules(analysisBase);
 
   const markdown = generateMarkdownReport(analysis);
 

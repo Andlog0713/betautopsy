@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { logErrorServer } from '@/lib/log-error-server';
+import { attachCanonicalControlRules } from '@/lib/control-system';
+import type { AutopsyAnalysis } from '@/types';
 
 // User-scoped fetch of a single autopsy_reports row. Used by the iOS
 // deep link router (PR-HEATED-PUSH-IOS) when a notification tap lands
@@ -63,10 +65,14 @@ export async function GET(
   } = report as Record<string, unknown>;
   void _fulfillment;
   void _frozenBets;
+  const reportJson = report.report_type === 'snapshot' || !report.report_json
+    ? report.report_json
+    : attachCanonicalControlRules(report.report_json as AutopsyAnalysis);
 
   return NextResponse.json({
     report: {
       ...publicReport,
+      report_json: reportJson,
       fulfillment_status: fulfillment?.paid_at ? fulfillment.status ?? null : null,
       completed_report_id: fulfillment?.completed_report_id ?? null,
       fulfillment_next_attempt_at: fulfillment?.next_attempt_at ?? null,
