@@ -37,6 +37,21 @@ function lossStreakRule(enforcement: 'hard' | 'soft', threshold = 3): ControlRul
   } as unknown as ControlRule;
 }
 
+function longParlayRule(): ControlRule {
+  return {
+    id: 'rule-long-parlay',
+    rule_type: 'ban_category',
+    status: 'active',
+    title: 'Limit parlays to 3 legs',
+    description: 'Do not place parlays with more than 3 legs.',
+    enforcement: 'hard',
+    severity: 'critical',
+    scope: 'bet_type',
+    scope_value: 'parlay',
+    trigger: { category: 'parlay', maxParlayLegs: 3 },
+  } as unknown as ControlRule;
+}
+
 function activeCooldown(): Cooldown {
   return {
     id: 'cooldown-1',
@@ -141,5 +156,28 @@ describe('evaluateCheckInAgainstControlState enforcement', () => {
     });
     expect(result.actionGate).toBe('reflection_required');
     expect(result.overrideRequired).toBe(false);
+  });
+
+  it('enforces a long-parlay limit only when the real leg count exceeds it', () => {
+    const unknownLegs = evaluateCheckInAgainstControlState({
+      request: { ...baseRequest, betType: 'parlay' },
+      rules: [longParlayRule()],
+      ...emptyState,
+    });
+    const withinLimit = evaluateCheckInAgainstControlState({
+      request: { ...baseRequest, betType: 'parlay', parlayLegs: 3 },
+      rules: [longParlayRule()],
+      ...emptyState,
+    });
+    const overLimit = evaluateCheckInAgainstControlState({
+      request: { ...baseRequest, betType: 'parlay', parlayLegs: 4 },
+      rules: [longParlayRule()],
+      ...emptyState,
+    });
+
+    expect(unknownLegs.ruleViolations).toHaveLength(0);
+    expect(withinLimit.ruleViolations).toHaveLength(0);
+    expect(overLimit.ruleViolations).toHaveLength(1);
+    expect(overLimit.actionGate).toBe('blocked');
   });
 });

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import { logErrorServer } from '@/lib/log-error-server';
+import { attachCanonicalControlRules } from '@/lib/control-system';
+import type { AutopsyAnalysis } from '@/types';
 
 // User-scoped list of autopsy_reports. Two modes on the same handler:
 //
@@ -160,7 +162,12 @@ export async function GET(request: NextRequest) {
     const publicReports = (data ?? []).map((report) => {
       const { analyzed_bets_snapshot: _frozenBets, ...publicReport } = report as Record<string, unknown>;
       void _frozenBets;
-      return publicReport;
+      return {
+        ...publicReport,
+        report_json: report.report_type === 'snapshot' || !report.report_json
+          ? report.report_json
+          : attachCanonicalControlRules(report.report_json as AutopsyAnalysis),
+      };
     });
     return NextResponse.json(
       { reports: publicReports },

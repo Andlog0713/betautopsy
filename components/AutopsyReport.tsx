@@ -27,6 +27,7 @@ import { isPlatformCategory } from '@/lib/platform-filter';
 import { formatApproxUSD } from '@/lib/utils';
 import { roundRecoveryRange } from '@/lib/engine/recovery';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
+import { attachCanonicalControlRules } from '@/lib/control-system';
 import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
@@ -417,7 +418,11 @@ function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: Au
 
 // ── Main Component ──
 
-export default function AutopsyReport({ analysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, purchaseAvailable = true, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; purchaseAvailable?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
+export default function AutopsyReport({ analysis: savedAnalysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, purchaseAvailable = true, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; purchaseAvailable?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
+  const analysis = useMemo(
+    () => isSnapshot ? savedAnalysis : attachCanonicalControlRules(savedAnalysis),
+    [isSnapshot, savedAnalysis],
+  );
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
   const effectiveTier = getEffectiveTier(tier);
@@ -2808,6 +2813,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <div>
                     <p className="text-fg-bright font-medium">{rule.description}</p>
                     <p className="text-fg-muted text-sm mt-1">{rule.rationale}</p>
+                    {rule.evidence && (
+                      <p className="text-fg-dim text-xs mt-2">Evidence: {rule.evidence.summary}</p>
+                    )}
                     <p className="text-fg-dim text-xs font-mono mt-2 uppercase tracking-[1.5px]">{rule.source}</p>
                   </div>
                   {!readOnly && (
@@ -2832,6 +2840,9 @@ export default function AutopsyReport({ analysis, bets = [], previousSnapshot, r
                   <div>
                     <p className="text-fg-bright font-medium">{rule.description}</p>
                     <p className="text-fg-muted text-sm mt-1">{rule.rationale}</p>
+                    {rule.evidence && (
+                      <p className="text-fg-dim text-xs mt-2">Evidence: {rule.evidence.summary}</p>
+                    )}
                   </div>
                   {!readOnly && (
                     <button

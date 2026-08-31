@@ -6,6 +6,7 @@ import {
   buildSuggestedPlanFromAnalysis,
   buildSuggestedRulesFromAnalysis,
   deriveRecoveryModeState,
+  findCanonicalRuleSuggestion,
 } from '@/lib/control-system';
 import { SUPPORT_RESOURCES } from '@/lib/support-resources';
 import type {
@@ -227,7 +228,12 @@ async function loadControlState(userId: string, supabase: NonNullable<Awaited<Re
     recentCheckIns: (checkInsRes.data ?? []) as Array<{ bet_quality_score: number; recommendation: string; created_at: string }>,
   });
 
-  const suggestedRules = latestReport ? buildSuggestedRulesFromAnalysis(latestReport.analysis) : [];
+  const suggestedRules = latestReport
+    ? buildSuggestedRulesFromAnalysis(latestReport.analysis).map((rule) => ({
+        ...rule,
+        sourceReportId: latestReport.id,
+      }))
+    : [];
   const suggestedPlan = latestReport
     ? { ...buildSuggestedPlanFromAnalysis(latestReport.analysis, latestReport.id), user_id: userId }
     : null;
@@ -347,7 +353,52 @@ export async function POST(request: Request) {
       if (!validated.ok) {
         return NextResponse.json({ error: validated.error }, { status: 400 });
       }
-      const rule = validated.value;
+      let rule = validated.value;
+      if (rule.provenance === 'engine_recommended') {
+        if (!rule.source_report_id) {
+          return NextResponse.json(
+            { error: 'Engine-recommended rules require a source report.' },
+            { status: 400 },
+          );
+        }
+
+        const { data: sourceReport, error: sourceReportError } = await supabase
+          .from('autopsy_reports')
+          .select('report_json')
+          .eq('id', rule.source_report_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (sourceReportError) throw sourceReportError;
+        if (!sourceReport?.report_json) {
+          return NextResponse.json({ error: 'Source report not found.' }, { status: 400 });
+        }
+
+        const canonical = findCanonicalRuleSuggestion(
+          sourceReport.report_json as AutopsyAnalysis,
+          rule.title,
+          rule.rule_type,
+        );
+        if (!canonical) {
+          return NextResponse.json(
+            { error: 'This rule is not supported by the source report.' },
+            { status: 400 },
+          );
+        }
+
+        rule = {
+          ...rule,
+          title: canonical.title,
+          description: canonical.description,
+          rationale: canonical.rationale,
+          rule_type: canonical.rule_type,
+          scope: canonical.scope,
+          scope_value: canonical.scope_value,
+          severity: canonical.severity,
+          enforcement: canonical.enforcement,
+          provenance: canonical.provenance,
+          trigger: canonical.trigger,
+        };
+      }
       const payload = {
         user_id: user.id,
         plan_id: rule.plan_id,

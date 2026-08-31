@@ -1,12 +1,15 @@
 # BetAutopsy — Claude Code instructions
 
-## CURRENT STATE (as of 2026-08-23)
+## CURRENT STATE (as of 2026-08-31)
 
-**Production**: `main` is on squash-merge commit `4850621`,
+**Production**: the latest behavior-changing production commit is `4850621`,
 [PR #125](https://github.com/Andlog0713/betautopsy/pull/125), which clears
 107 enforceable design-system violations, expands the checker to cover the
 forms it previously missed, and enables strict enforcement with zero reported
-findings. It includes [PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
+findings. GitHub `main` is on docs-only squash-merge commit `69288f1`,
+[PR #126](https://github.com/Andlog0713/betautopsy/pull/126), which closed that
+stage in this log without changing runtime behavior. The production code includes
+[PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
 the false-positive `/pricing` mobile cases with authenticated coverage of the
 real page, locked $19.99 copy, and final URL. It includes
 [PR #123](https://github.com/Andlog0713/betautopsy/pull/123), which aligns
@@ -39,9 +42,12 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Previous branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: none. The paid-report integrity, Pro checkout closure, CSP
-enforcement, overlapping-window CSV re-upload coverage, Node parity, real
-`/pricing` E2E coverage, and strict design-system stages are all merged.
+**In flight**: `codex/recommendation-integrity` is the first stage of the
+post-audit roadmap. It removes model-authored rules from every adoptable path,
+makes rule actions, triggers, evidence, and sufficiency deterministic, and
+requires any historical financial claim to match the corresponding What-If
+over the same frozen report cohort. Local typecheck, 601 unit tests, production
+build, strict design check, and all 39 browser cases are green.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -75,7 +81,25 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **No active engineering stage.**
+- **Stage 1, recommendation integrity**: finish review, ship, and verify the
+  current branch.
+- **Stage 2, temporal provenance**: preserve whether source time and timezone
+  were actually known without inventing either.
+- **Stage 3, Upload History correctness**: make upload records and outcomes
+  truthful and reconcilable.
+- **Stage 4, report and dashboard provenance**: unify report scope and select
+  one explicit previous-report baseline across web and API comparisons.
+- **Stage 5, Bet History correctness**: paginate the complete history and use
+  exact totals rather than the first fetched window.
+- **Stage 6, purchase truth**: verify Stripe price direction first, then make
+  every eligible purchase surface and fulfillment state agree.
+- **Stage 7, public truth**: align FAQ, sample, trust copy, and product claims
+  with behavior that is actually shipped and verified.
+- **Stage 8, runtime quality**: close remaining mobile, accessibility, warning,
+  and user-journey gaps, then repeat production verification.
+- **Owner-only live payment proof**: after Stage 6 and before traffic, a real
+  card purchase still requires Andrew. The automated suite covers the mocked
+  webhook and browser-independent delivery path but cannot spend real money.
 - **Supabase availability**: Andrew confirmed on 2026-08-23 that production
   stays on the free tier for now. This is an accepted availability risk, not
   a bug. Auto-pause previously killed login for eight days in August 2026.

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
 import { getAuthenticatedClient } from '@/lib/supabase-from-request';
 import type { AutopsyAnalysis, Profile } from '@/types';
 import { logErrorServer } from '@/lib/log-error-server';
+import { attachCanonicalControlRules } from '@/lib/control-system';
 
 export async function POST(request: Request) {
   try {
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    const analysis = report.report_json as AutopsyAnalysis;
+    const storedAnalysis = report.report_json as AutopsyAnalysis;
+    const analysis = report.report_type === 'snapshot'
+      ? storedAnalysis
+      : attachCanonicalControlRules(storedAnalysis);
 
     // Find best edge and biggest leak from strategic leaks
     const leaks = analysis.strategic_leaks ?? [];

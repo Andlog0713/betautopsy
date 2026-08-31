@@ -55,6 +55,7 @@ function suggestionToPayload(rule: ControlRuleSuggestion) {
     enforcement: rule.enforcement,
     provenance: rule.provenance,
     trigger: rule.trigger,
+    source_report_id: rule.sourceReportId ?? null,
   };
 }
 

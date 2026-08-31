@@ -14,7 +14,6 @@ import type {
   ControlSystemSummary,
   Cooldown,
   CooldownSuggestion,
-  PersonalRule,
   PreBetCheckInRequest,
   Profile,
   RecoveryModeState,
@@ -26,6 +25,7 @@ import type {
   RiskEventType,
 } from '@/types';
 import { SUPPORT_RESOURCES } from '@/lib/support-resources';
+import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 
 type CheckInEvaluationResult = {
   actionGate: CheckInActionGate;
@@ -71,21 +71,6 @@ function firstSentence(text: string): string {
   return (match?.[0] ?? trimmed).trim();
 }
 
-function extractNumber(text: string): number | null {
-  const match = text.match(/(\d+(?:\.\d+)?)/);
-  return match ? Number(match[1]) : null;
-}
-
-function extractDollar(text: string): number | null {
-  const match = text.match(/\$([\d,]+(?:\.\d+)?)/);
-  return match ? Number(match[1].replace(/,/g, '')) : null;
-}
-
-function sentenceCase(text: string): string {
-  if (!text) return text;
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 function toLocalHour(request: PreBetCheckInRequest): number {
   if (typeof request.localHour === 'number') return clampHour(request.localHour);
   return new Date(request.placedAt).getUTCHours();
@@ -121,103 +106,67 @@ function getCurrentSessionBetCount(recentBets: Bet[], placedAtIso: string): numb
   }).length;
 }
 
-function ruleTypeFromText(rule: string): ControlRuleSuggestion['rule_type'] {
-  const lower = rule.toLowerCase();
-  if (lower.includes('loss') && (lower.includes('stop') || lower.includes('done'))) return 'loss_streak_stop';
-  if (lower.includes('after') && lower.includes('pm')) return 'late_night_cutoff';
-  if (lower.includes('after') && lower.includes('loss') && lower.includes('cooldown')) return 'cooldown_after_loss';
-  if (lower.includes('emotion') || lower.includes('angry') || lower.includes('tilted')) return 'emotion_block';
-  if (lower.includes('session')) return 'session_limit';
-  if (lower.includes('stake') || lower.includes('bet more than') || lower.includes('unit')) return 'stake_cap';
-  if (lower.includes('rapid') || lower.includes('minutes of a loss')) return 'rapid_fire_limit';
-  if (lower.includes('no ') || lower.includes('never') || lower.includes('ban')) return 'ban_category';
-  return 'custom';
+const LOSS_SEQUENCE_MIN_BETS = 10;
+const LATE_NIGHT_MIN_BETS = 10;
+const LONG_PARLAY_MIN_BETS = 10;
+
+function formatRoundedMoney(value: number): string {
+  return `$${Math.round(Math.abs(value)).toLocaleString('en-US')}`;
 }
 
-function inferRuleSuggestion(rule: PersonalRule): ControlRuleSuggestion {
-  const ruleText = rule.rule.trim();
-  const lower = ruleText.toLowerCase();
-  const ruleType = rule.rule_type ?? ruleTypeFromText(ruleText);
-  const numberValue = extractNumber(ruleText);
-  const dollarValue = extractDollar(ruleText) ?? extractDollar(rule.reason);
-  const trigger = rule.trigger ?? {};
-
-  if (ruleType === 'loss_streak_stop' && numberValue) trigger.threshold = numberValue;
-  if (ruleType === 'late_night_cutoff') {
-    const hourMatch = lower.match(/after (\d{1,2})(?::\d{2})?\s*(am|pm)/);
-    if (hourMatch) {
-      let hour = Number(hourMatch[1]) % 12;
-      if (hourMatch[2] === 'pm') hour += 12;
-      trigger.startHour = hour;
-    }
-  }
-  if (ruleType === 'stake_cap') {
-    if (dollarValue) trigger.maxStake = dollarValue;
-    if (lower.includes('median') && numberValue) trigger.maxStakeMultiplier = numberValue;
-  }
-  if (ruleType === 'session_limit' && numberValue) trigger.sessionLimit = numberValue;
-  if (ruleType === 'cooldown_after_loss' && numberValue) trigger.waitMinutes = numberValue;
-  if (ruleType === 'emotion_block') {
-    trigger.blockedEmotions = ['angry', 'tilted', 'trying_to_win_it_back'];
-  }
-  if (ruleType === 'ban_category') {
-    if (lower.includes('parlay')) {
-      trigger.category = 'parlay';
-    } else if (lower.includes('prop')) {
-      trigger.category = 'prop';
-    } else if (lower.includes('nba')) {
-      trigger.category = 'nba';
-    } else if (lower.includes('dfs')) {
-      trigger.category = 'dfs';
-    }
-  }
-
-  const hard =
-    rule.enforcement === 'hard'
-    || lower.startsWith('no ')
-    || lower.startsWith('never')
-    || lower.includes('stop for the day')
-    || lower.includes('do not place');
-
-  return {
-    title: sentenceCase(ruleText.replace(/\.$/, '')),
-    description: ruleText,
-    rationale: rule.reason,
-    rule_type: ruleType,
-    scope: rule.scope ?? 'global',
-    scope_value: rule.scope_value ?? null,
-    severity: rule.severity ?? (hard ? 'critical' : 'guardrail'),
-    enforcement: rule.enforcement ?? (hard ? 'hard' : 'soft'),
-    provenance: rule.provenance ?? 'engine_recommended',
-    trigger,
-    source: rule.based_on,
-  };
+function formatRoundedNet(value: number): string {
+  const prefix = value < 0 ? '-$' : value > 0 ? '+$' : '$';
+  return `${prefix}${Math.round(Math.abs(value)).toLocaleString('en-US')}`;
 }
 
-function hasRuleLike(rules: ControlRuleSuggestion[], type: ControlRuleSuggestion['rule_type'], category?: string): boolean {
-  return rules.some((rule) => {
-    if (rule.rule_type !== type) return false;
-    if (!category) return true;
-    return rule.trigger.category?.toLowerCase() === category.toLowerCase()
-      || rule.scope_value?.toLowerCase() === category.toLowerCase()
-      || rule.description.toLowerCase().includes(category.toLowerCase());
-  });
+function hasCanonicalRuleInputs(analysis: AutopsyAnalysis): boolean {
+  return Boolean(
+    analysis.summary
+    && typeof analysis.summary.avg_stake === 'number'
+    && Array.isArray(analysis.biases_detected)
+    && typeof analysis.emotion_score === 'number',
+  );
 }
 
 export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): ControlRuleSuggestion[] {
-  const suggestions = (analysis.personal_rules ?? []).map(inferRuleSuggestion);
+  if (!hasCanonicalRuleInputs(analysis)) return [];
+  // Model-authored personal_rules are deliberately ignored. Every field on an
+  // adoptable suggestion, including its action, threshold, evidence, and
+  // sufficiency gate, is derived below from deterministic report fields.
+  const suggestions: ControlRuleSuggestion[] = [];
   const summary = analysis.summary;
   const avgStake = summary.avg_stake || 0;
+  const settledBets = analysis.sufficiency?.settledBets ?? 0;
+  const postLossBias = analysis.biases_detected.find(
+    (bias) => bias.bias_name === 'Post-Loss Escalation',
+  );
+  const postLossSample = postLossBias?.sample_size ?? 0;
+  const stakeVolatilityBias = analysis.biases_detected.find(
+    (bias) => bias.bias_name === 'Stake Volatility',
+  );
+  const stakeVolatilitySample = stakeVolatilityBias?.sample_size ?? 0;
+  const lateNight = analysis.timing_analysis?.has_time_data
+    ? analysis.timing_analysis.late_night_stats
+    : null;
+  const longParlayWhatIf = analysis.what_if_scenarios?.find(
+    (scenario) => scenario.label === 'Eliminated all parlays over 3 legs',
+  );
+  const longParlayImprovement = longParlayWhatIf
+    ? longParlayWhatIf.hypothetical - longParlayWhatIf.actual
+    : 0;
+  const affectedLongParlays = longParlayWhatIf?.affectedBets ?? 0;
+  const sessionDetection = analysis.session_detection;
   const heatedSessionPercent = analysis.session_detection?.heatedSessionPercent ?? 0;
 
   if (
-    analysis.biases_detected.some((bias) => bias.bias_name === 'Post-Loss Escalation')
-    && !hasRuleLike(suggestions, 'loss_streak_stop')
+    postLossBias
+    && postLossSample >= LOSS_SEQUENCE_MIN_BETS
   ) {
     suggestions.push({
+      candidateId: 'loss_streak_stop',
       title: 'Stop after 3 straight losses',
       description: 'After 3 losses in a row, stop betting for the rest of the day.',
-      rationale: 'Your report shows the worst damage happens once the third loss turns into a chase sequence.',
+      rationale: 'This guardrail interrupts the repeated loss-sequence escalation detected in this report.',
       rule_type: 'loss_streak_stop',
       scope: 'session',
       scope_value: null,
@@ -226,17 +175,31 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
       provenance: 'engine_recommended',
       trigger: { threshold: 3, cooldownHours: 24 },
       source: 'Post-Loss Escalation',
+      evidence: {
+        basis: 'bias',
+        summary: `Post-Loss Escalation qualified across ${postLossSample} ordered bets.`,
+        sampleSize: postLossSample,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: postLossSample,
+        minimum: LOSS_SEQUENCE_MIN_BETS,
+        unit: 'qualified_bets',
+      },
     });
   }
 
   if (
-    (analysis.timing_analysis?.late_night_stats?.count ?? 0) > 0
-    && !hasRuleLike(suggestions, 'late_night_cutoff')
+    lateNight
+    && lateNight.count >= LATE_NIGHT_MIN_BETS
+    && lateNight.roi < 0
+    && settledBets >= BET_COUNT_THRESHOLDS.biasesDetected
   ) {
     suggestions.push({
+      candidateId: 'late_night_cutoff',
       title: 'No bets after 11:00 PM',
       description: 'No bets after 11:00 PM local time. Review lines in the morning instead.',
-      rationale: 'Late-night bets are one of your repeat failure modes. The product should slow you down before that window opens.',
+      rationale: `${lateNight.count} qualified late-night bets returned ${lateNight.roi.toFixed(1)}% ROI in this report.`,
       rule_type: 'late_night_cutoff',
       scope: 'time_window',
       scope_value: '23:00-04:00',
@@ -245,34 +208,66 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
       provenance: 'engine_recommended',
       trigger: { startHour: 23, endHour: 4, recurrenceWindowDays: 14 },
       source: 'Timing analysis',
+      evidence: {
+        basis: 'timing',
+        summary: `${lateNight.count} qualified late-night bets returned ${lateNight.roi.toFixed(1)}% ROI.`,
+        sampleSize: lateNight.count,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: settledBets,
+        minimum: BET_COUNT_THRESHOLDS.biasesDetected,
+        unit: 'settled_bets',
+      },
     });
   }
 
   if (
-    analysis.strategic_leaks.some((leak) => leak.category.toLowerCase().includes('parlay'))
-    && !hasRuleLike(suggestions, 'ban_category', 'parlay')
+    longParlayWhatIf
+    && affectedLongParlays >= LONG_PARLAY_MIN_BETS
+    && longParlayImprovement > 0
   ) {
     suggestions.push({
-      title: 'Pause parlays for 14 days',
-      description: 'No parlays for the next 14 days. Straight bets only while you reset your process.',
-      rationale: 'Your report already shows the category is leaking. The safest move is to remove easy relapse access for a short window.',
+      candidateId: 'no_long_parlays',
+      title: 'Limit parlays to 3 legs',
+      description: 'Do not place parlays with more than 3 legs until your next report.',
+      rationale: `Removing those ${affectedLongParlays} bets would have improved this cohort's historical net by ${formatRoundedMoney(longParlayImprovement)}.`,
       rule_type: 'ban_category',
       scope: 'bet_type',
       scope_value: 'parlay',
       severity: 'guardrail',
       enforcement: 'hard',
       provenance: 'engine_recommended',
-      trigger: { category: 'parlay', recurrenceWindowDays: 14 },
-      source: 'Strategic leaks',
+      trigger: { category: 'parlay', maxParlayLegs: 3 },
+      source: 'No-long-parlays What-If',
+      evidence: {
+        basis: 'what_if',
+        summary: `The same frozen cohort moved from ${formatRoundedNet(longParlayWhatIf.actual)} to ${formatRoundedNet(longParlayWhatIf.hypothetical)} without parlays over 3 legs.`,
+        sampleSize: affectedLongParlays,
+        actualProfit: longParlayWhatIf.actual,
+        hypotheticalProfit: longParlayWhatIf.hypothetical,
+        deltaProfit: longParlayImprovement,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: affectedLongParlays,
+        minimum: LONG_PARLAY_MIN_BETS,
+        unit: 'qualified_bets',
+      },
     });
   }
 
-  if (!hasRuleLike(suggestions, 'stake_cap') && avgStake > 0) {
+  if (
+    stakeVolatilityBias
+    && stakeVolatilitySample >= LOSS_SEQUENCE_MIN_BETS
+    && avgStake > 0
+  ) {
     const maxStake = Math.max(10, Math.round(avgStake * 1.25 / 5) * 5);
     suggestions.push({
+      candidateId: 'stake_cap',
       title: `Cap stake at $${maxStake}`,
       description: `No single bet can exceed $${maxStake} until your next report.`,
-      rationale: 'Your control system should defend you from the outsized bet that usually follows a bad sequence.',
+      rationale: 'A fixed ceiling keeps every stake within the engine-derived limit until the next report.',
       rule_type: 'stake_cap',
       scope: 'global',
       scope_value: null,
@@ -281,14 +276,32 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
       provenance: 'engine_recommended',
       trigger: { maxStake, maxStakeMultiplier: 1.25 },
       source: 'Sizing discipline',
+      evidence: {
+        basis: 'sizing',
+        summary: `Stake Volatility qualified across ${stakeVolatilitySample} bets; average stake was ${formatRoundedMoney(avgStake)}.`,
+        sampleSize: stakeVolatilitySample,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: stakeVolatilitySample,
+        minimum: LOSS_SEQUENCE_MIN_BETS,
+        unit: 'qualified_bets',
+      },
     });
   }
 
-  if (heatedSessionPercent >= 20 && !hasRuleLike(suggestions, 'post_heated_session_pause')) {
+  if (
+    sessionDetection
+    && !sessionDetection.insufficient_data
+    && sessionDetection.totalSessions >= BET_COUNT_THRESHOLDS.heatedSessionsMinSessions
+    && sessionDetection.heatedSessionCount > 0
+    && heatedSessionPercent >= 20
+  ) {
     suggestions.push({
+      candidateId: 'post_heated_session_pause',
       title: 'Automatic pause after a heated session',
       description: 'If a session is flagged as heated, no same-day betting after it ends.',
-      rationale: 'Heated sessions are not isolated noise in your data. They repeat, and the next bet is usually part of the same spiral.',
+      rationale: 'A 24-hour pause adds friction after the engine classifies a session as heated.',
       rule_type: 'post_heated_session_pause',
       scope: 'session',
       scope_value: null,
@@ -297,14 +310,30 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
       provenance: 'engine_recommended',
       trigger: { cooldownHours: 24, recurrenceWindowDays: 14 },
       source: 'Session detection',
+      evidence: {
+        basis: 'sessions',
+        summary: `${sessionDetection.heatedSessionCount} of ${sessionDetection.totalSessions} sessions were classified as heated.`,
+        sampleSize: sessionDetection.heatedSessionCount,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: sessionDetection.totalSessions,
+        minimum: BET_COUNT_THRESHOLDS.heatedSessionsMinSessions,
+        unit: 'sessions',
+      },
     });
   }
 
-  if (analysis.emotion_score >= 55 && !hasRuleLike(suggestions, 'emotion_block')) {
+  if (
+    analysis.emotion_score >= 55
+    && settledBets >= BET_COUNT_THRESHOLDS.emotionScore
+    && analysis.emotion_score_insufficient_data !== true
+  ) {
     suggestions.push({
+      candidateId: 'emotion_block',
       title: 'Block angry or revenge-bet states',
       description: 'If you are angry, heated, or trying to win losses back, do not place the bet.',
-      rationale: 'High emotion-score stretches should trigger a hard pause, not a softer pep talk.',
+      rationale: 'The deterministic emotion score met the engine threshold for a hard pause.',
       rule_type: 'emotion_block',
       scope: 'emotion_state',
       scope_value: null,
@@ -313,10 +342,51 @@ export function buildSuggestedRulesFromAnalysis(analysis: AutopsyAnalysis): Cont
       provenance: 'engine_recommended',
       trigger: { blockedEmotions: ['angry', 'tilted', 'trying_to_win_it_back'] },
       source: 'Emotion score',
+      evidence: {
+        basis: 'emotion',
+        summary: `The deterministic emotion score was ${analysis.emotion_score} across ${settledBets} settled bets.`,
+        sampleSize: settledBets,
+      },
+      sufficiency: {
+        status: 'sufficient',
+        observed: settledBets,
+        minimum: BET_COUNT_THRESHOLDS.emotionScore,
+        unit: 'settled_bets',
+      },
     });
   }
 
   return suggestions.slice(0, 8);
+}
+
+export function buildPersonalRulesFromSuggestions(
+  suggestions: ControlRuleSuggestion[],
+) {
+  return suggestions.map((suggestion) => ({
+    rule: suggestion.description,
+    reason: suggestion.rationale,
+    based_on: suggestion.source,
+    candidate_id: suggestion.candidateId,
+    rule_type: suggestion.rule_type,
+    scope: suggestion.scope,
+    scope_value: suggestion.scope_value,
+    severity: suggestion.severity,
+    enforcement: suggestion.enforcement,
+    provenance: suggestion.provenance,
+    trigger: suggestion.trigger,
+    evidence: suggestion.evidence,
+    sufficiency: suggestion.sufficiency,
+  }));
+}
+
+export function findCanonicalRuleSuggestion(
+  analysis: AutopsyAnalysis,
+  title: string,
+  ruleType: ControlRuleSuggestion['rule_type'],
+): ControlRuleSuggestion | undefined {
+  return buildSuggestedRulesFromAnalysis(analysis).find((candidate) => (
+    candidate.title === title && candidate.rule_type === ruleType
+  ));
 }
 
 function buildPlanSettings(analysis: AutopsyAnalysis, rules: ControlRuleSuggestion[]): ControlPlanSettings {
@@ -326,7 +396,9 @@ function buildPlanSettings(analysis: AutopsyAnalysis, rules: ControlRuleSuggesti
   const sessionLimit = rules.find((rule) => rule.rule_type === 'session_limit')?.trigger.sessionLimit
     ?? ((analysis.session_detection?.heatedSessionCount ?? 0) > 0 ? 4 : null);
   const bannedBetCategories = rules
-    .filter((rule) => rule.rule_type === 'ban_category')
+    .filter(
+      (rule) => rule.rule_type === 'ban_category' && rule.trigger.maxParlayLegs == null,
+    )
     .map((rule) => rule.scope_value ?? rule.trigger.category ?? rule.title)
     .filter(Boolean);
   const waitMinutes = rules.find((rule) => rule.rule_type === 'cooldown_after_loss')?.trigger.waitMinutes
@@ -495,8 +567,10 @@ function recoveryRecommendedFromAnalysis(analysis: AutopsyAnalysis): boolean {
   return classifyReportRiskTier(analysis) === 'recovery';
 }
 
-export function buildReportControlSystem(analysis: AutopsyAnalysis): ReportControlSystem {
-  const rules = buildSuggestedRulesFromAnalysis(analysis);
+export function buildReportControlSystem(
+  analysis: AutopsyAnalysis,
+  rules = buildSuggestedRulesFromAnalysis(analysis),
+): ReportControlSystem {
   const hardRules = rules.filter((rule) => rule.enforcement === 'hard');
   const softRules = rules.filter((rule) => rule.enforcement === 'soft');
   const riskTier = classifyReportRiskTier(analysis);
@@ -528,6 +602,24 @@ export function buildReportControlSystem(analysis: AutopsyAnalysis): ReportContr
     recoveryModeRecommended,
     riskTier,
     supportResources: SUPPORT_RESOURCES,
+  };
+}
+
+/**
+ * Rebuilds every user-facing rule surface from deterministic report fields.
+ * This is used for new report assembly and at read time so historical saved
+ * reports cannot keep exposing model-authored personal_rules or control rules.
+ */
+export function attachCanonicalControlRules(analysis: AutopsyAnalysis): AutopsyAnalysis {
+  if (!hasCanonicalRuleInputs(analysis)) return analysis;
+  const rules = buildSuggestedRulesFromAnalysis(analysis);
+  const canonicalAnalysis: AutopsyAnalysis = {
+    ...analysis,
+    personal_rules: buildPersonalRulesFromSuggestions(rules),
+  };
+  return {
+    ...canonicalAnalysis,
+    control_system: buildReportControlSystem(canonicalAnalysis, rules),
   };
 }
 
@@ -710,11 +802,26 @@ function evaluateSingleRule(
     }
     case 'ban_category': {
       const category = (rule.scope_value ?? rule.trigger.category ?? '').toLowerCase();
+      const maxParlayLegs = rule.trigger.maxParlayLegs;
       const hitsCategory =
         lowerBetType.includes(category)
         || lowerSport === category
         || (category === 'parlay' && lowerBetType === 'parlay')
         || (category === 'prop' && lowerBetType === 'prop');
+      if (category === 'parlay' && maxParlayLegs != null) {
+        if (!hitsCategory || request.parlayLegs == null || request.parlayLegs <= maxParlayLegs) {
+          return null;
+        }
+        return {
+          ruleId: rule.id,
+          ruleType: rule.rule_type,
+          title: rule.title,
+          ruleText: rule.description,
+          enforcement: rule.enforcement,
+          severity: rule.severity,
+          reason: `This ${request.parlayLegs}-leg parlay exceeds your current ${maxParlayLegs}-leg limit.`,
+        };
+      }
       if (category && hitsCategory) {
         return {
           ruleId: rule.id,

@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { logErrorServer } from '@/lib/log-error-server';
 import { RECOVERY_SUPPORT_FOOTER } from '@/lib/support-resources';
 import type { AutopsyAnalysis, Bet } from '@/types';
+import { attachCanonicalControlRules } from '@/lib/control-system';
 
 const SYSTEM_PROMPT = `You are BetAutopsy's report analyst. You answer questions about this specific user's betting behavioral analysis report and their underlying bet data. Be specific and reference their actual numbers. Keep answers under 200 words. Never give betting picks, tout services, or financial advice. Never recommend specific bets. If asked something outside the scope of this report, say so. Always defer to the grades, scores, and classifications already in this report. Do not re-evaluate or contradict them.`;
 
@@ -168,10 +169,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ask Your Autopsy is available on paid reports.' }, { status: 403 });
     }
 
-    const analysis = report.report_json as AutopsyAnalysis | null;
-    if (!analysis) {
+    const storedAnalysis = report.report_json as AutopsyAnalysis | null;
+    if (!storedAnalysis) {
       return NextResponse.json({ error: 'Report data is missing.' }, { status: 404 });
     }
+    const analysis = attachCanonicalControlRules(storedAnalysis);
 
     // Fetch the actual bets that made up this report and aggregate them
     let betSummary = '';

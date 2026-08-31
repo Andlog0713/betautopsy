@@ -92,6 +92,14 @@ export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationE
     return { ok: false, error: 'betType must be one of: ' + CHECK_IN_BET_TYPES.join(', ') };
   }
 
+  const parlayLegs = r.parlayLegs;
+  if (
+    parlayLegs !== undefined
+    && (typeof parlayLegs !== 'number' || !Number.isInteger(parlayLegs) || parlayLegs < 2)
+  ) {
+    return { ok: false, error: 'parlayLegs must be an integer of at least 2' };
+  }
+
   const placedAt = r.placedAt;
   if (typeof placedAt !== 'string' || Number.isNaN(Date.parse(placedAt))) {
     return { ok: false, error: 'placedAt must be an ISO 8601 datetime string' };
@@ -133,6 +141,7 @@ export function validateCheckInRequest(raw: unknown): ValidationOk | ValidationE
     ok: true,
     value: {
       sport, stake, odds, betType, placedAt,
+      ...(parlayLegs !== undefined && { parlayLegs }),
       ...(localHour !== undefined && { localHour }),
       ...(reflection !== undefined && { reflection: reflection as PreBetCheckInRequest['reflection'] }),
     },
