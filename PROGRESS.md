@@ -2,8 +2,11 @@
 
 ## CURRENT STATE (as of 2026-08-23)
 
-**Production**: `main` is on squash-merge commit `1217a10`,
-[PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
+**Production**: `main` is on squash-merge commit `4850621`,
+[PR #125](https://github.com/Andlog0713/betautopsy/pull/125), which clears
+107 enforceable design-system violations, expands the checker to cover the
+forms it previously missed, and enables strict enforcement with zero reported
+findings. It includes [PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
 the false-positive `/pricing` mobile cases with authenticated coverage of the
 real page, locked $19.99 copy, and final URL. It includes
 [PR #123](https://github.com/Andlog0713/betautopsy/pull/123), which aligns
@@ -36,15 +39,9 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Previous branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: branch `codex/enforce-design-system` clears the 52 listed design
-violations plus 55 equivalent violations the warning-only checker missed.
-The checker now rejects larger named and raw CSS radii, raw shadows, Tailwind
-red and green families, retired V2 colors, and Inter in addition to its prior
-rules. All reported findings are at zero and `STRICT = true`. Visual checks of
-the landing page, collapsed sample gate, full sample, and mobile layouts show
-the flat surfaces, 6px cards, yellow actions, and neutral secondary states
-rendering without overflow or content loss. All four gates and the full
-39-case Playwright suite pass. The branch is ready for PR review.
+**In flight**: none. The paid-report integrity, Pro checkout closure, CSP
+enforcement, overlapping-window CSV re-upload coverage, Node parity, real
+`/pricing` E2E coverage, and strict design-system stages are all merged.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -78,9 +75,10 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **Supabase availability**: staying on the free tier is Andrew's call for
-  now, not a bug. It remains a known risk because auto-pause killed login
-  for eight days in August 2026.
+- **No active engineering stage.**
+- **Supabase availability**: Andrew confirmed on 2026-08-23 that production
+  stays on the free tier for now. This is an accepted availability risk, not
+  a bug. Auto-pause previously killed login for eight days in August 2026.
 
 ## Architecture
 - This repo is the web app (Next.js App Router), serving betautopsy.com and the API
@@ -191,7 +189,7 @@ Andrew first.
 
 ---
 
-## Current branch: `codex/enforce-design-system` (2026-08-23)
+## Completed branch: `codex/enforce-design-system` (2026-08-23)
 
 ### Done this session
 
@@ -217,6 +215,7 @@ Andrew first.
   Visual QA passed on desktop and mobile landing and sample surfaces. The CSP
   case passed 15 repeated runs, and the final full Playwright run passed all 39
   cases across the three iPhone projects.
+- PR #125 passed all GitHub and Vercel checks and merged to `main` as `4850621`.
 
 ## Previous branch: `docs/wire-provenance-standing-rule` - Claude-numeric-field audit fixes + Phase 1/2 batch (2026-08-18)
 
