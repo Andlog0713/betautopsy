@@ -257,7 +257,7 @@ export default function PasteParser() {
                         />
                       </td>
                       <td className="p-3 font-mono text-xs text-fg-muted whitespace-nowrap">
-                        {bet.placed_at?.slice(0, 10) ?? '-'}
+                        {bet.source_placed_at ?? bet.placed_date ?? bet.placed_at ?? '-'}
                       </td>
                       <td className="p-3 text-fg-muted">{bet.sport}</td>
                       <td className="p-3 text-fg-muted">{bet.bet_type}</td>

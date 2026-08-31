@@ -1,14 +1,20 @@
 import type { Bet } from '@/types';
+import {
+  betRecordedDate,
+  betSequenceTimeMs,
+  betSourceHour,
+  comparableBetSequences,
+} from '@/lib/temporal-provenance';
 
 export interface RoastStat {
   text: string;
 }
 
 export interface BehavioralInsight {
-  contextLabel: string;   // "AFTER A LOSS"
+  contextLabel: string;
   heroStat: string;       // "4.2x"
-  heroLabel: string;      // "more likely to bet within the hour"
-  verdict: string;        // "That's a textbook revenge bettor..."
+  heroLabel: string;
+  verdict: string;
 }
 
 // ── Archetype roast lines ──
@@ -64,21 +70,25 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
 
   if (!bets || bets.length < 20) return fallback;
 
-  const settled = [...bets]
-    .filter((b) => b.result === 'win' || b.result === 'loss')
-    .sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+  const sequences = comparableBetSequences(settled);
 
   if (settled.length < 20) return fallback;
 
-  // 1. Post-loss acceleration: how much faster do they bet after a loss?
+  // 1. Losing-result sequence acceleration: compare gaps by the prior row's final result.
   const afterLossGaps: number[] = [];
   const afterWinGaps: number[] = [];
 
-  for (let i = 1; i < settled.length; i++) {
-    const gapMin = (new Date(settled[i].placed_at).getTime() - new Date(settled[i - 1].placed_at).getTime()) / 60000;
-    if (gapMin > 360) continue; // skip overnight / next-day gaps
-    if (settled[i - 1].result === 'loss') afterLossGaps.push(gapMin);
-    else afterWinGaps.push(gapMin);
+  for (const sequence of sequences) {
+    for (let i = 1; i < sequence.length; i++) {
+      const currentTime = betSequenceTimeMs(sequence[i]);
+      const priorTime = betSequenceTimeMs(sequence[i - 1]);
+      if (currentTime === null || priorTime === null) continue;
+      const gapMin = (currentTime - priorTime) / 60000;
+      if (gapMin > 360) continue;
+      if (sequence[i - 1].result === 'loss') afterLossGaps.push(gapMin);
+      else afterWinGaps.push(gapMin);
+    }
   }
 
   if (afterLossGaps.length >= 10 && afterWinGaps.length >= 10) {
@@ -87,29 +97,31 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
     if (medAfterLoss > 0 && medAfterWin / medAfterLoss >= 1.5) {
       const ratio = Math.round((medAfterWin / medAfterLoss) * 10) / 10;
       return {
-        contextLabel: 'AFTER A LOSS',
+        contextLabel: 'AFTER A BET LATER SETTLED AS A LOSS',
         heroStat: `${ratio}x`,
-        heroLabel: 'faster to place another bet',
-        verdict: ratio >= 3
-          ? "That's textbook revenge betting. Your worst decisions come right after your worst results."
-          : "You speed up after losses. Most bettors do. The ones who win learn to slow down.",
+        heroLabel: 'shorter gap to the next recorded bet',
+        verdict: 'The sequence speeds up around losing bets. Settlement times are unavailable, so this does not prove the loss triggered the next bet.',
       };
     }
   }
 
   // 2. Session stake escalation
   const sessions: Bet[][] = [];
-  let currentSession: Bet[] = [settled[0]];
-  for (let i = 1; i < settled.length; i++) {
-    const gapMin = (new Date(settled[i].placed_at).getTime() - new Date(settled[i - 1].placed_at).getTime()) / 60000;
-    if (gapMin <= 90) {
-      currentSession.push(settled[i]);
-    } else {
-      sessions.push(currentSession);
-      currentSession = [settled[i]];
+  for (const sequence of sequences) {
+    let currentSession: Bet[] = [];
+    for (const bet of sequence) {
+      if (currentSession.length > 0) {
+        const previousTime = betSequenceTimeMs(currentSession[currentSession.length - 1]);
+        const currentTime = betSequenceTimeMs(bet);
+        if (previousTime === null || currentTime === null || (currentTime - previousTime) / 60000 > 90) {
+          sessions.push(currentSession);
+          currentSession = [];
+        }
+      }
+      currentSession.push(bet);
     }
+    if (currentSession.length > 0) sessions.push(currentSession);
   }
-  sessions.push(currentSession);
 
   const escalations = sessions
     .filter((s) => s.length >= 3)
@@ -125,8 +137,8 @@ export function deriveBehavioralInsight(bets?: Bet[], emotionScore?: number): Be
         heroStat: `${rounded}x`,
         heroLabel: 'larger stakes than when you started',
         verdict: rounded >= 2
-          ? "You escalate hard within sessions. Winning makes you confident. Losing makes you chase. Both cost you."
-          : "Your stakes creep up during sessions. Setting a flat unit size would change your results.",
+          ? 'Stakes rose sharply within these sessions. Settlement times are unavailable, so the sequence does not show what caused the increase.'
+          : 'Stakes rose within these sessions. Settlement times are unavailable, so the sequence does not show what caused the increase.',
       };
     }
   }
@@ -140,6 +152,7 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   if (!bets || bets.length < 10) return [];
 
   const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
+  const sequences = comparableBetSequences(settled);
   const roasts: RoastStat[] = [];
 
   // 1. Most-bet losing team/description pattern.
@@ -177,15 +190,18 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   }
 
   // 2. Late night record
-  const lateNight = settled.filter((b) => {
-    const h = new Date(b.placed_at).getUTCHours();
-    return h >= 3 && h <= 9;
+  const timeBearingCount = settled.filter((bet) => betSourceHour(bet) !== null).length;
+  const hasReliableClockCoverage = timeBearingCount >= 5
+    && timeBearingCount / Math.max(1, settled.length) >= 0.95;
+  const sourceClockWindow = settled.filter((b) => {
+    const hour = betSourceHour(b);
+    return hour !== null && (hour >= 23 || hour <= 4);
   });
-  if (lateNight.length >= 5) {
-    const lnWins = lateNight.filter((b) => b.result === 'win').length;
-    const lnLosses = lateNight.length - lnWins;
+  if (hasReliableClockCoverage && sourceClockWindow.length >= 5) {
+    const lnWins = sourceClockWindow.filter((b) => b.result === 'win').length;
+    const lnLosses = sourceClockWindow.length - lnWins;
     roasts.push({
-      text: `After-midnight bets: ${lnWins}-${lnLosses}. ${lnWins < lnLosses ? 'Maybe sleep on it.' : 'Night owl with an edge.'}`,
+      text: `Source-clock 11pm to 4:59am record: ${lnWins}-${lnLosses}. This clock is not assumed to be local time.`,
     });
   }
 
@@ -208,7 +224,8 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   // 4. Biggest single-day loss count
   const dayPnL = new Map<string, { losses: number; count: number }>();
   settled.forEach((b) => {
-    const day = b.placed_at.split('T')[0];
+    const day = betRecordedDate(b);
+    if (!day) return;
     const d = dayPnL.get(day) ?? { losses: 0, count: 0 };
     d.count++;
     if (b.result === 'loss') d.losses++;
@@ -230,19 +247,21 @@ export function generateRoastStats(bets?: Bet[]): RoastStat[] {
   }
 
   // 5. Longest losing streak
-  let maxLoseStreak = 0, curLose = 0;
-  const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  for (const b of sorted) {
-    if (b.result === 'loss') {
-      curLose++;
-      if (curLose > maxLoseStreak) maxLoseStreak = curLose;
-    } else {
-      curLose = 0;
+  let maxLoseStreak = 0;
+  for (const sequence of sequences) {
+    let curLose = 0;
+    for (const b of sequence) {
+      if (b.result === 'loss') {
+        curLose++;
+        if (curLose > maxLoseStreak) maxLoseStreak = curLose;
+      } else {
+        curLose = 0;
+      }
     }
   }
   if (maxLoseStreak >= 5) {
     roasts.push({
-      text: `${maxLoseStreak}-bet losing streak. The comeback started on bet ${maxLoseStreak + 1}.`,
+      text: `${maxLoseStreak}-bet losing streak in the comparable source order.`,
     });
   }
 

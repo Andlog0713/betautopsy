@@ -15,6 +15,7 @@ import {
   calculateMetricsOnly,
 } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── Fixture helpers ──
 
@@ -22,7 +23,7 @@ let betId = 0;
 
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   betId++;
-  return {
+  return markFixtureTimestampAsSourced({
     id: `test-${betId}`,
     user_id: 'user-test',
     placed_at: '2025-03-15T14:00:00Z',
@@ -43,7 +44,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: 'upload-test',
     created_at: '2025-03-15T14:00:00Z',
     ...overrides,
-  };
+  });
 }
 
 function makeBetSequence(
@@ -339,6 +340,30 @@ describe('Scenario 4: Loss chaser', () => {
       currentStake = 50;
     }
   }
+
+  it('describes result-sequence associations without inventing settlement order', () => {
+    const metrics = calculateMetrics(bets, 5000);
+    const bias = metrics.biases_detected.find((item) => item.bias_name === 'Post-Loss Escalation');
+    const longSequence = Array.from({ length: 120 }, (_, index) => {
+      const placedAt = new Date(Date.UTC(2025, 0, 1, 0, index)).toISOString();
+      const result = index % 2 === 0 ? 'loss' as const : 'win' as const;
+      const stake = result === 'loss' ? 50 : 200;
+      const win = winFor(stake, -110);
+      return makeBet({
+        placed_at: placedAt,
+        created_at: placedAt,
+        result,
+        stake,
+        payout: result === 'win' ? win.payout : 0,
+        profit: result === 'win' ? win.profit : -stake,
+      });
+    });
+    const enhanced = calculateEnhancedTilt(calculateMetrics(longSequence, 5000), longSequence);
+
+    expect(bias?.data).toContain('later settled as a loss');
+    expect(enhanced.worst_trigger).toContain('Settlement timing is unavailable');
+    expect(`${bias?.data} ${enhanced.worst_trigger}`).not.toMatch(/after losses?|loss triggered/i);
+  });
 
   runAllSnapshots('Loss chaser', bets);
 });
@@ -717,6 +742,33 @@ describe('Edge cases', () => {
     const metrics = calculateMetrics(bets, 5000);
     const contradictions = detectContradictions(metrics, bets);
     expect(contradictions).toMatchSnapshot();
+  });
+
+  it('keeps sport-mismatch cost on the frozen cohort instead of annualizing it', () => {
+    const nba = makeBetSequence(40, () => ({
+      sport: 'NBA',
+      league: 'NBA',
+      result: 'loss' as const,
+      stake: 100,
+      payout: 0,
+      profit: -100,
+    }));
+    const nfl = makeBetSequence(20, () => ({
+      sport: 'NFL',
+      league: 'NFL',
+      result: 'win' as const,
+      stake: 100,
+      payout: 191,
+      profit: 91,
+    }));
+    const bets = [...nba, ...nfl];
+    const contradiction = detectContradictions(calculateMetrics(bets, 5000), bets)
+      .find((item) => item.title === 'Your Identity Sport Is Your Worst Sport');
+
+    expect(contradiction).toMatchObject({ historicalCost: 4000 });
+    expect(contradiction?.annualCost).toBeUndefined();
+    expect(contradiction?.insight).toContain("improves this report's historical P&L by ~$4,000");
+    expect(contradiction?.insight).not.toContain('/year');
   });
 
   it('generatePertinentNegatives', () => {

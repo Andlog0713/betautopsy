@@ -1,7 +1,21 @@
 import type { Bet, AutopsyAnalysis, TimingAnalysis, TimingBucket, OddsAnalysis, OddsBucket, DFSDetection, DFSMetrics, BetIQResult, BetIQComponent, EnhancedTiltResult, TiltSignals, SportSpecificFinding, DetectedSession, SessionDetectionResult, BetAnnotation, BetSignal, BetClassification, AnnotationSummary, VisibilityTag, ExecutiveDiagnosis, PatternSnapshotEntry, SummaryCounts, TopDamageEntry, Recommendation, BiasDetected, SeverityTier, SubSplit, SessionAnalysis, SessionDetail, EdgeProfile, EdgeArea, EdgeAreaUnprofitable } from '@/types';
 import { formatParlayForClaude } from '@/lib/format-parlay';
 import { formatApproxUSD } from '@/lib/utils';
-import { getUTCHour, getUTCMinute, getUTCDayOfWeek, isMidnightUTC, formatUTCDate, formatUTCTime, formatUTCMonthDay } from '@/lib/date-utils';
+import {
+  betHasKnownTimezone,
+  betHasLegacyUnknownTime,
+  betRecordedDate,
+  betSequencePartition,
+  betSequenceTimeMs,
+  betSourceDayOfWeek,
+  betSourceHour,
+  comparableBetSequences,
+  compareBetsByRecordedTime,
+  formatRecordedDate,
+  formatSourceTime,
+  stripLocalTimeBehaviorSentences,
+  stripUnprovableResultSequenceSentences,
+} from '@/lib/temporal-provenance';
 import { logErrorServer } from '@/lib/log-error-server';
 import { BET_COUNT_THRESHOLDS } from '@/lib/engine/constants/thresholds';
 import { checkSufficiency, gateArray } from '@/lib/engine/helpers/sufficiencyGate';
@@ -13,6 +27,17 @@ import { buildReportCharts, buildSessionTimelineSilhouette } from '@/lib/engine/
 import { applySmallSampleBiasTier, buildSufficiencyState, isLimitedSample } from '@/lib/engine/sufficiency';
 import { attachCanonicalControlRules } from '@/lib/control-system';
 import { RESPONSIBLE_GAMBLING_DISCLAIMER } from '@/lib/support-resources';
+
+const MODEL_AUTHORED_NUMBER = /(?:[$%]|\b\d+(?:[.,]\d+)?\b|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|single|double|triple|twice|dozen|half|quarter)\b|\bper\s+(?:day|week|month|quarter|year|session)\b)/i;
+
+function stripModelNumberSentences(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) return undefined;
+  const sentences = value.match(/[^.!?]+(?:[.!?]+|$)/g) ?? [value];
+  const kept = sentences
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0 && !MODEL_AUTHORED_NUMBER.test(sentence));
+  return kept.length > 0 ? kept.join(' ') : undefined;
+}
 
 // Lazy-load the Anthropic SDK so it never lands in the client bundle.
 // `lib/autopsy-engine.ts` exports `calculateMetrics` (a pure server-or-client
@@ -242,18 +267,20 @@ export function calculateDFSMetrics(bets: Bet[]): DFSMetrics {
   });
   playerConcentration.sort((a, b) => b.count - a.count);
 
-  // Avg pick count + pick count after loss/win
+  // Avg pick count + pick count following rows later settled as losses/wins
   let totalPicks = 0;
-  const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  for (const b of sorted) totalPicks += getPickCount(b);
+  const sequences = comparableBetSequences(settled);
+  for (const b of settled) totalPicks += getPickCount(b);
   const avgPickCount = settled.length > 0 ? Math.round((totalPicks / settled.length) * 10) / 10 : 0;
 
   let picksAfterLoss = 0, countAfterLoss = 0, picksAfterWin = 0, countAfterWin = 0;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    const picks = getPickCount(sorted[i]);
-    if (prev.result === 'loss') { picksAfterLoss += picks; countAfterLoss++; }
-    else if (prev.result === 'win') { picksAfterWin += picks; countAfterWin++; }
+  for (const sequence of sequences) {
+    for (let i = 1; i < sequence.length; i++) {
+      const prev = sequence[i - 1];
+      const picks = getPickCount(sequence[i]);
+      if (prev.result === 'loss') { picksAfterLoss += picks; countAfterLoss++; }
+      else if (prev.result === 'win') { picksAfterWin += picks; countAfterWin++; }
+    }
   }
 
   const pickCountAfterLoss = countAfterLoss > 0 ? Math.round((picksAfterLoss / countAfterLoss) * 10) / 10 : avgPickCount;
@@ -391,26 +418,12 @@ const HOUR_LABELS = [
 
 function calculateTiming(bets: Bet[]): TimingAnalysis {
   const settled = bets.filter((b) => b.result === 'win' || b.result === 'loss');
-
-  // Detect if we actually have time data. Threshold was `< 0.8` (allow up
-  // to 80% midnight-artifact rows) - inverted from what it needed to be.
-  // A user at the population average (65.9% midnight) passed that gate and
-  // got a full late-night finding built mostly out of timestamp noise,
-  // since midnight (hour 0) is also the first hour in the late-night
-  // window below. Tightened to <= 0.05 (require ~95%+ real timestamps) as
-  // a launch stopgap. This ratio is still not the right long-term gate -
-  // it conflates "what fraction is midnight" with "is there enough real
-  // data," which have different denominators (1,000 bets at 65% midnight
-  // leaves 350 real ones, plenty; 20 bets at 5% midnight leaves 19, also
-  // fine; but the ratio alone can't distinguish a large real-but-noisy
-  // sample from a small clean one). v1.1: gate on an absolute count of
-  // real-timestamped settled bets instead, plus a disclosure naming which
-  // sportsbook(s) the real-timestamped subset actually came from, since
-  // date-only rows cluster by sportsbook and a coverage-based partial view
-  // would otherwise describe one book's behavior as the user's overall
-  // pattern.
-  const midnightCount = settled.filter((b) => isMidnightUTC(b.placed_at)).length;
-  const hasTimeData = settled.length >= 5 && midnightCount / settled.length <= 0.05;
+  const timeBearing = settled.filter((bet) => betSourceHour(bet) !== null);
+  const dateBearing = settled.filter((bet) => betSourceDayOfWeek(bet) !== null);
+  const timezoneBearing = timeBearing.filter(betHasKnownTimezone);
+  const legacyUnknown = settled.filter(betHasLegacyUnknownTime);
+  const timeCoverage = settled.length > 0 ? timeBearing.length / settled.length : 0;
+  const hasTimeData = timeBearing.length >= 5 && timeCoverage >= 0.95;
 
   // Initialize buckets
   const hourBuckets: { bets: number; wins: number; losses: number; staked: number; profit: number }[] =
@@ -419,24 +432,28 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
     Array.from({ length: 7 }, () => ({ bets: 0, wins: 0, losses: 0, staked: 0, profit: 0 }));
 
   for (const b of settled) {
-    const hour = getUTCHour(b.placed_at);
-    const day = getUTCDayOfWeek(b.placed_at); // 0=Sun
+    const hour = betSourceHour(b);
+    const day = betSourceDayOfWeek(b); // 0=Sun
 
     const stake = Number(b.stake);
     const profit = Number(b.profit);
     const isWin = b.result === 'win';
 
-    hourBuckets[hour].bets++;
-    hourBuckets[hour].staked += stake;
-    hourBuckets[hour].profit += profit;
-    if (isWin) hourBuckets[hour].wins++;
-    else hourBuckets[hour].losses++;
+    if (hour !== null) {
+      hourBuckets[hour].bets++;
+      hourBuckets[hour].staked += stake;
+      hourBuckets[hour].profit += profit;
+      if (isWin) hourBuckets[hour].wins++;
+      else hourBuckets[hour].losses++;
+    }
 
-    dayBuckets[day].bets++;
-    dayBuckets[day].staked += stake;
-    dayBuckets[day].profit += profit;
-    if (isWin) dayBuckets[day].wins++;
-    else dayBuckets[day].losses++;
+    if (day !== null) {
+      dayBuckets[day].bets++;
+      dayBuckets[day].staked += stake;
+      dayBuckets[day].profit += profit;
+      if (isWin) dayBuckets[day].wins++;
+      else dayBuckets[day].losses++;
+    }
   }
 
   function toBucket(raw: { bets: number; wins: number; losses: number; staked: number; profit: number }, label: string): TimingBucket {
@@ -464,15 +481,10 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
   const worstWindow = allBuckets.length > 0 ? { label: allBuckets[0].label, roi: allBuckets[0].roi, count: allBuckets[0].bets } : null;
   const bestWindow = allBuckets.length > 0 ? { label: allBuckets[allBuckets.length - 1].label, roi: allBuckets[allBuckets.length - 1].roi, count: allBuckets[allBuckets.length - 1].bets } : null;
 
-  // Late night stats (11pm-4am). Hour 0 (exact midnight) is deliberately
-  // excluded from this bucket - it's the one hour date-only CSV rows
-  // parse to, so including it means every midnight-artifact bet counts as
-  // "late night" regardless of the hasTimeData gate above. Same tradeoff
-  // PR #80 already accepted for the qualitative late-night bias detector
-  // (a genuine 00:00:00 bet is the one false negative); this is a
-  // separate computation that PR #80 never touched.
-  const lateNightHours = [23, 1, 2, 3, 4];
-  const lateNight = lateNightHours.reduce(
+  // Source provenance distinguishes a genuine midnight from a date-only
+  // value, so midnight can remain in this source-clock observation.
+  const sourceWindowHours = [23, 0, 1, 2, 3, 4];
+  const sourceWindow = sourceWindowHours.reduce(
     (acc, h) => {
       acc.count += hourBuckets[h].bets;
       acc.staked += hourBuckets[h].staked;
@@ -481,11 +493,11 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
     },
     { count: 0, staked: 0, profit: 0 }
   );
-  const lateNightStats = lateNight.count >= 3
+  const sourceClockWindowStats = sourceWindow.count >= 3
     ? {
-        count: lateNight.count,
-        roi: lateNight.staked > 0 ? round2((lateNight.profit / lateNight.staked) * 100) : 0,
-        pct_of_total: settled.length > 0 ? round2((lateNight.count / settled.length) * 100) : 0,
+        count: sourceWindow.count,
+        roi: sourceWindow.staked > 0 ? round2((sourceWindow.profit / sourceWindow.staked) * 100) : 0,
+        pct_of_total: timeBearing.length > 0 ? round2((sourceWindow.count / timeBearing.length) * 100) : 0,
       }
     : null;
 
@@ -503,8 +515,20 @@ function calculateTiming(bets: Bet[]): TimingAnalysis {
     by_day: byDay,
     best_window: hasTimeData ? bestWindow : null,
     worst_window: hasTimeData ? worstWindow : null,
-    late_night_stats: hasTimeData ? lateNightStats : null,
+    late_night_stats: null,
+    source_clock_window_stats: hasTimeData ? sourceClockWindowStats : null,
     has_time_data: hasTimeData,
+    clock_basis: 'source_clock',
+    clock_label: timeBearing.length === 0
+      ? 'No sourced clock values available'
+      : timezoneBearing.length === timeBearing.length
+        ? 'Clock time and timezone supplied by source'
+        : 'Clock time supplied by source; timezone may be unknown',
+    time_bearing_bets: timeBearing.length,
+    date_bearing_bets: dateBearing.length,
+    timezone_bearing_bets: timezoneBearing.length,
+    legacy_unknown_bets: legacyUnknown.length,
+    local_time_confirmed: false,
   };
 }
 
@@ -518,8 +542,9 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       odds: Number.isFinite(Number(b.odds)) ? Number(b.odds) : 0,
       payout: Number.isFinite(Number(b.payout)) ? Number(b.payout) : 0,
     }))
-    .sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+    .sort(compareBetsByRecordedTime);
   const settled = sorted.filter((b) => b.result === 'win' || b.result === 'loss');
+  const comparableSequences = comparableBetSequences(sorted);
 
   // Summary
   const totalBets = sorted.length;
@@ -538,10 +563,14 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const settledCount = sorted.filter((b) => ['win', 'loss', 'push'].includes(b.result)).length;
   const winRate = settledCount > 0 ? (wins / settledCount) * 100 : 0;
 
-  const dateStart = sorted[0]?.placed_at ?? '';
-  const dateEnd = sorted[sorted.length - 1]?.placed_at ?? '';
+  const recordedDates = sorted
+    .map(betRecordedDate)
+    .filter((date): date is string => Boolean(date))
+    .sort();
+  const dateStart = recordedDates[0] ?? null;
+  const dateEnd = recordedDates[recordedDates.length - 1] ?? null;
   const dateRange = dateStart && dateEnd
-    ? `${fmtDate(dateStart)} to ${fmtDate(dateEnd)}`
+    ? `${dateStart} to ${dateEnd}`
     : 'Unknown';
 
   // Stake CV — odds-normalized to avoid penalizing intentional sizing
@@ -566,13 +595,15 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const stdDev = Math.sqrt(variance);
   const stakeCv = normMean > 0 ? stdDev / normMean : 0;
 
-  // Loss chase ratio (profit sums feed the Post-Loss Escalation sub_splits)
+  // Result-sequence stake ratio (profit sums feed the Post-Loss Escalation sub_splits)
   let stakeAfterLoss = 0, countAfterLoss = 0, stakeAfterWin = 0, countAfterWin = 0;
   let profitAfterLoss = 0, profitAfterWin = 0;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    if (prev.result === 'loss') { stakeAfterLoss += Number(sorted[i].stake); countAfterLoss++; profitAfterLoss += Number(sorted[i].profit); }
-    else if (prev.result === 'win') { stakeAfterWin += Number(sorted[i].stake); countAfterWin++; profitAfterWin += Number(sorted[i].profit); }
+  for (const sequence of comparableSequences) {
+    for (let i = 1; i < sequence.length; i++) {
+      const prev = sequence[i - 1];
+      if (prev.result === 'loss') { stakeAfterLoss += Number(sequence[i].stake); countAfterLoss++; profitAfterLoss += Number(sequence[i].profit); }
+      else if (prev.result === 'win') { stakeAfterWin += Number(sequence[i].stake); countAfterWin++; profitAfterWin += Number(sequence[i].profit); }
+    }
   }
   const avgAfterLoss = countAfterLoss > 0 ? stakeAfterLoss / countAfterLoss : avgStake;
   const avgAfterWin = countAfterWin > 0 ? stakeAfterWin / countAfterWin : avgStake;
@@ -582,41 +613,54 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   const stakeVolatility = stakeCv < 0.5 ? 0 : stakeCv < 0.8 ? 3 : stakeCv < 1.0 ? 7 : stakeCv < 1.5 ? 12 : stakeCv < 2.0 ? 18 : 25;
   const lossChasingPts = lossChaseRatio < 1.15 ? 0 : lossChaseRatio < 1.3 ? 4 : lossChaseRatio < 1.6 ? 9 : lossChaseRatio < 2.0 ? 15 : lossChaseRatio < 3.0 ? 20 : 25;
 
-  // Behavior during losing streaks
+  // Patterns within source-ordered runs later settled as losses
   let streakBehaviorPts = 0;
   let rapidFireInStreaks = 0;
   let marathonEscalation = false;
   let streakFreqIncrease = 1.0;
   {
-    // Count rapid-fire bets during loss streaks (within 2 hours)
+    // Count tightly spaced rows within losing-result runs (within 2 hours)
     let lossRun = 0;
     let betsInStreakSession = 0;
     let stakesEscalating = false;
-    for (let i = 0; i < sorted.length; i++) {
-      if (sorted[i].result === 'loss') {
-        lossRun++;
-        if (lossRun >= 3) {
-          if (i > 0) {
-            const gap = new Date(sorted[i].placed_at).getTime() - new Date(sorted[i - 1].placed_at).getTime();
-            if (gap < 7200000) { rapidFireInStreaks++; betsInStreakSession++; }
-            if (Number(sorted[i].stake) > Number(sorted[i - 1].stake) * 1.1) stakesEscalating = true;
+    for (const sequence of comparableSequences) {
+      lossRun = 0;
+      betsInStreakSession = 0;
+      stakesEscalating = false;
+      for (let i = 0; i < sequence.length; i++) {
+        if (sequence[i].result === 'loss') {
+          lossRun++;
+          if (lossRun >= 3 && i > 0) {
+            const thisTime = betSequenceTimeMs(sequence[i]);
+            const previousTime = betSequenceTimeMs(sequence[i - 1]);
+            if (thisTime !== null && previousTime !== null && thisTime - previousTime < 7200000) {
+              rapidFireInStreaks++;
+              betsInStreakSession++;
+            }
+            if (Number(sequence[i].stake) > Number(sequence[i - 1].stake) * 1.1) stakesEscalating = true;
           }
+        } else {
+          if (betsInStreakSession >= 8 && stakesEscalating) marathonEscalation = true;
+          lossRun = 0;
+          betsInStreakSession = 0;
+          stakesEscalating = false;
         }
-      } else {
-        if (betsInStreakSession >= 8 && stakesEscalating) marathonEscalation = true;
-        lossRun = 0;
-        betsInStreakSession = 0;
-        stakesEscalating = false;
       }
     }
-    // Estimate frequency increase during streaks vs normal
+    // Compare gaps inside losing-result runs with other comparable gaps
     const normalGaps: number[] = [];
     const streakGaps: number[] = [];
     let run = 0;
-    for (let i = 1; i < sorted.length; i++) {
-      const gap = new Date(sorted[i].placed_at).getTime() - new Date(sorted[i - 1].placed_at).getTime();
-      if (sorted[i - 1].result === 'loss') { run++; if (run >= 2) streakGaps.push(gap); }
-      else { run = 0; normalGaps.push(gap); }
+    for (const sequence of comparableSequences) {
+      run = 0;
+      for (let i = 1; i < sequence.length; i++) {
+        const thisTime = betSequenceTimeMs(sequence[i]);
+        const previousTime = betSequenceTimeMs(sequence[i - 1]);
+        if (thisTime === null || previousTime === null) continue;
+        const gap = thisTime - previousTime;
+        if (sequence[i - 1].result === 'loss') { run++; if (run >= 2) streakGaps.push(gap); }
+        else { run = 0; normalGaps.push(gap); }
+      }
     }
     const avgNormalGap = normalGaps.length > 0 ? normalGaps.reduce((a, b) => a + b, 0) / normalGaps.length : 1;
     const avgStreakGap = streakGaps.length > 0 ? streakGaps.reduce((a, b) => a + b, 0) / streakGaps.length : avgNormalGap;
@@ -631,20 +675,22 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
 
   // Session discipline
   const sessions: { bets: Bet[]; profit: number }[] = [];
-  let currentSession: Bet[] = [];
-  for (const bet of sorted) {
-    if (currentSession.length > 0) {
-      const lastTime = new Date(currentSession[currentSession.length - 1].placed_at).getTime();
-      const thisTime = new Date(bet.placed_at).getTime();
-      if (thisTime - lastTime > 3 * 3600000) {
-        sessions.push({ bets: currentSession, profit: currentSession.reduce((s, b) => s + Number(b.profit), 0) });
-        currentSession = [];
+  for (const sequence of comparableSequences) {
+    let currentSession: Bet[] = [];
+    for (const bet of sequence) {
+      if (currentSession.length > 0) {
+        const lastTime = betSequenceTimeMs(currentSession[currentSession.length - 1]);
+        const thisTime = betSequenceTimeMs(bet);
+        if (lastTime !== null && thisTime !== null && thisTime - lastTime > 3 * 3600000) {
+          sessions.push({ bets: currentSession, profit: currentSession.reduce((s, b) => s + Number(b.profit), 0) });
+          currentSession = [];
+        }
       }
+      currentSession.push(bet);
     }
-    currentSession.push(bet);
-  }
-  if (currentSession.length > 0) {
-    sessions.push({ bets: currentSession, profit: currentSession.reduce((s, b) => s + Number(b.profit), 0) });
+    if (currentSession.length > 0) {
+      sessions.push({ bets: currentSession, profit: currentSession.reduce((s, b) => s + Number(b.profit), 0) });
+    }
   }
 
   const winningSessions = sessions.filter((s) => s.profit > 0);
@@ -718,25 +764,27 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
   // Pre-classify biases
   const biases: CalculatedMetrics['biases_detected'] = [];
 
-  // Loss chasing
+  // Stake escalation in losing-result sequences
   if (lossChaseRatio >= 1.1) {
     const sev = lossChaseRatio >= 2.0 ? 'critical' : lossChaseRatio >= 1.5 ? 'high' : lossChaseRatio >= 1.3 ? 'medium' : 'low';
-    // Capture bets where stake increased after a loss
+    // Capture bets where stake increased after a row later settled as a loss.
     const chaseEvidence: { id: string; ratio: number }[] = [];
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i - 1].result === 'loss' && Number(sorted[i].stake) > Number(sorted[i - 1].stake) * 1.15) {
-        chaseEvidence.push({ id: sorted[i].id, ratio: Number(sorted[i].stake) / Number(sorted[i - 1].stake) });
+    for (const sequence of comparableSequences) {
+      for (let i = 1; i < sequence.length; i++) {
+        if (sequence[i - 1].result === 'loss' && Number(sequence[i].stake) > Number(sequence[i - 1].stake) * 1.15) {
+          chaseEvidence.push({ id: sequence[i].id, ratio: Number(sequence[i].stake) / Number(sequence[i - 1].stake) });
+        }
       }
     }
     chaseEvidence.sort((a, b) => b.ratio - a.ratio);
     biases.push({
       bias_name: 'Post-Loss Escalation', severity: sev,
-      data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake on bets following a losing bet: $${avgAfterLoss.toFixed(0)} vs following a winning bet: $${avgAfterWin.toFixed(0)})`,
+      data: `ratio: ${lossChaseRatio.toFixed(2)}x (avg stake on bets following a row later settled as a loss: $${avgAfterLoss.toFixed(0)} vs following a row later settled as a win: $${avgAfterWin.toFixed(0)}). Settlement timing is unavailable`,
       evidence_bet_ids: chaseEvidence.slice(0, 8).map(e => e.id),
       sample_size: countAfterLoss,
       sub_splits: [
-        { label: 'Bets following a losing bet', bets: countAfterLoss, roi_pct: stakeAfterLoss > 0 ? round2((profitAfterLoss / stakeAfterLoss) * 100) : null, net_usd: round2(profitAfterLoss) },
-        { label: 'Bets following a winning bet', bets: countAfterWin, roi_pct: stakeAfterWin > 0 ? round2((profitAfterWin / stakeAfterWin) * 100) : null, net_usd: round2(profitAfterWin) },
+        { label: 'Bets after rows later settled as losses', bets: countAfterLoss, roi_pct: stakeAfterLoss > 0 ? round2((profitAfterLoss / stakeAfterLoss) * 100) : null, net_usd: round2(profitAfterLoss) },
+        { label: 'Bets after rows later settled as wins', bets: countAfterWin, roi_pct: stakeAfterWin > 0 ? round2((profitAfterWin / stakeAfterWin) * 100) : null, net_usd: round2(profitAfterWin) },
       ],
     });
   }
@@ -840,45 +888,6 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
           { label: worst.category, bets: worst.count, roi_pct: round2(worst.roi), net_usd: round2(worst.profit) },
         ],
       });
-    }
-  }
-
-  // Late-Night Betting — 23:00-04:59 window. Skip if the CSV has no time-of-day data
-  // (avoids false positives when all bets land at midnight UTC from date-only timestamps).
-  const midnightOnlyCount = settled.filter((b) => isMidnightUTC(b.placed_at)).length;
-  const hasTimeOfDay = settled.length >= 5 && midnightOnlyCount / settled.length < 0.8;
-  if (hasTimeOfDay) {
-    const lateNightBets = settled.filter((b) => {
-      // Date-only CSV values parse to 00:00 UTC, which would land inside
-      // the 11pm-5am window artificially. Exclude exact midnight so a
-      // date-only parse never counts as late-night.
-      if (isMidnightUTC(b.placed_at)) return false;
-      const h = getUTCHour(b.placed_at);
-      return h >= 23 || h < 5;
-    });
-    if (lateNightBets.length >= 5) {
-      const lateNightPct = (lateNightBets.length / settled.length) * 100;
-      const lateNightStaked = lateNightBets.reduce((s, b) => s + Number(b.stake), 0);
-      const lateNightProfit = lateNightBets.reduce((s, b) => s + Number(b.profit), 0);
-      const lateNightRoi = lateNightStaked > 0 ? (lateNightProfit / lateNightStaked) * 100 : 0;
-      if (lateNightPct >= 25 && lateNightRoi < -10) {
-        const sev = lateNightRoi <= -30 ? 'high' : lateNightRoi <= -20 ? 'medium' : 'low';
-        const lateNightLosingIds = lateNightBets
-          .filter((b) => b.result === 'loss')
-          .sort((a, b) => Number(b.stake) - Number(a.stake))
-          .slice(0, 8)
-          .map((b) => b.id);
-        biases.push({
-          bias_name: 'Late-Night Betting',
-          severity: sev,
-          data: `${lateNightPct.toFixed(0)}% of bets after 11pm, ROI ${lateNightRoi.toFixed(1)}% ($${lateNightProfit.toFixed(0)})`,
-          evidence_bet_ids: lateNightLosingIds,
-          sample_size: lateNightBets.length,
-          sub_splits: [
-            { label: 'Bets 11pm-5am', bets: lateNightBets.length, roi_pct: round2(lateNightRoi), net_usd: round2(lateNightProfit) },
-          ],
-        });
-      }
     }
   }
 
@@ -990,7 +999,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
     }
     if (dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2 && countAfterLoss > 2) {
       const sev = dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.4 ? 'high' : 'medium';
-      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count on entries following a losing entry: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} following a win. Pick counts step up over the prior losing entry, reaching for bigger multipliers`, sample_size: countAfterLoss });
+      result.biases_detected.push({ bias_name: 'Multiplier Chasing', severity: sev, data: `Average pick count on entries following a row later settled as a loss: ${dm.pickCountAfterLoss} vs ${dm.pickCountAfterWin} following a row later settled as a win. Settlement timing is unavailable`, sample_size: countAfterLoss });
     }
     const topPlayer = dm.playerConcentration[0];
     if (topPlayer && topPlayer.percent >= 25) {
@@ -1074,47 +1083,7 @@ export function calculateMetrics(bets: Bet[], bankroll?: number | null): Calcula
       });
     }
 
-    // (B) Sustained Late-Night Concentration: the existing Late-Night
-    // detector requires lateNight to be >= 25% of total bets, which a
-    // high-volume user almost never hits even with hundreds of late-night
-    // bets. Absolute-count threshold (>= 100 late-night bets) catches a
-    // real recurring late-night cluster while the volume floor (settled
-    // >= 500) prevents false positives on small users who happen to bet
-    // at night.
-    const lateNightBets = settled.filter((b) => {
-      // Same date-only guard as the headline Late-Night detector: exact
-      // midnight is a date-only parse, not a real clock time.
-      if (isMidnightUTC(b.placed_at)) return false;
-      const h = getUTCHour(b.placed_at);
-      return h >= 23 || h < 5;
-    });
-    // Gate on hasTimeOfDay so a date-only history (no real timestamps) never
-    // produces a late-night cluster finding, even above the volume floor.
-    if (hasTimeOfDay && lateNightBets.length >= 100) {
-      const lnStaked = lateNightBets.reduce((s, b) => s + Number(b.stake), 0);
-      const lnProfit = lateNightBets.reduce((s, b) => s + Number(b.profit), 0);
-      const lnRoi = lnStaked > 0 ? (lnProfit / lnStaked) * 100 : 0;
-      if (lnRoi < -10) {
-        const sev = lnRoi <= -30 ? 'high' : lnRoi <= -20 ? 'medium' : 'low';
-        const lnEvidence = lateNightBets
-          .filter((b) => b.result === 'loss')
-          .sort((a, b) => Number(b.stake) - Number(a.stake))
-          .slice(0, 8)
-          .map((b) => b.id);
-        result.biases_detected.push({
-          bias_name: 'Sustained Late-Night Concentration',
-          severity: sev,
-          data: `${lateNightBets.length} bets placed after 11pm or before 5am at ${lnRoi.toFixed(1)}% ROI ($${lnProfit.toFixed(0)}). A recurring late-night cluster with this sample size is rarely a coincidence.`,
-          evidence_bet_ids: lnEvidence,
-          sample_size: lateNightBets.length,
-          sub_splits: [
-            { label: 'Bets 11pm-5am', bets: lateNightBets.length, roi_pct: round2(lnRoi), net_usd: round2(lnProfit) },
-          ],
-        });
-      }
-    }
-
-    // (C) Chronic Emotional Drag: reads from the bet-by-bet annotations
+    // (B) Chronic Emotional Drag: reads from the bet-by-bet annotations
     // computed above. Annotations classify each bet as disciplined,
     // emotional, chasing, impulsive, or neutral; their summed emotional
     // cost is a robust per-bet signal even when no single session crosses
@@ -1186,7 +1155,7 @@ function determineArchetype(
   }
   // The Tilter — decent picks, emotions ruin it
   if (hasProfitableCats && emotionScore > 55 && lossChaseRatio > 1.4) {
-    return { name: 'The Tilter', description: "Your strategy has promise but your emotions are eating the profit." };
+    return { name: 'The Tilter', description: "Your strategy has promise, but stakes rise across losing-result sequences. Settlement timing is unavailable, so the report does not claim those results caused the increases." };
   }
   // The Grinder — heavy favorites, paying juice (Chalk profile)
   if (favPct >= 65 && stakeCv < 0.8 && roi < 0) {
@@ -1240,7 +1209,7 @@ function determineDFSArchetype(dm: DFSMetrics, emotionScore: number, stakeCv: nu
   }
   // The Tilter — emotional + chasing bigger multipliers
   if (emotionScore > 55 && dm.pickCountAfterLoss > dm.pickCountAfterWin * 1.2) {
-    return { name: 'The Tilter', description: "Your reads aren't bad, but your emotions turn winners into losing weeks. After losses you chase bigger multipliers." };
+    return { name: 'The Tilter', description: "Your reads aren't bad, but entries following rows later settled as losses carry bigger multipliers. Settlement timing is unavailable, so the sequence does not establish what caused the change." };
   }
   // The Lottery Bettor — high-pick fallback
   if (highPickPct > 60) {
@@ -1392,7 +1361,8 @@ export function estimatePercentile(
 // same drift risk this function exists to close.
 function buildSessionAnalysis(
   sessionDetection: SessionDetectionResult,
-  claudeSessionAnalysis: unknown
+  claudeSessionAnalysis: unknown,
+  localTimeConfirmed: boolean,
 ): SessionAnalysis | undefined {
   const { worstSession, bestSession } = sessionDetection;
   if (!worstSession || !bestSession) return undefined;
@@ -1418,12 +1388,19 @@ function buildSessionAnalysis(
   const fallbackDescription = (s: DetectedSession) =>
     `${s.grade}-graded session on ${s.date}: ${s.bets} bets, ${s.profit >= 0 ? '+' : '-'}$${Math.abs(s.profit).toFixed(0)}.`;
 
+  const safeDescription = (description: string | undefined, session: DetectedSession) => {
+    const numberSafe = stripModelNumberSentences(description);
+    const sequenceSafe = stripUnprovableResultSequenceSentences(numberSafe);
+    if (localTimeConfirmed) return sequenceSafe || fallbackDescription(session);
+    return stripLocalTimeBehaviorSentences(sequenceSafe) || fallbackDescription(session);
+  };
+
   return {
     total_sessions: sessionDetection.totalSessions,
     avg_bets_per_winning_session: avgBets(sessionDetection.sessions.filter(s => s.profit > 0)),
     avg_bets_per_losing_session: avgBets(sessionDetection.sessions.filter(s => s.profit < 0)),
-    worst_session: toDetail(worstSession, claude.worst_session?.description || fallbackDescription(worstSession)),
-    best_session: toDetail(bestSession, claude.best_session?.description || fallbackDescription(bestSession)),
+    worst_session: toDetail(worstSession, safeDescription(claude.worst_session?.description, worstSession)),
+    best_session: toDetail(bestSession, safeDescription(claude.best_session?.description, bestSession)),
     insight: sessionDetection.insight,
   };
 }
@@ -1504,36 +1481,48 @@ function buildEdgeProfile(
   metrics: CalculatedMetrics,
   bets: Bet[],
   drops: EngineDrop[],
-  reportId?: string
+  reportId?: string,
+  localTimeConfirmed = false,
 ): EdgeProfile | undefined {
   if (!claudeEdgeProfile || typeof claudeEdgeProfile !== 'object') return undefined;
   const claude = claudeEdgeProfile as Record<string, unknown>;
   return {
     profitable_areas: buildEdgeAreas<EdgeArea>(claude.profitable_areas, metrics.category_roi, 'profitable', drops, reportId),
     unprofitable_areas: buildEdgeAreas<EdgeAreaUnprofitable>(claude.unprofitable_areas, metrics.category_roi, 'unprofitable', drops, reportId),
-    reallocation_advice: (claude.reallocation_advice as string) ?? '',
+    reallocation_advice: localTimeConfirmed
+      ? stripModelNumberSentences(claude.reallocation_advice) ?? ''
+      : stripLocalTimeBehaviorSentences(stripModelNumberSentences(claude.reallocation_advice)) ?? '',
     sharp_score: calculateSharpScore(metrics, bets),
   };
 }
 
-// Plausibility bound for biases_detected[].estimated_cost: the model's
-// dollar figure can't exceed the actual net loss across the bets backing
-// this bias's sample_size. Not a full per-bias counterfactual (that's
-// v1.1 - see PROGRESS.md) - just a ceiling, using data the engine already
-// computed for sub_splits. Priority note: on snapshots this field is
-// already redacted to 0 (estimated_cost_visibility: 'redacted_dollar'),
-// so it's specifically the customer who paid for the full report who was
-// exposed to an unbounded invented number, not the free tier.
-//
-// sub_splits[] always includes one entry whose `bets` count matches
-// sample_size exactly - the full population this bias is about, not the
-// evidence_bet_ids sample (capped at 8 examples, too small to bound
-// against). That entry's net_usd is the real, already-computed dollar
-// outcome for that population.
-function estimatedCostBound(jsBias: CalculatedMetrics['biases_detected'][number]): number | undefined {
+// Deterministic historical counterfactual for biases_detected[].estimated_cost.
+// The model never supplies this number. Most detectors identify one complete
+// flagged cohort in sub_splits, so excluding a losing cohort changes historical
+// P&L by exactly its net loss. Stake Volatility uses the engine's flat-stake
+// counterfactual. Chronic Emotional Drag already computes a positive cost from
+// the disciplined-vs-emotional ROI difference. If no matching calculation
+// exists, zero is the required wire-safe unknown sentinel and visibility rules
+// keep it off user-facing cost surfaces.
+function deterministicBiasCost(
+  jsBias: CalculatedMetrics['biases_detected'][number],
+  metrics: CalculatedMetrics,
+): number {
+  if (jsBias.bias_name === 'Stake Volatility') {
+    return round2(Math.max(
+      0,
+      metrics.what_ifs.flat_stake.hypothetical_profit - metrics.what_ifs.actual_profit,
+    ));
+  }
+
+  if (jsBias.bias_name === 'Chronic Emotional Drag') {
+    const costSplit = jsBias.sub_splits?.find((split) => split.net_usd != null);
+    return round2(Math.max(0, costSplit?.net_usd ?? 0));
+  }
+
   const fullSplit = jsBias.sub_splits?.find((s) => s.bets === jsBias.sample_size);
-  if (!fullSplit || fullSplit.net_usd == null) return undefined;
-  return fullSplit.net_usd < 0 ? Math.abs(fullSplit.net_usd) : 0;
+  if (!fullSplit || fullSplit.net_usd == null) return 0;
+  return fullSplit.net_usd < 0 ? round2(Math.abs(fullSplit.net_usd)) : 0;
 }
 
 function calculateSharpScore(metrics: CalculatedMetrics, bets: Bet[]): number {
@@ -1669,7 +1658,11 @@ export function calculateBetIQ(metrics: CalculatedMetrics, bets: Bet[]): BetIQRe
 
   // COMPONENT 5: TIMING (0-10)
   let timing = 0;
-  if (metrics.timing && metrics.timing.has_time_data) {
+  if (
+    metrics.timing
+    && metrics.timing.has_time_data
+    && metrics.timing.local_time_confirmed === true
+  ) {
     const lateNight = metrics.timing.late_night_stats;
     if (!lateNight || lateNight.pct_of_total < 5) timing += 5;
     else if (lateNight.pct_of_total < 15) timing += 3;
@@ -1738,24 +1731,26 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
     };
   }
 
-  const sorted = [...settled].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  const sequences = comparableBetSequences(settled);
 
   // SESSION ACCELERATION (0-25)
   let sessionAcceleration = 0;
   const sessions: Bet[][] = [];
-  let currentSession: Bet[] = [];
-  for (const bet of sorted) {
-    if (currentSession.length === 0) { currentSession.push(bet); continue; }
-    const lastTime = new Date(currentSession[currentSession.length - 1].placed_at).getTime();
-    const thisTime = new Date(bet.placed_at).getTime();
-    if ((thisTime - lastTime) / (1000 * 60 * 60) <= 3) {
-      currentSession.push(bet);
-    } else {
-      if (currentSession.length >= 4) sessions.push([...currentSession]);
-      currentSession = [bet];
+  for (const sequence of sequences) {
+    let currentSession: Bet[] = [];
+    for (const bet of sequence) {
+      if (currentSession.length === 0) { currentSession.push(bet); continue; }
+      const lastTime = betSequenceTimeMs(currentSession[currentSession.length - 1]);
+      const thisTime = betSequenceTimeMs(bet);
+      if (lastTime !== null && thisTime !== null && (thisTime - lastTime) / (1000 * 60 * 60) <= 3) {
+        currentSession.push(bet);
+      } else {
+        if (currentSession.length >= 4) sessions.push([...currentSession]);
+        currentSession = [bet];
+      }
     }
+    if (currentSession.length >= 4) sessions.push(currentSession);
   }
-  if (currentSession.length >= 4) sessions.push(currentSession);
 
   if (sessions.length >= 2) {
     let acceleratingSessions = 0;
@@ -1765,8 +1760,13 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
       const mid = Math.floor(session.length / 2);
       const firstHalf = session.slice(0, mid);
       const secondHalf = session.slice(mid);
-      const firstSpan = Math.max((new Date(firstHalf[firstHalf.length - 1].placed_at).getTime() - new Date(firstHalf[0].placed_at).getTime()) / 3600000, 0.1);
-      const secondSpan = Math.max((new Date(secondHalf[secondHalf.length - 1].placed_at).getTime() - new Date(secondHalf[0].placed_at).getTime()) / 3600000, 0.1);
+      const firstStart = betSequenceTimeMs(firstHalf[0]);
+      const firstEnd = betSequenceTimeMs(firstHalf[firstHalf.length - 1]);
+      const secondStart = betSequenceTimeMs(secondHalf[0]);
+      const secondEnd = betSequenceTimeMs(secondHalf[secondHalf.length - 1]);
+      if (firstStart === null || firstEnd === null || secondStart === null || secondEnd === null) continue;
+      const firstSpan = Math.max((firstEnd - firstStart) / 3600000, 0.1);
+      const secondSpan = Math.max((secondEnd - secondStart) / 3600000, 0.1);
       const firstRate = firstHalf.length / firstSpan;
       const secondRate = secondHalf.length / secondSpan;
       if (secondRate > firstRate * 1.3) {
@@ -1789,14 +1789,16 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
   let oddsDrift = 0;
   const afterWinOdds: number[] = [];
   const afterLossOdds: number[] = [];
-  for (let i = 1; i < sorted.length; i++) {
-    const prevResult = sorted[i - 1].result;
-    const odds = Number(sorted[i].odds);
-    const impliedProb = odds > 0
-      ? 100 / (odds + 100) * 100
-      : Math.abs(odds) / (Math.abs(odds) + 100) * 100;
-    if (prevResult === 'win') afterWinOdds.push(impliedProb);
-    else if (prevResult === 'loss') afterLossOdds.push(impliedProb);
+  for (const sequence of sequences) {
+    for (let i = 1; i < sequence.length; i++) {
+      const prevResult = sequence[i - 1].result;
+      const odds = Number(sequence[i].odds);
+      const impliedProb = odds > 0
+        ? 100 / (odds + 100) * 100
+        : Math.abs(odds) / (Math.abs(odds) + 100) * 100;
+      if (prevResult === 'win') afterWinOdds.push(impliedProb);
+      else if (prevResult === 'loss') afterLossOdds.push(impliedProb);
+    }
   }
   if (afterWinOdds.length >= 10 && afterLossOdds.length >= 10) {
     const avgAfterWin = afterWinOdds.reduce((s, v) => s + v, 0) / afterWinOdds.length;
@@ -1832,11 +1834,11 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
   const worstSignal = signalEntries.reduce((a, b) => b[1] > a[1] ? b : a);
   const triggerDescriptions: Record<string, string> = {
     bet_sizing_volatility: `Your bet sizes vary wildly. A ${metrics.stake_cv.toFixed(1)}x coefficient of variation suggests emotional sizing.`,
-    loss_reaction: `Your stakes increase ${metrics.loss_chase_ratio.toFixed(1)}x after losses. Classic loss chasing.`,
-    streak_behavior: 'Your betting behavior deteriorates significantly during losing streaks.',
-    session_discipline: 'Your losing sessions run much longer than your winning ones. You don\'t know when to stop.',
-    session_acceleration: 'Your bet frequency increases within sessions. You place bets faster as sessions progress, especially after losses.',
-    odds_drift_after_loss: 'After losses, you shift toward longer odds. Chasing bigger payouts to recover instead of sticking to your edge.',
+    loss_reaction: `In source order, stakes on bets following rows later settled as losses are ${metrics.loss_chase_ratio.toFixed(1)}x the comparison baseline. Settlement timing is unavailable, so this does not establish a reaction to a result.`,
+    streak_behavior: 'Source-ordered runs later settled as losses contain faster pacing or stake escalation. Settlement timing is unavailable, so this does not establish that known losses caused the pattern.',
+    session_discipline: 'Sessions that ended negative run much longer than sessions that ended positive.',
+    session_acceleration: 'Your bet frequency increases within sessions. You place bets faster as sessions progress.',
+    odds_drift_after_loss: 'In source order, bets following rows later settled as losses shift toward longer odds. Settlement timing is unavailable, so this does not establish a reaction to a result.',
   };
 
   return {
@@ -1849,12 +1851,6 @@ export function calculateEnhancedTilt(metrics: CalculatedMetrics, bets: Bet[]): 
 }
 
 // ── Behavioral Contradictions ──
-
-function daysBetweenFirstAndLastBet(bets: Bet[]): number {
-  if (bets.length < 2) return 1;
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  return Math.max(1, (new Date(sorted[sorted.length - 1].placed_at).getTime() - new Date(sorted[0].placed_at).getTime()) / 86400000);
-}
 
 export function detectContradictions(
   metrics: CalculatedMetrics,
@@ -1884,15 +1880,15 @@ export function detectContradictions(
       topEdge.count >= 10
     ) {
       const volumePct = ((topVolume.count / settled.length) * 100).toFixed(0);
-      const annualCost = Math.abs(topVolume.profit) * (365 / Math.max(1, daysBetweenFirstAndLastBet(bets)));
+      const historicalCost = round2(Math.abs(Math.min(0, topVolume.profit)));
       contradictions.push({
         title: 'Your Identity Sport Is Your Worst Sport',
-        insight: `${volumePct}% of your bets go to ${topVolume.category} (${topVolume.roi.toFixed(1)}% ROI), while your actual edge is in ${topEdge.category} (${topEdge.roi.toFixed(1)}% ROI, ${topEdge.count} bets). Reallocating volume toward your proven edge could recover an estimated $${Math.round(annualCost).toLocaleString()}/year.`,
+        insight: `${volumePct}% of your bets go to ${topVolume.category} (${topVolume.roi.toFixed(1)}% ROI), while your actual edge is in ${topEdge.category} (${topEdge.roi.toFixed(1)}% ROI, ${topEdge.count} bets). Excluding the ${topVolume.category} cohort improves this report's historical P&L by ${formatApproxUSD(historicalCost)}.`,
         volumeLabel: 'YOUR VOLUME',
         volumeData: `${topVolume.category}: ${topVolume.count} bets, ${topVolume.roi.toFixed(1)}% ROI`,
         edgeLabel: 'YOUR EDGE',
         edgeData: `${topEdge.category}: ${topEdge.count} bets, +${topEdge.roi.toFixed(1)}% ROI`,
-        annualCost: Math.round(annualCost),
+        historicalCost,
       });
     }
   }
@@ -1955,7 +1951,8 @@ export function generatePertinentNegatives(
   detectedBiasNames: string[],
   behavioralPatterns?: { pattern_name: string; impact: string }[],
   strategicLeaks?: { category: string }[],
-  oddsAnalysis?: { worst_bucket?: { label: string } | null } | null
+  oddsAnalysis?: { worst_bucket?: { label: string } | null } | null,
+  options: { includeLocalTime?: boolean } = {},
 ): import('@/types').PertinentNegative[] {
   const detected = detectedBiasNames.map(n => n.toLowerCase());
 
@@ -1978,6 +1975,7 @@ export function generatePertinentNegatives(
   const negatives: import('@/types').PertinentNegative[] = [];
 
   for (const check of ALL_BIAS_CHECKS) {
+    if (check.name === 'Late Night Bias' && options.includeLocalTime === false) continue;
     const isDetected = check.matchNames.some(m =>
       allProblems.some(d => d.includes(m) || m.includes(d))
     );
@@ -2078,7 +2076,8 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
     }
     const nbaDayGroups = new Map<string, Bet[]>();
     for (const b of nbaBets) {
-      const day = b.placed_at.split('T')[0];
+      const day = betRecordedDate(b);
+      if (!day) continue;
       const group = nbaDayGroups.get(day) ?? [];
       group.push(b);
       nbaDayGroups.set(day, group);
@@ -2091,16 +2090,16 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       if (rapidProfit < 0) {
         const sev = rapidNBADays >= 6 ? 'high' as const : 'medium' as const;
         findings.push({
-          id: 'NBA-RAPID-BETTING', name: 'NBA rapid-fire sessions', sport: 'NBA',
+          id: 'NBA-RAPID-BETTING', name: 'High-volume NBA dates', sport: 'NBA',
           severity: sev,
-          description: 'Multiple days with 4+ NBA bets suggest live/in-play betting or emotional reactions to game flow.',
+          description: 'Multiple source dates contain 4 or more NBA bets, and that high-volume cohort lost money.',
           evidence: `${rapidNBADays} days with 4+ NBA bets. Combined: $${Math.round(rapidProfit)}.`,
           estimated_cost: rapidProfit < 0 ? Math.round(rapidProfit) : null,
-          recommendation: 'Limit yourself to pre-game NBA bets only. Live betting NBA is where emotional decisions get expensive.',
+          recommendation: 'Set a precommitted NBA volume limit before each slate and review the high-volume dates before adding more exposure.',
           sample_size: rapidDayBets.length,
           confidence: confidenceFor(rapidDayBets.length, sev),
           sub_splits: [
-            { label: `Bets on ${rapidNBADays} rapid-fire days (4+ NBA bets/day)`, bets: rapidDayBets.length, roi_pct: null, net_usd: Math.round(rapidProfit) },
+            { label: `Bets on ${rapidNBADays} high-volume NBA dates (4+ bets/date)`, bets: rapidDayBets.length, roi_pct: null, net_usd: Math.round(rapidProfit) },
           ],
         });
       }
@@ -2158,12 +2157,12 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
       const ratio = dm.pickCountAfterLoss / dm.pickCountAfterWin;
       const sev = ratio > 1.4 ? 'high' as const : 'medium' as const;
       findings.push({
-        id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation after loss', sport: 'DFS',
+        id: 'DFS-LOSS-ESCALATION', name: 'DFS pick count escalation in losing-result sequences', sport: 'DFS',
         severity: sev,
-        description: 'After losses, you increase your pick count. Going for bigger multipliers to recover.',
-        evidence: `Avg picks after loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
+        description: 'Pick counts are higher on entries following rows later settled as losses. Settlement timing is unavailable, so the data does not show that a result caused the next choice.',
+        evidence: `Avg picks after a row later settled as a loss: ${dm.pickCountAfterLoss.toFixed(1)} vs after a row later settled as a win: ${dm.pickCountAfterWin.toFixed(1)} (${((ratio - 1) * 100).toFixed(0)}% increase).`,
         estimated_cost: null,
-        recommendation: 'Set a rule: your pick count should never change based on your last result.',
+        recommendation: 'Choose a pick-count limit before the session and keep it fixed throughout the session.',
         sample_size: dfsEntryCount,
         confidence: confidenceFor(dfsEntryCount, sev),
       });
@@ -2176,7 +2175,25 @@ export function detectSportSpecificPatterns(metrics: CalculatedMetrics, bets: Be
 // ── Session Detection & Grading ──
 
 export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  const sorted = [...bets].sort(compareBetsByRecordedTime);
+  const indexedSequences = new Map<string, { bet: Bet; index: number }[]>();
+  for (let index = 0; index < sorted.length; index++) {
+    const bet = sorted[index];
+    const partition = betSequencePartition(bet);
+    if (!partition) continue;
+    const sequence = indexedSequences.get(partition) ?? [];
+    sequence.push({ bet, index });
+    indexedSequences.set(partition, sequence);
+  }
+  for (const sequence of indexedSequences.values()) {
+    sequence.sort((a, b) => {
+      const aTime = betSequenceTimeMs(a.bet);
+      const bTime = betSequenceTimeMs(b.bet);
+      if (aTime !== null && bTime !== null && aTime !== bTime) return aTime - bTime;
+      return a.bet.id.localeCompare(b.bet.id);
+    });
+  }
+  const sequenceBetCount = Array.from(indexedSequences.values()).reduce((sum, sequence) => sum + sequence.length, 0);
 
   // Median stake across the full bet history. Used for per-session
   // triggerEvent attribution below; the existing calculateMetrics function
@@ -2189,7 +2206,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
         : allStakes[Math.floor(allStakes.length / 2)])
     : 0;
 
-  if (sorted.length === 0) {
+  if (sequenceBetCount === 0) {
     return {
       sessions: [],
       totalSessions: 0,
@@ -2201,38 +2218,43 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       avgGradedROI: {},
       bestSession: null,
       worstSession: null,
-      insight: 'No bets to analyze.',
+      insight: bets.length === 0
+        ? 'No bets to analyze.'
+        : 'Session analysis unavailable because no bet has a sourced clock time.',
     };
   }
 
   // Split bets into sessions (gap > 3 hours)
-  const sessionGroups: { bets: Bet[]; indices: number[] }[] = [];
-  let currentBets: Bet[] = [sorted[0]];
-  let currentIndices: number[] = [0];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const prevTime = new Date(sorted[i - 1].placed_at).getTime();
-    const thisTime = new Date(sorted[i].placed_at).getTime();
-    if (thisTime - prevTime > 3 * 3600000) {
-      sessionGroups.push({ bets: currentBets, indices: currentIndices });
-      currentBets = [sorted[i]];
-      currentIndices = [i];
-    } else {
-      currentBets.push(sorted[i]);
-      currentIndices.push(i);
+  const sessionGroups: { bets: Bet[]; indices: number[]; partition: string }[] = [];
+  for (const [partition, sequence] of indexedSequences) {
+    let currentBets: Bet[] = [];
+    let currentIndices: number[] = [];
+    for (const entry of sequence) {
+      if (currentBets.length > 0) {
+        const prevTime = betSequenceTimeMs(currentBets[currentBets.length - 1]);
+        const thisTime = betSequenceTimeMs(entry.bet);
+        if (prevTime !== null && thisTime !== null && thisTime - prevTime > 3 * 3600000) {
+          sessionGroups.push({ bets: currentBets, indices: currentIndices, partition });
+          currentBets = [];
+          currentIndices = [];
+        }
+      }
+      currentBets.push(entry.bet);
+      currentIndices.push(entry.index);
     }
+    if (currentBets.length > 0) sessionGroups.push({ bets: currentBets, indices: currentIndices, partition });
   }
-  sessionGroups.push({ bets: currentBets, indices: currentIndices });
+  sessionGroups.sort((a, b) => compareBetsByRecordedTime(a.bets[0], b.bets[0]));
 
   // Build DetectedSession for each group
   const sessions: DetectedSession[] = sessionGroups.map((group, idx) => {
     const sessionBets = group.bets;
     const firstBet = sessionBets[0];
     const lastBet = sessionBets[sessionBets.length - 1];
-    const startDate = new Date(firstBet.placed_at);
-    const endDate = new Date(lastBet.placed_at);
+    const startTimeMs = betSequenceTimeMs(firstBet)!;
+    const endTimeMs = betSequenceTimeMs(lastBet)!;
 
-    const durationMinutes = Math.max(0, (endDate.getTime() - startDate.getTime()) / 60000);
+    const durationMinutes = Math.max(0, (endTimeMs - startTimeMs) / 60000);
 
     const wins = sessionBets.filter(b => b.result === 'win').length;
     const losses = sessionBets.filter(b => b.result === 'loss').length;
@@ -2282,18 +2304,16 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       }
     }
 
-    // Late night check (any bet after 23:00)
-    const lateNight = sessionBets.some(b => getUTCHour(b.placed_at) >= 23);
-
-    // Additive sibling to `lateNight` (do not widen `lateNight` itself to
-    // boolean | null - that's a breaking wire change for iOS). A `false`
-    // result above is only trustworthy if every bet in the session has a
-    // real clock time; a date-only bet parses to exact midnight and could
-    // be masking an actual late-night placement. `lateNight === true` is
-    // always trustworthy on its own since a midnight artifact can never
-    // satisfy `getUTCHour() >= 23`.
-    const hasRealTimestamp = (b: Bet) => !isMidnightUTC(b.placed_at);
-    const lateNightKnown = lateNight || sessionBets.every(hasRealTimestamp);
+    const sourceClockLateWindow = sessionBets.some((bet) => {
+      const hour = betSourceHour(bet);
+      return hour !== null && (hour >= 23 || hour < 5);
+    });
+    // The required legacy field cannot represent unknown. Keep its safe false
+    // sentinel and use lateNightKnown=false until a real local-time basis is
+    // available. The additive sourceClockLateWindow sibling carries the exact
+    // source-clock observation without changing old-client semantics.
+    const lateNight = false;
+    const lateNightKnown = false;
 
     const id = `SESSION-${String(idx + 1).padStart(3, '0')}`;
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -2308,8 +2328,8 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     if (stakeCv > 0.8) { score -= 10; deductions.push({ points: 10, reason: 'Highly inconsistent stake sizing within session' }); }
     else if (stakeCv > 0.5) { score -= 5; deductions.push({ points: 5, reason: 'Moderately inconsistent stake sizing within session' }); }
 
-    if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Stepped up stakes from a prior losing bet' }); }
-    if (chaseCount >= 3) { score -= 12; deductions.push({ points: 12, reason: `Chased losses ${chaseCount} times in a single session` }); }
+    if (chasedAfterLoss) { score -= 8; deductions.push({ points: 8, reason: 'Stepped up stakes from a prior bet later settled as a loss' }); }
+    if (chaseCount >= 3) { score -= 12; deductions.push({ points: 12, reason: `Raised stakes after losing-result rows ${chaseCount} times in one source-ordered session` }); }
 
     if (sessionBets.length > 10) { score -= 15; deductions.push({ points: 15, reason: `Placed ${sessionBets.length} bets in one session. Marathon session` }); }
     else if (sessionBets.length > 7) { score -= 8; deductions.push({ points: 8, reason: `Placed ${sessionBets.length} bets in one session` }); }
@@ -2317,10 +2337,8 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
     if (betsPerHour > 4) { score -= 10; deductions.push({ points: 10, reason: `Rapid-fire betting at ${betsPerHour.toFixed(1)} bets/hour` }); }
     else if (betsPerHour > 2.5) { score -= 5; deductions.push({ points: 5, reason: `Elevated pace at ${betsPerHour.toFixed(1)} bets/hour` }); }
 
-    if (lateNight) { score -= 5; deductions.push({ points: 5, reason: 'Late-night betting (after 11pm)' }); }
-
-    if (longestLossStreak >= 5) { score -= 10; deductions.push({ points: 10, reason: `${longestLossStreak} consecutive losses without stopping` }); }
-    else if (longestLossStreak >= 3) { score -= 5; deductions.push({ points: 5, reason: `${longestLossStreak} consecutive losses` }); }
+    if (longestLossStreak >= 5) { score -= 10; deductions.push({ points: 10, reason: `${longestLossStreak} consecutive source-order rows later settled as losses` }); }
+    else if (longestLossStreak >= 3) { score -= 5; deductions.push({ points: 5, reason: `${longestLossStreak} consecutive source-order rows later settled as losses` }); }
 
     if (roi < -30) { score -= 8; deductions.push({ points: 8, reason: `Heavy losses this session (${roi.toFixed(1)}% ROI)` }); }
     else if (roi < -15) { score -= 4; deductions.push({ points: 4, reason: `Significant losses this session (${roi.toFixed(1)}% ROI)` }); }
@@ -2344,26 +2362,29 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
 
     const heatSignals: string[] = [];
     if (grade === 'F') heatSignals.push('Session grade: F');
-    if (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) heatSignals.push('Stakes more than doubled while chasing losses');
-    if (betsPerHour > 5 && longestLossStreak >= 4) heatSignals.push('Rapid-fire betting during a loss streak');
+    if (stakeEscalation > 2.0 && chasedAfterLoss && chaseCount >= 2) heatSignals.push('Stakes more than doubled across a losing-result sequence');
+    if (betsPerHour > 5 && longestLossStreak >= 4) heatSignals.push('Rapid-fire betting across a source-order losing-result run');
     if (sessionBets.length >= 10 && roi < -30 && chasedAfterLoss) heatSignals.push('Extended session with heavy losses while chasing');
 
     // Per-session trigger attribution. Only populated for heated sessions
-    // when one of three signals can explain the heat. iOS reads this in
+    // when one of two signals can explain the heat. iOS reads this in
     // Mega-PR B; emitting it now lets that PR ship without engine work.
-    // Algorithm precedence: recent large loss > late-night timing > large
+    // Algorithm precedence: recent large loss > large
     // starting stake. Falls through to undefined when none qualify.
     let triggerEvent: DetectedSession['triggerEvent'] | undefined;
     if (isHeated) {
-      const firstIdxInSorted = group.indices[0];
-      let priorSettled: Bet | null = null;
-      for (let pi = firstIdxInSorted - 1; pi >= 0; pi--) {
-        const prev = sorted[pi];
-        if (prev.result === 'win' || prev.result === 'loss') {
-          priorSettled = prev;
-          break;
-        }
-      }
+      const firstTime = betSequenceTimeMs(firstBet);
+      const priorSettled = firstTime === null
+        ? null
+        : (indexedSequences.get(group.partition) ?? [])
+            .map((entry) => entry.bet)
+            .filter((candidate) => {
+              const candidateTime = betSequenceTimeMs(candidate);
+              return candidateTime !== null
+                && candidateTime < firstTime
+                && (candidate.result === 'win' || candidate.result === 'loss');
+            })
+            .sort((a, b) => (betSequenceTimeMs(b) ?? 0) - (betSequenceTimeMs(a) ?? 0))[0] ?? null;
       if (
         priorSettled &&
         priorSettled.result === 'loss' &&
@@ -2371,13 +2392,8 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       ) {
         triggerEvent = {
           type: 'loss',
-          description: `Preceded by a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} losing bet on ${formatUTCMonthDay(priorSettled.placed_at)}.`,
+          description: `Preceded in the comparable source order by a $${Math.abs(Number(priorSettled.profit)).toFixed(0)} bet later settled as a loss on ${formatRecordedDate(priorSettled, { month: 'short', day: 'numeric' })}.`,
           triggeringBetId: priorSettled.id,
-        };
-      } else if (lateNight) {
-        triggerEvent = {
-          type: 'late_night',
-          description: `Late-night session starting at ${formatUTCTime(startDate)}.`,
         };
       } else if (overallMedianStake > 0 && startingStake > 1.5 * overallMedianStake) {
         triggerEvent = {
@@ -2389,10 +2405,10 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
 
     return {
       id,
-      date: formatUTCDate(startDate),
-      dayOfWeek: dayNames[getUTCDayOfWeek(startDate)],
-      startTime: formatUTCTime(startDate),
-      endTime: formatUTCTime(endDate),
+      date: formatRecordedDate(firstBet),
+      dayOfWeek: dayNames[betSourceDayOfWeek(firstBet) ?? 0],
+      startTime: formatSourceTime(firstBet) ?? 'Time unknown',
+      endTime: formatSourceTime(lastBet) ?? 'Time unknown',
       durationMinutes: round2(durationMinutes),
       bets: sessionBets.length,
       wins,
@@ -2414,6 +2430,7 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
       chaseCount,
       lateNight,
       lateNightKnown,
+      sourceClockLateWindow,
       grade,
       gradeReasons,
       isHeated,
@@ -2480,17 +2497,29 @@ export function detectAndGradeSessions(bets: Bet[]): SessionDetectionResult {
   }
 
   // Embed lightweight bet snapshots for best/worst sessions (for share page rendering)
-  if (bestSession && bestSession.betIndices.length >= 2) {
-    bestSession = { ...bestSession, betSnapshots: bestSession.betIndices.map(idx => {
+  const buildBetSnapshots = (session: DetectedSession): NonNullable<DetectedSession['betSnapshots']> => (
+    session.betIndices.map((idx) => {
       const b = sorted[idx];
-      return b ? { placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result } : null;
-    }).filter(Boolean) as DetectedSession['betSnapshots'] };
+      if (!b?.placed_at) return null;
+      return {
+        placed_at: b.placed_at,
+        ...(b.source_placed_at !== undefined ? { source_placed_at: b.source_placed_at } : {}),
+        ...(b.placed_date !== undefined ? { placed_date: b.placed_date } : {}),
+        ...(b.placed_time !== undefined ? { placed_time: b.placed_time } : {}),
+        ...(b.source_timezone !== undefined ? { source_timezone: b.source_timezone } : {}),
+        ...(b.timestamp_quality != null ? { timestamp_quality: b.timestamp_quality } : {}),
+        description: b.description || '',
+        stake: Number(b.stake),
+        profit: Number(b.profit),
+        result: b.result,
+      };
+    }).filter((snapshot) => snapshot !== null)
+  );
+  if (bestSession && bestSession.betIndices.length >= 2 && bestSession.betIndices.every((idx) => sorted[idx]?.placed_at)) {
+    bestSession = { ...bestSession, betSnapshots: buildBetSnapshots(bestSession) };
   }
-  if (worstSession && worstSession.betIndices.length >= 2) {
-    worstSession = { ...worstSession, betSnapshots: worstSession.betIndices.map(idx => {
-      const b = sorted[idx];
-      return b ? { placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result } : null;
-    }).filter(Boolean) as DetectedSession['betSnapshots'] };
+  if (worstSession && worstSession.betIndices.length >= 2 && worstSession.betIndices.every((idx) => sorted[idx]?.placed_at)) {
+    worstSession = { ...worstSession, betSnapshots: buildBetSnapshots(worstSession) };
   }
 
   // Insight
@@ -2555,7 +2584,7 @@ export function annotateBets(
   medianStake: number,
   dfs: DFSDetection
 ): AnnotationSummary {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  const sorted = [...bets].sort(compareBetsByRecordedTime);
 
   // Session lookup map: betIndex → session
   const sessionByIndex = new Map<number, DetectedSession>();
@@ -2567,9 +2596,11 @@ export function annotateBets(
 
   const annotations: BetAnnotation[] = [];
 
-  let prevBet: Bet | null = null;
-  let prevResult: 'win' | 'loss' | 'push' | 'void' | 'pending' | null = null;
-  let runningStreak = 0; // positive = wins, negative = losses
+  const sequenceStates = new Map<string, {
+    prevBet: Bet | null;
+    prevResult: 'win' | 'loss' | 'push' | 'void' | 'pending' | null;
+    runningStreak: number;
+  }>();
 
   // Track daily bet counts for weekend volume spike
   const dailyBetCounts = new Map<string, number>();
@@ -2578,19 +2609,27 @@ export function annotateBets(
     const bet = sorted[i];
     const stake = Number(bet.stake);
     const stakeVsMedian = medianStake > 0 ? stake / medianStake : 1;
-    const betDate = new Date(bet.placed_at);
-    const hour = getUTCHour(betDate);
-    const dayOfWeek = getUTCDayOfWeek(betDate); // 0=Sun, 6=Sat
-    const dateKey = betDate.toISOString().split('T')[0];
+    const dayOfWeek = betSourceDayOfWeek(bet);
+    const dateKey = betRecordedDate(bet);
+    const sequencePartition = betSequencePartition(bet);
+    const sequenceState = sequencePartition
+      ? sequenceStates.get(sequencePartition) ?? { prevBet: null, prevResult: null, runningStreak: 0 }
+      : { prevBet: null, prevResult: null, runningStreak: 0 };
+    const { prevBet, prevResult } = sequenceState;
+    let { runningStreak } = sequenceState;
 
     // Increment daily count
-    dailyBetCounts.set(dateKey, (dailyBetCounts.get(dateKey) ?? 0) + 1);
-    const dailyCount = dailyBetCounts.get(dateKey)!;
+    if (dateKey) dailyBetCounts.set(dateKey, (dailyBetCounts.get(dateKey) ?? 0) + 1);
+    const dailyCount = dateKey ? dailyBetCounts.get(dateKey) ?? 0 : 0;
 
     // Time since last bet
     let timeSinceLastBet: number | null = null;
     if (prevBet) {
-      timeSinceLastBet = (betDate.getTime() - new Date(prevBet.placed_at).getTime()) / 60000;
+      const thisTime = betSequenceTimeMs(bet);
+      const previousTime = betSequenceTimeMs(prevBet);
+      if (thisTime !== null && previousTime !== null) {
+        timeSinceLastBet = (thisTime - previousTime) / 60000;
+      }
     }
 
     // Session info
@@ -2612,40 +2651,33 @@ export function annotateBets(
     if (prevResult === 'loss' && prevStake > 0 && stake > prevStake * 1.3) {
       const ratio = stake / prevStake;
       const weight = Math.min(10, Math.round(6 + (ratio - 1.3) * 4));
-      signals.push({ name: 'post_loss_escalation', weight, description: `Stake stepped up ${ratio.toFixed(1)}x from the prior losing bet`, category: 'chasing' });
+      signals.push({ name: 'post_loss_escalation', weight, description: `Stake stepped up ${ratio.toFixed(1)}x from the prior bet later settled as a loss`, category: 'chasing' });
     }
 
     if (prevResult === 'loss' && prevBet && bet.sport === prevBet.sport && bet.bet_type === prevBet.bet_type) {
-      signals.push({ name: 'double_down_after_loss', weight: 4, description: `Same sport+type (${bet.sport} ${bet.bet_type}) as the prior losing bet`, category: 'chasing' });
+      signals.push({ name: 'double_down_after_loss', weight: 4, description: `Same sport+type (${bet.sport} ${bet.bet_type}) as the prior bet later settled as a loss`, category: 'chasing' });
     }
 
     if (prevResult === 'loss' && bet.odds > 200 && prevOdds >= -200 && prevOdds <= 150) {
-      signals.push({ name: 'odds_shift_to_longshot', weight: 5, description: `Shifted to longshot odds (+${bet.odds}) from shorter odds on the prior losing bet`, category: 'chasing' });
+      signals.push({ name: 'odds_shift_to_longshot', weight: 5, description: `Shifted to longshot odds (+${bet.odds}) from shorter odds on the prior bet later settled as a loss`, category: 'chasing' });
     }
 
     if (!dfs.isDFS && prevResult === 'loss' && isParlay && !prevIsParlay) {
-      signals.push({ name: 'parlay_after_straight_loss', weight: 5, description: 'Jumped to a parlay from a prior losing straight bet', category: 'chasing' });
+      signals.push({ name: 'parlay_after_straight_loss', weight: 5, description: 'Jumped to a parlay from a prior straight bet later settled as a loss', category: 'chasing' });
     }
 
     if (runningStreak <= -3) {
-      signals.push({ name: 'loss_streak_continuation', weight: 3, description: `Betting during a ${Math.abs(runningStreak)}-loss streak`, category: 'chasing' });
+      signals.push({ name: 'loss_streak_continuation', weight: 3, description: `${Math.abs(runningStreak)} consecutive prior source-order rows later settled as losses`, category: 'chasing' });
     }
 
     if (dfs.isDFS && prevResult === 'loss' && bet.parlay_legs != null && prevParlayLegs != null && bet.parlay_legs > prevParlayLegs) {
-      signals.push({ name: 'dfs_pick_escalation', weight: 5, description: `Picks stepped up from ${prevParlayLegs} to ${bet.parlay_legs} over the prior losing entry`, category: 'chasing' });
+      signals.push({ name: 'dfs_pick_escalation', weight: 5, description: `Picks stepped up from ${prevParlayLegs} to ${bet.parlay_legs} over the prior entry later settled as a loss`, category: 'chasing' });
     }
 
     // ── Emotional signals ──
     if (stakeVsMedian > 2.0) {
       const weight = Math.min(8, Math.round(4 + (stakeVsMedian - 2) * 2));
       signals.push({ name: 'oversized_bet', weight, description: `Stake is ${stakeVsMedian.toFixed(1)}x the median`, category: 'emotional' });
-    }
-
-    // Date-only parses land at exact midnight; suppress their time-of-day
-    // contribution rather than counting them as late-night.
-    const isMidnightParse = hour === 0 && getUTCMinute(betDate) === 0;
-    if (!isMidnightParse && (hour >= 23 || hour <= 4)) {
-      signals.push({ name: 'late_night', weight: 3, description: `Placed at ${hour <= 4 ? hour : hour - 12}${hour <= 4 ? 'am' : 'pm'}`, category: 'emotional' });
     }
 
     if (timeSinceLastBet !== null && timeSinceLastBet < 5) {
@@ -2657,7 +2689,7 @@ export function annotateBets(
     }
 
     if (prevResult === 'loss' && prevProfit < -(medianStake * 2) && timeSinceLastBet !== null && timeSinceLastBet < 30) {
-      signals.push({ name: 'emotional_after_big_loss', weight: 6, description: `Bet placed ${timeSinceLastBet.toFixed(0)} min after a $${Math.abs(prevProfit).toFixed(0)} losing bet`, category: 'emotional' });
+      signals.push({ name: 'emotional_after_big_loss', weight: 6, description: `Bet placed ${timeSinceLastBet.toFixed(0)} min after a prior row later settled as a $${Math.abs(prevProfit).toFixed(0)} loss. Settlement time is unavailable`, category: 'emotional' });
     }
 
     if ((dayOfWeek === 0 || dayOfWeek === 6) && dailyCount >= 4) {
@@ -2679,7 +2711,7 @@ export function annotateBets(
     }
 
     if (prevResult === 'loss' && stakeVsMedian >= 0.5 && stakeVsMedian <= 1.2) {
-      signals.push({ name: 'consistent_after_loss', weight: -5, description: 'Held stake near the median following a losing bet', category: 'disciplined' });
+      signals.push({ name: 'consistent_after_loss', weight: -5, description: 'Held stake near the median following a prior row later settled as a loss', category: 'disciplined' });
     }
 
     if (timeSinceLastBet !== null && timeSinceLastBet > 60) {
@@ -2691,7 +2723,7 @@ export function annotateBets(
     }
 
     if (runningStreak >= 3 && stakeVsMedian <= 1.3) {
-      signals.push({ name: 'win_streak_no_escalation', weight: -4, description: `On a ${runningStreak}-win streak without increasing stakes`, category: 'disciplined' });
+      signals.push({ name: 'win_streak_no_escalation', weight: -4, description: `${runningStreak} consecutive source-order rows later settled as wins without increasing stakes`, category: 'disciplined' });
     }
 
     // ── Classification ──
@@ -2755,8 +2787,13 @@ export function annotateBets(
     }
     // push/void/pending don't change streak
 
-    prevBet = bet;
-    prevResult = bet.result;
+    if (sequencePartition) {
+      sequenceStates.set(sequencePartition, {
+        prevBet: bet,
+        prevResult: bet.result,
+        runningStreak,
+      });
+    }
   }
 
   // ── Aggregates ──
@@ -2825,7 +2862,7 @@ export function annotateBets(
   } else if (chasingPct >= 30) {
     insight = `${chasingPct}% of bets are classified as chasing, costing an estimated $${Math.abs(emotionalCost).toFixed(0)} in lost edge.`;
   } else if (emotionalPct >= 25) {
-    insight = `${emotionalPct}% of bets carry emotional signals. Late-night, oversized, or heated session bets are dragging your ROI.`;
+    insight = `${emotionalPct}% of bets carry emotional signals. Oversized or heated-session bets are dragging your ROI.`;
   } else if (topClass && distribution[topClass].count > 0) {
     if (topClass === 'disciplined' && distribution[topClass].roi < 0) {
       insight = `${distribution[topClass].percent}% of bets follow a disciplined process, but selections are still losing. The issue is bet selection, not process.`;
@@ -2914,7 +2951,13 @@ export function calculateMetricsOnly(
     personal_rules: undefined,
     session_analysis: undefined,
     edge_profile: undefined,
-    pertinent_negatives: generatePertinentNegatives(metrics.biases_detected.map(b => b.bias_name), [], [], metrics.odds),
+    pertinent_negatives: generatePertinentNegatives(
+      metrics.biases_detected.map(b => b.bias_name),
+      [],
+      [],
+      metrics.odds,
+      { includeLocalTime: metrics.timing.local_time_confirmed === true },
+    ),
     contradictions: detectContradictions(metrics, bets),
   };
 
@@ -2947,7 +2990,7 @@ You do NOT calculate: emotion_score, roi_percent, win_rate, bankroll_health, cat
 ### Sport-Specific Considerations
 When analyzing bets, pay attention to these sport-specific behavioral patterns:
 - **NFL**: Key number overpays (buying through 3/7 at bad juice), primetime game overload, parlay addiction specific to NFL
-- **NBA**: Player prop overexposure (recreational trap), rapid-fire in-game betting suggesting emotional decisions, back-to-back scheduling awareness
+- **NBA**: Player prop overexposure, high-volume source dates, source-clock clustering without inferring live betting or motive, back-to-back scheduling awareness
 - **MLB**: Moneyline tunnel vision (ignoring run lines and totals), starting pitcher obsession
 - **DFS**: Multiplier/pick-count chasing (5+ picks for max payout when 2-3 is more profitable), same-player repetition regardless of matchup
 
@@ -2956,55 +2999,48 @@ These sport-specific patterns are pre-detected by the system. Reference the pre-
 ## Output Format
 Respond with valid JSON:
 {
-  "executive_diagnosis": "At most 32 words total. See EXECUTIVE DIAGNOSIS RULES below. No em-dashes.",
-  "overall_grade": "use the exact pre-calculated grade provided. Do not assign a different one",
+  "executive_diagnosis": "Brief qualitative summary with no numbers. See EXECUTIVE DIAGNOSIS RULES below. No em-dashes.",
   "biases_detected": [
     {
       "bias_name": "exact name from pre-classified list",
       "severity": "exact severity from pre-classified list",
-      "description": "2-3 sentence explanation in casual, direct language",
-      "evidence": "cite the specific pre-calculated numbers",
-      "estimated_cost": number (rough dollar estimate based on the data, rounded to the nearest $100),
-      "fix": "specific actionable advice, at most 18 words"
+      "description": "qualitative explanation in casual, direct language with no numbers",
+      "fix": "specific qualitative advice with no numeric threshold"
     }
   ],
   "strategic_leaks": [
     {
       "category": "exact category name from CATEGORY ROI BREAKDOWN above - do not paraphrase, pluralize, or invent a variant",
-      "detail": "what the leak is",
-      "roi_impact": number (use the pre-calculated ROI),
-      "sample_size": number,
-      "suggestion": "what to do about it"
+      "detail": "what the leak is, with no numbers",
+      "suggestion": "what to do about it, with no numbers"
     }
   ],
   "behavioral_patterns": [
     {
       "pattern_name": "string",
-      "description": "what you observed",
+      "description": "what you observed, with no numbers",
       "frequency": "how often",
       "impact": "positive|negative|neutral",
-      "data_points": "supporting evidence"
+      "data_points": "qualitative supporting observation with no numbers"
     }
   ],
   "recommendations": [
     {
-      "priority": 1,
       "title": "short action title",
-      "description": "2-3 sentence explanation",
+      "description": "qualitative explanation with no numbers",
       "expected_improvement": "one sentence describing the behavioral change and its qualitative benefit - no dollar amounts, no percentages, no numbers of any kind",
       "difficulty": "easy|medium|hard",
       "tied_to_finding": "the exact bias_name from biases_detected this recommendation most directly addresses, or empty string if none apply - do not paraphrase or invent a name"
     }
   ],
   "session_analysis": {
-    "worst_session": { "description": "1-2 sentence narrative about the worst session, referencing the exact numbers already given in SESSION DETECTION above - do not invent different ones" },
-    "best_session": { "description": "1-2 sentence narrative about the best session, referencing the exact numbers already given in SESSION DETECTION above - do not invent different ones" }
+    "worst_session": { "description": "qualitative narrative about the worst session with no numbers" },
+    "best_session": { "description": "qualitative narrative about the best session with no numbers" }
   },
   "edge_profile": {
     "profitable_areas": [{ "category": "exact category name from CATEGORY ROI BREAKDOWN above, must be genuinely profitable there - do not invent one or reuse a category from a different section" }],
     "unprofitable_areas": [{ "category": "exact category name from CATEGORY ROI BREAKDOWN above, must be genuinely unprofitable there - do not invent one or reuse a category from a different section" }],
-    "reallocation_advice": "string",
-    "sharp_score": number (0-100)
+    "reallocation_advice": "qualitative advice with no numbers"
   }
 }
 
@@ -3054,7 +3090,7 @@ CRITICAL TONE RULE: Every report must lead with what the user is doing RIGHT bef
 - Do NOT invent numbers. Cite only pre-calculated metrics.
 - No em-dashes.
 - If no significant biases detected, write a positive diagnosis noting what they're doing right.
-- EXAMPLE (match this energy, not these exact words): "This bettor has a favorite problem. 57 chalk bets returned -31.7% ROI, the worst category here. Stakes jump 29% after losses, costing roughly $1,000 over this sample."
+- EXAMPLE (match this energy, not these exact words): "This bettor has a favorite problem. The chalk category is the weakest spot. The source-ordered sequence also shows rapid stake escalation."
 
 SPORTSBOOK RULE: Never reference specific sportsbook names (DraftKings, FanDuel, Caesars, BetMGM, etc.) in strategic_leaks, recommendations, or edge_profile. Sportsbook-level ROI differences are variance, not actionable insight. Only analyze by sport, bet type, odds range, timing, and behavioral pattern. Never recommend switching sportsbooks or increasing/decreasing volume on a specific sportsbook. Sportsbook choice is not a behavioral pattern.
 
@@ -3062,27 +3098,27 @@ BEHAVIORAL FRAMING RULE: This constrains the PRESCRIPTIVE ADVICE FIELDS ONLY (fi
 - Parlay example: instead of "parlays are negative EV, so cap your legs", say the parlays got worse with each leg the user added, and the rule is to stop at 2 legs.
 - NFL spread example: instead of "buy off the key number, take the alternate, watch the line movement", reframe as a pre-bet checkpoint. Ask whether the user is betting the game in front of them or chasing the last one, and note that NFL spreads are this bettor's weak spot.
 
-PROVABLE-SEQUENCE RULE: The source data has no settlement timestamps, so you cannot establish that a bet settled as a loss before the next bet was placed. Never frame stake escalation as a reaction to a settled result. Do NOT write "after a loss", "within minutes of the result", "right after losing", or any phrasing that asserts a loss triggered the next bet. State only what the bet ordering and the stakes show: stakes rising in close succession within a session (rapid in-session stake escalation). Keep the escalation finding itself; only the unprovable causal-timing claim goes. This applies to every field, not only the advice fields.
+PROVABLE-SEQUENCE RULE: The source data has no settlement timestamps, so you cannot establish that a bet settled as a loss before the next bet was placed. Never frame stake escalation as a reaction to a settled result. Do NOT write "after a loss", "after a string or stretch of losses", "already in the red before the next bet", "each miss prompted the next choice", "within minutes of the result", "right after losing", or any phrasing that asserts a result triggered the next bet. State only what the bet ordering and the stakes show: stakes rising in close succession within a session (rapid in-session stake escalation). Keep the escalation finding itself; only the unprovable causal-timing claim goes. This applies to every field, not only the advice fields.
 
-TIME-OF-DAY RULE: A large share of timestamps are date-only values that parse to midnight, which is not a real clock time. Do NOT surface a late-night or after-11pm pattern as a headline finding, and never rank or score sessions by a late-night signal, unless real (non-midnight) timestamps are present. When time-of-day data is absent, say so plainly instead of inferring a late-night pattern.
+TIME-OF-DAY RULE: Use only the source clock fields supplied in the analysis. Date-only and legacy timestamps have no clock time and must never enter an hour, late-night, pace, or session claim. A sourced 12:00am value is real clock data. Never describe a source clock as the bettor's local time unless the analysis explicitly confirms that basis. When local_time_confirmed is false, source-clock patterns are observations only: do not turn them into a cutoff, cooldown, recommendation, behavior label, or any other adoptable action. When clock data is absent, say so plainly.
 
 ## Critical Rules
 - NEVER recommend specific bets or picks
 - NEVER promise profitability
 - NEVER recalculate any numbers. Use only what is provided
 - COUNTERFACTUAL RULE: Do not sum overlapping counterfactuals. Report only the single largest recoverable leak, as a rounded range. Never present an additive "total recoverable" figure anywhere in your output.
-- NUMERIC FIELDS RULE: Every numeric JSON field (estimated_cost, roi_impact, sample_size, priority, sharp_score, etc.) must be a raw JSON number. Never formatted strings, never currency symbols, never percent signs, never thousands separators. The renderer formats all numeric-field values. Prose fields may still cite dollars and percentages normally.
+- NUMERIC OUTPUT RULE: Do not emit numeric JSON fields or put amounts, percentages, counts, thresholds, time windows, or other numbers in prose fields. The deterministic engine supplies every number that reaches the report.
 - If bankroll_health is "danger", mention responsible bankroll management but do NOT use alarmist language
 - If data is sparse (<20 bets), say so and give limited analysis`;
 
 // ── Format bet table for Claude ──
 
 function formatBetTable(bets: Bet[]): string {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  const header = 'DATE       | SPORT  | TYPE       | DESCRIPTION                          | ODDS   | STAKE  | RESULT | PROFIT  | BOOK';
+  const sorted = [...bets].sort(compareBetsByRecordedTime);
+  const header = 'SOURCE DATE/TIME          | SPORT  | TYPE       | DESCRIPTION                          | ODDS   | STAKE  | RESULT | PROFIT  | BOOK';
   const divider = '-'.repeat(header.length);
   const rows = sorted.map((b) => {
-    const date = fmtDate(b.placed_at);
+    const date = pad(b.source_placed_at ?? betRecordedDate(b) ?? 'unknown', 25);
     const sport = pad(b.sport, 6);
     const type = pad(b.bet_type, 10);
     const desc = pad(formatParlayForClaude(b).replace(/[<>{}]/g, '').slice(0, 200), 36);
@@ -3157,7 +3193,7 @@ By Time of Day:
 ${metrics.timing.by_hour.filter((h) => h.bets >= 1).map((h) => `${h.label}: ${h.roi.toFixed(1)}% ROI (${h.bets} bets, ${h.win_rate.toFixed(0)}% win rate, $${h.profit.toFixed(0)} profit)`).join('\n')}
 ${metrics.timing.best_window ? `\nBest Window: ${metrics.timing.best_window.label}: ${metrics.timing.best_window.roi.toFixed(1)}% ROI (${metrics.timing.best_window.count} bets)` : ''}
 ${metrics.timing.worst_window ? `Worst Window: ${metrics.timing.worst_window.label}: ${metrics.timing.worst_window.roi.toFixed(1)}% ROI (${metrics.timing.worst_window.count} bets)` : ''}
-${metrics.timing.late_night_stats ? `Late Night (11pm-4am): ${metrics.timing.late_night_stats.count} bets (${metrics.timing.late_night_stats.pct_of_total.toFixed(0)}% of total), ${metrics.timing.late_night_stats.roi.toFixed(1)}% ROI` : ''}` : '\nNo time-of-day (hour) data available - timestamps are date-only. Day-of-week data above is still real and usable.'}
+${metrics.timing.source_clock_window_stats ? `Source-clock 11pm-4:59am window: ${metrics.timing.source_clock_window_stats.count} bets (${metrics.timing.source_clock_window_stats.pct_of_total.toFixed(0)}% of bets with clock data), ${metrics.timing.source_clock_window_stats.roi.toFixed(1)}% ROI` : ''}` : '\nNo sufficiently complete sourced clock data is available. Day-of-week data above remains available when source dates are known.'}
 ===
 
 === ODDS INTELLIGENCE ===
@@ -3192,7 +3228,7 @@ Insight: ${metrics.sessionDetection.insight}
 === BET ANNOTATIONS (${metrics.annotations.annotations.length} bets annotated) ===
 Distribution: ${(['disciplined', 'emotional', 'chasing', 'impulsive', 'neutral'] as const).map(c => `${c}: ${metrics.annotations!.distribution[c].count} (${metrics.annotations!.distribution[c].percent}%), ROI: ${metrics.annotations!.distribution[c].roi.toFixed(1)}%`).join(' | ')}
 Emotional Cost: $${(metrics.annotations.emotionalCost ?? 0).toFixed(0)} (estimated profit lost to emotional/chasing/impulsive bets)
-Streak Influence: After 3+ win streak avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterWinStreak3 ?? 0).toFixed(0)} | After 3+ loss streak avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterLossStreak3 ?? 0).toFixed(0)} | Neutral avg stake $${(metrics.annotations.streakInfluence.avgStakeNeutral ?? 0).toFixed(0)}
+Streak Influence: Following 3+ source-order rows later settled as wins, avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterWinStreak3 ?? 0).toFixed(0)} | Following 3+ rows later settled as losses, avg stake $${(metrics.annotations.streakInfluence.avgStakeAfterLossStreak3 ?? 0).toFixed(0)} | Neutral avg stake $${(metrics.annotations.streakInfluence.avgStakeNeutral ?? 0).toFixed(0)}
 Insight: ${metrics.annotations.insight}
 ===` : ''}
 
@@ -3221,13 +3257,13 @@ CRITICAL LANGUAGE RULES:
 WHAT TO ANALYZE:
 - Pick count distribution: are they overloaded on 5-6 pick entries vs 2-3?
 - Power vs Flex: Power = all picks must hit. Flex = partial payouts. Flex has better EV.
-- Multiplier chasing: after losses, do they increase pick count for bigger multipliers?
+- Multiplier chasing: do pick counts rise on entries following rows later settled as losses?
 - Player concentration: over-exposed to specific players?
 
 DFS METRICS:
 Pick Count Distribution: ${dm.pickCountDistribution.map((d) => `${d.picks}-pick: ${d.count} entries, ${d.winRate}% WR, ${d.roi}% ROI`).join(' | ')}
 Avg Pick Count: ${dm.avgPickCount}
-Pick Count After Loss: ${dm.pickCountAfterLoss} vs After Win: ${dm.pickCountAfterWin}
+Pick Count Following Losing-Result Row: ${dm.pickCountAfterLoss} vs Following Winning-Result Row: ${dm.pickCountAfterWin}
 Low Pick (2-3) ROI: ${dm.lowPickROI}% | High Pick (5-6) ROI: ${dm.highPickROI}%
 ${dm.powerVsFlex ? `Power: ${dm.powerVsFlex.powerCount} entries, ${dm.powerVsFlex.powerROI}% ROI | Flex: ${dm.powerVsFlex.flexCount} entries, ${dm.powerVsFlex.flexROI}% ROI` : ''}
 Top Players: ${dm.playerConcentration.slice(0, 5).map((p) => `${p.player} (${p.percent}%, ${p.roi}% ROI)`).join(', ')}
@@ -3286,8 +3322,54 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
   // tone-setting) but never surfaced on the user-facing analysis.
   const settledCount = metrics.summary.wins + metrics.summary.losses;
   const emotionInsufficient = settledCount < BET_COUNT_THRESHOLDS.emotionScore;
+  const localTimeConfirmed = metrics.timing.local_time_confirmed === true;
   // A: collected here, returned from runAutopsy below.
   const drops: EngineDrop[] = [];
+
+  const safeModelText = (value: unknown, fallback: string): string => {
+    const numberSafe = stripModelNumberSentences(value);
+    const sequenceSafe = stripUnprovableResultSequenceSentences(numberSafe);
+    if (localTimeConfirmed) return sequenceSafe || fallback;
+    return stripLocalTimeBehaviorSentences(sequenceSafe) || fallback;
+  };
+  const modelBehavioralPatterns = (Array.isArray(claudeData.behavioral_patterns)
+    ? claudeData.behavioral_patterns
+    : []) as AutopsyAnalysis['behavioral_patterns'];
+  const safeBehavioralPatterns = modelBehavioralPatterns
+    .map((pattern) => ({
+      ...pattern,
+      pattern_name: safeModelText(pattern.pattern_name, ''),
+      description: safeModelText(pattern.description, ''),
+      frequency: safeModelText(pattern.frequency, ''),
+      data_points: safeModelText(pattern.data_points, ''),
+    }))
+    .filter((pattern) => pattern.pattern_name.length > 0 && pattern.description.length > 0);
+  const modelRecommendations = Array.isArray(claudeData.recommendations)
+    ? claudeData.recommendations as Record<string, unknown>[]
+    : [];
+  const safeModelRecommendations = modelRecommendations
+    .map((recommendation) => ({
+      ...recommendation,
+      title: safeModelText(recommendation.title, ''),
+      description: safeModelText(recommendation.description, ''),
+      expected_improvement: safeModelText(recommendation.expected_improvement, ''),
+      tied_to_finding: typeof recommendation.tied_to_finding === 'string'
+        ? recommendation.tied_to_finding
+        : undefined,
+    }))
+    .filter((recommendation) => {
+      const hasSelection = typeof recommendation.tied_to_finding === 'string'
+        && recommendation.tied_to_finding.length > 0;
+      return hasSelection || (
+        recommendation.title.length > 0
+        && recommendation.description.length > 0
+        && recommendation.expected_improvement.length > 0
+      );
+    });
+  const modelExecutiveDiagnosis = safeModelText(
+    claudeData.executive_diagnosis,
+    buildInsightSnapshot(metrics),
+  );
 
   // Extracted out of the analysisBase object literal below (was inline)
   // so buildFullModeRecommendations can look up each recommendation's
@@ -3298,15 +3380,13 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     const claudeBias = claudeBiases.find(
       (cb: Record<string, unknown>) => (cb.bias_name as string)?.toLowerCase() === jsBias.bias_name.toLowerCase()
     ) as Record<string, unknown> | undefined;
-    const claudeCost = (claudeBias?.estimated_cost as number) ?? 0;
-    const costBound = estimatedCostBound(jsBias);
     return withFullModeBiasTags({
       bias_name: jsBias.bias_name,
       severity: jsBias.severity,
-      description: (claudeBias?.description as string) ?? `${jsBias.bias_name} detected with ${jsBias.severity} severity.`,
-      evidence: (claudeBias?.evidence as string) ?? jsBias.data,
-      estimated_cost: costBound != null ? Math.min(claudeCost, costBound) : claudeCost,
-      fix: (claudeBias?.fix as string) ?? 'Review your betting patterns.',
+      description: safeModelText(claudeBias?.description, `${jsBias.bias_name} detected with ${jsBias.severity} severity.`),
+      evidence: jsBias.data,
+      estimated_cost: deterministicBiasCost(jsBias, metrics),
+      fix: safeModelText(claudeBias?.fix, 'Review your betting patterns.'),
       evidence_bet_ids: jsBias.evidence_bet_ids,
       // Report-trust metadata: deterministic, from the JS detector — never
       // the LLM. Full mode ships sub_splits dollars raw. Limited-sample
@@ -3368,11 +3448,11 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
           const leakSeverity = leakSeverityFromRoi(jsCat.roi);
           return {
             category: jsCat.category,
-            detail: (leak.detail as string) ?? '',
+            detail: safeModelText(leak.detail, `${jsCat.category} returned ${round2(jsCat.roi)}% ROI in this history.`),
             detail_visibility: 'visible' as VisibilityTag,
             roi_impact: jsCat.roi,
             sample_size: jsCat.count,
-            suggestion: (leak.suggestion as string) ?? '',
+            suggestion: safeModelText(leak.suggestion, 'Review this category before placing similar bets.'),
             suggestion_visibility: 'visible' as VisibilityTag,
             // Report-trust metadata: severity/confidence are deterministic
             // from the JS-side ROI + sample, never LLM-chosen.
@@ -3385,16 +3465,18 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
       BET_COUNT_THRESHOLDS.strategicLeaksFullTotal
     ),
     // Minimum-sample floor: bet-pattern observations need a bet sample.
-    behavioral_patterns: gateArray((Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns : []) as AutopsyAnalysis['behavioral_patterns'], settledCount, BET_COUNT_THRESHOLDS.behavioralPatterns),
-    recommendations: buildFullModeRecommendations(claudeData.recommendations, biasesDetectedFull),
+    behavioral_patterns: gateArray(safeBehavioralPatterns, settledCount, BET_COUNT_THRESHOLDS.behavioralPatterns),
+    recommendations: buildFullModeRecommendations(safeModelRecommendations, biasesDetectedFull),
     emotion_score: metrics.emotion_score,
     tilt_score: metrics.emotion_score, // backward compat for old report renders
     emotion_breakdown: metrics.emotion_breakdown,
     tilt_breakdown: metrics.emotion_breakdown, // backward compat
     bankroll_health: metrics.bankroll_health,
     personal_rules: undefined,
-    session_analysis: metrics.sessionDetection ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis) : undefined,
-    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, drops, reportId),
+    session_analysis: metrics.sessionDetection
+      ? buildSessionAnalysis(metrics.sessionDetection, claudeData.session_analysis, localTimeConfirmed)
+      : undefined,
+    edge_profile: buildEdgeProfile(claudeData.edge_profile, metrics, bets, drops, reportId, localTimeConfirmed),
     betting_archetype: metrics.betting_archetype,
     timing_analysis: withFullModeTimingTags(metrics.timing),
     odds_analysis: withFullModeOddsTags(metrics.odds),
@@ -3409,21 +3491,20 @@ Frame all advice around PICK COUNT REDUCTION and FLEX OVER POWER, not parlay red
     sport_specific_findings: sportFindings.length > 0 ? sportFindings.map(withFullModeFindingTags) : undefined,
     session_detection: withFullModeSessionTags(metrics.sessionDetection ?? undefined),
     bet_annotations: metrics.annotations ?? undefined,
-    executive_diagnosis: (claudeData.executive_diagnosis as string) ?? undefined,
+    executive_diagnosis: modelExecutiveDiagnosis,
     // Spec v2 dual-emission: ship the new struct alongside the legacy snake
     // string. iOS V8.5+ reads insightFull; pre-V8.5 reads executive_diagnosis.
     // insightSnapshot is the same 1-sentence template snapshot mode uses, so
     // a paid user who hits the same report twice sees consistent prose.
     executiveDiagnosis: ((): ExecutiveDiagnosis | undefined => {
-      const legacy = (claudeData.executive_diagnosis as string) ?? undefined;
-      if (!legacy) return undefined;
-      return { insightSnapshot: buildInsightSnapshot(metrics), insightFull: legacy };
+      return { insightSnapshot: buildInsightSnapshot(metrics), insightFull: modelExecutiveDiagnosis };
     })(),
     pertinent_negatives: generatePertinentNegatives(
       metrics.biases_detected.map(b => b.bias_name),
-      Array.isArray(claudeData.behavioral_patterns) ? claudeData.behavioral_patterns as { pattern_name: string; impact: string }[] : [],
+      safeBehavioralPatterns,
       Array.isArray(claudeData.strategic_leaks) ? claudeData.strategic_leaks as { category: string }[] : [],
-      metrics.odds
+      metrics.odds,
+      { includeLocalTime: localTimeConfirmed },
     ),
     contradictions: detectContradictions(metrics, bets),
     // summaryCounts ships in BOTH modes for paywall conversion copy.
@@ -3661,26 +3742,23 @@ function buildPatternsSnapshot(
       });
     }
   }
-  // Longest losing streak: walk bets in chronological order
-  const sortedBets = [...bets].sort((a, b) => {
-    const ta = new Date(a.placed_at).getTime();
-    const tb = new Date(b.placed_at).getTime();
-    return ta - tb;
-  });
+  // Longest source-order losing-result run
   let longestSkid = 0;
-  let currentSkid = 0;
-  for (const b of sortedBets) {
-    if (b.profit < 0) {
-      currentSkid += 1;
-      if (currentSkid > longestSkid) longestSkid = currentSkid;
-    } else if (b.profit > 0) {
-      currentSkid = 0;
+  for (const sequence of comparableBetSequences(bets)) {
+    let currentSkid = 0;
+    for (const b of sequence) {
+      if (b.profit < 0) {
+        currentSkid += 1;
+        if (currentSkid > longestSkid) longestSkid = currentSkid;
+      } else if (b.profit > 0) {
+        currentSkid = 0;
+      }
     }
   }
   if (longestSkid >= 2) {
     entries.push({
       kind: 'longest_skid',
-      entityLabel: `${longestSkid}-bet losing streak`,
+      entityLabel: `${longestSkid}-row losing-result run`,
       betCount: longestSkid,
       roi: 0,
       dollarValue: 0,
@@ -3836,50 +3914,42 @@ function withFullModeRecommendationTags(rec: Recommendation): Recommendation {
 // zero renderer risk, and the composed string is still exactly what the
 // UI already expects.
 //
-// tied_to_finding is Claude's SELECTION (which finding this recommendation
-// addresses is a reasonable judgment call, same latitude given to
-// edge_profile/strategic_leaks category choice) - only the number behind
-// it is verified. A miss (no tied_to_finding, or it doesn't match any
-// detected bias, or that bias has no cost) leaves Claude's plain
-// behavioral text untouched - unknown is a valid value, not a reason to
-// fabricate a figure.
-//
-// No "/quarter" (or any other period) on the composed figure. Per review:
-// bias.estimated_cost is the net loss attributable to this bias across
-// WHATEVER period was actually analyzed - could be six weeks, could be
-// two years, and the engine never computes or verifies a quarterly rate
-// against the real date range. A fix whose entire purpose is removing a
-// model-invented number doesn't get to hardcode an unverified temporal
-// claim in its place. The figure is a total over the analyzed sample,
-// stated as exactly that. (The bias card's own "/qtr" label rendered
-// this exact estimated_cost as a rate right next to this total - fixed
-// to match, components/AutopsyReport.tsx. lib/demo-data.ts's
-// hand-authored "expected_improvement: 'Save ~$X/quarter'" strings still
-// have the identical issue; left alone pending the demo fixture rebuild,
-// which replaces those hand-authored figures with real engine output.)
+// tied_to_finding is Claude's selection of which engine finding to explain.
+// Priority comes from array order, never a model number. Any appended dollar
+// statement names the exact deterministic historical counterfactual behind
+// the bias cost. It does not promise future savings or invent a time period.
+// A miss leaves the qualitative text unchanged because unknown is valid.
 function buildFullModeRecommendations(
   claudeRecommendations: unknown,
   biasesDetected: BiasDetected[]
 ): Recommendation[] {
   const list = Array.isArray(claudeRecommendations) ? claudeRecommendations as Record<string, unknown>[] : [];
-  return list.map((rec) => {
+  return list.map((rec, index) => {
     const claudeText = (rec.expected_improvement as string) ?? '';
     const tiedTo = (rec.tied_to_finding as string) ?? '';
     const bias = tiedTo
       ? biasesDetected.find((b) => b.bias_name.toLowerCase() === tiedTo.toLowerCase())
       : undefined;
+    const counterfactualClaim = bias?.bias_name === 'Stake Volatility'
+      ? `The flat-stake counterfactual improves historical P&L by ${formatApproxUSD(bias.estimated_cost)}.`
+      : `Excluding the flagged cohort improves historical P&L by ${formatApproxUSD(bias?.estimated_cost ?? 0)}.`;
     const expectedImprovement = bias && bias.estimated_cost > 0
-      ? (claudeText ? `${claudeText} Save ${formatApproxUSD(bias.estimated_cost)}.` : `Save ${formatApproxUSD(bias.estimated_cost)}.`)
+      ? (claudeText ? `${claudeText} ${counterfactualClaim}` : counterfactualClaim)
       : claudeText;
     return withFullModeRecommendationTags({
-      priority: (rec.priority as number) ?? 0,
-      title: (rec.title as string) ?? '',
-      description: (rec.description as string) ?? '',
+      priority: index + 1,
+      title: (rec.title as string) || (bias ? biasNameToRecommendationTitle(bias.bias_name) : ''),
+      description: (rec.description as string)
+        || (bias ? 'Use the matching control supported by this report.' : ''),
       expected_improvement: expectedImprovement,
       difficulty: (rec.difficulty as Recommendation['difficulty']) ?? 'medium',
       tied_to_finding: bias ? bias.bias_name : undefined,
     });
-  });
+  }).filter((recommendation) => (
+    recommendation.title.length > 0
+    && recommendation.description.length > 0
+    && recommendation.expected_improvement.length > 0
+  ));
 }
 
 function withFullModeFindingTags(f: SportSpecificFinding): SportSpecificFinding {
@@ -4395,7 +4465,7 @@ export function generateMarkdownReport(a: AutopsyAnalysis): string {
     }
     if (a.timing_analysis.best_window) lines.push(`- **Best Window:** ${a.timing_analysis.best_window.label} (${a.timing_analysis.best_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.best_window.count} bets)`);
     if (a.timing_analysis.worst_window) lines.push(`- **Worst Window:** ${a.timing_analysis.worst_window.label} (${a.timing_analysis.worst_window.roi.toFixed(1)}% ROI, ${a.timing_analysis.worst_window.count} bets)`);
-    if (a.timing_analysis.late_night_stats) lines.push(`- **Late Night (11pm-4am):** ${a.timing_analysis.late_night_stats.count} bets, ${a.timing_analysis.late_night_stats.roi.toFixed(1)}% ROI`);
+    if (a.timing_analysis.source_clock_window_stats) lines.push(`- **Source clock, 11pm-4:59am:** ${a.timing_analysis.source_clock_window_stats.count} bets, ${a.timing_analysis.source_clock_window_stats.roi.toFixed(1)}% ROI`);
     lines.push('');
   }
   if (a.odds_analysis && a.odds_analysis.buckets.some((b) => b.bets > 0)) {

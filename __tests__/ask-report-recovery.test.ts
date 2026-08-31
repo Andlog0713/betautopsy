@@ -37,7 +37,7 @@ const mockedAuth = vi.mocked(getAuthenticatedClient);
 
 // Minimal supabase stub: profiles -> recovery flag, autopsy_reports -> report,
 // bets -> none. Dispatches by table name; chainable, awaitable via maybeSingle.
-function makeSupabase(opts: { recovery: boolean; controlSystem: boolean }) {
+function makeSupabase(opts: { recovery: boolean; controlSystem: boolean; localTimeClaims?: boolean }) {
   const report = {
     id: 'r1',
     is_paid: true,
@@ -46,6 +46,13 @@ function makeSupabase(opts: { recovery: boolean; controlSystem: boolean }) {
     report_json: {
       summary: { record: '1-1', total_bets: 2 },
       ...(opts.controlSystem ? { control_system: { headline: 'x', hardRules: [], softRules: [] } } : {}),
+      ...(opts.localTimeClaims ? {
+        biases_detected: [],
+        strategic_leaks: [],
+        behavioral_patterns: [{ pattern_name: 'Late-night losses', impact: 'negative' }],
+        recommendations: [{ title: 'Stop at 11pm', description: 'Avoid overnight betting.' }],
+        executive_diagnosis: 'Your sizing is uneven. Late-night losses dominate.',
+      } : {}),
     },
   };
   return {
@@ -138,5 +145,22 @@ describe('ask-report recovery support footer', () => {
     const res = await POST(req(ADVERSARIAL));
     const body = await res.json();
     expect(body.answer).not.toContain(RECOVERY_SUPPORT_FOOTER);
+  });
+});
+
+describe('ask-report temporal provenance', () => {
+  it('does not send historical local-time claims to the report analyst when provenance is absent', async () => {
+    mockedAuth.mockResolvedValue({
+      supabase: makeSupabase({ recovery: false, controlSystem: false, localTimeClaims: true }) as any,
+      user: { id: 'u1', email: 'a@b.c' } as any,
+      error: null,
+    } as any);
+
+    await POST(req('What should I change?'));
+
+    const sentContext = createMock.mock.calls[0][0].messages[0].content as string;
+    expect(sentContext).toContain('"behavioral_patterns": []');
+    expect(sentContext).toContain('"recommendations": []');
+    expect(sentContext).not.toMatch(/late[- ]?night|overnight|11pm/i);
   });
 });

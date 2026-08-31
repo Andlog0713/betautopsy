@@ -58,7 +58,21 @@ export interface Profile {
 export interface Bet {
   id: string;
   user_id: string;
-  placed_at: string;
+  /** Real UTC instant only. Null means the source did not supply enough
+   * information to identify an instant. */
+  placed_at: string | null;
+  /** Exact timestamp text supplied by the source, when captured. */
+  source_placed_at?: string | null;
+  /** Source calendar date and clock components. These preserve partial
+   * temporal facts without assigning an offset. */
+  placed_date?: string | null;
+  placed_time?: string | null;
+  source_timezone?: string | null;
+  /** Optional for older API clients. Production legacy rows are explicitly
+   * marked legacy_unknown by the temporal-provenance migration. */
+  timestamp_quality?: TimestampQuality | null;
+  /** Database-generated display and filter date. It is not a clock time. */
+  recorded_date?: string | null;
   sport: string;
   league: string | null;
   bet_type: string;
@@ -95,6 +109,8 @@ export interface AutopsyReport {
   bet_count_analyzed: number;
   date_range_start: string | null;
   date_range_end: string | null;
+  date_range_start_date?: string | null;
+  date_range_end_date?: string | null;
   report_json: AutopsyAnalysis;
   report_markdown: string;
   model_used: string | null;
@@ -211,8 +227,8 @@ export interface SessionTimelinePoint {
 // stakeUSD/netUSD are paywalled dollars, so runSnapshot never attaches
 // charts (the snapshot gets only the redacted sessionTimelineSilhouette).
 // Optional on AutopsyAnalysis — absent on snapshots and all pre-v3 reports.
-// KNOWN CAVEAT: hour/day buckets inherit the engine's UTC bucketing bug
-// exactly as timing_analysis does; corrected when WS-TEMPORAL lands.
+// Hour/day buckets use source-preserved calendar and clock fields. The clock
+// is not labeled as the bettor's local time unless that basis is confirmed.
 export interface ReportCharts {
   /** 24 rows, hour 0-23 (index = hour). */
   timeOfDayPnl: { hour: number; netUSD: number; bets: number }[];
@@ -295,8 +311,21 @@ export interface TimingAnalysis {
   by_day: TimingBucket[];      // 7 buckets (Mon-Sun)
   best_window: { label: string; roi: number; count: number } | null;
   worst_window: { label: string; roi: number; count: number } | null;
-  late_night_stats: { count: number; roi: number; pct_of_total: number } | null; // 11pm-4am
-  has_time_data: boolean;      // false if all bets land at midnight (no real time info)
+  /** Local-time window only. Null unless local_time_confirmed is true. */
+  late_night_stats: { count: number; roi: number; pct_of_total: number } | null;
+  /** Additive source-clock observation. This does not imply local time and
+   * must not become an adoptable control rule. */
+  source_clock_window_stats?: { count: number; roi: number; pct_of_total: number } | null;
+  has_time_data: boolean;      // true only when sourced clock coverage clears the engine gate
+  /** Additive provenance fields. Hour buckets use the exact clock shown by
+   * the source, never a guessed local timezone. */
+  clock_basis?: 'source_clock';
+  clock_label?: string;
+  time_bearing_bets?: number;
+  date_bearing_bets?: number;
+  timezone_bearing_bets?: number;
+  legacy_unknown_bets?: number;
+  local_time_confirmed?: boolean;
 }
 
 export interface OddsBucket {
@@ -927,13 +956,14 @@ export interface DetectedSession {
   chaseCount: number;
   lateNight: boolean;
   // Additive sibling to `lateNight` (do not widen `lateNight` to
-  // boolean | null - breaking wire change for iOS). `false` when
-  // `lateNight` is false but at least one bet in the session lacks a real
-  // clock time (date-only source data parses to exact midnight), so the
-  // session's late-night status can't actually be determined. Always true
-  // when `lateNight` is true. Swift Codable with explicit CodingKeys
+  // boolean | null because that breaks the iOS wire). False means at least
+  // one bet lacks a sourced clock, so a false lateNight value is not
+  // conclusive. Swift Codable with explicit CodingKeys
   // silently ignores unknown fields, so existing clients decode unchanged.
   lateNightKnown: boolean;
+  /** Additive observation for the source-clock 11pm-4:59am window. It does
+   * not assert that the source clock is the bettor's local clock. */
+  sourceClockLateWindow?: boolean;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   gradeReasons: string[];
   isHeated: boolean;
@@ -948,7 +978,18 @@ export interface DetectedSession {
   framing?: 'loss' | 'win-but-risky';
   heatSignals: string[];
   betIndices: number[];
-  betSnapshots?: { placed_at: string; description: string; stake: number; profit: number; result: string }[];
+  betSnapshots?: {
+    placed_at: string;
+    source_placed_at?: string | null;
+    placed_date?: string | null;
+    placed_time?: string | null;
+    source_timezone?: string | null;
+    timestamp_quality?: TimestampQuality;
+    description: string;
+    stake: number;
+    profit: number;
+    result: string;
+  }[];
   // Engine-emitted per-session trigger attribution. Populated only for
   // heated sessions when one of three signals (recent large loss, late-night
   // session timing, or large starting stake vs median) explains the heat.
@@ -1125,6 +1166,9 @@ export interface Contradiction {
   volumeData: string;
   edgeLabel: string;
   edgeData: string;
+  /** Exact negative net of the flagged cohort over this report. */
+  historicalCost?: number;
+  /** Legacy field. New reports omit unsupported annual projections. */
   annualCost?: number;
 }
 
@@ -1363,8 +1407,16 @@ export interface SportSpecificFinding {
 
 // ── CSV Parser ──
 
+export type TimestampQuality = 'instant' | 'local_datetime' | 'date_only' | 'legacy_unknown';
+
 export interface ParsedBet {
-  placed_at: string;
+  /** Real UTC instant only. Partial source timestamps remain null here. */
+  placed_at: string | null;
+  source_placed_at?: string;
+  placed_date?: string;
+  placed_time?: string | null;
+  source_timezone?: string | null;
+  timestamp_quality?: Exclude<TimestampQuality, 'legacy_unknown'>;
   sport: string;
   league?: string;
   bet_type: string;

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { detectAndGradeSessions } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 function makeBet(overrides: Partial<Bet> = {}): Bet {
-  return {
+  return markFixtureTimestampAsSourced({
     id: `b-${Math.random().toString(36).slice(2, 10)}`,
     user_id: 'u',
     placed_at: '2024-01-01T14:00:00Z',
@@ -24,7 +25,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: 'u',
     created_at: '2024-01-01T14:00:00Z',
     ...overrides,
-  };
+  });
 }
 
 // Build a heated session by jamming 12 escalating-stake losses into a short
@@ -78,13 +79,15 @@ describe('per-session triggerEvent attribution', () => {
     expect(heatedSess?.triggerEvent?.description).toMatch(/\$1500/);
   });
 
-  it('attributes "late_night" when no prior big loss but session is late-night', () => {
-    // No prior bets at all, heated session starts at 11:30pm LOCAL time.
+  it('does not turn a source-clock window into a local-time trigger', () => {
+    // No prior bets at all. The source clock begins at 11:30pm, but the
+    // source timezone does not establish the bettor's local timezone.
     const heated = heatedSessionBets(new Date(2024, 0, 1, 23, 30, 0));
     const result = detectAndGradeSessions(heated);
     const heatedSess = result.sessions.find((s) => s.isHeated);
-    expect(heatedSess?.triggerEvent?.type).toBe('late_night');
-    expect(heatedSess?.triggerEvent?.triggeringBetId).toBeUndefined();
+    expect(heatedSess?.sourceClockLateWindow).toBe(true);
+    expect(heatedSess?.lateNightKnown).toBe(false);
+    expect(heatedSess?.triggerEvent).toBeUndefined();
   });
 
   it('attributes "stake_volatility" when starting stake is >1.5x median and no loss/late-night', () => {

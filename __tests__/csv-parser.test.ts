@@ -689,8 +689,6 @@ describe('parseCSV unknown analytical values', () => {
 
   it.each([
     ['missing timestamp', ',NFL,spread,Test,-110,100,win,91', 'Missing date'],
-    ['date-only timestamp', '2026-02-10,NFL,spread,Test,-110,100,win,91', 'has no clock time'],
-    ['timezone-less timestamp', '2026-02-10T12:30:00,NFL,spread,Test,-110,100,win,91', 'no timezone'],
     ['invalid calendar date', '2026-02-30T12:30:00Z,NFL,spread,Test,-110,100,win,91', 'invalid calendar date'],
     ['missing sport', '2026-02-10T12:30:00Z,,spread,Chiefs -3.5,-110,100,win,91', 'sport'],
     ['missing bet type', '2026-02-10T12:30:00Z,NFL,,Chiefs -3.5,-110,100,win,91', 'bet type'],
@@ -708,6 +706,38 @@ describe('parseCSV unknown analytical values', () => {
     expect(result.rows_skipped).toBe(1);
     expect(result.warnings.join(' ')).toContain(warningFragment);
     expect(result.warnings.join(' ')).not.toMatch(/using today|using 0|defaulting to pending/i);
+  });
+
+  it('keeps a date-only timestamp as date-only provenance', () => {
+    const result = parseCSV(rawCsv([
+      header,
+      '2026-02-10,NFL,spread,Test,-110,100,win,91',
+    ]));
+    expect(result.bets).toHaveLength(1);
+    expect(result.bets[0]).toMatchObject({
+      placed_at: null,
+      source_placed_at: '2026-02-10',
+      placed_date: '2026-02-10',
+      placed_time: null,
+      source_timezone: null,
+      timestamp_quality: 'date_only',
+    });
+  });
+
+  it('keeps a timezone-less clock without assigning an offset', () => {
+    const result = parseCSV(rawCsv([
+      header,
+      '2026-02-10T12:30:00,NFL,spread,Test,-110,100,win,91',
+    ]));
+    expect(result.bets).toHaveLength(1);
+    expect(result.bets[0]).toMatchObject({
+      placed_at: null,
+      source_placed_at: '2026-02-10T12:30:00',
+      placed_date: '2026-02-10',
+      placed_time: '12:30:00',
+      source_timezone: null,
+      timestamp_quality: 'local_datetime',
+    });
   });
 
   it('preserves an explicit zero profit because zero is known source data', () => {

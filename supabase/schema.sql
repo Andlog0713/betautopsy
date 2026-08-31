@@ -123,7 +123,16 @@ create table if not exists bets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references profiles(id) on delete cascade not null,
   upload_id uuid references uploads(id) on delete set null,
-  placed_at timestamptz not null,
+  placed_at timestamptz,
+  source_placed_at text,
+  placed_date date,
+  placed_time time without time zone,
+  source_timezone text,
+  timestamp_quality text not null default 'legacy_unknown'
+    check (timestamp_quality in ('instant', 'local_datetime', 'date_only', 'legacy_unknown')),
+  recorded_date date generated always as (
+    coalesce(placed_date, (placed_at at time zone 'UTC')::date)
+  ) stored,
   sport text not null,
   league text,
   bet_type text not null,
@@ -139,7 +148,37 @@ create table if not exists bets (
   tags text[],
   notes text,
   settlement_type text check (settlement_type is null or settlement_type = 'cash_out'),
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint bets_temporal_provenance_check check (
+    (
+      timestamp_quality = 'legacy_unknown'
+      and placed_at is not null
+    )
+    or (
+      timestamp_quality = 'instant'
+      and placed_at is not null
+      and source_placed_at is not null
+      and placed_date is not null
+      and placed_time is not null
+      and source_timezone is not null
+    )
+    or (
+      timestamp_quality = 'local_datetime'
+      and placed_at is null
+      and source_placed_at is not null
+      and placed_date is not null
+      and placed_time is not null
+      and source_timezone is null
+    )
+    or (
+      timestamp_quality = 'date_only'
+      and placed_at is null
+      and source_placed_at is not null
+      and placed_date is not null
+      and placed_time is null
+      and source_timezone is null
+    )
+  )
 );
 
 -- ── Logical Upload Memberships ──
@@ -163,6 +202,8 @@ create table if not exists autopsy_reports (
   bet_count_analyzed integer not null,
   date_range_start timestamptz,
   date_range_end timestamptz,
+  date_range_start_date date,
+  date_range_end_date date,
   report_json jsonb not null,
   report_markdown text not null,
   model_used text,
@@ -520,6 +561,7 @@ create index if not exists idx_rate_limits_reset on rate_limits(reset_at);
 
 create index if not exists idx_bets_user_id on bets(user_id);
 create index if not exists idx_bets_user_placed on bets(user_id, placed_at desc);
+create index if not exists idx_bets_user_recorded_date on bets(user_id, recorded_date desc, placed_at desc);
 create index if not exists idx_bets_user_result on bets(user_id, result);
 create index if not exists upload_bets_bet_id_idx on upload_bets(bet_id);
 create index if not exists upload_bets_user_upload_idx on upload_bets(user_id, upload_id);

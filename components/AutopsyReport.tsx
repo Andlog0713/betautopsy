@@ -31,6 +31,14 @@ import { attachCanonicalControlRules } from '@/lib/control-system';
 import { PROBLEM_GAMBLING_HELPLINE, SUPPORT_PAGE_PATH } from '@/lib/support-resources';
 import WhatChangedSection from './WhatChangedSection';
 import EvidencePanel from './report/EvidencePanel';
+import {
+  betSequencePartition,
+  betSequenceTimeMs,
+  compareBetsByRecordedTime,
+  formatRecordedDate,
+  formatSourceTime,
+  sanitizeUnconfirmedLocalTimeClaims,
+} from '@/lib/temporal-provenance';
 
 // ── Helpers ──
 
@@ -133,31 +141,35 @@ function calcProfit(odds: number, stake: number, result: string): number {
 // ── Chart data builders ──
 
 function buildPnLData(bets: Bet[]) {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
+  const sorted = [...bets].sort(compareBetsByRecordedTime);
   let cum = 0;
   return sorted.map((b) => {
     cum += Number(b.profit);
     return {
-      date: new Date(b.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: formatRecordedDate(b, { month: 'short', day: 'numeric' }),
       pnl: Math.round(cum * 100) / 100,
     };
   });
 }
 
 function buildStakeData(bets: Bet[]) {
-  const sorted = [...bets].sort((a, b) => new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime());
-  return sorted.map((b, i) => {
+  const sorted = [...bets].sort(compareBetsByRecordedTime);
+  const previousByPartition = new Map<string, Bet>();
+  return sorted.map((b) => {
     // Check if this bet was placed within 1 hour of a previous loss
     let afterLoss = false;
-    if (i > 0) {
-      const prev = sorted[i - 1];
+    const partition = betSequencePartition(b);
+    const prev = partition ? previousByPartition.get(partition) : undefined;
+    if (prev) {
       if (prev.result === 'loss') {
-        const gap = new Date(b.placed_at).getTime() - new Date(prev.placed_at).getTime();
-        if (gap < 3600000) afterLoss = true; // < 1 hour
+        const currentTime = betSequenceTimeMs(b);
+        const previousTime = betSequenceTimeMs(prev);
+        if (currentTime !== null && previousTime !== null && currentTime - previousTime < 3600000) afterLoss = true;
       }
     }
+    if (partition) previousByPartition.set(partition, b);
     return {
-      date: new Date(b.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: formatRecordedDate(b, { month: 'short', day: 'numeric' }),
       stake: Number(b.stake),
       afterLoss,
     };
@@ -419,9 +431,13 @@ function AskYourAutopsy({ reportId, analysis }: { reportId: string; analysis: Au
 // ── Main Component ──
 
 export default function AutopsyReport({ analysis: savedAnalysis, bets = [], previousSnapshot, reportId, tier = 'free', readOnly = false, isSnapshot = false, purchaseAvailable = true, comparison, recoveryModeActive = false }: { analysis: AutopsyAnalysis; bets?: Bet[]; previousSnapshot?: ProgressSnapshot | null; reportId?: string; tier?: 'free' | 'pro'; readOnly?: boolean; isSnapshot?: boolean; purchaseAvailable?: boolean; comparison?: ReportComparison | null; recoveryModeActive?: boolean }) {
+  const provenanceSafeAnalysis = useMemo(
+    () => sanitizeUnconfirmedLocalTimeClaims(savedAnalysis),
+    [savedAnalysis],
+  );
   const analysis = useMemo(
-    () => isSnapshot ? savedAnalysis : attachCanonicalControlRules(savedAnalysis),
-    [isSnapshot, savedAnalysis],
+    () => isSnapshot ? provenanceSafeAnalysis : attachCanonicalControlRules(provenanceSafeAnalysis),
+    [isSnapshot, provenanceSafeAnalysis],
   );
   const { summary, biases_detected, strategic_leaks, behavioral_patterns, recommendations } = analysis;
   const filteredLeaks = strategic_leaks.filter(l => !isPlatformCategory(l.category));
@@ -875,7 +891,7 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
   const compItems = previousSnapshot ? [
     { label: 'Emotion Score', from: previousSnapshot.tilt_score, to: emotionScore, lowerBetter: true },
     { label: 'Grade', from: previousSnapshot.overall_grade, to: analysis.summary.overall_grade, isGrade: true },
-    { label: 'Loss Chase Ratio', from: previousSnapshot.loss_chase_ratio, to: null, lowerBetter: true, suffix: 'x' },
+    { label: 'Losing-Result Sequence Ratio', from: previousSnapshot.loss_chase_ratio, to: null, lowerBetter: true, suffix: 'x' },
     { label: 'Parlay %', from: previousSnapshot.parlay_percent, to: null, lowerBetter: true, suffix: '%' },
     { label: 'ROI', from: previousSnapshot.roi_percent, to: analysis.summary.roi_percent, suffix: '%' },
   ] : [];
@@ -1117,7 +1133,7 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/[0.04] mb-6 rounded-md overflow-hidden">
         <div className="bg-base p-[18px]">
           <div className="flex justify-between items-baseline mb-2.5">
-            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring emotional betting behavior. Factors in stake volatility after losses, loss-chasing patterns, rapid-fire betting during losing streaks, and session discipline. Lower is better: under 25 is excellent, over 50 signals frequent heated sessions." /></span>
+            <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">EMOTION SCORE<InfoTip text="0-100 scale measuring stake variation, source-ordered losing-result sequences, rapid-fire clusters, and session discipline. Export data does not include settlement times, so the score does not assume one result caused the next bet. Lower is better: under 25 is excellent, over 50 signals frequent heated sessions." /></span>
             <span className={`font-mono text-[22px] font-bold ${
               emotionInsufficient ? 'text-fg-dim' : emotionScore <= 25 ? 'text-win' : emotionScore <= 50 ? 'text-caution' : emotionScore <= 75 ? 'text-caution' : 'text-loss'
             }`}>{emotionInsufficient ? '??' : emotionScore}</span>
@@ -1137,7 +1153,7 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
         {analysis.discipline_score ? (
           <div className="bg-base p-[18px]">
             <div className="flex justify-between items-baseline mb-2.5">
-              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE<InfoTip text="0-100 scale measuring process consistency. Scores four areas: tracking habits (logging bets regularly), stake sizing (consistent unit sizes), emotional control (staying level after losses), and strategic focus (sticking to profitable categories). Higher is better." /></span>
+              <span className="font-mono text-[9px] text-fg-dim tracking-[1.5px]">DISCIPLINE<InfoTip text="0-100 scale measuring process consistency. Scores four areas: tracking habits, stake sizing, consistency across result sequences, and strategic focus. Higher is better." /></span>
               <span className={`font-mono text-[22px] font-bold ${
                 analysis.discipline_score.total >= 71 ? 'text-win' : analysis.discipline_score.total >= 51 ? 'text-caution' : analysis.discipline_score.total >= 31 ? 'text-caution' : 'text-loss'
               }`}>{analysis.discipline_score.total}</span>
@@ -1178,7 +1194,16 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
                 { label: 'Calibration', hint: 'Does your win rate match the implied probability of your bets?', val: analysis.betiq.components.calibration, max: 20 },
                 { label: 'Sophistication', hint: 'Straight bets vs parlays. Higher means less parlay exposure', val: analysis.betiq.components.sophistication, max: 15 },
                 { label: 'Specialization', hint: 'Do you have a focused edge in 1-2 sports or bet types?', val: analysis.betiq.components.specialization, max: 15 },
-                { label: 'Timing', hint: 'Are you avoiding bad time windows like late-night betting?', val: analysis.betiq.components.timing, max: 10 },
+                {
+                  label: 'Timing',
+                  hint: analysis.timing_analysis?.local_time_confirmed
+                    ? 'How consistent is performance across confirmed local-time windows?'
+                    : analysis.timing_analysis?.clock_basis === 'source_clock'
+                    ? 'Held neutral. Source clocks are observed without treating them as your local time.'
+                    : 'Held neutral because this saved report lacks timestamp provenance.',
+                  val: analysis.betiq.components.timing,
+                  max: 10,
+                },
                 { label: 'Sample size', hint: 'More bets = more reliable analysis', val: analysis.betiq.components.confidence, max: 15 },
               ].map(c => (
                 <div key={c.label} className="vitals-cell">
@@ -1646,8 +1671,8 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
                   </div>
                 </div>
                 <p className="text-[12px] text-fg-muted leading-relaxed">{c.insight}</p>
-                {c.annualCost && (
-                  <p className="font-mono text-sm font-semibold text-loss mt-2">est. annual cost: ${c.annualCost.toLocaleString()}</p>
+                {c.historicalCost !== undefined && c.historicalCost > 0 && (
+                  <p className="font-mono text-sm font-semibold text-loss mt-2">historical impact in this report: ${c.historicalCost.toLocaleString()}</p>
                 )}
               </div>
             ))}
@@ -1746,11 +1771,11 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
               {[
                 { label: 'Bet size swings', hint: 'How much your stakes vary. Higher means more erratic sizing', value: analysis.enhanced_tilt.signals.bet_sizing_volatility, max: 25 },
-                { label: 'Reaction to losses', hint: 'Whether your stakes increase after you lose', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
-                { label: 'Losing streak behavior', hint: 'How your betting changes during consecutive losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
+                { label: 'Losing-result sequence', hint: 'Whether stakes rise on bets following rows later settled as losses. Settlement timing is unavailable', value: analysis.enhanced_tilt.signals.loss_reaction, max: 25 },
+                { label: 'Losing-result runs', hint: 'Pace and sizing across consecutive source-order rows later settled as losses', value: analysis.enhanced_tilt.signals.streak_behavior, max: 25 },
                 { label: 'Session overstaying', hint: 'Whether you bet longer in losing sessions vs winning ones', value: analysis.enhanced_tilt.signals.session_discipline, max: 25 },
                 { label: 'Speeding up mid-session', hint: 'Whether you place bets faster as a session goes on', value: analysis.enhanced_tilt.signals.session_acceleration, max: 25 },
-                { label: 'Chasing bigger payouts', hint: 'Whether you shift to longer odds after losing, reaching for a recovery', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
+                { label: 'Odds shift in loss sequences', hint: 'Whether longer odds follow rows later settled as losses. Settlement timing is unavailable', value: analysis.enhanced_tilt.signals.odds_drift_after_loss, max: 25 },
               ].map(signal => (
                 <div key={signal.label} className="card-tier-2 p-3">
                   <div className="mb-1.5">
@@ -1908,10 +1933,10 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
             <span className="font-mono text-[9px] text-fg-dim tracking-[3px] mr-3">EXHIBIT</span>
             Stake Size Timeline
           </h2>
-          <p className="text-fg-muted text-xs italic mb-1">How much you wagered on each bet over time. Spikes after losses can signal emotional betting.</p>
+          <p className="text-fg-muted text-xs italic mb-1">How much you wagered on each bet over time. Red bars follow bets that eventually settled as losses in the source order; settlement timing is unavailable.</p>
           <p className="text-fg-muted text-xs mb-4">
             <span className="inline-block w-2 h-2 rounded-full bg-white/10 border border-white/20 mr-1 align-middle" /> Normal
-            <span className="inline-block w-2 h-2 rounded-full bg-loss mr-1 ml-3 align-middle" /> Within 1hr of a loss
+            <span className="inline-block w-2 h-2 rounded-full bg-loss mr-1 ml-3 align-middle" /> Within 1hr after a bet later settled as a loss
           </p>
           <div className="h-40 sm:h-48">
             <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 320, height: 160 }}>
@@ -1981,6 +2006,11 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
         <div className="space-y-4">
           <h2 className="font-bold text-2xl tracking-tight">Timing Patterns</h2>
           <p className="text-fg-muted text-xs italic -mt-2">Your performance broken down by when you place bets. Reveals hidden patterns in your schedule.</p>
+          {analysis.timing_analysis.time_bearing_bets !== undefined && (
+            <p className="text-fg-dim text-xs leading-relaxed">
+              Hour analysis uses {analysis.timing_analysis.time_bearing_bets} of {analysis.sufficiency?.settledBets ?? analysis.summary.total_bets} settled bets with a sourced clock. {analysis.timing_analysis.clock_label ?? 'Times are shown exactly as supplied by the source.'}
+            </p>
+          )}
 
           {/* Day of Week Chart */}
           <div className="card p-6">
@@ -2117,14 +2147,14 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
                 </div>
               );
             })()}
-            {analysis.timing_analysis.late_night_stats && (
-              <div className={`pl-4 border-l ${analysis.timing_analysis.late_night_stats.roi < 0 ? 'border-l-caution/60' : 'border-l-white/[0.06]'}`}>
-                <p className="data-label-sm mb-2">Late Night · 11p–4a</p>
-                <p className="text-fg-bright text-base mb-1 data-number">{analysis.timing_analysis.late_night_stats.count} bets</p>
-                <p className={`data-number text-xl leading-none ${analysis.timing_analysis.late_night_stats.roi >= 0 ? 'text-win' : 'text-caution'}`}>
-                  {analysis.timing_analysis.late_night_stats.roi.toFixed(1)}<span className="text-xs opacity-60">%</span>
+            {analysis.timing_analysis.source_clock_window_stats && (
+              <div className={`pl-4 border-l ${analysis.timing_analysis.source_clock_window_stats.roi < 0 ? 'border-l-caution/60' : 'border-l-white/[0.06]'}`}>
+                <p className="data-label-sm mb-2">Source Clock · 11pm-4:59am</p>
+                <p className="text-fg-bright text-base mb-1 data-number">{analysis.timing_analysis.source_clock_window_stats.count} bets</p>
+                <p className={`data-number text-xl leading-none ${analysis.timing_analysis.source_clock_window_stats.roi >= 0 ? 'text-win' : 'text-caution'}`}>
+                  {analysis.timing_analysis.source_clock_window_stats.roi.toFixed(1)}<span className="text-xs opacity-60">%</span>
                 </p>
-                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.late_night_stats.pct_of_total.toFixed(0)}% of total</p>
+                <p className="data-number text-[11px] text-fg-dim mt-1">{analysis.timing_analysis.source_clock_window_stats.pct_of_total.toFixed(0)}% of bets with clock data</p>
               </div>
             )}
           </div>
@@ -2134,8 +2164,7 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
             <div className="pl-4 border-l border-l-caution/60">
               <p className="data-label-sm text-caution mb-2">Limited time data</p>
               <p className="text-fg-muted text-xs leading-relaxed">
-                Your CSV only included dates, not timestamps. Day-of-week analysis is available above, but hour-of-day patterns require time data.
-                For full timing insights, use a tracker like Pikkit that exports <span className="text-fg-bright">time_placed_iso</span> with each bet.
+                This history does not include enough sourced clock values for hour-of-day analysis. Day-of-week analysis is available above when dates are known. BetAutopsy does not turn missing clock or timezone data into a guessed time.
               </p>
             </div>
           )}
@@ -2637,7 +2666,7 @@ export default function AutopsyReport({ analysis: savedAnalysis, bets = [], prev
         <div className="card p-6 text-center space-y-3">
           <Lock size={20} className="text-fg-muted mx-auto" />
           <p className="text-fg-muted text-sm font-mono">Leak prioritizer with dollar costs</p>
-          <p className="text-fg-dim text-xs">See exactly how much each leak costs you per quarter</p>
+          <p className="text-fg-dim text-xs">See each leak&apos;s historical impact across this report</p>
         </div>
       ) : (
       <>
@@ -3527,10 +3556,13 @@ function BetAnnotationsSection({ data }: { data: import('@/types').AnnotationSum
 // ── Session Bet Timeline ──
 
 function SessionBetTimeline({ session, bets, show, setShow }: { session: import('@/types').DetectedSession; bets: Bet[]; show: boolean; setShow: (v: boolean) => void }) {
-  // Use bets from prop if available, fall back to embedded snapshots
-  const sessionBets: { placed_at: string; description: string; stake: number; profit: number; result: string }[] = bets.length > 0
-    ? session.betIndices.map(idx => bets[idx]).filter(Boolean).map(b => ({ placed_at: b.placed_at, description: b.description || '', stake: Number(b.stake), profit: Number(b.profit), result: b.result }))
-    : (session.betSnapshots ?? []);
+  const orderedBets = useMemo(() => [...bets].sort(compareBetsByRecordedTime), [bets]);
+  // Frozen snapshots preserve the exact session membership even when a saved
+  // report is later opened with bets in a different query order. Newer local
+  // clock sessions without snapshots fall back to the engine's sort order.
+  const sessionBets = (session.betSnapshots?.length ?? 0) >= 2
+    ? session.betSnapshots!
+    : session.betIndices.map(idx => orderedBets[idx]).filter((bet): bet is Bet => Boolean(bet));
   if (sessionBets.length < 2) return null;
 
   return (
@@ -3544,8 +3576,7 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
             const stake = Math.abs(Number(bet.stake));
             const profit = Number(bet.profit);
             const isLoss = bet.result === 'loss';
-            const time = new Date(bet.placed_at);
-            const timeStr = `${time.getUTCHours() % 12 || 12}:${String(time.getUTCMinutes()).padStart(2, '0')} ${time.getUTCHours() >= 12 ? 'PM' : 'AM'}`;
+            const timeStr = formatSourceTime(bet) ?? 'Time unknown';
 
             // Stake escalation annotation
             let stakeAnnotation: string | null = null;
@@ -3561,9 +3592,12 @@ function SessionBetTimeline({ session, bets, show, setShow }: { session: import(
             // Time gap from previous bet
             let timeGap: string | null = null;
             if (i > 0) {
-              const prevTime = new Date(sessionBets[i - 1].placed_at).getTime();
-              const gap = Math.round((time.getTime() - prevTime) / 60000);
-              if (gap > 0) timeGap = gap >= 60 ? `${Math.floor(gap / 60)}h ${gap % 60}m later` : `${gap}m later`;
+              const previousTime = betSequenceTimeMs(sessionBets[i - 1]);
+              const currentTime = betSequenceTimeMs(bet);
+              if (previousTime !== null && currentTime !== null) {
+                const gap = Math.round((currentTime - previousTime) / 60000);
+                if (gap > 0) timeGap = gap >= 60 ? `${Math.floor(gap / 60)}h ${gap % 60}m later` : `${gap}m later`;
+              }
             }
 
             return (

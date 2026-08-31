@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import type { Bet } from '@/types';
+import { formatRecordedDate } from '@/lib/temporal-provenance';
 
 interface EvidencePanelProps {
   bets: Bet[];
@@ -39,7 +40,7 @@ export default function EvidencePanel({ bets, evidenceBetIds, biasName }: Eviden
             return (
               <div key={bet.id || i} className="flex items-center gap-3 py-1.5 font-mono text-[11px]">
                 <span className="text-fg-dim w-[72px] shrink-0">
-                  {new Date(bet.placed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {formatRecordedDate(bet, { month: 'short', day: 'numeric' })}
                 </span>
                 <span className="text-fg truncate flex-1 min-w-0">{bet.description}</span>
                 <span className="text-fg-bright w-[52px] text-right shrink-0">${stake.toFixed(0)}</span>

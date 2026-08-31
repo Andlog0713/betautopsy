@@ -15,6 +15,7 @@ import ScreenshotParser from '@/components/ScreenshotParser';
 import type { UploadResponse, UploadPreviewResponse } from '@/types';
 import { userQualifiesForPromo } from '@/types';
 import { PRICING_ENABLED } from '@/lib/feature-flags';
+import { formatCalendarDate } from '@/lib/temporal-provenance';
 import { Camera, FlaskConical, DollarSign, Loader2, CheckCircle2, XCircle, Upload as UploadIcon, Smartphone, ClipboardList, FileText } from 'lucide-react';
 
 type UploadState = 'idle' | 'uploading' | 'previewing' | 'confirming' | 'success' | 'error';
@@ -500,9 +501,9 @@ export default function UploadPage() {
               </div>
               <div className="border-l-2 border-scalpel pl-3">
                 <p className="font-mono text-xs font-bold text-fg-bright">
-                  {preview.date_range_start ? new Date(preview.date_range_start).toLocaleDateString() : '—'}
-                  {' – '}
-                  {preview.date_range_end ? new Date(preview.date_range_end).toLocaleDateString() : '—'}
+                  {preview.date_range_start ? formatCalendarDate(preview.date_range_start) : 'Unknown'}
+                  {' to '}
+                  {preview.date_range_end ? formatCalendarDate(preview.date_range_end) : 'Unknown'}
                 </p>
                 <p className="text-xs text-fg-muted">date range</p>
               </div>

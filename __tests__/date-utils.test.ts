@@ -41,6 +41,7 @@ import {
 } from '@/lib/date-utils';
 import { calculateMetrics, runAutopsy } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // Captures the prompt actually sent to Claude so the "By Day of Week
 // stays in the prompt even when has_time_data is false" test below can
@@ -184,17 +185,17 @@ describe('source guard — no raw local Date accessor outside date-utils.ts', ()
 });
 
 function makeBet(overrides: Partial<Bet>): Bet {
-  return {
+  return markFixtureTimestampAsSourced({
     id: 'bet', user_id: 'u', placed_at: '2026-01-15T20:00:00Z', sport: 'NFL',
     league: null, bet_type: 'spread', description: 'test bet', odds: -110,
     stake: 100, result: 'win', payout: 191, profit: 91, sportsbook: 'DraftKings',
     is_bonus_bet: false, parlay_legs: null, tags: null, notes: null,
     upload_id: null, created_at: '2026-01-15T20:00:00Z',
     ...overrides,
-  };
+  });
 }
 
-describe('calculateMetrics.timing — by_day/by_hour bucket on the UTC calendar, not the runner\'s local zone', () => {
+describe('calculateMetrics.timing: source calendar and clock', () => {
   it('places a 2am-UTC bet in the UTC Thursday/hour-2 bucket, not the local-shifted Wednesday/hour-21', () => {
     // 2026-02-01/02/03/06/07/08/09 (skipping 04 Wed and 05 Thu) at 15:00
     // UTC (hour 15, nowhere near hour 2) so padding never lands in the
@@ -226,16 +227,22 @@ describe('calculateMetrics.timing — by_day/by_hour bucket on the UTC calendar,
   });
 });
 
-describe('Claude prompt — By Day of Week is not gated behind has_time_data', () => {
-  it('includes real day-of-week data in the prompt even when every bet is a midnight (date-only) parse', async () => {
-    // All 20 bets at exactly 00:00 UTC (date-only source data) so
-    // has_time_data is false, spread across 5 distinct weekdays.
+describe('Claude prompt: By Day of Week is not gated behind has_time_data', () => {
+  it('includes real day-of-week data in the prompt when every bet is date-only', async () => {
+    // All 20 bets have known dates but no source clock, spread across five
+    // distinct weekdays.
     const bets: Bet[] = Array.from({ length: 20 }, (_, i) => {
       const day = 2 + (i % 5); // 2026-02-02 .. 2026-02-06 (Mon-Fri)
+      const date = `2026-02-0${day}`;
       return makeBet({
         id: `bet-${i}`,
-        placed_at: `2026-02-0${day}T00:00:00Z`,
-        created_at: `2026-02-0${day}T00:00:00Z`,
+        placed_at: null,
+        source_placed_at: date,
+        placed_date: date,
+        placed_time: null,
+        source_timezone: null,
+        timestamp_quality: 'date_only',
+        created_at: `${date}T00:00:00Z`,
         result: i % 4 === 0 ? 'loss' : 'win',
       });
     });
@@ -254,6 +261,8 @@ describe('Claude prompt — By Day of Week is not gated behind has_time_data', (
     // Hour-of-day genuinely has no real data here, so it correctly stays
     // gated - the fix scopes to day-of-week only, not a blanket un-gate.
     expect(capturedPrompt).not.toContain('By Time of Day');
-    expect(capturedPrompt).toContain('No time-of-day (hour) data available');
+    expect(capturedPrompt).toContain(
+      'No sufficiently complete sourced clock data is available. Day-of-week data above remains available when source dates are known.',
+    );
   });
 });

@@ -9,7 +9,13 @@ import { buildBetImportPlan, importBets, planBetImport } from '@/lib/import-bets
 interface ExistingIdentity {
   id: string;
   upload_id?: string | null;
-  placed_at: string;
+  placed_at: string | null;
+  source_placed_at?: string | null;
+  placed_date?: string | null;
+  placed_time?: string | null;
+  source_timezone?: string | null;
+  timestamp_quality?: 'instant' | 'local_datetime' | 'date_only' | 'legacy_unknown';
+  recorded_date?: string | null;
   sport: string;
   league?: string | null;
   bet_type: string;
@@ -29,6 +35,12 @@ function existingIdentity(bet: ParsedBet, id: string): ExistingIdentity {
   return {
     id,
     placed_at: bet.placed_at,
+    source_placed_at: bet.source_placed_at,
+    placed_date: bet.placed_date,
+    placed_time: bet.placed_time,
+    source_timezone: bet.source_timezone,
+    timestamp_quality: bet.timestamp_quality,
+    recorded_date: bet.placed_date,
     sport: bet.sport,
     league: bet.league,
     bet_type: bet.bet_type,
@@ -42,6 +54,22 @@ function existingIdentity(bet: ParsedBet, id: string): ExistingIdentity {
     is_bonus_bet: bet.is_bonus_bet,
     parlay_legs: bet.parlay_legs,
     settlement_type: bet.settlement_type,
+  };
+}
+
+function legacyIdentity(bet: ParsedBet, id: string): ExistingIdentity {
+  const date = bet.placed_date ?? bet.placed_at?.slice(0, 10) ?? '2026-01-01';
+  const legacyPlacedAt = bet.placed_at
+    ?? `${date}T${bet.placed_time ?? '00:00:00'}Z`;
+  return {
+    ...existingIdentity(bet, id),
+    placed_at: legacyPlacedAt,
+    source_placed_at: null,
+    placed_date: null,
+    placed_time: null,
+    source_timezone: null,
+    timestamp_quality: 'legacy_unknown',
+    recorded_date: legacyPlacedAt.slice(0, 10),
   };
 }
 
@@ -172,6 +200,11 @@ function makeImportClient(existing: ExistingIdentity[]) {
         if (operation === 'update' && table === 'profiles') {
           profileBetCount = Number((payload as Record<string, unknown>).bet_count);
         }
+        if (operation === 'update' && table === 'bets' && eqId) {
+          storedBets = storedBets.map((bet) => bet.id === eqId
+            ? { ...bet, ...(payload as Record<string, unknown>) }
+            : bet);
+        }
         if (operation === 'delete') {
           deletes.push({ table, ids: inIds, id: eqId });
           if (table === 'bets' && inIds) {
@@ -235,9 +268,74 @@ describe('buildBetImportPlan', () => {
     expect(plan.existing_bets).toBe(0);
     expect(plan.new_bets).toBe(1);
   });
+
+  it.each([
+    ['qualified instant', '2026-06-01T12:30:00Z', 'instant'],
+    ['local clock', '2026-06-01T12:30:00', 'local_datetime'],
+    ['date only', '2026-06-01', 'date_only'],
+  ])('matches and plans a provenance upgrade for a legacy %s row', (_label, source, quality) => {
+    const [incoming] = parseSyntheticExport([
+      `${source},NFL,spread,Alpha -3.5,-110,100,loss,-100,DraftKings`,
+    ]);
+    const plan = buildBetImportPlan([incoming], [legacyIdentity(incoming, 'legacy-1')]);
+
+    expect(plan).toMatchObject({ existing_bets: 1, new_bets: 0 });
+    expect(plan.entries[0]).toMatchObject({
+      existing_bet_id: 'legacy-1',
+      existing_temporal_upgrade: {
+        placed_at: incoming.placed_at,
+        source_placed_at: source,
+        placed_date: '2026-06-01',
+        timestamp_quality: quality,
+      },
+    });
+  });
 });
 
 describe('importBets logical memberships', () => {
+  it('uses a fresh export to replace legacy uncertainty without inserting a duplicate', async () => {
+    const bets = parseSyntheticExport([
+      '2026-06-01T12:30:00Z,NFL,spread,Alpha -3.5,-110,100,loss,-100,DraftKings',
+    ]);
+    const mock = makeImportClient([legacyIdentity(bets[0], 'legacy-1')]);
+
+    const result = await importBets(mock.client, 'user-1', bets, 'fresh-export.csv');
+
+    expect(result).toMatchObject({ existing_bets: 1, new_bets: 0, bets_imported: 0 });
+    expect(mock.state.bets).toHaveLength(1);
+    expect(mock.state.bets[0]).toMatchObject({
+      id: 'legacy-1',
+      source_placed_at: '2026-06-01T12:30:00Z',
+      placed_date: '2026-06-01',
+      placed_time: '12:30:00',
+      source_timezone: 'Z',
+      timestamp_quality: 'instant',
+    });
+  });
+
+  it('deduplicates overlapping date-only windows without turning dates into instants', async () => {
+    const firstExport = parseSyntheticExport([
+      '2026-06-01,NFL,spread,Alpha -3.5,-110,100,loss,-100,DraftKings',
+      '2026-06-02,NBA,moneyline,Bravo ML,+150,50,win,75,DraftKings',
+    ]);
+    const secondExport = parseSyntheticExport([
+      '2026-06-02,NBA,moneyline,Bravo ML,+150,50,win,75,DraftKings',
+      '2026-06-03,MLB,total,Charlie Under 8.5,-110,40,loss,-40,DraftKings',
+    ]);
+    const mock = makeImportClient([]);
+
+    await importBets(mock.client, 'user-1', firstExport, 'window-one.csv');
+    const preview = await planBetImport(mock.client, 'user-1', secondExport);
+    const result = await importBets(mock.client, 'user-1', secondExport, 'window-two.csv');
+
+    expect(preview).toMatchObject({ logical_bets: 2, existing_bets: 1, new_bets: 1 });
+    expect(result).toMatchObject({ logical_bets: 2, existing_bets: 1, new_bets: 1 });
+    expect(mock.state.bets).toHaveLength(3);
+    expect(mock.state.bets.every((bet) => bet.placed_at === null)).toBe(true);
+    expect(mock.state.bets.every((bet) => bet.timestamp_quality === 'date_only')).toBe(true);
+    expect(mock.state.memberships.filter((row) => row.upload_id === 'logical-upload-2')).toHaveLength(2);
+  });
+
   it('commits overlapping export windows without duplicating historical bets', async () => {
     const firstExport = parseSyntheticExport([
       '2026-06-01T12:00:00Z,NFL,spread,Alpha -3.5,-110,100,loss,-100,DraftKings',

@@ -29,6 +29,7 @@ import { PRICING_ENABLED, getEffectiveTier } from '@/lib/feature-flags';
 import { trackPurchase as trackPurchaseMeta } from '@/lib/meta-events';
 import { FlaskConical, Upload as UploadIcon, Brain, Lock } from 'lucide-react';
 import { isReportValueVisible } from '@/components/RedactedValue';
+import { compareBetsByRecordedTime } from '@/lib/temporal-provenance';
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -180,12 +181,10 @@ export default function ReportsPage() {
       .eq('user_id', user.id);
 
     if (dateFrom) {
-      query = query.gte('placed_at', new Date(dateFrom).toISOString());
+      query = query.gte('recorded_date', dateFrom);
     }
     if (dateTo) {
-      const endDate = new Date(dateTo);
-      endDate.setDate(endDate.getDate() + 1);
-      query = query.lt('placed_at', endDate.toISOString());
+      query = query.lte('recorded_date', dateTo);
     }
 
     const { count } = await query;
@@ -377,6 +376,8 @@ export default function ReportsPage() {
                 bet_count_analyzed: report.bet_count_analyzed,
                 date_range_start: report.date_range_start,
                 date_range_end: report.date_range_end,
+                date_range_start_date: report.date_range_start_date,
+                date_range_end_date: report.date_range_end_date,
                 report_json: report.report_summary ?? report.report_json,
                 is_paid: report.is_paid,
                 upgraded_from_snapshot_id: report.upgraded_from_snapshot_id,
@@ -494,7 +495,7 @@ export default function ReportsPage() {
         } else {
           const exactBets = results
             .flatMap((result) => (result.data ?? []) as Bet[])
-            .sort((a, b) => a.placed_at.localeCompare(b.placed_at));
+            .sort(compareBetsByRecordedTime);
           setAnalyzedBets(exactBets);
         }
       } else {
@@ -502,11 +503,16 @@ export default function ReportsPage() {
           .from('bets')
           .select('*')
           .eq('user_id', user.id)
-          .order('placed_at', { ascending: true });
-        if (report.date_range_start) query = query.gte('placed_at', report.date_range_start);
-        if (report.date_range_end) query = query.lte('placed_at', report.date_range_end);
+          .order('recorded_date', { ascending: true })
+          .order('placed_time', { ascending: true, nullsFirst: false })
+          .order('placed_at', { ascending: true, nullsFirst: false })
+          .order('id', { ascending: true });
+        const startDate = report.date_range_start_date ?? report.date_range_start?.slice(0, 10);
+        const endDate = report.date_range_end_date ?? report.date_range_end?.slice(0, 10);
+        if (startDate) query = query.gte('recorded_date', startDate);
+        if (endDate) query = query.lte('recorded_date', endDate);
         const { data: betsData } = await query;
-        setAnalyzedBets((betsData ?? []) as Bet[]);
+        setAnalyzedBets(((betsData ?? []) as Bet[]).sort(compareBetsByRecordedTime));
       }
     } catch {
       setError('This report could not be opened. Please try again.');

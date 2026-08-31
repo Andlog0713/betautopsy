@@ -2,13 +2,34 @@
 
 ## CURRENT STATE (as of 2026-08-31)
 
-**Production**: the latest behavior-changing production commit is `4850621`,
+**Production**: The presence of this block on GitHub `main` means
+[PR #128](https://github.com/Andlog0713/betautopsy/pull/128) is merged. That
+Stage 2 release preserves source date, clock, and timezone as separate facts;
+stores a UTC instant only when the source supplied an offset; marks historical
+rows `legacy_unknown` without heuristic backfill; and keeps date-only or
+timezone-naive rows out of analyses that require real chronology. Saved-report
+copy is sanitized when it treats source order as settlement order, and session
+evidence uses the exact frozen session membership. The additive production
+migration `20260831213000_temporal_provenance` was applied before the code
+release and verified against all 8,665 existing bets: the row count did not
+change, every historical row retained `placed_at`, every row received
+`legacy_unknown`, and every new column, constraint, generated date, report
+range, and index matched the reviewed schema. Supabase remains on the free
+tier. Typecheck, 647 unit tests, the production build, strict design validation
+with zero findings, and all 39 browser cases are green.
+
+The production code also includes `f7441ea`,
+[PR #127](https://github.com/Andlog0713/betautopsy/pull/127). That release
+makes every adoptable control action, scope, trigger, threshold, evidence
+record, and sufficiency check deterministic. A historical financial claim is
+attached only when it matches the corresponding deterministic counterfactual
+over the same frozen cohort. It also includes `4850621`,
 [PR #125](https://github.com/Andlog0713/betautopsy/pull/125), which clears
 107 enforceable design-system violations, expands the checker to cover the
 forms it previously missed, and enables strict enforcement with zero reported
-findings. GitHub `main` is on docs-only squash-merge commit `69288f1`,
-[PR #126](https://github.com/Andlog0713/betautopsy/pull/126), which closed that
-stage in this log without changing runtime behavior. The production code includes
+findings. Docs-only squash-merge commit `69288f1`,
+[PR #126](https://github.com/Andlog0713/betautopsy/pull/126), closed that
+design stage without changing runtime behavior. The production code includes
 [PR #124](https://github.com/Andlog0713/betautopsy/pull/124), which replaces
 the false-positive `/pricing` mobile cases with authenticated coverage of the
 real page, locked $19.99 copy, and final URL. It includes
@@ -42,12 +63,8 @@ verified in a browser with the real DraftKings export: the preview showed
 cleared. Full history of this arc is logged under "Previous branch:
 `docs/wire-provenance-standing-rule`" below.
 
-**In flight**: `codex/recommendation-integrity` is the first stage of the
-post-audit roadmap. It removes model-authored rules from every adoptable path,
-makes rule actions, triggers, evidence, and sufficiency deterministic, and
-requires any historical financial claim to match the corresponding What-If
-over the same frozen report cohort. Local typecheck, 601 unit tests, production
-build, strict design check, and all 39 browser cases are green.
+**In flight**: None. Stage 2 is the final stage authorized for this run. Stage
+3 and later have not started.
 
 **Main provenance note**: commits `236ac27` and `27e1903` came from the
 GitHub web UI, not from a local session.
@@ -81,21 +98,18 @@ rather than forcing an empty conflict resolution — confirmed with
 Andrew first.
 
 ### Next up
-- **Stage 1, recommendation integrity**: finish review, ship, and verify the
-  current branch.
-- **Stage 2, temporal provenance**: preserve whether source time and timezone
-  were actually known without inventing either.
-- **Stage 3, Upload History correctness**: make upload records and outcomes
+- **Stop after Stage 2**: no later roadmap stage should begin in this run.
+- **Stage 3, Upload History correctness, not started**: make upload records and outcomes
   truthful and reconcilable.
-- **Stage 4, report and dashboard provenance**: unify report scope and select
+- **Stage 4, report and dashboard provenance, not started**: unify report scope and select
   one explicit previous-report baseline across web and API comparisons.
-- **Stage 5, Bet History correctness**: paginate the complete history and use
+- **Stage 5, Bet History correctness, not started**: paginate the complete history and use
   exact totals rather than the first fetched window.
-- **Stage 6, purchase truth**: verify Stripe price direction first, then make
+- **Stage 6, purchase truth, not started**: verify Stripe price direction first, then make
   every eligible purchase surface and fulfillment state agree.
-- **Stage 7, public truth**: align FAQ, sample, trust copy, and product claims
+- **Stage 7, public truth, not started**: align FAQ, sample, trust copy, and product claims
   with behavior that is actually shipped and verified.
-- **Stage 8, runtime quality**: close remaining mobile, accessibility, warning,
+- **Stage 8, runtime quality, not started**: close remaining mobile, accessibility, warning,
   and user-journey gaps, then repeat production verification.
 - **Owner-only live payment proof**: after Stage 6 and before traffic, a real
   card purchase still requires Andrew. The automated suite covers the mocked
@@ -199,12 +213,14 @@ Andrew first.
   (silently falling back to the model's raw number on a category-name
   mismatch — correct most of the time, wrong invisibly the rest, with
   nothing distinguishing the two), and `biases_detected[].estimated_cost`
-  (unbounded on the paid report specifically, since it's already redacted
-  to 0 on snapshots — the customer who paid was the one exposed to the
-  invented number). Fixed in four separate PRs; `recommendations[].
-  expected_improvement` (prose with an embedded dollar/percent claim, no
-  structured field to swap in) reported but not yet fixed — needs a design
-  decision, not a mechanical repoint.
+  (unbounded on the paid report specifically, since it is already redacted
+  to 0 on snapshots, so the customer who paid was the one exposed to the
+  invented number). All structured numeric fields are now deterministic.
+  PR #127 moved adoptable controls fully into the engine. Stage 2 closes the
+  remaining recommendation claim path: model priority and cost inputs are
+  ignored, model-written numeric thresholds are removed, and a financial
+  sentence is attached only from the matching deterministic historical
+  counterfactual.
 
 ## Pushback expected
 - Refuse requests that violate the design system.

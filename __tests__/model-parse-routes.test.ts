@@ -49,7 +49,7 @@ function extracted(overrides: Record<string, unknown> = {}) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('model-assisted parse routes', () => {
-  it('paste parsing discloses and skips a date-only model value', async () => {
+  it('paste parsing preserves a date-only model value without adding a clock', async () => {
     mocks.createMessage.mockResolvedValue(modelResponse([
       extracted({ placed_at: '2026-08-22' }),
     ]));
@@ -64,8 +64,15 @@ describe('model-assisted parse routes', () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.bets).toEqual([]);
-    expect(body.parse_notes.join(' ')).toContain('no clock time');
+    expect(body.bets).toHaveLength(1);
+    expect(body.bets[0]).toMatchObject({
+      placed_at: null,
+      source_placed_at: '2026-08-22',
+      placed_date: '2026-08-22',
+      placed_time: null,
+      source_timezone: null,
+      timestamp_quality: 'date_only',
+    });
   });
 
   it('screenshot parsing does not calculate a missing profit', async () => {

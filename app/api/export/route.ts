@@ -33,7 +33,10 @@ export async function GET(request: Request) {
         .from('bets')
         .select('*')
         .eq('user_id', user.id)
-        .order('placed_at', { ascending: true })
+        .order('recorded_date', { ascending: true })
+        .order('placed_time', { ascending: true, nullsFirst: false })
+        .order('placed_at', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true })
         .range(fetchStart, fetchStart + FETCH_PAGE - 1);
       if (error) {
         await logErrorServer(error, { path: '/api/export', userId: user.id });
@@ -47,7 +50,7 @@ export async function GET(request: Request) {
 
     const header = 'date,sport,league,bet_type,description,odds,stake,result,profit,sportsbook,is_bonus_bet';
     const csvRows = rows.map((b) => {
-      const date = new Date(b.placed_at).toISOString().split('T')[0];
+      const date = b.source_placed_at ?? b.placed_date ?? b.placed_at ?? '';
       return [
         csvCell(date),
         csvCell(b.sport),

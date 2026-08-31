@@ -33,6 +33,7 @@ import type {
   PatternSnapshotEntry,
   VisibilityTag,
 } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── Anthropic SDK mock ─────────────────────────────────────────────────
 // runAutopsy dynamically imports @anthropic-ai/sdk and calls .messages.create.
@@ -143,7 +144,7 @@ function makeFixtureBets(): Bet[] {
     upload_id: null,
     created_at: new Date().toISOString(),
   });
-  return bets;
+  return bets.map(markFixtureTimestampAsSourced);
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -818,17 +819,22 @@ describe('Snapshot loosen v2 — sport_specific_findings redaction', () => {
 
 const ALL_VISIBILITY_TAGS = new Set(['visible', 'redacted_dollar', 'redacted_percent', 'redacted_text', 'hidden']);
 
-// Fixture: every bet at exact UTC midnight — the date-only CSV shape.
-// Should drive has_time_data to false (PR #83's <= 0.05 threshold).
+// Fixture: every bet has a source date but no source clock.
+// This must drive has_time_data to false.
 function noTimestampBets(count: number): Bet[] {
-  const base = Date.parse('2026-02-01T00:00:00Z');
   return Array.from({ length: count }, (_, i) => {
     const isWin = i % 3 === 0;
     const stake = 40 + (i % 5) * 20;
+    const date = new Date(Date.UTC(2026, 1, 1 + i)).toISOString().slice(0, 10);
     return {
-      id: `midnight-${i}`,
+      id: `date-only-${i}`,
       user_id: 'u',
-      placed_at: new Date(base + i * 86400_000).toISOString(), // always T00:00:00.000Z
+      placed_at: null,
+      source_placed_at: date,
+      placed_date: date,
+      placed_time: null,
+      source_timezone: null,
+      timestamp_quality: 'date_only',
       sport: i % 2 === 0 ? 'NFL' : 'NBA',
       league: null,
       bet_type: 'spread',
@@ -880,7 +886,7 @@ function tinySampleBets(): Bet[] {
       upload_id: null,
       created_at: new Date().toISOString(),
     } as Bet;
-  });
+  }).map(markFixtureTimestampAsSourced);
 }
 
 // Fixture: every bet a win. Snapshot redaction must hold even when every
@@ -912,7 +918,7 @@ function allWinsBets(count: number): Bet[] {
       upload_id: null,
       created_at: new Date().toISOString(),
     } as Bet;
-  });
+  }).map(markFixtureTimestampAsSourced);
 }
 
 // Fixture: spans a year boundary (Dec 31 -> Jan 1) and a month boundary
@@ -948,7 +954,7 @@ function dateBoundaryBets(): Bet[] {
       upload_id: null,
       created_at: new Date().toISOString(),
     } as Bet;
-  });
+  }).map(markFixtureTimestampAsSourced);
 }
 
 // Fixture: cash-out heavy. As of Stage 8 (lib/csv-parser.ts), a cash-out
@@ -987,7 +993,7 @@ function cashOutHeavyBets(): Bet[] {
       upload_id: null,
       created_at: new Date().toISOString(),
     } as Bet;
-  });
+  }).map(markFixtureTimestampAsSourced);
 }
 
 describe('Golden fixture wire assertions — visibility tags valid + sub_splits redacted', () => {

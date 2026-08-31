@@ -4,13 +4,14 @@ import { dedupeBiases } from '@/lib/engine/dedupeBiases';
 import { buildRecoveryModel, roundRecoveryRange } from '@/lib/engine/recovery';
 import { calculateMetrics, runSnapshot } from '@/lib/autopsy-engine';
 import type { Bet } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // ── helpers ──────────────────────────────────────────────────────────
 
 let betSeq = 0;
 function makeBet(overrides: Partial<Bet> = {}): Bet {
   betSeq++;
-  return {
+  return markFixtureTimestampAsSourced({
     id: `bet-${betSeq}`,
     user_id: 'user-1',
     placed_at: `2026-01-${String((betSeq % 27) + 1).padStart(2, '0')}T12:00:00.000Z`,
@@ -31,7 +32,7 @@ function makeBet(overrides: Partial<Bet> = {}): Bet {
     upload_id: null,
     created_at: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  };
+  });
 }
 
 const WHAT_IFS_BASE = {

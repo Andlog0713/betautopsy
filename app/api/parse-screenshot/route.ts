@@ -23,9 +23,9 @@ EXTRACTION RULES:
 7. If you can identify the sportsbook from logos, colors, or branding (DraftKings blue, FanDuel blue/navy, BetMGM gold, Caesars green, theScore Bet, Fanatics, bet365, BetRivers), include it.
 8. Copy sport only when the source identifies it. Never infer it from a team or player name.
 9. Copy bet_type only when the source identifies it. Never infer a category from description prose.
-10. Copy placed_at only when date, clock time, and timezone or UTC offset are all visible. Use an ISO 8601 timestamp with the explicit offset.
+10. Copy placed_at whenever a calendar date is visible. Preserve the exact visible precision: date only, local date and time, or a timestamp with an explicit timezone. Never add a clock time or offset.
 11. Read odds carefully — they may be in American (-110, +150) or decimal (1.91, 2.50) format.
-12. If a required field is cut off, blurry, date-only, or missing, skip that bet and note the exact reason. Never make a best guess.
+12. If a required non-temporal field or the calendar date is cut off, blurry, or missing, skip that bet and note the exact reason. A missing clock time or timezone is valid and must remain missing.
 
 RESPOND WITH ONLY valid JSON, no markdown fences:
 {

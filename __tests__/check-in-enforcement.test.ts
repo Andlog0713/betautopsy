@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateCheckInAgainstControlState } from '@/lib/control-system';
 import type { Bet, ControlRule, Cooldown, PreBetCheckInRequest } from '@/types';
+import { markFixtureTimestampAsSourced } from './helpers/known-instant';
 
 // Enforcement-path coverage for evaluateCheckInAgainstControlState. The shipped
 // suite (api-check-in-compat) only exercises the prod-schema fallbacks; the
@@ -17,11 +18,11 @@ const baseRequest: PreBetCheckInRequest = {
 };
 
 function lossBets(n: number): Bet[] {
-  return Array.from({ length: n }, (_, i) => ({
+  return Array.from({ length: n }, (_, i) => markFixtureTimestampAsSourced({
     id: `bet-${i}`,
     placed_at: new Date(Date.UTC(2026, 5, 10, 12, i)).toISOString(),
     result: 'loss',
-  })) as unknown as Bet[];
+  } as Bet));
 }
 
 function lossStreakRule(enforcement: 'hard' | 'soft', threshold = 3): ControlRule {
@@ -49,6 +50,19 @@ function longParlayRule(): ControlRule {
     scope: 'bet_type',
     scope_value: 'parlay',
     trigger: { category: 'parlay', maxParlayLegs: 3 },
+  } as unknown as ControlRule;
+}
+
+function resultCooldownRule(): ControlRule {
+  return {
+    id: 'rule-result-cooldown',
+    rule_type: 'cooldown_after_loss',
+    status: 'active',
+    title: 'Wait after a known loss',
+    description: 'Pause before the next bet.',
+    enforcement: 'hard',
+    severity: 'critical',
+    trigger: { waitMinutes: 30 },
   } as unknown as ControlRule;
 }
 
@@ -119,6 +133,23 @@ describe('evaluateCheckInAgainstControlState enforcement', () => {
     expect(result.actionGate).toBe('clear');
   });
 
+  it('does not skip an unknown pending result when evaluating a current loss run', () => {
+    const pending = markFixtureTimestampAsSourced({
+      id: 'pending-latest',
+      placed_at: '2026-06-10T17:00:00.000Z',
+      result: 'pending',
+    } as Bet);
+    const result = evaluateCheckInAgainstControlState({
+      request: baseRequest,
+      rules: [lossStreakRule('hard', 3)],
+      ...emptyState,
+      recentBets: [...lossBets(3), pending],
+    });
+
+    expect(result.ruleViolations).toHaveLength(0);
+    expect(result.actionGate).toBe('clear');
+  });
+
   it('blocks on an active cooldown even with no rule violation', () => {
     const result = evaluateCheckInAgainstControlState({
       request: baseRequest,
@@ -179,5 +210,22 @@ describe('evaluateCheckInAgainstControlState enforcement', () => {
     expect(withinLimit.ruleViolations).toHaveLength(0);
     expect(overLimit.ruleViolations).toHaveLength(1);
     expect(overLimit.actionGate).toBe('blocked');
+  });
+
+  it('does not use bet placement time as the unknown settlement time for a loss cooldown', () => {
+    const recentLoss = markFixtureTimestampAsSourced({
+      id: 'recent-loss',
+      placed_at: '2026-06-10T17:50:00.000Z',
+      result: 'loss',
+    } as Bet);
+    const result = evaluateCheckInAgainstControlState({
+      request: baseRequest,
+      rules: [resultCooldownRule()],
+      ...emptyState,
+      recentBets: [recentLoss],
+    });
+
+    expect(result.ruleViolations).toHaveLength(0);
+    expect(result.actionGate).toBe('clear');
   });
 });

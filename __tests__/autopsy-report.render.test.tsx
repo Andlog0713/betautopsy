@@ -13,9 +13,10 @@
  * as of this test) - that can follow as its own piece of work.
  */
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import AutopsyReport from '@/components/AutopsyReport';
 import { runSnapshot } from '@/lib/autopsy-engine';
+import { DEMO_ANALYSIS, DEMO_BETS } from '@/lib/demo-data';
 import type { Bet } from '@/types';
 
 // framer-motion's useInView (via components/ui/number-ticker.tsx) needs
@@ -227,6 +228,55 @@ describe('AutopsyReport — snapshot findings render (P1-1 minimum viable guard)
     expect(warningText).not.toMatch(/width\([^)]*\)[\s\S]*height\([^)]*\)[\s\S]*greater than 0/i);
     warn.mockRestore();
   });
+
+  it('renders the frozen session snapshots instead of unrelated prop indices', () => {
+    render(
+      <AutopsyReport
+        analysis={DEMO_ANALYSIS}
+        bets={DEMO_BETS}
+        isSnapshot={false}
+        tier="pro"
+      />,
+    );
+
+    const bestSessionButton = screen.getAllByRole('button', { name: /view session bets/i })[0];
+    const bestSessionCard = bestSessionButton.parentElement;
+    expect(bestSessionCard).not.toBeNull();
+    fireEvent.click(bestSessionButton);
+
+    expect(within(bestSessionCard!).getByText('3-leg NFL parlay: Chiefs + Texans + Texans')).toBeTruthy();
+    expect(within(bestSessionCard!).getByText('2h 22m later')).toBeTruthy();
+    expect(within(bestSessionCard!).queryByText('24h 50m later')).toBeNull();
+  });
+
+  it('reconstructs session indices from engine ordering when snapshots are unavailable', () => {
+    const sessionDetection = DEMO_ANALYSIS.session_detection!;
+    const bestSession = sessionDetection.bestSession!;
+    const analysisWithoutSnapshots = {
+      ...DEMO_ANALYSIS,
+      session_detection: {
+        ...sessionDetection,
+        bestSession: { ...bestSession, betSnapshots: undefined },
+      },
+    };
+
+    render(
+      <AutopsyReport
+        analysis={analysisWithoutSnapshots}
+        bets={DEMO_BETS}
+        isSnapshot={false}
+        tier="pro"
+      />,
+    );
+
+    const bestSessionButton = screen.getAllByRole('button', { name: /view session bets/i })[0];
+    const bestSessionCard = bestSessionButton.parentElement;
+    expect(bestSessionCard).not.toBeNull();
+    fireEvent.click(bestSessionButton);
+
+    expect(within(bestSessionCard!).getByText('3-leg NFL parlay: Chiefs + Texans + Texans')).toBeTruthy();
+    expect(within(bestSessionCard!).getByText('2h 22m later')).toBeTruthy();
+  });
 });
 
 describe('AutopsyReport — isPartialReport vacuous-truth guard', () => {
@@ -273,5 +323,42 @@ describe('AutopsyReport — isPartialReport vacuous-truth guard', () => {
     render(<AutopsyReport analysis={partialAnalysis} bets={[]} isSnapshot={false} tier="pro" />);
 
     expect(screen.queryAllByText(/Generating/i).length).toBeGreaterThan(0);
+  });
+
+  it('does not render local-time claims from a saved report with no timestamp provenance', async () => {
+    const { analysis } = await runSnapshot(makeFixtureBets());
+    const historicalAnalysis = {
+      ...analysis,
+      timing_analysis: analysis.timing_analysis
+        ? {
+            ...analysis.timing_analysis,
+            clock_basis: undefined,
+            local_time_confirmed: undefined,
+          }
+        : undefined,
+      behavioral_patterns: [{
+        pattern_name: 'Late-night losses',
+        description: 'Late-night bets underperformed.',
+        frequency: 'Often',
+        impact: 'negative' as const,
+        data_points: 'After 11pm',
+      }],
+      recommendations: [{
+        priority: 1,
+        title: 'Set an 11pm cutoff',
+        description: 'Stop betting after 11pm.',
+        expected_improvement: 'Avoid overnight losses.',
+        difficulty: 'easy' as const,
+      }],
+      executive_diagnosis: 'Your sizing is uneven. Late-night losses dominate.',
+    };
+
+    const { container } = render(
+      <AutopsyReport analysis={historicalAnalysis} bets={[]} isSnapshot={false} tier="pro" />,
+    );
+
+    expect(container.textContent).toContain('Your sizing is uneven.');
+    expect(container.textContent).not.toMatch(/late[- ]?night|overnight|11pm/i);
+    expect(screen.queryByText('Timing Patterns')).toBeNull();
   });
 });

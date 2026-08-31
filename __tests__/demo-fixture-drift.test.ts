@@ -115,3 +115,33 @@ function runDriftGuard(label: string, bets: Bet[], analysis: AutopsyAnalysis, op
 
 runDriftGuard('DEMO_ANALYSIS vs a fresh calculateMetrics(DEMO_BETS)', DEMO_BETS, DEMO_ANALYSIS, { isDFS: false });
 runDriftGuard('DEMO_DFS_ANALYSIS vs a fresh calculateMetrics(DEMO_DFS_BETS)', DEMO_DFS_BETS, DEMO_DFS_ANALYSIS, { isDFS: true });
+
+describe('demo fixture settlement-provenance copy', () => {
+  it('does not turn source order into a known result sequence', () => {
+    const sportsbookStake = DEMO_ANALYSIS.biases_detected.find((bias) => bias.bias_name === 'Stake Volatility');
+    const sportsbookNbaVolume = DEMO_ANALYSIS.sport_specific_findings?.find((finding) => finding.id === 'NBA-RAPID-BETTING');
+    const sportsbookNbaSpread = DEMO_ANALYSIS.strategic_leaks.find((leak) => leak.category === 'NBA spread');
+    const dfsMultiplier = DEMO_DFS_ANALYSIS.biases_detected.find((bias) => bias.bias_name === 'Multiplier Chasing');
+    const copy = [
+      sportsbookStake?.description,
+      sportsbookStake?.fix,
+      sportsbookNbaVolume?.name,
+      sportsbookNbaVolume?.description,
+      sportsbookNbaVolume?.recommendation,
+      sportsbookNbaSpread?.detail,
+      sportsbookNbaSpread?.suggestion,
+      DEMO_ANALYSIS.session_analysis?.worst_session.description,
+      dfsMultiplier?.description,
+      DEMO_DFS_ANALYSIS.session_analysis?.worst_session.description,
+    ].filter((value): value is string => typeof value === 'string');
+
+    expect(copy).not.toEqual([]);
+    for (const value of copy) {
+      expect(value).not.toMatch(/after a (?:string|streak|run|series|stretch) of/i);
+      expect(value).not.toMatch(/already (?:in the red|down|losing) before/i);
+      expect(value).not.toMatch(/miss(?:es)? seemed to prompt/i);
+      expect(value).not.toMatch(/trying to get even/i);
+      expect(value).not.toMatch(/live\/in-play|emotional reactions to game flow|rapid-fire sessions/i);
+    }
+  });
+});

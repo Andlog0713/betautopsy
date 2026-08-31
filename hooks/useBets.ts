@@ -7,7 +7,7 @@ import type { Bet } from '@/types';
 
 export interface UseBetsOptions {
   limit?: number;
-  since?: string; // ISO timestamp
+  since?: string;
 }
 
 export type BetsKey = readonly ['bets', string, number | undefined, string | undefined];
@@ -18,8 +18,11 @@ async function fetchBets([, userId, limit, since]: BetsKey): Promise<Bet[]> {
     .from('bets')
     .select('*')
     .eq('user_id', userId)
-    .order('placed_at', { ascending: false });
-  if (since) query = query.gt('placed_at', since);
+    .order('recorded_date', { ascending: false })
+    .order('placed_time', { ascending: false, nullsFirst: false })
+    .order('placed_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false });
+  if (since) query = query.gte('recorded_date', since.slice(0, 10));
   if (typeof limit === 'number') query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw error;
